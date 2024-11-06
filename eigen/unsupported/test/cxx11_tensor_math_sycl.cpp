@@ -25,12 +25,10 @@ using Eigen::SyclDevice;
 using Eigen::Tensor;
 using Eigen::TensorMap;
 
-using Eigen::Tensor;
 using Eigen::RowMajor;
+using Eigen::Tensor;
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_tanh_sycl(const Eigen::SyclDevice &sycl_device)
-{
-
+static void test_tanh_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType sizeDim1 = 4;
   IndexType sizeDim2 = 4;
   IndexType sizeDim3 = 1;
@@ -41,26 +39,24 @@ static void test_tanh_sycl(const Eigen::SyclDevice &sycl_device)
 
   in = in.random();
 
-  DataType* gpu_data1  = static_cast<DataType*>(sycl_device.allocate(in.size()*sizeof(DataType)));
-  DataType* gpu_data2  = static_cast<DataType*>(sycl_device.allocate(out.size()*sizeof(DataType)));
+  DataType* gpu_data1 = static_cast<DataType*>(sycl_device.allocate(in.size() * sizeof(DataType)));
+  DataType* gpu_data2 = static_cast<DataType*>(sycl_device.allocate(out.size() * sizeof(DataType)));
 
   TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> gpu1(gpu_data1, tensorRange);
   TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> gpu2(gpu_data2, tensorRange);
 
-  sycl_device.memcpyHostToDevice(gpu_data1, in.data(),(in.size())*sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_data1, in.data(), (in.size()) * sizeof(DataType));
   gpu2.device(sycl_device) = gpu1.tanh();
-  sycl_device.memcpyDeviceToHost(out.data(), gpu_data2,(out.size())*sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(out.data(), gpu_data2, (out.size()) * sizeof(DataType));
 
-  out_cpu=in.tanh();
+  out_cpu = in.tanh();
 
   for (int i = 0; i < in.size(); ++i) {
     VERIFY_IS_APPROX(out(i), out_cpu(i));
   }
 }
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_sigmoid_sycl(const Eigen::SyclDevice &sycl_device)
-{
-
+static void test_sigmoid_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType sizeDim1 = 4;
   IndexType sizeDim2 = 4;
   IndexType sizeDim3 = 1;
@@ -71,25 +67,25 @@ static void test_sigmoid_sycl(const Eigen::SyclDevice &sycl_device)
 
   in = in.random();
 
-  DataType* gpu_data1  = static_cast<DataType*>(sycl_device.allocate(in.size()*sizeof(DataType)));
-  DataType* gpu_data2  = static_cast<DataType*>(sycl_device.allocate(out.size()*sizeof(DataType)));
+  DataType* gpu_data1 = static_cast<DataType*>(sycl_device.allocate(in.size() * sizeof(DataType)));
+  DataType* gpu_data2 = static_cast<DataType*>(sycl_device.allocate(out.size() * sizeof(DataType)));
 
   TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> gpu1(gpu_data1, tensorRange);
   TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> gpu2(gpu_data2, tensorRange);
 
-  sycl_device.memcpyHostToDevice(gpu_data1, in.data(),(in.size())*sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_data1, in.data(), (in.size()) * sizeof(DataType));
   gpu2.device(sycl_device) = gpu1.sigmoid();
-  sycl_device.memcpyDeviceToHost(out.data(), gpu_data2,(out.size())*sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(out.data(), gpu_data2, (out.size()) * sizeof(DataType));
 
-  out_cpu=in.sigmoid();
+  out_cpu = in.sigmoid();
 
   for (int i = 0; i < in.size(); ++i) {
     VERIFY_IS_APPROX(out(i), out_cpu(i));
   }
 }
 
-
-template<typename DataType, typename dev_Selector> void sycl_computing_test_per_device(dev_Selector s){
+template <typename DataType, typename dev_Selector>
+void sycl_computing_test_per_device(dev_Selector s) {
   QueueInterface queueInterface(s);
   auto sycl_device = Eigen::SyclDevice(&queueInterface);
   test_tanh_sycl<DataType, RowMajor, int64_t>(sycl_device);
@@ -99,7 +95,8 @@ template<typename DataType, typename dev_Selector> void sycl_computing_test_per_
 }
 
 EIGEN_DECLARE_TEST(cxx11_tensor_math_sycl) {
-  for (const auto& device :Eigen::get_sycl_supported_devices()) {
+  for (const auto& device : Eigen::get_sycl_supported_devices()) {
+    CALL_SUBTEST(sycl_computing_test_per_device<half>(device));
     CALL_SUBTEST(sycl_computing_test_per_device<float>(device));
   }
 }

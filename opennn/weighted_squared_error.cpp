@@ -40,7 +40,7 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-    if(has_data_set() && !data_set->is_empty())
+    if(has_data_set() && !data_set->get_samples_number() == 0)
     {
         set_weights();
 

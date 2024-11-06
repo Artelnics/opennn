@@ -37,12 +37,6 @@ dimensions AdditionLayer3D::get_output_dimensions() const
 }
 
 
-const bool& AdditionLayer3D::get_display() const
-{
-    return display;
-}
-
-
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
     inputs_number = new_inputs_number;
@@ -50,8 +44,6 @@ void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_input
     inputs_depth = new_inputs_depth;
 
     name = "addition_layer_3d";
-
-    display = true;
 
     layer_type = Type::Addition3D;
 }
@@ -66,12 +58,6 @@ void AdditionLayer3D::set_inputs_number(const Index& new_inputs_number)
 void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
     inputs_depth = new_inputs_depth;
-}
-
-
-void AdditionLayer3D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -115,10 +101,10 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
 void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const auto* addition_layer_element = document.FirstChildElement("AdditionLayer3D");
+    const auto* addition_layer_element = document.FirstChildElement("Addition3D");
 
     if (!addition_layer_element)
-        throw runtime_error("AdditionLayer3D element is nullptr.\n");
+        throw runtime_error("Addition3D element is nullptr.\n");
 
     set_name(read_xml_string(addition_layer_element, "Name"));    
     set_inputs_number(read_xml_index(addition_layer_element, "InputsNumber"));
@@ -128,7 +114,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
 void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("AdditionLayer3D");
+    printer.OpenElement("Addition3D");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));

@@ -32,12 +32,6 @@ PoolingLayer::PoolingLayer(const dimensions& new_input_dimensions,
 }
 
 
-Index PoolingLayer::get_neurons_number() const
-{
-    return get_output_height() * get_output_width() * get_channels_number();
-}
-
-
 dimensions PoolingLayer::get_output_dimensions() const
 {
     const Index rows_number = get_output_height();
@@ -435,8 +429,7 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     
     input_derivatives.setZero();
 
-    #pragma omp parallel for collapse(2)
-
+    #pragma omp parallel
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
         for (Index channel_index = 0; channel_index < channels; channel_index++)
             for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
@@ -483,8 +476,7 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     // Input derivatives
 
-    #pragma omp parallel for collapse(2)
-
+    #pragma omp parallel for
     for (Index channel_index = 0; channel_index < channels; channel_index++)
         for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
         {
@@ -501,12 +493,6 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
                 const Eigen::array<Index, 4> offsets = { 0, height_start, width_start, channel_index };
                 const Eigen::array<Index, 4> extents = { batch_samples_number, height_end - height_start, width_end - width_start, 1 };
-
-                // @todo check times
-
-                //const Tensor<type, 4> gradient = deltas_by_pool_size.slice(grad_offsets, grad_extents);
-                //const Tensor<type, 4> gradient_tensor_slice = gradient.broadcast(broadcast_dims);
-                //input_derivatives.slice(offsets, extents) += gradient_tensor_slice;
 
                 input_derivatives.slice(offsets, extents) +=
                     deltas_by_pool_size.slice(grad_offsets, grad_extents).broadcast(broadcast_dims);

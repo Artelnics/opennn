@@ -16,15 +16,13 @@
 
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int64_t
 #define EIGEN_USE_SYCL
-#define EIGEN_HAS_CONSTEXPR 1
 
 #include "main.h"
 
 #include <unsupported/Eigen/CXX11/Tensor>
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_sum_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_sum_sycl(const Eigen::SyclDevice& sycl_device) {
   const IndexType num_rows = 753;
   const IndexType num_cols = 537;
   array<IndexType, 2> tensorRange = {{num_rows, num_cols}};
@@ -39,32 +37,25 @@ static void test_full_reductions_sum_sycl(
   auto dim = DSizes<IndexType, 2>(1, 1);
   full_redux = in.sum().reshape(dim);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = (DataType*)sycl_device.allocate(
-      sizeof(DataType) * (full_redux_gpu.dimensions().TotalSize()));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      (DataType*)sycl_device.allocate(sizeof(DataType) * (full_redux_gpu.dimensions().TotalSize()));
 
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data,
-                                                                outRange);
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data, outRange);
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.sum().reshape(dim);
-  sycl_device.memcpyDeviceToHost(
-      full_redux_gpu.data(), gpu_out_data,
-      (full_redux_gpu.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
+                                 (full_redux_gpu.dimensions().TotalSize()) * sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
-  std::cout << "SYCL FULL :" << full_redux_gpu(0, 0)
-            << ", CPU FULL: " << full_redux(0, 0) << "\n";
+  std::cout << "SYCL FULL :" << full_redux_gpu(0, 0) << ", CPU FULL: " << full_redux(0, 0) << "\n";
   VERIFY_IS_APPROX(full_redux_gpu(0, 0), full_redux(0, 0));
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_sum_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_sum_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using scalar_tensor = Tensor<DataType, 0, DataLayout, IndexType>;
   const IndexType num_rows = 64;
@@ -84,18 +75,14 @@ static void test_full_reductions_sum_with_offset_sycl(
   TensorMap<data_tensor> in_offset(in.data() + offset, tensor_offset_range);
   full_redux = in_offset.sum();
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data =
-      static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<scalar_tensor> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.sum();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
@@ -105,8 +92,7 @@ static void test_full_reductions_sum_with_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_max_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_max_sycl(const Eigen::SyclDevice& sycl_device) {
   const IndexType num_rows = 4096;
   const IndexType num_cols = 4096;
   array<IndexType, 2> tensorRange = {{num_rows, num_cols}};
@@ -119,26 +105,21 @@ static void test_full_reductions_max_sycl(
 
   full_redux = in.maximum();
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
   DataType* gpu_out_data = (DataType*)sycl_device.allocate(sizeof(DataType));
 
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
   TensorMap<Tensor<DataType, 0, DataLayout, IndexType>> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.maximum();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_max_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_max_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using scalar_tensor = Tensor<DataType, 0, DataLayout, IndexType>;
   const IndexType num_rows = 64;
@@ -162,18 +143,14 @@ static void test_full_reductions_max_with_offset_sycl(
   full_redux = in_offset.maximum();
   VERIFY_IS_NOT_EQUAL(full_redux(), in(0));
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data =
-      static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<scalar_tensor> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.maximum();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
@@ -183,8 +160,7 @@ static void test_full_reductions_max_with_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_mean_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_mean_sycl(const Eigen::SyclDevice& sycl_device) {
   const IndexType num_rows = 4096;
   const IndexType num_cols = 4096;
   array<IndexType, 2> tensorRange = {{num_rows, num_cols}};
@@ -205,61 +181,44 @@ static void test_full_reductions_mean_sycl(
   in_arg1.setRandom();
   in_arg2.setRandom();
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_in_arg1_data = static_cast<DataType*>(sycl_device.allocate(
-      in_arg1.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_in_arg2_data = static_cast<DataType*>(sycl_device.allocate(
-      in_arg2.dimensions().TotalSize() * sizeof(DataType)));
-  bool* gpu_out_arg__gpu_helper_data = static_cast<bool*>(sycl_device.allocate(
-      out_arg_gpu.dimensions().TotalSize() * sizeof(DataType)));
-  bool* gpu_out_arg_data = static_cast<bool*>(sycl_device.allocate(
-      out_arg_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_arg1_data =
+      static_cast<DataType*>(sycl_device.allocate(in_arg1.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_arg2_data =
+      static_cast<DataType*>(sycl_device.allocate(in_arg2.dimensions().TotalSize() * sizeof(DataType)));
+  bool* gpu_out_arg__gpu_helper_data =
+      static_cast<bool*>(sycl_device.allocate(out_arg_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  bool* gpu_out_arg_data =
+      static_cast<bool*>(sycl_device.allocate(out_arg_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
   DataType* gpu_out_data = (DataType*)sycl_device.allocate(sizeof(DataType));
 
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_Arg1_gpu(
-      gpu_in_arg1_data, tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_Arg2_gpu(
-      gpu_in_arg2_data, tensorRange);
-  TensorMap<Tensor<bool, 1, DataLayout, IndexType>> out_Argout_gpu(
-      gpu_out_arg_data, argRange);
-  TensorMap<Tensor<bool, 1, DataLayout, IndexType>> out_Argout_gpu_helper(
-      gpu_out_arg__gpu_helper_data, argRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_Arg1_gpu(gpu_in_arg1_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_Arg2_gpu(gpu_in_arg2_data, tensorRange);
+  TensorMap<Tensor<bool, 1, DataLayout, IndexType>> out_Argout_gpu(gpu_out_arg_data, argRange);
+  TensorMap<Tensor<bool, 1, DataLayout, IndexType>> out_Argout_gpu_helper(gpu_out_arg__gpu_helper_data, argRange);
   TensorMap<Tensor<DataType, 0, DataLayout, IndexType>> out_gpu(gpu_out_data);
 
   // CPU VERSION
   out_arg_cpu =
-      (in_arg1.argmax(1) == in_arg2.argmax(1))
-          .select(out_arg_cpu.constant(true), out_arg_cpu.constant(false));
-  full_redux = (out_arg_cpu.template cast<float>())
-                   .reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
+      (in_arg1.argmax(1) == in_arg2.argmax(1)).select(out_arg_cpu.constant(true), out_arg_cpu.constant(false));
+  full_redux = (out_arg_cpu.template cast<float>()).reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
 
   // GPU VERSION
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
-  sycl_device.memcpyHostToDevice(
-      gpu_in_arg1_data, in_arg1.data(),
-      (in_arg1.dimensions().TotalSize()) * sizeof(DataType));
-  sycl_device.memcpyHostToDevice(
-      gpu_in_arg2_data, in_arg2.data(),
-      (in_arg2.dimensions().TotalSize()) * sizeof(DataType));
-  out_Argout_gpu_helper.device(sycl_device) =
-      (in_Arg1_gpu.argmax(1) == in_Arg2_gpu.argmax(1));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_arg1_data, in_arg1.data(),
+                                 (in_arg1.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_arg2_data, in_arg2.data(),
+                                 (in_arg2.dimensions().TotalSize()) * sizeof(DataType));
+  out_Argout_gpu_helper.device(sycl_device) = (in_Arg1_gpu.argmax(1) == in_Arg2_gpu.argmax(1));
   out_Argout_gpu.device(sycl_device) =
-      (out_Argout_gpu_helper)
-          .select(out_Argout_gpu.constant(true),
-                  out_Argout_gpu.constant(false));
+      (out_Argout_gpu_helper).select(out_Argout_gpu.constant(true), out_Argout_gpu.constant(false));
   out_gpu.device(sycl_device) =
-      (out_Argout_gpu.template cast<float>())
-          .reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+      (out_Argout_gpu.template cast<float>()).reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
-  std::cout << "SYCL : " << full_redux_gpu() << " , CPU : " << full_redux()
-            << '\n';
+  std::cout << "SYCL : " << full_redux_gpu() << " , CPU : " << full_redux() << '\n';
   VERIFY_IS_EQUAL(full_redux_gpu(), full_redux());
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_in_arg1_data);
@@ -270,8 +229,7 @@ static void test_full_reductions_mean_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_mean_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_mean_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using scalar_tensor = Tensor<DataType, 0, DataLayout, IndexType>;
   const IndexType num_rows = 64;
@@ -292,18 +250,14 @@ static void test_full_reductions_mean_with_offset_sycl(
   full_redux = in_offset.mean();
   VERIFY_IS_NOT_EQUAL(full_redux(), in(0));
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data =
-      static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<scalar_tensor> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.mean();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
@@ -313,8 +267,7 @@ static void test_full_reductions_mean_with_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_mean_with_odd_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_mean_with_odd_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   // This is a particular case which illustrates a possible problem when the
   // number of local threads in a workgroup is even, but is not a power of two.
   using data_tensor = Tensor<DataType, 1, DataLayout, IndexType>;
@@ -337,19 +290,14 @@ static void test_full_reductions_mean_with_odd_offset_sycl(
   red_cpu = in.reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
   VERIFY_IS_APPROX(const_val, red_cpu());
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data =
-      static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data, tensor_range);
   TensorMap<scalar_tensor> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
-  out_gpu.device(sycl_device) =
-      in_gpu.reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
-  sycl_device.memcpyDeviceToHost(red_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
+  out_gpu.device(sycl_device) = in_gpu.reduce(red_axis, Eigen::internal::MeanReducer<DataType>());
+  sycl_device.memcpyDeviceToHost(red_gpu.data(), gpu_out_data, sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu, full_redux);
@@ -359,8 +307,7 @@ static void test_full_reductions_mean_with_odd_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_min_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_min_sycl(const Eigen::SyclDevice& sycl_device) {
   const IndexType num_rows = 876;
   const IndexType num_cols = 953;
   array<IndexType, 2> tensorRange = {{num_rows, num_cols}};
@@ -373,19 +320,15 @@ static void test_full_reductions_min_sycl(
 
   full_redux = in.minimum();
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
   DataType* gpu_out_data = (DataType*)sycl_device.allocate(sizeof(DataType));
 
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
   TensorMap<Tensor<DataType, 0, DataLayout, IndexType>> out_gpu(gpu_out_data);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.minimum();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
   sycl_device.deallocate(gpu_in_data);
@@ -393,8 +336,7 @@ static void test_full_reductions_min_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_full_reductions_min_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_full_reductions_min_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using scalar_tensor = Tensor<DataType, 0, DataLayout, IndexType>;
   const IndexType num_rows = 64;
@@ -418,18 +360,14 @@ static void test_full_reductions_min_with_offset_sycl(
   full_redux = in_offset.minimum();
   VERIFY_IS_NOT_EQUAL(full_redux(), in(0));
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data =
-      static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<scalar_tensor> out_gpu(gpu_out_data);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.minimum();
-  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data,
-                                 sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(full_redux_gpu.data(), gpu_out_data, sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   VERIFY_IS_APPROX(full_redux_gpu(), full_redux());
@@ -438,8 +376,7 @@ static void test_full_reductions_min_with_offset_sycl(
   sycl_device.deallocate(gpu_out_data);
 }
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_first_dim_reductions_max_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_first_dim_reductions_max_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType dim_x = 145;
   IndexType dim_y = 1;
   IndexType dim_z = 67;
@@ -457,35 +394,27 @@ static void test_first_dim_reductions_max_sycl(
 
   redux = in.maximum(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.maximum(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu.data(), gpu_out_data,
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, redux_gpu.dimensions().TotalSize() * sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++)
-    for (IndexType k = 0; k < reduced_tensorRange[1]; k++)
-      VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
+    for (IndexType k = 0; k < reduced_tensorRange[1]; k++) VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
 
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_first_dim_reductions_max_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_first_dim_reductions_max_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using reduced_tensor = Tensor<DataType, 1, DataLayout, IndexType>;
 
@@ -518,18 +447,14 @@ static void test_first_dim_reductions_max_with_offset_sycl(
     VERIFY_IS_NOT_EQUAL(redux(i), in(i));
   }
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(
-      sycl_device.allocate(n_reduced * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(n_reduced * sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<reduced_tensor> out_gpu(gpu_out_data, reduced_range);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.maximum(red_axis);
-  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data,
-                                 n_reduced * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, n_reduced * sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType i = 0; i < n_reduced; i++) {
@@ -541,8 +466,7 @@ static void test_first_dim_reductions_max_with_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_last_dim_reductions_max_with_offset_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_last_dim_reductions_max_with_offset_sycl(const Eigen::SyclDevice& sycl_device) {
   using data_tensor = Tensor<DataType, 2, DataLayout, IndexType>;
   using reduced_tensor = Tensor<DataType, 1, DataLayout, IndexType>;
 
@@ -583,18 +507,14 @@ static void test_last_dim_reductions_max_with_offset_sycl(
     VERIFY_IS_NOT_EQUAL(red_offset(i), in(i));
   }
 
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(
-      sycl_device.allocate((n_reduced + 1) * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(n_elems * sizeof(DataType)));
+  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate((n_reduced + 1) * sizeof(DataType)));
 
   TensorMap<data_tensor> in_gpu(gpu_in_data + offset, tensor_offset_range);
   TensorMap<reduced_tensor> out_gpu(gpu_out_data + 1, reduced_range);
-  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(),
-                                 n_elems * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), n_elems * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.maximum(red_axis);
-  sycl_device.memcpyDeviceToHost(redux_gpu.data(), out_gpu.data(),
-                                 n_reduced * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), out_gpu.data(), n_reduced * sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType i = 0; i < n_reduced; i++) {
@@ -606,8 +526,7 @@ static void test_last_dim_reductions_max_with_offset_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_first_dim_reductions_sum_sycl(
-    const Eigen::SyclDevice& sycl_device, IndexType dim_x, IndexType dim_y) {
+static void test_first_dim_reductions_sum_sycl(const Eigen::SyclDevice& sycl_device, IndexType dim_x, IndexType dim_y) {
   array<IndexType, 2> tensorRange = {{dim_x, dim_y}};
   Eigen::array<IndexType, 1> red_axis;
   red_axis[0] = 0;
@@ -620,22 +539,16 @@ static void test_first_dim_reductions_sum_sycl(
   in.setRandom();
   redux = in.sum(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 1, DataLayout, IndexType>> out_gpu(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 1, DataLayout, IndexType>> out_gpu(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.sum(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu.data(), gpu_out_data,
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, redux_gpu.dimensions().TotalSize() * sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType i = 0; i < redux.size(); i++) {
@@ -646,8 +559,7 @@ static void test_first_dim_reductions_sum_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_first_dim_reductions_mean_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_first_dim_reductions_mean_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType dim_x = 145;
   IndexType dim_y = 1;
   IndexType dim_z = 67;
@@ -665,35 +577,27 @@ static void test_first_dim_reductions_mean_sycl(
 
   redux = in.mean(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.mean(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu.data(), gpu_out_data,
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, redux_gpu.dimensions().TotalSize() * sizeof(DataType));
 
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++)
-    for (IndexType k = 0; k < reduced_tensorRange[1]; k++)
-      VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
+    for (IndexType k = 0; k < reduced_tensorRange[1]; k++) VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
 
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_last_dim_reductions_mean_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_last_dim_reductions_mean_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType dim_x = 64;
   IndexType dim_y = 1;
   IndexType dim_z = 32;
@@ -711,34 +615,26 @@ static void test_last_dim_reductions_mean_sycl(
 
   redux = in.mean(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.mean(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu.data(), gpu_out_data,
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, redux_gpu.dimensions().TotalSize() * sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++)
-    for (IndexType k = 0; k < reduced_tensorRange[1]; k++)
-      VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
+    for (IndexType k = 0; k < reduced_tensorRange[1]; k++) VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
 
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_last_dim_reductions_sum_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_last_dim_reductions_sum_sycl(const Eigen::SyclDevice& sycl_device) {
   IndexType dim_x = 64;
   IndexType dim_y = 1;
   IndexType dim_z = 32;
@@ -756,34 +652,26 @@ static void test_last_dim_reductions_sum_sycl(
 
   redux = in.sum(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data,
-                                                               tensorRange);
-  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<Tensor<DataType, 3, DataLayout, IndexType>> in_gpu(gpu_in_data, tensorRange);
+  TensorMap<Tensor<DataType, 2, DataLayout, IndexType>> out_gpu(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in.data(), (in.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu.device(sycl_device) = in_gpu.sum(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu.data(), gpu_out_data,
-      redux_gpu.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu.data(), gpu_out_data, redux_gpu.dimensions().TotalSize() * sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++)
-    for (IndexType k = 0; k < reduced_tensorRange[1]; k++)
-      VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
+    for (IndexType k = 0; k < reduced_tensorRange[1]; k++) VERIFY_IS_APPROX(redux_gpu(j, k), redux(j, k));
 
   sycl_device.deallocate(gpu_in_data);
   sycl_device.deallocate(gpu_out_data);
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_last_reductions_sum_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_last_reductions_sum_sycl(const Eigen::SyclDevice& sycl_device) {
   auto tensorRange = Sizes<64, 32>(64, 32);
   // auto red_axis =  Sizes<0,1>(0,1);
   Eigen::IndexList<Eigen::type2index<1>> red_axis;
@@ -796,23 +684,18 @@ static void test_last_reductions_sum_sycl(
 
   redux_fix = in_fix.sum(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in_fix.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data =
+      static_cast<DataType*>(sycl_device.allocate(in_fix.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<TensorFixedSize<DataType, Sizes<64, 32>, DataLayout>> in_gpu_fix(
-      gpu_in_data, tensorRange);
-  TensorMap<TensorFixedSize<DataType, Sizes<64>, DataLayout>> out_gpu_fix(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<TensorFixedSize<DataType, Sizes<64, 32>, DataLayout>> in_gpu_fix(gpu_in_data, tensorRange);
+  TensorMap<TensorFixedSize<DataType, Sizes<64>, DataLayout>> out_gpu_fix(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in_fix.data(),
-      (in_fix.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in_fix.data(), (in_fix.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu_fix.device(sycl_device) = in_gpu_fix.sum(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu_fix.data(), gpu_out_data,
-      redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu_fix.data(), gpu_out_data,
+                                 redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType));
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++) {
     VERIFY_IS_APPROX(redux_gpu_fix(j), redux_fix(j));
@@ -823,8 +706,7 @@ static void test_last_reductions_sum_sycl(
 }
 
 template <typename DataType, int DataLayout, typename IndexType>
-static void test_last_reductions_mean_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+static void test_last_reductions_mean_sycl(const Eigen::SyclDevice& sycl_device) {
   auto tensorRange = Sizes<64, 32>(64, 32);
   Eigen::IndexList<Eigen::type2index<1>> red_axis;
   auto reduced_tensorRange = Sizes<64>(64);
@@ -835,23 +717,18 @@ static void test_last_reductions_mean_sycl(
   in_fix.setRandom();
   redux_fix = in_fix.mean(red_axis);
 
-  DataType* gpu_in_data = static_cast<DataType*>(
-      sycl_device.allocate(in_fix.dimensions().TotalSize() * sizeof(DataType)));
-  DataType* gpu_out_data = static_cast<DataType*>(sycl_device.allocate(
-      redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_in_data =
+      static_cast<DataType*>(sycl_device.allocate(in_fix.dimensions().TotalSize() * sizeof(DataType)));
+  DataType* gpu_out_data =
+      static_cast<DataType*>(sycl_device.allocate(redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType)));
 
-  TensorMap<TensorFixedSize<DataType, Sizes<64, 32>, DataLayout>> in_gpu_fix(
-      gpu_in_data, tensorRange);
-  TensorMap<TensorFixedSize<DataType, Sizes<64>, DataLayout>> out_gpu_fix(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<TensorFixedSize<DataType, Sizes<64, 32>, DataLayout>> in_gpu_fix(gpu_in_data, tensorRange);
+  TensorMap<TensorFixedSize<DataType, Sizes<64>, DataLayout>> out_gpu_fix(gpu_out_data, reduced_tensorRange);
 
-  sycl_device.memcpyHostToDevice(
-      gpu_in_data, in_fix.data(),
-      (in_fix.dimensions().TotalSize()) * sizeof(DataType));
+  sycl_device.memcpyHostToDevice(gpu_in_data, in_fix.data(), (in_fix.dimensions().TotalSize()) * sizeof(DataType));
   out_gpu_fix.device(sycl_device) = in_gpu_fix.mean(red_axis);
-  sycl_device.memcpyDeviceToHost(
-      redux_gpu_fix.data(), gpu_out_data,
-      redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType));
+  sycl_device.memcpyDeviceToHost(redux_gpu_fix.data(), gpu_out_data,
+                                 redux_gpu_fix.dimensions().TotalSize() * sizeof(DataType));
   sycl_device.synchronize();
   // Check that the CPU and GPU reductions return the same result.
   for (IndexType j = 0; j < reduced_tensorRange[0]; j++) {
@@ -873,32 +750,22 @@ struct CustomReducer {
   static constexpr OutT InfBit = 1;
   static constexpr OutT NanBit = 2;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const InT x,
-                                                    OutT* accum) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const InT x, OutT* accum) const {
     if (Eigen::numext::isinf(x))
       *accum |= InfBit;
     else if (Eigen::numext::isnan(x))
       *accum |= NanBit;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const OutT x,
-                                                    OutT* accum) const {
-    *accum |= x;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const OutT x, OutT* accum) const { *accum |= x; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE OutT initialize() const {
-    return OutT(0);
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE OutT initialize() const { return OutT(0); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE OutT finalize(const OutT accum) const {
-    return accum;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE OutT finalize(const OutT accum) const { return accum; }
 };
 
-template <typename DataType, typename AccumType, int DataLayout,
-          typename IndexType>
-static void test_full_reductions_custom_sycl(
-    const Eigen::SyclDevice& sycl_device) {
+template <typename DataType, typename AccumType, int DataLayout, typename IndexType>
+static void test_full_reductions_custom_sycl(const Eigen::SyclDevice& sycl_device) {
   constexpr IndexType InSize = 64;
   auto tensorRange = Sizes<InSize>(InSize);
   Eigen::IndexList<Eigen::type2index<0>> dims;
@@ -911,20 +778,15 @@ static void test_full_reductions_custom_sycl(
   in_fix.setRandom();
 
   size_t in_size_bytes = in_fix.dimensions().TotalSize() * sizeof(DataType);
-  DataType* gpu_in_data =
-      static_cast<DataType*>(sycl_device.allocate(in_size_bytes));
-  AccumType* gpu_out_data =
-      static_cast<AccumType*>(sycl_device.allocate(sizeof(AccumType)));
+  DataType* gpu_in_data = static_cast<DataType*>(sycl_device.allocate(in_size_bytes));
+  AccumType* gpu_out_data = static_cast<AccumType*>(sycl_device.allocate(sizeof(AccumType)));
 
-  TensorMap<TensorFixedSize<DataType, Sizes<InSize>, DataLayout>> in_gpu_fix(
-      gpu_in_data, tensorRange);
-  TensorMap<TensorFixedSize<AccumType, Sizes<>, DataLayout>> out_gpu_fix(
-      gpu_out_data, reduced_tensorRange);
+  TensorMap<TensorFixedSize<DataType, Sizes<InSize>, DataLayout>> in_gpu_fix(gpu_in_data, tensorRange);
+  TensorMap<TensorFixedSize<AccumType, Sizes<>, DataLayout>> out_gpu_fix(gpu_out_data, reduced_tensorRange);
 
   sycl_device.memcpyHostToDevice(gpu_in_data, in_fix.data(), in_size_bytes);
   out_gpu_fix.device(sycl_device) = in_gpu_fix.reduce(dims, reducer);
-  sycl_device.memcpyDeviceToHost(redux_gpu_fix.data(), gpu_out_data,
-                                 sizeof(AccumType));
+  sycl_device.memcpyDeviceToHost(redux_gpu_fix.data(), gpu_out_data, sizeof(AccumType));
   VERIFY_IS_EQUAL(redux_gpu_fix(0), AccumType(0));
 
   sycl_device.deallocate(gpu_in_data);
@@ -942,55 +804,39 @@ void sycl_reduction_test_full_per_device(const Dev& sycl_device) {
 
   test_full_reductions_mean_sycl<DataType, ColMajor, int64_t>(sycl_device);
   test_full_reductions_mean_sycl<DataType, RowMajor, int64_t>(sycl_device);
-  test_full_reductions_custom_sycl<DataType, int, RowMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_custom_sycl<DataType, int, ColMajor, int64_t>(
-      sycl_device);
+  test_full_reductions_custom_sycl<DataType, int, RowMajor, int64_t>(sycl_device);
+  test_full_reductions_custom_sycl<DataType, int, ColMajor, int64_t>(sycl_device);
   sycl_device.synchronize();
 }
 
 template <typename DataType, typename Dev>
 void sycl_reduction_full_offset_per_device(const Dev& sycl_device) {
-  test_full_reductions_sum_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_sum_with_offset_sycl<DataType, ColMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_min_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_min_with_offset_sycl<DataType, ColMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_max_with_offset_sycl<DataType, ColMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_mean_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_mean_with_offset_sycl<DataType, ColMajor, int64_t>(
-      sycl_device);
-  test_full_reductions_mean_with_odd_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
+  test_full_reductions_sum_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
+  test_full_reductions_sum_with_offset_sycl<DataType, ColMajor, int64_t>(sycl_device);
+  test_full_reductions_min_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
+  test_full_reductions_min_with_offset_sycl<DataType, ColMajor, int64_t>(sycl_device);
+  test_full_reductions_max_with_offset_sycl<DataType, ColMajor, int64_t>(sycl_device);
+  test_full_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
+  test_full_reductions_mean_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
+  test_full_reductions_mean_with_offset_sycl<DataType, ColMajor, int64_t>(sycl_device);
+  test_full_reductions_mean_with_odd_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
   sycl_device.synchronize();
 }
 
 template <typename DataType, typename Dev>
 void sycl_reduction_test_first_dim_per_device(const Dev& sycl_device) {
-  test_first_dim_reductions_sum_sycl<DataType, ColMajor, int64_t>(sycl_device,
-                                                                  4197, 4097);
-  test_first_dim_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device,
-                                                                  4197, 4097);
-  test_first_dim_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device,
-                                                                  129, 8);
+  test_first_dim_reductions_sum_sycl<DataType, ColMajor, int64_t>(sycl_device, 4197, 4097);
+  test_first_dim_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device, 4197, 4097);
+  test_first_dim_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device, 129, 8);
   test_first_dim_reductions_max_sycl<DataType, RowMajor, int64_t>(sycl_device);
-  test_first_dim_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
+  test_first_dim_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
   sycl_device.synchronize();
 }
 
 template <typename DataType, typename Dev>
 void sycl_reduction_test_last_dim_per_device(const Dev& sycl_device) {
   test_last_dim_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device);
-  test_last_dim_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(
-      sycl_device);
+  test_last_dim_reductions_max_with_offset_sycl<DataType, RowMajor, int64_t>(sycl_device);
   test_last_reductions_sum_sycl<DataType, ColMajor, int64_t>(sycl_device);
   test_last_reductions_sum_sycl<DataType, RowMajor, int64_t>(sycl_device);
   test_last_reductions_mean_sycl<DataType, ColMajor, int64_t>(sycl_device);
@@ -1000,15 +846,12 @@ void sycl_reduction_test_last_dim_per_device(const Dev& sycl_device) {
 
 EIGEN_DECLARE_TEST(cxx11_tensor_reduction_sycl) {
   for (const auto& device : Eigen::get_sycl_supported_devices()) {
-    std::cout << "Running on "
-              << device.template get_info<cl::sycl::info::device::name>()
-              << std::endl;
+    std::cout << "Running on " << device.template get_info<cl::sycl::info::device::name>() << std::endl;
     QueueInterface queueInterface(device);
     auto sycl_device = Eigen::SyclDevice(&queueInterface);
     CALL_SUBTEST_1(sycl_reduction_test_full_per_device<float>(sycl_device));
     CALL_SUBTEST_2(sycl_reduction_full_offset_per_device<float>(sycl_device));
-    CALL_SUBTEST_3(
-        sycl_reduction_test_first_dim_per_device<float>(sycl_device));
+    CALL_SUBTEST_3(sycl_reduction_test_first_dim_per_device<float>(sycl_device));
     CALL_SUBTEST_4(sycl_reduction_test_last_dim_per_device<float>(sycl_device));
   }
 }

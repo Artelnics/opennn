@@ -25,7 +25,6 @@ namespace opennn
     struct PerceptronLayerBackPropagationCuda;
 #endif
 
-
 class PerceptronLayer : public Layer
 {
 
@@ -43,51 +42,41 @@ public:
         HardSigmoid
     };
 
-    explicit PerceptronLayer(const dimensions& = {0},
-                             const dimensions& = {0},
-                             const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
-                             const string = "perceptron");
+    PerceptronLayer(const dimensions& = {0},
+                    const dimensions& = {0},
+                    const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                    const string& = "perceptron_layer");
 
-    Index get_inputs_number() const final;
-    Index get_neurons_number() const final;
+    dimensions get_input_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
     Tensor<type, 1> get_parameters() const final;
 
-    Index get_biases_number() const;
-    Index get_synaptic_weights_number() const;
     Index get_parameters_number() const final;
     type get_dropout_rate() const;
 
-    dimensions get_output_dimensions() const final;
-
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
-    string write_activation_function() const;
+    string get_activation_function_string() const;
 
-    const bool& get_display() const;
-
-    void set(const Index& = 0,
-             const Index& = 0,
+    void set(const dimensions& = {0},
+             const dimensions& = {0},
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
-             const string = "perceptron_layer");
+             const string& = "perceptron_layer");
 
-    void set_inputs_number(const Index&) final;
-    void set_neurons_number(const Index&) final;
+    void set_input_dimensions(const dimensions&) final;
+    void set_output_dimensions(const dimensions&) final;
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters_constant(const type&) final;
+    void set_parameters_random() final;
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
-    void set_display(const bool&);
-
-    void set_parameters_constant(const type&) final;
-
-    void set_parameters_random() final;
-
     void calculate_combinations(const Tensor<type, 2>&,
-        Tensor<type, 2>&) const;
+                                Tensor<type, 2>&) const;
 
     void dropout(Tensor<type, 2>&) const;
 
@@ -116,9 +105,9 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+    string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-    string write_activation_function_expression() const;
+    string get_activation_function_string_expression() const;
 
     void print() const;
 
@@ -129,17 +118,15 @@ public:
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     Tensor<type, 1> biases;
 
     Tensor<type, 2> synaptic_weights;
 
-    ActivationFunction activation_function;
+    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    bool display = true;
 
     const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };

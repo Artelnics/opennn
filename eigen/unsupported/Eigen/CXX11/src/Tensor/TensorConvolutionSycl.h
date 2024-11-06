@@ -15,6 +15,9 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONVOLUTION_SYCL_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONVOLUTION_SYCL_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \class TensorConvolution
@@ -55,12 +58,12 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
         input_range(input_range_) {}
 
   template <typename BooleanDim2>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim2 boolean_check) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim2 boolean_check) const {
     return (boolean_check[0] && boolean_check[1]);
   }
-  void operator()(cl::sycl::nd_item<2> itemID) {
-    auto buffer_ptr = buffer_acc.get_pointer();
-    auto kernel_ptr = kernel_filter.get_pointer();
+  void operator()(cl::sycl::nd_item<2> itemID) const {
+    auto buffer_ptr = buffer_acc;
+    auto kernel_ptr = kernel_filter;
     // the required row to be calculated for the for each plane in shered memory
     const size_t num_input = (itemID.get_local_range()[0] + kernelSize - 1);
     const size_t plane_kernel_offset = itemID.get_local_id(1) * num_input;
@@ -121,13 +124,13 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
         kernel_size(kernel_size_),
         input_range(input_range_) {}
   template <typename BooleanDim3>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim3 boolean_check) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim3 boolean_check) const {
     return (boolean_check[0] && boolean_check[1] && boolean_check[2]);
   }
 
-  void operator()(cl::sycl::nd_item<3> itemID) {
-    auto buffer_ptr = buffer_acc.get_pointer();
-    auto kernel_ptr = kernel_filter.get_pointer();
+  void operator()(cl::sycl::nd_item<3> itemID) const {
+    auto buffer_ptr = buffer_acc;
+    auto kernel_ptr = kernel_filter;
     // the required row to be calculated for the for each plane in shered memory
     const auto num_input = cl::sycl::range<2>{
         (cl::sycl::range<2>(itemID.get_local_range()[0], itemID.get_local_range()[1]) + kernel_size - 1)};
@@ -137,20 +140,20 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
 
     const auto input_offset = cl::sycl::range<2>{itemID.get_group(0) * itemID.get_local_range()[0],
                                                  itemID.get_group(1) * itemID.get_local_range()[1]};
-      
+
     // fill the local memory
     bool in_range_dim2 = itemID.get_global_id(2) < input_range[2];
     for (size_t j = itemID.get_local_id(1); j < num_input[1]; j += itemID.get_local_range()[1]) {
       const size_t local_input_offset = num_input[0] * (j + plane_kernel_offset);
-      bool in_range_dim1 = ((j + input_offset[1]) < (input_range[1] + kernel_size[1] - 1)); 
+      bool in_range_dim1 = ((j + input_offset[1]) < (input_range[1] + kernel_size[1] - 1));
       for (size_t i = itemID.get_local_id(0); i < num_input[0]; i += itemID.get_local_range()[0]) {
         const size_t local_index = i + local_input_offset;
         const size_t tensor_index = plane_input_offset + indexMapper.mapGpuInputKernelToTensorInputOffset(
                                                              i + input_offset[0], j + input_offset[1]);
-        local_acc[local_index] = (((i + input_offset[0]) < (input_range[0] + kernel_size[0] - 1)) &&
-                                  in_range_dim1 && in_range_dim2)
-                                     ? device_evaluator.coeff(tensor_index)
-                                     : CoeffReturnType(0);
+        local_acc[local_index] =
+            (((i + input_offset[0]) < (input_range[0] + kernel_size[0] - 1)) && in_range_dim1 && in_range_dim2)
+                ? device_evaluator.coeff(tensor_index)
+                : CoeffReturnType(0);
       }
     }
 
@@ -210,18 +213,18 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
         input_range(input_range_),
         numP(numP_) {}
   template <typename BooleanDim3>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim3 boolean_check) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool boundary_check(const BooleanDim3 boolean_check) const {
     return (boolean_check[0] && boolean_check[1] && boolean_check[2]);
   }
-  void operator()(cl::sycl::nd_item<3> itemID) {
-    auto buffer_ptr = buffer_acc.get_pointer();
-    auto kernel_ptr = kernel_filter.get_pointer();
+  void operator()(cl::sycl::nd_item<3> itemID) const {
+    auto buffer_ptr = buffer_acc;
+    auto kernel_ptr = kernel_filter;
     const auto num_input = cl::sycl::range<3>{itemID.get_local_range() + kernel_size - 1};
 
     const auto input_offset = cl::sycl::range<3>{itemID.get_group().get_id() * itemID.get_local_range()};
 
     const auto output_offset =
-          cl::sycl::range<3>{itemID.get_group().get_id() * itemID.get_local_range() + itemID.get_local_id()};
+        cl::sycl::range<3>{itemID.get_group().get_id() * itemID.get_local_range() + itemID.get_local_id()};
 
     for (size_t p = 0; p < numP; p++) {
       /// fill the shared memory
@@ -231,7 +234,7 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
         bool cond_k_dim = (k + input_offset[2] < (input_range[2] + kernel_size[2] - 1));
         for (size_t j = itemID.get_local_id(1); j < num_input[1]; j += itemID.get_local_range()[1]) {
           bool cond_j_dim = cond_k_dim && (j + input_offset[1] < (input_range[1] + kernel_size[1] - 1));
-          size_t local_index_dim1 = (num_input[0] * j)  + local_index_dim2;
+          size_t local_index_dim1 = (num_input[0] * j) + local_index_dim2;
           for (size_t i = itemID.get_local_id(0); i < num_input[0]; i += itemID.get_local_range()[0]) {
             bool conds = cond_j_dim && (i + input_offset[0] < (input_range[0] + kernel_size[0] - 1));
             const size_t local_index = local_index_dim1 + i;
@@ -275,9 +278,9 @@ template <typename Indices, typename InputArgType, typename KernelArgType>
 struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelArgType>, Eigen::SyclDevice> {
   typedef TensorConvolutionOp<Indices, InputArgType, KernelArgType> XprType;
 
-  static const int NumDims =
+  static constexpr int NumDims =
       internal::array_size<typename TensorEvaluator<InputArgType, Eigen::SyclDevice>::Dimensions>::value;
-  static const int NumKernelDims = internal::array_size<Indices>::value;
+  static constexpr int NumKernelDims = internal::array_size<Indices>::value;
   typedef typename XprType::Index Index;
   typedef DSizes<Index, NumDims> Dimensions;
   typedef typename TensorEvaluator<KernelArgType, Eigen::SyclDevice>::Dimensions KernelDimensions;
@@ -285,18 +288,18 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Eigen::SyclDevice>::type PacketReturnType;
   typedef typename InputArgType::Scalar Scalar;
-  static const int PacketSize = PacketType<CoeffReturnType, Device>::size;
+  static constexpr int PacketSize = PacketType<CoeffReturnType, Device>::size;
   typedef StorageMemory<CoeffReturnType, Eigen::SyclDevice> Storage;
   typedef typename Storage::Type EvaluatorPointerType;
   typedef StorageMemory<const CoeffReturnType, Eigen::SyclDevice> KernelStorage;
 
+  static constexpr int Layout = TensorEvaluator<InputArgType, Eigen::SyclDevice>::Layout;
   enum {
     IsAligned = TensorEvaluator<InputArgType, Eigen::SyclDevice>::IsAligned &
                 TensorEvaluator<KernelArgType, Eigen::SyclDevice>::IsAligned,
     PacketAccess = false,
     BlockAccess = false,
     PreferBlockAccess = false,
-    Layout = TensorEvaluator<InputArgType, Eigen::SyclDevice>::Layout,
     CoordAccess = false,  // to be implemented
     RawAccess = false
   };
@@ -392,8 +395,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         const size_t numX = dimensions()[m_indices[0]];
         const size_t numP = dimensions().TotalSize() / numX;
         const auto input_dim = std::array<size_t, 2>{numX, numP};
-        auto global_range = cl::sycl::range<2>{};
-        auto local_range = cl::sycl::range<2>{};
+        auto global_range = cl::sycl::range<2>{1, 1};
+        auto local_range = cl::sycl::range<2>{1, 1};
         const size_t kernel_size = m_kernelImpl.dimensions().TotalSize();
 
         m_device.parallel_for_setup(input_dim, global_range, local_range);
@@ -407,9 +410,11 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
                                        typename KernelStorage::Type, EvaluatorPointerType, convolution_type::CONV1D>
             ConvKernel;
 
-        m_device.template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
-            m_inputImpl, m_kernel, data, cl::sycl::nd_range<2>(global_range, local_range), local_memory_size,
-            indexMapper, kernel_size, cl::sycl::range<2>(input_dim[0], input_dim[1]));
+        m_device
+            .template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
+                m_inputImpl, m_kernel, data, cl::sycl::nd_range<2>(global_range, local_range), local_memory_size,
+                indexMapper, kernel_size, cl::sycl::range<2>(input_dim[0], input_dim[1]))
+            .wait();
         break;
       }
 
@@ -423,8 +428,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         const size_t numP = dimensions().TotalSize() / (numX * numY);
         auto input_dim = std::array<size_t, 3>{numX, numY, numP};
 
-        auto global_range = cl::sycl::range<3>{};
-        auto local_range = cl::sycl::range<3>{};
+        auto global_range = cl::sycl::range<3>{1, 1, 1};
+        auto local_range = cl::sycl::range<3>{1, 1, 1};
 
         m_device.parallel_for_setup(input_dim, global_range, local_range);
 
@@ -438,9 +443,11 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         typedef EigenConvolutionKernel<InputEvaluator, CoeffReturnType, Scalar, Index, InputDims,
                                        typename KernelStorage::Type, EvaluatorPointerType, convolution_type::CONV2D>
             ConvKernel;
-        m_device.template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
-            m_inputImpl, m_kernel, data, cl::sycl::nd_range<3>(global_range, local_range), local_memory_size,
-            indexMapper, kernel_size, cl::sycl::range<3>{input_dim[0], input_dim[1], input_dim[2]});
+        m_device
+            .template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
+                m_inputImpl, m_kernel, data, cl::sycl::nd_range<3>(global_range, local_range), local_memory_size,
+                indexMapper, kernel_size, cl::sycl::range<3>{input_dim[0], input_dim[1], input_dim[2]})
+            .wait();
         break;
       }
 
@@ -467,8 +474,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
 
         internal::IndexMapper<Index, InputDims, 3, Layout> indexMapper(m_inputImpl.dimensions(), kernel_dims, indices);
 
-        auto global_range = cl::sycl::range<3>{};
-        auto local_range = cl::sycl::range<3>{};
+        auto global_range = cl::sycl::range<3>{1, 1, 1};
+        auto local_range = cl::sycl::range<3>{1, 1, 1};
 
         m_device.parallel_for_setup(input_dim, global_range, local_range);
         auto local_memory_range = (local_range + kernel_size - 1);
@@ -478,9 +485,11 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         typedef EigenConvolutionKernel<InputEvaluator, CoeffReturnType, Scalar, Index, InputDims,
                                        typename KernelStorage::Type, EvaluatorPointerType, convolution_type::CONV3D>
             ConvKernel;
-        m_device.template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
-            m_inputImpl, m_kernel, data, cl::sycl::nd_range<3>(global_range, local_range), local_memory_size,
-            indexMapper, kernel_size, cl::sycl::range<3>(input_dim[0], input_dim[1], input_dim[2]), numP);
+        m_device
+            .template binary_kernel_launcher<CoeffReturnType, ConvKernel>(
+                m_inputImpl, m_kernel, data, cl::sycl::nd_range<3>(global_range, local_range), local_memory_size,
+                indexMapper, kernel_size, cl::sycl::range<3>(input_dim[0], input_dim[1], input_dim[2]), numP)
+            .wait();
         break;
       }
 
@@ -516,13 +525,6 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
     return TensorOpCost(0, 0, firstIndex_compute_cost, vectorized, PacketSize) +
            kernel_size * (m_inputImpl.costPerCoeff(vectorized) + m_kernelImpl.costPerCoeff(vectorized) +
                           TensorOpCost(0, 0, convolve_compute_cost, vectorized, PacketSize));
-  }
-  // binding placeholder accessors to a command group handler for SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void bind(cl::sycl::handler &cgh) const {
-    m_kernelImpl.bind(cgh);
-    m_inputImpl.bind(cgh);
-    m_buf.bind(cgh);
-    m_kernel.bind(cgh);
   }
 
  private:

@@ -30,7 +30,8 @@ class Layer
 
 public:
 
-    enum class Type{Scaling2D,
+    enum class Type{None,
+                    Scaling2D,
                     Scaling4D,
                     Addition3D,
                     Normalization3D,
@@ -51,28 +52,23 @@ public:
 
     explicit Layer();
 
-    virtual ~Layer();
-
     string get_name() const;
+
+    const bool& get_display() const;
 
     string layer_type_to_string(const Layer::Type&);
     Type string_to_layer_type(const string&);
-
-    // Get neurons number
-
-    virtual Index get_inputs_number() const;
-    virtual Index get_neurons_number() const;
-
-    virtual void set_inputs_number(const Index&);
-    virtual void set_neurons_number(const Index&);
-
-    // Layer type
 
     Type get_type() const;
 
     string get_type_string() const;
 
+    virtual void set_input_dimensions(const dimensions&);
+    virtual void set_output_dimensions(const dimensions&);
+
     void set_name(const string&);
+
+    void set_display(const bool&);
 
     // Parameters initialization
 
@@ -84,6 +80,7 @@ public:
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
 
+    virtual dimensions get_input_dimensions() const;
     virtual dimensions get_output_dimensions() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
@@ -128,7 +125,7 @@ public:
 
     // Expression
 
-    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
+    virtual string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
     {
         return string();
     }
@@ -137,13 +134,14 @@ public:
 
 protected:
 
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
 
     string name = "layer";
 
-    Type layer_type;
+    Type layer_type = Type::None;
 
+    bool display = true;
 
     template <int rank>
     void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const

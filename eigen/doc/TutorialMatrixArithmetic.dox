@@ -158,7 +158,7 @@ For dot product and cross product, you need the \link MatrixBase::dot() dot()\en
 \verbinclude tut_arithmetic_dot_cross.out
 </td></tr></table>
 
-Remember that cross product is only for vectors of size 3. Dot product is for vectors of any sizes.
+Cross product is defined in Eigen not only for vectors of size 3 but also for those of size 2, check \link MatrixBase::cross() the doc\endlink for details. Dot product is for vectors of any sizes.
 When using complex numbers, Eigen's dot product is conjugate-linear in the first variable and linear in the
 second variable.
 

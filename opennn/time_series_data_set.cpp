@@ -1405,7 +1405,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-        autocorrelations_vector = opennn::autocorrelations(thread_pool_device, current_input_i, new_lags_number);
+        autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
 
         for(Index j = 0; j < new_lags_number; j++)
         {
@@ -1519,12 +1519,11 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-            cross_correlations_vector = opennn::cross_correlations(thread_pool_device, current_input_i, current_input_j, new_lags_number);
+            cross_correlations_vector = opennn::cross_correlations(thread_pool_device.get(), 
+                current_input_i, current_input_j, new_lags_number);
 
             for(Index k = 0; k < new_lags_number; k++)
-            {
                 cross_correlations(counter_i, counter_j, k) = cross_correlations_vector(k) ;
-            }
 
             counter_j++;
         }

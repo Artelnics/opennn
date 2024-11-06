@@ -22,7 +22,7 @@ add_custom_target(lapack)
 include_directories(../blas)
 
 set(EigenLapack_SRCS
-single.cpp double.cpp complex_single.cpp complex_double.cpp ../blas/xerbla.cpp
+  dsecnd_INT_CPU_TIME.cpp second_INT_CPU_TIME.cpp single.cpp double.cpp complex_single.cpp complex_double.cpp ../blas/xerbla.cpp
 )
 
 if(EIGEN_Fortran_COMPILER_WORKS)
@@ -38,7 +38,6 @@ set(EigenLapack_SRCS  ${EigenLapack_SRCS}
   dlapy2.f  dlapy3.f  slapy2.f  slapy3.f
   clacgv.f  zlacgv.f
   slamch.f  dlamch.f
-  second_NONE.f dsecnd_NONE.f
 )
 
 option(EIGEN_ENABLE_LAPACK_TESTS OFF "Enable the Lapack unit tests")
@@ -111,6 +110,7 @@ foreach(target IN LISTS EIGEN_LAPACK_TARGETS)
   if(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO)
     target_link_libraries(${target} ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO})
   endif()
+  target_link_libraries(${target} Eigen3::Eigen)
   add_dependencies(lapack ${target})
   install(TARGETS ${target}
           RUNTIME DESTINATION bin

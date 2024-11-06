@@ -140,6 +140,8 @@ R.array().square()             // P .^ 2
 R.array().cube()               // P .^ 3
 R.cwiseSqrt()                  // sqrt(P)
 R.array().sqrt()               // sqrt(P)
+R.cwiseCbrt()                  // cbrt(P)
+R.array().cbrt()               // cbrt(P)
 R.array().exp()                // exp(P)
 R.array().log()                // log(P)
 R.cwiseMax(P)                  // max(R, P)

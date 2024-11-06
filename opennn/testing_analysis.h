@@ -26,8 +26,6 @@ public:
 
    explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   virtual ~TestingAnalysis();
-
     struct GoodnessOfFitAnalysis
     {
        type determination = type(0);
@@ -273,11 +271,10 @@ public:
    void save(const string&) const;
    void load(const string&);
 
-
 private: 
 
-   ThreadPool* thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device = nullptr;
+   unique_ptr<ThreadPool> thread_pool;
+   unique_ptr<ThreadPoolDevice> thread_pool_device;
 
    NeuralNetwork* neural_network = nullptr;
 

@@ -44,11 +44,8 @@ public:
     Index get_input_channels() const;
     Index get_input_height() const;
     Index get_input_width() const;
-    Index get_neurons_number() const;
 
     void set(const dimensions & = {0,0,0});
-
-//    void set_display(const bool&);
 
 //    bool is_empty() const;
 
@@ -77,11 +74,9 @@ public:
         #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
-
-    bool display = true;
 };
 
 

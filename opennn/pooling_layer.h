@@ -50,8 +50,6 @@ public:
     Index get_input_width() const;
     Index get_channels_number() const;
 
-    Index get_neurons_number() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 
@@ -125,7 +123,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
 

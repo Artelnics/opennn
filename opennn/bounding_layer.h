@@ -24,21 +24,15 @@ class BoundingLayer : public Layer
 
 public:
 
-   explicit BoundingLayer(const dimensions& = {}, const string& = "bounding_layer");
+   explicit BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
 
    // Enumerations
 
    enum class BoundingMethod{NoBounding, Bounding};
 
-   // Check
-
-   bool is_empty() const;
-
    // Get
 
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
 
    const BoundingMethod& get_bounding_method() const;
@@ -53,10 +47,10 @@ public:
 
    // Variables bounds
 
-   void set(const Index& = 0, const string& = "bounding_layer");
+   void set(const dimensions & = { 0 }, const string & = "bounding_layer");
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -67,8 +61,6 @@ public:
    void set_upper_bounds(const Tensor<type, 1>&);
    void set_upper_bound(const Index&, const type&);
 
-   void set_display(const bool&);
-
    // Lower and upper bounds
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -77,7 +69,7 @@ public:
 
    // Expression
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization
 
@@ -89,15 +81,11 @@ public:
 
 private:
 
-   // MEMBERS
-
    BoundingMethod bounding_method = BoundingMethod::Bounding;
 
    Tensor<type, 1> lower_bounds;
 
    Tensor<type, 1> upper_bounds;
-
-   bool display = true;
 };
 
 

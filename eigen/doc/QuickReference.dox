@@ -367,7 +367,8 @@ vec2 = vec1.normalized();     vec1.normalize(); // inplace \endcode
 <tr class="alt"><td>
 \link MatrixBase::cross() cross product \endlink \matrixworld</td><td>\code
 #include <Eigen/Geometry>
-vec3 = vec1.cross(vec2);\endcode</td></tr>
+v3c = v3a.cross(v3b);    // size-3 vectors
+scalar = v2a.cross(v2b); // size-2 vectors \endcode</td></tr>
 </table>
 
 <a href="#" class="top">top</a>
@@ -457,6 +458,7 @@ mat1.cwiseMax(mat2)         mat1.cwiseMax(scalar)
 mat1.cwiseAbs2()
 mat1.cwiseAbs()
 mat1.cwiseSqrt()
+mat1.cwiseCbrt()
 mat1.cwiseInverse()
 mat1.cwiseProduct(mat2)
 mat1.cwiseQuotient(mat2)
@@ -469,6 +471,7 @@ mat1.array().max(mat2.array())    mat1.array().max(scalar)
 mat1.array().abs2()
 mat1.array().abs()
 mat1.array().sqrt()
+mat1.array().cbrt()
 mat1.array().inverse()
 mat1.array() * mat2.array()
 mat1.array() / mat2.array()

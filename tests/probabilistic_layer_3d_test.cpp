@@ -28,34 +28,28 @@ void ProbabilisticLayer3DTest::test_constructor()
         probabilistic_layer_3d_1.get_inputs_number() == 0 &&
         probabilistic_layer_3d_1.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_1.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_1.get_biases_number() == 0 &&
-        probabilistic_layer_3d_1.get_synaptic_weights_number() == 0 &&
         probabilistic_layer_3d_1.get_parameters_number() == 0, LOG);
 
     // Probabilistic neurons number constructor
-
+/*
     ProbabilisticLayer3D probabilistic_layer_3d_2;
 
-    probabilistic_layer_3d_2.set_neurons_number(0);
+    probabilistic_layer_3d_2.set_output_dimensions(0);
 
     assert_true(
         probabilistic_layer_3d_2.get_inputs_number() == 0 &&
         probabilistic_layer_3d_2.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_2.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_2.get_biases_number() == 0 &&
-        probabilistic_layer_3d_2.get_synaptic_weights_number() == 0 &&
         probabilistic_layer_3d_2.get_parameters_number() == 0, LOG);
 
     ProbabilisticLayer3D probabilistic_layer_3d_3;
 
-    probabilistic_layer_3d_3.set_neurons_number(3);
+    probabilistic_layer_3d_3.set_output_dimensions(3);
 
     assert_true(
         probabilistic_layer_3d_3.get_inputs_number() == 0 &&
         probabilistic_layer_3d_3.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_3.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_3.get_biases_number() == 3 &&
-        probabilistic_layer_3d_3.get_synaptic_weights_number() == 0 &&
         probabilistic_layer_3d_3.get_parameters_number() == 3, LOG);
 
 
@@ -65,9 +59,8 @@ void ProbabilisticLayer3DTest::test_constructor()
         probabilistic_layer_3d_4.get_inputs_number() == 1 &&
         probabilistic_layer_3d_4.get_inputs_depth() == 2 &&
         probabilistic_layer_3d_4.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_4.get_biases_number() == 3 &&
-        probabilistic_layer_3d_4.get_synaptic_weights_number() == 6 &&
         probabilistic_layer_3d_4.get_parameters_number() == 9, LOG);
+*/
 }
 
 

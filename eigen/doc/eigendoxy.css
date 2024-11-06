@@ -160,9 +160,7 @@ div.toc {
   margin:0;
   padding: 0.3em 0 0 0;
   width:100%;
-  float:none;
-  position:absolute;
-  bottom:0;
+  float: none;
   border-radius:0px;
   border-style: solid none none none;
   max-height:50%;
