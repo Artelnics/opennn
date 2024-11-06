@@ -48,10 +48,10 @@ private:
     Index neurons_number;
     Index samples_number;
 
-    PerceptronLayer perceptron_layer;
+    unique_ptr<PerceptronLayer> perceptron_layer;
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation;
-    PerceptronLayerBackPropagation back_propagation;
+    unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation;
+    unique_ptr<PerceptronLayerBackPropagation> back_propagation;
 };
 
 }

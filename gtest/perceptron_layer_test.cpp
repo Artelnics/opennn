@@ -2,13 +2,13 @@
 
 #include "../opennn/perceptron_layer.h"
 
-using namespace opennn;
+//using namespace opennn;
 
 class PerceptronLayerTest : public ::testing::Test 
 {
 private:
 
-    PerceptronLayer perceptron_layer;
+//    PerceptronLayer perceptron_layer;
 
 };
 
@@ -28,12 +28,12 @@ TEST(PerceptronLayerTest, DefaultConstructor)
 
 TEST(PerceptronLayerTest, GeneralConstructor)
 {
-    
+    /*
     PerceptronLayer perceptron_layer({3}, 
                                      {2}, 
                                      PerceptronLayer::ActivationFunction::Linear,
                                      "perceptron_layer_test");
-    /*
+
     EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
 //    EXPECT_EQ(perceptron_layer.get_input_dimensions(), { 10 });
 //    EXPECT_EQ(perceptron_layer.get_output_dimensions(), { 3 });

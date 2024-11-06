@@ -561,13 +561,9 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("AdaptiveMomentEstimation");
 
     add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
-
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
-
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
-
     add_xml_element(printer, "HardwareUse", get_hardware_use());
 
     printer.CloseElement();

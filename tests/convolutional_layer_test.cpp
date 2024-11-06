@@ -506,8 +506,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
     kernel.setConstant(type(1));
 
     Tensor<pair<type*, dimensions>, 1> input_pairs[1];
-    input_pairs[0].first = inputs.data();
-    input_pairs[0].second = { input_images, input_height, input_width, channels };
+    input_pairs[0] = {inputs.data(),  { input_images, input_height, input_width, channels }};
 
     // bmp_image_1:
     //    255 255   0   0   255 255   0   0     255 255   0   0
