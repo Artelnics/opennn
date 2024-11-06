@@ -42,7 +42,7 @@ Index EmbeddingLayer::get_input_dimension() const
 
 Index EmbeddingLayer::get_inputs_number() const
 {
-    return embedding_weights.dimension(0);
+    return inputs_number;
 }
 
 
@@ -231,6 +231,8 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
         for(Index input_position = 0; input_position < inputs_number; input_position++)
             outputs.chip(row, 0).chip(input_position, 0)
                 = embedding_weights.chip(inputs(row, input_position), 0);
+
+
 }
 
 
@@ -244,6 +246,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         static_cast<EmbeddingLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = embedding_layer_forward_propagation->outputs;
+
 
     lookup_embedding(inputs, outputs);
 
@@ -259,6 +262,8 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs);
+    cout<<outputs.dimensions()<<endl;
+
 }
 
 

@@ -281,10 +281,10 @@ vector<pair<type*, dimensions>> Batch::get_input_pairs() const
     vector<pair<type*, dimensions>> input_pairs(has_context ? 2 : 1);
 
     input_pairs[0] = { input_data, input_dimensions };
-    
+
+
     if (has_context)
         input_pairs[1] = { context_data, context_dimensions };
-    
     return input_pairs;
 }
 

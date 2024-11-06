@@ -196,6 +196,7 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     multiply_matrices(thread_pool_device, outputs, gammas);
 
     sum_matrices(thread_pool_device, betas, outputs);
+    cout<<outputs.dimensions()<<endl;
 }
 
 

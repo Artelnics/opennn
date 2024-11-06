@@ -74,22 +74,22 @@ public:
 
     void load_documents(const string&);
 
-    void readDataFilePreview();
+    void read_csv_1();
 
-    void validateDataIntegrity();
+    void read_csv_2_simple();
 
-    void extractDataPreview();
+    void read_csv_3_language_model();
 
     void read_csv_language_model();
 
     void read_txt_language_model();
 
-//    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+    //    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
     void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
 
 private:
 
-//    Separator text_separator = Separator::Tab;
+    //    Separator text_separator = Separator::Tab;
 
     Tensor<string, 2> text_data_file_preview;
 

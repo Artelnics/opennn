@@ -332,6 +332,7 @@ void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>&
     {
         calculate_activations(outputs, empty);
     }
+    cout<<outputs.dimensions()<<endl;
 }
 
 

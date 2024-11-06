@@ -97,7 +97,7 @@ void Transformer::set(const Index& input_length,
     add_layer(std::move(input_embedding_layer));
     set_layer_inputs_indices("input_embedding", "input");
 
-    unique_ptr<EmbeddingLayer> context_embedding_layer 
+    unique_ptr<EmbeddingLayer> context_embedding_layer
         = make_unique<EmbeddingLayer>(context_dimension, context_length, embedding_depth, true);
 
     context_embedding_layer->set_dropout_rate(dropout_rate);
@@ -303,6 +303,15 @@ void Transformer::set(const Index& input_length,
     name = final_layer->get_name();
     add_layer(std::move(final_layer));
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
+    for(Index i = 0; i < layer_input_indices.size(); i++){
+        cout<<layers[i]->get_name()<<endl;
+        for(Index j = 0; j < layer_input_indices[i].size(); j++){
+            if(layer_input_indices[i][j]>-1)
+            cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<" -> "<<layers[layer_input_indices[i][j]]->get_name()<<endl;
+            else{cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;}}
+        cout<<endl;}
+    // for(Index i = 0; i < layer_input_indices[i]; i++)
+    //         cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;
 }
 
 

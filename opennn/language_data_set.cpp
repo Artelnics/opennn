@@ -606,7 +606,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
             raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
 
-//        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
+        //        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
     }
 
     // Rows label
@@ -851,9 +851,9 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 
 
 map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
-    map<string, int> output_tokens,
-    bool include_joiner_token,
-    const string& joiner)
+                                         map<string, int> output_tokens,
+                                         bool include_joiner_token,
+                                         const string& joiner)
 {
     for(const string& token : input_tokens)
     {
@@ -877,9 +877,9 @@ map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
 }
 
 
-vector<int> get_split_indices(const string& word, 
-                              const map<string, int>& current_tokens, 
-                              bool include_joiner_token, 
+vector<int> get_split_indices(const string& word,
+                              const map<string, int>& current_tokens,
+                              bool include_joiner_token,
                               const string& joiner)
 {
     vector<int> indices;
@@ -893,7 +893,7 @@ vector<int> get_split_indices(const string& word,
         {
             string subtoken = word.substr(start, end - start);
 
-            if(include_joiner_token && start > 0)    
+            if(include_joiner_token && start > 0)
                 subtoken = joiner + subtoken;
 
             if(current_tokens.find(subtoken) != current_tokens.end())
@@ -932,8 +932,8 @@ tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_count
 
 
 vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_counts,
-    const vector<string>& reserved_tokens,
-    int max_token_length)
+                                      const vector<string>& reserved_tokens,
+                                      int max_token_length)
 {
     vector<pair<string, int>> trimmed_counts;
 
@@ -966,12 +966,12 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
     vector<pair<char, int>> sorted_counts(character_counts.begin(), character_counts.end());
 
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, int>& a, const pair<char, int>& b)
-        {
-            if(a.second != b.second)
-                return a.second > b.second;
-            return a.first < b.first;
-        }
-);
+         {
+             if(a.second != b.second)
+                 return a.second > b.second;
+             return a.first < b.first;
+         }
+         );
 
     set<char> allowed_characters;
     for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)    allowed_characters.insert(sorted_counts[i].first);
@@ -984,10 +984,10 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
     vector<pair<string, int>> sorted_counts = trimmed_counts;
 
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, int>& a, const pair<string, int>& b)
-        {
-            return a.second > b.second;
-        }
-);
+         {
+             return a.second > b.second;
+         }
+         );
 
     vector<pair<string, int>> filtered_counts;
 
@@ -1017,8 +1017,8 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
 }
 
 vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
-    const set<char>& character_tokens,
-    const map<string, int>& current_tokens)
+                                         const set<char>& character_tokens,
+                                         const map<string, int>& current_tokens)
 {
     vector<string> vocabulary;
     vocabulary.insert(vocabulary.end(), reserved_tokens.begin(), reserved_tokens.end());
@@ -1031,11 +1031,11 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
 
     vector<pair<string, int>> sorted_tokens(current_tokens.begin(), current_tokens.end());
     sort(sorted_tokens.begin(), sorted_tokens.end(), [](const pair<string, int>& a, const pair<string, int>& b)
-        {
-            if(a.second != b.second)    return a.second > b.second;
-            return a.first < b.first;
-        }
-);
+         {
+             if(a.second != b.second)    return a.second > b.second;
+             return a.first < b.first;
+         }
+         );
 
     for(const auto& [token, _] : sorted_tokens)
     {
@@ -1095,7 +1095,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                     string subtoken = word.substr(start, end - start);
                     int length = subtoken.size();
 
-                    if(parameters.include_joiner_token && start > 0)    
+                    if(parameters.include_joiner_token && start > 0)
                         subtoken = parameters.joiner + subtoken;
 
                     subtokens[length][subtoken] += count;
@@ -1130,7 +1130,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                     {
                         const string prefix = token.substr(0, i);
 
-                        if(subtokens[i].find(prefix) != subtokens[i].end())   
+                        if(subtokens[i].find(prefix) != subtokens[i].end())
                             subtokens[i][prefix] -= count;
                     }
                 }
@@ -1145,9 +1145,9 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 
 
 vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>>& word_counts,
-    int lower_bound,
-    int upper_bound,
-    const WordpieceAlgorithmParameters& parameters)
+                                                  int lower_bound,
+                                                  int upper_bound,
+                                                  const WordpieceAlgorithmParameters& parameters)
 {
     const int threshold = (upper_bound + lower_bound) / 2;
 
@@ -1160,7 +1160,7 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
 
     const bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
 
-    if(is_within_slack || lower_bound >= upper_bound || threshold <= 1)    
+    if(is_within_slack || lower_bound >= upper_bound || threshold <= 1)
         return current_vocabulary;
 
     if(current_vocabulary_size > parameters.vocabulary_size)
@@ -1293,11 +1293,11 @@ void LanguageDataSet::load_documents(const string& path)
         {
             if(tokens(0).find(delimiter,0) == 0)
 
-                document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
+            document(lines_count) += tokens(0).substr(delimiter.length(), tokens(0).size());
 
             else
 
-                document(lines_count) += " " + tokens(0);
+            document(lines_count) += " " + tokens(0);
 
 
             lines_count++;
@@ -1307,7 +1307,7 @@ void LanguageDataSet::load_documents(const string& path)
             if(tokens_number > 2)
                 throw runtime_error("Found more than one separator in line: " + line + "\n");
 
-            if(tokens(0).empty() && tokens(1).empty())  
+            if(tokens(0).empty() && tokens(1).empty())
                 continue;
 
             document(lines_count) += " " + tokens(0);
@@ -1316,7 +1316,7 @@ void LanguageDataSet::load_documents(const string& path)
             lines_count++;
         }
 
-        if(file.peek() == EOF) 
+        if(file.peek() == EOF)
             break;
     }
 
@@ -1324,12 +1324,12 @@ void LanguageDataSet::load_documents(const string& path)
     Tensor<string,1> document_target_copy(lines_count);
 
     copy(document.data(),
-        document.data() + lines_count,
-        document_copy.data());
+         document.data() + lines_count,
+         document_copy.data());
 
     copy(document_target.data(),
-        document_target.data() + lines_count,
-        document_target_copy.data());
+         document_target.data() + lines_count,
+         document_target_copy.data());
 
     documents(original_size) = document_copy;
     targets(original_size) = document_target_copy;
@@ -1338,352 +1338,94 @@ void LanguageDataSet::load_documents(const string& path)
 }
 
 
-// void LanguageDataSet::extractDataPreview()
-// {
-//     ifstream file(data_path.c_str());
-
-//     const bool is_float = is_same<type, float>::value;
-
-//     const string separator_string = get_separator_string();
-
-//     string line;
-
-//     //skip_header(file);
-
-//     // Read data
-
-//     const Index raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
-
-//     Tensor<string, 1> tokens(raw_variables_number);
-
-//     const Index samples_number = data.dimension(0);
-
-//     if(has_sample_ids) samples_id.resize(samples_number);
-
-//     if(display) cout << "Reading data..." << endl;
-
-//     Index sample_index = 0;
-//     Index raw_variable_index = 0;
-
-//     while(getline(file, line))
-//     {
-//         prepare_line(line);
-
-//         if(line.empty()) continue;
-
-//         fill_tokens(line, separator_string, tokens);
-
-//         for(Index j = 0; j < raw_variables_number; j++)
-//         {
-//             trim(tokens(j));
-
-//             if(has_sample_ids && j == 0){
-//                 samples_id(sample_index) = tokens(j); continue;
-//             }
-//             if(tokens(j) == missing_values_label || tokens(j).empty())
-//                 data(sample_index, raw_variable_index++) = type(NAN);
-//             else if(is_float)
-//                 data(sample_index, raw_variable_index++) = type(strtof(tokens(j).data(), nullptr));
-//             else
-//                 data(sample_index, raw_variable_index++) = type(stof(tokens(j)));
-//         }
-//         raw_variable_index = 0;
-//         sample_index++;
-//     }
-
-//     data_file_preview(has_header ? 3 : 2) = tokens;
-
-//     file.close();
-
-//     if(display) cout << "Data read successfully..." << endl;
-// }
-
-
-// void LanguageDataSet::readDataFilePreview()
-// {
-//     if (display) cout << "Path: " << data_path << endl;
-//     if (data_path.empty()) throw runtime_error("Data file name is empty.");
-
-//     std::ifstream file;
-
-// #ifdef _WIN32
-
-//     if(std::regex_search(data_path, accent_regex))
-//     {
-//         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-//         std::wstring file_name_wide = conv.from_bytes(data_path);
-//         file.open(file_name_wide);
-//     }
-//     else
-//     {
-//         file.open(data_path.c_str());
-//     }
-// #else
-//     file.open(data_path.c_str());
-// #endif
-
-//     if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
-
-
-//     const string separator_char = get_separator_string();
-
-
-//     if(display) cout << "Setting data file preview..." << endl;
-
-//     Index lines_number = has_binary_raw_variables()? 4 : 3;
-
-//     data_file_preview.resize(lines_number);
-
-//     string line;
-
-//     Index lines_count = 0;
-//     while (file.good() && lines_count < data_file_preview.size())
-//     {
-//         getline(file, line);
-//         decode(line);
-//         trim(line);
-//         erase(line, '"');
-//         if (line.empty()) continue;
-//         check_separators(line);
-//         data_file_preview(lines_count++) = get_tokens(line, separator_char);
-//     }
-
-//     file.close();
-
-//     if(data_file_preview(0).size() == 0)
-//     {
-//         ostringstream buffer;
-
-//         buffer << "OpenNN Exception: DataSet class.\n"
-//                << "void read_csv_1() method.\n"
-//                << "File " << data_path << " is empty.\n";
-
-//         throw runtime_error(buffer.str());
-//     }
-
-//     // Set rows labels and raw_variables names
-
-//     if(display) cout << "Setting rows labels..." << endl;
-
-//     string first_name = data_file_preview(0)(0);
-//     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
-//     const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
-
-//     raw_variables.resize(raw_variables_number);
-
-//     // Check if header has numeric value
-
-//     if(has_binary_raw_variables() && has_numbers(data_file_preview(0))){
-//         ostringstream buffer;
-
-//         buffer << "OpenNN Exception: DataSet class.\n"
-//                << "void read_csv_1() method.\n"
-//                << "Some raw_variables names are numeric.\n";
-
-//         throw runtime_error(buffer.str());
-//     }
-
-//     // raw_variables names
-
-//     if(display) cout << "Setting raw_variables names..." << endl;
-
-//     if(has_binary_raw_variables()){
-//         get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
-//                                                                                   Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
-//                               : set_raw_variable_names(data_file_preview(0));
-//     }
-//     else{
-//         set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
-//     }
-
-//     // Check raw_variables with all missing values
-
-//     bool has_nans_raw_variables = false;
-
-//     do
-//     {
-//         has_nans_raw_variables = false;
-
-//         if(lines_number > 10)
-//             break;
-
-//         for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
-//         {
-//             if(get_has_rows_labels() && i == 0) continue;
-
-//             // Check if all are missing values
-
-//             if( data_file_preview(1)(i) == missing_values_label
-//                 && data_file_preview(2)(i) == missing_values_label
-//                 && data_file_preview(lines_number-2)(i) == missing_values_label
-//                 && data_file_preview(lines_number-1)(i) == missing_values_label)
-//             {
-//                 has_nans_raw_variables = true;
-//             }
-//             else
-//             {
-//                 has_nans_raw_variables = false;
-//             }
-
-//             if(has_nans_raw_variables)
-//             {
-//                 lines_number++;
-//                 data_file_preview.resize(lines_number);
-
-//                 string line;
-//                 Index lines_count = 0;
-
-//                 file.open(data_path.c_str());
-
-//                 if(!file.is_open())
-//                 {
-//                     ostringstream buffer;
-
-//                     buffer << "OpenNN Exception: DataSet class.\n"
-//                            << "void read_csv() method.\n"
-//                            << "Cannot open data file: " << data_path << "\n";
-
-//                     throw runtime_error(buffer.str());
-//                 }
-
-//                 while(file.good())
-//                 {
-//                     getline(file, line);
-//                     decode(line);
-//                     trim(line);
-//                     erase(line, '"');
-//                     if(line.empty()) continue;
-//                     check_separators(line);
-//                     data_file_preview(lines_count) = get_tokens(line, separator_char);
-//                     lines_count++;
-//                     if(lines_count == lines_number) break;
-//                 }
-//                 file.close();
-//             }
-//         }
-//     }while(has_nans_raw_variables);
-
-//     // raw_variables types
-
-//     if(display) cout << "Setting raw_variables types..." << endl;
-
-//     Index raw_variable_index = 0;
-
-//     for(Index i = 0; i < data_file_preview(0).dimension(0); i++)
-//     {
-//         if(get_has_rows_labels() && i == 0) continue;
-
-//         string data_file_preview_1 = data_file_preview(1)(i);
-//         string data_file_preview_2 = data_file_preview(2)(i);
-//         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
-//         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
-
-//         string preview1 = data_file_preview(1)(i);
-//         string preview2 = data_file_preview(2)(i);
-//         string preview_last1 = data_file_preview(data_file_preview.size() - 2)(i);
-//         string preview_last2 = data_file_preview(data_file_preview.size() - 1)(i);
-
-//         if (is_date_time_string(preview1) || is_date_time_string(preview2) || is_date_time_string(preview_last1) || is_date_time_string(preview_last2))
-//             raw_variables(i).type = RawVariableType::DateTime;
-//         else if (is_numeric_string(preview1) || is_numeric_string(preview2) || is_numeric_string(preview_last1) || is_numeric_string(preview_last2))
-//             raw_variables(i).type = RawVariableType::Numeric;
-//         else
-//             raw_variables(i).type = RawVariableType::Categorical;
-
-
-//     }
-
-//     // Resize data file preview to original
-
-//     if(data_file_preview.size() > 4)
-//     {
-//         lines_number = has_binary_raw_variables() ? 4 : 3;
-
-//         Tensor<Tensor<string, 1>, 1> data_file_preview_copy(data_file_preview);
-
-//         data_file_preview.resize(lines_number);
-
-//         data_file_preview(0) = data_file_preview_copy(1);
-//         data_file_preview(1) = data_file_preview_copy(1);
-//         data_file_preview(2) = data_file_preview_copy(2);
-//         data_file_preview(lines_number - 2) = data_file_preview_copy(data_file_preview_copy.size()-2);
-//         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
-//     }
-// }
-
-// void LanguageDataSet::validateDataIntegrity()
-// {
-//     regex accent_regex("[\\xC0-\\xFF]");
-//     std::ifstream file;
-
-// #ifdef _WIN32
-
-//     if(regex_search(data_path, accent_regex))
-//     {
-//         wstring_convert<codecvt_utf8<wchar_t>> conv;
-//         wstring file_name_wide = conv.from_bytes(data_path);
-//         file.open(file_name_wide);
-//     }else
-//     {
-//         file.open(data_path.c_str());
-//     }
-
-// #else
-//     file.open(data_path.c_str());
-// #endif
-
-//     if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
-
-//     string line;
-//     Index line_number = 0;
-
-//     Index samples_count = 0;
-//     const string separator_char = get_separator_string();
-//     const Index raw_variables_number = get_has_rows_labels() ? get_raw_variables_number() + 1 : get_raw_variables_number();
-
-//     while (getline(file, line))
-//     {
-//         line_number++;
-//         trim(line);
-//         erase(line, '"');
-//         if (line.empty()) continue;
-
-//         if (count_tokens(line, separator_char) != raw_variables_number)
-//             throw runtime_error("Line " + to_string(line_number) + ": Incorrect number of tokens.");
-
-//         samples_count++;
-//     }
-
-
-//     file.close();
-
-//     data.resize(samples_count, get_raw_variables_number());
-
-//     set_default_raw_variables_uses();
-
-//     //samples_uses.resize(samples_count);
-//     //samples_uses.setConstant(SampleUse::Training);
-
-//     split_samples_random();
-// }
-
-
-
-// void LanguageDataSet::read_csv_language_model()
-// {
-//     read_csv_1();
-
-//     read_csv_2_simple();
-
-//     read_csv_3_language_model();
-// }
-
-void LanguageDataSet::read_csv_language_model()
+void LanguageDataSet::read_csv_3_language_model()
 {
-    if (display) cout << "Path: " << data_path << endl;
-    if (data_path.empty()) throw runtime_error("Data file name is empty.");
+    ifstream file;
 
+    open_file(data_path, file);
+
+    const bool is_float = is_same<type, float>::value;
+
+    const string separator_string = get_separator_string();
+
+    string line;
+
+    //skip_header(file);
+
+    // Read data
+
+    const Index raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
+
+    Tensor<string, 1> tokens(raw_variables_number);
+
+    const Index samples_number = data.dimension(0);
+
+    if(has_sample_ids) samples_id.resize(samples_number);
+
+    if(display) cout << "Reading data..." << endl;
+
+    Index sample_index = 0;
+    Index raw_variable_index = 0;
+
+    while(getline(file, line))
+    {
+        prepare_line(line);
+
+        if(line.empty()) continue;
+
+        fill_tokens(line, separator_string, tokens);
+
+        for(Index j = 0; j < raw_variables_number; j++)
+        {
+            trim(tokens(j));
+
+            if(has_sample_ids && j == 0)
+            {
+                samples_id(sample_index) = tokens(j);
+
+                continue;
+            }
+
+            if(tokens(j) == missing_values_label || tokens(j).empty())
+                data(sample_index, raw_variable_index) = type(NAN);
+            else if(is_float)
+                data(sample_index, raw_variable_index) = type(strtof(tokens(j).data(), nullptr));
+            else
+                data(sample_index, raw_variable_index) = type(stof(tokens(j)));
+
+            raw_variable_index++;
+        }
+
+        raw_variable_index = 0;
+        sample_index++;
+    }
+
+    const Index data_file_preview_index = has_header ? 3 : 2;
+
+    data_file_preview(data_file_preview_index) = tokens;
+
+    file.close();
+
+    if(display) cout << "Data read successfully..." << endl;
+}
+
+
+void LanguageDataSet::read_csv_1()
+{
+    if(display) cout << "Path: " << data_path << endl;
+
+    if(data_path.empty())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Data file name is empty.\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    std::regex accent_regex("[\\xC0-\\xFF]");
     std::ifstream file;
 
 #ifdef _WIN32
@@ -1702,11 +1444,18 @@ void LanguageDataSet::read_csv_language_model()
     file.open(data_path.c_str());
 #endif
 
-    if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
+    if(!file.is_open())
+    {
+        ostringstream buffer;
 
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv() method.\n"
+               << "Cannot open data file: " << data_path << "\n";
 
-    string separator_char = get_separator_string();
+        throw runtime_error(buffer.str());
+    }
 
+    const string separator_char = get_separator_string();
 
     if(display) cout << "Setting data file preview..." << endl;
 
@@ -1717,18 +1466,31 @@ void LanguageDataSet::read_csv_language_model()
     string line;
 
     Index lines_count = 0;
-    while (file.good() && lines_count < data_file_preview.size())
+
+    while(file.good())
     {
         getline(file, line);
+
         decode(line);
+
         trim(line);
+
         erase(line, '"');
-        if (line.empty()) continue;
+
+        if(line.empty()) continue;
+
         check_separators(line);
-        data_file_preview(lines_count++) = get_tokens(line, separator_char);
+
+        data_file_preview(lines_count) = get_tokens(line, separator_char);
+
+        lines_count++;
+
+        if(lines_count == lines_number) break;
     }
 
     file.close();
+
+    // Check empty file
 
     if(data_file_preview(0).size() == 0)
     {
@@ -1748,13 +1510,14 @@ void LanguageDataSet::read_csv_language_model()
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
 
-    Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
+    const Index raw_variables_number = get_has_rows_labels() ? data_file_preview(0).size()-1 : data_file_preview(0).size();
 
     raw_variables.resize(raw_variables_number);
 
     // Check if header has numeric value
 
-    if(has_binary_raw_variables() && has_numbers(data_file_preview(0))){
+    if(has_binary_raw_variables() && has_numbers(data_file_preview(0)))
+    {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
@@ -1768,12 +1531,14 @@ void LanguageDataSet::read_csv_language_model()
 
     if(display) cout << "Setting raw_variables names..." << endl;
 
-    if(has_binary_raw_variables()){
+    if(has_binary_raw_variables())
+    {
         get_has_rows_labels() ? set_raw_variable_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}),
                                                                                   Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                               : set_raw_variable_names(data_file_preview(0));
     }
-    else{
+    else
+    {
         set_raw_variable_names(get_default_raw_variables_names(raw_variables_number));
     }
 
@@ -1839,6 +1604,7 @@ void LanguageDataSet::read_csv_language_model()
                     lines_count++;
                     if(lines_count == lines_number) break;
                 }
+
                 file.close();
             }
         }
@@ -1859,19 +1625,33 @@ void LanguageDataSet::read_csv_language_model()
         string data_file_preview_3 = data_file_preview(lines_number-2)(i);
         string data_file_preview_4 = data_file_preview(lines_number-1)(i);
 
-        string preview1 = data_file_preview(1)(i);
-        string preview2 = data_file_preview(2)(i);
-        string preview_last1 = data_file_preview(data_file_preview.size() - 2)(i);
-        string preview_last2 = data_file_preview(data_file_preview.size() - 1)(i);
-
-        if (is_date_time_string(preview1) || is_date_time_string(preview2) || is_date_time_string(preview_last1) || is_date_time_string(preview_last2))
-            raw_variables(i).type = RawVariableType::DateTime;
-        else if (is_numeric_string(preview1) || is_numeric_string(preview2) || is_numeric_string(preview_last1) || is_numeric_string(preview_last2))
-            raw_variables(i).type = RawVariableType::Numeric;
+        /*        if(nans_columns(column_index))
+        {
+            columns(column_index).type = ColumnType::Constant;
+            column_index++;
+        }
+        else*/ if((is_date_time_string(data_file_preview_1) && data_file_preview_1 != missing_values_label)
+            || (is_date_time_string(data_file_preview_2) && data_file_preview_2 != missing_values_label)
+            || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
+            || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
+            //            time_column = raw_variables(raw_variable_index).name;
+            raw_variable_index++;
+        }
+        else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
+                 || ((is_numeric_string(data_file_preview_2) && data_file_preview_2 != missing_values_label) || data_file_preview_2.empty())
+                 || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
+                 || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
+            raw_variable_index++;
+        }
         else
-            raw_variables(i).type = RawVariableType::Categorical;
-
-
+        {
+            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
+            raw_variable_index++;
+        }
     }
 
     // Resize data file preview to original
@@ -1891,9 +1671,13 @@ void LanguageDataSet::read_csv_language_model()
         data_file_preview(lines_number - 1) = data_file_preview_copy(data_file_preview_copy.size()-1);
     }
 
+}
 
+
+void LanguageDataSet::read_csv_2_simple()
+{
     regex accent_regex("[\\xC0-\\xFF]");
-    //std::ifstream file;
+    std::ifstream file;
 
 #ifdef _WIN32
 
@@ -1911,97 +1695,101 @@ void LanguageDataSet::read_csv_language_model()
     file.open(data_path.c_str());
 #endif
 
-    if (!file.is_open()) throw runtime_error("Cannot open data file: " + data_path);
+    if(!file.is_open())
+    {
+        ostringstream buffer;
 
-    //string line;
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void read_csv_2_simple() method.\n"
+               << "Cannot open data file: " << data_path << "\n";
+
+        throw runtime_error(buffer.str());
+    }
+
+    string line;
     Index line_number = 0;
 
-    Index samples_count = 0;
-    //separator_char = get_separator_string();
-    raw_variables_number = get_has_rows_labels() ? get_raw_variables_number() + 1 : get_raw_variables_number();
+    if(has_binary_raw_variables())
+    {
+        while(file.good())
+        {
+            line_number++;
 
-    while (getline(file, line))
+            getline(file, line);
+
+            trim(line);
+
+            erase(line, '"');
+
+            if(line.empty()) continue;
+
+            break;
+        }
+    }
+
+    Index samples_count = 0;
+
+    Index tokens_count;
+
+    if(display) cout << "Setting data dimensions..." << endl;
+
+    const string separator_char = get_separator_string();
+
+    const Index raw_variables_number = get_raw_variables_number();
+    const Index raw_raw_variables_number = get_has_rows_labels() ? raw_variables_number + 1 : raw_variables_number;
+
+    while(file.good())
     {
         line_number++;
-        trim(line);
-        erase(line, '"');
-        if (line.empty()) continue;
 
-        if (count_tokens(line, separator_char) != raw_variables_number)
-            throw runtime_error("Line " + to_string(line_number) + ": Incorrect number of tokens.");
+        getline(file, line);
+
+        trim(line);
+
+        erase(line, '"');
+
+        if(line.empty()) continue;
+
+        tokens_count = count_tokens(line, separator_char);
+
+        if(tokens_count != raw_raw_variables_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void read_csv_2_simple() method.\n"
+                   << "Line " << line_number << ": Size of tokens("
+                   << tokens_count << ") is not equal to number of raw_variables("
+                   << raw_raw_variables_number << ").\n";
+
+            throw runtime_error(buffer.str());
+        }
 
         samples_count++;
     }
 
-
     file.close();
 
-    data.resize(samples_count, get_raw_variables_number());
+    data.resize(samples_count, raw_variables_number);
 
     set_default_raw_variables_uses();
 
-    //samples_uses.resize(samples_count);
-    //samples_uses.setConstant(SampleUse::Training);
+    sample_uses.resize(samples_count);
+    sample_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
 
+}
 
-    //ifstream file(data_path.c_str());
 
-    const bool is_float = is_same<type, float>::value;
 
-    const string separator_string = get_separator_string();
+void LanguageDataSet::read_csv_language_model()
+{
+    read_csv_1();
 
-    //string line;
+    read_csv_2_simple();
 
-    //skip_header(file);
-
-    // Read data
-
-    raw_variables_number = has_sample_ids ? get_raw_variables_number() + 1 : get_raw_variables_number();
-
-    Tensor<string, 1> tokens(raw_variables_number);
-
-    const Index samples_number = data.dimension(0);
-
-    if(has_sample_ids) samples_id.resize(samples_number);
-
-    if(display) cout << "Reading data..." << endl;
-
-    Index sample_index = 0;
-    raw_variable_index = 0;
-
-    while(getline(file, line))
-    {
-        prepare_line(line);
-
-        if(line.empty()) continue;
-
-        fill_tokens(line, separator_string, tokens);
-
-        for(Index j = 0; j < raw_variables_number; j++)
-        {
-            trim(tokens(j));
-
-            if(has_sample_ids && j == 0){
-                samples_id(sample_index) = tokens(j); continue;
-            }
-            if(tokens(j) == missing_values_label || tokens(j).empty())
-                data(sample_index, raw_variable_index++) = type(NAN);
-            else if(is_float)
-                data(sample_index, raw_variable_index++) = type(strtof(tokens(j).data(), nullptr));
-            else
-                data(sample_index, raw_variable_index++) = type(stof(tokens(j)));
-        }
-        raw_variable_index = 0;
-        sample_index++;
-    }
-
-    data_file_preview(has_header ? 3 : 2) = tokens;
-
-    file.close();
-
-    if(display) cout << "Data read successfully..." << endl;
+    read_csv_language_model();
 }
 
 // void DataSet::read_csv()
@@ -2109,7 +1897,7 @@ void LanguageDataSet::read_csv_language_model()
 //     // Output
 
 //     cout << "Writting data file..." << endl;
-    
+
 //     string transformed_data_path = data_path;
 //     replace(transformed_data_path,".txt","_data.txt");
 //     replace(transformed_data_path,".csv","_data.csv");
@@ -2144,7 +1932,7 @@ void LanguageDataSet::read_csv_language_model()
 
 //     text_data_file_preview(preview_size - 1, 0) = context(context.size()-1);
 //     text_data_file_preview(preview_size - 1, 1) = completion(completion.size()-1);
-    
+
 //     //if(!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
 //     //else
 //     write_data_file_wordpiece(file, context_tokens, completion_tokens);
@@ -2215,7 +2003,6 @@ void LanguageDataSet::read_txt_language_model()
 
     const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(context);
     const Tensor<Tensor<string, 1>, 1> completion_tokens = preprocess_language_documents(completion);
-
 
     bool imported_vocabulary = false;
 
@@ -2430,8 +2217,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     unordered_map<std::string, type> completion_vocabulary_map;
     for(Index i = 0; i < completion_vocabulary.size(); i++)    completion_vocabulary_map[completion_vocabulary(i)] = type(i);
 
-//    const Index context_vocabulary_size = context_vocabulary.size();
-//    const Index completion_vocabulary_size = completion_vocabulary.size();
+    //    const Index context_vocabulary_size = context_vocabulary.size();
+    //    const Index completion_vocabulary_size = completion_vocabulary.size();
 
     Tensor<type, 1> context_row(max_context_length + 2);
     Tensor<type, 1> completion_row(max_completion_length + 2);
@@ -2449,7 +2236,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     bool tokenized;
 
     for(Index i = 0; i < entry_number; i++)
-    {        
+    {
         // Context
 
         context_row.setZero();
@@ -2460,7 +2247,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
         line_ended = false;
 
         line_tokens = context_tokens(i);
-        
+
         for(Index j = 0; j < max_context_length + 1; j++)
         {
             if(j < line_tokens.size() && token_counter < max_context_length + 1)
@@ -2468,14 +2255,14 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 word = line_tokens(j);
 
                 wordpiece_entry = context_vocabulary_map.find(word);
-                
+
                 if(wordpiece_entry != context_vocabulary_map.end())
                 {
                     context_row(token_counter) = wordpiece_entry->second;
                     token_counter++;
                     continue;
                 }
-                
+
                 tokenized = false;
 
                 for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
@@ -2493,7 +2280,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                     {
                         context_row(token_counter) = wordpiece_entry->second;
                         token_counter++;
-                        
+
                         rest = word.substr(wordpiece_length);
 
                         if(rest.empty())
@@ -2529,11 +2316,11 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 }
             }
         }
-        
+
         for(Index j = 0; j < max_context_length + 2; j++)
             file << context_row(j) << ";";
-        
-        
+
+
         // Completion
 
         completion_row.setZero();
@@ -2550,7 +2337,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             if(j < line_tokens.size() && token_counter < max_completion_length + 1)
             {
                 word = line_tokens(j);
-                
+
                 wordpiece_entry = completion_vocabulary_map.find(word);
 
                 if(wordpiece_entry != completion_vocabulary_map.end())
@@ -2621,7 +2408,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
         for(Index j = 1; j < max_completion_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
 
-        file << completion_row(max_completion_length + 1) << "\n";        
+        file << completion_row(max_completion_length + 1) << "\n";
     }
 }
 

@@ -1631,10 +1631,11 @@ Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use) const
 
 
 Tensor<type, 2> DataSet::get_data(const VariableUse& variable_use) const
-{cout<<"Works properly"<<endl;
+{
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;
+
     initialize_sequential(indices, 0, 1, samples_number - 1);
 
     const Tensor<Index, 1> variable_indices = get_variable_indices(variable_use);

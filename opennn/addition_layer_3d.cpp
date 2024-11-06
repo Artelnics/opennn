@@ -88,7 +88,8 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = input_1 + input_2;    
+    outputs.device(*thread_pool_device) = input_1 + input_2;
+    cout<<outputs.dimensions()<<endl;
 }
 
 

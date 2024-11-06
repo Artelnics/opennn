@@ -601,6 +601,8 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
     calculate_output_projection(attention_outputs,
                                 projection_outputs,
                                 outputs);
+    cout<<outputs.dimensions()<<endl;
+
 }
 
 

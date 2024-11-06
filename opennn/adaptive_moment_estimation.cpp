@@ -157,7 +157,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const bool is_language_model = is_instance_of<LanguageDataSet>(data_set) ? true : false;
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
-   
+
     const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     Tensor<Index, 1> context_variable_indices;
@@ -196,12 +196,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             ? selection_batch_samples_number = selection_samples_number
             : selection_batch_samples_number = batch_samples_number;
 
+
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
+
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
-    
+
     Tensor<Index, 2> training_batches(training_batches_number, training_batch_samples_number);
     Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
 

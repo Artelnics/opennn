@@ -48,15 +48,17 @@ int main()
 
         language_data_set.read_txt_language_model();
 
-        //language_data_set.set_raw_variables_scalers(Scaler::None);
+        language_data_set.set_raw_variable_scalers(Scaler::None);
 
         Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
 
-        cout<<completion_vocabulary.dimensions()<<endl;
-        cout<<completion_vocabulary<<endl;
-        cout<<context_vocabulary.dimensions()<<endl;
-        cout<<context_vocabulary<<endl;
+        // cout<<completion_vocabulary.dimensions()<<endl;
+        // cout<<completion_vocabulary<<endl;
+        // cout<<context_vocabulary.dimensions()<<endl;
+        cout<<context_vocabulary(2)+context_vocabulary(58)+context_vocabulary(29)+context_vocabulary(50)+context_vocabulary(97)+context_vocabulary(54)+context_vocabulary(37)
+             +context_vocabulary(60)+context_vocabulary(119)+context_vocabulary(51)+context_vocabulary(19)+context_vocabulary(79)+context_vocabulary(22)+context_vocabulary(61)
+             +context_vocabulary(8)+context_vocabulary(3)<<endl;
 
         // Neural network
 
@@ -65,11 +67,12 @@ int main()
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
 
-
         Index number_of_layers = 1;
         Index depth = 64;
         Index perceptron_depth = 128;
         Index heads_number = 4;
+
+
 
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                                  depth, perceptron_depth, heads_number, number_of_layers });

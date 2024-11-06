@@ -69,10 +69,20 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     layers.push_back(std::move(layer));
 
-    layer_input_indices.push_back(input_indices.empty() 
-        ? std::vector<Index>(1, old_layers_number - 1) 
+    layer_input_indices.push_back(input_indices.empty()
+        ? std::vector<Index>(1, old_layers_number - 1)
         : input_indices);
-    layers[old_layers_number]->set_name(name);
+    // for(Index i=0; i<old_layers_number+1;i++){
+    //     cout<<layer_input_indices[i][0];
+    // }
+    // cout<<endl;
+    // cout<<input_indices.size()<<endl;
+    // cout<<"Layer number: " << old_layers_number<<endl;
+    // cout<<"Index: "<<layer_input_indices[old_layers_number][0]<<endl;
+    // if(layer_input_indices.size()>1){
+    //     cout<<"Index layer 2: "<<layer_input_indices[1][0]<<endl;
+//}
+
 }
 
 
@@ -205,7 +215,7 @@ Index NeuralNetwork::get_layer_index(const string& name) const
         return -1;
 
     if(name == "context")
-        return -2;
+        return -1;  //-1 instead of -2
 
     const Index layers_number = get_layers_number();
 
@@ -714,6 +724,7 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& n
     const Index layer_index = get_layer_index(name);
 
     layer_input_indices[layer_index] = {get_layer_index(new_layer_inputs_name)};
+
 }
 
 
@@ -1056,10 +1067,11 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair);
 
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
+    for (Index i = first_layer_index; i <= last_layer_index; i++){
+        cout<<layers[i]->get_name()<<endl;
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
-                                     is_training);
+                                     is_training);}
 
 }
 
@@ -2056,33 +2068,49 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
+
     vector<vector<pair<type*, dimensions>>> layer_input_pairs(layers_number);
 
-    layer_input_pairs[0] = batch_input_pairs;
+    //layer_input_pairs[0] = batch_input_pairs;
 
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i < layers_number; i++)
     {
-        const vector<Index>& this_layer_input_indices = layer_input_indices[i];
+        const vector<Index>& this_layer_input_indices = layer_input_indices[i]; //Added "+1"
 
-        layer_input_pairs[i].resize(1);
+        //layer_input_pairs[i].resize(1);
 
-        if (i == first_trainable_layer_index) 
-        {
-            layer_input_pairs[i] = batch_input_pairs;
+        // if (i == first_trainable_layer_index)
+        // {
+        //     layer_input_pairs[i] = batch_input_pairs;
+        //     continue;
+        // }
 
+        if (i == first_trainable_layer_index)
+        {   vector<pair<type*, dimensions>> batch_input_pairs1;
+            batch_input_pairs1.push_back(batch_input_pairs[0]);
+            layer_input_pairs[i] = batch_input_pairs1;
             continue;
         }
-               
-        const Index this_layer_inputs_number = this_layer_input_indices.size();
 
+        if (i == first_trainable_layer_index+1)
+        {   vector<pair<type*, dimensions>> batch_input_pairs2;
+            batch_input_pairs2.push_back(batch_input_pairs[1]);
+            layer_input_pairs[i] = batch_input_pairs2;
+            continue;
+        }
+
+
+        const Index this_layer_inputs_number = this_layer_input_indices.size();
+        layer_input_pairs[i].resize(this_layer_inputs_number);
         for (Index j = 0; j < this_layer_inputs_number; j++)
         {
             const Index this_layer_input_index = this_layer_input_indices[j];
 
             layer_input_pairs[i][j] = layers[this_layer_input_index]->get_outputs_pair();
-        }       
+
+        }
     }
 
     return layer_input_pairs;

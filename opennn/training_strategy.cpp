@@ -512,7 +512,7 @@ void TrainingStrategy::set_default()
 
 
 TrainingResults TrainingStrategy::perform_training()
-{    
+{
     if(neural_network->has(Layer::Type::Recurrent)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
