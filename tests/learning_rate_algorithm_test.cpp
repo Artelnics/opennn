@@ -22,29 +22,9 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
     EXPECT_EQ(learning_rate_algorithm.has_loss_index(), true);
 }
 
-/*
-namespace opennn
+
+TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {
-
-void LearningRateAlgorithmTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    // Test
-
-    LearningRateAlgorithm tra1;
-
-    assert_true(tra1.has_loss_index(), LOG);
-
-    // Test
-
-}
-
-
-void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
-{
-    cout << "test_calculate_bracketing_triplet\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -67,11 +47,11 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     targets_number = 1;
     neurons_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
+    DataSet data_set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
-
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, { neurons_number }, { targets_number });
+/*
     batch.set(samples_number, &data_set);
     forward_propagation.set(samples_number, &neural_network);
     back_propagation.set(samples_number, &sum_squared_error);
@@ -86,10 +66,19 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     Tensor<type, 1> training_direction;
     type initial_learning_rate = 0.0;
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+//    assert_true(triplet.A.first <= triplet.U.first, LOG);
+//    assert_true(triplet.U.first <= triplet.B.first, LOG);
+//    assert_true(triplet.A.second >= triplet.U.second, LOG);
+//    assert_true(triplet.U.second <= triplet.B.second, LOG);
+*/
+}
+
+/*
+
+void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
+{
+    cout << "test_calculate_bracketing_triplet\n";
+
 
     // Test
 

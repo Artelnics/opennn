@@ -20,26 +20,20 @@ TEST(GrowingNeuronsTest, GeneralConstructor)
     EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 }
 
-/*
-namespace opennn
+
+TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-void GrowingNeuronsTest::test_perform_neurons_selection()
-{
-    cout << "test_perform_neurons_selection\n";
+    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
 
-    growing_neurons.set_training_strategy(&training_strategy);
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Tensor<type, 2> data;
+    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 
     NeuronsSelectionResults neurons_selection_results;
 
     // Test
 
-    data.resize(21,2);
+    Tensor<type, 2> data(21, 2);
+
     data.setValues({{type(-1),type(0)},
                     {type(-0.9),type(0)},
                     {type(-0.9),type(0)},
@@ -61,13 +55,14 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(0.8),type(0)},
                     {type(0.9),type(0)},
                     {type(1),type(0)}});
-    data_set.set(data);
+
+    DataSet data_set(data);
 
     Tensor<DataSet::VariableUse, 1> uses(2);
-    uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
+    uses.setValues({ DataSet::VariableUse::Input, DataSet::VariableUse::Target });
     data_set.set_raw_variables_uses(uses);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1},{3},{1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
     neural_network.set_parameters_constant(type(0));
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
@@ -80,6 +75,22 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     growing_neurons.set_display(false);
 
     //assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+}
+
+/*
+namespace opennn
+{
+void GrowingNeuronsTest::test_perform_neurons_selection()
+{
+
+    growing_neurons.set_training_strategy(&training_strategy);
+
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
+    Tensor<type, 2> data;
+
 
     // Test
 
