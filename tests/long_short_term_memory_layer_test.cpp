@@ -78,8 +78,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     long_short_term_layer_forward_propagation.set(samples_number, &long_short_term_memory_layer);
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 /*
     long_short_term_memory_layer.forward_propagate({input_pairs}, &long_short_term_layer_forward_propagation, is_training);
 

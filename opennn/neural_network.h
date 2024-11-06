@@ -203,6 +203,8 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
+   Index calculate_image_output(const string&);
+
    // Serialization
 
    Tensor<string, 2> get_perceptron_layers_information() const;

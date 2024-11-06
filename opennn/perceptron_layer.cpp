@@ -35,6 +35,12 @@ dimensions PerceptronLayer::get_input_dimensions() const
 }
 
 
+dimensions PerceptronLayer::get_output_dimensions() const
+{
+    return { biases.size() };
+}
+
+
 void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
@@ -50,12 +56,6 @@ Index PerceptronLayer::get_parameters_number() const
 type PerceptronLayer::get_dropout_rate() const
 {
     return dropout_rate;
-}
-
-
-dimensions PerceptronLayer::get_output_dimensions() const
-{
-    return {biases.size()};
 }
 
 
