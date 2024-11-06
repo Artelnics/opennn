@@ -123,7 +123,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
 

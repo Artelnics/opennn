@@ -10,7 +10,6 @@ benchmark_main.cc \
 -march=native \
 -O3 \
 -DNDEBUG \
--DEIGEN_MPL2_ONLY \
 -DEIGEN_USE_SYCL=1 \
 -DEIGEN_SYCL_LOCAL_MEM=1 \
 -no-serial-memop \

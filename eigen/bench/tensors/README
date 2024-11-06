@@ -16,5 +16,11 @@ following commands:
 1. export COMPUTECPP_PACKAGE_ROOT_DIR={PATH TO COMPUTECPP ROOT DIRECTORY}
 2. bash eigen_sycl_bench.sh
 
+To compile the floating point GPU benchmarks using Intel DPCPP compiler 
+/path/to/dpcpp/bin/clang+  -DSYCL_COMPILER_IS_DPCPP -DNDEBUG -DEIGEN_USE_SYCL=1 -I ../../  -O3 -DNDEBUG -fsycl -fsycl-targets="supported backend in DPCPP. i.e. spir64 or nvptx64-nvidia-cuda"  -std=c++17  tensor_benchmarks_sycl.cc benchmark_main.cc  -lpthread -o eigen_dpcpp_sycl
+
 Last but not least, we also provide a suite of benchmarks to measure the scalability of the contraction code on CPU. To compile these benchmarks, call
 g++ contraction_benchmarks_cpu.cc benchmark_main.cc -I ../../ -std=c++11 -O3 -DNDEBUG -pthread -mavx -o benchmarks_cpu
+
+To compile the contraction with DPCPP: 
+/path/to/dpcpp/bin/clang++  -DSYCL_COMPILER_IS_DPCPP -DNDEBUG -DEIGEN_USE_SYCL=1 -I ../../  -O3 -DNDEBUG -fsycl -fsycl-targets="supported backend in DPCPP. i.e. spir64 or nvptx64-nvidia-cuda" -std=c++17   tensor_contract_sycl_bench.cc -lpthread -o eigen_dpcpp_contract

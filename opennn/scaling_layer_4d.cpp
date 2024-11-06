@@ -30,19 +30,11 @@ dimensions ScalingLayer4D::get_output_dimensions() const
 }
 
 
-const bool& ScalingLayer4D::get_display() const
-{
-    return display;
-}
-
-
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
     set_min_max_range(type(0), type(255));
-
-    display = true;
 
     layer_type = Type::Scaling4D;
 
@@ -54,12 +46,6 @@ void ScalingLayer4D::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
-}
-
-
-void ScalingLayer4D::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 

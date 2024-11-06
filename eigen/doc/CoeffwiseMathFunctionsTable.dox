@@ -172,6 +172,19 @@ This also means that, unless specified, if the function \c std::foo is available
 </tr>
 <tr>
   <td class="code">
+  \anchor cwisetable_cbrt
+  a.\link ArrayBase::cbrt cbrt\endlink(); \n
+  \link Eigen::cbrt cbrt\endlink(a);\n
+  m.\link MatrixBase::cwiseCbrt cwiseCbrt\endlink();
+  </td>
+  <td>computes cube root (\f$ \cbrt a_i \f$)</td>
+  <td class="code">
+  using <a href="http://en.cppreference.com/w/cpp/numeric/math/cbrt">std::cbrt</a>; \n
+  cbrt(a[i]);</td>
+  <td></td>
+</tr>
+<tr>
+  <td class="code">
   \anchor cwisetable_rsqrt
   a.\link ArrayBase::rsqrt rsqrt\endlink(); \n
   \link Eigen::rsqrt rsqrt\endlink(a);

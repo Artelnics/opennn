@@ -7,31 +7,7 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#define EIGEN_NO_STATIC_ASSERT
-
 #include "main.h"
-
-template <typename Scalar>
-void assertionTest()
-{
-  typedef DiagonalMatrix<Scalar, 5> DiagMatrix5;
-  typedef DiagonalMatrix<Scalar, 7> DiagMatrix7;
-  typedef DiagonalMatrix<Scalar, Dynamic> DiagMatrixX;
-
-  Scalar raw[6];
-  for (int i = 0; i < 6; ++i) {
-    raw[i] = internal::random<Scalar>();
-  }
-
-  VERIFY_RAISES_ASSERT((DiagMatrix5{raw[0], raw[1], raw[2], raw[3]}));
-  VERIFY_RAISES_ASSERT((DiagMatrix5{raw[0], raw[1], raw[3]}));
-  VERIFY_RAISES_ASSERT((DiagMatrix7{raw[0], raw[1], raw[2], raw[3]}));
-
-  VERIFY_RAISES_ASSERT((DiagMatrixX {
-    {raw[0], raw[1], raw[2]},
-    {raw[3], raw[4], raw[5]}
-  }));
-}
 
 #define VERIFY_IMPLICIT_CONVERSION_3(DIAGTYPE, V0, V1, V2) \
   DIAGTYPE d(V0, V1, V2);                                  \
@@ -57,9 +33,8 @@ void assertionTest()
   VERIFY_IS_APPROX(Dense(3, 3), (Scalar)V3);                       \
   VERIFY_IS_APPROX(Dense(4, 4), (Scalar)V4);
 
-template<typename Scalar>
-void constructorTest()
-{
+template <typename Scalar>
+void constructorTest() {
   typedef DiagonalMatrix<Scalar, 0> DiagonalMatrix0;
   typedef DiagonalMatrix<Scalar, 3> DiagonalMatrix3;
   typedef DiagonalMatrix<Scalar, 4> DiagonalMatrix4;
@@ -70,21 +45,21 @@ void constructorTest()
 
   // Fixed-sized matrices
   {
-    DiagonalMatrix0 a {{}};
+    DiagonalMatrix0 a{{}};
     VERIFY(a.rows() == 0);
     VERIFY(a.cols() == 0);
     typename DiagonalMatrix0::DenseMatrixType m = a.toDenseMatrix();
     for (Index k = 0; k < a.rows(); ++k) VERIFY(m(k, k) == raw[k]);
   }
   {
-    DiagonalMatrix3 a {{raw[0], raw[1], raw[2]}};
+    DiagonalMatrix3 a{{raw[0], raw[1], raw[2]}};
     VERIFY(a.rows() == 3);
     VERIFY(a.cols() == 3);
     typename DiagonalMatrix3::DenseMatrixType m = a.toDenseMatrix();
     for (Index k = 0; k < a.rows(); ++k) VERIFY(m(k, k) == raw[k]);
   }
   {
-    DiagonalMatrix4 a {{raw[0], raw[1], raw[2], raw[3]}};
+    DiagonalMatrix4 a{{raw[0], raw[1], raw[2], raw[3]}};
     VERIFY(a.rows() == 4);
     VERIFY(a.cols() == 4);
     typename DiagonalMatrix4::DenseMatrixType m = a.toDenseMatrix();
@@ -108,9 +83,8 @@ void constructorTest()
   }
 }
 
-template<>
-void constructorTest<float>()
-{
+template <>
+void constructorTest<float>() {
   typedef float Scalar;
 
   typedef DiagonalMatrix<Scalar, 0> DiagonalMatrix0;
@@ -124,21 +98,21 @@ void constructorTest<float>()
 
   // Fixed-sized matrices
   {
-    DiagonalMatrix0 a {{}};
+    DiagonalMatrix0 a{{}};
     VERIFY(a.rows() == 0);
     VERIFY(a.cols() == 0);
     typename DiagonalMatrix0::DenseMatrixType m = a.toDenseMatrix();
     for (Index k = 0; k < a.rows(); ++k) VERIFY(m(k, k) == raw[k]);
   }
   {
-    DiagonalMatrix3 a {{raw[0], raw[1], raw[2]}};
+    DiagonalMatrix3 a{{raw[0], raw[1], raw[2]}};
     VERIFY(a.rows() == 3);
     VERIFY(a.cols() == 3);
     typename DiagonalMatrix3::DenseMatrixType m = a.toDenseMatrix();
     for (Index k = 0; k < a.rows(); ++k) VERIFY(m(k, k) == raw[k]);
   }
   {
-    DiagonalMatrix4 a {{raw[0], raw[1], raw[2], raw[3]}};
+    DiagonalMatrix4 a{{raw[0], raw[1], raw[2], raw[3]}};
     VERIFY(a.rows() == 4);
     VERIFY(a.cols() == 4);
     typename DiagonalMatrix4::DenseMatrixType m = a.toDenseMatrix();
@@ -165,16 +139,7 @@ void constructorTest<float>()
   { VERIFY_IMPLICIT_CONVERSION_5(DiagonalMatrix5, 1.2647, 2.56f, -3, 3.23f, 2); }
 }
 
-EIGEN_DECLARE_TEST(diagonal_matrix_variadic_ctor)
-{
-  CALL_SUBTEST_1(assertionTest<unsigned char>());
-  CALL_SUBTEST_1(assertionTest<float>());
-  CALL_SUBTEST_1(assertionTest<Index>());
-  CALL_SUBTEST_1(assertionTest<int>());
-  CALL_SUBTEST_1(assertionTest<long int>());
-  CALL_SUBTEST_1(assertionTest<std::ptrdiff_t>());
-  CALL_SUBTEST_1(assertionTest<std::complex<double>>());
-
+EIGEN_DECLARE_TEST(diagonal_matrix_variadic_ctor) {
   CALL_SUBTEST_2(constructorTest<unsigned char>());
   CALL_SUBTEST_2(constructorTest<float>());
   CALL_SUBTEST_2(constructorTest<Index>());

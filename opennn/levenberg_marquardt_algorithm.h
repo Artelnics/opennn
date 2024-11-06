@@ -89,8 +89,6 @@ public:
    
 private:
 
-   // MEMBERS
-
    type damping_parameter = type(0);
 
    type minimum_damping_parameter = type(0);

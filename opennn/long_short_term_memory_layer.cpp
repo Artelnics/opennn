@@ -131,7 +131,7 @@ const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::ge
 }
 
 
-string LongShortTermMemoryLayer::write_activation_function() const
+string LongShortTermMemoryLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -185,12 +185,6 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 }
 
 
-const bool& LongShortTermMemoryLayer::get_display() const
-{
-    return display;
-}
-
-
 void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     input_biases.resize(new_neurons_number);
@@ -218,21 +212,21 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 }
 
 
-void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
+void LongShortTermMemoryLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index neurons_number = get_output_dimensions()[0];
     const Index time_steps = get_timesteps();
 
-    set(new_inputs_number, neurons_number, time_steps);
+    set(new_input_dimensions[0], neurons_number, time_steps);
 }
 
 
-void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
+void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_input_dimensions()[0];
     const Index time_steps = get_timesteps();
 
-    set(inputs_number, new_neurons_number, time_steps);
+    set(inputs_number, new_output_dimensions[0], time_steps);
 }
 
 
@@ -365,12 +359,6 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
 {
     time_steps = new_timesteps;
-}
-
-
-void LongShortTermMemoryLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 
@@ -2030,7 +2018,7 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
 }
 
 
-string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string LongShortTermMemoryLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
     ostringstream buffer;
 
@@ -2071,7 +2059,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     // State gate
     for(Index i = 0; i < neurons_number; i++)
     {
-       buffer << "state_gate_" << to_string(i) << " = " << write_activation_function_expression() << " (" << state_biases[i] << " + ";
+       buffer << "state_gate_" << to_string(i) << " = " << get_activation_function_string_expression() << " (" << state_biases[i] << " + ";
 
        for(Index j = 0; j < inputs_number; j++)
            buffer << input_names[j] << " * (" << state_weights(j,i) << ") + ";
@@ -2104,7 +2092,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
     // Hidden state
 
     for(Index i = 0; i < neurons_number; i++)
-        buffer << "hidden_state_" << to_string(i) << "(t) = output_gate_" << to_string(i) << " * " << write_activation_function_expression() << "(cell_states_" << to_string(i) << ");\n";
+        buffer << "hidden_state_" << to_string(i) << "(t) = output_gate_" << to_string(i) << " * " << get_activation_function_string_expression() << "(cell_states_" << to_string(i) << ");\n";
 
     // Output
 
@@ -2123,8 +2111,8 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw runtime_error("LongShortTermMemory element is nullptr.\n");
 
     set_name(read_xml_string(lstm_layer_element, "Name"));
-    set_inputs_number(read_xml_index(lstm_layer_element, "InputsNumber"));
-    set_neurons_number(read_xml_index(lstm_layer_element, "NeuronsNumber"));
+    set_input_dimensions({ read_xml_index(lstm_layer_element, "InputsNumber") });
+    set_output_dimensions({ read_xml_index(lstm_layer_element, "NeuronsNumber") });
     set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
     set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
     set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
@@ -2140,7 +2128,7 @@ void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
-    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -2162,7 +2150,7 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function_expression(
 }
 
 
-string LongShortTermMemoryLayer::write_activation_function_expression() const
+string LongShortTermMemoryLayer::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
@@ -2171,7 +2159,7 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
     case ActivationFunction::Linear:
         return string();
     default:
-        return write_activation_function();
+        return get_activation_function_string();
     }
 }
 

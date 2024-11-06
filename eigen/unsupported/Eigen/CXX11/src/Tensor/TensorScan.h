@@ -10,46 +10,44 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
 #define EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 namespace internal {
 
 template <typename Op, typename XprType>
-struct traits<TensorScanOp<Op, XprType> >
-    : public traits<XprType> {
+struct traits<TensorScanOp<Op, XprType> > : public traits<XprType> {
   typedef typename XprType::Scalar Scalar;
   typedef traits<XprType> XprTraits;
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type _Nested;
-  static const int NumDimensions = XprTraits::NumDimensions;
-  static const int Layout = XprTraits::Layout;
+  typedef std::remove_reference_t<Nested> Nested_;
+  static constexpr int NumDimensions = XprTraits::NumDimensions;
+  static constexpr int Layout = XprTraits::Layout;
   typedef typename XprTraits::PointerType PointerType;
 };
 
-template<typename Op, typename XprType>
-struct eval<TensorScanOp<Op, XprType>, Eigen::Dense>
-{
+template <typename Op, typename XprType>
+struct eval<TensorScanOp<Op, XprType>, Eigen::Dense> {
   typedef const TensorScanOp<Op, XprType>& type;
 };
 
-template<typename Op, typename XprType>
-struct nested<TensorScanOp<Op, XprType>, 1,
-            typename eval<TensorScanOp<Op, XprType> >::type>
-{
+template <typename Op, typename XprType>
+struct nested<TensorScanOp<Op, XprType>, 1, typename eval<TensorScanOp<Op, XprType> >::type> {
   typedef TensorScanOp<Op, XprType> type;
 };
-} // end namespace internal
+}  // end namespace internal
 
 /** \class TensorScan
-  * \ingroup CXX11_Tensor_Module
-  *
-  * \brief Tensor scan class.
-  */
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor scan class.
+ */
 template <typename Op, typename XprType>
-class TensorScanOp
-    : public TensorBase<TensorScanOp<Op, XprType>, ReadOnlyAccessors> {
-public:
+class TensorScanOp : public TensorBase<TensorScanOp<Op, XprType>, ReadOnlyAccessors> {
+ public:
   typedef typename Eigen::internal::traits<TensorScanOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
@@ -57,32 +55,26 @@ public:
   typedef typename Eigen::internal::traits<TensorScanOp>::StorageKind StorageKind;
   typedef typename Eigen::internal::traits<TensorScanOp>::Index Index;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorScanOp(
-      const XprType& expr, const Index& axis, bool exclusive = false, const Op& op = Op())
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorScanOp(const XprType& expr, const Index& axis, bool exclusive = false,
+                                                     const Op& op = Op())
       : m_expr(expr), m_axis(axis), m_accumulator(op), m_exclusive(exclusive) {}
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  const Index axis() const { return m_axis; }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  const XprType& expression() const { return m_expr; }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  const Op accumulator() const { return m_accumulator; }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  bool exclusive() const { return m_exclusive; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index axis() const { return m_axis; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const XprType& expression() const { return m_expr; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Op accumulator() const { return m_accumulator; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool exclusive() const { return m_exclusive; }
 
-protected:
+ protected:
   typename XprType::Nested m_expr;
   const Index m_axis;
   const Op m_accumulator;
   const bool m_exclusive;
 };
 
-
 namespace internal {
 
 template <typename Self>
-EIGEN_STRONG_INLINE void ReduceScalar(Self& self, Index offset,
-                                      typename Self::CoeffReturnType* data) {
+EIGEN_STRONG_INLINE void ReduceScalar(Self& self, Index offset, typename Self::CoeffReturnType* data) {
   // Compute the scan along the axis, starting at the given offset
   typename Self::CoeffReturnType accum = self.accumulator().initialize();
   if (self.stride() == 1) {
@@ -115,8 +107,7 @@ EIGEN_STRONG_INLINE void ReduceScalar(Self& self, Index offset,
 }
 
 template <typename Self>
-EIGEN_STRONG_INLINE void ReducePacket(Self& self, Index offset,
-                                      typename Self::CoeffReturnType* data) {
+EIGEN_STRONG_INLINE void ReducePacket(Self& self, Index offset, typename Self::CoeffReturnType* data) {
   using Scalar = typename Self::CoeffReturnType;
   using Packet = typename Self::PacketReturnType;
   // Compute the scan along the axis, starting at the calculated offset
@@ -152,8 +143,7 @@ EIGEN_STRONG_INLINE void ReducePacket(Self& self, Index offset,
 
 template <typename Self, bool Vectorize, bool Parallel>
 struct ReduceBlock {
-  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1,
-                                      typename Self::CoeffReturnType* data) {
+  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1, typename Self::CoeffReturnType* data) {
     for (Index idx2 = 0; idx2 < self.stride(); idx2++) {
       // Calculate the starting offset for the scan
       Index offset = idx1 + idx2;
@@ -165,8 +155,7 @@ struct ReduceBlock {
 // Specialization for vectorized reduction.
 template <typename Self>
 struct ReduceBlock<Self, /*Vectorize=*/true, /*Parallel=*/false> {
-  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1,
-                                      typename Self::CoeffReturnType* data) {
+  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1, typename Self::CoeffReturnType* data) {
     using Packet = typename Self::PacketReturnType;
     const int PacketSize = internal::unpacket_traits<Packet>::size;
     Index idx2 = 0;
@@ -185,11 +174,10 @@ struct ReduceBlock<Self, /*Vectorize=*/true, /*Parallel=*/false> {
 
 // Single-threaded CPU implementation of scan
 template <typename Self, typename Reducer, typename Device,
-          bool Vectorize =
-              (TensorEvaluator<typename Self::ChildTypeNoConst, Device>::PacketAccess &&
-               internal::reducer_traits<Reducer, Device>::PacketAccess)>
+          bool Vectorize = (TensorEvaluator<typename Self::ChildTypeNoConst, Device>::PacketAccess &&
+                            internal::reducer_traits<Reducer, Device>::PacketAccess)>
 struct ScanLauncher {
-  void operator()(Self& self, typename Self::CoeffReturnType* data) {
+  void operator()(Self& self, typename Self::CoeffReturnType* data) const {
     Index total_size = internal::array_prod(self.dimensions());
 
     // We fix the index along the scan axis to 0 and perform a
@@ -210,15 +198,13 @@ struct ScanLauncher {
 // processors.
 EIGEN_STRONG_INLINE Index AdjustBlockSize(Index item_size, Index block_size) {
   EIGEN_CONSTEXPR Index kBlockAlignment = 128;
-  const Index items_per_cacheline =
-      numext::maxi<Index>(1, kBlockAlignment / item_size);
-  return items_per_cacheline * divup(block_size, items_per_cacheline);
+  const Index items_per_cacheline = numext::maxi<Index>(1, kBlockAlignment / item_size);
+  return items_per_cacheline * numext::div_ceil(block_size, items_per_cacheline);
 }
 
 template <typename Self>
 struct ReduceBlock<Self, /*Vectorize=*/true, /*Parallel=*/true> {
-  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1,
-                                      typename Self::CoeffReturnType* data) {
+  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1, typename Self::CoeffReturnType* data) {
     using Scalar = typename Self::CoeffReturnType;
     using Packet = typename Self::PacketReturnType;
     const int PacketSize = internal::unpacket_traits<Packet>::size;
@@ -228,28 +214,24 @@ struct ReduceBlock<Self, /*Vectorize=*/true, /*Parallel=*/true> {
       num_packets = self.stride() / PacketSize;
       self.device().parallelFor(
           num_packets,
-        TensorOpCost(PacketSize * self.size(), PacketSize * self.size(),
-                     16 * PacketSize * self.size(), true, PacketSize),
-        // Make the shard size large enough that two neighboring threads
-        // won't write to the same cacheline of `data`.
-        [=](Index blk_size) {
-          return AdjustBlockSize(PacketSize * sizeof(Scalar), blk_size);
-        },
-        [&](Index first, Index last) {
-          for (Index packet = first; packet < last; ++packet) {
-            const Index idx2 = packet * PacketSize;
-            ReducePacket(self, idx1 + idx2, data);
-          }
-        });
+          TensorOpCost(PacketSize * self.size(), PacketSize * self.size(), 16 * PacketSize * self.size(), true,
+                       PacketSize),
+          // Make the shard size large enough that two neighboring threads
+          // won't write to the same cacheline of `data`.
+          [=](Index blk_size) { return AdjustBlockSize(PacketSize * sizeof(Scalar), blk_size); },
+          [&](Index first, Index last) {
+            for (Index packet = first; packet < last; ++packet) {
+              const Index idx2 = packet * PacketSize;
+              ReducePacket(self, idx1 + idx2, data);
+            }
+          });
       num_scalars -= num_packets * PacketSize;
     }
     self.device().parallelFor(
         num_scalars, TensorOpCost(self.size(), self.size(), 16 * self.size()),
         // Make the shard size large enough that two neighboring threads
         // won't write to the same cacheline of `data`.
-        [=](Index blk_size) {
-          return AdjustBlockSize(sizeof(Scalar), blk_size);
-        },
+        [=](Index blk_size) { return AdjustBlockSize(sizeof(Scalar), blk_size); },
         [&](Index first, Index last) {
           for (Index scalar = first; scalar < last; ++scalar) {
             const Index idx2 = num_packets * PacketSize + scalar;
@@ -261,16 +243,13 @@ struct ReduceBlock<Self, /*Vectorize=*/true, /*Parallel=*/true> {
 
 template <typename Self>
 struct ReduceBlock<Self, /*Vectorize=*/false, /*Parallel=*/true> {
-  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1,
-                                      typename Self::CoeffReturnType* data) {
+  EIGEN_STRONG_INLINE void operator()(Self& self, Index idx1, typename Self::CoeffReturnType* data) {
     using Scalar = typename Self::CoeffReturnType;
     self.device().parallelFor(
         self.stride(), TensorOpCost(self.size(), self.size(), 16 * self.size()),
         // Make the shard size large enough that two neighboring threads
         // won't write to the same cacheline of `data`.
-        [=](Index blk_size) {
-          return AdjustBlockSize(sizeof(Scalar), blk_size);
-        },
+        [=](Index blk_size) { return AdjustBlockSize(sizeof(Scalar), blk_size); },
         [&](Index first, Index last) {
           for (Index idx2 = first; idx2 < last; ++idx2) {
             ReduceScalar(self, idx1 + idx2, data);
@@ -302,12 +281,8 @@ struct ScanLauncher<Self, Reducer, ThreadPoolDevice, Vectorize> {
       const Index num_outer_blocks = total_size / inner_block_size;
       self.device().parallelFor(
           num_outer_blocks,
-          TensorOpCost(inner_block_size, inner_block_size,
-                       16 * PacketSize * inner_block_size, Vectorize,
-                       PacketSize),
-          [=](Index blk_size) {
-            return AdjustBlockSize(inner_block_size * sizeof(Scalar), blk_size);
-          },
+          TensorOpCost(inner_block_size, inner_block_size, 16 * PacketSize * inner_block_size, Vectorize, PacketSize),
+          [=](Index blk_size) { return AdjustBlockSize(inner_block_size * sizeof(Scalar), blk_size); },
           [&](Index first, Index last) {
             for (Index idx1 = first; idx1 < last; ++idx1) {
               ReduceBlock<Self, Vectorize, /*Parallelize=*/false> block_reducer;
@@ -318,8 +293,7 @@ struct ScanLauncher<Self, Reducer, ThreadPoolDevice, Vectorize> {
       // Parallelize over inner packets/scalars dimensions when the reduction
       // axis is not an inner dimension.
       ReduceBlock<Self, Vectorize, /*Parallelize=*/true> block_reducer;
-      for (Index idx1 = 0; idx1 < total_size;
-           idx1 += self.stride() * self.size()) {
+      for (Index idx1 = 0; idx1 < total_size; idx1 += self.stride() * self.size()) {
         block_reducer(self, idx1, data);
       }
     }
@@ -334,7 +308,8 @@ struct ScanLauncher<Self, Reducer, ThreadPoolDevice, Vectorize> {
 // parallel, but it would be better to use a parallel scan algorithm and
 // optimize memory access.
 template <typename Self, typename Reducer>
-__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ScanKernel(Self self, Index total_size, typename Self::CoeffReturnType* data) {
+__global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ScanKernel(Self self, Index total_size,
+                                                        typename Self::CoeffReturnType* data) {
   // Compute offset as in the CPU version
   Index val = threadIdx.x + blockIdx.x * blockDim.x;
   Index offset = (val / self.stride()) * self.stride() * self.size() + val % self.stride();
@@ -354,17 +329,16 @@ __global__ EIGEN_HIP_LAUNCH_BOUNDS_1024 void ScanKernel(Self self, Index total_s
     }
   }
   __syncthreads();
-
 }
 
 template <typename Self, typename Reducer, bool Vectorize>
 struct ScanLauncher<Self, Reducer, GpuDevice, Vectorize> {
   void operator()(const Self& self, typename Self::CoeffReturnType* data) {
-     Index total_size = internal::array_prod(self.dimensions());
-     Index num_blocks = (total_size / self.size() + 63) / 64;
-     Index block_size = 64;
+    Index total_size = internal::array_prod(self.dimensions());
+    Index num_blocks = (total_size / self.size() + 63) / 64;
+    Index block_size = 64;
 
-     LAUNCH_GPU_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
+    LAUNCH_GPU_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
   }
 };
 #endif  // EIGEN_USE_GPU && (EIGEN_GPUCC)
@@ -374,26 +348,25 @@ struct ScanLauncher<Self, Reducer, GpuDevice, Vectorize> {
 // Eval as rvalue
 template <typename Op, typename ArgType, typename Device>
 struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
-
   typedef TensorScanOp<Op, ArgType> XprType;
   typedef typename XprType::Index Index;
   typedef const ArgType ChildTypeNoConst;
   typedef const ArgType ChildType;
-  static const int NumDims = internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
+  static constexpr int NumDims = internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
   typedef DSizes<Index, NumDims> Dimensions;
-  typedef typename internal::remove_const<typename XprType::Scalar>::type Scalar;
+  typedef std::remove_const_t<typename XprType::Scalar> Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
   typedef TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> Self;
   typedef StorageMemory<Scalar, Device> Storage;
   typedef typename Storage::Type EvaluatorPointerType;
 
+  static constexpr int Layout = TensorEvaluator<ArgType, Device>::Layout;
   enum {
     IsAligned = false,
     PacketAccess = (PacketType<CoeffReturnType, Device>::size > 1),
     BlockAccess = false,
     PreferBlockAccess = false,
-    Layout = TensorEvaluator<ArgType, Device>::Layout,
     CoordAccess = false,
     RawAccess = true
   };
@@ -408,9 +381,9 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
         m_exclusive(op.exclusive()),
         m_accumulator(op.accumulator()),
         m_size(m_impl.dimensions()[op.axis()]),
-        m_stride(1), m_consume_dim(op.axis()),
+        m_stride(1),
+        m_consume_dim(op.axis()),
         m_output(NULL) {
-
     // Accumulating a scalar isn't supported.
     EIGEN_STATIC_ASSERT((NumDims > 0), YOU_MADE_A_PROGRAMMING_MISTAKE);
     eigen_assert(op.axis() >= 0 && op.axis() < NumDims);
@@ -424,7 +397,8 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     } else {
       // dims can only be indexed through unsigned integers,
       // so let's use an unsigned type to let the compiler knows.
-      // This prevents stupid warnings: ""'*((void*)(& evaluator)+64)[18446744073709551615]' may be used uninitialized in this function"
+      // This prevents stupid warnings: ""'*((void*)(& evaluator)+64)[18446744073709551615]' may be used uninitialized
+      // in this function"
       unsigned int axis = internal::convert_index<unsigned int>(op.axis());
       for (unsigned int i = NumDims - 1; i > axis; --i) {
         m_stride = m_stride * dims[i];
@@ -432,37 +406,21 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const {
-    return m_impl.dimensions();
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_impl.dimensions(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& stride() const {
-    return m_stride;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& stride() const { return m_stride; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& consume_dim() const {
-    return m_consume_dim;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& consume_dim() const { return m_consume_dim; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& size() const {
-    return m_size;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Index& size() const { return m_size; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Op& accumulator() const {
-    return m_accumulator;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Op& accumulator() const { return m_accumulator; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool exclusive() const {
-    return m_exclusive;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool exclusive() const { return m_exclusive; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const TensorEvaluator<ArgType, Device>& inner() const {
-    return m_impl;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const TensorEvaluator<ArgType, Device>& inner() const { return m_impl; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const {
-    return m_device;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Device& device() const { return m_device; }
 
   EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(EvaluatorPointerType data) {
     m_impl.evalSubExprsIfNeeded(NULL);
@@ -473,25 +431,20 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     }
 
     const Index total_size = internal::array_prod(dimensions());
-    m_output = static_cast<EvaluatorPointerType>(m_device.get((Scalar*) m_device.allocate_temp(total_size * sizeof(Scalar))));
+    m_output =
+        static_cast<EvaluatorPointerType>(m_device.get((Scalar*)m_device.allocate_temp(total_size * sizeof(Scalar))));
     launcher(*this, m_output);
     return true;
   }
 
-  template<int LoadMode>
+  template <int LoadMode>
   EIGEN_DEVICE_FUNC PacketReturnType packet(Index index) const {
     return internal::ploadt<PacketReturnType, LoadMode>(m_output + index);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EvaluatorPointerType data() const
-  {
-    return m_output;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EvaluatorPointerType data() const { return m_output; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const
-  {
-    return m_output[index];
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const { return m_output[index]; }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool) const {
     return TensorOpCost(sizeof(CoeffReturnType), 0, 0);
@@ -505,14 +458,7 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     m_impl.cleanup();
   }
 
-#ifdef EIGEN_USE_SYCL
- // binding placeholder accessors to a command group handler for SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void bind(cl::sycl::handler &cgh) const {
-    m_impl.bind(cgh);
-    m_output.bind(cgh);
-  }
-#endif
-protected:
+ protected:
   TensorEvaluator<ArgType, Device> m_impl;
   const Device EIGEN_DEVICE_REF m_device;
   const bool m_exclusive;

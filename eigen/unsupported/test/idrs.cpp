@@ -11,17 +11,16 @@
 #include "../../test/sparse_solver.h"
 #include <Eigen/IterativeSolvers>
 
-template<typename T> void test_idrs_T()
-{
+template <typename T>
+void test_idrs_T() {
   IDRS<SparseMatrix<T>, DiagonalPreconditioner<T> > idrs_colmajor_diag;
-  IDRS<SparseMatrix<T>, IncompleteLUT<T> >           idrs_colmajor_ilut;
+  IDRS<SparseMatrix<T>, IncompleteLUT<T> > idrs_colmajor_ilut;
 
-  CALL_SUBTEST( check_sparse_square_solving(idrs_colmajor_diag)  );
-  CALL_SUBTEST( check_sparse_square_solving(idrs_colmajor_ilut)     );
+  CALL_SUBTEST(check_sparse_square_solving(idrs_colmajor_diag));
+  CALL_SUBTEST(check_sparse_square_solving(idrs_colmajor_ilut));
 }
 
-EIGEN_DECLARE_TEST(idrs)
-{
+EIGEN_DECLARE_TEST(idrs) {
   CALL_SUBTEST_1(test_idrs_T<double>());
   CALL_SUBTEST_2(test_idrs_T<std::complex<double> >());
 }

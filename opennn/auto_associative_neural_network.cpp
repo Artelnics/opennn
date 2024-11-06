@@ -346,7 +346,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
 }
 
 
-string AutoAssociativeNeuralNetwork::write_expression_autoassociation_distances(string& input_variables_names, string& output_variables_names) const
+string AutoAssociativeNeuralNetwork::get_expression_autoassociation_distances(string& input_variables_names, string& output_variables_names) const
 {
     ostringstream buffer;
 
@@ -361,7 +361,7 @@ string AutoAssociativeNeuralNetwork::write_expression_autoassociation_distances(
 }
 
 
-string AutoAssociativeNeuralNetwork::write_expression_autoassociation_variables_distances(string& input_variables_names, string& output_variables_names) const
+string AutoAssociativeNeuralNetwork::get_expression_autoassociation_variables_distances(string& input_variables_names, string& output_variables_names) const
 {
     ostringstream buffer;
 

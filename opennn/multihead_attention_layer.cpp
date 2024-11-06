@@ -163,12 +163,6 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 }
 
 
-const bool& MultiheadAttentionLayer::get_display() const
-{
-    return display;
-}
-
-
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
@@ -187,8 +181,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
     scaling_factor = type(1) / type(sqrt(hidden_depth));
 
     name = "multihead_attention_layer";
-
-    display = true;
 
     layer_type = Type::MultiheadAttention;
 
@@ -370,12 +362,6 @@ void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
     use_causal_mask = new_use_causal_mask;
 
     build_causal_mask();
-}
-
-
-void MultiheadAttentionLayer::set_display(const bool& new_display)
-{
-    display = new_display;
 }
 
 

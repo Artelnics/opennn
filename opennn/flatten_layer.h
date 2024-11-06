@@ -47,8 +47,6 @@ public:
 
     void set(const dimensions & = {0,0,0});
 
-//    void set_display(const bool&);
-
 //    bool is_empty() const;
 
     // Forward propagation
@@ -76,11 +74,9 @@ public:
         #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
-
-    bool display = true;
 };
 
 
