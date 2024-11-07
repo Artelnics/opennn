@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/forward_propagation.h"
 #include "../opennn/back_propagation.h"
 #include "../opennn/learning_rate_algorithm.h"
 #include "../opennn/mean_squared_error.h"

@@ -11,7 +11,6 @@
 
 #include "config.h"
 #include "loss_index.h"
-#include "sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
@@ -37,7 +36,6 @@ public:
 
     enum class LossMethod
     {
-        SUM_SQUARED_ERROR,
         MEAN_SQUARED_ERROR,
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
@@ -48,7 +46,6 @@ public:
 
     enum class OptimizationMethod
     {
-        GRADIENT_DESCENT,
         CONJUGATE_GRADIENT,
         QUASI_NEWTON_METHOD,
         LEVENBERG_MARQUARDT_ALGORITHM,
@@ -68,7 +65,6 @@ public:
     bool has_neural_network() const;
     bool has_data_set() const;
 
-    SumSquaredError* get_sum_squared_error();
     MeanSquaredError* get_mean_squared_error();
     NormalizedSquaredError* get_normalized_squared_error();
     MinkowskiError* get_Minkowski_error();
@@ -149,8 +145,6 @@ private:
     NeuralNetwork* neural_network = nullptr;
 
     // Loss index
-
-    SumSquaredError sum_squared_error;
 
     MeanSquaredError mean_squared_error;
 

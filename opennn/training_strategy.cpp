@@ -34,8 +34,6 @@ LossIndex* TrainingStrategy::get_loss_index()
 {
     switch(loss_method)
     {
-        case LossMethod::SUM_SQUARED_ERROR: return &sum_squared_error;
-
         case LossMethod::MEAN_SQUARED_ERROR: return &mean_squared_error;
 
         case LossMethod::NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
@@ -114,12 +112,6 @@ AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 }
 
 
-SumSquaredError* TrainingStrategy::get_sum_squared_error()
-{
-    return &sum_squared_error;
-}
-
-
 MeanSquaredError* TrainingStrategy::get_mean_squared_error()
 {
     return &mean_squared_error;
@@ -167,9 +159,6 @@ string TrainingStrategy::write_loss_method() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "SUM_SQUARED_ERROR";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "MEAN_SQUARED_ERROR";
 
@@ -194,10 +183,7 @@ string TrainingStrategy::write_loss_method() const
 string TrainingStrategy::write_optimization_method() const
 {
     switch (optimization_method)
-    {
-    case OptimizationMethod::GRADIENT_DESCENT:
-        return "GRADIENT_DESCENT";
-    
+    { 
     case OptimizationMethod::CONJUGATE_GRADIENT:
         return "CONJUGATE_GRADIENT";
     
@@ -224,9 +210,6 @@ string TrainingStrategy::write_optimization_method_text() const
 {
     switch (optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT:
-        return "gradient descent";
-
     case OptimizationMethod::CONJUGATE_GRADIENT:
         return "conjugate gradient";
 
@@ -252,9 +235,6 @@ string TrainingStrategy::write_loss_method_text() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "Sum squared error";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "Mean squared error";
 
@@ -294,9 +274,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
 
 void TrainingStrategy::set_loss_method(const string& new_loss_method)
 {
-    if(new_loss_method == "SUM_SQUARED_ERROR")
-        set_loss_method(LossMethod::SUM_SQUARED_ERROR);
-    else if(new_loss_method == "MEAN_SQUARED_ERROR")
+    if(new_loss_method == "MEAN_SQUARED_ERROR")
         set_loss_method(LossMethod::MEAN_SQUARED_ERROR);
     else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
         set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
@@ -327,9 +305,7 @@ void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_opt
 
 void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
 {
-    if(new_optimization_method == "GRADIENT_DESCENT")
-        set_optimization_method(OptimizationMethod::GRADIENT_DESCENT);
-    else if(new_optimization_method == "CONJUGATE_GRADIENT")
+    if(new_optimization_method == "CONJUGATE_GRADIENT")
         set_optimization_method(OptimizationMethod::CONJUGATE_GRADIENT);
     else if(new_optimization_method == "QUASI_NEWTON_METHOD")
         set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -370,7 +346,6 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 
 void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_number)
 {
-    sum_squared_error.set_threads_number(new_threads_number);
     mean_squared_error.set_threads_number(new_threads_number);
     normalized_squared_error.set_threads_number(new_threads_number);
     Minkowski_error.set_threads_number(new_threads_number);
@@ -401,7 +376,6 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 
 void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
-    sum_squared_error.set_data_set(new_data_set);
     mean_squared_error.set_data_set(new_data_set);
     normalized_squared_error.set_data_set(new_data_set);
     cross_entropy_error.set_data_set(new_data_set);
@@ -413,7 +387,6 @@ void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 
 void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_network)
 {
-    sum_squared_error.set_neural_network(new_neural_network);
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
     cross_entropy_error.set_neural_network(new_neural_network);
@@ -429,7 +402,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Loss index
 
-    sum_squared_error.set_display(display);
     mean_squared_error.set_display(display);
     normalized_squared_error.set_display(display);
     cross_entropy_error.set_display(display);
@@ -599,9 +571,6 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
         break;
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         weighted_squared_error.write_regularization_XML(printer);
-        break;
-    case LossMethod::SUM_SQUARED_ERROR:
-        sum_squared_error.write_regularization_XML(printer);
         break;
     default:
         break;

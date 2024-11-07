@@ -55,7 +55,6 @@
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
-#include "sum_squared_error.h"
 #include "weighted_squared_error.h"
 
 #include "conjugate_gradient.h"

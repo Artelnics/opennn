@@ -5,36 +5,43 @@
 
 TEST(FlattenLayerTest, Constructor)
 {
-    EXPECT_EQ(1, 1);
+    const Index height = 6;
+    const Index width = 6;
+    const Index channels = 3;
+
+    dimensions input_dimensions({ height, width, channels });
+
+    FlattenLayer flatten_layer(input_dimensions);
+
+    EXPECT_EQ(flatten_layer.get_input_dimensions(), input_dimensions);
+
+    EXPECT_EQ(flatten_layer.get_type(), Layer::Type::Flatten);
 }
 
 
 TEST(FlattenLayerTest, ForwardPropagate)
 {
-    const Index height = 6;
-    const Index width = 6;
-    const Index image_channels_number = 3;
-    const Index images_number = 2;
+    const Index batch_samples_number = 2;
+    const Index height = 4;
+    const Index width = 4;
+    const Index channels = 3;
 
-    bool is_training = true;
+    const bool is_training = true;
 
-    Tensor<type, 4> inputs(height, width, image_channels_number, images_number);
+    Tensor<type, 4> inputs(batch_samples_number, height, width, channels);
     inputs.setRandom();
 
-    dimensions input_dimensions({ height, width, image_channels_number, images_number });
+    dimensions input_dimensions({ height, width, channels });
 
-//    flatten_layer.set(input_dimensions);
+    FlattenLayer flatten_layer(input_dimensions);
 
     Tensor<type, 2> outputs;
 
-//    flatten_layer_forward_propagation.set(images_number, &flatten_layer);
+    //unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation  = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, flatten_layer);
 
-    Tensor<type*, 1> input_data(1);
-    input_data(0) = inputs.data();
+    //pair<type*, dimensions> input_pairs(inputs.data(), { {batch_samples_number, height, width, channels} });
 
-    pair<type*, dimensions> input_pairs(inputs.data(), { {height, width, image_channels_number, images_number} });
-
-//    flatten_layer.forward_propagate({ input_pairs }, &flatten_layer_forward_propagation, is_training);
+    //flatten_layer.forward_propagate({ input_pairs }, flatten_layer_forward_propagation, is_training);
 
 //    outputs = flatten_layer_forward_propagation.outputs;
 
@@ -43,4 +50,12 @@ TEST(FlattenLayerTest, ForwardPropagate)
 //    assert_true(inputs.size() == outputs.size(), LOG);
 
     EXPECT_EQ(1, 1);
+}
+
+TEST(FlattenLayerTest, BackPropagate)
+{
+
+
+
+
 }
