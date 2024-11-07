@@ -14,8 +14,6 @@ namespace opennn
 
 FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
 {
-    layer_type = Type::Flatten;
-
     set(new_input_dimensions);
 }
 
@@ -64,6 +62,10 @@ Index FlattenLayer::get_input_channels() const
 
 void FlattenLayer::set(const dimensions& new_input_dimensions)
 {
+    layer_type = Type::Flatten;
+
+    set_name("flatten_layer");
+
     input_dimensions = new_input_dimensions;
 }
 

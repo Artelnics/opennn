@@ -42,11 +42,11 @@ int main()
 
         language_data_set.set_data_source_path("data/ENtoES_dataset.txt");
 
-        language_data_set.set_text_separator(DataSet::Separator::Tab);
+        //language_data_set.set_text_separator(DataSet::Separator::Tab);
 
         language_data_set.read_txt_language_model();
 
-        language_data_set.set_raw_variable_scalers(Scaler::NoScaling);
+        language_data_set.set_raw_variable_scalers(Scaler::None);
 
         Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();

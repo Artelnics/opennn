@@ -36,18 +36,16 @@ public:
     explicit FlattenLayer(const dimensions& = {0,0,0});
 
     dimensions get_input_dimensions() const;
-    Index get_outputs_number() const;
-    
     dimensions get_output_dimensions() const final;
 
     Index get_inputs_number() const;
-    Index get_input_channels() const;
+    Index get_outputs_number() const;
+
     Index get_input_height() const;
     Index get_input_width() const;
+    Index get_input_channels() const;
 
     void set(const dimensions & = {0,0,0});
-
-//    bool is_empty() const;
 
     // Forward propagation
 

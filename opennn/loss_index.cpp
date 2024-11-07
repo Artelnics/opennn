@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"
 #include "back_propagation.h"
@@ -127,11 +127,11 @@ void LossIndex::check() const
 
 
 void LossIndex::calculate_errors_lm(const Batch& batch,
-                                    const ForwardPropagation & neural_network_forward_propagation,
+                                    const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
     const pair<type*, dimensions> outputs_pair
-        = neural_network_forward_propagation.get_last_trainable_layer_outputs_pair();
+        = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 

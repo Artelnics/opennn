@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/cross_entropy_error.h"
-#include "../opennn/neural_network_forward_propagation.h"
+#include "../opennn/forward_propagation.h"
 #include "../opennn/back_propagation.h"
 
 
