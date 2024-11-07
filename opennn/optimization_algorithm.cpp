@@ -17,24 +17,13 @@
 namespace opennn
 {
 
-OptimizationAlgorithm::OptimizationAlgorithm()
-{
-    const int n = omp_get_max_threads();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
-    set_default();
-}
-
-
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
-    : loss_index(new_loss_index)
 {
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 
-    set_default();
+    set(new_loss_index);
 }
 
 
@@ -65,14 +54,7 @@ void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
 
 bool OptimizationAlgorithm::has_loss_index() const
 {
-    if(loss_index)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return loss_index;
 }
 
 
@@ -100,9 +82,9 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 }
 
 
-void OptimizationAlgorithm::set()
+void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 {
-    loss_index = nullptr;
+    loss_index = new_loss_index;
 
     set_default();
 }
@@ -192,19 +174,13 @@ void OptimizationAlgorithm::check() const
 }
 
 
-void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("OptimizationAlgorithm");
 
-    file_stream.OpenElement("OptimizationAlgorithm");
+    add_xml_element(printer, "Display", std::to_string(display));
 
-    // Display
-
-    file_stream.OpenElement("Display");
-    file_stream.PushText(to_string(display).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -215,12 +191,7 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Optimization algorithm element is nullptr.\n");
 
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
 
@@ -287,7 +258,7 @@ string TrainingResults::write_stopping_condition() const
         return "Maximum selection error increases";
 
     case OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber:
-        return "Maximum number of epochs";
+        return "Maximum epochs number";
 
     case OptimizationAlgorithm::StoppingCondition::MaximumTime:
         return "Maximum training time";

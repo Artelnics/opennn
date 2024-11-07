@@ -16,14 +16,6 @@
 namespace opennn
 {
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::LongShortTermMemory;
-}
-
-
 LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, 
                                                    const Index& new_neurons_number, 
                                                    const Index& new_timesteps) : Layer()
@@ -202,12 +194,6 @@ const bool& LongShortTermMemoryLayer::get_display() const
 }
 
 
-void LongShortTermMemoryLayer::set()
-{
-    set_default();
-}
-
-
 void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     input_biases.resize(new_neurons_number);
@@ -229,23 +215,8 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
-void LongShortTermMemoryLayer::set_default()
-{
     name = "long_short_term_memory_layer";
+
     layer_type = Type::LongShortTermMemory;
 }
 
@@ -467,54 +438,54 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 
 
 void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activations, 
-                                                     Tensor<type, 1>& activations_derivatives) const
+                                                     Tensor<type, 1>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activations_derivatives) const
+void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activation_derivatives) const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
@@ -2148,145 +2119,34 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
 void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
+    const tinyxml2::XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
 
-    // LongShortTermMemoryLayer layer
-
-    const tinyxml2::XMLElement* long_short_term_memory_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
-
-    if(!long_short_term_memory_layer_element)
+    if(!lstm_layer_element)
         throw runtime_error("PerceptronLayer element is nullptr.\n");
 
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = long_short_term_memory_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = long_short_term_memory_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = long_short_term_memory_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Time step
-
-    const tinyxml2::XMLElement* time_step_element = long_short_term_memory_layer_element->FirstChildElement("TimeStep");
-
-    if(!time_step_element)
-        throw runtime_error("TimeStep element is nullptr.\n");
-
-    if(time_step_element->GetText())
-        set_timesteps(Index(stoi(time_step_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = long_short_term_memory_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Recurrent activation function
-
-    const tinyxml2::XMLElement* recurrent_activation_function_element = long_short_term_memory_layer_element->FirstChildElement("RecurrentActivationFunction");
-
-    if(!recurrent_activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(recurrent_activation_function_element->GetText())
-        set_recurrent_activation_function(recurrent_activation_function_element->GetText());
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = long_short_term_memory_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    set_name(read_xml_string(lstm_layer_element, "Name"));
+    set_inputs_number(read_xml_index(lstm_layer_element, "InputsNumber"));
+    set_neurons_number(read_xml_index(lstm_layer_element, "NeuronsNumber"));
+    set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
+    set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
+    set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
+    set_parameters(to_type_vector(read_xml_string(lstm_layer_element, "Parameters"), " "));
 }
 
 
-void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-//    ostringstream buffer;
+    printer.OpenElement("LongShortTermMemoryLayer");
 
-    // Long short-term memory layer
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("LongShortTermMemoryLayer");
-
-    // Layer name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Time step
-
-    file_stream.OpenElement("TimeStep");
-    file_stream.PushText(to_string(get_timesteps()).c_str());
-
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-
-    file_stream.PushText(write_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Recurrent activation function
-
-    file_stream.OpenElement("RecurrentActivationFunction");
-
-    file_stream.PushText(write_recurrent_activation_function().c_str());
-
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Long short-term memory layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -2318,11 +2178,18 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 }
 
 
+LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_pair() const
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -2336,7 +2203,6 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
-    outputs_data = outputs.data();
 
     previous_cell_states.resize(neurons_number);
     previous_hidden_states.resize(neurons_number);
@@ -2372,6 +2238,17 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     output_activations_derivatives.resize(batch_samples_number, neurons_number);
 
     hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+}
+
+
+void LongShortTermMemoryLayerForwardPropagation::print() const
+{
+    cout << "Current inputs: " << endl
+         << current_inputs << endl
+         << "Current input activations: " << endl
+         << current_input_activations << endl
+         << "Current input activations derivatives: " << endl
+         << current_input_activations_derivatives << endl;
 }
 
 
@@ -2429,6 +2306,13 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
 }
 
 
+LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
 vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_inputs_number();
@@ -2461,6 +2345,11 @@ void LongShortTermMemoryLayerBackPropagation::set_derivatives_zero()
     hidden_states_weights_derivatives.setZero();
     hidden_states_recurrent_weights_derivatives.setZero();
     hidden_states_biases_derivatives.setZero();
+}
+
+
+void LongShortTermMemoryLayerBackPropagation::print() const
+{
 }
 
 }

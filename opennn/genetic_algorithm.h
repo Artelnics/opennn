@@ -9,8 +9,6 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-
-
 #include "training_strategy.h"
 #include "inputs_selection.h"
 #include "config.h"
@@ -23,15 +21,9 @@ class GeneticAlgorithm : public InputsSelection
 
 public:
 
-    // Constructors
-
-    explicit GeneticAlgorithm();
-
-    explicit GeneticAlgorithm(TrainingStrategy*);
+    explicit GeneticAlgorithm(TrainingStrategy* = nullptr);
 
     enum class InitializationMethod{Random,Correlations};
-
-    // Get
 
     const Tensor<bool, 2>& get_population() const;
 
@@ -52,8 +44,6 @@ public:
     const Index& get_elitism_size() const;
 
     const InitializationMethod& get_initialization_method() const;
-
-    // Set
 
     virtual void set_default() final;
 
@@ -77,10 +67,6 @@ public:
 
     void set_maximum_epochs_number(const Index&);
 
-    // GENETIC OPERATORS METHODS
-
-    // Population
-
     void initialize_population();
 
     void initialize_population_random();
@@ -97,25 +83,15 @@ public:
 
     Tensor<type, 1> calculate_selection_probabilities();
 
-    // Selection
-
     void perform_selection();
 
     Index weighted_random(const Tensor<type, 1>&);
 
-    // Crossover
-
     void perform_crossover();
-
-    // Mutation
 
     void perform_mutation();
 
-    // Check 
-
     void check_categorical_raw_variables();
-
-//    Tensor<bool, 1> get_individual_variables_to_indexes (Tensor<bool, 1>&);
 
     Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 
@@ -130,8 +106,6 @@ public:
     Tensor<Index, 1> get_original_unused_raw_variables();
 
     InputsSelectionResults perform_inputs_selection ()  final;
-
-    // Serialization method
 
     Tensor<string, 2> to_string_matrix() const;
 

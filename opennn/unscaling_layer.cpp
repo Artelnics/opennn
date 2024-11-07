@@ -13,15 +13,11 @@
 namespace opennn
 {
 
-UnscalingLayer::UnscalingLayer() : Layer()
-{
-    set();
-}
 
-
-UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions) : Layer()
+UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
+    : Layer()
 {
-    set(new_input_dimensions[0]);
+    set(new_input_dimensions[0]);      
 }
 
 
@@ -39,7 +35,7 @@ Index UnscalingLayer::get_neurons_number() const
 
 dimensions UnscalingLayer::get_output_dimensions() const
 {
-    Index neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     return { neurons_number };
 }
@@ -208,16 +204,6 @@ const bool& UnscalingLayer::get_display() const
 }
 
 
-void UnscalingLayer::set()
-{
-    descriptives.resize(0);
-
-    scalers.resize(0);
-
-    set_default();
-}
-
-
 void UnscalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
@@ -230,7 +216,7 @@ void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void UnscalingLayer::set(const Index& new_neurons_number)
+void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name)
 {
     descriptives.resize(new_neurons_number);
 
@@ -238,51 +224,7 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
     scalers.setConstant(Scaler::MinimumMaximum);
 
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
-{
-    descriptives = new_descriptives;
-
-    scalers.resize(new_descriptives.size());
-
-    scalers.setConstant(Scaler::MinimumMaximum);
-
-    set_default();
-}
-
-
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
-{
-    descriptives = new_descriptives;
-
-    scalers = new_scalers;
-}
-
-
-void UnscalingLayer::set(const tinyxml2::XMLDocument& new_unscaling_layer_document)
-{
-    set_default();
-
-    from_XML(new_unscaling_layer_document);
-}
-
-
-void UnscalingLayer::set(const UnscalingLayer& new_unscaling_layer)
-{
-    descriptives = new_unscaling_layer.descriptives;
-
-    scalers = new_unscaling_layer.scalers;
-
-    display = new_unscaling_layer.display;
-}
-
-
-void UnscalingLayer::set_default()
-{
-    name = "unscaling_layer";
+    name = new_name;
 
     set_scalers(Scaler::MinimumMaximum);
 
@@ -292,6 +234,13 @@ void UnscalingLayer::set_default()
 
     layer_type = Type::Unscaling;
 }
+
+
+void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+{
+    descriptives = new_descriptives;
+}
+
 
 
 void UnscalingLayer::set_min_max_range(const type min, const type max)
@@ -311,30 +260,6 @@ void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& i
 {
     descriptives[i] = item_descriptives;
 }
-
-
-// void UnscalingLayer::set_minimum(const Index& i, const type& new_minimum)
-// {
-//     descriptives[i].set_minimum(new_minimum);
-// }
-
-
-// void UnscalingLayer::set_maximum(const Index& i, const type& new_maximum)
-// {
-//     descriptives[i].set_maximum(new_maximum);
-// }
-
-
-// void UnscalingLayer::set_mean(const Index& i, const type& new_mean)
-// {
-//     descriptives[i].set_mean(new_mean);
-// }
-
-
-// void UnscalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-// {
-//     descriptives[i].set_standard_deviation(new_standard_deviation);
-// }
 
 
 void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
@@ -411,7 +336,6 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_neurons_number();
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
@@ -425,9 +349,9 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     {
         const Scaler& scaler = scalers(i);
 
-        const TensorMap<Tensor<type, 1>> input_column(inputs.data() + i * samples_number, samples_number);
+        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
 
-        TensorMap<Tensor<type, 1>> output_column(outputs.data() + i * samples_number, samples_number);
+        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
 
         if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
@@ -475,50 +399,28 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
+    printer.OpenElement("UnscalingLayer");
+
     const Index neurons_number = get_neurons_number();
-
-    // Unscaling layer
-
-    file_stream.OpenElement("UnscalingLayer");
-
-    // Unscaling neurons number
-
-    file_stream.OpenElement("UnscalingNeuronsNumber");
-    file_stream.PushText(to_string(neurons_number).c_str());
-    file_stream.CloseElement();
-
-    // Descriptives
+    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(neurons_number));
 
     const Tensor<string, 1> scalers = write_unscaling_methods();
 
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        file_stream.OpenElement("UnscalingNeuron");
-        file_stream.PushAttribute("Index", int(i+1));
+    for (Index i = 0; i < neurons_number; i++) {
+        printer.OpenElement("UnscalingNeuron");
+        printer.PushAttribute("Index", int(i + 1));
 
-        //Descriptives
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
+        add_xml_element(printer, "Scaler", scalers(i));
 
-        file_stream.OpenElement("Descriptives");
-        file_stream.PushText(tensor_to_string(descriptives(i).to_tensor()).c_str());
-        file_stream.CloseElement();
-
-        // Unscaling method
-
-        file_stream.OpenElement("Scaler");
-        file_stream.PushText(scalers(i).c_str());
-        file_stream.CloseElement();
-
-        // Unscaling neuron (end tag)
-
-        file_stream.CloseElement();
+        printer.CloseElement();  
     }
 
-    // Unscaling layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
+
 
 Tensor<string, 1> UnscalingLayer::write_scalers_text() const
 {
@@ -569,68 +471,46 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!root_element)
         throw runtime_error("Unscaling layer element is nullptr.\n");
 
-    // Unscaling neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("Unscaling neurons number element is nullptr.\n");
-
-    const Index neurons_number = Index(atoi(neurons_number_element->GetText()));
-
+    Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
     set(neurons_number);
 
-    unsigned index = 0; // Index does not work
+    const tinyxml2::XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
 
-    const tinyxml2::XMLElement* start_element = neurons_number_element;
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
+    for (Index i = 0; i < neurons_number; i++) {
         const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
-        start_element = unscaling_neuron_element;
-
-        if(!unscaling_neuron_element)
-            throw runtime_error("Unscaling neuron " + to_string(i+1) + " is nullptr.\n");
-
-        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
-
-        if(index != i+1)
-            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
-
-        // Minimum
-
-        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
-
-        if(descriptives_element->GetText())
-        {
-            const char* new_descriptives_element = descriptives_element->GetText();
-
-            const Tensor<string,1> splitted_descriptives = get_tokens(new_descriptives_element, " ");
-
-            descriptives[i].minimum = type(stof(splitted_descriptives[0]));
-            descriptives[i].maximum = type(stof(splitted_descriptives[1]));
-            descriptives[i].mean = type(stof(splitted_descriptives[2]));
-            descriptives[i].standard_deviation = type(stof(splitted_descriptives[3]));
+        if (!unscaling_neuron_element) {
+            throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
 
-        // Unscaling method
+        unsigned index = 0;
+        unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
+        if (index != i + 1) {
+            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+        }
 
-        const tinyxml2::XMLElement* unscaling_method_element = unscaling_neuron_element->FirstChildElement("Scaler");
+        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
+        if (descriptives_element->GetText()) {
+            Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+            descriptives[i].set(
+                type(stof(splitted_descriptives[0])),
+                type(stof(splitted_descriptives[1])),
+                type(stof(splitted_descriptives[2])),
+                type(stof(splitted_descriptives[3])));
+        }
 
-        if(!unscaling_method_element)
-            throw runtime_error("Unscaling method element " + to_string(i+1) + " is nullptr.\n");
+        set_scaler(i, read_xml_string(unscaling_neuron_element, "Scaler"));
 
-        const string new_method = unscaling_method_element->GetText();
-
-        set_scaler(i, new_method);
+        start_element = unscaling_neuron_element;
     }
 
-    // Display
+    set_display(read_xml_bool(root_element, "Display"));
+}
 
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
 
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -638,7 +518,7 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return { outputs_data, { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
 }
 
 
@@ -651,8 +531,13 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     outputs.resize(batch_samples_number, neurons_number);
+}
 
-    outputs_data = outputs.data();
+
+void UnscalingLayerForwardPropagation::print() const
+{
+    cout << "Outputs:" << endl
+        << outputs << endl;
 }
 
 }

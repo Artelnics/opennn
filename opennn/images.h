@@ -9,10 +9,6 @@
 #ifndef OPENNN_IMAGES_H
 #define OPENNN_IMAGES_H
 
-
-
-
-
 #include "config.h"
 
 using namespace std;

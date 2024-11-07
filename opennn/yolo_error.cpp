@@ -1,4 +1,4 @@
-#include "yolo_v2_error.h"
+#include "yolo_error.h"
 #include "neural_network_forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
@@ -6,18 +6,18 @@
 namespace opennn
 {
 
-YoloV2Error::YoloV2Error() : LossIndex()
+YoloError::YoloError() : LossIndex()
 {
 }
 
 
-YoloV2Error::YoloV2Error(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+YoloError::YoloError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
 
 
-void YoloV2Error::calculate_error(const Batch& batch,
+void YoloError::calculate_error(const Batch& batch,
                                         const ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation) const
 {
@@ -29,7 +29,7 @@ void YoloV2Error::calculate_error(const Batch& batch,
 }
 
 
-void YoloV2Error::calculate_binary_error(const Batch& batch,
+void YoloError::calculate_binary_error(const Batch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -58,7 +58,7 @@ void YoloV2Error::calculate_binary_error(const Batch& batch,
 }
 
 
-void YoloV2Error::calculate_multiple_error(const Batch& batch,
+void YoloError::calculate_multiple_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
@@ -95,7 +95,7 @@ void YoloV2Error::calculate_multiple_error(const Batch& batch,
 }
 
 
-void YoloV2Error::calculate_output_delta(const Batch& batch,
+void YoloError::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -107,7 +107,7 @@ void YoloV2Error::calculate_output_delta(const Batch& batch,
 }
 
 
-void YoloV2Error::calculate_binary_output_delta(const Batch& batch,
+void YoloError::calculate_binary_output_delta(const Batch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
@@ -141,7 +141,7 @@ void YoloV2Error::calculate_binary_output_delta(const Batch& batch,
 }
 
 
-void YoloV2Error::calculate_multiple_output_delta(const Batch& batch,
+void YoloError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
@@ -165,19 +165,19 @@ void YoloV2Error::calculate_multiple_output_delta(const Batch& batch,
 }
 
 
-string YoloV2Error::get_loss_method() const
+string YoloError::get_loss_method() const
 {
     return "YOLO_V2_ERROR";
 }
 
 
-string YoloV2Error::get_error_type_text() const
+string YoloError::get_error_type_text() const
 {
     return "YOLOv2 error";
 }
 
 
-void YoloV2Error::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void YoloError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
@@ -187,7 +187,7 @@ void YoloV2Error::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void YoloV2Error::from_XML(const tinyxml2::XMLDocument& document)
+void YoloError::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("YOLOv2Error");
 

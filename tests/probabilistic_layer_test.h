@@ -40,15 +40,11 @@ private:
     Index neurons_number = 0;
     Index samples_number = 0;
 
-    Tensor<type, 1> biases;
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 1> parameters;
-
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
     Tensor<type, 2> combinations;
     Tensor<type, 2> activations;
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activation_derivatives;
 
     pair<type*, dimensions> input_pairs;
 

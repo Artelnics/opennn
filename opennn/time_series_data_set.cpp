@@ -195,7 +195,7 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
 }
 
 
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_variables_names() const
+Tensor<string, 1> TimeSeriesDataSet::get_time_series_variable_names() const
 {
     const Index variables_number = get_time_series_variables_number();
 
@@ -279,20 +279,14 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
 
     Tensor<RawVariable, 1> new_raw_variables;
 
-    const Index time_raw_variables_number = get_time_raw_variables_number();
+    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
 
     if(time_raw_variables_number == 0)
-    {
         new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
-    }
     else if(time_raw_variables_number == 1)
-    {
         new_raw_variables.resize((raw_variables_number-1)*(lags_number+steps_ahead));
-    }
     else
-    {
         throw runtime_error("More than 1 time variable.");
-    }
 
     Index lag_index = lags_number - 1;
     Index ahead_index = 0;
@@ -303,51 +297,38 @@ void TimeSeriesDataSet::transform_time_series_raw_variables()
     {
         raw_variable_index = i%raw_variables_number;
 
+        const RawVariable& raw_variable = raw_variables(raw_variable_index);
+
         if(time_series_raw_variables(raw_variable_index).type == RawVariableType::DateTime) continue;
 
         if(i < lags_number*raw_variables_number)
         {            
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_lag_" + to_string(lag_index);
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_lag_" + to_string(lag_index);
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Input);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
-            new_raw_variable_index++;
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
         }
         else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
         {            
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_ahead_" + to_string(ahead_index);
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::Target);
-
-            new_raw_variable_index++;            
         }
         else
         {
-
-            new_raw_variables(new_raw_variable_index).name = raw_variables(raw_variable_index).name + "_ahead_" + to_string(ahead_index);
-
-            new_raw_variables(new_raw_variable_index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(new_raw_variable_index).categories = raw_variables(raw_variable_index).categories;
-
+            new_raw_variables(new_raw_variable_index).name = raw_variable.name + "_ahead_" + to_string(ahead_index);
+            new_raw_variables(new_raw_variable_index).type = raw_variable.type;
+            new_raw_variables(new_raw_variable_index).categories = raw_variable.categories;
             new_raw_variables(new_raw_variable_index).set_use(VariableUse::None);
-
-            new_raw_variable_index++;
         }
+
+        new_raw_variable_index++;
 
         if(lag_index > 0 && raw_variable_index == raw_variables_number - 1)
-        {
             lag_index--;
-        }
         else if(raw_variable_index == raw_variables_number - 1)
-        {
             ahead_index++;
-        }
     }
 
     raw_variables = new_raw_variables;
@@ -363,7 +344,7 @@ void TimeSeriesDataSet::transform_time_series_data()
     const Index old_samples_number = data.dimension(0);
     const Index old_variables_number = data.dimension(1);
 
-    const Index time_raw_variables_number = get_time_raw_variables_number();
+    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
 
     const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
 
@@ -393,7 +374,7 @@ void TimeSeriesDataSet::transform_time_series_data()
         }
     }
 
-    samples_uses.resize(new_samples_number);
+    sample_uses.resize(new_samples_number);
 
     split_samples_random();
 }
@@ -420,9 +401,9 @@ void TimeSeriesDataSet::print() const
     if(!display) return;
 
     const Index variables_number = get_variables_number();
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index samples_number = get_samples_number();
-    const Index target_variables_bumber = get_target_variables_number();
+    const Index target_variables_bumber = get_variables_number(VariableUse::Target);
 
     cout << "Time series data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -1065,9 +1046,9 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
-        samples_uses.resize(new_samples_number);
+        sample_uses.resize(new_samples_number);
 
-        set_training();
+        set(DataSet::SampleUse::Training);
     }
 
     // Samples uses
@@ -1192,15 +1173,15 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index used_samples_number = used_samples_indices.size();
     const Index used_variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     //Index current_variable_index;
     //Index current_sample_index;
@@ -1211,16 +1192,14 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < used_variables_number - target_variables_number; j++)
         {
-            const Index current_variable_index = input_variables_indices(j);
+            const Index current_variable_index = input_variable_indices(j);
 
             for(Index i = 0; i < used_samples_number; i++)
             {
                 const Index current_sample_index = used_samples_indices(i);
 
                 if(isnan(data(current_sample_index, current_variable_index)))
-                {
                     data(current_sample_index, current_variable_index) = means(j);
-                }
             }
         }
 
@@ -1228,16 +1207,14 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < target_variables_number; j++)
         {
-            const Index current_variable_index = target_variables_indices(j);
+            const Index current_variable_index = target_variable_indices(j);
 
             for(Index i = 0; i < used_samples_number; i++)
             {
                 const Index current_sample_index = used_samples_indices(i);
 
                 if(isnan(data(current_sample_index, current_variable_index)))
-                {
                     set_sample_use(i, "None");
-                }
             }
         }
     }
@@ -1290,17 +1267,11 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                         }
 
                         if(isnan(previous_value))
-                        {
                             data(current_sample_index, current_variable_index) = type(next_value);
-                        }
                         else if(isnan(next_value))
-                        {
                             data(current_sample_index, current_variable_index) = type(previous_value);
-                        }
                         else
-                        {
                             data(current_sample_index, current_variable_index) = type((previous_value + next_value)/2);
-                        }
                     }
                 }
             }

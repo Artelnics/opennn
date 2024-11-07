@@ -21,11 +21,17 @@ struct BoxPlot {
 
     type maximum = type(NAN);
 
-    explicit BoxPlot() {}
+    explicit BoxPlot(const type& = type(NAN), 
+                     const type& = type(NAN),
+                     const type& = type(NAN),
+                     const type& = type(NAN),
+                     const type& = type(NAN));
 
-    explicit BoxPlot(const type&, const type&, const type&, const type&, const type&);
-
-    void set(const type&, const type&, const type&, const type&, const type&);
+    void set(const type& = type(NAN), 
+             const type& = type(NAN), 
+             const type& = type(NAN), 
+             const type& = type(NAN), 
+             const type& = type(NAN));
 };
 
 

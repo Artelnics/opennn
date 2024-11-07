@@ -234,7 +234,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            SampleUse sample_use = samples_uses(i);
+            SampleUse sample_use = sample_uses(i);
 
             buffer << Index(sample_use);
 
@@ -802,7 +802,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
     {
         const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
 
-        samples_uses.resize(new_samples_number);
+        sample_uses.resize(new_samples_number);
 
         set_training();
     }
@@ -1924,7 +1924,7 @@ void TextDataSet::read_txt()
     separator = Separator::Semicolon;
     has_header = true;
 
-//    for(Index i = 0; i < get_input_raw_variables_number(); i++)
+//    for(Index i = 0; i < get_raw_variables_number(VariableUse::Input); i++)
 //        set_raw_variable_type(i, RawVariableType::Numeric);
 
 }

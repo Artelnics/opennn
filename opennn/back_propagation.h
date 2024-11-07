@@ -12,14 +12,9 @@ namespace opennn
 
 struct BackPropagation
 {
-    explicit BackPropagation() {}
+    BackPropagation(const Index& = 0, LossIndex* = nullptr);
 
-    explicit BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
-    {
-        set(new_batch_samples_number, new_loss_index);
-    }
-
-    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
+    void set(const Index& = 0, LossIndex* = nullptr);
 
     vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 
@@ -47,7 +42,7 @@ struct BackPropagation
     Tensor<type, 1> gradient;
     Tensor<type, 1> regularization_gradient;
 
-    type accuracy = type(0);
+    Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;
     Tensor<bool, 2> matches;
     Tensor<bool, 2> mask;

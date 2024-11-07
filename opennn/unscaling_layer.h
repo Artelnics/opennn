@@ -9,12 +9,8 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "config.h"
 #include "layer.h"
@@ -29,14 +25,8 @@ class UnscalingLayer : public Layer
 
 public:
 
-   // Constructors
-
-   explicit UnscalingLayer();
-
-   explicit UnscalingLayer(const dimensions&);
+   explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
-   // Get  
-
    Index get_inputs_number() const final;
    Index get_neurons_number() const final;
 
@@ -54,34 +44,18 @@ public:
 
    const bool& get_display() const;
 
-   // Set
-
-   void set();
-   void set(const Index&);
-   void set(const Tensor<Descriptives, 1>&);
+   void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   void set(const tinyxml2::XMLDocument&);
-   void set(const UnscalingLayer&);
 
    void set_inputs_number(const Index&) final;
    void set_neurons_number(const Index&) final;
-
-   void set_default();
-
-   // Output variables descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
-//   void set_minimum(const Index&, const type&);
-//   void set_maximum(const Index&, const type&);
-//   void set_mean(const Index&, const type&);
-//   void set_standard_deviation(const Index&, const type&);
-
    void set_min_max_range(const type min, const type max);
 
-   // Outputs unscaling method
 
    void set_scalers(const Tensor<Scaler,1>&);
    void set_scalers(const string&);
@@ -90,21 +64,13 @@ public:
 
    void set_scaler(const Index&, const string&);
 
-   // Display messages
-
    void set_display(const bool&);
 
-   // Check
-
    bool is_empty() const;
-
-   // Forward propagation
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
-
-   // Serialization
 
    Tensor<string, 1> write_scalers_text() const;
 
@@ -112,8 +78,6 @@ public:
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
-
-   // Expression
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
@@ -134,33 +98,13 @@ protected:
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    
-
-    explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-    
-
-    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
-    
+    explicit UnscalingLayerForwardPropagation(const Index& = 0, Layer* = 0);
     
     pair<type*, dimensions> get_outputs_pair() const final;
 
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
-
-
-    void print() const
-    {
-        cout << "Outputs:" << endl;
-        cout << outputs << endl;
-    }
-
+    void print() const;
 
     Tensor<type, 2> outputs;
 };

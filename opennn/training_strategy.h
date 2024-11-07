@@ -25,7 +25,7 @@
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
-#include "yolo_v2_error.h"
+#include "yolo_error.h"
 
 namespace opennn
 {
@@ -35,13 +35,7 @@ class TrainingStrategy
 
 public:
 
-    // Constructors
-
-    explicit TrainingStrategy();
-
-    explicit TrainingStrategy(NeuralNetwork*, DataSet*);
-
-    // Enumerations
+    explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     enum class LossMethod
     {
@@ -52,7 +46,7 @@ public:
         WEIGHTED_SQUARED_ERROR,
         CROSS_ENTROPY_ERROR,
         CROSS_ENTROPY_ERROR_3D,
-        YOLO_V2_ERROR
+        YOLO_ERROR
     };
 
     enum class OptimizationMethod
@@ -104,9 +98,8 @@ public:
 
     // Set
 
-    void set();
-    void set(NeuralNetwork*, DataSet*);
-    void set_default() const;
+    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    void set_default();
 
     void set_threads_number(const int&);
 
@@ -178,7 +171,7 @@ private:
 
     LossMethod loss_method;
 
-    YoloV2Error yolov2_error;
+    YoloError yolo_error;
 
     // Optimization algorithm
 

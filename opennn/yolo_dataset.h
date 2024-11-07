@@ -35,7 +35,7 @@ public:
 
     size_t size() const;
 
-    Tensor<type, 3> getImage(const Index&) const;
+    Tensor<type, 3> getImage(const Index&) /*const*/;
 
     Tensor<type, 2> getLabel(const Index&) const;
 
@@ -53,7 +53,7 @@ public:
 
 protected:
     vector<Tensor<type, 1>> offsets;
-    vector<Tensor<type, 3>> images;
+    Tensor<type, 4> images;
     vector<Tensor<type, 2>> raw_labels;
     vector<Tensor<type, 2>> labels;
     vector<string> labels_files;
@@ -65,6 +65,13 @@ protected:
     Index anchor_number = 5;
     Index input_data_size = 416 * 416 * 3;
     Index target_data_size;
+
+    ModelType model_type = opennn::DataSet::ModelType::ObjectDetection;
+    dimensions input_dimensions = {416, 416, 3};
+    dimensions target_dimensions = {13, 13, 125};
+
+    // Tensor<type, 4> targets_batch;
+    // Tensor<type, 4> images_batch;
 
     // int yolo_scale = 416;
 };

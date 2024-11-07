@@ -9,10 +9,6 @@
 #ifndef GROWINGNEURONS_H
 #define GROWINGNEURONS_H
 
-
-
-
-
 #include "training_strategy.h"
 #include "neurons_selection.h"
 
@@ -28,9 +24,7 @@ public:
 
     // Constructors
 
-    explicit GrowingNeurons();
-
-    explicit GrowingNeurons(TrainingStrategy*);
+    explicit GrowingNeurons(TrainingStrategy* = nullptr);
 
     // Get
 

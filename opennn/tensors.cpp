@@ -41,25 +41,6 @@ bool calculate_random_bool()
 }
 
 
-template<int rank>
-void set_random(Tensor<type, rank>& tensor, const type& minimum, const type& maximum)
-{
-    random_device rd;
-    mt19937 gen(rd());
-
-    uniform_real_distribution<type> distribution(minimum, maximum);
-
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(gen);
-}
-
-
-template void set_random(Tensor<type, 1>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 2>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 3>& tensor, const type& minimum, const type& maximum);
-template void set_random(Tensor<type, 4>& tensor, const type& minimum, const type& maximum);
-
-
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     #pragma omp parallel for
@@ -86,7 +67,6 @@ void initialize_sequential(Tensor<Index, 1>& new_tensor,
     new_tensor.resize(new_size);
     new_tensor(0) = start;
 
-    #pragma omp parallel for
     for(Index i = 1; i < new_size-1; i++)
         new_tensor(i) = new_tensor(i-1) + step;
 
@@ -458,7 +438,10 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        TensorMap<Tensor<type, 1>> column((type*) matrix.data() + i * matrix.dimension(0),
+                                          matrix.dimension(0));
 
         column.device(*thread_pool_device) = column + vector(i);
     }
@@ -1554,6 +1537,87 @@ string dimensions_to_string(const dimensions& x, const string& separator)
 }
 
 
+dimensions string_to_dimensions(const string& x, const string& separator) {
+
+    dimensions result;
+
+    if (x.empty()) {
+        throw std::runtime_error("Error: Input string must not be empty.\n");
+    }
+
+    size_t start = 0;
+    size_t end = x.find(separator);
+
+    while (end != string::npos) {
+        string token = x.substr(start, end - start);
+
+        try {
+            result.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+
+        start = end + separator.length();
+        end = x.find(separator, start);
+    }
+
+    if (start < x.size()) {
+        string token = x.substr(start);
+        try {
+            result.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+    }
+
+    return result;
+}
+
+
+Tensor<type, 1> string_to_tensor(const string& x, const string& separator) {
+    if (x.empty()) {
+        throw runtime_error("Error: Input string must not be empty.\n");
+    }
+
+    dimensions temp_dimensions;
+    size_t start = 0;
+    size_t end = x.find(separator);
+
+    while (end != string::npos) {
+        string token = x.substr(start, end - start);
+
+        try {
+            temp_dimensions.push_back(std::stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+
+        start = end + separator.length();
+        end = x.find(separator, start);
+    }
+
+    if (start < x.size()) {
+        string token = x.substr(start);
+        try {
+            temp_dimensions.push_back(stoi(token));
+        }
+        catch (const invalid_argument&) {
+            throw runtime_error("Error: Input string contains non-numeric elements.\n");
+        }
+    }
+
+    Tensor<type, 1> tensor(temp_dimensions.size());
+    for (size_t i = 0; i < temp_dimensions.size(); ++i) {
+        tensor(i) = temp_dimensions[i];
+    }
+
+    return tensor;
+}
+
+
 string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
 {
     const Index size = x.size();
@@ -1767,8 +1831,10 @@ type round_to_precision(type x, const int& precision)
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
 {
-    return TensorMap<Tensor<type, 1>>((type*) matrix.data() + column_index * matrix.dimension(0),
-                                      matrix.dimension(0));
+    const TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0),
+                                            matrix.dimension(0));
+
+    return column;
 }
 
 
@@ -1783,6 +1849,9 @@ void print_dimensions(const dimensions& new_dimensions)
 
 TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair)
 {
+    if(x_pair.second.size() != 1)
+        throw runtime_error("Dimensions must be 1");
+
     return TensorMap<Tensor<type, 1>>(x_pair.first,
                                       x_pair.second[0]);
 }
@@ -1790,6 +1859,9 @@ TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
 {
+    if(x_pair.second.size() != 2)
+        throw runtime_error("Dimensions must be 2");
+
     return TensorMap<Tensor<type, 2>>(x_pair.first,
                                       x_pair.second[0],
                                       x_pair.second[1]);
@@ -1798,6 +1870,9 @@ TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 {
+    if(x_pair.second.size() != 3)
+        throw runtime_error("Dimensions must be 3");
+
     return TensorMap<Tensor<type, 3>>(x_pair.first,
                                       x_pair.second[0],
                                       x_pair.second[1],

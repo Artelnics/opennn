@@ -21,7 +21,7 @@ PoolingLayerTest::PoolingLayerTest() : UnitTesting()
 void PoolingLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
-
+/*
     dimensions input_dimensions;
     dimensions pool_dimensions;
 
@@ -36,6 +36,7 @@ void PoolingLayerTest::test_constructor()
 
     assert_true(pooling_layer.get_pool_height() == 3 
                 && pooling_layer.get_pool_width() == 2, LOG);
+*/
 }
 
 

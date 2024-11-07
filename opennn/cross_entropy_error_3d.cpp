@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-CrossEntropyError3D::CrossEntropyError3D() : LossIndex()
-{
-}
-
-
 CrossEntropyError3D::CrossEntropyError3D(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
@@ -88,11 +83,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     matches.device(*thread_pool_device) = matches && mask;
 
-    Tensor<type, 0> accuracy;
+    Tensor<type, 0>& accuracy = back_propagation.accuracy;
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
-
-    back_propagation.accuracy = accuracy(0);
     
     if(isnan(error())) throw runtime_error("Error is NAN");
 }
@@ -104,7 +97,6 @@ void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
 {
     // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
 }
-
 
 
 string CrossEntropyError3D::get_loss_method() const
@@ -123,10 +115,7 @@ string CrossEntropyError3D::get_error_type_text() const
 
 void CrossEntropyError3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("CrossEntropyError3D");
-
     file_stream.CloseElement();
 }
 

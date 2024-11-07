@@ -21,10 +21,6 @@
 namespace opennn
 {
 
-struct ProbabilisticLayerForwardPropagation;
-struct ProbabilisticLayerBackPropagation;
-struct ProbabilisticLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
     struct ProbabilisticLayerForwardPropagationCuda;
     struct ProbabilisticLayerBackPropagationCuda;
@@ -33,30 +29,26 @@ struct ProbabilisticLayerBackPropagationLM;
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit ProbabilisticLayerForwardPropagation();
-
-    explicit ProbabilisticLayerForwardPropagation(const Index&, Layer*);
+    explicit ProbabilisticLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type *, dimensions> get_outputs_pair() const final;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
     Tensor<type, 2> outputs;
-    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> activation_derivatives;
 };
 
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayerBackPropagation();
-
-    explicit ProbabilisticLayerBackPropagation(const Index&, Layer*);
+    explicit ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index&, Layer*) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
 
@@ -76,12 +68,8 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit ProbabilisticLayerBackPropagationLM() : LayerBackPropagationLM()
-    {
-
-    }
-
-    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
+    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
+                                                 Layer* new_layer = nullptr)
         : LayerBackPropagationLM()
     {
         set(new_batch_samples_number, new_layer);
@@ -92,7 +80,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
         return vector<pair<type*, dimensions>>();
     }
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const
     {
@@ -130,7 +118,10 @@ public:
     explicit ProbabilisticLayer();
 
     explicit ProbabilisticLayer(const Index&, const Index&);
-    explicit ProbabilisticLayer(const dimensions&, const dimensions&);
+
+    explicit ProbabilisticLayer(const dimensions&,
+                                const dimensions&,
+                                const string = "probabilistic_layer");
 
     // Get
 
@@ -152,9 +143,9 @@ public:
 
     // Set
 
-    void set();
-    void set(const Index&, const Index&);
-    void set(const ProbabilisticLayer&);
+    void set(const Index& = 0, 
+             const Index& = 0, 
+             const string = "probabilistic_layer");
 
     void set_inputs_number(const Index&) final;
     void set_neurons_number(const Index&) final;
@@ -164,8 +155,6 @@ public:
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
-
-    void set_default();
 
     // Parameters
 
@@ -244,6 +233,8 @@ protected:
     bool display = true;
 
     Tensor<type, 2> empty;
+
+    const Eigen::array<Index, 1> sum_dimensions = {0};
 
 #ifdef OPENNN_CUDA
 #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"

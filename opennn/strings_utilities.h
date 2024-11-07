@@ -9,12 +9,8 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
-
-
 #include <string>
 #include <vector>
-
-// Eigen includes
 
 #include "config.h"
 #include "word_bag.h"
@@ -97,7 +93,6 @@ namespace opennn
     string get_word_from_token(string&);
 
     string round_to_precision_string(const type&, const int&);
-    Tensor<string,2> round_to_precision_string_matrix(const Tensor<type,2>&, const int&);
 
     Tensor<string,1> sort_string_tensor(Tensor<string, 1>&);
     Tensor<string,1> concatenate_string_tensors (const Tensor<string, 1>&, const Tensor<string, 1>&);
@@ -303,8 +298,6 @@ public:
     Index get_alphabet_index(const char&) const;
 
     // Set
-
-    void set();
 
     void set_text(const string&);
 

@@ -9,11 +9,7 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-
-
 #include <string>
-
-
 
 #include "config.h"
 #include "data_set.h"
@@ -37,17 +33,9 @@ class LossIndex
 
 public:
 
-   // Constructors
-
-   explicit LossIndex();
-
-   explicit LossIndex(NeuralNetwork*, DataSet*);
-
-   // Destructor
+   explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    virtual ~LossIndex();
-
-   // Methods
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
@@ -69,26 +57,15 @@ public:
 
    bool has_data_set() const;
 
-   // Get
-
    RegularizationMethod get_regularization_method() const;
 
-   // Set
-
-   void set();
-   void set(NeuralNetwork*);
-   void set(DataSet*);
-   void set(NeuralNetwork*, DataSet*);
-
-   void set(const LossIndex&);
+   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set_threads_number(const int&);
 
    void set_neural_network(NeuralNetwork*);
 
    virtual void set_data_set(DataSet*);
-
-   void set_default();
 
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
@@ -225,11 +202,9 @@ protected:
 
 struct BackPropagationLM
 {
-    BackPropagationLM();
+    explicit BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
 
-    explicit BackPropagationLM(const Index&, LossIndex*);
-
-    void set(const Index&, LossIndex*);
+    void set(const Index& = 0, LossIndex* = nullptr);
 
     void print() const;
     

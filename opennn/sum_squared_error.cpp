@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-SumSquaredError::SumSquaredError() : LossIndex()
-{
-}
-
-
 SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
@@ -145,10 +140,7 @@ string SumSquaredError::get_error_type_text() const
 
 void SumSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("SumSquaredError");
-
     file_stream.CloseElement();
 }
 

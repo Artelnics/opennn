@@ -27,10 +27,6 @@ void RecurrentLayerTest::test_constructor()
     Index neurons_number;
     Index time_steps;
 
-    Tensor<type, 2> synaptic_weights;
-    Tensor<type, 2> recurrent_initializer;
-    Tensor<type, 1> biases;
-
     // Test
 
     inputs_number = 1;
@@ -60,7 +56,7 @@ void RecurrentLayerTest::test_calculate_activations()
 
     Tensor<type, 1> combinations;
     Tensor<type, 1> activations;
-    Tensor<type, 1> activations_derivatives;
+    Tensor<type, 1> activation_derivatives;
 
     Tensor<type, 1> numerical_activation_derivative;
     Tensor<type, 0> maximum_difference;

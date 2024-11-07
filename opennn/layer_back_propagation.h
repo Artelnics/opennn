@@ -1,8 +1,6 @@
 #ifndef LAYERBACKPROPAGATION_H
 #define LAYERBACKPROPAGATION_H
 
-//#include "layer.h"
-
 using namespace std;
 using namespace Eigen;
 
@@ -17,7 +15,7 @@ struct LayerBackPropagation
     
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 
-    virtual void set(const Index&, Layer*) {}
+    virtual void set(const Index& = 0, Layer* = nullptr) {}
 
     virtual void print() const {}
 

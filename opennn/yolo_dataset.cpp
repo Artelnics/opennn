@@ -22,15 +22,15 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
     sort(images_files.begin(), images_files.end());
 
-    images.resize(images_files.size());
+    images.resize(images_files.size(), 416, 416, 3);
     offsets.resize(images_files.size());
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(size_t i = 0; i < images_files.size(); i++)
     {
         Tensor<type, 1> image_offsets;
 
-        images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets), false);
+        images.chip(i,0) = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets), false);
         offsets[i] = image_offsets;
 
     }
@@ -58,7 +58,7 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
     labels.resize(raw_labels.size());
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for(size_t i = 0; i < raw_labels.size(); i++)
     {
 
@@ -99,29 +99,25 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
     }
     //cout<<images.size()<<endl<<labels.size()<<endl;
 
-    if (images.size() != labels.size()) {
+    if (images.dimension(0) != labels.size()) {
         cerr << "Images and labels file number do not match!" << endl;
         //throw runtime_error("Images and labels file number do not match!");
     }
 
     set(images.size(), input_data_size, target_data_size);
 
-#pragma omp parallel for
-    for(size_t i = 0; i < images.size(); i++)
-    {
-        for(Index j = 0; j <input_data_size; j++)
-        {
-            data(i,j) = images[i](j);
-        }
-        for(Index k = 0; k < target_data_size; k++)
-        {
-            data(i,k + input_data_size) = converted_labels[i](k);
-        }
-    }
-
-    model_type = opennn::DataSet::ModelType::ObjectDetection;
-    input_dimensions = {416, 416, 3};
-    target_dimensions = {13, 13, 125};
+// #pragma omp parallel for
+//     for(size_t i = 0; i < images.size(); i++)
+//     {
+//         for(Index j = 0; j <input_data_size; j++)
+//         {
+//             data(i,j) = images[i](j);
+//         }
+//         for(Index k = 0; k < target_data_size; k++)
+//         {
+//             data(i,k + input_data_size) = converted_labels[i](k);
+//         }
+//     }
 }
 
 YOLODataset::YOLODataset(const string& images_directory)
@@ -135,12 +131,12 @@ YOLODataset::YOLODataset(const string& images_directory)
     }
     sort(images_files.begin(), images_files.end());
 
-    images.resize(images_files.size());
+    images.resize(images_files.size(), 416, 416, 3);
 
 #pragma omp parallel for
     for(size_t i = 0; i < images_files.size(); i++)
     {
-        images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>()), false);
+        images.chip(i, 0) = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>()), false);
     }
 
     model_type = opennn::DataSet::ModelType::ObjectDetection;
@@ -153,9 +149,9 @@ size_t YOLODataset::size() const
     return images.size();
 }
 
-Tensor<type, 3> YOLODataset::getImage(const Index& index) const
+Tensor<type, 3> YOLODataset::getImage(const Index& index) /*const*/
 {
-    return images[index];
+    return images.chip(index, 0);
 }
 
 Tensor<type, 2> YOLODataset::getLabel(const Index& index) const
@@ -323,9 +319,9 @@ vector<string> read_classes(const string& classes_path)
 Tensor<type, 3> scale_image(const Tensor<type, 3>& image, const Index& new_height, const Index& new_width)
 {
 
-    Index original_height = image.dimension(0);
-    Index original_width = image.dimension(1);
-    Index channels = image.dimension(2);
+    const Index original_height = image.dimension(0);
+    const Index original_width = image.dimension(1);
+    const Index channels = image.dimension(2);
 
 
     Tensor<type, 3> scaled_image(new_height, new_width, channels);
@@ -373,9 +369,9 @@ Tensor<type, 3> scale_image(const Tensor<type, 3>& image, const Index& new_heigh
 Tensor<type, 3> apply_zero_padding(const Tensor<type, 3>& image, const Index& target_height, const Index& target_width)
 {
 
-    Index original_height = image.dimension(0);
-    Index original_width = image.dimension(1);
-    Index channels = image.dimension(2);
+    const Index original_height = image.dimension(0);
+    const Index original_width = image.dimension(1);
+    const Index channels = image.dimension(2);
 
 
     Tensor<type, 3> padded_image(target_height, target_width, channels);
@@ -406,8 +402,8 @@ Tensor<type, 3> resize_image_416x416(const Tensor<type, 3>& image)
     }
     else
     {
-        Index original_height = image.dimension(0);
-        Index original_width = image.dimension(1);
+        const Index original_height = image.dimension(0);
+        const Index original_width = image.dimension(1);
         //Index channels = image.dimension(2);
 
         // Calculate the scaling factor to preserve the proportions of the image
@@ -438,8 +434,8 @@ Tensor<type, 3> resize_image_416x416(const Tensor<type, 3>& image, Tensor<type, 
     }
     else
     {
-        Index original_height = image.dimension(0);
-        Index original_width = image.dimension(1);
+        const Index original_height = image.dimension(0);
+        const Index original_width = image.dimension(1);
         //Index channels = image.dimension(2);
 
         // Calculate the scaling factor to preserve the proportions of the image
@@ -481,7 +477,7 @@ Tensor<type, 3>  normalize_tensor(const Tensor<type, 3>& image, const bool& is_n
 Tensor<type, 2> extract_boxes_width_height_data(const vector<Tensor<type, 2> >&labels)
 {
     vector<Tensor<type, 1>> box_dimensions;
-    Index image_size = 416;
+    const Index image_size = 416;
     Tensor<type, 1> dimension(2);
 
     for(size_t i = 0; i < labels.size(); i++)
@@ -545,7 +541,7 @@ type calculate_intersection_over_union_anchors(const Tensor<type, 1>& box, const
 
 Tensor<type, 1> compute_distance(const Tensor<type, 1>& box, const vector<Tensor<type, 1>>& anchors)
 {
-    Index num_anchor = anchors.size();
+    const Index num_anchor = anchors.size();
 
     Tensor<type, 1> distances(num_anchor);
     for(Index i = 0; i < num_anchor; i++)
@@ -557,7 +553,7 @@ Tensor<type, 1> compute_distance(const Tensor<type, 1>& box, const vector<Tensor
 
 Tensor<Index, 1> assign_boxes_to_anchors(const Tensor<type, 2>& boxes, const vector<Tensor<type, 1>>& anchors)
 {
-    Index num_boxes = boxes.dimension(0);
+    const Index num_boxes = boxes.dimension(0);
     Tensor<Index, 1> assignments(num_boxes);
 
     for(Index i = 0; i < num_boxes; i++)
@@ -665,6 +661,8 @@ Tensor<type, 3> convert_to_YOLO_grid_data(const Tensor<type, 2>& labels, const v
     Tensor<type, 3> target(S, S, B * (5 + C));
     target.setZero();
 
+    Tensor<Index, 1> box_assignment = assign_boxes_to_anchors(labels, anchors);
+
     //for(size_t i = 0; i < labels.size(); i++)
     //{
     #pragma omp parallel for
@@ -676,22 +674,26 @@ Tensor<type, 3> convert_to_YOLO_grid_data(const Tensor<type, 2>& labels, const v
         type relative_x = labels(j,1) * S - cell_x;
         type relative_y = labels(j,2) * S - cell_y;
 
-        assign_boxes_to_anchors(labels, anchors);
-
-        for(Index b = 0; b < B; b++)
-        {
-            if(target(cell_x, cell_y, b * (5 + C)) == 0)
-            {
-                target(cell_x, cell_y, 0 + b * (5 + C)) = relative_x;
-                target(cell_x, cell_y, 1 + b * (5 + C)) = relative_y;
-                target(cell_x, cell_y, 2 + b * (5 + C)) = labels(j, 3);
-                target(cell_x, cell_y, 3 + b * (5 + C)) = labels(j, 4);
-                target(cell_x, cell_y, 4 + b * (5 + C)) = 1.0;
-                target(cell_x, cell_y, 5 + static_cast<Index>(labels(j,0)) + b * (5 + C)) = 1.0;
-                break;
-            }
-            continue;
-        }
+        target(cell_x, cell_y, 0 + box_assignment(j) * (5 + C)) = relative_x;
+        target(cell_x, cell_y, 1 + box_assignment(j) * (5 + C)) = relative_y;
+        target(cell_x, cell_y, 2 + box_assignment(j) * (5 + C)) = labels(j, 3);
+        target(cell_x, cell_y, 3 + box_assignment(j) * (5 + C)) = labels(j, 4);
+        target(cell_x, cell_y, 4 + box_assignment(j) * (5 + C)) = 1.0;
+        target(cell_x, cell_y, 5 + static_cast<Index>(labels(j,0)) + box_assignment(j) * (5 + C)) = 1.0;
+        // for(Index b = 0; b < B; b++)
+        // {
+        //     if(target(cell_x, cell_y, b * (5 + C)) == 0)
+        //     {
+        //         target(cell_x, cell_y, 0 + b * (5 + C)) = relative_x;
+        //         target(cell_x, cell_y, 1 + b * (5 + C)) = relative_y;
+        //         target(cell_x, cell_y, 2 + b * (5 + C)) = labels(j, 3);
+        //         target(cell_x, cell_y, 3 + b * (5 + C)) = labels(j, 4);
+        //         target(cell_x, cell_y, 4 + b * (5 + C)) = 1.0;
+        //         target(cell_x, cell_y, 5 + static_cast<Index>(labels(j,0)) + b * (5 + C)) = 1.0;
+        //         break;
+        //     }
+        //     continue;
+        // }
     }
 
     //}

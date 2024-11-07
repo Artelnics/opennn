@@ -13,14 +13,6 @@
 namespace opennn
 {
 
-MultiheadAttentionLayer::MultiheadAttentionLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::MultiheadAttention;
-}
-
-
 MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
                                                  const Index& new_depth,
@@ -177,30 +169,6 @@ const bool& MultiheadAttentionLayer::get_display() const
 }
 
 
-void MultiheadAttentionLayer::set()
-{
-    input_size = 0;
-
-    depth = 0;
-
-    heads_number = 0;
-
-    query_weights.resize(0, 0, 0);
-    query_biases.resize(0, 0);
-
-    key_weights.resize(0, 0, 0);
-    key_biases.resize(0, 0);
-
-    value_weights.resize(0, 0, 0);
-    value_biases.resize(0, 0);
-
-    projection_weights.resize(0, 0, 0);
-    projection_biases.resize(0);
-
-    set_default();
-}
-
-
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
@@ -218,12 +186,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     scaling_factor = type(1) / type(sqrt(hidden_depth));
 
-    set_default();
-}
-
-
-void MultiheadAttentionLayer::set_default()
-{
     name = "multihead_attention_layer";
 
     display = true;
@@ -232,7 +194,6 @@ void MultiheadAttentionLayer::set_default()
 
     dropout_rate = 0;
 }
-
 
 
 void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
@@ -435,8 +396,6 @@ void MultiheadAttentionLayer::build_causal_mask()
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
     const Index batch_samples_number = attention_scores.dimension(2);
-
-    #pragma omp parallel for
     
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -543,7 +502,8 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
-    if(use_causal_mask) apply_causal_mask(attention_scores);
+    if(use_causal_mask)
+        apply_causal_mask(attention_scores);
 /*
     softmax(attention_scores, attention_weights);
 */
@@ -560,38 +520,33 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
 
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
-    /*
+    // @todo there are two loops here. Are they the same?
+
     const Index batch_samples_number = attention_scores.dimension(2);
 
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    type* entry_data;
-    type random = 0;
-    
-#pragma omp parallel for
+/*
+    #pragma omp parallel for
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             for(Index position_index = 0; position_index < input_size; position_index++)
             {
-                entry_data = attention_scores.data()
+                type* entry_data = attention_scores.data()
                              + position_index * context_size
                              + sample_index * input_size * context_size
                              + head_index * batch_samples_number * input_size * context_size;
 
                 TensorMap<Tensor<type, 1>> entry(entry_data, context_size);
 
-                random = calculate_random_uniform((type)0, (type)1);
-
-                random < dropout_rate ? entry.setZero()
-                    : entry = entry * scaling_factor;
+                calculate_random_uniform(type(0), type(1)) < dropout_rate 
+                    ? entry.setZero()
+                    : entry *= scaling_factor;
             }
         }
     }
-    */
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
+*/   
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
@@ -948,138 +903,41 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 
 void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Multihead Attention layer
-
     const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttentionLayer");
 
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiheadAttentionLayer element is nullptr.\n");
     
-    // Layer name
-
-    const tinyxml2::XMLElement* layer_name_element = multihead_attention_layer_element->FirstChildElement("Name");
-
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-    
-    // Input size
-
-    const tinyxml2::XMLElement* input_size_element = multihead_attention_layer_element->FirstChildElement("InputSize");
-
-    if(!input_size_element)
-        throw runtime_error("InputSize element is nullptr.\n");
-
-    if(input_size_element->GetText())
-        set_input_size(Index(stoi(input_size_element->GetText())));
-    
-    // Context size
-
-    const tinyxml2::XMLElement* context_size_element = multihead_attention_layer_element->FirstChildElement("ContextSize");
-
-    if(!context_size_element)
-        throw runtime_error("ContextSize element is nullptr.\n");
-
-    if(context_size_element->GetText())
-        set_context_size(Index(stoi(context_size_element->GetText())));
-    
-    // Embedding depth
-
-    const tinyxml2::XMLElement* depth_element = multihead_attention_layer_element->FirstChildElement("Depth");
-
-    if(!depth_element)
-        throw runtime_error("Depth element is nullptr.\n");
-
-    if(depth_element->GetText())
-        set_depth(Index(stoi(depth_element->GetText())));
-    
-    // Number of attention heads
-
-    const tinyxml2::XMLElement* heads_number_element = multihead_attention_layer_element->FirstChildElement("HeadsNumber");
-
-    if(!heads_number_element)
-        throw runtime_error("HeadsNumber element is nullptr.\n");
-
-    if(heads_number_element->GetText())
-        set_heads_number(Index(stoi(heads_number_element->GetText())));
-    
-    // Use causal mask
-
-    const tinyxml2::XMLElement* causal_mask_element = multihead_attention_layer_element->FirstChildElement("CausalMask");
-
-    if(!causal_mask_element)
-        throw runtime_error("CausalMask element is nullptr.\n");
-
-    if(causal_mask_element->GetText())
-        set_causal_mask(string(causal_mask_element->GetText()) == "true");
-    
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = multihead_attention_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    set_name(read_xml_string(multihead_attention_layer_element, "Name"));
+    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
+    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
+    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
+    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
+    set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
+    set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "));
 }
 
 
-void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Multihead Attention layer
+    printer.OpenElement("MultiheadAttentionLayer");
 
-    file_stream.OpenElement("MultiheadAttentionLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputSize", to_string(get_input_size()));
+    add_xml_element(printer, "ContextSize", to_string(get_context_size()));
+    add_xml_element(printer, "Depth", to_string(get_depth()));
+    add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
+    add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
+    printer.CloseElement();
+}
 
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
 
-    // Input size
-
-    file_stream.OpenElement("InputSize");
-    file_stream.PushText(to_string(get_input_size()).c_str());
-    file_stream.CloseElement();
-
-    // Context size
-
-    file_stream.OpenElement("ContextSize");
-    file_stream.PushText(to_string(get_context_size()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding depth
-
-    file_stream.OpenElement("Depth");
-    file_stream.PushText(to_string(get_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Number of attention heads
-
-    file_stream.OpenElement("HeadsNumber");
-    file_stream.PushText(to_string(get_heads_number()).c_str());
-    file_stream.CloseElement();
-
-    // Use causal mask
-
-    file_stream.OpenElement("CausalMask");
-    file_stream.PushText(to_string(use_causal_mask ? 1 : 0).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Multihead Attention layer (end tag)
-
-    file_stream.CloseElement();
+MultiheadAttentionLayerForwardPropagation::MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -1091,7 +949,7 @@ pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_p
 
     const Index depth = multihead_attention_layer->get_depth();
 
-    return { (type*)outputs_data, {{ batch_samples_number, input_size, depth }} };
+    return { (type*)outputs.data(), {{ batch_samples_number, input_size, depth }} };
 }
 
 
@@ -1117,8 +975,6 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 
     outputs.resize(batch_samples_number, input_size, depth);
 
-    outputs_data = outputs.data();
-
     // Rest of quantities
 
     query.resize(input_size, hidden_depth, batch_samples_number, heads_number);
@@ -1132,6 +988,19 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
     attention_outputs.resize(input_size, hidden_depth, batch_samples_number, heads_number);
 
     projection_outputs.resize(batch_samples_number, input_size, depth, heads_number);
+}
+
+
+void MultiheadAttentionLayerForwardPropagation::print() const
+{
+    cout << "Attention scores:" << endl
+        << attention_scores.dimensions() << endl
+        << "Outputs dimensions:" << endl;
+    //cout << output_dimensions << endl;
+    cout << "Outputs:" << endl;
+    //cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+    cout << "Attention scores:" << endl;
+    cout << attention_scores << endl;
 }
 
 
@@ -1174,6 +1043,18 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
 
     input_derivatives.resize(batch_samples_number, input_size, depth);
     context_derivatives.resize(batch_samples_number, context_size, depth);
+}
+
+
+void MultiheadAttentionLayerBackPropagation::print() const
+{
+}
+
+
+MultiheadAttentionLayerBackPropagation::MultiheadAttentionLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

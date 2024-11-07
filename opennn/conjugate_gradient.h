@@ -9,8 +9,6 @@
 #ifndef CONJUGATEGRADIENT_H
 #define CONJUGATEGRADIENT_H
 
-// System inlcludes
-
 #include <string>
 
 #include "config.h"
@@ -33,11 +31,7 @@ public:
 
    enum class TrainingDirectionMethod{PR, FR};
 
-   // DEFAULT CONSTRUCTOR
-
-   explicit ConjugateGradient(); 
-
-   explicit ConjugateGradient(LossIndex*);   
+   explicit ConjugateGradient(LossIndex* = nullptr);   
 
    // Get
 
@@ -54,8 +48,6 @@ public:
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const Index& get_maximum_selection_failures() const;
-
-
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 
@@ -75,7 +67,6 @@ public:
    void set_loss_goal(const type&);
    void set_minimum_loss_decrease(const type&);
    void set_maximum_selection_failures(const Index&);
-
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
@@ -139,11 +130,9 @@ private:
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {
-    explicit ConjugateGradientData();
+    explicit ConjugateGradientData(ConjugateGradient* = nullptr);
 
-    explicit ConjugateGradientData(ConjugateGradient*);
-
-    void set(ConjugateGradient*);
+    void set(ConjugateGradient* = nullptr);
 
     virtual void print() const;
 

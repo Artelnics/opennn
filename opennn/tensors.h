@@ -17,7 +17,16 @@ type calculate_random_uniform(const type& = type(0), const type& = type(1));
 bool calculate_random_bool();
 
 template<int rank>
-void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1);
+void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_real_distribution<type> distribution(minimum, maximum);
+
+    for (Index i = 0; i < tensor.size(); ++i)
+        tensor(i) = distribution(gen);
+}
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
@@ -196,6 +205,9 @@ Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const 
 // Conversion
 
 string dimensions_to_string(const dimensions&, const string& = " ");
+dimensions string_to_dimensions(const string&, const string& = " ");
+Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
+
 string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");

@@ -9,14 +9,10 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-
-
 #include <iostream>
 #include <limits>
 #include <cmath>
 #include <cstdlib>
-
-
 
 #include "config.h"
 #include "neural_network.h"
@@ -32,15 +28,9 @@ class LearningRateAlgorithm
 
 public:
 
-   // Enumerations
-
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
-   // Constructors
-
-   explicit LearningRateAlgorithm();
-
-   explicit LearningRateAlgorithm(LossIndex*);
+   explicit LearningRateAlgorithm(LossIndex* = nullptr);
 
    virtual ~LearningRateAlgorithm();
 
@@ -97,8 +87,8 @@ public:
 
        inline void print() const
        {
-           cout << struct_to_string();
-           cout << "Lenght: " << get_length() << endl;
+           cout << struct_to_string()
+                << "Lenght: " << get_length() << endl;
        }
 
 
@@ -107,44 +97,16 @@ public:
            ostringstream buffer;
 
            if(U.first < A.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is less than A:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("U is less than A:\n" + struct_to_string());
 
            if(U.first > B.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is greater than B:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("U is greater than B:\n" + struct_to_string());
 
            if(U.second >= A.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fA:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fA:\n" + struct_to_string());
 
            if(U.second >= B.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fB:\n"
-                     << struct_to_string();
-
-              throw runtime_error(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
        }
 
        pair<type, type> A;
@@ -175,8 +137,7 @@ public:
   
    // Set
 
-   void set();
-   void set(LossIndex*);
+   void set(LossIndex* = nullptr);
 
    void set_loss_index(LossIndex*);
    void set_threads_number(const int&);

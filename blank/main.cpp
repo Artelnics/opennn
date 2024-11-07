@@ -20,13 +20,15 @@
 //#include <algorithm>
 //#include <execution>
 #include <cstdlib>
-#include "yolo_dataset.h"
-
 
 // OpenNN includes
 
 #include "../opennn/opennn.h"
 #include "../opennn/data_set.h"
+#include "yolo_dataset.h"
+#include "neural_network.h"
+#include "yolo_network.h"
+#include "layer.h"
 
 
 using namespace std;
@@ -36,7 +38,9 @@ using namespace Eigen;
 
 //namespace fs = std::filesystem;
 
-//falta meter una función que extraiga los batches
+
+
+// Tensor<type, 4> detection_layer(Tensor<type, 4>&);
 
 
 type loss_function(const Tensor<type, 3>&, const vector<Tensor<type, 1>>&, Tensor<type, 3>&);
@@ -45,7 +49,7 @@ type loss_function(const Tensor<type, 3>&, const vector<Tensor<type, 1>>&, Tenso
 // MIRAR SI TENGO QUE METER UNA FUNCIÓN QUE CONSTRUYA LAS CAJAS A PARTIR DE LOS DATOS DADOS POR LA RED (la red me da un resize de las anchors y tengo que aplicarlo al anchor correspondiente para tener la supuesta caja final)
 
 
-Tensor<type, 2> non_maximum_suppression(const Tensor<type, 2>&, const type&, const Index&);
+vector<Tensor<type, 2>> non_maximum_suppression(Tensor<type, 2>&, const type&, const Index&);
 
 
 Tensor<type, 3> draw_boxes(const Tensor<type, 3>&, const Tensor<type, 2>&);
@@ -53,7 +57,7 @@ Tensor<type, 3> draw_boxes(const Tensor<type, 3>&, const Tensor<type, 2>&);
 void save_tensor_as_BMP(const Tensor<type, 3>&, const string&);
 
 
-
+// NeuralNetwork create_yolo_network(const dimensions&);
 
 
 
@@ -62,98 +66,78 @@ int main()
     try
     {
 
-        // Tensor<type, 3> test(2,2,3);
-        // test(0,0,0)=0;
-        // test(0,0,1)=4;
-        // test(0,0,2)=8;
-        // test(0,1,0)=2;
-        // test(0,1,1)=6;
-        // test(0,1,2)=10;
-        // test(1,0,0)=1;
-        // test(1,0,1)=5;
-        // test(1,0,2)=9;
-        // test(1,1,0)=3;
-        // test(1,1,1)=7;
-        // test(1,1,2)=11;
-
-        // for(Index i = 0; i < 2*2*3; i++)
-        // {
-        //     cout<<test(i)<<endl;
-        // }
-
         YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages_fixing","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels_fixing");     //PARA COMPROBAR DONDE FALLA
 
         // YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages_debug","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels_debug");     //PARA DEBUGGEAR
 
         // YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels");
 
-        // cout<<convert_to_YOLO_grid_data(train_dataset.getLabel(0), 13, 5, 20)<<endl<<endl;
+        YoloNetwork yolo({416, 416, 3});
 
-        // NeuralNetwork neural_network(NeuralNetwork::ModelType::YoloV2,
-        //                              train_dataset.get_input_dimensions(),
-        //                              { 1 },
-        //                              train_dataset.get_target_dimensions());
+        TensorMap<Tensor<type, 4>> input_image(train_dataset.getImage(0).data(), {1, 416, 416, 3});
+        cout<<yolo.calculate_outputs(input_image)<<endl;
 
-        // neural_network.print();
-
-        // Tensor<Index, 1> training_indices = train_dataset.get_training_samples_indices();
-
-        // TrainingStrategy training_strategy(&neural_network, &train_dataset);
-
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR); //TENGO QUE CREAR UN TIPO DE ERROR LLAMADO YOLOV2ERROR QUE ME DE LA LOSS FUNCTION DE YOLO Y USAR ESE
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(70);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(0);
-        // training_strategy.set_display_period(1);
+        cout<<yolo.calculate_outputs(input_image).dimensions()<<endl;
 
 
-        // training_strategy.perform_training();
+/*
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::YoloV2,
+                                     train_dataset.get_input_dimensions(),
+                                     { 1 },
+                                     train_dataset.get_target_dimensions());
 
-        // cout<<"========"<<endl;
+        neural_network.print();
 
-        // Tensor<Index, 1> validation_indices = train_dataset.get_selection_samples_indices();
+        training_strategy.perform_training();
 
-        // cout<<"========"<<endl;
+        Tensor<Index, 1> training_indices = train_dataset.get_samples_uses_tensor();
 
-        // Tensor<Index, 1> testing_indices = train_dataset.get_testing_samples_indices();
+        cout<<training_indices<<endl;
 
-        // cout<<"========"<<endl;
+        cout<<"========"<<endl;
 
-        // Tensor<Index, 2> training_batches = train_dataset.get_batches(training_indices, 200, true);
-        // Tensor<Index, 2> validation_batches = train_dataset.get_batches(validation_indices, 200, true);
-        // Tensor<Index, 2> testing_batches = train_dataset.get_batches(testing_indices, 200, true);
+        Tensor<Index, 1> validation_indices = train_dataset.get_selection_samples_indices();
 
+        cout<<"========"<<endl;
 
+        Tensor<Index, 1> testing_indices = train_dataset.get_testing_samples_indices();
+
+        cout<<"========"<<endl;
+
+        Tensor<Index, 2> training_batches = train_dataset.get_batches(training_indices, 200, true);
+        Tensor<Index, 2> validation_batches = train_dataset.get_batches(validation_indices, 200, true);
+        Tensor<Index, 2> testing_batches = train_dataset.get_batches(testing_indices, 200, true);
+*/
 
 
 
-        // cout<<training_indices.dimension(0)<<endl;
+/*
+        cout<<training_indices.dimension(0)<<endl;
 
-        // Index image_number = 160;
+        Index image_number = 160;
 
-        // cout<<train_dataset.getClass(0)<<endl;
+        cout<<train_dataset.getClass(0)<<endl;
 
-        // // for(Index i = 0; i < training_indices.dimension(0); i++)
-        // for(Index i = 0; i< 4; i++)
-        // {
-        //     string complete = "output_" + to_string(i) + ".bmp";
+        // for(Index i = 0; i < training_indices.dimension(0); i++)
+        for(Index i = 0; i< 4; i++)
+        {
+            string complete = "output_" + to_string(i) + ".bmp";
 
-        //     string filename = "/Users/artelnics/Desktop/image_test/" + complete ;    //Emplear este proceso para guardar las imágenes con las bounding_boxes ya metidas en una carpeta
+            string filename = "/Users/artelnics/Desktop/image_test/" + complete ;    //Emplear este proceso para guardar las imágenes con las bounding_boxes ya metidas en una carpeta
 
-        //     /*cout<<train_dataset.offsets[image_number - 1 + i]<<endl*/;
+            cout<<train_dataset.offsets[image_number - 1 + i]<<endl;
 
-        //     train_dataset.apply_data_augmentation(train_dataset.images[image_number - 1 + i], train_dataset.labels[image_number - 1 + i]);
+            train_dataset.apply_data_augmentation(train_dataset.images[image_number - 1 + i], train_dataset.labels[image_number - 1 + i]);
 
-        //     // cout<<train_dataset.labels[image_number - 1 + i]<<endl;
+            // cout<<train_dataset.labels[image_number - 1 + i]<<endl;
 
-        //     // train_dataset.apply_data_augmentation(train_dataset.images[training_indices(i)], train_dataset.labels[training_indices(i)]);
+            // train_dataset.apply_data_augmentation(train_dataset.images[training_indices(i)], train_dataset.labels[training_indices(i)]);
 
-        //     // save_tensor_as_BMP(draw_boxes(normalize_tensor(train_dataset.getImage(training_indices(i)), true), train_dataset.getLabel(training_indices(i))), filename);
+            // save_tensor_as_BMP(draw_boxes(normalize_tensor(train_dataset.getImage(training_indices(i)), true), train_dataset.getLabel(training_indices(i))), filename);
 
-        //     save_tensor_as_BMP(draw_boxes(normalize_tensor(train_dataset.getImage(image_number - 1 + i), true), train_dataset.getLabel(image_number - 1 + i)), filename);
-        // }
-
+            save_tensor_as_BMP(draw_boxes(normalize_tensor(train_dataset.getImage(image_number - 1 + i), true), train_dataset.getLabel(image_number - 1 + i)), filename);
+        }
+*/
         cout<<"works properly"<<endl;
 
         return 0;
@@ -167,132 +151,172 @@ int main()
 }
 
 
-type loss_function(const Tensor<type, 3>& target_data, const vector<Tensor<type, 1>>& anchors, Tensor<type, 3>& network_output)
+
+// Tensor<type, 4> detection_layer(Tensor<type, 4>& output)
+// {
+
+// }
+
+// @TODO change the loss function so that it recieves the network output and calculates the loss correctly (It does not receive the target data in a Tensor type 3 but the data matrix and then reconvert it to a type 3 Tensor)
+
+type loss_function(const Tensor<type, 3>& targets, const vector<Tensor<type, 1>>& anchors, Tensor<type, 3>& outputs)
 {
-    Index S = network_output.dimension(0);
-    Index B = anchors.size();
-    Index C = (network_output.dimension(3) / anchors.size()) - 5;
-    type total_loss = 0, coord_loss = 0, conf_loss_object = 0, conf_loss_noobject = 0, conf_loss = 0, class_loss = 0;
-    type lambda_coord = 5.0;
-    type lambda_noobject = 0.5;
 
-    for(Index i = 0; i < S; i++)
+    // @TODO check if applying the exponential activation function to the network_output height and width I can avoid doing it in the loss function and just use the output * anchor instead of the exponential of it
+
+    const Index grid_size = outputs.dimension(0);
+    const Index boxes_per_cell = anchors.size();
+    const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
+    const Index box_data_size = 5 + classes_number;
+    type coord_loss = 0, conf_loss_object = 0, conf_loss_noobject = 0, conf_loss = 0, class_loss = 0;
+    const type lambda_coord = 5.0;
+    const type lambda_noobject = 0.5;
+
+
+    for(Index i = 0; i < grid_size; i++)
     {
-        for(Index j = 0; j < S; j++)
+        for(Index j = 0; j < grid_size; j++)
         {
-            for(Index k = 0; k < B; k++)
+            for(Index k = 0; k < boxes_per_cell; k++)
             {
-
-                if(target_data(i,j, k * (5 + C) + 4) == 1)
+                if(targets(i,j, k * box_data_size + 4) == 1)
                 {
-                    coord_loss += pow(target_data(i, j, k * (5 + C) + 0) - network_output(i, j, k * (5 + C) + 0), 2) +
-                                  pow(target_data(i, j, k * (5 + C) + 1) - network_output(i, j, k * (5 + C) + 1), 2) +
-                                  pow(sqrt(target_data(i, j, k * (5 + C) + 2)) - sqrt(exp(network_output(i, j, k * (5 + C) + 2)) * anchors[k](0)), 2) +
-                                  pow(sqrt(target_data(i, j, k * (5 + C) + 3)) - sqrt(exp(network_output(i, j, k * (5 + C) + 3)) * anchors[k](1)), 2);
 
-                    conf_loss_object += pow(1 - network_output(i,j, k * (5 + C) + 4), 2);
-                    for(Index c = 0; c < C; c++)
-                    {
-                        class_loss += target_data(i,j, k * (5 + C) + c) * log(network_output(i,j, k * (5 + C) + c));
-                    }
+
+                    coord_loss += pow(targets(i, j, k * box_data_size + 0) - outputs(i, j, k * box_data_size + 0), 2)
+                                + pow(targets(i, j, k * box_data_size + 1) - outputs(i, j, k * box_data_size + 1), 2) +
+                                  pow(sqrt(targets(i, j, k * box_data_size + 2)) - sqrt(exp(outputs(i, j, k * box_data_size + 2)) * anchors[k](0)), 2) +
+                                  pow(sqrt(targets(i, j, k * box_data_size + 3)) - sqrt(exp(outputs(i, j, k * box_data_size + 3)) * anchors[k](1)), 2);
+
+                    conf_loss_object += pow(1 - outputs(i, j, k * box_data_size + 4), 2);
+
+                    for(Index c = 0; c < classes_number; c++)
+                        class_loss += targets(i,j, k * box_data_size + (5 + c)) * log(outputs(i,j, k * box_data_size + (5 + c)));
                 }
-                else conf_loss_noobject = pow(network_output(i,j, k * (5 + C) + 4), 2);
+                else
+
+                    conf_loss_noobject += pow(outputs(i, j, k * box_data_size + 4), 2);
             }
 
         }
-        coord_loss = lambda_coord * coord_loss;
-        class_loss = -class_loss;
-        conf_loss = conf_loss_object + lambda_noobject * conf_loss_noobject;
     }
 
-    total_loss = coord_loss + class_loss + conf_loss;
+    coord_loss = lambda_coord * coord_loss;
+    // class_loss = -class_loss;
+    conf_loss = conf_loss_object + lambda_noobject * conf_loss_noobject;
+
+    // total_loss = coord_loss + class_loss + conf_loss;
+    const type total_loss = coord_loss - class_loss + conf_loss;
 
     return total_loss;
 }
 
-Tensor<type, 2> non_maximum_suppression(const Tensor<type, 2>& network_output, const type& overlap_treshold, const Index& classes_number)
+
+vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_output, const type& overlap_threshold, const Index& classes_number)
 {
-    Tensor<type, 3> converted_network_output(/*network_output.dimension(0),*/13,13,125); //Should be Tensor<type, 4> bc I need to add the batch_size dimension
+    const Index batch_size = network_output.dimension(0);
 
-    // pair<type*, Tensor;
+    // @TODO check if I need to pre-convert the boxes format to a 6-data format (x,y,w,h,p,c) where p = object_prob * class_prob and c = class (bc if I do it, the output of the NMS will be the standard one)
 
-
-
-    vector<Tensor<type, 1>> input_bounding_boxes;
-    vector<Tensor<type, 1>> final_boxes;
-    vector<vector<Tensor<type, 1>>> classified_boxes(classes_number);
+    vector<vector<Tensor<type, 1>>> input_bounding_boxes(batch_size);
+    vector<vector<Tensor<type, 1>>> final_boxes(batch_size);
+    vector<vector<vector<Tensor<type, 1>>>> classified_boxes(batch_size);
     Tensor<type, 1> box(25);
 
-    for(Index i = 0; i < converted_network_output.dimension(0); i++)
+    vector<Tensor<type, 2>> tensor_final_boxes(batch_size);
+
+    for(Index i = 0; i < batch_size; i++)
     {
-        for(Index j = 0; j < converted_network_output.dimension(1); j++)
+        classified_boxes[i].resize(classes_number);
+
+        for(Index j = 0; j < network_output.dimension(1); j++)
         {
-            for(Index k = 0; k < converted_network_output.dimension(2); k++)
+            for(Index k = 0; k < network_output.dimension(2); k++)
             {
-                if(k % 25 == 0 && converted_network_output(i,j,k) == 0)
+                if(network_output(i,j,k,4) > 0.5)
                 {
+                    for(Index l = 0; l < 25; l++)
+                        box(l) = network_output(i,j,k,l);
+
+                    input_bounding_boxes[i].push_back(box);
+                }
+
+                if(network_output(i,j,k,29) > 0.5)
+                {
+                    for(Index l = 0; l < 25; l++)
+                        box(l) = network_output(i,j,k,25 + l);
+
+                    input_bounding_boxes[i].push_back(box);
+                }
+
+                if (network_output(i,j,k, 54) > 0.5)
+                {
+                    for(Index l = 0; l < 25; l++)
+                        box(l) = network_output(i,j,k,50 + l);
+
+                    input_bounding_boxes[i].push_back(box);
+                }
+
+                if (network_output(i,j,k, 79) > 0.5)
+                {
+                    for(Index l = 0; l < 25; l++)
+                        box(l) = network_output(i,j,k,75 + l);
+
+                    input_bounding_boxes[i].push_back(box);
+                }
+
+                if (network_output(i,j,k, 104) > 0.5)
+                {
+                    for(Index l = 0; l < 25; l++)
+                        box(l) = network_output(i,j,k,100 + l);
+
+                    input_bounding_boxes[i].push_back(box);
+                }
+            }
+        }
+
+        for(size_t j = 0; j < input_bounding_boxes[i].size(); j++)
+        {
+            for(Index k = 0; k < classes_number; k++)
+            {
+                if(input_bounding_boxes[i][j](5+k) > 0.4)
+                {
+                    classified_boxes[i][k].push_back(input_bounding_boxes[i][j]);
                     break;
-                } else
-                {
-                    box (k % 25) = converted_network_output(i,j,k);
-                    if(k % 25 == 24) input_bounding_boxes.push_back(box);
                 }
             }
         }
-    }
 
-
-    for(size_t i = 0; i < input_bounding_boxes.size(); i++)
-    {
-        for(Index j = 0; j < classes_number; j++)
+        for(Index k = 0; k < classes_number; k++)
         {
-            if(input_bounding_boxes[i](5+j) > 0.3)
+            if(classified_boxes[i][k].empty())
+                continue;
+
+            sort(classified_boxes[i][k].begin(), classified_boxes[i][k].end(), [](const Tensor<type, 1>& a, const Tensor<type, 1>& b){
+                return a(4) > b(4);
+            });
+
+
+            while(!classified_boxes[i][k].empty())
             {
-                classified_boxes[j].push_back(input_bounding_boxes[i]);
-                break;
+                const Tensor<type, 1> box = classified_boxes[i][k].front();
+                classified_boxes[i][k].erase(classified_boxes[i][k].begin());
+
+                for(auto it = classified_boxes[i][k].begin(); it != classified_boxes[i][k].end();)
+                    if(calculate_intersection_over_union(box, *it) > overlap_threshold)
+                        it = classified_boxes[i][k].erase(it);
+                    else
+                        it++;
+
+                final_boxes[i].push_back(box);
             }
         }
-    }
 
+        // @todo use memcpy
 
-    for(Index k = 0; k < classes_number; k++)
-    {
-        if(classified_boxes[k].empty()) continue;
-
-        sort(classified_boxes[k].begin(), classified_boxes[k].end(), [](const Tensor<type, 1>& a, const Tensor<type, 1>& b){
-            return a(4) > b(4);
-        });
-
-
-        while(!classified_boxes[k].empty())
-        {
-            Tensor<type, 1> box = classified_boxes[k].front();
-            classified_boxes[k].erase(classified_boxes[k].begin());
-
-            for(auto it = classified_boxes[k].begin(); it != classified_boxes[k].end();)
-            {
-                if(calculate_intersection_over_union(box, *it) > overlap_treshold)
-                {
-                    it = classified_boxes[k].erase(it);
-                }else
-                {
-                    it++;
-                }
-            }
-            final_boxes.push_back(box);
-        }
-    }
-
-
-
-    Tensor<type, 2> tensor_final_boxes(/*network_output.dimension(0),*/ final_boxes.size(), final_boxes[0].dimension(0));    //mirar si puedo hacer un tensor map
-
-    for(size_t box = 0; box < final_boxes.size(); box++)
-    {
-        for(Index element = 0; element < final_boxes[box].dimension(0); element++)
-        {
-            tensor_final_boxes(box, element) = final_boxes[box](element);
-        }
+        for(size_t box = 0; box < final_boxes.size(); box++)
+            for(Index element = 0; element < final_boxes[i][box].dimension(0); element++)
+                tensor_final_boxes[i](box, element) = final_boxes[i][box](element);
     }
 
     return tensor_final_boxes;
@@ -303,9 +327,9 @@ Tensor<type, 3> draw_boxes(const Tensor<type, 3>& images, const Tensor<type, 2>&
 {
 
     Tensor<type, 3> image = images;
-    Index image_height = image.dimension(0);
-    Index image_width = image.dimension(1);
-    Index channels = image.dimension(2);
+    const Index image_height = image.dimension(0);
+    const Index image_width = image.dimension(1);
+    const Index channels = image.dimension(2);
 
     if (channels != 3) {
         // std::cerr << "Error: Image must have 3 channels (RGB)." << std::endl;
@@ -362,7 +386,7 @@ Tensor<type, 3> draw_boxes(const Tensor<type, 3>& images, const Tensor<type, 2>&
     return image;
 }
 
-void save_tensor_as_BMP(const Tensor<type, 3>& tensor, const string& filename)
+void save_tensor_as_BMP(const Tensor<type, 3> &tensor, const string& filename)
 {
 
     const Index height = tensor.dimension(0);
@@ -422,7 +446,7 @@ void save_tensor_as_BMP(const Tensor<type, 3>& tensor, const string& filename)
     // Writing of the BMP header
     file.write(reinterpret_cast<char*>(bmpHeader), 54);
 
-    // Writing of the image data (RGB format)
+// Writing of the image data (RGB format)
 #pragma omp parallel for
     for (Index h = 0; h < height; h++)
     {
@@ -442,6 +466,196 @@ void save_tensor_as_BMP(const Tensor<type, 3>& tensor, const string& filename)
     std::cout << "Image saved as " << filename << std::endl;
 }
 
+/*
+NeuralNetwork create_yolo_network(const dimensions& input_dimensions)
+{
+    NeuralNetwork nn;
+    //add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+
+
+    const dimensions convolution_stride_dimensions = {1, 1};
+    const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+
+    const dimensions pool_dimensions = {2, 2};
+    const dimensions pooling_stride_dimensions = { 2, 2 };
+    const dimensions padding_dimensions = { 0, 0 };
+    const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
+
+    nn.add_layer(make_unique<ConvolutionalLayer> (input_dimensions,
+                                              (dimensions){3, 3, input_dimensions[2], 32},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 1"));
+
+    nn.add_layer(make_unique<PoolingLayer>(nn.get_output_dimensions(),
+                                           pool_dimensions,
+                                           pooling_stride_dimensions,
+                                           padding_dimensions,
+                                           pooling_method,
+                                           "Pooling layer 1"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 64},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 2"));
+
+    nn.add_layer(make_unique<PoolingLayer>(nn.get_output_dimensions(),
+                                        pool_dimensions,
+                                        pooling_stride_dimensions,
+                                        padding_dimensions,
+                                        pooling_method,
+                                        "Pooling layer 2"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 128},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 3"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 64},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 4"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 128},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 5"));
+
+    nn.add_layer(make_unique<PoolingLayer>(nn.get_output_dimensions(),
+                                        pool_dimensions,
+                                        pooling_stride_dimensions,
+                                        padding_dimensions,
+                                        pooling_method,
+                                        "Pooling layer 3"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 256},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 6"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 128},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 7"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 256},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 8"));
+
+    nn.add_layer(make_unique<PoolingLayer>(nn.get_output_dimensions(),
+                                        pool_dimensions,
+                                        pooling_stride_dimensions,
+                                        padding_dimensions,
+                                        pooling_method,
+                                        "Pooling layer 4"));
+
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 512},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 9"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 256},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 10"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 512},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 11"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 256},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 12"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 512},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 13"));
+
+    nn.add_layer(make_unique<PoolingLayer>(nn.get_output_dimensions(),
+                                        pool_dimensions,
+                                        pooling_stride_dimensions,
+                                        padding_dimensions,
+                                        pooling_method,
+                                        "Pooling layer 5"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 1024},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 14"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 512},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 15"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 1024},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 16"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 512},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 17"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){3, 3, nn.get_output_dimensions()[2], 1024},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 18"));
+
+    nn.add_layer(make_unique<ConvolutionalLayer>(nn.get_output_dimensions(),
+                                              (dimensions){1, 1, nn.get_output_dimensions()[2], 125},
+                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 19"));
+
+
+    cout<<nn.get_output_dimensions()[0]<<","<<nn.get_output_dimensions()[1]<<","<<nn.get_output_dimensions()[2]<<","<<nn.get_output_dimensions()[3]<<endl;
+
+    // @todo Add non_max_supression_layer
+}
+*/
 
 
 // OpenNN: Open Neural Networks Library.

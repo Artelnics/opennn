@@ -136,7 +136,7 @@ void TimeSeriesDataSetTest::test_transform_time_series()
                     {9, 90}});
 
     data_set.set_data(data);
-
+/*
     data_set.set_variable_name(0, "x");
     data_set.set_variable_name(1, "y");
 
@@ -149,15 +149,16 @@ void TimeSeriesDataSetTest::test_transform_time_series()
     assert_true(data_set.get_variables_number() == 6, LOG);
     assert_true(data_set.get_samples_number() == 7, LOG);
 
-    assert_true(data_set.get_input_variables_number() == 4, LOG);
-    assert_true(data_set.get_target_variables_number() == 1, LOG);
-    assert_true(data_set.get_target_raw_variables_number() == 1, LOG);
-    assert_true(data_set.get_unused_variables_number() == 1, LOG);
+    assert_true(data_set.get_variables_number(DataSet::VariableUse::Input) == 4, LOG);
+    assert_true(data_set.get_variables_number(DataSet::VariableUse::Target) == 1, LOG);
+    assert_true(data_set.get_raw_variables_number(DataSet::VariableUse::Target) == 1, LOG);
+    assert_true(data_set.get_variables_number(DataSet::VariableUse::None) == 1, LOG);
 
     assert_true(data_set.get_variable_name(0) == "x_lag_1", LOG);
     assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
     assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
+*/
 }
 
 

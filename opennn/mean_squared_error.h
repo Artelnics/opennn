@@ -9,11 +9,7 @@
 #ifndef MEANSQUAREDERROR_H
 #define MEANSQUAREDERROR_H
 
-
-
 #include <string>
-
-
 
 #include "loss_index.h"
 #include "data_set.h"
@@ -25,14 +21,8 @@ class MeanSquaredError : public LossIndex
 {
 
 public:
-
-   // DEFAULT CONSTRUCTOR
-
-   explicit MeanSquaredError();
    
-   explicit MeanSquaredError(NeuralNetwork*, DataSet*);
-
-   // Back propagation
+   explicit MeanSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,

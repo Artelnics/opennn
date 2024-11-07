@@ -9,12 +9,8 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-
-
 #include <iostream>
 #include <string>
-
-
 
 #include "config.h"
 #include "training_strategy.h"
@@ -28,17 +24,9 @@ class NeuronsSelection
 {
 public:
 
-    // Constructors
+    enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
-    explicit NeuronsSelection();
-
-    explicit NeuronsSelection(TrainingStrategy*);
-
-    // Enumerators
-
-    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons};
-
-    // Get
+    explicit NeuronsSelection(TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -54,7 +42,7 @@ public:
     const Index& get_maximum_epochs_number() const;
     const type& get_maximum_time() const;
 
-    // Set
+    void set(TrainingStrategy* = nullptr);
 
     void set_training_strategy(TrainingStrategy*);
 
@@ -70,17 +58,11 @@ public:
     void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
 
-    // Loss calculation
-
     string write_stopping_condition(const TrainingResults&) const;
-
-    // Neuron selection
 
     void delete_selection_history();
     void delete_training_error_history();
     void check() const;
-
-    // Utilities
 
     virtual NeuronsSelectionResults perform_neurons_selection() = 0;
 

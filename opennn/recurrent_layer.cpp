@@ -16,15 +16,9 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer() : Layer()
-{
-    set();
-
-    layer_type = Type::Recurrent;
-}
-
-
-RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps) : Layer()
+RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, 
+                               const Index& new_neurons_number, 
+                               const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
 
@@ -159,12 +153,6 @@ const bool& RecurrentLayer::get_display() const
 }
 
 
-void RecurrentLayer::set()
-{
-    set_default();
-}
-
-
 void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     biases.resize(new_neurons_number);
@@ -183,22 +171,6 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     set_parameters_random();
 
-    set_default();
-}
-
-
-void RecurrentLayer::set(const RecurrentLayer& other_neuron_layer)
-{
-    activation_function = other_neuron_layer.activation_function;
-
-    display = other_neuron_layer.display;
-
-    set_default();
-}
-
-
-void RecurrentLayer::set_default()
-{
     name = "recurrent_layer";
 
     display = true;
@@ -335,27 +307,27 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 
 void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
-                                           Tensor<type, 2>& activations_derivatives) const
+                                           Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear(activations, activations_derivatives); return;
+        case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::Logistic: logistic(activations, activations_derivatives); return;
+        case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activations_derivatives); return;
+        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activations_derivatives); return;
+        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activations_derivatives); return;
+        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(activations, activations_derivatives); return;
+        case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftSign: soft_sign(activations, activations_derivatives); return;
+        case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activations_derivatives); return;
+        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activations_derivatives); return;
+        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
         default: throw runtime_error("Unknown activation function");
     }
@@ -376,7 +348,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    Tensor<type, 3>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
+    Tensor<type, 3>& activation_derivatives = recurrent_layer_forward_propagation->activation_derivatives;
 
     Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
@@ -399,7 +371,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         {
             calculate_activations(current_hidden_states, current_activations_derivatives);
 
-            activations_derivatives.chip(time_step, 1) = current_activations_derivatives;
+            activation_derivatives.chip(time_step, 1) = current_activations_derivatives;
         }
         
         hidden_states.chip(time_step, 1) = current_hidden_states;
@@ -428,7 +400,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
 
-    const Tensor<type, 3>& activations_derivatives = recurrent_layer_forward_propagation->activations_derivatives;
+    const Tensor<type, 3>& activation_derivatives = recurrent_layer_forward_propagation->activation_derivatives;
 
     Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
@@ -474,7 +446,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
         current_deltas.device(*thread_pool_device) = deltas.chip(sample_index, 0);
 
-        get_row(current_activations_derivatives, activations_derivatives, sample_index);
+        get_row(current_activations_derivatives, activation_derivatives, sample_index);
 
         if(sample_index % time_steps == 0)
         {
@@ -622,93 +594,34 @@ string RecurrentLayer::write_activation_function_expression() const
 
 void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
+    const tinyxml2::XMLElement* recurrent_layer_element = document.FirstChildElement("RecurrentLayer");
 
-    // Perceptron layer
-
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("RecurrentLayer");
-
-    if(!perceptron_layer_element)
+    if(!recurrent_layer_element)
         throw runtime_error("RecurrentLayer element is nullptr.\n");
 
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = perceptron_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!neurons_number_element)
-        throw runtime_error("NeuronsNumber element is nullptr.\n");
-
-    if(neurons_number_element->GetText())
-        set_neurons_number(Index(stoi(neurons_number_element->GetText())));
-
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = perceptron_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("ActivationFunction element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = perceptron_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    set_inputs_number(read_xml_index(recurrent_layer_element, "InputsNumber"));
+    set_neurons_number(read_xml_index(recurrent_layer_element, "NeuronsNumber"));
+    set_activation_function(read_xml_string(recurrent_layer_element, "ActivationFunction"));
+    set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "));
 }
 
 
-void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
-
+void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("RecurrentLayer");
 
-    // Perceptron layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    file_stream.OpenElement("RecurrentLayer");
+    printer.CloseElement();
+}
 
-    // Inputs number
 
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Outputs number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Recurrent layer (end tag)
-
-    file_stream.CloseElement();
+RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -716,7 +629,7 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return {outputs_data, {{batch_samples_number, neurons_number}}};
+    return {(type*)outputs.data(), {{batch_samples_number, neurons_number}}};
 }
 
 
@@ -730,12 +643,15 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-//    outputs_data = outputs.data();
-
     current_inputs.resize(batch_samples_number, inputs_number);
     current_activations_derivatives.resize(batch_samples_number, neurons_number);
 
-    activations_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+    activation_derivatives.resize(batch_samples_number, time_steps, neurons_number);
+}
+
+
+void RecurrentLayerForwardPropagation::print() const
+{
 }
 
 
@@ -768,6 +684,19 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
     const Index time_steps = 0;
 
     input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+}
+
+
+void RecurrentLayerBackPropagation::print() const
+{
+
+}
+
+
+RecurrentLayerBackPropagation::RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 

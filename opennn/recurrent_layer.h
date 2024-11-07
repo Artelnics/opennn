@@ -19,9 +19,6 @@
 namespace opennn
 {
 
-struct RecurrentLayerForwardPropagation;
-struct RecurrentLayerBackPropagation;
-
 #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
@@ -41,13 +38,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   // Constructors
-
-   explicit RecurrentLayer();
-
-   explicit RecurrentLayer(const Index&, const Index&, const Index&);
-
-   // Get
+   explicit RecurrentLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
    bool is_empty() const;
 
@@ -81,9 +72,7 @@ public:
 
    // Set
 
-   void set();
-   void set(const Index&, const Index&, const Index&);
-   void set(const RecurrentLayer&);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
    void set_default();
 
@@ -176,51 +165,32 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
-
-
-    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-    }
+    void print() const;
+
+    Tensor<type, 2> outputs;
 
     Tensor<type, 2> current_inputs;
     Tensor<type, 2> current_activations_derivatives;
 
-    Tensor<type, 3> activations_derivatives;
+    Tensor<type, 3> activation_derivatives;
 };
 
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    explicit RecurrentLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
-
-    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer) final;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    void print() const
-    {
-
-    }
+    void print() const;
 
     //Tensor<type, 1> current_deltas;
 

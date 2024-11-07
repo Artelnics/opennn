@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-
-MeanSquaredError::MeanSquaredError() : LossIndex()
-{
-}
-
-
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
@@ -178,8 +172,6 @@ string MeanSquaredError::get_error_type_text() const
 
 void MeanSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // Error type
-
     file_stream.OpenElement("MeanSquaredError");
 
     file_stream.CloseElement();

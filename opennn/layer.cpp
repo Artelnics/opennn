@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-//#include "tensors.h"
 #include "layer_back_propagation_lm.h"
 
 namespace opennn
@@ -29,6 +28,131 @@ Layer::~Layer()
 }
 
 
+string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
+{
+    switch(this_layer_type)
+    {
+    case Type::Perceptron:
+        return "Perceptron";
+
+    case Type::Perceptron3D:
+        return "Perceptron3D";
+
+    case Type::Bounding:
+        return "Bounding";
+
+    case Type::Pooling:
+        return "Pooling";
+
+    case Type::Probabilistic:
+        return "Probabilistic";
+
+    case Type::Probabilistic3D:
+        return "Probabilistic3D";
+
+    case Type::Convolutional:
+        return "Convolutional";
+
+    case Type::LongShortTermMemory:
+        return "LongShortTermMemory";
+
+    case Type::Recurrent:
+        return "Recurrent";
+
+    case Type::Scaling2D:
+        return "Scaling2D";
+
+    case Type::Scaling4D:
+        return "Scaling4D";
+
+    case Type::Unscaling:
+        return "Unscaling";
+
+    case Type::Flatten:
+        return "Flatten";
+
+    case Type::NonMaxSuppression:
+        return "NonMaxSuppression";
+
+    case Type::Addition3D:
+        return "Addition3D";
+
+    case Type::Normalization3D:
+        return "Normalization3D";
+
+    case Type::Embedding:
+        return "Embedding";
+
+    case Type::MultiheadAttention:
+        return "MultiheadAttention";
+
+    default:
+        throw runtime_error("Unknown layer type.");
+    }
+
+}
+
+
+Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
+{
+    if(this_layer_type == "Perceptron")
+        return Type::Perceptron;
+
+    if(this_layer_type == "Perceptron3D")
+        return Type::Perceptron3D;
+
+    if(this_layer_type == "Bounding")
+        return Type::Bounding;
+
+    if(this_layer_type == "Pooling")
+        return Type::Pooling;
+
+    if(this_layer_type == "Probabilistic")
+        return Type::Probabilistic;
+
+    if(this_layer_type == "Probabilistic3D")
+        return Type::Probabilistic3D;
+
+    if(this_layer_type == "Convolutional")
+        return Type::Convolutional;
+
+    if(this_layer_type == "LongShortTermMemory")
+        return Type::LongShortTermMemory;
+
+    if(this_layer_type == "Recurrent")
+        return Type::Recurrent;
+
+    if(this_layer_type == "Scaling2D")
+        return Type::Scaling2D;
+
+    if(this_layer_type == "Scaling4D")
+        return Type::Scaling4D;
+
+    if(this_layer_type == "Unscaling")
+        return Type::Unscaling;
+
+    if(this_layer_type == "Flatten")
+        return Type::Flatten;
+
+    if(this_layer_type == "NonMaxSuppression")
+        return Type::NonMaxSuppression;
+
+    if(this_layer_type == "Addition3D")
+        return Type::Addition3D;
+
+    if(this_layer_type == "Normalization3D")
+        return Type::Normalization3D;
+
+    if(this_layer_type == "Embedding")
+        return Type::Embedding;
+
+    if(this_layer_type == "MultiheadAttention")
+        return Type::MultiheadAttention;
+
+    throw runtime_error("Unknown layer type.");
+}
+
+
 string Layer::get_name() const
 {
     return name;
@@ -46,40 +170,40 @@ string Layer::get_type_string() const
     switch(layer_type)
     {
     case Type::Perceptron:
-        return "PerceptronLayer";
+        return "Perceptron";
 
-    case Type::PerceptronLayer3D:
-        return "PerceptronLayer3D";
+    case Type::Perceptron3D:
+        return "Perceptron3D";
 
     case Type::Bounding:
-        return "BoundingLayer";
+        return "Bounding";
 
     case Type::Pooling:
-        return "PoolingLayer";
+        return "Pooling";
 
     case Type::Probabilistic:
-        return "ProbabilisticLayer2D";
+        return "Probabilistic";
 
     case Type::Probabilistic3D:
-        return "ProbabilisticLayer3D";
+        return "Probabilistic3D";
 
     case Type::Convolutional:
-        return "ConvolutionalLayer";
+        return "Convolutional";
 
     case Type::LongShortTermMemory:
-        return "LongShortTermMemoryLayer";
+        return "LongShortTermMemory";
 
     case Type::Recurrent:
-        return "RecurrentLayer";
+        return "Recurrent";
 
     case Type::Scaling2D:
-        return "ScalingLayer2D";
+        return "Scaling2D";
 
     case Type::Scaling4D:
         return "Scaling4D";
 
     case Type::Unscaling:
-        return "UnscalingLayer";
+        return "Unscaling";
 
     case Type::Flatten:
         return "Flatten";
@@ -88,16 +212,16 @@ string Layer::get_type_string() const
         return "NonMaxSuppression";
 
     case Type::Addition3D:
-        return "AdditionLayer3D";
+        return "Addition3D";
 
     case Type::Normalization3D:
-        return "NormalizationLayer3D";
+        return "Normalization3D";
 
     case Type::Embedding:
-        return "EmbeddingLayer";
+        return "Embedding";
 
     case Type::MultiheadAttention:
-        return "MultiheadAttentionLayer";
+        return "MultiheadAttention";
 
     default:
         return "Unkown type";
@@ -113,8 +237,11 @@ void Layer::set_name(const string& new_name)
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
+    if(thread_pool) 
+        delete thread_pool;
+
+    if(thread_pool_device) 
+        delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
@@ -223,7 +350,7 @@ void Layer::softmax(Tensor<type, 2>& y) const
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{ { 2 }}; 
+    const Eigen::array<Index, 1> softmax_dimension{{2}}; 
     
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
@@ -253,9 +380,9 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{ { 0 }};
-    const Eigen::array<Index, 4> range_4{ { 1, columns_number, channels, blocks_number }};
-    const Eigen::array<Index, 4> expand_softmax_dim{ { rows_number, 1, 1, 1 }};
+    const Eigen::array<Index, 1> softmax_dimension{{0}};
+    const Eigen::array<Index, 4> range_4{{1, columns_number, channels, blocks_number}};
+    const Eigen::array<Index, 4> expand_softmax_dim{{rows_number, 1, 1, 1 }};
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
                                          .eval()

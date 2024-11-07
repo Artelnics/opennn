@@ -58,6 +58,7 @@ HEADERS += \
     ../blank/yolo_dataset.h \
     codification.h \
     cross_entropy_error_3d.h \
+    detection_layer.h \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
@@ -144,7 +145,8 @@ HEADERS += \
     non_max_suppression_layer.h \
     opennn.h \
     yolo_dataset.h \
-    yolo_v2_error.h\
+    yolo_error.h \
+    yolo_network.h
 
 SOURCES += \
     cross_entropy_error_3d.cpp \
@@ -214,4 +216,5 @@ SOURCES += \
     unit_testing.cpp \
     non_max_suppression_layer.cpp \
     yolo_dataset.cpp \
-    yolo_v2_error.cpp
+    yolo_error.cpp \
+    yolo_network.cpp

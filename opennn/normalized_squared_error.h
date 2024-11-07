@@ -9,12 +9,8 @@
 #ifndef NORMALIZEDSQUAREDERROR_H
 #define NORMALIZEDSQUAREDERROR_H
 
-
-
 #include <cmath>
 #include <string>
-
-
 
 #include "config.h"
 #include "loss_index.h"
@@ -28,18 +24,10 @@ class NormalizedSquaredError : public LossIndex
 
 public:
 
-    // Constructors
-
-   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
-
-   explicit NormalizedSquaredError();   
-
-   // Get
+   explicit NormalizedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     type get_normalization_coefficient() const;
     type get_selection_normalization_coefficient() const;
-
-   // Set
 
     void set_normalization_coefficient();
 //    void set_normalization_coefficient(const type&);
@@ -52,8 +40,6 @@ public:
     void set_default();
 
     void set_data_set(DataSet* new_data_set) final;
-
-   // Normalization coefficients 
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
@@ -84,8 +70,6 @@ public:
 
    void calculate_error_hessian_lm(const Batch&,
                                         BackPropagationLM&) const final;
-
-   // Serialization
 
    string get_loss_method() const final;
    string get_error_type_text() const final;

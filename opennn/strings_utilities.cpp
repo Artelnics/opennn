@@ -17,6 +17,7 @@
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
+#include "data_set.h"
 
 namespace opennn
 {
@@ -700,24 +701,14 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     else if(matchs[59] != "") // yyyy/mm/dd hh:mm:ss.ssssss
     {
         if(stoi(matchs[60].str()) < 1970)
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet Class.\n"
-                   << "time_t date_to_timestamp(const string&) method.\n"
-                   << "Cannot convert dates below 1970.\n";
-
             throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[60].str())-1900;
-            time_structure.tm_mon = stoi(matchs[59].str())-1;
-            time_structure.tm_mday = stoi(matchs[58].str());
-            time_structure.tm_hour = stoi(matchs[61].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[62].str());
-            time_structure.tm_sec = stof(matchs[63].str());
-        }
+        
+        time_structure.tm_year = stoi(matchs[60].str())-1900;
+        time_structure.tm_mon = stoi(matchs[59].str())-1;
+        time_structure.tm_mday = stoi(matchs[58].str());
+        time_structure.tm_hour = stoi(matchs[61].str()) - int(gmt);
+        time_structure.tm_min = stoi(matchs[62].str());
+        time_structure.tm_sec = stof(matchs[63].str());
     }
     else if(matchs[70] != "") // %d/%m/%y %H:%M
     {
@@ -1510,10 +1501,12 @@ Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, cons
 
     Tensor<Tensor<string, 1>, 1> tokens(documents_number);
 
+
     //#pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
-        tokens(i) = get_tokens(documents(i), separator);
+    for(Index i = 0; i < documents_number-1; i++)
+    tokens(i) = get_tokens(documents(i), separator);
+
 
     return tokens;
 }
@@ -1566,7 +1559,7 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 
 Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
 {
-/*
+
     Tensor<string, 1> documents_copy(documents);
 
     to_lower(documents_copy);
@@ -1579,9 +1572,9 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     delete_non_alphanumeric(documents_copy);
 
-    return get_tokens(documents_copy);
-*/
-    return Tensor<Tensor<string, 1>, 1>();
+    return get_tokens(documents_copy," ");
+
+    //return Tensor<Tensor<string, 1>, 1>();
 }
 
 

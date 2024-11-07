@@ -13,20 +13,11 @@
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization()
-{
-}
-
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : data_set(new_data_set)
 {
     set(new_neural_network);
-}
 
-
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
-    : neural_network(new_neural_network)
-{
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -39,7 +30,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
     inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
     inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
 
-    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
     {
         output_minimums.resize(outputs_number);
         output_minimums.setZero();
@@ -282,9 +273,9 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> input_names = data_set->get_input_variables_names();
+    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> output_names = data_set->get_target_variables_names();
+    const Tensor<string, 1> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
@@ -431,7 +422,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_raw_variables_number = data_set->get_input_raw_variables_number();
+    const int input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
 

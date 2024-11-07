@@ -11,14 +11,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <codecvt>
-#include <exception>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <random>
 #include <regex>
 #include <stdexcept>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "data_set.h"
@@ -27,6 +25,8 @@
 #include "tensors.h"
 #include "codification.h"
 #include "strings_utilities.h"
+
+using namespace std;
 
 namespace opennn
 {
@@ -150,6 +150,8 @@ void DataSet::RawVariable::set_scaler(const string& new_scaler)
         set_scaler(Scaler::StandardDeviation);
     else if(new_scaler == "Logarithm")
         set_scaler(Scaler::Logarithm);
+    else if (new_scaler == "ImageMinMax")
+        set_scaler(Scaler::ImageMinMax);
     else
         throw runtime_error("Unknown scaler: " + new_scaler + "\n");
 }
@@ -216,57 +218,15 @@ void DataSet::RawVariable::set_categories(const Tensor<string, 1>& new_categorie
 
 void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& document)
 {
-    // Name
+    name = read_xml_string(document.FirstChildElement(), "Name");
+    set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
+    set_use(read_xml_string(document.FirstChildElement(), "Use"));
+    set_type(read_xml_string(document.FirstChildElement(), "Type"));
 
-    const tinyxml2::XMLElement* name_element = document.FirstChildElement("Name");
-
-    if(!name_element)
-        throw runtime_error("Name element is nullptr.\n");
-
-    if(name_element->GetText())
-        name = name_element->GetText();
-
-    // Scaler
-
-    const tinyxml2::XMLElement* scaler_element = document.FirstChildElement("Scaler");
-
-    if(!scaler_element)
-        throw runtime_error("Scaler element is nullptr.\n");
-
-    if(scaler_element->GetText())
-        set_scaler(scaler_element->GetText());
-
-    // Use
-
-    const tinyxml2::XMLElement* use_element = document.FirstChildElement("Use");
-
-    if(!use_element)
-        throw runtime_error("RawVariableUse element is nullptr.\n");
-
-    if(use_element->GetText())
-        set_use(use_element->GetText());
-
-    // Type
-
-    const tinyxml2::XMLElement* type_element = document.FirstChildElement("Type");
-
-    if(!type_element)
-        throw runtime_error("Type element is nullptr.\n");
-
-    if(type_element->GetText())
-        set_type(type_element->GetText());
-
-    if(type == RawVariableType::Categorical)
+    if (type == RawVariableType::Categorical) 
     {
-        // Categories
-
-        const tinyxml2::XMLElement* categories_element = document.FirstChildElement("Categories");
-
-        if(!categories_element)
-            throw runtime_error("Categories element is nullptr.\n");
-
-        if(categories_element->GetText())
-            categories = get_tokens(categories_element->GetText(), ";");
+        const std::string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
+        categories = get_tokens(categories_text, ";");
     }
 }
 
@@ -392,17 +352,11 @@ Index DataSet::RawVariable::get_categories_number() const
 
 bool DataSet::is_sample_used(const Index& index) const
 {
-    return samples_uses(index) != SampleUse::None;
+    return sample_uses(index) != SampleUse::None;
 }
 
 
-bool DataSet::is_sample_unused(const Index& index) const
-{
-    return samples_uses(index) == SampleUse::None;
-}
-
-
-Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
+Tensor<Index, 1> DataSet::get_sample_use_numbers() const
 {
     Tensor<Index, 1> count(4);
     count.setZero();
@@ -412,7 +366,7 @@ Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
     #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
-        switch (samples_uses(i))
+        switch (sample_uses(i))
         {
         case SampleUse::Training: count[0]++; break;
         case SampleUse::Selection: count[1]++; break;
@@ -424,11 +378,11 @@ Tensor<Index, 1> DataSet::get_samples_uses_numbers() const
 }
 
 
-Tensor<type, 1> DataSet::get_samples_uses_percentages() const
+Tensor<type, 1> DataSet::get_sample_use_percentages() const
 {
     const Index samples_number = get_samples_number();
 
-    return (get_samples_uses_numbers().cast<type>()) * (100 / type(samples_number));
+    return (get_sample_use_numbers().cast<type>()) * (100 / type(samples_number));
 }
 
 
@@ -444,7 +398,9 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        switch(raw_variables(i).type)
+        const RawVariable& raw_variable = raw_variables(i);
+
+        switch(raw_variable.type)
         {
         case RawVariableType::Numeric:
             sample_string += isnan(data(sample_index, variable_index))
@@ -457,7 +413,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
         case RawVariableType::Binary:
             sample_string += isnan(data(sample_index, variable_index))
                 ? missing_values_label
-                : raw_variables(i).categories(Index(data(sample_index, variable_index)));
+                : raw_variable.categories(Index(data(sample_index, variable_index)));
 
             variable_index++;
             break;
@@ -477,13 +433,13 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
             }
             else
             {
-                const Index categories_number = raw_variables(i).get_categories_number();
+                const Index categories_number = raw_variable.get_categories_number();
 
                 for(Index j = 0; j < categories_number; j++)
                 {
                     if(abs(data(sample_index, variable_index+j) - type(1)) < type(NUMERIC_LIMITS_MIN))
                     {
-                        sample_string += raw_variables(i).categories(j);
+                        sample_string += raw_variable.categories(j);
                         break;
                     }
                 }
@@ -512,57 +468,23 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 }
 
 
-Tensor<Index, 1> DataSet::get_training_samples_indices() const
+
+
+Tensor<Index, 1> DataSet::get_sample_indices(const SampleUse& sample_use) const
 {
     const Index samples_number = get_samples_number();
 
-    const Index training_samples_number = get_training_samples_number();
+    const Index count = get_samples_number(sample_use);
 
-    Tensor<Index, 1> training_indices(training_samples_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Training)
-            training_indices(index++) = i;
-
-    return training_indices;
-}
-
-
-Tensor<Index, 1> DataSet::get_selection_samples_indices() const
-{
-    const Index samples_number = get_samples_number();
-
-    const Index selection_samples_number = get_selection_samples_number();
-
-    Tensor<Index, 1> selection_indices(selection_samples_number);
+    Tensor<Index, 1> indices(count);
 
     Index index = 0;
 
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Selection)
-            selection_indices(index++) = i;
+    for (Index i = 0; i < samples_number; i++)
+        if (sample_uses(i) == sample_use)
+            indices(index++) = i;
 
-    return selection_indices;
-}
-
-
-Tensor<Index, 1> DataSet::get_testing_samples_indices() const
-{
-    const Index samples_number = get_samples_number();
-
-    const Index testing_samples_number = get_testing_samples_number();
-
-    Tensor<Index, 1> testing_indices(testing_samples_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Testing)
-            testing_indices(index++) = i;
-
-    return testing_indices;
+    return indices;
 }
 
 
@@ -570,47 +492,29 @@ Tensor<Index, 1> DataSet::get_used_samples_indices() const
 {
     const Index samples_number = get_samples_number();
 
-    const Index used_samples_number = samples_number - get_unused_samples_number();
+    const Index used_samples_number = samples_number - get_samples_number(SampleUse::None);
 
     Tensor<Index, 1> used_indices(used_samples_number);
 
     Index index = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) != SampleUse::None)
+        if(sample_uses(i) != SampleUse::None)
             used_indices(index++) = i;
 
     return used_indices;
 }
 
 
-Tensor<Index, 1> DataSet::get_unused_samples_indices() const
-{
-    const Index samples_number = get_samples_number();
-
-    const Index unused_samples_number = get_unused_samples_number();
-
-    Tensor<Index, 1> unused_indices(unused_samples_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::None)
-            unused_indices(index++) = i;
-
-    return unused_indices;
-}
-
-
 DataSet::SampleUse DataSet::get_sample_use(const Index& index) const
 {
-    return samples_uses(index);
+    return sample_uses(index);
 }
 
 
-const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
+const Tensor<DataSet::SampleUse,1 >& DataSet::get_sample_uses() const
 {
-    return samples_uses;
+    return sample_uses;
 }
 
 
@@ -623,7 +527,7 @@ Tensor<Index, 1> DataSet::get_samples_uses_tensor() const
     #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
-        samples_uses_tensor(i) = Index(samples_uses(i));
+        samples_uses_tensor(i) = Index(sample_uses(i));
 
     return samples_uses_tensor;
 }
@@ -681,145 +585,34 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 }
 
 
-Index DataSet::get_training_samples_number() const
+Index DataSet::get_samples_number(const SampleUse& sample_use) const
 {
     const Index samples_number = get_samples_number();
 
-    Index training_samples_number = 0;
+    Index count = 0;
 
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Training)
-            training_samples_number++;
+    #pragma omp parallel for reduction(+:count)
 
-    return training_samples_number;
-}
+    for (Index i = 0; i < samples_number; i++)
+        if (sample_uses(i) == sample_use)
+            count++;
 
-
-Index DataSet::get_selection_samples_number() const
-{
-    const Index samples_number = get_samples_number();
-
-    Index selection_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Selection)
-            selection_samples_number++;
-
-    return selection_samples_number;
-}
-
-
-Index DataSet::get_testing_samples_number() const
-{
-    const Index samples_number = get_samples_number();
-
-    Index testing_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::Testing)
-            testing_samples_number++;
-
-    return testing_samples_number;
+    return count;
 }
 
 
 Index DataSet::get_used_samples_number() const
 {
     const Index samples_number = get_samples_number();
-    const Index unused_samples_number = get_unused_samples_number();
+    const Index unused_samples_number = get_samples_number(SampleUse::None);
 
     return samples_number - unused_samples_number;
 }
 
 
-Index DataSet::get_unused_samples_number() const
+void DataSet::set(const SampleUse& sample_use)
 {
-    const Index samples_number = get_samples_number();
-
-    Index unused_samples_number = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-        if(samples_uses(i) == SampleUse::None)
-            unused_samples_number++;
-
-    return unused_samples_number;
-}
-
-
-void DataSet::set_training()
-{
-    samples_uses.setConstant(SampleUse::Training);
-}
-
-
-void DataSet::set_selection()
-{
-    samples_uses.setConstant(SampleUse::Selection);
-}
-
-
-void DataSet::set_testing()
-{
-    samples_uses.setConstant(SampleUse::Testing);
-}
-
-
-void DataSet::set_training(const Tensor<Index, 1>& indices)
-{
-    Index index = 0;
-
-    for(Index i = 0; i < indices.size(); i++)
-    {
-        index = indices(i);
-
-        samples_uses(index) = SampleUse::Training;
-    }
-}
-
-
-void DataSet::set_selection(const Tensor<Index, 1>& indices)
-{
-    Index index = 0;
-
-    for(Index i = 0; i < indices.size(); i++)
-    {
-        index = indices(i);
-
-        samples_uses(index) = SampleUse::Selection;
-    }
-}
-
-
-void DataSet::set_testing(const Tensor<Index, 1>& indices)
-{
-    Index index = 0;
-
-    for(Index i = 0; i < indices.size(); i++)
-    {
-        index = indices(i);
-
-        samples_uses(index) = SampleUse::Testing;
-    }
-}
-
-
-void DataSet::set_samples_unused()
-{
-    const Index samples_number = get_samples_number();
-
-    for(Index i = 0; i < samples_number; i++)
-        samples_uses(i) = SampleUse::None;
-}
-
-
-void DataSet::set_samples_unused(const Tensor<Index, 1>& indices)
-{
-    for(Index i = 0; i < Index(indices.size()); i++)
-    {
-        const Index index = indices(i);
-
-        samples_uses(index) = SampleUse::None;
-    }
+    sample_uses.setConstant(sample_use);
 }
 
 
@@ -830,20 +623,20 @@ void DataSet::set_sample_use(const Index& index, const SampleUse& new_use)
     if(index >= samples_number)
         throw runtime_error("Index must be less than samples number.\n");
 
-    samples_uses(index) = new_use;
+    sample_uses(index) = new_use;
 }
 
 
 void DataSet::set_sample_use(const Index& index, const string& new_use)
 {
     if(new_use == "Training")
-        samples_uses(index) = SampleUse::Training;
+        sample_uses(index) = SampleUse::Training;
     else if(new_use == "Selection")
-        samples_uses(index) = SampleUse::Selection;
+        sample_uses(index) = SampleUse::Selection;
     else if(new_use == "Testing")
-        samples_uses(index) = SampleUse::Testing;
+        sample_uses(index) = SampleUse::Testing;
     else if(new_use == "None")
-        samples_uses(index) = SampleUse::None;
+        sample_uses(index) = SampleUse::None;
     else
         throw runtime_error("Unknown sample use: " + new_use + "\n");
 }
@@ -854,7 +647,7 @@ void DataSet::set_sample_uses(const Tensor<SampleUse, 1>& new_uses)
     const Index samples_number = get_samples_number();
 
     for(Index i = 0; i < samples_number; i++)
-        samples_uses(i) = new_uses(i);
+        sample_uses(i) = new_uses(i);
 }
 
 
@@ -865,13 +658,13 @@ void DataSet::set_sample_uses(const Tensor<string, 1>& new_uses)
     for(Index i = 0; i < samples_number; i++)
     {
         if(new_uses(i) == "Training" || new_uses(i) == "0")
-            samples_uses(i) = SampleUse::Training;
+            sample_uses(i) = SampleUse::Training;
         else if(new_uses(i) == "Selection" || new_uses(i) == "1")
-            samples_uses(i) = SampleUse::Selection;
+            sample_uses(i) = SampleUse::Selection;
         else if(new_uses(i) == "Testing" || new_uses(i) == "2")
-            samples_uses(i) = SampleUse::Testing;
+            sample_uses(i) = SampleUse::Testing;
         else if(new_uses(i) == "None" || new_uses(i) == "3")
-            samples_uses(i) = SampleUse::None;
+            sample_uses(i) = SampleUse::None;
         else
             throw runtime_error("Unknown sample use: " + new_uses(i) + ".\n");
     }
@@ -898,14 +691,13 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     const type total_ratio = training_samples_ratio + selection_samples_ratio + testing_samples_ratio;
 
-    // Get number of samples for training, selection and testing
-
     const Index selection_samples_number = Index((selection_samples_ratio * used_samples_number)/total_ratio);
     const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number)/ total_ratio);
 
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
 
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
+
 
     if(sum_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
@@ -918,52 +710,30 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
-    Index i = 0;
-    Index index;
-
-    // Training
-
-    Index count_training = 0;
-
-    while(count_training != training_samples_number)
+    auto assign_sample_use = [this, &indices](SampleUse use, Index count, Index& i) 
     {
 
-        index = indices(i++);
+        Index assigned_count = 0;
 
-        if (samples_uses(index) == SampleUse::None) continue;
+        while (assigned_count < count) 
+        {
+            const Index index = indices(i++);
 
-        samples_uses(index) = SampleUse::Training;
-        count_training++;
-    }
+            if (sample_uses(index) != SampleUse::None) 
+            {
+                sample_uses(index) = use;
+                assigned_count++;
+            }
+        }
+    };
 
 
-    // Selection
-    Index count_selection = 0;
+    Index index = 0;
 
-    while(count_selection != selection_samples_number)
-    {
+    assign_sample_use(SampleUse::Training, training_samples_number, index);
+    assign_sample_use(SampleUse::Selection, selection_samples_number, index);
+    assign_sample_use(SampleUse::Testing, testing_samples_number, index);
 
-        index = indices(i++);
-
-        if (samples_uses(index) == SampleUse::None) continue;
-        
-        samples_uses(index) = SampleUse::Selection;
-        count_selection++;
-    }
-
-    // Testing
-    Index count_testing = 0;
-
-    while(count_testing != testing_samples_number)
-    {
-
-        index = indices(i++);
-
-        if (samples_uses(index) == SampleUse::None) continue;
-
-        samples_uses(index) = SampleUse::Testing;
-        count_testing++;
-    }
 }
 
 
@@ -977,8 +747,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 
     const type total_ratio = training_samples_ratio + selection_samples_ratio + testing_samples_ratio;
 
-    // Get number of samples for training, selection and testing
-
     const Index selection_samples_number = Index(selection_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index testing_samples_number = Index(testing_samples_ratio* type(used_samples_number)/ type(total_ratio));
     const Index training_samples_number = used_samples_number - selection_samples_number - testing_samples_number;
@@ -988,52 +756,26 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     if(sum_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
-    Index i = 0;
-
-    // Training
-
-    Index count_training = 0;
-
-    while(count_training != training_samples_number)
+    auto set_sample_uses = [this](SampleUse use, Index count, Index& i) 
     {
-        if(samples_uses(i) != SampleUse::None)
+        Index current_count = 0;
+
+        while (current_count < count) 
         {
-            samples_uses(i) = SampleUse::Training;
-            count_training++;
+            if (sample_uses(i) != SampleUse::None) 
+            {
+                sample_uses(i) = use;
+                current_count++;
+            }
+
+            i++;
         }
+    };
 
-        i++;
-    }
-
-    // Selection
-
-    Index count_selection = 0;
-
-    while(count_selection != selection_samples_number)
-    {
-        if(samples_uses(i) != SampleUse::None)
-        {
-            samples_uses(i) = SampleUse::Selection;
-            count_selection++;
-        }
-
-        i++;
-    }
-
-    // Testing
-
-    Index count_testing = 0;
-
-    while(count_testing != testing_samples_number)
-    {
-        if(samples_uses(i) != SampleUse::None)
-        {
-            samples_uses(i) = SampleUse::Testing;
-            count_testing++;
-        }
-
-        i++;
-    }
+    Index index = 0;
+    set_sample_uses(SampleUse::Training, training_samples_number, index);
+    set_sample_uses(SampleUse::Selection, selection_samples_number, index);
+    set_sample_uses(SampleUse::Testing, testing_samples_number, index);
 }
 
 
@@ -1049,21 +791,21 @@ void DataSet::set_default_raw_variables_uses()
 
     bool target = false;
 
-    if(raw_variables_number == 0)
-    {
+    if(raw_variables_number == 0)   
         return;
-    }
-    else if(raw_variables_number == 1)
+    
+    if(raw_variables_number == 1)
     {
         raw_variables(0).set_use(VariableUse::None);
     }
     else
     {
-        set_input();
+        set(VariableUse::Input);
 
         for(Index i = raw_variables.size()-1; i >= 0; i--)
         {
-            if(raw_variables(i).type == RawVariableType::Constant || raw_variables(i).type == RawVariableType::DateTime)
+            if(raw_variables(i).type == RawVariableType::Constant 
+            || raw_variables(i).type == RawVariableType::DateTime)
             {
                 raw_variables(i).set_use(VariableUse::None);
                 continue;
@@ -1080,7 +822,6 @@ void DataSet::set_default_raw_variables_uses()
         }
 
         input_dimensions.resize(1);
-
         target_dimensions.resize(1);
     }
 }
@@ -1092,31 +833,6 @@ void DataSet::set_default_raw_variables_names()
 
     for(Index i = 0; i < raw_variables_number; i++)
         raw_variables(i).name = "variable_" + to_string(1+i);
-}
-
-
-void DataSet::set_raw_variable_name(const Index& raw_variable_index, const string& new_name)
-{
-    raw_variables(raw_variable_index).name = new_name;
-}
-
-
-DataSet::VariableUse DataSet::get_raw_variable_use(const Index&  index) const
-{
-    return raw_variables(index).use;
-}
-
-
-Tensor<DataSet::VariableUse, 1> DataSet::get_raw_variables_uses() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Tensor<DataSet::VariableUse, 1> raw_variables_uses(raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        raw_variables_uses(i) = raw_variables(i).use;
-
-    return raw_variables_uses;
 }
 
 
@@ -1139,36 +855,7 @@ Tensor<DataSet::VariableUse, 1> DataSet::get_variables_uses() const
 }
 
 
-string DataSet::get_variable_name(const Index& variable_index) const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            for(Index j = 0; j < raw_variables(i).get_categories_number(); j++)
-                if(index == variable_index)
-                    return raw_variables(i).categories(j);
-                else
-                    index++;
-        }
-        else
-        {
-            if(index == variable_index)
-                return raw_variables(i).name;
-            else
-                index++;
-        }
-    }
-
-    return string();
-}
-
-
-Tensor<string, 1> DataSet::get_variables_names() const
+Tensor<string, 1> DataSet::get_variable_names() const
 {    
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -1189,53 +876,28 @@ Tensor<string, 1> DataSet::get_variables_names() const
 }
 
 
-Tensor<string, 1> DataSet::get_input_variables_names() const
+Tensor<string, 1> DataSet::get_variable_names(const VariableUse& variable_use) const
 {
-    const Index input_variables_number = get_input_variables_number();
+    const Index variables_number = get_variables_number(VariableUse::Input);
 
-    Tensor<string, 1> input_variables_names(input_variables_number);
+    Tensor<string, 1> variable_names(variables_number);
 
     const Index raw_variables_number = get_raw_variables_number();
 
     Index index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Input) continue;
+        if (raw_variables(i).use != variable_use) continue;
 
-        if(raw_variables(i).type == RawVariableType::Categorical)
-            for(Index j = 0; j < raw_variables(i).get_categories_number(); j++)
-                input_variables_names(index++) = raw_variables(i).categories(j);
+        if (raw_variables(i).type == RawVariableType::Categorical)
+            for (Index j = 0; j < raw_variables(i).get_categories_number(); j++)
+                variable_names(index++) = raw_variables(i).categories(j);
         else
-            input_variables_names(index++) = raw_variables(i).name;
+            variable_names(index++) = raw_variables(i).name;
     }
 
-    return input_variables_names;
-}
-
-
-Tensor<string, 1> DataSet::get_target_variables_names() const
-{
-    const Index target_variables_number = get_target_variables_number();
-
-    Tensor<string, 1> target_variables_names(target_variables_number);
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use != VariableUse::Target) continue;
-
-        if(raw_variables(i).type == RawVariableType::Categorical)
-            for(Index j = 0; j < raw_variables(i).get_categories_number(); j++)
-                target_variables_names(index++) = raw_variables(i).categories(j);
-        else
-            target_variables_names(index++) = raw_variables(i).name;
-    }
-
-    return target_variables_names;
+    return variable_names;
 }
 
 
@@ -1255,63 +917,66 @@ Index DataSet::get_used_variables_number() const
 {
     const Index variables_number = get_variables_number();
 
-    const Index unused_variables_number = get_unused_variables_number();
+    const Index unused_variables_number = get_variables_number(VariableUse::None);
 
     return variables_number - unused_variables_number;
 }
 
 
-Tensor<Index, 1> DataSet::get_input_raw_variables_indices() const
+Tensor<Index, 1> DataSet::get_variable_indices(const VariableUse& variable_use) const
 {
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-
-    Tensor<Index, 1> input_raw_variables_indices(input_raw_variables_number);
+    const Index this_variables_number = get_variables_number(variable_use);
+    Tensor<Index, 1> this_variable_indices(this_variables_number);
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    Index index = 0;
+    Index variable_index = 0;
+    Index this_variable_index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Input)
-            input_raw_variables_indices(index++) = i;
+    for (Index i = 0; i < raw_variables_number; i++)
+    {
+        if (raw_variables(i).use != variable_use)
+        {
+            if (raw_variables(i).type == RawVariableType::Categorical)
+                variable_index += raw_variables(i).get_categories_number();
+            else
+                variable_index++;
 
-    return input_raw_variables_indices;
+            continue;
+        }
+
+        if (raw_variables(i).type == RawVariableType::Categorical)
+        {
+            const Index categories_number = raw_variables(i).get_categories_number();
+
+            for (Index j = 0; j < categories_number; j++)
+                this_variable_indices(this_variable_index++) = variable_index++;
+        }
+        else
+        {
+            this_variable_indices(this_variable_index++) = variable_index++;
+        }
+    }
+
+    return this_variable_indices;
 }
 
 
-Tensor<Index, 1> DataSet::get_target_raw_variables_indices() const
+Tensor<Index, 1> DataSet::get_raw_variable_indices(const VariableUse& variable_use) const
 {
+    const Index count = get_raw_variables_number(variable_use);
+
+    Tensor<Index, 1> indices(count);
+
     const Index raw_variables_number = get_raw_variables_number();
-
-    const Index target_raw_variables_number = get_target_raw_variables_number();
-
-    Tensor<Index, 1> target_raw_variables_indices(target_raw_variables_number);
 
     Index index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Target)
-            target_raw_variables_indices(index++) = i;
+    for (Index i = 0; i < raw_variables_number; i++)
+        if (raw_variables(i).use == variable_use)
+            indices(index++) = i;
 
-    return target_raw_variables_indices;
-}
-
-
-Tensor<Index, 1> DataSet::get_unused_raw_variables_indices() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index unused_raw_variables_number = get_unused_raw_variables_number();
-
-    Tensor<Index, 1> unused_raw_variables_indices(unused_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::None)
-            unused_raw_variables_indices(index++) = i;
-
-    return unused_raw_variables_indices;
+    return indices;
 }
 
 
@@ -1348,12 +1013,12 @@ Tensor<Scaler, 1> DataSet::get_raw_variables_scalers() const
 }
 
 
-Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
+Tensor<Scaler, 1> DataSet::get_variable_scalers(const VariableUse& variable_use) const
 {
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(variable_use);
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<RawVariable, 1> input_raw_variables = get_input_raw_variables();
+    const Tensor<RawVariable, 1> input_raw_variables = get_raw_variables(variable_use);
 
     Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
 
@@ -1370,28 +1035,6 @@ Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
 }
 
 
-Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
-{
-    const Index target_raw_variables_number = get_target_raw_variables_number();
-    const Index target_variables_number = get_target_variables_number();
-
-    const Tensor<RawVariable, 1> target_raw_variables = get_target_raw_variables();
-
-    Tensor<Scaler, 1> target_variables_scalers(target_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < target_raw_variables_number; i++)
-        if(target_raw_variables(i).type == RawVariableType::Categorical)
-            for(Index j = 0; j < target_raw_variables(i).get_categories_number(); j++)
-                target_variables_scalers(index++) = target_raw_variables(i).scaler;
-        else
-            target_variables_scalers(index++) = target_raw_variables(i).scaler;
-
-    return target_variables_scalers;
-}
-
-
 Tensor<string, 1> DataSet::get_raw_variable_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
@@ -1405,124 +1048,40 @@ Tensor<string, 1> DataSet::get_raw_variable_names() const
 }
 
 
-Tensor<string, 1> DataSet::get_input_raw_variable_names() const
+Tensor<string, 1> DataSet::get_raw_variable_names(const VariableUse& variable_use) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index input_raw_variables_number = get_input_raw_variables_number();
+    const Index count = get_raw_variables_number(variable_use);
 
-    Tensor<string, 1> input_raw_variables_names(input_raw_variables_number);
+    Tensor<string, 1> names(count);
 
     Index index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
-        if (raw_variables(i).use != VariableUse::Input) 
-            continue;
-        
-        input_raw_variables_names(index++) = raw_variables(i).name;        
-    }
-
-    return input_raw_variables_names;
-}
-
-
-Tensor<string, 1> DataSet::get_target_raw_variables_names() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index target_raw_variables_number = get_target_raw_variables_number();
-
-    Tensor<string, 1> target_raw_variables_names(target_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if (raw_variables(i).use != VariableUse::Target) 
-            continue;
-        
-        target_raw_variables_names(index++) = raw_variables(i).name;
-    }
-
-    return target_raw_variables_names;
-}
-
-
-Tensor<string, 1> DataSet::get_used_raw_variables_names() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-    const Index used_raw_variables_number = get_used_raw_variables_number();
-
-    Tensor<string, 1> names(used_raw_variables_number);
-
-    Index index = 0 ;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if (raw_variables(i).use == VariableUse::None) 
+        if (raw_variables(i).use != variable_use)
             continue;
 
         names(index++) = raw_variables(i).name;
     }
 
     return names;
+
 }
 
 
-Index DataSet::get_input_raw_variables_number() const
-{    
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index input_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Input)
-            input_raw_variables_number++;
-
-    return input_raw_variables_number;
-}
-
-
-Index DataSet::get_target_raw_variables_number() const
+Index DataSet::get_raw_variables_number(const VariableUse& variable_use) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Index target_raw_variables_number = 0;
+    Index count = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Target)
-            target_raw_variables_number++;
+    for (Index i = 0; i < raw_variables_number; i++)
+        if (raw_variables(i).use == variable_use)
+            count++;
 
-    return target_raw_variables_number;
-}
-
-
-Index DataSet::get_time_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index time_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::Time)
-            time_raw_variables_number++;
-
-    return time_raw_variables_number;
-}
-
-
-Index DataSet::get_unused_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index unused_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).use == VariableUse::None)
-            unused_raw_variables_number++;
-
-    return unused_raw_variables_number;
+    return count;
 }
 
 
@@ -1561,154 +1120,26 @@ Index DataSet::get_input_and_unused_variables_number() const
 }
 
 
-Tensor<type, 1> DataSet::box_plot_from_histogram(const Histogram& histogram, 
-                                                 const Index& bins_number) const
-{
-    const Index samples_number = get_training_samples_number();
-
-    const Tensor<type, 1>relative_frequencies = histogram.frequencies.cast<type>() *
-           histogram.frequencies.constant(100.0).cast<type>() /
-           histogram.frequencies.constant(samples_number).cast<type>();
-
-    const Tensor<type, 1> bin_centers = histogram.centers;
-    const Tensor<type, 1> bin_frequencies = relative_frequencies;
-
-    vector<type> cumulative_frequencies(1000);
-
-    cumulative_frequencies[0] = bin_frequencies[0];
-
-    for(size_t i = 1; i < 1000; i++)
-        cumulative_frequencies[i] = cumulative_frequencies[i-1] + bin_frequencies[i];
-
-    const type total_frequency = cumulative_frequencies[999];
-
-    const type q1_position = type(0.25) * total_frequency;
-    const type q2_position = type(0.5) * total_frequency;
-    const type q3_position = type(0.75) * total_frequency;
-
-    size_t q1_bin = 0;
-    size_t q2_bin = 0;
-    size_t q3_bin = 0;
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q1_position)
-        {
-            q1_bin = i;
-            break;
-        }
-    }
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q2_position)
-        {
-            q2_bin = i;
-            break;
-        }
-    }
-
-    for(size_t i = 0; i < 1000; i++) 
-    {
-        if(cumulative_frequencies[i] >= q3_position)
-        {
-            q3_bin = i;
-            break;
-        }
-    }
-
-    const type bin_width = bin_centers[1] - bin_centers[0];
-
-    const type q1 = bin_centers[q1_bin] + (q1_position - cumulative_frequencies[q1_bin-1]) * bin_width / bin_frequencies[q1_bin];
-
-    const type q2 = bin_centers[q2_bin] + (q2_position - cumulative_frequencies[q2_bin-1]) * bin_width / bin_frequencies[q2_bin];
-
-    const type q3 = bin_centers[q3_bin] + (q3_position - cumulative_frequencies[q3_bin-1]) * bin_width / bin_frequencies[q3_bin];
-
-    const type minimum = bin_centers[0] - bin_width / type(2);
-    const type maximum = bin_centers[999] + bin_width / type(2);
-
-    Tensor<type, 1> iqr_values(5);
-    iqr_values.setValues({ minimum, q1, q2, q3, maximum });
-
-    return iqr_values;
-}
-
-
 Tensor<DataSet::RawVariable, 1> DataSet::get_raw_variables() const
 {
     return raw_variables;
 }
 
 
-Tensor<DataSet::RawVariable, 1> DataSet::get_input_raw_variables() const
+Tensor<DataSet::RawVariable, 1> DataSet::get_raw_variables(const VariableUse& variable_use) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    const Index inputs_number = get_input_raw_variables_number();
+    const Index count = get_raw_variables_number(variable_use);
 
-    Tensor<RawVariable, 1> input_raw_variables(inputs_number);
-    Index input_index = 0;
+    Tensor<RawVariable, 1> this_raw_variables(count);
+    Index index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if (raw_variables(i).use != VariableUse::Input) 
-            continue;
-        
-        input_raw_variables(input_index++) = raw_variables(i);
-    }
+    for (Index i = 0; i < raw_variables_number; i++)
+        if (raw_variables(i).use == variable_use)
+            this_raw_variables(index++) = raw_variables(i);
 
-    return input_raw_variables;
-}
-
-
-Tensor<DataSet::RawVariable, 1> DataSet::get_target_raw_variables() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    const Index targets_number = get_target_raw_variables_number();
-
-    Tensor<RawVariable, 1> target_raw_variables(targets_number);
-    Index target_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if (raw_variables(i).use != VariableUse::Target) 
-            continue;
-        
-        target_raw_variables(target_index++) = raw_variables(i);
-    }
-
-    return target_raw_variables;
-}
-
-
-Tensor<DataSet::RawVariable, 1> DataSet::get_used_raw_variables() const
-{
-    const Index used_raw_variables_number = get_used_raw_variables_number();
-
-    const Tensor<Index, 1> used_raw_variables_indices = get_used_raw_variables_indices();
-
-    Tensor<DataSet::RawVariable, 1> used_raw_variables(used_raw_variables_number);
-
-    for(Index i = 0; i < used_raw_variables_number; i++)
-        used_raw_variables(i) = raw_variables(used_raw_variables_indices(i));
-
-    return used_raw_variables;
-}
-
-
-Index DataSet::get_constant_raw_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index constant_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables(i).type == RawVariableType::Constant)
-            constant_number++;
-
-    return constant_number;
+    return this_raw_variables;
 }
 
 
@@ -1727,69 +1158,27 @@ Index DataSet::get_variables_number() const
 }
 
 
-Index DataSet::get_input_variables_number() const
+Index DataSet::get_variables_number(const VariableUse& variable_use) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    Index input_variables_number = 0;
+    Index count = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).use != VariableUse::Input) 
+        if (raw_variables(i).use != variable_use)
             continue;
 
-        input_variables_number += (raw_variables(i).type == RawVariableType::Categorical)
+        count += (raw_variables(i).type == RawVariableType::Categorical)
             ? raw_variables(i).get_categories_number()
             : 1;
     }
 
-    return input_variables_number;
+    return count;
 }
 
 
-Index DataSet::get_target_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index target_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use != VariableUse::Target) 
-            continue;
-
-        target_variables_number += (raw_variables(i).type == RawVariableType::Categorical)
-            ? raw_variables(i).get_categories_number()
-            : 1;
-    }
-
-    return target_variables_number;
-}
-
-
-Index DataSet::get_unused_variables_number() const
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index unused_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use != VariableUse::None) 
-            continue;
-
-        unused_variables_number += (raw_variables(i).type == RawVariableType::Categorical)
-            ? raw_variables(i).get_categories_number()
-            : 1;
-
-        //unused_variables_number += raw_variables(i).get_categories_number();
-    }
-
-    return unused_variables_number;
-}
-
-
-Tensor<Index, 1> DataSet::get_used_variables_indices() const
+Tensor<Index, 1> DataSet::get_used_variable_indices() const
 {
     const Index used_variables_number = get_used_variables_number();
     Tensor<Index, 1> used_variables_indices(used_variables_number);
@@ -1817,82 +1206,6 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 }
 
 
-Tensor<Index, 1> DataSet::get_input_variables_indices() const
-{
-    const Index input_variables_number = get_input_variables_number();
-    Tensor<Index, 1> input_variables_indices(input_variables_number);
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index variable_index = 0;
-    Index input_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use != VariableUse::Input)
-        {
-            if(raw_variables(i).type == RawVariableType::Categorical)
-                variable_index += raw_variables(i).get_categories_number();
-            else
-                variable_index++;
-
-            continue;
-        }
-
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index categories_number = raw_variables(i).get_categories_number();
-
-            for(Index j = 0; j < categories_number; j++)
-                input_variables_indices(input_variable_index++) = variable_index++;
-        }
-        else
-        {
-            input_variables_indices(input_variable_index++) = variable_index++;
-        }
-    }
-
-    return input_variables_indices;
-}
-
-
-Tensor<Index, 1> DataSet::get_target_variables_indices() const
-{
-    const Index target_variables_number = get_target_variables_number();
-    Tensor<Index, 1> target_variables_indices(target_variables_number);
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index variable_index = 0;
-    Index target_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).use != VariableUse::Target)
-        {
-            variable_index += (raw_variables(i).type == RawVariableType::Categorical)
-                ? raw_variables(i).get_categories_number()
-                : 1;
-
-            continue;
-        }
-
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            const Index categories_number = raw_variables(i).get_categories_number();
-
-            for(Index j = 0; j < categories_number; j++)
-                target_variables_indices(target_variable_index++) = variable_index++;
-        }
-        else
-        {
-            target_variables_indices(target_variable_index++) = variable_index++;
-        }
-    }
-
-    return target_variables_indices;
-}
-
 
 void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses)
 {
@@ -1905,9 +1218,9 @@ void DataSet::set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables(i).set_use(new_raw_variables_uses(i));
 
-    input_dimensions = {get_input_variables_number()};
+    input_dimensions = {get_variables_number(VariableUse::Input)};
 
-    target_dimensions = {get_target_variables_number()};
+    target_dimensions = {get_variables_number(VariableUse::Target)};
 }
 
 
@@ -1922,25 +1235,25 @@ void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_varia
     for(Index i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables(i).set_use(new_raw_variables_uses(i));
 
-    input_dimensions = {get_input_variables_number()};
+    input_dimensions = {get_variables_number(VariableUse::Input)};
 
-    target_dimensions = {get_target_variables_number()};
+    target_dimensions = {get_variables_number(VariableUse::Target)};
 }
 
 
-void DataSet::set_raw_variables_unused()
+void DataSet::set_raw_variables(const VariableUse& variable_use)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
     for(Index i = 0; i < raw_variables_number; i++)
-        set_raw_variable_use(i, VariableUse::None);
+        set_raw_variable_use(i, variable_use);
 }
 
 
-void DataSet::set_input_target_raw_variables_indices(const Tensor<Index, 1>& input_raw_variables,
+void DataSet::set_input_target_raw_variable_indices(const Tensor<Index, 1>& input_raw_variables,
                                                      const Tensor<Index, 1>& target_raw_variables)
 {
-    set_raw_variables_unused();
+    set_raw_variables(VariableUse::None);
 
     for(Index i = 0; i < input_raw_variables.size(); i++)
         set_raw_variable_use(input_raw_variables(i), VariableUse::Input);
@@ -1950,10 +1263,10 @@ void DataSet::set_input_target_raw_variables_indices(const Tensor<Index, 1>& inp
 }
 
 
-void DataSet::set_input_target_raw_variables_indices(const Tensor<string, 1>& input_raw_variables,
+void DataSet::set_input_target_raw_variable_indices(const Tensor<string, 1>& input_raw_variables,
                                                      const Tensor<string, 1>& target_raw_variables)
 {
-    set_raw_variables_unused();
+    set_raw_variables(VariableUse::None);
 
     for(Index i = 0; i < input_raw_variables.size(); i++)
         set_raw_variable_use(input_raw_variables(i), VariableUse::Input);
@@ -1973,24 +1286,17 @@ void DataSet::set_input_raw_variables_unused()
 }
 
 
-void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variables_indices, const Tensor<bool, 1>& input_raw_variables_use)
-{
-    for(Index i = 0; i < input_raw_variables_indices.size(); i++)
-        set_raw_variable_use(input_raw_variables_indices(i),
-            input_raw_variables_use(i) ? VariableUse::Input : VariableUse::None);
-}
+//void DataSet::set_input_raw_variables(const Tensor<Index, 1>& input_raw_variables_indices, const Tensor<bool, 1>& input_raw_variables_use)
+//{
+//    for(Index i = 0; i < input_raw_variables_indices.size(); i++)
+//        set_raw_variable_use(input_raw_variables_indices(i),
+//            input_raw_variables_use(i) ? VariableUse::Input : VariableUse::None);
+//}
 
 
 void DataSet::set_raw_variable_use(const Index& index, const VariableUse& new_use)
 {
     raw_variables(index).use = new_use;
-}
-
-
-void DataSet::set_raw_variables_unused(const Tensor<Index, 1>& unused_raw_variables_index)
-{
-    for(Index i = 0; i < unused_raw_variables_index.size(); i++)
-        set_raw_variable_use(unused_raw_variables_index(i), VariableUse::None);
 }
 
 
@@ -2016,53 +1322,14 @@ void DataSet::set_raw_variable_type(const string& name, const RawVariableType& n
 }
 
 
-void DataSet::set_all_raw_variables_type(const RawVariableType& new_type)
+void DataSet::set_raw_variable_types(const RawVariableType& new_type)
 {
     for(Index i = 0; i < raw_variables.size(); i ++)
         raw_variables[i].type = new_type;
 }
 
 
-void DataSet::set_variable_name(const Index& variable_index, const string& new_variable_name)
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index index = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        if(raw_variables(i).type == RawVariableType::Categorical)
-        {
-            for(Index j = 0; j < raw_variables(i).get_categories_number(); j++)
-            {
-                if(index == variable_index)
-                {
-                    raw_variables(i).categories(j) = new_variable_name;
-                    return;
-                }
-                else
-                {
-                    index++;
-                }
-            }
-        }
-        else
-        {
-            if(index == variable_index)
-            {
-                raw_variables(i).name = new_variable_name;
-                return;
-            }
-            else
-            {
-                index++;
-            }
-        }
-    }
-}
-
-
-void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
+void DataSet::set_variable_names(const Tensor<string, 1>& new_variables_names)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2077,7 +1344,7 @@ void DataSet::set_variables_names(const Tensor<string, 1>& new_variables_names)
 }
 
 
-void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
+void DataSet::set_raw_variable_names(const Tensor<string, 1>& new_names)
 {
     const Index new_names_size = new_names.size();
     const Index raw_variables_number = get_raw_variables_number();
@@ -2091,47 +1358,27 @@ void DataSet::set_raw_variables_names(const Tensor<string, 1>& new_names)
 }
 
 
-void DataSet::set_input()
+void DataSet::set(const VariableUse& variable_use)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
-        if(raw_variables(i).type == RawVariableType::Constant) 
+        if (raw_variables(i).type == RawVariableType::Constant)
             continue;
 
-        raw_variables(i).set_use(VariableUse::Input);
+        raw_variables(i).set_use(variable_use);
     }
-}
-
-
-void DataSet::set_target()
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        raw_variables(i).set_use(VariableUse::Target);
-}
-
-
-void DataSet::set_variables_unused()
-{
-    const Index raw_variables_number = get_raw_variables_number();
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        raw_variables(i).set_use(VariableUse::None);
 }
 
 
 void DataSet::set_raw_variables_number(const Index& new_raw_variables_number)
 {
     raw_variables.resize(new_raw_variables_number);
-
-    set_default_raw_variables_uses();
 }
 
 
-void DataSet::set_raw_variables_scalers(const Scaler& scalers)
+void DataSet::set_raw_variable_scalers(const Scaler& scalers)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2140,7 +1387,7 @@ void DataSet::set_raw_variables_scalers(const Scaler& scalers)
 }
 
 
-void DataSet::set_raw_variables_scalers(const Tensor<Scaler, 1>& new_scalers)
+void DataSet::set_raw_variable_scalers(const Tensor<Scaler, 1>& new_scalers)
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -2161,7 +1408,7 @@ void DataSet::set_binary_raw_variables()
 
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        RawVariable raw_variable = raw_variables(raw_variable_index);
+        RawVariable& raw_variable = raw_variables(raw_variable_index);
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
@@ -2182,8 +1429,6 @@ void DataSet::set_binary_raw_variables()
         {
             variable_index++;
         }
-
-        raw_variables(raw_variable_index) = raw_variable;
     }
 }
 
@@ -2196,17 +1441,14 @@ void DataSet::unuse_constant_raw_variables()
 
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
-        RawVariable raw_variable = raw_variables(raw_variable_index);
+        RawVariable& raw_variable = raw_variables(raw_variable_index);
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
             const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
 
             if(is_constant_vector(data_column))
-            {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
-            }
+                raw_variable.set(raw_variable.name, VariableUse::None, RawVariableType::Constant);
 
             variable_index++;
         }
@@ -2217,30 +1459,22 @@ void DataSet::unuse_constant_raw_variables()
         else if(raw_variable.type == RawVariableType::Binary)
         {
             if(raw_variable.get_categories_number() == 1)
-            {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
-            }
+                raw_variable.set(raw_variable.name, VariableUse::None, RawVariableType::Constant);
 
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::Categorical)
         {           
             if(raw_variable.get_categories_number() == 1)
-            {
-                raw_variable.type = RawVariableType::Constant;
-                raw_variable.use = VariableUse::None;
-            }
+                raw_variable.set(raw_variable.name, VariableUse::None, RawVariableType::Constant);
 
             variable_index += raw_variable.get_categories_number();        
         }
-
-        raw_variables(raw_variable_index) = raw_variable;
     }
 }
 
 
-void DataSet::set_input_variables_dimensions(const dimensions& new_input_dimensions)
+void DataSet::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 }
@@ -2306,7 +1540,7 @@ const bool& DataSet::get_header_line() const
 }
 
 
-const bool& DataSet::get_has_ids() const
+const bool& DataSet::get_has_sample_ids() const
 {
     return has_sample_ids;
 }
@@ -2386,192 +1620,48 @@ const string& DataSet::get_missing_values_label() const
 }
 
 
-Tensor<type, 2> DataSet::get_training_data() const
+Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use) const
 {
-    const Tensor<Index, 1> variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> variable_indices = get_used_variable_indices();
 
-    const Tensor<Index, 1> training_indices = get_training_samples_indices();
+    const Tensor<Index, 1> sample_indices = get_sample_indices(SampleUse::Training);
 
-    Tensor<type, 2> training_data(training_indices.size(), variables_indices.size());
+    Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
 
-    fill_tensor_data(data, training_indices, variables_indices, training_data.data());
+    fill_tensor_data(data, sample_indices, variable_indices, this_data.data());
 
-    return training_data;
+    return this_data;
 }
 
 
-Tensor<type, 2> DataSet::get_selection_data() const
-{
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-
-    const Index variables_number = get_variables_number();
-
-    Tensor<Index, 1> variables_indices;
-    initialize_sequential(variables_indices, 0, 1, variables_number-1);
-
-    Tensor<type, 2> selection_data(selection_indices.size(), variables_indices.size());
-
-    fill_tensor_data(data, selection_indices, variables_indices, selection_data.data());
-
-    return selection_data;
-}
-
-
-Tensor<type, 2> DataSet::get_testing_data() const
-{
-    const Index variables_number = get_variables_number();
-
-    Tensor<Index, 1> variables_indices;
-    initialize_sequential(variables_indices, 0, 1, variables_number-1);
-
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-
-    Tensor<type, 2> testing_data(testing_indices.size(), variables_indices.size());
-
-    fill_tensor_data(data, testing_indices, variables_indices, testing_data.data());
-
-    return testing_data;
-}
-
-
-Tensor<type, 2> DataSet::get_input_data() const
+Tensor<type, 2> DataSet::get_data(const VariableUse& variable_use) const
 {
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;
-    initialize_sequential(indices, 0, 1, samples_number-1);
+    initialize_sequential(indices, 0, 1, samples_number - 1);
 
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> variable_indices = get_variable_indices(variable_use);
 
-    Tensor<type, 2> input_data(indices.size(), input_variables_indices.size());
+    Tensor<type, 2> this_data(indices.size(), variable_indices.size());
 
-    fill_tensor_data(data, indices, input_variables_indices, input_data.data());
+    fill_tensor_data(data, indices, variable_indices, this_data.data());
 
-    return input_data;
+    return this_data;
 }
 
 
-Tensor<type, 2> DataSet::get_target_data() const
+Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use, const VariableUse& variable_use) const
 {
-    const Tensor<Index, 1> indices = get_used_samples_indices();
+    const Tensor<Index, 1> sample_indices = get_sample_indices(sample_use);
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> variable_indices = get_variable_indices(variable_use);
 
-    Tensor<type, 2> target_data(indices.size(), target_variables_indices.size());
+    Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
 
-    fill_tensor_data(data, indices, target_variables_indices, target_data.data());
+    fill_tensor_data(data, sample_indices, variable_indices, this_data.data());
 
-    return target_data;
-}
-
-
-Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& samples_indices) const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    Tensor<type, 2> input_data(samples_indices.size(), input_variables_indices.size());
-
-    fill_tensor_data(data, samples_indices, input_variables_indices, input_data.data());
-
-    return input_data;
-}
-
-
-Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& samples_indices) const
-{
-    const Index samples_number = get_samples_number();
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    Tensor<type, 2> target_data(samples_number, target_variables_indices.size());
-
-    fill_tensor_data(data, samples_number, target_variables_indices, target_data.data());
-
-    return target_data;
-}
-
-
-Tensor<type, 2> DataSet::get_training_input_data() const
-{
-    const Tensor<Index, 1> training_indices = get_training_samples_indices();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    Tensor<type, 2> training_input_data(training_indices.size(), input_variables_indices.size());
-
-    fill_tensor_data(data, training_indices, input_variables_indices, training_input_data.data());
-
-    return training_input_data;
-}
-
-
-Tensor<type, 2> DataSet::get_training_target_data() const
-{
-    const Tensor<Index, 1> training_indices = get_training_samples_indices();
-
-    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
-
-    Tensor<type, 2> training_target_data(training_indices.size(), target_variables_indices.size());
-
-    fill_tensor_data(data, training_indices, target_variables_indices, training_target_data.data());
-
-    return training_target_data;
-}
-
-
-Tensor<type, 2> DataSet::get_selection_input_data() const
-{
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    Tensor<type, 2> selection_input_data(selection_indices.size(), input_variables_indices.size());
-
-    fill_tensor_data(data, selection_indices, input_variables_indices, selection_input_data.data());
-
-    return selection_input_data;
-}
-
-
-Tensor<type, 2> DataSet::get_selection_target_data() const
-{
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    Tensor<type, 2> selection_target_data(selection_indices.size(), target_variables_indices.size());
-
-    fill_tensor_data(data, selection_indices, target_variables_indices, selection_target_data.data());
-
-    return selection_target_data;
-}
-
-
-Tensor<type, 2> DataSet::get_testing_input_data() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-
-    Tensor<type, 2> testing_input_data(testing_indices.size(), input_variables_indices.size());
-
-    fill_tensor_data(data, testing_indices, input_variables_indices, testing_input_data.data());
-
-    return testing_input_data;
-}
-
-
-Tensor<type, 2> DataSet::get_testing_target_data() const
-{
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-
-    Tensor<type, 2> testing_target_data(testing_indices.size(), target_variables_indices.size());
-
-    fill_tensor_data(data, testing_indices, target_variables_indices, testing_target_data.data());
-
-    return testing_target_data;
+    return this_data;
 }
 
 
@@ -2581,15 +1671,15 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
 }
 
 
-Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor<Index, 1>& variables_indices) const
+Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor<Index, 1>& variable_indices) const
 {
-    const Index variables_number = variables_indices.size();
+    const Index variables_number = variable_indices.size();
 
     Tensor<type, 1 > row(variables_number);
 
     #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
-        row(i) = data(sample_index, variables_indices(i));
+        row(i) = data(sample_index, variable_indices(i));
 
     return row;
 }
@@ -2597,14 +1687,14 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
 
 Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 {
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
 
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<type, 2> inputs(1, input_variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
-        inputs(0, i) = data(sample_index, input_variables_indices(i));
+        inputs(0, i) = data(sample_index, input_variable_indices(i));
 
     return inputs;
 }
@@ -2612,24 +1702,13 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 
 Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) const
 {
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    Tensor<type, 2> sample_target_data(1, target_variables_indices.size());
+    Tensor<type, 2> sample_target_data(1, target_variable_indices.size());
 
-    fill_tensor_data(data, Tensor<Index, 1>(sample_index), target_variables_indices, sample_target_data.data());
+    fill_tensor_data(data, Tensor<Index, 1>(sample_index), target_variable_indices, sample_target_data.data());
 
     return sample_target_data;
-}
-
-
-Tensor<Index, 1> DataSet::get_raw_variables_index(const Tensor<string, 1>& raw_variables_names) const
-{
-    Tensor<Index, 1> raw_variables_index(raw_variables_names.size());
-
-    for(Index i = 0; i < raw_variables_names.size(); i++)
-        raw_variables_index(i) = get_raw_variable_index(raw_variables_names(i));
-
-    return raw_variables_index;
 }
 
 
@@ -2665,6 +1744,19 @@ Index DataSet::get_raw_variable_index(const Index& variable_index) const
 }
 
 
+Tensor<Tensor<Index, 1>, 1> DataSet::get_variable_indices() const
+{
+    const Index raw_variables_number = get_raw_variables_number();
+
+    Tensor<Tensor<Index, 1>, 1> indices(raw_variables_number);
+
+    for(Index i = 0; i < raw_variables_number; i++)
+        indices(i) = get_variable_indices(i);
+
+    return indices;
+}
+
+
 Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) const
 {
     Index index = 0;
@@ -2674,21 +1766,22 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& raw_variable_index) 
             ? raw_variables(i).categories.size()
             : 1;
 
-    if(raw_variables(raw_variable_index).type == RawVariableType::Categorical)
-    {
-        Tensor<Index, 1> variable_indices(raw_variables(raw_variable_index).categories.size());
+    const RawVariable& raw_variable = raw_variables(raw_variable_index);
 
-        for(Index j = 0; j<raw_variables(raw_variable_index).categories.size(); j++)
-            variable_indices(j) = index+j;
-
-        return variable_indices;
-    }
-    else
+    if(raw_variable.type == RawVariableType::Categorical)
     {
-        const Tensor<Index, 1> indices = {index};
+        Tensor<Index, 1> indices(raw_variable.categories.size());
+
+        for(Index j = 0; j < raw_variable.categories.size(); j++)
+            indices(j) = index + j;
 
         return indices;
     }
+
+    Tensor<Index, 1> indices(1);
+    indices(0) = index;
+
+    return indices;
 }
 
 
@@ -2755,26 +1848,26 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
-{
-    const Index raw_variables_number = selected_raw_variable_indices.size();
-    const Index rows_number = data.dimension(0);
+// Tensor<type, 2> DataSet::get_raw_variables_data(const Tensor<Index, 1>& selected_raw_variable_indices) const
+// {
+//     const Index raw_variables_number = selected_raw_variable_indices.size();
+//     const Index rows_number = data.dimension(0);
 
-    Tensor<type, 2> data_slice(rows_number, raw_variables_number);
+//     Tensor<type, 2> data_slice(rows_number, raw_variables_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
+//     for(Index i = 0; i < raw_variables_number; i++)
+//     {
+//         const Eigen::array<Index, 1> rows_number_to_reshape{{rows_number}};
 
-        const Tensor<type, 2> single_raw_variable_data = get_raw_variable_data(selected_raw_variable_indices(i));
+//         const Tensor<type, 2> single_raw_variable_data = get_raw_variable_data(selected_raw_variable_indices(i));
 
-        const Tensor<type, 1> column_data = single_raw_variable_data.reshape(rows_number_to_reshape);
+//         const Tensor<type, 1> column_data = single_raw_variable_data.reshape(rows_number_to_reshape);
 
-        data_slice.chip(i,1) = column_data;
-    }
+//         data_slice.chip(i,1) = column_data;
+//     }
 
-    return data_slice;
-}
+//     return data_slice;
+// }
 
 
 Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const Tensor<Index, 1>& rows_indices) const
@@ -2808,7 +1901,7 @@ void DataSet::set()
 
     data.resize(0,0);
 
-    samples_uses.resize(0);
+    sample_uses.resize(0);
 
     raw_variables.resize(0);
 
@@ -2828,21 +1921,15 @@ void DataSet::set(const Tensor<type, 1>& inputs_variables_dimensions, const Inde
     // Set raw variables
 
     for(Index i = 0; i < inputs_variables_dimensions.dimension(0);i++)
-    {
         for(Index j = 0; j < inputs_variables_dimensions(i); j++)
-        {
-            raw_variables(i+j).name = "variable_" + to_string(i+j+1);
-            raw_variables(i+j).use = VariableUse::Input;
-            raw_variables(i+j).type = RawVariableType::Numeric;
-        }
-    }
+            raw_variables(i + j).set("variable_" + to_string(i + j + 1), 
+                                     VariableUse::Input, 
+                                     RawVariableType::Numeric);
 
     for(Index i = 0; i < channels; i++)
-    {
-        raw_variables(inputs_variables_dimensions.dimension(0) + i).name = "variable_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1);
-        raw_variables(inputs_variables_dimensions.dimension(0) + i).use = VariableUse::Target;
-        raw_variables(inputs_variables_dimensions.dimension(0) + i).type = RawVariableType::Numeric;
-    }
+        raw_variables(inputs_variables_dimensions.dimension(0) + i).set("variable_" + to_string(inputs_variables_dimensions.dimension(0) + i + 1),
+                                                                        VariableUse::Target, 
+                                                                        RawVariableType::Numeric);
 }
 
 
@@ -2852,6 +1939,7 @@ void DataSet::set(const string& data_path,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
 {
+
     set();
 
     set_default();
@@ -2872,8 +1960,8 @@ void DataSet::set(const string& data_path,
 
     set_default_raw_variables_uses();
 
-    const Index input_variables_number = get_input_variables_number();
-    const Index target_variables_number = get_target_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index target_variables_number = get_variables_number(VariableUse::Target);
 
     input_dimensions = {input_variables_number};
 
@@ -2903,19 +1991,17 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
     raw_variables.resize(new_variables_number);
     
     for(Index index = 0; index < new_variables_number-1; index++)
-    {
-        raw_variables(index).name = "variable_" + to_string(index+1);
-        raw_variables(index).use = VariableUse::Input;
-        raw_variables(index).type = RawVariableType::Numeric;
-    }
+        raw_variables(index).set("variable_" + to_string(index + 1), 
+                                 VariableUse::Input, 
+                                 RawVariableType::Numeric);
 
-    raw_variables(new_variables_number - 1).name = "variable_" + to_string(new_variables_number);
-    raw_variables(new_variables_number - 1).use = VariableUse::Target;
-    raw_variables(new_variables_number - 1).type = RawVariableType::Numeric;
+    raw_variables(new_variables_number - 1).set("variable_" + to_string(new_variables_number), 
+                                                VariableUse::Target, 
+                                                RawVariableType::Numeric);
 
-    samples_uses.resize(new_samples_number);
+    sample_uses.resize(new_samples_number);
 
-    samples_uses.setConstant(SampleUse::Training);
+    sample_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
 }
@@ -2949,37 +2035,8 @@ void DataSet::set(const Index& new_samples_number,
 
     target_dimensions = { new_targets_number };
 
-    samples_uses.resize(new_samples_number);
+    sample_uses.resize(new_samples_number);
     split_samples_random();
-}
-
-
-void DataSet::set(const DataSet& other_data_set)
-{
-    data_path = other_data_set.data_path;
-
-    has_header = other_data_set.has_header;
-
-    separator = other_data_set.separator;
-
-    missing_values_label = other_data_set.missing_values_label;
-
-    data = other_data_set.data;
-
-    raw_variables = other_data_set.raw_variables;
-
-    display = other_data_set.display;
-}
-
-
-void DataSet::set(const tinyxml2::XMLDocument& data_set_document)
-{
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    set_default();
-
-    from_XML(data_set_document);
 }
 
 
@@ -3011,9 +2068,9 @@ void DataSet::set_default()
 
     set_default_raw_variables_names();
 
-    input_dimensions = {get_input_variables_number()};
+    input_dimensions = {get_variables_number(VariableUse::Input)};
 
-    target_dimensions = {get_target_variables_number()};
+    target_dimensions = {get_variables_number(VariableUse::Target)};
 }
 
 
@@ -3051,12 +2108,6 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
     set(samples_number, variables_number);
 
-    data = new_data;
-}
-
-
-void DataSet::set_data(const Tensor<type, 2>& new_data, const bool& new_samples)
-{
     data = new_data;
 }
 
@@ -3214,10 +2265,10 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-    const Index target_raw_variables_number = get_target_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
+    const Tensor<Index, 1> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
@@ -3287,98 +2338,89 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < raw_variables_number; i++)
     {
         const RawVariable raw_variable = raw_variables(i);
 
-        if(raw_variable.type == RawVariableType::Numeric)
+        if (raw_variable.use == VariableUse::None)
         {
-            if(raw_variable.use == VariableUse::None)
-            {
-                variable_index++;
-            }
-            else
-            {
-                Tensor<type, 1> raw_variable_data(used_samples_number);
-
-                for(Index j = 0; j < used_samples_number; j++)
-                    raw_variable_data(j) = data(used_samples_indices(j), variable_index);
-
-                histograms(used_raw_variable_index++) = histogram(raw_variable_data, bins_number);
-
-                variable_index++;
-            }
+            variable_index += (raw_variable.type == RawVariableType::Categorical)
+                ? raw_variable.get_categories_number()
+                : 1;
+            continue;
         }
-        else if(raw_variable.type == RawVariableType::Categorical)
+
+       
+        switch (raw_variable.type)
+        {
+
+        case RawVariableType::Numeric:
+        {
+            Tensor<type, 1> raw_variable_data(used_samples_number);
+
+            for (Index j = 0; j < used_samples_number; j++)
+                raw_variable_data(j) = data(used_samples_indices(j), variable_index);
+
+            histograms(used_raw_variable_index++) = histogram(raw_variable_data, bins_number);
+
+            variable_index++;
+        }
+            break;
+
+        case RawVariableType::Categorical:
         {
             const Index categories_number = raw_variable.get_categories_number();
 
-            if(raw_variable.use == VariableUse::None)
+            Tensor<Index, 1> categories_frequencies(categories_number);
+            categories_frequencies.setZero();
+            Tensor<type, 1> centers(categories_number);
+
+            for (Index j = 0; j < categories_number; j++)
             {
-                variable_index += categories_number;
-            }
-            else
-            {
-                Tensor<Index, 1> categories_frequencies(categories_number);
-                categories_frequencies.setZero();
-                Tensor<type, 1> centers(categories_number);
+                for (Index k = 0; k < used_samples_number; k++)
+                    if (abs(data(used_samples_indices(k), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                        categories_frequencies(j)++;
 
-                for(Index j = 0; j < categories_number; j++)
-                {
-                    for(Index k = 0; k < used_samples_number; k++)
-                        if(abs(data(used_samples_indices(k), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
-                            categories_frequencies(j)++;
+                centers(j) = type(j);
 
-                    centers(j) = type(j);
-
-                    variable_index++;
-                }
-
-                histograms(used_raw_variable_index).frequencies = categories_frequencies;
-                histograms(used_raw_variable_index).centers = centers;
-
-                used_raw_variable_index++;
-            }
-        }
-        else if(raw_variable.type == RawVariableType::Binary)
-        {
-            if(raw_variable.use == VariableUse::None)
-            {
                 variable_index++;
             }
-            else
-            {
-                Tensor<Index, 1> binary_frequencies(2);
-                binary_frequencies.setZero();
 
-                for(Index j = 0; j < used_samples_number; j++)
-                {
-                    binary_frequencies(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
-                        ? 0
-                        : 1)++;
-                }
+            histograms(used_raw_variable_index).frequencies = categories_frequencies;
+            histograms(used_raw_variable_index).centers = centers;
 
-                histograms(used_raw_variable_index).frequencies = binary_frequencies;
-                variable_index++;
-                used_raw_variable_index++;
-            }
+            used_raw_variable_index++;
         }
-        else if(raw_variable.type == RawVariableType::DateTime)
-        {
-            // @todo
+            break;
 
-            if(raw_variable.use == VariableUse::None)
+        case RawVariableType::Binary:
+        {
+            Tensor<Index, 1> binary_frequencies(2);
+            binary_frequencies.setZero();
+
+            for (Index j = 0; j < used_samples_number; j++)
             {
+                binary_frequencies(abs(data(used_samples_indices(j), variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
+                    ? 0
+                    : 1)++;
             }
-            else
-            {
-            }
+
+            histograms(used_raw_variable_index).frequencies = binary_frequencies;
+            variable_index++;
+            used_raw_variable_index++;
+        }
+            break;
+        
+        case RawVariableType::DateTime:
 
             variable_index++;
-        }
-        else
-        {
-            variable_index++;
+
+            break;
+
+        default:
+
+            throw runtime_error("Unknown raw variable type.");
+
         }
     }
 
@@ -3386,17 +2428,17 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 }
 
 
-Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
-{
-    const Index raw_variables_number = data.dimension(1);
+//Tensor<BoxPlot, 1> DataSet::calculate_data_raw_variables_box_plot(Tensor<type,2>& data) const
+//{
+//    const Index columns_number = data.dimension(1);
 
-    Tensor<BoxPlot, 1> box_plots(raw_variables_number);
+//    Tensor<BoxPlot, 1> box_plots(columns_number);
 
-    for(Index i = 0; i < raw_variables_number; i++)
-        box_plots(i) = box_plot(data.chip(i, 1));
+//    for(Index i = 0; i < columns_number; i++)
+//        box_plots(i) = box_plot(data.chip(i, 1));
 
-    return box_plots;
-}
+//    return box_plots;
+//}
 
 
 Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
@@ -3467,78 +2509,16 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
 }
 
 
-Index DataSet::calculate_training_negatives(const Index& target_index) const
-{
-    Index negatives = 0;
-
-    const Tensor<Index, 1> training_indices = get_training_samples_indices();
-
-    const Index training_samples_number = training_indices.size();
-
-    for(Index i = 0; i < training_samples_number; i++)
-    {
-        const Index training_index = training_indices(i);
-
-        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
-            negatives++;
-        else if(abs(data(training_index, target_index) - type(1)) > type(1.0e-3))
-            throw runtime_error("Training sample is neither positive nor negative: "
-                                + to_string(data(training_index, target_index)));
-    }
-
-    return negatives;
-}
-
-
-Index DataSet::calculate_selection_negatives(const Index& target_index) const
-{
-    Index negatives = 0;
-
-    const Index selection_samples_number = get_selection_samples_number();
-
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-
-    for(Index i = 0; i < Index(selection_samples_number); i++)
-    {
-        const Index selection_index = selection_indices(i);
-
-        if(abs(data(selection_index, target_index)) < type(NUMERIC_LIMITS_MIN))
-            negatives++;
-        else if(abs(data(selection_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN))
-            throw runtime_error("Selection sample is neither a positive nor a negative: "
-                                + to_string(data(selection_index, target_index)));
-    }
-
-    return negatives;
-}
-
-
-Index DataSet::calculate_testing_negatives(const Index& target_index) const
-{
-    Index negatives = 0;
-
-    const Index testing_samples_number = get_testing_samples_number();
-
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
-
-    for(Index i = 0; i < Index(testing_samples_number); i++)
-        if(data(testing_indices(i), target_index) < type(NUMERIC_LIMITS_MIN))
-            negatives++;
-
-    return negatives;
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_variable_descriptives() const
 {
     return descriptives(data);
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_used_variable_descriptives() const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
 
     return descriptives(data, used_samples_indices, used_variables_indices);
 }
@@ -3546,10 +2526,10 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_samples() const
 {
-    const Index target_index = get_target_variables_indices()(0);
+    const Index target_index = get_variable_indices(DataSet::VariableUse::Target)(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -3577,16 +2557,16 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_positive_s
         }
     }
 
-    return descriptives(data, positive_used_samples_indices, input_variables_indices);
+    return descriptives(data, positive_used_samples_indices, input_variable_indices);
 }
 
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_samples() const
 {
-    const Index target_index = get_target_variables_indices()(0);
+    const Index target_index = get_variable_indices(DataSet::VariableUse::Target)(0);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -3611,14 +2591,14 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_negative_s
             negative_used_samples_indices(negative_sample_index++) = sample_index;
     }
 
-    return descriptives(data, negative_used_samples_indices, input_variables_indices);
+    return descriptives(data, negative_used_samples_indices, input_variable_indices);
 }
 
 
 Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories(const Index& class_index) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
 
     const Index samples_number = used_samples_indices.size();
 
@@ -3645,87 +2625,33 @@ Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_categories
             class_used_samples_indices(class_sample_index++) = sample_index;
     }
 
-    return descriptives(data, class_used_samples_indices, input_variables_indices);
+    return descriptives(data, class_used_samples_indices, input_variable_indices);
 }
 
 
-Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_training_samples() const
-{
-    const Tensor<Index, 1> training_indices = get_training_samples_indices();
-
-    const Tensor<Index, 1> used_indices = get_used_raw_variables_indices();
-
-    return descriptives(data, training_indices, used_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_raw_variables_descriptives_selection_samples() const
-{
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
-
-    const Tensor<Index, 1> used_indices = get_used_raw_variables_indices();
-
-    return descriptives(data, selection_indices, used_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
+Tensor<Descriptives, 1> DataSet::calculate_variable_descriptives(const VariableUse& variable_use) const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
 
-    return descriptives(data, used_samples_indices, input_variables_indices);
-}
-
-
-Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
-{
-    const Tensor<Index, 1> used_indices = get_used_samples_indices();
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-
-    return descriptives(data, used_indices, target_variables_indices);
+    return descriptives(data, used_samples_indices, input_variable_indices);
 }
 
 
 Tensor<Descriptives, 1> DataSet::calculate_testing_target_variables_descriptives() const
 {
-    const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
+    const Tensor<Index, 1> testing_indices = get_sample_indices(SampleUse::Testing);
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return descriptives(data, testing_indices, target_variables_indices);
-}
-
-
-Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
-{
-    return column_minimums(data, get_used_samples_indices(), get_input_variables_indices());
-}
-
-
-Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
-{
-    return column_minimums(data, get_used_samples_indices(), get_target_variables_indices());
-}
-
-
-Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
-{
-    return column_maximums(data, get_used_samples_indices(), get_input_variables_indices());
-}
-
-
-Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
-{
-    return column_maximums(data, get_used_samples_indices(), get_target_variables_indices());
+    return descriptives(data, testing_indices, target_variable_indices);
 }
 
 
 Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 {
-    return column_minimums(data, get_used_samples_indices(), get_used_variables_indices());
+    return column_minimums(data, get_used_samples_indices(), get_used_variable_indices());
 }
 
 
@@ -3733,19 +2659,19 @@ Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 {
     const Tensor<Index, 1> used_indices = get_used_samples_indices();
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return mean(data, used_indices, target_variables_indices);
+    return mean(data, used_indices, target_variable_indices);
 }
 
 
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
 {
-    const Tensor<Index, 1> selection_indices = get_selection_samples_indices();
+    const Tensor<Index, 1> selection_indices = get_sample_indices(SampleUse::Selection);
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    return mean(data, selection_indices, target_variables_indices);
+    return mean(data, selection_indices, target_variable_indices);
 }
 
 
@@ -3763,11 +2689,11 @@ void DataSet::set_gmt(Index& new_gmt)
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
 {
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-    const Index target_raw_variables_number = get_target_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_raw_variables_indices();
+    const Tensor<Index, 1> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
+    const Tensor<Index, 1> target_raw_variables_indices = get_raw_variable_indices(VariableUse::Target);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
@@ -3799,11 +2725,11 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
 
 Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
 {
-    const Index input_raw_variables_number = get_input_raw_variables_number();
-    const Index target_raw_variables_number = get_target_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_raw_variables_indices();
+    const Tensor<Index, 1> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
+    const Tensor<Index, 1> target_raw_variables_indices = get_raw_variable_indices(VariableUse::Target);
 
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
@@ -3834,7 +2760,7 @@ bool DataSet::has_nan() const
     const Index rows_number = data.dimension(0);
 
     for(Index i = 0; i < rows_number; i++)
-        if(samples_uses(i) != SampleUse::None)
+        if(sample_uses(i) != SampleUse::None)
             if(has_nan_row(i)) 
                 return true;
 
@@ -3872,11 +2798,11 @@ void DataSet::print_missing_values_information() const
 
 void DataSet::print_input_target_raw_variables_correlations() const
 {
-    const Index inputs_number = get_input_variables_number();
-    const Index targets_number = get_target_raw_variables_number();
+    const Index inputs_number = get_variables_number(VariableUse::Input);
+    const Index targets_number = get_raw_variables_number(VariableUse::Target);
 
-    const Tensor<string, 1> input_names = get_input_raw_variable_names();
-    const Tensor<string, 1> targets_name = get_target_raw_variables_names();
+    const Tensor<string, 1> input_names = get_raw_variable_names(VariableUse::Input);
+    const Tensor<string, 1> targets_name = get_raw_variable_names(VariableUse::Target);
 
     const Tensor<Correlation, 2> correlations = calculate_input_target_raw_variable_pearson_correlations();
 
@@ -3888,11 +2814,11 @@ void DataSet::print_input_target_raw_variables_correlations() const
 
 void DataSet::print_top_input_target_raw_variables_correlations() const
 {
-    const Index inputs_number = get_input_raw_variables_number();
-    const Index targets_number = get_target_raw_variables_number();
+    const Index inputs_number = get_raw_variables_number(VariableUse::Input);
+    const Index targets_number = get_raw_variables_number(VariableUse::Target);
 
-    const Tensor<string, 1> input_names = get_input_variables_names();
-    const Tensor<string, 1> targets_name = get_target_variables_names();
+    const Tensor<string, 1> input_names = get_variable_names(DataSet::VariableUse::Input);
+    const Tensor<string, 1> targets_name = get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<type, 2> correlations = get_correlation_values(calculate_input_target_raw_variable_pearson_correlations());
 
@@ -3917,9 +2843,9 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 {
     // list to return
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
+    const Tensor<Index, 1> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
 
-    const Index input_raw_variables_number = get_input_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
 
     Tensor<Correlation, 2> correlations_pearson(input_raw_variables_number, input_raw_variables_number);
 
@@ -3956,9 +2882,9 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlations() const
 {
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_raw_variables_indices();
+    const Tensor<Index, 1> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
 
-    const Index input_raw_variables_number = get_input_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
 
     Tensor<Correlation, 2> correlations_spearman(input_raw_variables_number, input_raw_variables_number);
 
@@ -4019,9 +2945,9 @@ void DataSet::print_data_file_preview() const
 
 void DataSet::print_top_inputs_correlations() const
 {
-    const Index variables_number = get_input_variables_number();
+    const Index variables_number = get_variables_number(VariableUse::Input);
 
-    const Tensor<string, 1> variables_name = get_input_variables_names();
+    const Tensor<string, 1> variables_name = get_variable_names(DataSet::VariableUse::Input);
 
     const Tensor<type, 2> variables_correlations = get_correlation_values(calculate_input_raw_variable_pearson_correlations());
 
@@ -4053,7 +2979,7 @@ void DataSet::set_default_raw_variables_scalers()
     const Index raw_variables_number = raw_variables.size();
 
     if(model_type == ModelType::ImageClassification)
-        set_raw_variables_scalers(Scaler::ImageMinMax);
+        set_raw_variable_scalers(Scaler::ImageMinMax);
     else
         for(Index i = 0; i < raw_variables_number; i++)
             raw_variables(i).scaler = (raw_variables(i).type == RawVariableType::Numeric)
@@ -4066,7 +2992,7 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 {
     const Index variables_number = get_variables_number();
 
-    const Tensor<Descriptives, 1> variables_descriptives = calculate_variables_descriptives();
+    const Tensor<Descriptives, 1> variables_descriptives = calculate_variable_descriptives();
 
     Index raw_variable_index;
 
@@ -4104,48 +3030,14 @@ Tensor<Descriptives, 1> DataSet::scale_data()
 }
 
 
-void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_variables(const VariableUse& variable_use)
 {
-    const Index variables_number = get_variables_number();
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    for(Index i = 0; i < variables_number; i++)
-    {
-        switch(raw_variables(i).scaler)
-        {
-        case Scaler::None:
-            break;
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
+    const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
-        case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, i, variables_descriptives(i));
-            break;
-
-        case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, i, variables_descriptives(i));
-            break;
-
-        case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, i, variables_descriptives(i));
-            break;
-
-        case Scaler::Logarithm:
-            unscale_logarithmic(data, i);
-            break;
-
-        default:
-            throw runtime_error("Unknown scaler: " + to_string(int(raw_variables(i).scaler)) + "\n");
-        }
-    }
-}
-
-
-Tensor<Descriptives, 1> DataSet::scale_input_variables()
-{
-    const Index input_variables_number = get_input_variables_number();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
-
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_variable_descriptives(variable_use);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -4155,19 +3047,19 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
             break;
 
         case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_minimum_maximum(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_mean_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::StandardDeviation:
-            scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            scale_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::Logarithm:
-            scale_logarithmic(data, input_variables_indices(i));
+            scale_logarithmic(data, input_variable_indices(i));
             break;
 
         default:
@@ -4179,54 +3071,14 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables()
 }
 
 
-Tensor<Descriptives, 1> DataSet::scale_target_variables()
+void DataSet::unscale_variables(const VariableUse& variable_use, 
+                                const Tensor<Descriptives, 1>& input_variables_descriptives)
 {
-    const Index target_variables_number = get_target_variables_number();
+    const Index input_variables_number = get_variables_number(variable_use);
 
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(variable_use);
 
-    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
-
-    for(Index i = 0; i < target_variables_number; i++)
-    {
-        switch(target_variables_scalers(i))
-        {
-        case Scaler::None:
-            break;
-
-        case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::StandardDeviation:
-            scale_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
-            break;
-
-        case Scaler::Logarithm:
-            scale_logarithmic(data, target_variables_indices(i));
-            break;
-
-        default:        
-            throw runtime_error("Unknown scaling targets method: " + to_string(int(target_variables_scalers(i))) + "\n");
-        }
-    }
-
-    return target_variables_descriptives;
-}
-
-
-void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Index input_variables_number = get_input_variables_number();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -4236,63 +3088,27 @@ void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_varia
             break;
 
         case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_minimum_maximum(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_mean_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+            unscale_standard_deviation(data, input_variable_indices(i), input_variables_descriptives(i));
             break;
 
         case Scaler::Logarithm:
-            unscale_logarithmic(data, input_variables_indices(i));
+            unscale_logarithmic(data, input_variable_indices(i));
             break;
 
         case Scaler::ImageMinMax:
-            unscale_image_minimum_maximum(data, input_variables_indices(i));
+            unscale_image_minimum_maximum(data, input_variable_indices(i));
             break;
 
         default:
             throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variables_scalers(i))) + "\n");
-        }
-    }
-}
-
-
-void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_descriptives)
-{
-    const Index target_variables_number = get_target_variables_number();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
-
-    for(Index i = 0; i < target_variables_number; i++)
-    {
-        switch(target_variables_scalers(i))
-        {
-        case Scaler::None:
-            break;
-
-        case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
-            break;
-
-        case Scaler::Logarithm:
-            unscale_logarithmic(data, target_variables_indices(i));
-            break;
-
-        default:
-            throw runtime_error("Unknown unscaling and unscaling method.\n");
         }
     }
 }
@@ -4311,545 +3127,135 @@ void DataSet::set_data_random()
 }
 
 
-void DataSet::set_data_binary_random()
+void DataSet::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    set_random(data);
-
-    const Index samples_number = data.dimension(0);
-    const Index variables_number = data.dimension(1);
-
-    const Index input_variables_number = get_input_variables_number();
-    const Index target_variables_number = variables_number - input_variables_number;
-
-    Index target_variable_index = 0;
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        target_variable_index = (target_variables_number == 1)
-            ? rand() % 2
-            : rand() % (variables_number - input_variables_number) + input_variables_number;
-
-        for(Index j = input_variables_number; j < variables_number; j++)
-            if(target_variables_number == 1) 
-                data(i, j) = type(target_variable_index);
-            else 
-                data(i, j) = (j == target_variable_index)
-                        ? type(1)
-                        : type(0);
-    }
-}
-
-
-void DataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
-{
-    if(model_type == ModelType::Forecasting)
+    if (model_type == ModelType::Forecasting)
         throw runtime_error("Forecasting");
-
-    if(model_type == ModelType::ImageClassification)
+    if (model_type == ModelType::ImageClassification)
         throw runtime_error("Image classification");
 
-    file_stream.OpenElement("DataSet");
+    printer.OpenElement("DataSet");
 
-    // Data file
+    printer.OpenElement("DataSource");
+    add_xml_element(printer, "FileType", "csv");
+    add_xml_element(printer, "Path", data_path);
+    add_xml_element(printer, "Separator", get_separator_name());
+    add_xml_element(printer, "HasHeader", to_string(has_header));
+    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
+    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
+    add_xml_element(printer, "Codification", get_codification_string());
+    printer.CloseElement();  
 
-    file_stream.OpenElement("DataSource");
+    printer.OpenElement("RawVariables");
+    add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
 
-    file_stream.OpenElement("FileType");
-    file_stream.PushText("csv");
-    file_stream.CloseElement();
-
-    // Data file name
-
-    file_stream.OpenElement("Path");
-    file_stream.PushText(data_path.c_str());
-    file_stream.CloseElement();
-
-    // Separator
-
-    file_stream.OpenElement("Separator");
-    file_stream.PushText(get_separator_name().c_str());
-    file_stream.CloseElement();
-
-    // Has header
-
-    file_stream.OpenElement("HasHeader");
-    file_stream.PushText(to_string(has_header).c_str());
-    file_stream.CloseElement();
-
-    // Has Ids
-
-    file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_sample_ids).c_str());
-    file_stream.CloseElement();
-
-    // Missing values label
-
-    file_stream.OpenElement("MissingValuesLabel");
-    file_stream.PushText(missing_values_label.c_str());
-    file_stream.CloseElement();
-
-    // Codification
-
-    file_stream.OpenElement("Codification");
-    file_stream.PushText(get_codification_string().c_str());
-    file_stream.CloseElement();
-
-    // Close Data source
-
-    file_stream.CloseElement();
-
-    // Raw variables
-
-    file_stream.OpenElement("RawVariables");
-
-    // Raw variables number
-
-    file_stream.OpenElement("RawVariablesNumber");
-    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
-    file_stream.CloseElement();
-
-    // Raw variables items
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    for(Index i = 0; i < raw_variables_number; i++)
+    for (Index i = 0; i < get_raw_variables_number(); i++) 
     {
-        file_stream.OpenElement("RawVariable");
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables(i).to_XML(file_stream);
-        file_stream.CloseElement();
+        printer.OpenElement("RawVariable");
+        printer.PushAttribute("Item", to_string(i + 1).c_str());
+        raw_variables(i).to_XML(printer);
+        printer.CloseElement();  
     }
 
-    // Close raw variables
+    printer.CloseElement();  
 
-    file_stream.CloseElement();
+    printer.OpenElement("Samples");
+    
+    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
+    
+    if (has_sample_ids) 
+        add_xml_element(printer, "SamplesId", string_tensor_to_string(samples_id));
+    
+    add_xml_element(printer, "SamplesUses", tensor_to_string(get_samples_uses_tensor()));
+    printer.CloseElement();  
 
-    // Samples
+    printer.OpenElement("MissingValues");
+    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
+    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
-    file_stream.OpenElement("Samples");
-
-    // Samples number
-
-    file_stream.OpenElement("SamplesNumber");
-    file_stream.PushText(to_string(get_samples_number()).c_str());
-    file_stream.CloseElement();
-
-    // Samples id
-
-    if(has_sample_ids)
+    if (missing_values_number > 0) 
     {
-        file_stream.OpenElement("SamplesId");
-        file_stream.PushText(string_tensor_to_string(samples_id).c_str());
-        file_stream.CloseElement();
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
+    printer.CloseElement();  
 
-    // Samples uses
-
-    file_stream.OpenElement("SamplesUses");
-    file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
-    file_stream.CloseElement();
-
-    // Close samples
-
-    file_stream.CloseElement();
-
-    // Missing values
-
-    file_stream.OpenElement("MissingValues");
-
-    // Missing values method
-
-    file_stream.OpenElement("MissingValuesMethod");
-    file_stream.PushText(get_missing_values_method_string().c_str());
-    file_stream.CloseElement();
-
-    // Missing values number
-
-    file_stream.OpenElement("MissingValuesNumber");
-    file_stream.PushText(to_string(missing_values_number).c_str());
-    file_stream.CloseElement();
-
-    if(missing_values_number > 0)
-    {
-        // Raw variables missing values number
-
-        file_stream.OpenElement("RawVariablesMissingValuesNumber");
-        file_stream.PushText(tensor_to_string(raw_variables_missing_values_number).c_str());
-        file_stream.CloseElement();
-
-        // Rows missing values number
-
-        file_stream.OpenElement("RowsMissingValuesNumber");
-        file_stream.PushText(to_string(rows_missing_values_number).c_str());
-        file_stream.CloseElement();
-    }
-
-    // Missing values
-
-    file_stream.CloseElement();
-/*
-    // Preview data
-
-    file_stream.OpenElement("PreviewData");
-
-    file_stream.OpenElement("PreviewSize");
-
-    buffer << data_file_preview.size();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    for(Index i = 0; i < data_file_preview.size(); i++)
-    {
-        file_stream.OpenElement("Row");
-
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-        for(Index j = 0; j < data_file_preview(i).size(); j++)
-        {
-            file_stream.PushText(data_file_preview(i)(j).c_str());
-
-            if(j != data_file_preview(i).size()-1)
-                file_stream.PushText(",");
-        }
-
-        file_stream.CloseElement();
-    }
-
-    // Close preview data
-
-    file_stream.CloseElement();
-*/
-    // Close data set
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
-void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document) 
 {
-    // Data set element
-
     const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
-
-    if(!data_set_element)
+    if (!data_set_element) 
         throw runtime_error("Data set element is nullptr.\n");
-
-    // Data file
-
+    
     const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-
-    if(!data_source_element)
+    if (!data_source_element) 
         throw runtime_error("Data source element is nullptr.\n");
-
-    // Data file name
-
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
-
-    if(!data_source_path_element)
-        throw runtime_error("Path element is nullptr.\n");
-
-    if(data_source_path_element->GetText())
-        set_data_source_path(data_source_path_element->GetText());
-
-    // Separator
-
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(separator_element)
-        if(separator_element->GetText())
-            set_separator_name(separator_element->GetText());
-
-    // Has raw_variables names
-
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
-
-    if(raw_variables_names_element)
-    {
-        const string new_raw_variables_names_string = raw_variables_names_element->GetText();
-
-        try
-        {
-            set_has_header(new_raw_variables_names_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Samples id
-
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
-
-    if(rows_label_element)
-    {
-        const string new_rows_label_string = rows_label_element->GetText();
-
-        try
-        {
-            set_has_ids(new_rows_label_string == "1");
-        }
-        catch(const exception& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Missing values label
-
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
-
-    if(missing_values_label_element)
-        if(missing_values_label_element->GetText())
-            set_missing_values_label(missing_values_label_element->GetText());
-
-    // Codification
-
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
-
-    if(codification_element)
-        if(codification_element->GetText())
-            set_codification(codification_element->GetText());
-
-    // Raw variables
+    
+    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
 
     const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
-
-    if(!raw_variables_element)
+    if (!raw_variables_element) {
         throw runtime_error("RawVariables element is nullptr.\n");
+    }
+    set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
-    // Raw variables number
-
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-
-    if(!raw_variables_number_element)
-        throw runtime_error("RawVariablesNumber element is nullptr.\n");
-
-    if(raw_variables_number_element->GetText())
-        set_raw_variables_number(Index(atoi(raw_variables_number_element->GetText())));
-
-    // Raw variables
-
-    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
-
-    for(Index i = 0; i < raw_variables.size(); i++)
-    {
+    const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    for (Index i = 0; i < raw_variables.size(); i++) {
         RawVariable& raw_variable = raw_variables(i);
-
         const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if(raw_variable_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
-
-        // Name
-
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
-
-        if(!name_element)
-            throw runtime_error("Name element is nullptr.\n");
-
-        if(name_element->GetText())
-            raw_variable.name = name_element->GetText();
-
-        // Scaler
-
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
-
-        if(!scaler_element)
-            throw runtime_error("Scaler element is nullptr.\n");
-
-        if(scaler_element->GetText())
-            raw_variable.set_scaler(scaler_element->GetText());
-
-        // raw_variable use
-
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
-
-        if(!use_element)
-            throw runtime_error("RawVariableUse element is nullptr.\n");
-
-        if(use_element->GetText())
-            raw_variable.set_use(use_element->GetText());
-
-        // Type
-
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
-
-        if(!type_element)
-            throw runtime_error("Type element is nullptr.\n");
-
-        if(type_element->GetText())
-            raw_variable.set_type(type_element->GetText());
-
-        if(raw_variable.type == RawVariableType::Categorical
-        || raw_variable.type == RawVariableType::Binary)
-        {
-            // Categories
-
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
-
-            if(!categories_element)
-                throw runtime_error("Categories element is nullptr.\n");
-
-            if(categories_element->GetText())
-                raw_variable.categories = get_tokens(categories_element->GetText(), ";");
+        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1)) {
+            throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
         }
+
+        raw_variable.name = read_xml_string(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
+
+        if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary) 
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
     }
 
-    // Has Ids
-
-    if(has_sample_ids)
-    {
-        // Samples id begin tag
-
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
-
-        if(!has_ids_element)
-            throw runtime_error("HasSamplesId element is nullptr.\n");
-
-        // Ids
-
-        if(has_ids_element->GetText())
-            samples_id = get_tokens(has_ids_element->GetText(), " ");
+    // Sample IDs
+    if (has_sample_ids) {
+        samples_id = get_tokens(read_xml_string(data_set_element, "SamplesId"), " ");
     }
 
     // Samples
-
     const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
-
-    if(!samples_element)
+    if (!samples_element) {
         throw runtime_error("Samples element is nullptr.\n");
-
-    // Samples number
-
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
-
-    if(!samples_number_element)
-        throw runtime_error("Samples number element is nullptr.\n");
-
-    if(samples_number_element->GetText())
-        samples_uses.resize(Index(atoi(samples_number_element->GetText())));
-
-    // Samples uses
-
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
-
-    if(!samples_uses_element)
-        throw runtime_error("Samples uses element is nullptr.\n");
-
-    if(samples_uses_element->GetText())
-        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
+    }
+    sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
+    set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
 
     // Missing values
-
     const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
-
-    if(!missing_values_element)
+    if (!missing_values_element) {
         throw runtime_error("Missing values element is nullptr.\n");
+    }
+    set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+    missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
-    // Missing values method
-
-    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
-
-    if(!missing_values_method_element)
-        throw runtime_error("Missing values method element is nullptr.\n");
-
-    if(missing_values_method_element->GetText())
-        set_missing_values_method(missing_values_method_element->GetText());
-
-    // Missing values number
-
-    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
-
-    if(!missing_values_number_element)
-        throw runtime_error("Missing values number element is nullptr.\n");
-
-    if(missing_values_number_element->GetText())
-        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
-
-    if(missing_values_number > 0)
-    {
-        // Raw variables Missing values number
-
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element
-                = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
-
-        if(!raw_variables_missing_values_number_element)
-            throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
-
-        if(raw_variables_missing_values_number_element->GetText())
-        {
-            Tensor<string, 1> new_raw_variables_missing_values_number
-                    = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
-
-            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
-
-            for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
-                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+    if (missing_values_number > 0) {
+        raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
+        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++) {
+            raw_variables_missing_values_number(i) = std::stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
         }
-
-        // Rows missing values number
-
-        const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
-
-        if(!rows_missing_values_number_element)
-            throw runtime_error("Rows missing values number element is nullptr.\n");
-
-        if(rows_missing_values_number_element->GetText())
-            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
-    }
-/*
-    // Preview data
-
-    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
-
-    if(!preview_data_element)
-        throw runtime_error("Preview data element is nullptr.\n");
-
-    // Preview size
-
-    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
-
-    if(!preview_size_element)
-        throw runtime_error("Preview size element is nullptr.\n");
-
-    Index new_preview_size = 0;
-
-    if(preview_size_element->GetText())
-    {
-        new_preview_size = Index(atoi(preview_size_element->GetText()));
-
-        if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
+        rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
 
-    // Preview data
-
-    start_element = preview_size_element;
-
-    for(Index i = 0; i < new_preview_size; i++)
-    {
-        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
-        start_element = row_element;
-
-        if(row_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Row item number (" + to_string(i+1) + ") "
-                                "does not match (" + row_element->Attribute("Item") + ").\n");
-
-        if(row_element->GetText())
-        {
-            data_file_preview(i) = get_tokens(row_element->GetText(), ",");
-        }
-    }
-*/
-    // Display
-
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(data_set_element, "Display"));
 }
 
 
@@ -4858,13 +3264,13 @@ void DataSet::print() const
     if(!display) return;
     
     const Index variables_number = get_variables_number();
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index samples_number = get_samples_number();
-    const Index target_variables_bumber = get_target_variables_number();
-    const Index training_samples_number = get_training_samples_number();
-    const Index selection_samples_number = get_selection_samples_number();
-    const Index testing_samples_number = get_testing_samples_number();
-    const Index unused_samples_number = get_unused_samples_number();
+    const Index target_variables_bumber = get_variables_number(VariableUse::Target);
+    const Index training_samples_number = get_samples_number(SampleUse::Training);
+    const Index selection_samples_number = get_samples_number(SampleUse::Selection);
+    const Index testing_samples_number = get_samples_number(SampleUse::Testing);
+    const Index unused_samples_number = get_samples_number(SampleUse::None);
 
     cout << "Data set object summary:\n"
          << "Number of samples: " << samples_number << "\n"
@@ -4873,11 +3279,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
    
-    print_dimensions(input_dimensions);
+    print_dimensions(get_input_dimensions());
          
     cout << "Target variables dimensions: ";
     
-    print_dimensions(target_dimensions);
+    print_dimensions(get_target_dimensions());
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -4986,7 +3392,7 @@ void DataSet::save_data() const
     const Index samples_number = get_samples_number();
     const Index variables_number = get_variables_number();
 
-    const Tensor<string, 1> variables_names = get_variables_names();
+    const Tensor<string, 1> variables_names = get_variable_names();
 
     const string separator_string = get_separator_string();
 
@@ -5085,8 +3491,8 @@ void DataSet::load_data_binary()
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
     const Index samples_number = get_samples_number();
-    const Index targets_number = get_target_variables_number();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Index targets_number = get_variables_number(VariableUse::Target);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     Tensor<Index, 1> class_distribution;
 
@@ -5094,7 +3500,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     {
         class_distribution.resize(2);
 
-        const Index target_index = target_variables_indices(0);
+        const Index target_index = target_variable_indices(0);
 
         Index positives = 0;
         Index negatives = 0;
@@ -5121,10 +3527,10 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
             for(Index j = 0; j < targets_number; j++)
             {
-                if(isnan(data(i,target_variables_indices(j)))) 
+                if(isnan(data(i,target_variable_indices(j))))
                     continue;
 
-                if(data(i,target_variables_indices(j)) > type(0.5)) 
+                if(data(i,target_variable_indices(j)) > type(0.5))
                     class_distribution(j)++;
             }
         }
@@ -5428,7 +3834,7 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, 
                                       const Tensor<type, 1>& maximums)
 {
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
 
     const Index used_variables_number = used_variables_indices.size();
 
@@ -5511,15 +3917,15 @@ void DataSet::impute_missing_values_unuse()
 void DataSet::impute_missing_values_mean()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     Index current_variable;
     Index current_sample;
@@ -5528,7 +3934,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = input_variables_indices(j);
+        current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5543,7 +3949,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < target_variables_number; j++)
     {
-        current_variable = target_variables_indices(j);
+        current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5559,21 +3965,21 @@ void DataSet::impute_missing_values_mean()
 void DataSet::impute_missing_values_median()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<type, 1> medians = median(data, used_samples_indices, used_variables_indices);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     #pragma omp parallel for schedule(dynamic)
 
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        const Index current_variable = input_variables_indices(j);
+        const Index current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5588,7 +3994,7 @@ void DataSet::impute_missing_values_median()
 
     for(Index j = 0; j < target_variables_number; j++)
     {
-        const Index current_variable = target_variables_indices(j);
+        const Index current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5604,13 +4010,13 @@ void DataSet::impute_missing_values_median()
 void DataSet::impute_missing_values_interpolate()
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
+    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
     const Index samples_number = used_samples_indices.size();
     const Index variables_number = used_variables_indices.size();
-    const Index target_variables_number = target_variables_indices.size();
+    const Index target_variables_number = target_variable_indices.size();
 
     Index current_variable;
     Index current_sample;
@@ -5618,7 +4024,7 @@ void DataSet::impute_missing_values_interpolate()
     #pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < variables_number - target_variables_number; j++)
     {
-        current_variable = input_variables_indices(j);
+        current_variable = input_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5669,7 +4075,7 @@ void DataSet::impute_missing_values_interpolate()
     #pragma omp parallel for schedule(dynamic)
     for(Index j = 0; j < target_variables_number; j++)
     {
-        current_variable = target_variables_indices(j);
+        current_variable = target_variable_indices(j);
 
         for(Index i = 0; i < samples_number; i++)
         {
@@ -5757,6 +4163,7 @@ void DataSet::process_tokens(Tensor<string, 1>& tokens)
 
 void DataSet::read_csv()
 {
+
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
@@ -5813,7 +4220,7 @@ void DataSet::read_csv()
             for(Index i = 0; i < raw_variables_number; i++)
                 raw_variables(i).name = tokens(i+1);
         else
-            set_raw_variables_names(tokens);
+            set_raw_variable_names(tokens);
     }
     else
     {
@@ -5846,11 +4253,13 @@ void DataSet::read_csv()
         && raw_variables(i).get_categories_number() == 2)
             raw_variables(i).type = RawVariableType::Binary;
 
-    samples_uses.resize(samples_number);
+    sample_uses.resize(samples_number);
 
     samples_id.resize(samples_number);
 
     const Index variables_number = get_variables_number();
+
+    const Tensor<Tensor<Index, 1>, 1> all_variable_indices = get_variable_indices();
 
     data.resize(samples_number, variables_number);
     data.setZero();
@@ -5904,7 +4313,8 @@ void DataSet::read_csv()
             }
         }
 
-        if(has_sample_ids) samples_id(sample_index) = tokens(0);
+        if(has_sample_ids)
+            samples_id(sample_index) = tokens(0);
 
         #pragma omp parallel for
 
@@ -5912,16 +4322,18 @@ void DataSet::read_csv()
         {
             const RawVariableType raw_variable_type = raw_variables(raw_variable_index).type;
 
-            const string token = has_sample_ids ? tokens(raw_variable_index+1) : tokens(raw_variable_index);
+            const string token = has_sample_ids
+                ? tokens(raw_variable_index+1)
+                : tokens(raw_variable_index);
 
-            const Tensor<Index, 1> variable_indices = get_variable_indices(raw_variable_index);
+            const Tensor<Index, 1>& variable_indices = all_variable_indices(raw_variable_index);
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
-                if(token.empty() || token == missing_values_label)
-                    data(sample_index, variable_indices(0)) = NAN;
-                else
-                    data(sample_index, variable_indices(0)) = stof(token);
+                (token.empty() || token == missing_values_label)
+                    ? data(sample_index, variable_indices(0)) = NAN
+                    : data(sample_index, variable_indices(0)) = stof(token);
+
             }
             else if(raw_variable_type == RawVariableType::DateTime)
             {              
@@ -5949,7 +4361,9 @@ void DataSet::read_csv()
             {
                 if(contains(positive_words, token) || contains(negative_words, token))
                 {
-                    data(sample_index, variable_indices(0)) = contains(positive_words, token) ? 1 : 0;
+                    data(sample_index, variable_indices(0)) = contains(positive_words, token)
+                        ? 1
+                        : 0;
                 }
                 else
                 {
@@ -6025,6 +4439,8 @@ string DataSet::RawVariable::get_scaler_string() const
         return "StandardDeviation";
     case Scaler::Logarithm:
         return "Logarithm";
+    case Scaler::ImageMinMax:
+        return "ImageMinMax";
     default:
         return "";
     }
@@ -6152,16 +4568,14 @@ void DataSet::check_separators(const string& line) const
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
-
-        if(line.find(';') != string::npos)
+        else if(line.find(';') != string::npos)
             throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
@@ -6174,22 +4588,6 @@ void DataSet::check_separators(const string& line) const
         if(line.find(",") != string::npos)
             throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is semicolon (';').");
     }
-}
-
-
-void DataSet::check_special_characters(const string & line) const
-{
-    if(line.find_first_of("|@#~€¬^*") != string::npos)
-        throw runtime_error("Error: found special characters in line: " + line + ". Please, review the file.");
-
-    //#ifdef __unix__
-    //    if(line.find("\r") != string::npos)
-    //    {
-    //        const string message =
-    //                "Error: mixed break line characters in line: " + line + ". Please, review the file.";
-    //        throw runtime_error(message);
-    //    }
-    //#endif
 }
 
 
@@ -6225,7 +4623,7 @@ bool DataSet::has_binary_or_categorical_raw_variables() const
 
 bool DataSet::has_selection() const
 {
-    return get_selection_samples_number() != 0;
+    return get_samples_number(SampleUse::Selection) != 0;
 }
 
 
@@ -6296,33 +4694,15 @@ Index DataSet::count_nan() const
 }
 
 
-void DataSet::set_missing_values_number(const Index& new_missing_values_number)
-{
-    missing_values_number = new_missing_values_number;
-}
-
-
 void DataSet::set_missing_values_number()
 {
     missing_values_number = count_nan();
 }
 
 
-void DataSet::set_raw_variables_missing_values_number(const Tensor<Index, 1>& new_raw_variables_missing_values_number)
-{
-    raw_variables_missing_values_number = new_raw_variables_missing_values_number;
-}
-
-
 void DataSet::set_raw_variables_missing_values_number()
 {
     raw_variables_missing_values_number = count_raw_variables_with_nan();
-}
-
-
-void DataSet::set_samples_missing_values_number(const Index& new_rows_missing_values_number)
-{
-    rows_missing_values_number = new_rows_missing_values_number;
 }
 
 
@@ -6344,7 +4724,8 @@ void DataSet::fix_repeated_names()
     {
         auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variables(i).name, 1));
 
-        if(!result.second) result.first->second++;
+        if(!result.second) 
+            result.first->second++;
     }
 
     for(const auto & element : raw_variables_count_map)
@@ -6365,7 +4746,7 @@ void DataSet::fix_repeated_names()
 
     if(has_categorical_raw_variables() || has_binary_raw_variables())
     {
-        Tensor<string, 1> variables_names = get_variables_names();
+        Tensor<string, 1> variables_names = get_variable_names();
 
         const Index variables_number = variables_names.size();
 
@@ -6390,7 +4771,8 @@ void DataSet::fix_repeated_names()
                     {
                         const Index raw_variable_index = get_raw_variable_index(i);
 
-                        if(raw_variables(raw_variable_index).type != RawVariableType::Categorical) continue;
+                        if(raw_variables(raw_variable_index).type != RawVariableType::Categorical)
+                            continue;
 
                         variables_names(i) = variables_names(i) + "_" + raw_variables(raw_variable_index).name;
                     }
@@ -6398,7 +4780,7 @@ void DataSet::fix_repeated_names()
             }
         }
 
-        set_variables_names(variables_names);
+        set_variable_names(variables_names);
     }
 }
 
@@ -6425,14 +4807,8 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     Index count = 0;
 
     for(Index i = 0; i < batches_number;i++)
-    {
         for(Index j = 0; j < batch_size;++j)
-        {
-            batches(i, j) = samples_indices(count);
-
-            count++;
-        }
-    }
+            batches(i, j) = samples_indices(count++);
 
     return batches;
 }
@@ -6515,10 +4891,12 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     Index tokens_count;
 
-    Index input_raw_variables_number = get_input_raw_variables_number();
+    Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
 
     if(model_type == ModelType::AutoAssociation)
-        input_raw_variables_number = get_raw_variables_number() - get_target_raw_variables_number() - get_unused_raw_variables_number()/2;
+        input_raw_variables_number = get_raw_variables_number() 
+                                   - get_raw_variables_number(VariableUse::Target) 
+                                   - get_raw_variables_number(VariableUse::None)/2;
 
     while(getline(file, line))
     {
@@ -6539,7 +4917,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 
     file.close();
 
-    const Index input_variables_number = get_input_variables_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
 
     if(has_raw_variables_name) input_samples_count--;
 

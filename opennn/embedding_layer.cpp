@@ -13,12 +13,12 @@
 namespace opennn
 {
 
-EmbeddingLayer::EmbeddingLayer() : Layer()
-{
-    set();
+// EmbeddingLayer::EmbeddingLayer() : Layer()
+// {
+//     set();
 
-    layer_type = Type::Embedding;
-}
+//     layer_type = Type::Embedding;
+// }
 
 
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
@@ -98,20 +98,20 @@ const bool& EmbeddingLayer::get_display() const
 }
 
 
-void EmbeddingLayer::set()
-{
-    input_dimensions = 0;
+// void EmbeddingLayer::set()
+// {
+//     input_dimensions = 0;
 
-    inputs_number = 0;
+//     inputs_number = 0;
 
-    depth = 0;
+//     depth = 0;
 
-    positional_encoding = false;
+//     positional_encoding = false;
 
-    embedding_weights.resize(0, 0);
+//     embedding_weights.resize(0, 0);
 
-    set_default();
-}
+//     set_default();
+// }
 
 
 void EmbeddingLayer::set(const Index& new_inputs_dimension,
@@ -125,16 +125,12 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
     depth = new_depth;
 
-    set_embedding_weights();
+    embedding_weights.resize(input_dimensions, depth);
+
+    set_parameters_random();
 
     positional_encoding = new_positional_encoding;
 
-    set_default();
-}
-
-
-void EmbeddingLayer::set_default()
-{
     name = "embedding_layer";
 
     display = true;
@@ -143,26 +139,26 @@ void EmbeddingLayer::set_default()
 }
 
 
-void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
-{
-    input_dimensions = new_inputs_dimension;
+// void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
+// {
+//     input_dimensions = new_inputs_dimension;
 
-    set_embedding_weights();
-}
-
-
-void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
-{
-    inputs_number = new_inputs_number;
-}
+//     set_embedding_weights();
+// }
 
 
-void EmbeddingLayer::set_depth(const Index& new_depth)
-{
-    depth = new_depth;
+// void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
+// {
+//     inputs_number = new_inputs_number;
+// }
 
-    set_embedding_weights();
-}
+
+// void EmbeddingLayer::set_depth(const Index& new_depth)
+// {
+//     depth = new_depth;
+
+//     set_embedding_weights();
+// }
 
 
 void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
@@ -341,113 +337,36 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("EmbeddingLayer element is nullptr.\n");
 
-    // Layer name
+    set_name(read_xml_string(embedding_layer_element, "Name"));
+//    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+//    set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
+//    set_depth(read_xml_index(embedding_layer_element, "Depth"));
 
-    const tinyxml2::XMLElement* layer_name_element = embedding_layer_element->FirstChildElement("Name");
+    positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
-    if(!layer_name_element)
-        throw runtime_error("LayerName element is nullptr.\n");
-
-    if(layer_name_element->GetText())
-        set_name(layer_name_element->GetText());
-
-    // Input dimension
-
-    const tinyxml2::XMLElement* input_dimensions_element = embedding_layer_element->FirstChildElement("InputDimensions");
-
-    if(!input_dimensions_element)
-        throw runtime_error("InputDimensions element is nullptr.\n");
-
-    if(input_dimensions_element->GetText())
-        set_input_dimensions(Index(stoi(input_dimensions_element->GetText())));
-
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = embedding_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("InputsNumber element is nullptr.\n");
-
-    if(inputs_number_element->GetText())
-        set_inputs_number(Index(stoi(inputs_number_element->GetText())));
-
-    // Embedding depth
-
-    const tinyxml2::XMLElement* depth_element = embedding_layer_element->FirstChildElement("Depth");
-
-    if(!depth_element)
-        throw runtime_error("Depth element is nullptr.\n");
-
-    if(depth_element->GetText())
-        set_depth(Index(stoi(depth_element->GetText())));
-
-    // Positional encoding
-
-    const tinyxml2::XMLElement* positional_encoding_element = embedding_layer_element->FirstChildElement("PositionalEncoding");
-
-    if(!positional_encoding_element)
-        throw runtime_error("PositionalEncoding element is nullptr.\n");
-
-    if(positional_encoding_element->GetText())
-        positional_encoding = string(positional_encoding_element->GetText()) == "true";
-
-    // Embedding weights
-
-    const tinyxml2::XMLElement* parameters_element = embedding_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
+    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }
 
 
-void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    // Embedding layer
+    printer.OpenElement("EmbeddingLayer");
 
-    file_stream.OpenElement("EmbeddingLayer");
+    add_xml_element(printer, "Name", name);
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "Depth", to_string(get_depth()));
+    add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
-    // Layer name
+    printer.CloseElement();  
+}
 
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
 
-    // Input dimension
-
-    file_stream.OpenElement("InputDimensions");
-    file_stream.PushText(dimensions_to_string(get_input_dimensions()).c_str());
-    file_stream.CloseElement();
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding depth
-
-    file_stream.OpenElement("Depth");
-    file_stream.PushText(to_string(get_depth()).c_str());
-    file_stream.CloseElement();
-
-    // Positional encoding
-
-    file_stream.OpenElement("PositionalEncoding");
-    file_stream.PushText(to_string(positional_encoding ? 1 : 0).c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Embedding layer (end tag)
-
-    file_stream.CloseElement();
+EmbeddingLayerForwardPropagation::EmbeddingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
+{
+    set(new_batch_samples_number, new_layer);
 }
 
 
@@ -459,7 +378,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index depth = embedding_layer->get_depth();
     
-    return {outputs_data, {batch_samples_number, inputs_number, depth}};
+    return {(type*)outputs.data(), {batch_samples_number, inputs_number, depth}};
 }
 
 
@@ -479,10 +398,21 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     outputs.resize(batch_samples_number, inputs_number, depth);
 
-    outputs_data = outputs.data();
-
     if(embedding_layer->get_positional_encoding())
         build_positional_encoding_matrix();
+}
+
+
+void EmbeddingLayerForwardPropagation::print() const
+{
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores.dimensions() << endl;
+    cout << "Outputs dimensions:" << endl;
+    //       cout << output_dimensions << endl;
+    cout << "Outputs:" << endl;
+    //       cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
+    cout << "Attention scores:" << endl;
+    //       cout << attention_scores << endl;
 }
 
 
@@ -510,6 +440,19 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 }
 
 
+EmbeddingLayerBackPropagation::EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagation()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+vector<pair<type*, dimensions>> EmbeddingLayerBackPropagation::get_input_derivative_pairs() const
+{
+    return vector<pair<type*, dimensions>>();
+}
+
+
 void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     layer = new_layer;
@@ -524,6 +467,11 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);
+}
+
+
+void EmbeddingLayerBackPropagation::print() const
+{
 }
 
 }

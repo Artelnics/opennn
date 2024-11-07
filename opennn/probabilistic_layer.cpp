@@ -29,12 +29,16 @@ ProbabilisticLayer::ProbabilisticLayer(const Index& new_inputs_number,
 }
 
 
-ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
+                                       const dimensions& new_output_dimensions,
+                                       const string new_name)
 {
     set(new_input_dimensions[0], new_output_dimensions[0]);
 
     if(new_output_dimensions[0] > 1)
         activation_function = ActivationFunction::Softmax;
+
+    name = new_name;
 }
 
 
@@ -137,17 +141,7 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 }
 
 
-void ProbabilisticLayer::set()
-{
-    biases.resize(0);
-
-    synaptic_weights.resize(0,0);
-
-    set_default();
-}
-
-
-void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
+void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const string new_name)
 {
     biases.resize(new_neurons_number);
 
@@ -155,20 +149,21 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 
     set_parameters_random();
 
-    set_default();
+    name = new_name;
+
+    layer_type = Layer::Type::Probabilistic;
+
+    const Index neurons_number = get_neurons_number();
+
+    neurons_number == 1
+        ? activation_function = ActivationFunction::Logistic
+        : activation_function = ActivationFunction::Softmax;
+
+    decision_threshold = type(0.5);
+
+    display = true;
 }
 
-
-void ProbabilisticLayer::set(const ProbabilisticLayer& other_probabilistic_layer)
-{
-    set_default();
-
-    activation_function = other_probabilistic_layer.activation_function;
-
-    decision_threshold = other_probabilistic_layer.decision_threshold;
-
-    display = other_probabilistic_layer.display;
-}
 
 
 void ProbabilisticLayer::set_inputs_number(const Index& new_inputs_number)
@@ -205,24 +200,6 @@ void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 void ProbabilisticLayer::set_decision_threshold(const type& new_decision_threshold)
 {
     decision_threshold = new_decision_threshold;
-}
-
-
-void ProbabilisticLayer::set_default()
-{
-    name = "probabilistic_layer";
-
-    layer_type = Layer::Type::Probabilistic;
-
-    const Index neurons_number = get_neurons_number();
-
-    neurons_number == 1 
-        ? activation_function = ActivationFunction::Logistic
-        : activation_function = ActivationFunction::Softmax;
-
-    decision_threshold = type(0.5);
-
-    display = true;
 }
 
 
@@ -279,13 +256,13 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 
 void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activations_derivatives) const
+                                               Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
     case ActivationFunction::Logistic:
         /*
-        logistic(combinations, activations_derivatives);
+        logistic(combinations, activation_derivatives);
         */
         return;
 
@@ -316,9 +293,9 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
     }
     else if (neurons_number == 1 && is_training)
     {
-        Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+        Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-        logistic(outputs, activations_derivatives);
+        logistic(outputs, activation_derivatives);
     }
     else if (neurons_number > 1)
     {
@@ -359,9 +336,9 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     if(neurons_number == 1)
     {
-        const Tensor<type, 2>& activations_derivatives = probabilistic_layer_forward_propagation->activations_derivatives;
+        const Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-        combinations_derivatives.device(*thread_pool_device) = deltas * activations_derivatives;
+        combinations_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
     }
     else
     {
@@ -373,8 +350,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
 
     Tensor<type, 2>& synaptic_weights_derivatives = probabilistic_layer_back_propagation->synaptic_weights_derivatives;
-
-    const Eigen::array<Index, 1> sum_dimensions({0});
 
     synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(combinations_derivatives, AT_B);
 
@@ -424,123 +399,35 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 }
 
 
-void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("Probabilistic");
 
-    // Probabilistic layer
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
+    add_xml_element(printer, "ActivationFunction", write_activation_function());
+    add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
+    add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
 
-    file_stream.OpenElement("ProbabilisticLayer");
-
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(get_inputs_number()).c_str());
-    file_stream.CloseElement();
-
-    // Neurons number
-
-    file_stream.OpenElement("NeuronsNumber");
-    file_stream.PushText(to_string(get_neurons_number()).c_str());
-    file_stream.CloseElement();
-
-    // Activation function
-
-    file_stream.OpenElement("ActivationFunction");
-    file_stream.PushText(write_activation_function().c_str());
-    file_stream.CloseElement();
-
-    // Parameters
-
-    file_stream.OpenElement("Parameters");
-    file_stream.PushText(tensor_to_string(get_parameters()).c_str());
-    file_stream.CloseElement();
-
-    // Decision threshold
-
-    file_stream.OpenElement("DecisionThreshold");
-    file_stream.PushText(to_string(decision_threshold).c_str());
-    file_stream.CloseElement();
-
-    // Probabilistic layer (end tag)
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    ostringstream buffer;
-
-    // Probabilistic layer
-
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
+    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic");
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic layer element is nullptr.\n");
 
-    // Inputs number
-
-    const tinyxml2::XMLElement* inputs_number_element = probabilistic_layer_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("Inputs number element is nullptr.\n");
-
-    Index new_inputs_number;
-
-    if(inputs_number_element->GetText())
-        new_inputs_number = Index(stoi(inputs_number_element->GetText()));
-
-    // Neurons number
-
-    const tinyxml2::XMLElement* neurons_number_element = probabilistic_layer_element->FirstChildElement("NeuronsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("Neurons number element is nullptr.\n");
-
-    Index new_neurons_number;
-
-    if(neurons_number_element->GetText())
-        new_neurons_number = Index(stoi(neurons_number_element->GetText()));
+    const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
+    const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
 
     set(new_inputs_number, new_neurons_number);
 
-    // Activation function
-
-    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
-
-    if(!activation_function_element)
-        throw runtime_error("Activation function element is nullptr.\n");
-
-    if(activation_function_element->GetText())
-        set_activation_function(activation_function_element->GetText());
-
-    // Parameters
-
-    const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
-
-    if(!parameters_element)
-        throw runtime_error("Parameters element is nullptr.\n");
-
-    if(parameters_element->GetText())
-        set_parameters(to_type_vector(parameters_element->GetText(), " "));
-
-    // Decision threshold
-
-    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
-
-    if(!decision_threshold_element)
-        throw runtime_error("Decision threshold element is nullptr.\n");
-
-    if(decision_threshold_element->GetText())
-        set_decision_threshold(type(atof(decision_threshold_element->GetText())));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));    
+    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
+    set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
 }
 
 
@@ -680,12 +567,6 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& input_names
     return buffer.str();
 }
 
-ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation()
-    : LayerForwardPropagation()
-{
-
-}
-
 
 ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
     const Index& new_batch_samples_number, Layer *new_layer)
@@ -699,7 +580,7 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 {
     const Index neurons_number = layer->get_neurons_number();
 
-    return pair<type *, dimensions>(outputs_data, {{batch_samples_number, neurons_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, neurons_number}});
 }
 
 
@@ -713,12 +594,10 @@ void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_nu
 
     outputs.resize(batch_samples_number, neurons_number);
 
-    outputs_data = outputs.data();
-
-    activations_derivatives.resize(0, 0);
+    activation_derivatives.resize(0, 0);
 
     if(neurons_number == 1)
-        activations_derivatives.resize(batch_samples_number, neurons_number);
+        activation_derivatives.resize(batch_samples_number, neurons_number);
 }
 
 
@@ -731,13 +610,8 @@ void ProbabilisticLayerForwardPropagation::print() const
     const Index neurons_number = layer->get_neurons_number();
 
     if(neurons_number == 1)
-       cout << "Activations derivatives:" << endl
-            << activations_derivatives << endl;
-}
-
-
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation() : LayerBackPropagation() 
-{
+       cout << "Activation derivatives:" << endl
+            << activation_derivatives << endl;
 }
 
 

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <algorithm>
 #include <cmath>
 #include <ctime>
@@ -16,28 +14,18 @@
 #include <stdio.h>
 #include <random>
 
-
-
 #include "tensors.h"
 #include "correlations.h"
 #include "genetic_algorithm.h"
-
+#include "tinyxml2.h"
 
 namespace opennn
 {
-
-GeneticAlgorithm::GeneticAlgorithm()
-    : InputsSelection()
-{
-    set_default();
-}
 
 
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)
 {
-//    set(new_training_strategy);
-
     set_default();
 }
 
@@ -110,11 +98,13 @@ Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
 
 void GeneticAlgorithm::set_default()
 {
-    // @todo if training strategy is nullptr this will crash
+    if (!training_strategy)
+        return;
 
-    const Index genes_number = (training_strategy || !training_strategy->has_neural_network())
-        ? 0
-        : training_strategy->get_data_set()->get_input_and_unused_variables_number();
+    if (!training_strategy->has_neural_network())
+        return;
+
+    const Index genes_number = training_strategy->get_data_set()->get_input_and_unused_variables_number();
 
     Index individuals_number = 40;
 
@@ -186,7 +176,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-    const Index new_genes_number = training_strategy->get_data_set()->get_input_variables_number();
+    const Index new_genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -244,9 +234,9 @@ void GeneticAlgorithm::initialize_population_random()
 
     // Original inputs, targets and unused index
 
-    original_input_raw_variables_indices = data_set->get_input_raw_variables_indices();
+    original_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
-    original_target_raw_variables_indices = data_set->get_target_raw_variables_indices();
+    original_target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const Tensor<DataSet::RawVariable, 1> raw_variables = data_set->get_raw_variables();
 
@@ -266,7 +256,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
 
-    const Index random_raw_variables_number = data_set->get_input_raw_variables_number();
+    const Index random_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     type percentage = type(1);
 
@@ -349,7 +339,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index raw_variables_number = data_set->get_input_raw_variables_number();
+    const Index raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     const Tensor<Correlation, 2> correlations_matrix = data_set->calculate_input_target_raw_variable_pearson_correlations();
 
@@ -383,7 +373,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     const Index genes_number = get_genes_number();
 
-    const Index raw_variables_number = data_set->get_input_raw_variables_number();
+    const Index raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
     Tensor<bool, 1> individual_raw_variables(raw_variables_number);
 
@@ -487,13 +477,13 @@ void GeneticAlgorithm::evaluate_population()
 
         // Neural network
 
-        data_set->set_input_target_raw_variables_indices(individual_raw_variables_indexes, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(individual_raw_variables_indexes, original_target_raw_variables_indices);
 
         data_set->scrub_missing_values();
 
-        input_names = data_set->get_input_variables_names();
+        input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-        neural_network->set_inputs_number(data_set->get_input_variables_number());
+        neural_network->set_inputs_number(data_set->get_variables_number(DataSet::VariableUse::Input));
 
         neural_network->set_inputs_names(input_names);
 
@@ -513,9 +503,9 @@ void GeneticAlgorithm::evaluate_population()
             cout << "Training error: " << training_results.get_training_error() << endl
                  << "Selection error: " << training_results.get_selection_error() << endl
                  << "Variables number: " << input_names.size() << endl
-                 << "Inputs number: " << data_set->get_input_raw_variables_number() << endl;
+                 << "Inputs number: " << data_set->get_raw_variables_number(DataSet::VariableUse::Input) << endl;
 
-        data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
     }
 
     // Mean generational selection and training error calculation (primitive way)
@@ -842,7 +832,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             generation_selected = epoch;
 
-            data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
             // Neural network
 
@@ -850,9 +840,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             optimal_inputs_raw_variables_indexes = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-            data_set->set_input_target_raw_variables_indices(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
 
-            inputs_selection_results.optimal_input_raw_variables_names = data_set->get_input_raw_variable_names();
+            inputs_selection_results.optimal_input_raw_variables_names 
+                = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
             inputs_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
@@ -864,10 +855,10 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         }
         else
         {
-            data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices,original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices,original_target_raw_variables_indices);
         }
 
-        data_set->set_input_target_raw_variables_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
 
         std::time(&current_time);
 
@@ -901,7 +892,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
@@ -929,19 +920,19 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     Tensor<Index, 1> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-    data_set->set_input_target_raw_variables_indices(optimal_raw_variables, original_target_raw_variables_indices);
+    data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_input_variables_scalers();
+    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     // Set neural network stuff
 
-    neural_network->set_inputs_number( data_set->get_input_variables_number());
+    neural_network->set_inputs_number( data_set->get_variables_number(DataSet::VariableUse::Input));
 
-    neural_network->set_inputs_names(data_set->get_input_variables_names());
+    neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
-    if(neural_network->has_scaling_layer_2d())
+    if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
         scaling_layer_2d->set_descriptives(input_variables_descriptives);
@@ -964,7 +955,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
 
     const Index individuals_number = get_individuals_number();
 
-    const Index variables_number = data_set->get_input_variables_number();
+    const Index variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
     Index raw_variable_index = 0;
 
@@ -1081,7 +1072,7 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
 }
 
 
-Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& individual_raw_variables) // updated
+Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& individual_raw_variables) 
 {
     DataSet* data_set = training_strategy->get_data_set();
 
@@ -1191,7 +1182,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& indi
 // {
 //     DataSet* data_set = training_strategy->get_data_set();
 
-//     const Index raw_variables_number = data_set->get_input_raw_variables_number();
+//     const Index raw_variables_number = data_set->get_raw_variables_number(VariableUse::Input);
 
 //     Tensor<bool, 1> new_indexes(individual);
 
@@ -1287,121 +1278,37 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    const Index individuals_number = get_individuals_number();
+    printer.OpenElement("GeneticAlgorithm");
 
-    file_stream.OpenElement("GeneticAlgorithm");
+    add_xml_element(printer, "PopulationSize", to_string(get_individuals_number()));
+    add_xml_element(printer, "ElitismSize", to_string(elitism_size));
+    add_xml_element(printer, "MutationRate", to_string(mutation_rate));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumGenerationsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Population size
-
-    file_stream.OpenElement("PopulationSize");
-    file_stream.PushText(to_string(individuals_number).c_str());
-    file_stream.CloseElement();
-
-    // Elitism size
-
-    file_stream.OpenElement("ElitismSize");
-    file_stream.PushText(to_string(elitism_size).c_str());
-    file_stream.CloseElement();
-
-    // Mutation rate
-
-    file_stream.OpenElement("MutationRate");
-    file_stream.PushText(to_string(mutation_rate).c_str());
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-    file_stream.PushText(to_string(selection_error_goal).c_str());
-    file_stream.CloseElement();
-
-    // Maximum iterations
-
-    file_stream.OpenElement("MaximumGenerationsNumber");
-    file_stream.PushText(to_string(maximum_epochs_number).c_str());
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-    file_stream.PushText(to_string(maximum_time).c_str());
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GeneticAlgorithm");
+    const tinyxml2::XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
 
-    if(!root_element)
+    if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
 
-    // Population size
-
-    const tinyxml2::XMLElement* population_size_element = root_element->FirstChildElement("PopulationSize");
-
-    if(population_size_element)
-        set_individuals_number(Index(atoi(population_size_element->GetText())));
-
-    // Mutation rate
-
-    const tinyxml2::XMLElement* mutation_rate_element = root_element->FirstChildElement("MutationRate");
-
-    if(mutation_rate_element)
-        set_mutation_rate(type(atof(mutation_rate_element->GetText())));
-
-    // Elitism size
-
-    const tinyxml2::XMLElement* elitism_size_element = root_element->FirstChildElement("ElitismSize");
-
-    if(elitism_size_element)
-        set_elitism_size(Index(atoi(elitism_size_element->GetText())));
-
-    // Display
-
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
-
-    // Selection error goal
-
-    const tinyxml2::XMLElement* selection_error_goal_element = root_element->FirstChildElement("SelectionErrorGoal");
-
-    if(selection_error_goal_element)
-        set_selection_error_goal(type(atof(selection_error_goal_element->GetText())));
-
-    // Maximum generations number
-
-    const tinyxml2::XMLElement* maximum_generations_number_element = root_element->FirstChildElement("MaximumGenerationsNumber");
-
-    if(maximum_generations_number_element)
-        set_maximum_epochs_number(Index(atoi(maximum_generations_number_element->GetText())));
-
-    // Maximum correlation
-
-    const tinyxml2::XMLElement* maximum_correlation_element = root_element->FirstChildElement("MaximumCorrelation");
-
-    if(maximum_correlation_element)
-        set_maximum_correlation(type(atof(maximum_correlation_element->GetText())));
-
-    // Minimum correlation
-
-    const tinyxml2::XMLElement* minimum_correlation_element = root_element->FirstChildElement("MinimumCorrelation");
-
-    if(minimum_correlation_element)
-        set_minimum_correlation(type(atof(minimum_correlation_element->GetText())));
-
-    // Maximum time
-
-    const tinyxml2::XMLElement* maximum_time_element = root_element->FirstChildElement("MaximumTime");
-
-    if(maximum_time_element)
-        set_maximum_time(type(atoi(maximum_time_element->GetText())));
+    set_individuals_number(read_xml_index(root, "PopulationSize"));
+    set_mutation_rate(read_xml_type(root, "MutationRate"));
+    set_elitism_size(read_xml_index(root, "ElitismSize"));
+    set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
+    set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
+    set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
+    set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
+    set_maximum_time(read_xml_type(root, "MaximumTime"));
+    set_display(read_xml_bool(root, "Display"));
 }
 
 

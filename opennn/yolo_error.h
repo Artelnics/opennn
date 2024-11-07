@@ -1,5 +1,5 @@
-#ifndef YOLO_V2_ERROR_H
-#define YOLO_V2_ERROR_H
+#ifndef YOLO_ERROR_H
+#define YOLO_ERROR_H
 
 #include "loss_index.h"
 #include "data_set.h"
@@ -8,7 +8,7 @@
 namespace opennn
 {
 
-class YoloV2Error : public LossIndex
+class YoloError : public LossIndex
 {
 // protected:
 //     struct YOLO_anchor_box
@@ -23,9 +23,9 @@ class YoloV2Error : public LossIndex
 public:
     // Constructors
 
-    explicit YoloV2Error();
+    explicit YoloError();
 
-    explicit YoloV2Error(NeuralNetwork*, DataSet*);
+    explicit YoloError(NeuralNetwork*, DataSet*);
 
     // Error
 
@@ -73,4 +73,4 @@ public:
 
 }
 
-#endif // YOLO_V2_ERROR_H
+#endif // YOLO_ERROR_H
