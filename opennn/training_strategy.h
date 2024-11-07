@@ -19,7 +19,6 @@
 #include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
 #include "optimization_algorithm.h"
-#include "gradient_descent.h"
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
@@ -76,7 +75,6 @@ public:
     CrossEntropyError* get_cross_entropy_error();
     WeightedSquaredError* get_weighted_squared_error();
 
-    GradientDescent* get_gradient_descent();
     ConjugateGradient* get_conjugate_gradient();
     QuasiNewtonMethod* get_quasi_Newton_method();
     LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm();
@@ -169,8 +167,6 @@ private:
     LossMethod loss_method;
 
     // Optimization algorithm
-
-    GradientDescent gradient_descent;
 
     ConjugateGradient conjugate_gradient;
 

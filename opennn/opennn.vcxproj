@@ -237,6 +237,7 @@
     <ClInclude Include="box_plot.h" />
     <ClInclude Include="codification.h" />
     <ClCompile Include="codification.cpp" />
+    <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="layer_back_propagation.h" />
     <ClInclude Include="layer_back_propagation_lm.h" />
     <ClInclude Include="model_expression.h" />
@@ -265,8 +266,6 @@
     <ClCompile Include="flatten_layer.cpp" />
     <ClInclude Include="genetic_algorithm.h" />
     <ClCompile Include="genetic_algorithm.cpp" />
-    <ClInclude Include="gradient_descent.h" />
-    <ClCompile Include="gradient_descent.cpp" />
     <ClInclude Include="growing_inputs.h" />
     <ClCompile Include="growing_inputs.cpp" />
     <ClInclude Include="growing_neurons.h" />
@@ -303,7 +302,6 @@
     <ClInclude Include="neural_network.h" />
     <ClCompile Include="neural_network.cpp" />
     <ClInclude Include="neural_network_back_propagation.h" />
-    <ClInclude Include="neural_network_forward_propagation.h" />
     <ClInclude Include="neurons_selection.h" />
     <ClCompile Include="neurons_selection.cpp" />
     <ClCompile Include="normalization_layer_3d.cpp" />
@@ -369,8 +367,6 @@
     <ClCompile Include="training_strategy.cpp" />
     <ClInclude Include="transformer.h" />
     <ClCompile Include="transformer.cpp" />
-    <ClInclude Include="unit_testing.h" />
-    <ClCompile Include="unit_testing.cpp" />
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
     <ClInclude Include="unscaling_layer_forward_propagation.h" />

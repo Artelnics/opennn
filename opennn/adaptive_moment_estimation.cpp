@@ -8,7 +8,7 @@
 
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "adaptive_moment_estimation.h"
 #include "back_propagation.h"
 

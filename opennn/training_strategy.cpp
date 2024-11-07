@@ -57,8 +57,6 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
     switch(optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT: return &gradient_descent;
-
     case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
 
     case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
@@ -83,12 +81,6 @@ bool TrainingStrategy::has_neural_network() const
 bool TrainingStrategy::has_data_set() const
 {
     return data_set;
-}
-
-
-GradientDescent* TrainingStrategy::get_gradient_descent()
-{
-    return &gradient_descent;
 }
 
 
@@ -389,7 +381,6 @@ void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_numb
 
 void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_threads_number)
 {
-    gradient_descent.set_threads_number(new_threads_number);
     conjugate_gradient.set_threads_number(new_threads_number);
     quasi_Newton_method.set_threads_number(new_threads_number);
     Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
@@ -400,7 +391,6 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 
 void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
-    gradient_descent.set_loss_index(new_loss_index);
     conjugate_gradient.set_loss_index(new_loss_index);
     stochastic_gradient_descent.set_loss_index(new_loss_index);
     adaptive_moment_estimation.set_loss_index(new_loss_index);
@@ -448,7 +438,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Optimization algorithm
 
-    gradient_descent.set_display(display);
     conjugate_gradient.set_display(display);
     stochastic_gradient_descent.set_display(display);
     adaptive_moment_estimation.set_display(display);
@@ -459,7 +448,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
 void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
-    gradient_descent.set_loss_goal(new_loss_goal);
     conjugate_gradient.set_loss_goal(new_loss_goal);
     quasi_Newton_method.set_loss_goal(new_loss_goal);
     Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
@@ -468,7 +456,6 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 
 void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    gradient_descent.set_maximum_selection_failures(maximum_selection_failures);
     conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
     quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
     Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
@@ -477,7 +464,6 @@ void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_sele
 
 void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
 {
-    gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
     stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
@@ -494,7 +480,6 @@ void TrainingStrategy::set_display_period(const int & display_period)
 
 void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
-    gradient_descent.set_maximum_time(maximum_time);
     conjugate_gradient.set_maximum_time(maximum_time);
     stochastic_gradient_descent.set_maximum_time(maximum_time);
     adaptive_moment_estimation.set_maximum_time(maximum_time);
@@ -520,10 +505,7 @@ TrainingResults TrainingStrategy::perform_training()
     set_display(display);
 
     switch(optimization_method)
-    {
-        case OptimizationMethod::GRADIENT_DESCENT:
-            return gradient_descent.perform_training();
-       
+    {  
         case OptimizationMethod::CONJUGATE_GRADIENT:
             return conjugate_gradient.perform_training();
 
@@ -631,7 +613,6 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    gradient_descent.to_XML(printer);
     conjugate_gradient.to_XML(printer);
     stochastic_gradient_descent.to_XML(printer);
     adaptive_moment_estimation.to_XML(printer);
@@ -717,20 +698,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
     // Optimization method
 
     set_optimization_method(read_xml_string(optimization_algorithm_element, "OptimizationMethod"));
-
-    // Gradient descent
-
-    const tinyxml2::XMLElement* gradient_descent_element = optimization_algorithm_element->FirstChildElement("GradientDescent");
-    if (gradient_descent_element) {
-        tinyxml2::XMLDocument gradient_descent_document;
-        tinyxml2::XMLElement* gradient_descent_element_copy = gradient_descent_document.NewElement("GradientDescent");
-
-        for (const tinyxml2::XMLNode* node = gradient_descent_element->FirstChild(); node; node = node->NextSibling())
-            gradient_descent_element_copy->InsertEndChild(node->DeepClone(&gradient_descent_document));
-
-        gradient_descent_document.InsertEndChild(gradient_descent_element_copy);
-        gradient_descent.from_XML(gradient_descent_document);
-    }
 
     // Conjugate gradient
 

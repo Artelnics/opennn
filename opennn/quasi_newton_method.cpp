@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "quasi_newton_method.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
 
