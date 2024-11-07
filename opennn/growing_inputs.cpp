@@ -106,7 +106,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set = loss_index->get_data_set();
 
-    const Tensor<Index, 1> target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
@@ -126,11 +126,12 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
          correlations_indexes.data() + correlations_indexes.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    Tensor<Index, 1> input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    vector<Index> input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variables_indices.size());
 
-    for(Index i = 0; i < correlations_rank_descending.size(); i++) correlations_rank_descending(i) = input_raw_variables_indices(correlations_indexes[i]);
+    for(Index i = 0; i < correlations_rank_descending.size(); i++) 
+        correlations_rank_descending(i) = input_raw_variables_indices[correlations_indexes[i]];
 
     data_set->set_input_raw_variables_unused();
 
@@ -309,7 +310,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         }
 
         raw_variable_index++;
-
     }
 
     // Set data set stuff

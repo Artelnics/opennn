@@ -275,7 +275,7 @@ void GeneticAlgorithm::initialize_population_random()
     original_input_raw_variables.setConstant(false);
 
     for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
-        original_input_raw_variables(original_input_raw_variables_indices(i)) = true;
+        original_input_raw_variables(original_input_raw_variables_indices[i]) = true;
 
     // Initialization a random population
 
@@ -459,7 +459,7 @@ void GeneticAlgorithm::evaluate_population()
 
     Tensor<bool, 1> individual_raw_variables;
 
-    Tensor<Index, 1> individual_raw_variables_indexes;
+    vector<Index> individual_raw_variables_indices;
 
     Tensor<Index, 1> inputs_number(individuals_number);
 
@@ -471,13 +471,13 @@ void GeneticAlgorithm::evaluate_population()
 
         cout << endl << "Individual " << i + 1 << endl;
 
-        individual_raw_variables_indexes = get_individual_as_raw_variables_indexes_from_variables(individual);
+        individual_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(individual);
 
-        inputs_number(i) = individual_raw_variables_indexes.size();
+        inputs_number(i) = individual_raw_variables_indices.size();
 
         // Neural network
 
-        data_set->set_input_target_raw_variable_indices(individual_raw_variables_indexes, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(individual_raw_variables_indices, original_target_raw_variables_indices);
 
         data_set->scrub_missing_values();
 
@@ -792,7 +792,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     type elapsed_time = type(0);
 
-    Tensor<Index, 1> optimal_inputs_raw_variables_indexes;
+    vector<Index> optimal_inputs_raw_variables_indices;
 
     std::time(&beginning_time);
 
@@ -838,9 +838,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-            optimal_inputs_raw_variables_indexes = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
+            optimal_inputs_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-            data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indexes, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variables_indices);
 
             inputs_selection_results.optimal_input_raw_variables_names 
                 = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
@@ -918,7 +918,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set data set stuff
 
-    Tensor<Index, 1> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
+    vector<Index> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
     data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
@@ -1029,7 +1029,7 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& i
 }
 
 
-Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_variables(Tensor<bool, 1>& individual) // updated
+vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_variables(Tensor<bool, 1>& individual) // updated
 {
     Tensor<bool, 1> individual_raw_variables = get_individual_raw_variables(individual);
 
@@ -1062,13 +1062,13 @@ Tensor<Index, 1> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_
 
     Index index = 0;
 
-    Tensor<Index ,1> indexes(indexes_dimension);
+    vector<Index> indices(indexes_dimension);
 
     for(Index i = 0; i < individual_raw_variables.size(); i++)
         if(inputs_pre_indexes(i))
-            indexes(index) = i;
+            indices[index] = i;
 
-    return indexes;
+    return indices;
 }
 
 

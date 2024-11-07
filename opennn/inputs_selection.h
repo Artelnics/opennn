@@ -157,7 +157,7 @@ struct InputsSelectionResults
 
    Tensor<string, 1> optimal_input_raw_variables_names;
 
-   Tensor<Index, 1> optimal_input_raw_variables_indices;
+   vector<Index> optimal_input_raw_variables_indices;
 
    Tensor<bool, 1> optimal_inputs;
 

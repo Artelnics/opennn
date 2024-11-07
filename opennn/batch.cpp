@@ -7,10 +7,10 @@
 namespace opennn
 {
 
-void Batch::fill(const Tensor<Index, 1>& samples_indices,
-                 const Tensor<Index, 1>& inputs_indices,
-                 const Tensor<Index, 1>& targets_indices,
-                 const Tensor<Index, 1>& context_indices)
+void Batch::fill(const vector<Index>& samples_indices,
+                 const vector<Index>& inputs_indices,
+                 const vector<Index>& targets_indices,
+                 const vector<Index>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 

@@ -26,10 +26,10 @@ struct Batch
 
     void set(const Index& = 0, DataSet* = nullptr);
 
-    void fill(const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>& = Tensor<Index, 1>());
+    void fill(const vector<Index>&, 
+              const vector<Index>&, 
+              const vector<Index>&, 
+              const vector<Index>& = vector<Index>());
 
     Tensor<type, 2> perform_augmentation(const Tensor<type, 2>&);
 

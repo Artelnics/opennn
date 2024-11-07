@@ -1439,7 +1439,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<Index, 1> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
+    const vector<Index> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
 
     const type decision_threshold = neural_network->get_probabilistic_layer()
                                   ? neural_network->get_probabilistic_layer()->get_decision_threshold()
@@ -1458,7 +1458,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
 Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets,
                                                                   const Tensor<type, 2>& outputs,
-                                                                  const Tensor<Index, 1>& testing_indices,
+                                                                  const vector<Index>& testing_indices,
                                                                   const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
@@ -1469,7 +1469,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
-            true_positives_indices_copy(index++) = testing_indices(i);
+            true_positives_indices_copy(index++) = testing_indices[i];
 
     Tensor<Index, 1> true_positives_indices(index);
 
@@ -1483,7 +1483,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 
 Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets,
                                                                    const Tensor<type, 2>& outputs,
-                                                                   const Tensor<Index, 1>& testing_indices,
+                                                                   const vector<Index>& testing_indices,
                                                                    const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
@@ -1494,7 +1494,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-            false_positives_indices_copy(index++) = testing_indices(i);
+            false_positives_indices_copy(index++) = testing_indices[i];
 
     Tensor<Index, 1> false_positives_indices(index);
 
@@ -1508,7 +1508,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 
 Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
                                                                    const Tensor<type, 2>& outputs,
-                                                                   const Tensor<Index, 1>& testing_indices,
+                                                                   const vector<Index>& testing_indices,
                                                                    const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
@@ -1519,7 +1519,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-            false_negatives_indices_copy(index++) = testing_indices(i);
+            false_negatives_indices_copy(index++) = testing_indices[i];
 
     Tensor<Index, 1> false_negatives_indices(index);
 
@@ -1533,7 +1533,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 
 Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
                                                                   const Tensor<type, 2>& outputs,
-                                                                  const Tensor<Index, 1>& testing_indices,
+                                                                  const vector<Index>& testing_indices,
                                                                   const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
@@ -1544,7 +1544,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
-            true_negatives_indices_copy(index++) = testing_indices(i);
+            true_negatives_indices_copy(index++) = testing_indices[i];
 
     Tensor<Index, 1> true_negatives_indices(index);
 
@@ -1645,7 +1645,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<Index, 1> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
+    const vector<Index> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
 
     return calculate_multiple_classification_rates(targets, outputs, testing_indices);
 }
@@ -1653,7 +1653,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
                                                                                     const Tensor<type, 2>& outputs,
-                                                                                    const Tensor<Index, 1>& testing_indices) const
+                                                                                    const vector<Index>& testing_indices) const
 {
     const Index samples_number = targets.dimension(0);
     const Index targets_number = targets.dimension(1);
@@ -1681,7 +1681,8 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
         target_index = maximal_index(targets.chip(i, 0));
         output_index = maximal_index(outputs.chip(i, 0));
 
-        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index)) = testing_indices(i);
+        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index)) 
+            = testing_indices[i];
 
         indices(target_index, output_index)++;
     }

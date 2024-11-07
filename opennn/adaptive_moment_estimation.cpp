@@ -158,9 +158,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
    
-    const Tensor<Index, 1> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    Tensor<Index, 1> context_variable_indices;
+    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    vector<Index> context_variable_indices;
 
     if(is_language_model)
     {
@@ -168,8 +168,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
     }
 
-    const Tensor<Index, 1> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
-    const Tensor<Index, 1> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
@@ -202,8 +202,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_batches_number = training_samples_number/training_batch_samples_number;
     const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
     
-    Tensor<Index, 2> training_batches(training_batches_number, training_batch_samples_number);
-    Tensor<Index, 2> selection_batches(selection_batches_number, selection_batch_samples_number);
+    vector<vector<Index>> training_batches(training_batches_number);
+    vector<vector<Index>> selection_batches(selection_batches_number);
 
     // Neural network
 
@@ -250,7 +250,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     AdaptiveMomentEstimationData optimization_data(this);
 
-
     bool stop_training = false;
     bool is_training = true;
 
@@ -276,7 +275,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        const Index training_batches_number = training_batches.dimension(0);
+        const Index training_batches_number = training_batches.size();
 
         training_error = type(0);
 
@@ -288,7 +287,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
-            training_batch.fill(training_batches.chip(iteration, 0),
+            training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
                                 context_variable_indices);
@@ -345,7 +344,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             {
                 // Data set
 
-                selection_batch.fill(selection_batches.chip(iteration, 0),
+                selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
                                      target_variable_indices,
                                      context_variable_indices);

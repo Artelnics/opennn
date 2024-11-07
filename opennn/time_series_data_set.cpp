@@ -115,7 +115,7 @@ Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index
     }
 
     const Eigen::array<Index, 2> extents = {rows_number, raw_variables_number};
-    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)(0)};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)[0]};
 
     return time_series_data.slice(offsets, extents);
 }
@@ -1172,15 +1172,15 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
 void TimeSeriesDataSet::impute_missing_values_mean()
 {
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-    const Tensor<Index, 1> used_variables_indices = get_used_variable_indices();
-    const Tensor<Index, 1> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> used_sample_indices = get_used_sample_indices();
+    const vector<Index> used_variable_indices = get_used_variable_indices();
+    const vector<Index> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
 
-    const Tensor<type, 1> means = mean(data, used_samples_indices, used_variables_indices);
+    const Tensor<type, 1> means = mean(data, used_sample_indices, used_variable_indices);
 
-    const Index used_samples_number = used_samples_indices.size();
-    const Index used_variables_number = used_variables_indices.size();
+    const Index used_samples_number = used_sample_indices.size();
+    const Index used_variables_number = used_variable_indices.size();
     const Index target_variables_number = target_variable_indices.size();
 
     //Index current_variable_index;
@@ -1192,11 +1192,11 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < used_variables_number - target_variables_number; j++)
         {
-            const Index current_variable_index = input_variable_indices(j);
+            const Index current_variable_index = input_variable_indices[j];
 
             for(Index i = 0; i < used_samples_number; i++)
             {
-                const Index current_sample_index = used_samples_indices(i);
+                const Index current_sample_index = used_sample_indices[i];
 
                 if(isnan(data(current_sample_index, current_variable_index)))
                     data(current_sample_index, current_variable_index) = means(j);
@@ -1207,11 +1207,11 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
         for(Index j = 0; j < target_variables_number; j++)
         {
-            const Index current_variable_index = target_variable_indices(j);
+            const Index current_variable_index = target_variable_indices[j];
 
             for(Index i = 0; i < used_samples_number; i++)
             {
-                const Index current_sample_index = used_samples_indices(i);
+                const Index current_sample_index = used_sample_indices[i];
 
                 if(isnan(data(current_sample_index, current_variable_index)))
                     set_sample_use(i, "None");
@@ -1228,7 +1228,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
             for(Index i = 0; i < used_samples_number; i++)
             {
-                const Index current_sample_index = used_samples_indices(i);
+                const Index current_sample_index = used_sample_indices[i];
 
                 if(isnan(data(current_sample_index, current_variable_index)))
                 {
@@ -1244,7 +1244,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                         while(isnan(previous_value) && k > 0)
                         {
                             k--;
-                            previous_value = data(used_samples_indices(k), current_variable_index);
+                            previous_value = data(used_sample_indices[k], current_variable_index);
                         }
 
                         k = i;
@@ -1252,7 +1252,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                         while(isnan(next_value) && k < used_samples_number)
                         {
                             k++;
-                            next_value = data(used_samples_indices(k), current_variable_index);
+                            next_value = data(used_sample_indices[k], current_variable_index);
                         }
 
                         if(isnan(previous_value) && isnan(next_value))

@@ -151,9 +151,9 @@ public:
 
     Index get_used_samples_number() const;
 
-    Tensor<Index, 1> get_sample_indices(const SampleUse&) const;
+    vector<Index> get_sample_indices(const SampleUse&) const;
 
-    Tensor<Index, 1> get_used_samples_indices() const;
+    vector<Index> get_used_sample_indices() const;
 
     SampleUse get_sample_use(const Index&) const;
     const Tensor<SampleUse, 1>& get_sample_uses() const;
@@ -176,8 +176,8 @@ public:
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-    Tensor<Index, 1> get_raw_variable_indices(const VariableUse&) const;        
-    Tensor<Index, 1> get_used_raw_variables_indices() const;
+    vector<Index> get_raw_variable_indices(const VariableUse&) const;        
+    vector<Index> get_used_raw_variables_indices() const;
 
     Tensor<string, 1> get_raw_variable_names() const;
     Tensor<string, 1> get_raw_variable_names(const VariableUse&) const;
@@ -193,10 +193,10 @@ public:
     Tensor<string, 1> get_variable_names() const;
     Tensor<string, 1> get_variable_names(const VariableUse&) const;
 
-    Tensor<Tensor<Index, 1>, 1> get_variable_indices() const;
-    Tensor<Index, 1> get_variable_indices(const Index&) const;
-    Tensor<Index, 1> get_variable_indices(const VariableUse&) const;
-    Tensor<Index, 1> get_used_variable_indices() const;
+    vector<vector<Index>> get_variable_indices() const;
+    vector<Index> get_variable_indices(const Index&) const;
+    vector<Index> get_variable_indices(const VariableUse&) const;
+    vector<Index> get_used_variable_indices() const;
 
     Tensor<VariableUse, 1> get_variables_uses() const;
 
@@ -207,7 +207,7 @@ public:
 
     Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
 
-    Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& = 100) const;
+    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
@@ -216,12 +216,12 @@ public:
     Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
-    Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
+    Tensor<type, 1> get_sample_data(const Index&, const vector<Index>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
-    Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;
+    Tensor<type, 2> get_raw_variable_data(const Index&, const vector<Index>&) const;
     Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_raw_variable_data(const string&) const;
 
@@ -299,7 +299,7 @@ public:
     void set_raw_variables_uses(const Tensor<string, 1>&);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
     void set_raw_variables(const VariableUse&);
-    void set_input_target_raw_variable_indices(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_target_raw_variable_indices(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_raw_variables_unused();
 
@@ -536,7 +536,7 @@ public:
 
     // Eigen
 
-    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
+    vector<vector<Index>> split_samples(const vector<Index>&, const Index&) const;
 
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;

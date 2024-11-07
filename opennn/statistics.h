@@ -26,15 +26,15 @@ namespace opennn
 // Minimum
 
  type minimum(const Tensor<type, 1>&);
- type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+ type minimum(const Tensor<type, 1>&, const vector<Index>&);
  Index minimum(const Tensor<Index, 1>&);
  type minimum(const Tensor<type, 2>&);
- Tensor<type, 1> column_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
+ Tensor<type, 1> column_minimums(const Tensor<type, 2>&, const vector<Index>& = vector<Index>(), const vector<Index>& = vector<Index>());
 
  // Maximum
 
  type maximum(const Tensor<type, 1>&);
- type maximum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+ type maximum(const Tensor<type, 1>&, const vector<Index>&);
  Index maximum(const Tensor<Index, 1>&);
  type maximum(const Tensor<type, 2>&);
  Tensor<type, 1> column_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
@@ -47,15 +47,15 @@ namespace opennn
  type mean(const Tensor<type, 1>&, const Index&, const Index&);
  type mean(const Tensor<type, 2>&,  const Index&);
  Tensor<type, 1> mean(const Tensor<type, 2>&);
- Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&);
- Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+ Tensor<type, 1> mean(const Tensor<type, 2>&, const vector<Index>&);
+ Tensor<type, 1> mean(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
 
  // Median
  type median(const Tensor<type, 1>&);
  type median(const Tensor<type, 2>&, const Index&);
  Tensor<type, 1> median(const Tensor<type, 2>&);
- Tensor<type, 1> median(const Tensor<type, 2>&, const Tensor<Index, 1>&);
- Tensor<type, 1> median(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+ Tensor<type, 1> median(const Tensor<type, 2>&, const vector<Index>&);
+ Tensor<type, 1> median(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
 
  // Variance
  type variance(const Tensor<type, 1>&);
@@ -74,18 +74,18 @@ namespace opennn
 
  // Quartiles
  Tensor<type, 1> quartiles(const Tensor<type, 1>&);
- Tensor<type, 1> quartiles(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+ Tensor<type, 1> quartiles(const Tensor<type, 1>&, const vector<Index>&);
 
  // Box plot
  BoxPlot box_plot(const Tensor<type, 1>&);
- BoxPlot box_plot(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+ BoxPlot box_plot(const Tensor<type, 1>&, const vector<Index>&);
 
  // Descriptives vector
  Descriptives descriptives(const Tensor<type, 1>&);
 
  // Descriptives matrix
  Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&);
- Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
 
  // Histograms
  Histogram histogram(const Tensor<type, 1>&, const Index&  = 10);

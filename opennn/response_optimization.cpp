@@ -424,7 +424,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
     const int input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    Tensor<Index, 1> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
+    vector<Index> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
@@ -434,7 +434,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
         for(Index j = 0; j < input_raw_variables_number; j++)
         {
-            used_raw_variable_index = used_raw_variables_indices(j);
+            used_raw_variable_index = used_raw_variables_indices[j];
 
             DataSet::RawVariableType column_type = data_set->get_raw_variable_type(used_raw_variable_index);
 

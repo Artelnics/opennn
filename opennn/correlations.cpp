@@ -705,13 +705,13 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_vector_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_columns_indices(1);
-    input_columns_indices(0) = type(0);
+    vector<Index> input_columns_indices(1);
+    input_columns_indices[0] = type(0);
 
-    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
+    vector<Index> target_columns_indices(y_filtered.dimension(1));
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
-        target_columns_indices(i) = i + 1;
+        target_columns_indices[i] = i + 1;
 
     DataSet data_set(data);
 
@@ -818,15 +818,15 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> data = opennn::assemble_matrix_matrix(x_filtered, y_filtered);
 
-    Tensor<Index, 1> input_columns_indices(x_filtered.dimension(1));
+    vector<Index> input_columns_indices(x_filtered.dimension(1));
 
     for(Index i = 0; i < x_filtered.dimension(1); i++)
-        input_columns_indices(i) = i;
+        input_columns_indices[i] = i;
 
-    Tensor<Index, 1> target_columns_indices(y_filtered.dimension(1));
+    vector<Index> target_columns_indices(y_filtered.dimension(1));
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
-        target_columns_indices(i) = x_filtered.dimension(1)+i;
+        target_columns_indices[i] = x_filtered.dimension(1)+i;
 
     DataSet data_set(data);
 
