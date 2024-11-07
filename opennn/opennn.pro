@@ -70,7 +70,6 @@ HEADERS += \
     scaling.h \
     correlations.h \
     correlation.h \
-    codification.h \
     tinyxml2.h \
     data_set.h \
     batch.h \
@@ -105,11 +104,7 @@ HEADERS += \
     loss_index.h \
     loss_index_forward_propagation.h \
     back_propagation.h \
-    mean_squared_error.h \
     optimization_algorithm.h \
-    stochastic_gradient_descent.h\
-    training_strategy.h \
-    sum_squared_error.h\
     normalized_squared_error.h\
     minkowski_error.h \
     mean_squared_error.h \
@@ -119,7 +114,6 @@ HEADERS += \
     learning_rate_algorithm.h \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h\
-    gradient_descent.h \
     stochastic_gradient_descent.h\
     adaptive_moment_estimation.h\
     conjugate_gradient.h\
@@ -132,7 +126,6 @@ HEADERS += \
     testing_analysis.h \
     response_optimization.h \
     tensors.h \
-    unit_testing.h \
     flatten_layer.h \
     bounding_box_regressor_layer.h \
     bounding_box.h \
@@ -153,7 +146,6 @@ SOURCES += \
     statistics.cpp \
     scaling.cpp \
     correlations.cpp \
-    codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
     batch.cpp \
@@ -179,11 +171,9 @@ SOURCES += \
     neural_network.cpp \
     auto_associative_neural_network.cpp \
     loss_index.cpp \
-    mean_squared_error.cpp \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \
     optimization_algorithm.cpp \
-    sum_squared_error.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
@@ -192,8 +182,6 @@ SOURCES += \
     learning_rate_algorithm.cpp \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
-    gradient_descent.cpp \
-    stochastic_gradient_descent.cpp\
     adaptive_moment_estimation.cpp\
     conjugate_gradient.cpp \
     model_selection.cpp \
@@ -206,5 +194,4 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     addition_layer_3d.cpp \
-    normalization_layer_3d.cpp \
-    unit_testing.cpp
+    normalization_layer_3d.cpp
