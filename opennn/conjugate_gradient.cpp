@@ -11,7 +11,7 @@
 #include <ctime>
 
 #include "conjugate_gradient.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn

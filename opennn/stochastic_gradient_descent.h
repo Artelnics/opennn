@@ -47,11 +47,7 @@ public:
 
    void set_default() final;
 
-   void set_batch_samples_number(const Index& new_batch_samples_number)
-   {
-       batch_samples_number = new_batch_samples_number;
-   }
-
+   void set_batch_samples_number(const Index&);
 
    Index get_batch_samples_number() const;
 
@@ -108,10 +104,7 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    explicit StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
-    {
-        set(new_stochastic_gradient_descent);
-    }
+    explicit StochasticGradientDescentData(StochasticGradientDescent*);
 
     void set(StochasticGradientDescent* = nullptr);
 

@@ -11,7 +11,6 @@
 
 #include "config.h"
 #include "loss_index.h"
-#include "sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
@@ -19,7 +18,6 @@
 #include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
 #include "optimization_algorithm.h"
-#include "gradient_descent.h"
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
@@ -38,7 +36,6 @@ public:
 
     enum class LossMethod
     {
-        SUM_SQUARED_ERROR,
         MEAN_SQUARED_ERROR,
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
@@ -49,7 +46,6 @@ public:
 
     enum class OptimizationMethod
     {
-        GRADIENT_DESCENT,
         CONJUGATE_GRADIENT,
         QUASI_NEWTON_METHOD,
         LEVENBERG_MARQUARDT_ALGORITHM,
@@ -69,14 +65,12 @@ public:
     bool has_neural_network() const;
     bool has_data_set() const;
 
-    SumSquaredError* get_sum_squared_error();
     MeanSquaredError* get_mean_squared_error();
     NormalizedSquaredError* get_normalized_squared_error();
     MinkowskiError* get_Minkowski_error();
     CrossEntropyError* get_cross_entropy_error();
     WeightedSquaredError* get_weighted_squared_error();
 
-    GradientDescent* get_gradient_descent();
     ConjugateGradient* get_conjugate_gradient();
     QuasiNewtonMethod* get_quasi_Newton_method();
     LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm();
@@ -152,8 +146,6 @@ private:
 
     // Loss index
 
-    SumSquaredError sum_squared_error;
-
     MeanSquaredError mean_squared_error;
 
     NormalizedSquaredError normalized_squared_error;
@@ -169,8 +161,6 @@ private:
     LossMethod loss_method;
 
     // Optimization algorithm
-
-    GradientDescent gradient_descent;
 
     ConjugateGradient conjugate_gradient;
 

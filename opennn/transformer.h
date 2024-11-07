@@ -13,7 +13,7 @@
 #include <sstream>
 
 #include "neural_network.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 
 namespace opennn
 {

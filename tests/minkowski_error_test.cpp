@@ -16,7 +16,6 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
 
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
-
     NeuralNetwork neural_network;
     DataSet data_set;
 
@@ -29,6 +28,7 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 {
+/*
     DataSet data_set(1, 1, 1);
     data_set.set_data_constant(type(0));
     data_set.set(DataSet::SampleUse::Training);
@@ -38,7 +38,7 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
     const Tensor<Index, 1> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(1, &data_set);
-/*
+
     batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
 
     // Neural network

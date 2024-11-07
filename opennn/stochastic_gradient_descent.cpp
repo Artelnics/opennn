@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "stochastic_gradient_descent.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 #include "language_data_set.h"
 
@@ -81,6 +81,12 @@ void StochasticGradientDescent::set_default()
     // UTILITIES
 
     display_period = 100;
+}
+
+
+void StochasticGradientDescent::set_batch_samples_number(const Index& new_batch_samples_number)
+{
+    batch_samples_number = new_batch_samples_number;
 }
 
 
@@ -546,6 +552,12 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
     set_hardware_use(read_xml_string(root_element, "HardwareUse"));
+}
+
+
+StochasticGradientDescentData::StochasticGradientDescentData(StochasticGradientDescent* new_stochastic_gradient_descent)
+{
+    set(new_stochastic_gradient_descent);
 }
 
 

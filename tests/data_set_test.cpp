@@ -5,12 +5,10 @@
 
 TEST(DataSetTest, DefaultConstructor)
 {
-    DataSet data_set_1;
+    DataSet data_set;
 
-    //assert_true(data_set_1.get_variables_number() == 0, LOG);
-    //assert_true(data_set_1.get_samples_number() == 0, LOG);
-
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(data_set.get_variables_number(), 0);
+    EXPECT_EQ(data_set.get_samples_number(), 0);
 }
 
 
