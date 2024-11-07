@@ -235,8 +235,6 @@
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
-    <ClInclude Include="codification.h" />
-    <ClCompile Include="codification.cpp" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="layer_back_propagation.h" />
     <ClInclude Include="layer_back_propagation_lm.h" />

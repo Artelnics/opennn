@@ -23,7 +23,6 @@
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
-#include "codification.h"
 #include "strings_utilities.h"
 
 using namespace std;
@@ -4839,7 +4838,7 @@ void DataSet::decode(string& input_string) const
     switch(codification)
     {
     case DataSet::Codification::SHIFT_JIS:
-        input_string = sj2utf8(input_string);
+//        input_string = sj2utf8(input_string);
         break;
     default:
         break;
