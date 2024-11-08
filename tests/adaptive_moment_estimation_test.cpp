@@ -25,18 +25,20 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 }
 
 
-TEST(AdaptiveMomentEstimationTest, Train)
+TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-/*
     samples_number = 1;
     inputs_number = 1;
     outputs_number = 1;
 
-    data_set.set(1, 1, 1);
+    DataSet data_set(1, 1, 1);
     data_set.set_data_constant(type(1));
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
+    /*
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+//    training_strategy
 
     adaptive_moment_estimation.set_maximum_epochs_number(1);
     adaptive_moment_estimation.set_display(false);
@@ -51,17 +53,17 @@ TEST(AdaptiveMomentEstimationTest, Train)
 
 TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 {
-    Index batch_samples_number = 1;
+    const Index batch_samples_number = 1;
 
-    Index input_length = 2;
-    Index context_length = 3;
-    Index input_dimensions = 5;
-    Index context_dimension = 6;
+    const Index input_length = 2;
+    const Index context_length = 3;
+    const Index input_dimensions = 5;
+    const Index context_dimension = 6;
 
-    Index depth = 4;
-    Index perceptron_depth = 6;
-    Index heads_number = 4;
-    Index layers_number = 1;
+    const Index depth = 4;
+    const Index perceptron_depth = 6;
+    const Index heads_number = 4;
+    const Index layers_number = 1;
 /*
     LanguageDataSet language_data_set;
 

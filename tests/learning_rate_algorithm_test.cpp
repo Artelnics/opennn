@@ -79,7 +79,6 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
 
-
     // Test
 
     sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
