@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "time_series_data_set_test.h"
-
 #include "../opennn/time_series_data_set.h"
 
 namespace opennn

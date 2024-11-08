@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-#include "recurrent_layer_test.h"
 #include "../opennn/tensors.h"
 
 namespace opennn

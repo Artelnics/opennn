@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "training_strategy_test.h"
-
 namespace opennn
 {
 

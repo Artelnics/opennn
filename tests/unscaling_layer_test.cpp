@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include <iostream>
-#include "unscaling_layer_test.h"
 
 namespace opennn
 {

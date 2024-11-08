@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "weighted_squared_error_test.h"
-
 #include "../opennn/tensors.h"
 
 namespace opennn

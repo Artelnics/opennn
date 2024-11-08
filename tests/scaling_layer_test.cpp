@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "scaling_layer_test.h"
 
 #include "../opennn/neural_network.h"
 #include "../opennn/neural_network_forward_propagation.h".h"

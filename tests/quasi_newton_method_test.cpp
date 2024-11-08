@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "quasi_newton_method_test.h"
-
 namespace opennn
 {
 
