@@ -35,7 +35,9 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
     output_2 = input_2.convolve(kernel_2, dimensions_2);
 
-//    assert_true(output_2.dimension(0) == 2, LOG);
+//    EXPECT_EQ(output_2.dimension(0), dimensions{ 2,1 });
+
+//    assert_true( == 2, LOG);
 //    assert_true(output_2.dimension(1) == 2, LOG);
 
     // Convolution 3D, 3 channels
@@ -139,8 +141,6 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 //    assert_true(fabs(output(1, 0, 0) - 356) < type(NUMERIC_LIMITS_MIN), LOG);
 //    assert_true(fabs(output(0, 1, 0) - 428) < type(NUMERIC_LIMITS_MIN), LOG);
 //    assert_true(fabs(output(1, 1, 0) - 464) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    EXPECT_EQ(1, 1);
 }
 
 

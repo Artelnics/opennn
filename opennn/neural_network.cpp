@@ -104,7 +104,7 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_input_names() const
+const vector<string>& NeuralNetwork::get_input_names() const
 {
     return input_names;
 }
@@ -119,7 +119,7 @@ string NeuralNetwork::get_input_name(const Index& index) const
 Index NeuralNetwork::get_input_index(const string& name) const
 {
     for(Index i = 0; i < input_names.size(); i++)
-        if(input_names(i) == name) 
+        if(input_names[i] == name) 
             return i;
 
     throw runtime_error("Input name not found: " + name);
@@ -154,7 +154,7 @@ string NeuralNetwork::get_model_type_string() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_output_names() const
+const vector<string>& NeuralNetwork::get_output_names() const
 {
     return output_names;
 }
@@ -169,7 +169,7 @@ string NeuralNetwork::get_output_name(const Index& index) const
 Index NeuralNetwork::get_output_index(const string& name) const
 {
     for(Index i = 0; i < output_names.size(); i++)
-        if(output_names(i) == name) 
+        if(output_names[i] == name) 
             return i;
 
     throw runtime_error("Output name not found: " + name);
@@ -413,7 +413,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     input_names.resize(inputs_number);
 
     for(Index i = 0; i < inputs_number; i++)
-        input_names(i) = "input_" + to_string(i+1);
+        input_names[i] = "input_" + to_string(i+1);
 
     switch(model_type)
     {    
@@ -447,7 +447,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     output_names.resize(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        output_names(i) = "output_" + to_string(i+1);
+        output_names[i] = "output_" + to_string(i+1);
 }
 
 
@@ -614,13 +614,13 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 }
 
 
-void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
+void NeuralNetwork::set_input_names(const vector<string>& new_inputs_names)
 {
     input_names = new_inputs_names;
 }
 
 
-void NeuralNetwork::set_output_namess(const Tensor<string, 1>& new_output_namess)
+void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
 {
     output_names = new_output_namess;
 }
@@ -1440,7 +1440,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
         if(!input_element->GetText())
             throw runtime_error("Input text is nullptr.");
 
-        input_names(i) = input_element->GetText();
+        input_names[i] = input_element->GetText();
 
         start_element = input_element;
     }
@@ -1640,7 +1640,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
 
         if(output_element->GetText())
-            output_names(i) = output_element->GetText();
+            output_names[i] = output_element->GetText();
     }
 }
 
@@ -1648,7 +1648,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
-
+/*
     if(model_type != ModelType::ImageClassification)
         cout << "Inputs:" << endl
              << get_input_names() << endl;
@@ -1668,6 +1668,7 @@ void NeuralNetwork::print() const
          << get_output_names() << endl
          << "Parameters:" << endl
          << get_parameters_number() << endl;
+*/
 }
 
 
@@ -1803,7 +1804,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> output_names = get_output_names();
+    const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);

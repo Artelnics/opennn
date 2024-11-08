@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/embedding_layer.h"
@@ -5,12 +7,9 @@
 #include "../opennn/language_data_set.h"
 #include "../opennn/transformer.h"
 
-#include "pch.h"
-
-
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
-//    CrossEntropyError3D cross_entropy_error_3d;
+    CrossEntropyError3D cross_entropy_error_3d;
 
     EXPECT_EQ(1, 1);
 }
@@ -18,7 +17,7 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
-//    CrossEntropyError3D cross_entropy_error_3d;
+    CrossEntropyError3D cross_entropy_error_3d;
 /*
     batch_samples_number = 1;
     inputs_number = 1;

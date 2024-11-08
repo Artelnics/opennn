@@ -116,6 +116,8 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {        
+    if (!new_data_set) return;
+
     batch_size = new_batch_size;
     data_set = new_data_set;
 

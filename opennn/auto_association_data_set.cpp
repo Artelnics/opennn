@@ -59,7 +59,7 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    Tensor<RawVariable, 1> new_raw_variables(2 * raw_variables_number);
+    vector<RawVariable> new_raw_variables(2 * raw_variables_number);
 
     Index raw_variable_index = 0;
     Index index = 0;
@@ -70,18 +70,18 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
 
         if(i < raw_variables_number)
         {
-            new_raw_variables(index).name = raw_variables(raw_variable_index).name;
+            new_raw_variables[index].name = raw_variables[raw_variable_index].name;
 
-            new_raw_variables(index).set_use(DataSet::VariableUse::Input);
-            new_raw_variables(index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
+            new_raw_variables[index].set_use(DataSet::VariableUse::Input);
+            new_raw_variables[index].type = raw_variables[raw_variable_index].type;
+            new_raw_variables[index].categories = raw_variables[raw_variable_index].categories;
         }
         else
         {
-            new_raw_variables(index).name = raw_variables(raw_variable_index).name + "_output";
-            new_raw_variables(index).set_use(DataSet::VariableUse::Target);
-            new_raw_variables(index).type = raw_variables(raw_variable_index).type;
-            new_raw_variables(index).categories = raw_variables(raw_variable_index).categories;
+            new_raw_variables[index].name = raw_variables[raw_variable_index].name + "_output";
+            new_raw_variables[index].set_use(DataSet::VariableUse::Target);
+            new_raw_variables[index].type = raw_variables[raw_variable_index].type;
+            new_raw_variables[index].categories = raw_variables[raw_variable_index].categories;
         }
 
         index++;
@@ -135,9 +135,9 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     {
         index = indices(i++);
 
-        if(sample_uses(index) != SampleUse::None)
+        if(sample_uses[index] != SampleUse::None)
         {
-            sample_uses(index)= SampleUse::Training;
+            sample_uses[index] = SampleUse::Training;
             count_training++;
         }
     }
@@ -150,16 +150,16 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     {
         index = indices(i++);
 
-        if(sample_uses(index) != SampleUse::None)
+        if(sample_uses[index] != SampleUse::None)
         {
-            sample_uses(index) = SampleUse::Testing;
+            sample_uses[index] = SampleUse::Testing;
             count_testing++;
         }
     }
 }
 
 
-Tensor<DataSet::RawVariable, 1> AutoAssociationDataSet::get_associative_raw_variables() const
+vector<DataSet::RawVariable> AutoAssociationDataSet::get_associative_raw_variables() const
 {
     return associative_raw_variables;
 }

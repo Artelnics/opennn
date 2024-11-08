@@ -10,15 +10,11 @@
 
 TEST(CorrelationsTest, SpearmanCorrelations)
 {
-
-    Index size;
 /*
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
-    type solution;
-
-    size = 10;
+    const Index size = 10;
 
     x.resize(size);
     x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
@@ -26,11 +22,10 @@ TEST(CorrelationsTest, SpearmanCorrelations)
     y.resize(size);
     y.setValues({ type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100) });
 
-    solution = type(1);
+    type solution = type(1);
 
 //    assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 */
-    EXPECT_EQ(1, 1);
 }
 
 

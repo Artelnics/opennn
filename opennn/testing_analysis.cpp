@@ -123,7 +123,7 @@ void TestingAnalysis::print_linear_correlations() const
 {
     const Tensor<Correlation, 1> linear_correlations = linear_correlation();
 
-    const Tensor<string, 1> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Index targets_number = linear_correlations.size();
 
@@ -338,7 +338,7 @@ void TestingAnalysis::print_error_data_descriptives() const
 {
     const Index targets_number = data_set->get_variables_number(DataSet::VariableUse::Target);
 
-    const Tensor<string, 1> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = calculate_error_data_descriptives();
 
@@ -1595,15 +1595,15 @@ void TestingAnalysis::save_confusion(const string& file_name) const
 
     ofstream file(file_name);
 
-    const Tensor<string, 1> target_variable_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> target_variable_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     file << ",";
 
     for(Index i = 0; i < confusion.dimension(0); i++)
     {
-        file << target_variable_names(i);
+        file << target_variable_names[i];
 
-        if(i != target_variable_names.dimension(0) - 1)
+        if(i != target_variable_names.size() - 1)
             file << ",";
     }
 
@@ -1611,7 +1611,7 @@ void TestingAnalysis::save_confusion(const string& file_name) const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        file << target_variable_names(i) << ",";
+        file << target_variable_names[i] << ",";
 
         for(Index j = 0; j < raw_variables_number; j++)
             if(j == raw_variables_number - 1)
@@ -1704,7 +1704,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
     Index number_of_well_classified = 0;
     string class_name;
 
-    const Tensor<string, 1> target_variables_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> target_variables_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -1714,9 +1714,9 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         if(actual_class != predicted_class) continue;
 
         well_lassified_samples(number_of_well_classified, 0) = labels(i);
-        class_name = target_variables_names(actual_class);
+        class_name = target_variables_names[actual_class];
         well_lassified_samples(number_of_well_classified, 1) = class_name;
-        class_name = target_variables_names(predicted_class);
+        class_name = target_variables_names[predicted_class];
         well_lassified_samples(number_of_well_classified, 2) = class_name;
         well_lassified_samples(number_of_well_classified, 3) = to_string(double(outputs(i, predicted_class)));
 
@@ -1740,7 +1740,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
     Index actual_class;
     string class_name;
 
-    const Tensor<string, 1> target_variables_names = neural_network->get_output_names();
+    const vector<string> target_variables_names = neural_network->get_output_names();
 
     Index count_misclassified = 0;
 
@@ -1765,9 +1765,9 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
         if(actual_class == predicted_class) continue;
 
         misclassified_samples(j, 0) = labels(i);
-        class_name = target_variables_names(actual_class);
+        class_name = target_variables_names[actual_class];
         misclassified_samples(j, 1) = class_name;
-        class_name = target_variables_names(predicted_class);
+        class_name = target_variables_names[predicted_class];
         misclassified_samples(j, 2) = class_name;
         misclassified_samples(j, 3) = to_string(double(outputs(i, predicted_class)));
         j++;
