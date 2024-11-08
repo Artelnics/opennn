@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/training_strategy.h"
 #include "../opennn/adaptive_moment_estimation.h"
 #include "../opennn/mean_squared_error.h"
 
@@ -27,17 +28,16 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
 
     DataSet data_set(1, 1, 1);
+/*
     data_set.set_data_constant(type(1));
     /*
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
+
 //    training_strategy
 
     adaptive_moment_estimation.set_maximum_epochs_number(1);

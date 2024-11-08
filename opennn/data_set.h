@@ -49,6 +49,8 @@ class DataSet
 
 public:
 
+    enum class Codification { UTF8, SHIFT_JIS };
+
     // Constructors
 
     explicit DataSet();
@@ -60,8 +62,6 @@ public:
     explicit DataSet(const Index&, const Index&, const Index&);
 
     explicit DataSet(const Tensor<type, 1>&, const Index&);
-
-    enum class Codification{UTF8, SHIFT_JIS};
 
     explicit DataSet(const string&,
                      const string&,
