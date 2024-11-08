@@ -36,7 +36,7 @@ namespace opennn
  type maximum(const Tensor<type, 1>&);
  type maximum(const Tensor<type, 1>&, const vector<Index>&);
  Index maximum(const Tensor<Index, 1>&);
- type maximum(const Tensor<type, 2>&);
+ //type maximum(const Tensor<type, 2>&);
  Tensor<type, 1> column_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
  // Range

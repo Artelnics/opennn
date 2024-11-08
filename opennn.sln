@@ -39,8 +39,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "amazon_reviews", "examples\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "translation", "examples\translation\translation.vcxproj", "{7303381C-8282-4BA1-B16A-7DFEE47D50E1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gtest", "gtest\gtest.vcxproj", "{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E55C52E7-E1BE-4F8B-9543-50174FE92248}"
 	ProjectSection(SolutionItems) = preProject
 		gtests\gtest.vcxproj = gtests\gtest.vcxproj
@@ -204,22 +202,6 @@ Global
 		{7303381C-8282-4BA1-B16A-7DFEE47D50E1}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 		{7303381C-8282-4BA1-B16A-7DFEE47D50E1}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
 		{7303381C-8282-4BA1-B16A-7DFEE47D50E1}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Debug|x64.ActiveCfg = Debug|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Debug|x64.Build.0 = Debug|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Debug|x86.ActiveCfg = Debug|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Debug|x86.Build.0 = Debug|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.MinSizeRel|x64.ActiveCfg = Debug|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.MinSizeRel|x64.Build.0 = Debug|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.MinSizeRel|x86.ActiveCfg = Debug|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.MinSizeRel|x86.Build.0 = Debug|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Release|x64.ActiveCfg = Release|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Release|x64.Build.0 = Release|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Release|x86.ActiveCfg = Release|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.Release|x86.Build.0 = Release|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.RelWithDebInfo|x64.ActiveCfg = Release|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.RelWithDebInfo|x64.Build.0 = Release|x64
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
-		{3AE1F166-2B66-47E3-BC67-20DEE821E7DE}.RelWithDebInfo|x86.Build.0 = Release|Win32
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.Debug|x64.ActiveCfg = Debug|x64
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.Debug|x64.Build.0 = Debug|x64
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.Debug|x86.ActiveCfg = Debug|Win32

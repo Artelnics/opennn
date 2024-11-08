@@ -532,9 +532,9 @@ type maximum(const Tensor<type, 1>& vector)
 }
 
 
-type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+type maximum(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
-    const Index size = indices.dimension(0);
+    const Index size = indices.size();
 
     if(size == 0) return type(NAN);
 
@@ -544,10 +544,10 @@ type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     for(Index i = 0; i < size; i++)
     {
-        index = indices(i);
+        index = indices[i];
 
-        if(!isnan(vector(index)) && vector(index) > maximum)
-            maximum = vector(index);
+        if(!isnan(data(index)) && data(index) > maximum)
+            maximum = data(index);
     }
 
     return maximum;
@@ -1426,34 +1426,34 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
 
 Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
-                                 const Tensor<Index, 1>& row_indices,
-                                 const Tensor<Index, 1>& column_indices)
+                                const vector<Index>& row_indices,
+                                const vector<Index>& column_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_column_indices;
+    vector<Index> used_column_indices;
 
-    if(column_indices.dimension(0) == 0)
+    if(column_indices.size() == 0)
     {
         used_column_indices.resize(columns_number);
 
         for(Index i = 0; i < columns_number; i++)
-            used_column_indices(i) = i;
+            used_column_indices[i] = i;
     }
     else
     {
         used_column_indices = column_indices;
     }
 
-    Tensor<Index, 1> used_row_indices;
+    vector<Index> used_row_indices;
 
-    if(row_indices.dimension(0) == 0)
+    if(row_indices.size() == 0)
     {
         used_row_indices.resize(rows_number);
 
         for(Index i = 0; i < rows_number; i++)
-            used_row_indices(i) = i;
+            used_row_indices[i] = i;
     }
     else
     {
@@ -1470,13 +1470,13 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = used_column_indices(j);
+        column_index = used_column_indices[j];
 
         Tensor<type, 1> column(row_indices_size);
 
         for(Index i = 0; i < row_indices_size; i++)
         {
-            row_index = used_row_indices(i);
+            row_index = used_row_indices[i];
 
             column(i) = matrix(row_index,column_index);
         }
@@ -1587,7 +1587,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 }
 
 
-Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& column_indices)
+Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
@@ -1606,13 +1606,13 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = column_indices(j);
+        column_index = column_indices[j];
 
         count = 0;
 
         for(Index i = 0; i < row_indices_size; i++)
         {
-            row_index = row_indices(i);
+            row_index = row_indices[i];
 
             if (isnan(matrix(row_index, column_index))) continue;
 
