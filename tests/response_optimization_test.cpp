@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "response_optimization_test.h"
-
 namespace opennn
 {
 

@@ -154,7 +154,7 @@ void ImageDataSet::set(const Index& new_images_number,
     raw_variables.resize(raw_variables_number);
 
     for(Index i = 0; i < inputs_number; i++)
-        raw_variables(i).set("p_" + to_string(i + 1), 
+        raw_variables[i].set("p_" + to_string(i + 1), 
                              VariableUse::Input, 
                              RawVariableType::Numeric,
                              Scaler::ImageMinMax);
@@ -163,13 +163,13 @@ void ImageDataSet::set(const Index& new_images_number,
     categories.setConstant("ABC");
 
     if(targets_number == 1)
-        raw_variables(raw_variables_number - 1).set("target",
+        raw_variables[raw_variables_number - 1].set("target",
                                                     VariableUse::Target,
                                                     RawVariableType::Binary,
                                                     Scaler::None,
                                                     categories);
     else
-        raw_variables(raw_variables_number - 1).set("target",
+        raw_variables[raw_variables_number - 1].set("target",
                                                     VariableUse::Target,
                                                     RawVariableType::Categorical,
                                                     Scaler::None,
@@ -446,7 +446,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("RawVariable");
         file_stream.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables(i).to_XML(file_stream);
+        raw_variables[i].to_XML(file_stream);
         file_stream.CloseElement();
     }
 
@@ -459,7 +459,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     if(has_sample_ids)
     {
         file_stream.OpenElement("Ids");
-        file_stream.PushText(string_tensor_to_string(samples_id).c_str());
+        file_stream.PushText(string_tensor_to_string(sample_ids).c_str());
         file_stream.CloseElement();
     }
 
@@ -476,7 +476,7 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Samples uses
 
     file_stream.OpenElement("SamplesUses");
-    file_stream.PushText(tensor_to_string(get_samples_uses_tensor()).c_str());
+    file_stream.PushText(tensor_to_string(get_sample_uses_vector()).c_str());
     file_stream.CloseElement();
 
     // Close samples
@@ -551,14 +551,14 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        raw_variables(i).name = read_xml_string(start_element, "Name");
-        raw_variables(i).set_scaler(read_xml_string(start_element, "Scaler"));
-        raw_variables(i).set_use(read_xml_string(start_element, "Use"));
-        raw_variables(i).set_type(read_xml_string(start_element, "Type"));
+        raw_variables[i].name = read_xml_string(start_element, "Name");
+        raw_variables[i].set_scaler(read_xml_string(start_element, "Scaler"));
+        raw_variables[i].set_use(read_xml_string(start_element, "Use"));
+        raw_variables[i].set_type(read_xml_string(start_element, "Type"));
 
-        if (raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+        if (raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
         {
-            raw_variables(i).categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
+            raw_variables[i].categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
             target_count++;
         }
     }
@@ -569,7 +569,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     // Samples
 
     if (has_sample_ids)
-        samples_id = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
+        sample_ids = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
 
     const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
@@ -663,7 +663,7 @@ void ImageDataSet::read_bmp()
     for(Index i = 0; i < targets_number; i++)
         categories(i) = directory_path[i].filename().string();
 
-    raw_variables(raw_variables_number-1).set_categories(categories);
+    raw_variables[raw_variables_number-1].set_categories(categories);
 
     data.setZero();
 

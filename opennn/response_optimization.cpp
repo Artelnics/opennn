@@ -273,10 +273,10 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 
     const Index variables_number = conditions_string.size();
 
-    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
+    const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+/*
     #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
     {
@@ -293,6 +293,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
     }
+*/
 }
 
 
@@ -424,7 +425,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
     const int input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    Tensor<Index, 1> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
+    vector<Index> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
@@ -434,7 +435,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
         for(Index j = 0; j < input_raw_variables_number; j++)
         {
-            used_raw_variable_index = used_raw_variables_indices(j);
+            used_raw_variable_index = used_raw_variables_indices[j];
 
             DataSet::RawVariableType column_type = data_set->get_raw_variable_type(used_raw_variable_index);
 
@@ -453,7 +454,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             }
             else if(column_type == DataSet::RawVariableType::Categorical)
             {
-                const Index categories_number = data_set->get_raw_variables()(used_raw_variable_index).get_categories_number();
+                const Index categories_number = data_set->get_raw_variables()[used_raw_variable_index].get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)
@@ -555,8 +556,8 @@ void ResponseOptimizationResults::print() const
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<string, 1> input_names = neural_network->get_input_names();
-    const Tensor<string, 1> output_names = neural_network->get_output_names();
+    const vector<string> input_names = neural_network->get_input_names();
+    const vector<string> output_names = neural_network->get_output_names();
 
     cout << "\nResponse optimization results: " << endl;
 

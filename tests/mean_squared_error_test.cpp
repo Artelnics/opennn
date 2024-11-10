@@ -27,6 +27,12 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
 }
 
 
+TEST(MeanSquaredErrorTest, BackPropagateEmpty)
+{
+
+}
+
+
 TEST(MeanSquaredErrorTest, BackPropagateApproximationZero)
 {
     /*

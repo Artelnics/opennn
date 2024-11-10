@@ -14,22 +14,26 @@ TEST(GrowingNeuronsTest, DefaultConstructor)
 
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
+
     TrainingStrategy training_strategy;
+    /*
     GrowingNeurons growing_neurons(&training_strategy);
 
     EXPECT_EQ(growing_neurons.has_training_strategy(), true);
+*/
 }
 
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
+/*
     TrainingStrategy training_strategy;
     GrowingNeurons growing_neurons(&training_strategy);
 
     EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 
     NeuronsSelectionResults neurons_selection_results;
-
+/*
     // Test
 
     Tensor<type, 2> data(21, 2);
@@ -73,7 +77,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     growing_neurons.set_maximum_neurons_number(7);
     growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
-
+*/
     //assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
 }
 

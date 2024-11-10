@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-#include "tensor_utilities_test.h"
 #include "../opennn/tensors.h"
 
 namespace opennn

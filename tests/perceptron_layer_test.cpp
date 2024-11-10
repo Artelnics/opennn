@@ -71,15 +71,9 @@ void PerceptronLayerTest::test_calculate_combinations()
     inputs_number = 1;
     neurons_number = 1;
     samples_number = 1;
-<<<<<<< HEAD
-
-    perceptron_layer->set(inputs_number, neurons_number);
-    perceptron_layer->set_parameters_constant(type(0));
-=======
 /*
     perceptron_layer.set(inputs_number, neurons_number);
     perceptron_layer.set_parameters_constant(type(0));
->>>>>>> a0e0be6ac2809a11528b6c820b9dd7edfe076c35
 
     inputs.resize(samples_number, inputs_number);
     inputs.setZero();
@@ -208,11 +202,7 @@ void PerceptronLayerTest::test_calculate_combinations()
     assert_true(combinations.dimension(1) == 1, LOG);
 
     assert_true(abs(combinations(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-<<<<<<< HEAD
-
-=======
 */
->>>>>>> a0e0be6ac2809a11528b6c820b9dd7edfe076c35
 }
 
 
@@ -230,15 +220,9 @@ void PerceptronLayerTest::test_calculate_activations()
     dimensions = get_dimensions(activation_derivatives);
 
     // Test
-<<<<<<< HEAD
-
-    perceptron_layer->set(1,1);
-    perceptron_layer->set_parameters_constant(type(1));
-=======
 /*
     perceptron_layer.set(1,1);
     perceptron_layer.set_parameters_constant(type(1));
->>>>>>> a0e0be6ac2809a11528b6c820b9dd7edfe076c35
 
     inputs.setConstant(type(1));
 
@@ -317,15 +301,9 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_number = 2;
     neurons_number = 2;
     bool is_training = true;
-<<<<<<< HEAD
-
-    perceptron_layer->set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
-    perceptron_layer->set_parameters_constant(type(1));
-=======
     /*
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(1));
->>>>>>> a0e0be6ac2809a11528b6c820b9dd7edfe076c35
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));

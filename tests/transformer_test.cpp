@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "transformer_test.h"
-
 //#include "../opennn/probabilistic_layer_3d.h"
 
 namespace opennn

@@ -22,25 +22,6 @@
 
 using namespace Eigen;
 
-// Filesystem namespace
-
-// #ifdef __APPLE__
-// #include <Availability.h> // for deployment target to support pre-catalina targets without fs
-// #endif
-// #if((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
-// #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
-// #define GHC_USE_STD_FS
-// #include <filesystem>
-// namespace fs = filesystem;
-// #endif
-// #endif
-// #ifndef GHC_USE_STD_FS
-// #include "filesystem.h"
-// namespace fs = ghc::filesystem;
-// #endif
-
-// using namespace fs;
-
 namespace opennn
 {
 
@@ -49,19 +30,13 @@ class DataSet
 
 public:
 
+    enum class Codification { UTF8, SHIFT_JIS };
+
     // Constructors
 
-    explicit DataSet();
-
-    explicit DataSet(const Tensor<type, 2>&);
-
-    explicit DataSet(const Index&, const Index&);
-
-    explicit DataSet(const Index&, const Index&, const Index&);
-
-    explicit DataSet(const Tensor<type, 1>&, const Index&);
-
-    enum class Codification{UTF8, SHIFT_JIS};
+    explicit DataSet(const Index& = 0, 
+                     const dimensions& = {}, 
+                     const dimensions& = {});
 
     explicit DataSet(const string&,
                      const string&,
@@ -87,17 +62,15 @@ public:
 
     struct RawVariable
     {
-        RawVariable();
-
-        RawVariable(const string&,
-                    const DataSet::VariableUse&,
+        RawVariable(const string& = "",
+                    const DataSet::VariableUse& = DataSet::VariableUse::None,
                     const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const Tensor<string, 1>& = Tensor<string, 1>());
 
-        void set(const string&,
-                 const DataSet::VariableUse&,
-                 const DataSet::RawVariableType & = DataSet::RawVariableType::Numeric,
+        void set(const string& = "",
+                 const DataSet::VariableUse& = DataSet::VariableUse::None,
+                 const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                  const Scaler & = Scaler::MeanStandardDeviation,
                  const Tensor<string, 1> & = Tensor<string, 1>());
 
@@ -151,14 +124,14 @@ public:
 
     Index get_used_samples_number() const;
 
-    Tensor<Index, 1> get_sample_indices(const SampleUse&) const;
+    vector<Index> get_sample_indices(const SampleUse&) const;
 
-    Tensor<Index, 1> get_used_samples_indices() const;
+    vector<Index> get_used_sample_indices() const;
 
     SampleUse get_sample_use(const Index&) const;
-    const Tensor<SampleUse, 1>& get_sample_uses() const;
+    const vector<SampleUse>& get_sample_uses() const;
 
-    Tensor<Index, 1> get_samples_uses_tensor() const;
+    Tensor<Index, 1> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
     Tensor<type, 1> get_sample_use_percentages() const;
@@ -170,17 +143,17 @@ public:
     Index get_used_raw_variables_number() const;
     Index get_input_and_unused_variables_number() const;
 
-    Tensor<RawVariable, 1> get_raw_variables() const;
-    Tensor<RawVariable, 1> get_raw_variables(const VariableUse&) const;
+    const vector<RawVariable>& get_raw_variables() const;
+    vector<RawVariable> get_raw_variables(const VariableUse&) const;
 
     Index get_raw_variable_index(const string&) const;
     Index get_raw_variable_index(const Index&) const;
 
-    Tensor<Index, 1> get_raw_variable_indices(const VariableUse&) const;        
-    Tensor<Index, 1> get_used_raw_variables_indices() const;
+    vector<Index> get_raw_variable_indices(const VariableUse&) const;        
+    vector<Index> get_used_raw_variables_indices() const;
 
-    Tensor<string, 1> get_raw_variable_names() const;
-    Tensor<string, 1> get_raw_variable_names(const VariableUse&) const;
+    vector<string> get_raw_variable_names() const;
+    vector<string> get_raw_variable_names(const VariableUse&) const;
 
     RawVariableType get_raw_variable_type(const Index& index) const {return raw_variables[index].type;}
 
@@ -190,24 +163,20 @@ public:
     Index get_variables_number(const VariableUse&) const;
     Index get_used_variables_number() const;
 
-    Tensor<string, 1> get_variable_names() const;
-    Tensor<string, 1> get_variable_names(const VariableUse&) const;
+    vector<string> get_variable_names() const;
+    vector<string> get_variable_names(const VariableUse&) const;
 
-    Tensor<Tensor<Index, 1>, 1> get_variable_indices() const;
-    Tensor<Index, 1> get_variable_indices(const Index&) const;
-    Tensor<Index, 1> get_variable_indices(const VariableUse&) const;
-    Tensor<Index, 1> get_used_variable_indices() const;
-
-    Tensor<VariableUse, 1> get_variables_uses() const;
+    vector<vector<Index>> get_variable_indices() const;
+    vector<Index> get_variable_indices(const Index&) const;
+    vector<Index> get_variable_indices(const VariableUse&) const;
+    vector<Index> get_used_variable_indices() const;
 
     const dimensions& get_input_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
-    Tensor<Scaler, 1> get_raw_variables_scalers() const;
-
     Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
 
-    Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& = 100) const;
+    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();
@@ -216,12 +185,12 @@ public:
     Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
-    Tensor<type, 1> get_sample_data(const Index&, const Tensor<Index, 1>&) const;
+    Tensor<type, 1> get_sample_data(const Index&, const vector<Index>&) const;
     Tensor<type, 2> get_sample_input_data(const Index&) const;
     Tensor<type, 2> get_sample_target_data(const Index&) const;
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
-    Tensor<type, 2> get_raw_variable_data(const Index&, const Tensor<Index, 1>&) const;
+    Tensor<type, 2> get_raw_variable_data(const Index&, const vector<Index>&) const;
     Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_raw_variable_data(const string&) const;
 
@@ -264,11 +233,11 @@ public:
 
     void set();
     void set(const Tensor<type, 2>&);
-    void set(const Index&, const Index&);
-    void set(const Index&, const Index&, const Index&);
+//    void set(const Index&, const Index&);
+    void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
-    void set(const Tensor<type, 1>&, const Index&);
+//    void set(const Tensor<type, 1>&, const Index&);
     void set_default();
 
     void set_model_type_string(const string&);
@@ -277,8 +246,6 @@ public:
     void set_threads_number(const int&);
 
     // Samples set
-
-    void set_samples_number(const Index&);
 
     void set(const SampleUse&);
 
@@ -291,7 +258,7 @@ public:
 
     // Raw variables set
 
-    void set_raw_variables(const Tensor<RawVariable, 1>&);
+    void set_raw_variables(const vector<RawVariable>&);
     void set_default_raw_variables_uses();
 
     void set_default_raw_variables_names();
@@ -299,7 +266,7 @@ public:
     void set_raw_variables_uses(const Tensor<string, 1>&);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
     void set_raw_variables(const VariableUse&);
-    void set_input_target_raw_variable_indices(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_target_raw_variable_indices(const Tensor<string, 1>&, const Tensor<string, 1>&);
     void set_input_raw_variables_unused();
 
@@ -326,7 +293,7 @@ public:
 
     // Variables set
 
-    void set_variable_names(const Tensor<string, 1>&);
+    void set_variable_names(const vector<string>&);
 
     void set(const VariableUse&);
 
@@ -475,9 +442,7 @@ public:
 
     // Data generation
 
-    void generate_constant_data(const Index&, const Index&, const type&);
     void generate_random_data(const Index&, const Index&);
-    void generate_sequential_data(const Index&, const Index&);
     void generate_Rosenbrock_data(const Index&, const Index&);
     void generate_sum_data(const Index&, const Index&);
     void generate_classification_data(const Index&, const Index&, const Index&);
@@ -536,7 +501,7 @@ public:
 
     // Eigen
 
-    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
+    vector<vector<Index>> split_samples(const vector<Index>&, const Index&) const;
 
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
@@ -589,13 +554,13 @@ protected:
 
     // Samples
 
-    Tensor<SampleUse, 1> sample_uses;
+    vector<SampleUse> sample_uses;
 
-    Tensor<string, 1> samples_id;
+    Tensor<string, 1> sample_ids;
 
     // Raw variables
 
-    Tensor<RawVariable, 1> raw_variables;
+    vector<RawVariable> raw_variables;
 
     dimensions input_dimensions;
 

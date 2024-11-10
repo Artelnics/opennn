@@ -494,9 +494,9 @@ Index minimum(const Tensor<Index, 1>& vector)
 }
 
 
-type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+type minimum(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
-    const Index size = indices.dimension(0);
+    const Index size = indices.size();
 
     if(size == 0) return type(NAN);
 
@@ -506,10 +506,10 @@ type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     for(Index i = 0; i < size; i++)
     {
-        index = indices(i);
+        index = indices[i];
 
-        if(vector(index) < minimum && !isnan(vector(index)))
-            minimum = vector(index);
+        if(data(index) < minimum && !isnan(data(index)))
+            minimum = data(index);
     }
 
     return minimum;
@@ -532,9 +532,9 @@ type maximum(const Tensor<type, 1>& vector)
 }
 
 
-type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+type maximum(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
-    const Index size = indices.dimension(0);
+    const Index size = indices.size();
 
     if(size == 0) return type(NAN);
 
@@ -544,10 +544,10 @@ type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 
     for(Index i = 0; i < size; i++)
     {
-        index = indices(i);
+        index = indices[i];
 
-        if(!isnan(vector(index)) && vector(index) > maximum)
-            maximum = vector(index);
+        if(!isnan(data(index)) && data(index) > maximum)
+            maximum = data(index);
     }
 
     return maximum;
@@ -961,9 +961,9 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 }
 
 
-Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+Tensor<type, 1> quartiles(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
-    const Index indices_size = indices.dimension(0);
+    const Index indices_size = indices.size();
 
     // Fix missing values
 
@@ -971,7 +971,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
     Index new_size = 0;
 
     for(Index i = 0; i < indices_size; i++)
-        if(!isnan(vector(indices(i)))) 
+        if(!isnan(data(indices[i]))) 
             new_size++;
 
     Tensor<type, 1> sorted_vector(new_size);
@@ -980,10 +980,10 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>&
 
     for(Index i = 0; i < indices_size; i++)
     {
-        index = indices(i);
+        index = indices[i];
 
-        if(!isnan(vector(index)))
-            sorted_vector(sorted_index++) = vector(index);
+        if(!isnan(data(index)))
+            sorted_vector(sorted_index++) = data(index);
     }
 
     sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
@@ -1060,20 +1060,20 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 }
 
 
-BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
 {
     BoxPlot box_plot;
 
-    if(vector.dimension(0) == 0 || indices.dimension(0) == 0) 
+    if(data.dimension(0) == 0 || indices.size() == 0) 
         return box_plot;
 
-    const Tensor<type, 1> quartiles = opennn::quartiles(vector, indices);
+    const Tensor<type, 1> quartiles = opennn::quartiles(data, indices);
 
-    box_plot.minimum = minimum(vector, indices);
+    box_plot.minimum = minimum(data, indices);
     box_plot.first_quartile = quartiles(0);
     box_plot.median = quartiles(1);
     box_plot.third_quartile = quartiles(2);
-    box_plot.maximum = maximum(vector, indices);
+    box_plot.maximum = maximum(data, indices);
 
     return box_plot;
 }
@@ -1346,8 +1346,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 
 
 Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
-                                     const Tensor<Index, 1>& row_indices,
-                                     const Tensor<Index, 1>& column_indices)
+                                     const vector<Index>& row_indices,
+                                     const vector<Index>& column_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
@@ -1374,13 +1374,13 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     // @todo optimize this loop
     for(Index i = 0; i < row_indices_size; i++)
     {
-        row_index = row_indices(i);
+        row_index = row_indices[i];
 
         //        #pragma omp parallel for private(column_index)
 
         for(Index j = 0; j < column_indices_size; j++)
         {
-            column_index = column_indices(j);
+            column_index = column_indices[j];
 
             const type value = matrix(row_index, column_index);
 
@@ -1426,34 +1426,34 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
 
 
 Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
-                                 const Tensor<Index, 1>& row_indices,
-                                 const Tensor<Index, 1>& column_indices)
+                                const vector<Index>& row_indices,
+                                const vector<Index>& column_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_column_indices;
+    vector<Index> used_column_indices;
 
-    if(column_indices.dimension(0) == 0)
+    if(column_indices.size() == 0)
     {
         used_column_indices.resize(columns_number);
 
         for(Index i = 0; i < columns_number; i++)
-            used_column_indices(i) = i;
+            used_column_indices[i] = i;
     }
     else
     {
         used_column_indices = column_indices;
     }
 
-    Tensor<Index, 1> used_row_indices;
+    vector<Index> used_row_indices;
 
-    if(row_indices.dimension(0) == 0)
+    if(row_indices.size() == 0)
     {
         used_row_indices.resize(rows_number);
 
         for(Index i = 0; i < rows_number; i++)
-            used_row_indices(i) = i;
+            used_row_indices[i] = i;
     }
     else
     {
@@ -1470,13 +1470,13 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = used_column_indices(j);
+        column_index = used_column_indices[j];
 
         Tensor<type, 1> column(row_indices_size);
 
         for(Index i = 0; i < row_indices_size; i++)
         {
-            row_index = used_row_indices(i);
+            row_index = used_row_indices[i];
 
             column(i) = matrix(row_index,column_index);
         }
@@ -1587,7 +1587,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& colu
 }
 
 
-Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& column_indices)
+Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_indices, const vector<Index>& column_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
@@ -1606,13 +1606,13 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = column_indices(j);
+        column_index = column_indices[j];
 
         count = 0;
 
         for(Index i = 0; i < row_indices_size; i++)
         {
-            row_index = row_indices(i);
+            row_index = row_indices[i];
 
             if (isnan(matrix(row_index, column_index))) continue;
 
@@ -1765,7 +1765,9 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 }
 
 
-Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_indices, const Tensor<Index, 1>& column_indices)
+Tensor<type, 1> median(const Tensor<type, 2>& matrix, 
+                       const vector<Index>& row_indices,  
+                       const vector<Index>& column_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
@@ -1778,13 +1780,13 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& ro
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = column_indices(j);
+        column_index = column_indices[j];
 
         Tensor<type, 1> sorted_column;
 
         for(Index k = 0; k < row_indices_size; k++)
         {
-            const Index row_index = row_indices(k);
+            const Index row_index = row_indices[k];
 
             if(!isnan(matrix(row_index, column_index)))
                 push_back_type(sorted_column, matrix(row_index, column_index));

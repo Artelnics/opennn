@@ -184,7 +184,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("RawVariable");
         file_stream.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables(i).to_XML(file_stream);
+        raw_variables[i].to_XML(file_stream);
         file_stream.CloseElement();
     }
 
@@ -234,7 +234,7 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            SampleUse sample_use = sample_uses(i);
+            SampleUse sample_use = sample_uses[i];
 
             buffer << Index(sample_use);
 
@@ -652,7 +652,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
         {
             const string new_name = name_element->GetText();
 
-            raw_variables(i).name = new_name;
+            raw_variables[i].name = new_name;
         }
 
         // Scaler
@@ -672,7 +672,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
         {
             const string new_scaler = scaler_element->GetText();
 
-            raw_variables(i).set_scaler(new_scaler);
+            raw_variables[i].set_scaler(new_scaler);
         }
 
         // raw_variable use
@@ -692,7 +692,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
         {
             const string new_raw_variable_use = use_element->GetText();
 
-            raw_variables(i).set_use(new_raw_variable_use);
+            raw_variables[i].set_use(new_raw_variable_use);
         }
 
         // Type
@@ -711,10 +711,10 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
         if(type_element->GetText())
         {
             const string new_type = type_element->GetText();
-            raw_variables(i).set_type(new_type);
+            raw_variables[i].set_type(new_type);
         }
 
-        if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+        if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
         {
             // Categories
 
@@ -733,7 +733,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
             {
                 const string new_categories = categories_element->GetText();
 
-                raw_variables(i).categories = get_tokens(new_categories, ";");
+                raw_variables[i].categories = get_tokens(new_categories, ";");
             }
         }
     }
@@ -1040,7 +1040,7 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
 
     const Index raw_variables_number = get_raw_variables_number();
-    const Tensor<string,1> raw_variables_names = get_raw_variable_names();
+    const vector<string> raw_variables_names = get_raw_variable_names();
 
     const Tensor<string, 1> tokens = get_tokens(sentence, " ");
 

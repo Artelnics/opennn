@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "scaling_test.h"
-
 #include "../opennn/descriptives.h"
 #include "../opennn/tensors.h"
 

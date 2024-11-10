@@ -336,8 +336,8 @@ string get_expression_c(const NeuralNetwork& neural_network)
     ostringstream buffer;
     ostringstream outputs_buffer;
 
-    Tensor<string, 1> input_names =  neural_network.get_input_names();
-    Tensor<string, 1> output_names = neural_network.get_output_names();
+    vector<string> input_names =  neural_network.get_input_names();
+    vector<string> output_names = neural_network.get_output_names();
 
     fix_input_names(input_names);
     fix_output_names(output_names);
@@ -469,7 +469,7 @@ string get_expression_c(const NeuralNetwork& neural_network)
 
     buffer << "\t" << "vector<float> out(" << output_names.size() << ");" << endl;
 
-    for(int i = 0; i < output_names.dimension(0); i++)
+    for(int i = 0; i < output_names.size(); i++)
         buffer << "\t" << "out[" << to_string(i) << "] = " << output_names[i] << ";" << endl;
 
     buffer << "\n\t" << "return out;" << endl
@@ -753,8 +753,8 @@ string get_expression_api(const NeuralNetwork& neural_network)
     ostringstream buffer;
     Tensor<string, 1> found_tokens;
     
-    Tensor<string, 1> input_names =  neural_network.get_input_names();
-    Tensor<string, 1> output_names = neural_network.get_output_names();
+    vector<string> input_names =  neural_network.get_input_names();
+    vector<string> output_names = neural_network.get_output_names();
 
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
@@ -776,10 +776,10 @@ string get_expression_api(const NeuralNetwork& neural_network)
     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        input_names(i) = inputs_outputs_buffer(0)(i);
+        input_names[i] = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        output_names(i) = inputs_outputs_buffer(1)(i);
+        output_names[i] = inputs_outputs_buffer(1)(i);
 
     string token;
     string expression = get_expression();
@@ -864,7 +864,7 @@ string get_expression_api(const NeuralNetwork& neural_network)
     size_t substring_length8;
 
     string new_word;
-
+/*
     Tensor<string, 1> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
     found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
 
@@ -1010,6 +1010,8 @@ string get_expression_api(const NeuralNetwork& neural_network)
     replace_all_appearances(out, "_$", "_");
 
     return out;
+*/
+return string();
 }
 
 string autoassociaton_javascript()
@@ -1049,8 +1051,8 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
     Tensor<string, 1> tokens;
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
-    Tensor<string, 1> input_names = neural_network.get_input_names();
-    Tensor<string, 1> output_names = neural_network.get_output_names();
+    vector<string> input_names = neural_network.get_input_names();
+    vector<string> output_names = neural_network.get_output_names();
 
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
@@ -1106,10 +1108,10 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
      Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
-        input_names(i) = inputs_outputs_buffer(0)(i);
+        input_names[i] = inputs_outputs_buffer(0)(i);
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        output_names(i) = inputs_outputs_buffer(1)(i);
+        output_names[i] = inputs_outputs_buffer(1)(i);
 
     ostringstream buffer;
 
@@ -1583,9 +1585,9 @@ string get_expression_python(const NeuralNetwork& neural_network)
     Tensor<string, 1> found_tokens;
     Tensor<string, 1> found_mathematical_expressions;
 
-    Tensor<string, 1> inputs = neural_network.get_input_names();
-    Tensor<string, 1> original_inputs = neural_network.get_input_names();
-    Tensor<string, 1> outputs = neural_network.get_output_names();
+    vector<string> inputs = neural_network.get_input_names();
+    vector<string> original_inputs = neural_network.get_input_names();
+    vector<string> outputs = neural_network.get_output_names();
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
@@ -1621,12 +1623,12 @@ string get_expression_python(const NeuralNetwork& neural_network)
 
     for(Index i = 0; i < inputs_outputs_buffer(0).dimension(0);i++)
     {
-        inputs(i) = inputs_outputs_buffer(0)(i);
-        buffer << "\t" << i << ") " << inputs(i) << endl;
+        inputs[i] = inputs_outputs_buffer(0)(i);
+        buffer << "\t" << i << ") " << inputs[i] << endl;
     }
 
     for(Index i = 0; i < inputs_outputs_buffer(1).dimension(0);i++)
-        outputs(i) = inputs_outputs_buffer(1)(i);
+        outputs[i] = inputs_outputs_buffer(1)(i);
 
     buffer << "\n" << endl
            << "You can predict with a batch of samples using calculate_batch_output method\t" << endl
@@ -1768,7 +1770,7 @@ string get_expression_python(const NeuralNetwork& neural_network)
 
         for(int i = 0; i < original_inputs.size();i++)
         {
-            inputs_list += "'" + original_inputs(i) + "'";
+            inputs_list += "'" + original_inputs[i] + "'";
 
             if(i < original_inputs.size() - 1)
                 inputs_list += ", ";
@@ -1834,7 +1836,7 @@ string get_expression_python(const NeuralNetwork& neural_network)
 
     buffer << "\t" << "def calculate_outputs(self, inputs):" << endl;
 
-    for(int i = 0; i < inputs.dimension(0); i++)
+    for(int i = 0; i < inputs.size(); i++)
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
 
     if(LSTM_number > 0)
@@ -1913,7 +1915,7 @@ string get_expression_python(const NeuralNetwork& neural_network)
 
     buffer << "\t\t" << "out = " << "[None]*" << outputs.size() << "\n" << endl;
 
-    for(int i = 0; i < outputs.dimension(0); i++)
+    for(int i = 0; i < outputs.size(); i++)
         buffer << "\t\t" << "out[" << to_string(i) << "] = " << outputs[i] << endl;
 
     if(LSTM_number>0)
@@ -1946,8 +1948,8 @@ string get_expression_python(const NeuralNetwork& neural_network)
            << "\n\tinputs = []" << "\n" << endl;
 
     for(Index i = 0; i < inputs.size(); i++)
-        buffer << "\t" << inputs(i) << " = " << "#- ENTER YOUR VALUE HERE -#" << endl
-               << "\t" << "inputs.append(" << inputs(i) << ")" << "\n" << endl;
+        buffer << "\t" << inputs[i] << " = " << "#- ENTER YOUR VALUE HERE -#" << endl
+               << "\t" << "inputs.append(" << inputs[i] << ")" << "\n" << endl;
 
     buffer << "\t" << "nn = NeuralNetwork()" << endl
            << "\t" << "outputs = nn.calculate_outputs(inputs)" << endl
@@ -2084,8 +2086,8 @@ string replace_reserved_keywords(const string& str)
 
 
 Tensor<string, 1> fix_get_expression_outputs(const string& str,
-                                               const Tensor<string, 1>& outputs,
-                                               const string& programming_languaje)
+                                             const vector<string>& outputs,
+                                             const string& programming_languaje)
 {
     Tensor<string,1> out;
     Tensor<string,1> tokens;
@@ -2110,7 +2112,7 @@ Tensor<string, 1> fix_get_expression_outputs(const string& str,
     else if(programming_languaje == "c")     
         option = 4;
 
-    const size_t dimension = outputs.dimension(0);
+    const size_t dimension = outputs.size();
 
     while(getline(ss, token, '\n'))
     {
@@ -2202,31 +2204,31 @@ Tensor<string, 1> fix_get_expression_outputs(const string& str,
 }
 
 
-void fix_input_names(Tensor<string, 1>& input_names)
+void fix_input_names(vector<string>& input_names)
 {
-    const Index inputs_number = input_names.dimension(0);
+    const Index inputs_number = input_names.size();
 
     Tensor<string,1> input_names(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
-            input_names(i) = "input_" + to_string(i);
+            input_names[i] = "input_" + to_string(i);
         else
-            input_names(i) = replace_reserved_keywords(input_names[i]);
+            input_names[i] = replace_reserved_keywords(input_names[i]);
 }
 
 
-Tensor<string, 1> fix_output_names(Tensor<string, 1>& output_names)
+vector<string> fix_output_names(vector<string>& output_names)
 {
-    const Index outputs_number = output_names.dimension(0);
+    const Index outputs_number = output_names.size();
 
-    Tensor<string, 1> input_names(outputs_number);
+    vector<string> input_names(outputs_number);
 
     for (int i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
-            output_names(i) = "output_" + to_string(i);
+            output_names[i] = "output_" + to_string(i);
         else
-            input_names(i) = replace_reserved_keywords(input_names[i]);
+            input_names[i] = replace_reserved_keywords(input_names[i]);
 
 }
 

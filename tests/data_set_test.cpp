@@ -12,45 +12,21 @@ TEST(DataSetTest, DefaultConstructor)
 }
 
 
-TEST(DataSetTest, Constructor)
+TEST(DataSetTest, DimensionsConstructor)
 {
-/*
-    // Samples and variables number constructor
+    DataSet data_set(1, {1}, {1});
+    /*
+    EXPECT_EQ(data_set.get_samples_number(), 0);
 
-    DataSet data_set_2(1, 2);
-
-    //assert_true(data_set_2.get_samples_number() == 1, LOG);
-    //assert_true(data_set_2.get_variables_number() == 2, LOG);
-
-    // Inputs, targets and samples numbers constructor
-
-    //DataSet data_set_3(1, 1, 1);
-
-    //assert_true(data_set_3.get_variables_number() == 2, LOG);
-    //assert_true(data_set_3.get_samples_number() == 1, LOG);
-    //assert_true(data_set_3.get_variables_number(DataSet::VariableUse::Input) == 1, LOG);
-    //assert_true(data_set_3.get_variables_number(DataSet::VariableUse::Target) == 1, LOG);
+    EXPECT_EQ(data_set.get_variables_number(), 2);
+    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Input), 1);
+    EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Target), 1);
 */
-    EXPECT_EQ(1, 1);
 }
-
 
 /*
-namespace opennn
-{
-
-
-void DataSetTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-}
-
-
 void DataSetTest::test_calculate_variables_descriptives()
 {
-    cout << "test_calculate_variables_descriptives\n";
-
     Tensor<Descriptives, 1> variables_descriptives;
 
     // Test

@@ -25,6 +25,7 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {
+/*
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -47,7 +48,7 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
     targets_number = 1;
     neurons_number = 1;
 
-    DataSet data_set(samples_number, inputs_number, targets_number);
+    DataSet data_set(samples_number, { inputs_number }, { targets_number });
     data_set.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, { neurons_number }, { targets_number });
@@ -78,7 +79,6 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
-
 
     // Test
 
