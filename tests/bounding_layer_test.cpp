@@ -7,7 +7,7 @@ TEST(BoundingLayerTest, Constructor)
 {
     BoundingLayer bounding_layer;
 
-//    EXPECT_EQ(bounding_layer_1.get_output_dimensions(), dimensions{});
+    EXPECT_EQ(bounding_layer.get_output_dimensions(), dimensions{0});
 }
 
 

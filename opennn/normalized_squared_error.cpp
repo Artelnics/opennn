@@ -107,7 +107,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     const Index selection_samples_number = selection_indices.size();
 

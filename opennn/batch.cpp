@@ -7,10 +7,10 @@
 namespace opennn
 {
 
-void Batch::fill(const Tensor<Index, 1>& samples_indices,
-                 const Tensor<Index, 1>& inputs_indices,
-                 const Tensor<Index, 1>& targets_indices,
-                 const Tensor<Index, 1>& context_indices)
+void Batch::fill(const vector<Index>& samples_indices,
+                 const vector<Index>& inputs_indices,
+                 const vector<Index>& targets_indices,
+                 const vector<Index>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
@@ -116,6 +116,8 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {        
+    if (!new_data_set) return;
+
     batch_size = new_batch_size;
     data_set = new_data_set;
 

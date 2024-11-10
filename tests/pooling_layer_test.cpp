@@ -8,8 +8,6 @@
 
 #include <iostream>
 
-#include "pooling_layer_test.h"
-
 namespace opennn
 {
 

@@ -142,6 +142,7 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
                                                      const Index& completion_dimension,
                                                      const Index& context_dimension)
 {
+/*
     data_path.clear();
 
     set(batch_samples_number, context_length + 2 * completion_length);
@@ -163,6 +164,7 @@ void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_
 
     for(Index i = 0; i < completion_length; i++)
         set_raw_variable_use(i + context_length + completion_length, DataSet::VariableUse::Target);
+*/
 }
 
 
@@ -305,7 +307,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            raw_variables(i).to_XML(file_stream);
+            raw_variables[i].to_XML(file_stream);
 
             file_stream.CloseElement();
         }
@@ -319,7 +321,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
     if(has_sample_ids)
     {
-        const Index rows_labels_number = samples_id.size();
+        const Index rows_labels_number = sample_ids.size();
 
         file_stream.OpenElement("HasSamplesId");
 
@@ -327,7 +329,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < rows_labels_number; i++)
         {
-            buffer << samples_id(i);
+            buffer << sample_ids(i);
 
             if(i != rows_labels_number-1) buffer << ",";
         }
@@ -364,7 +366,7 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         for(Index i = 0; i < samples_number; i++)
         {
-            SampleUse sample_use = sample_uses(i);
+            SampleUse sample_use = sample_uses[i];
 
             buffer << Index(sample_use);
 
@@ -596,14 +598,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
             throw runtime_error("Raw_variable item number (" + to_string(i + 1) + ") exception.\n");
 
-        RawVariable& raw_variable = raw_variables(i);
+        RawVariable& raw_variable = raw_variables[i];
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
 
-        if(raw_variables(i).type == RawVariableType::Categorical || raw_variables(i).type == RawVariableType::Binary)
+        if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
             raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
 
 //        raw_variable_element = raw_variable_element->NextSiblingElement("RawVariable");
@@ -612,7 +614,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     // Rows label
 
     if(has_sample_ids)
-        samples_id = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
+        sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), ",");
 
     // Samples
 
@@ -1360,7 +1362,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
     const Index samples_number = data.dimension(0);
 
-    if(has_sample_ids) samples_id.resize(samples_number);
+    if(has_sample_ids) sample_ids.resize(samples_number);
 
     if(display) cout << "Reading data..." << endl;
 
@@ -1381,7 +1383,7 @@ void LanguageDataSet::read_csv_3_language_model()
 
             if(has_sample_ids && j == 0)
             {
-                samples_id(sample_index) = tokens(j);
+                sample_ids(sample_index) = tokens(j);
 
                 continue;
             }            
@@ -1633,8 +1635,8 @@ void LanguageDataSet::read_csv_1()
             || (is_date_time_string(data_file_preview_3) && data_file_preview_3 != missing_values_label)
             || (is_date_time_string(data_file_preview_4) && data_file_preview_4 != missing_values_label))
         {
-            raw_variables(raw_variable_index).type = RawVariableType::DateTime;
-            //            time_column = raw_variables(raw_variable_index).name;
+            raw_variables[raw_variable_index].type = RawVariableType::DateTime;
+            //            time_column = raw_variables[raw_variable_index].name;
             raw_variable_index++;
         }
         else if(((is_numeric_string(data_file_preview_1) && data_file_preview_1 != missing_values_label) || data_file_preview_1.empty())
@@ -1642,12 +1644,12 @@ void LanguageDataSet::read_csv_1()
                  || ((is_numeric_string(data_file_preview_3) && data_file_preview_3 != missing_values_label) || data_file_preview_3.empty())
                  || ((is_numeric_string(data_file_preview_4) && data_file_preview_4 != missing_values_label) || data_file_preview_4.empty()))
         {
-            raw_variables(raw_variable_index).type = RawVariableType::Numeric;
+            raw_variables[raw_variable_index].type = RawVariableType::Numeric;
             raw_variable_index++;
         }
         else
         {
-            raw_variables(raw_variable_index).type = RawVariableType::Categorical;
+            raw_variables[raw_variable_index].type = RawVariableType::Categorical;
             raw_variable_index++;
         }
     }

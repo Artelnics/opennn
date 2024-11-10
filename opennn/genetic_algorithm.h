@@ -99,7 +99,7 @@ public:
 
     Tensor<Index, 1> get_selected_individuals_indices ();
 
-    Tensor<Index, 1> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
+    vector<Index> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
 
     void set_unused_raw_variables(Tensor<Index, 1>&);
 
@@ -149,9 +149,9 @@ private:
     
     Tensor<bool, 2> optimal_individuals_history;
 
-    Tensor<Index, 1> original_input_raw_variables_indices;
+    vector<Index> original_input_raw_variables_indices;
 
-    Tensor<Index, 1> original_target_raw_variables_indices;
+    vector<Index> original_target_raw_variables_indices;
 
     Index genes_number;
 
