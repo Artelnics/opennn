@@ -478,7 +478,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     // Inputs names
 
-    for(Index i = 0; i < input_names.size(); i++)
+    for(Index i = 0; i < Index(input_names.size()); i++)
     {
         file_stream.OpenElement("Input");
 

@@ -1172,10 +1172,10 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 {
     set_raw_variables(VariableUse::None);
 
-    for(Index i = 0; i < input_raw_variables.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(input_raw_variables.size()); i++)
         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(Index i = 0; i < target_raw_variables.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(target_raw_variables.size()); i++)
         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
 }
 
@@ -1241,7 +1241,7 @@ void DataSet::set_raw_variable_type(const string& name, const RawVariableType& n
 
 void DataSet::set_raw_variable_types(const RawVariableType& new_type)
 {
-    for(Index i = 0; i < raw_variables.size(); i ++)
+    for(Index i = 0; i < static_cast<Index>(raw_variables.size()); i ++)
         raw_variables[i].type = new_type;
 }
 
@@ -1748,7 +1748,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
     if(raw_variables[column_index_start].type != RawVariableType::Categorical)
         throw runtime_error("The specified raw_variable is not of categorical type.");
 
-    for(Index raw_variable_index = column_index_start; raw_variable_index < raw_variables.size(); raw_variable_index++)
+    for(Index raw_variable_index = column_index_start; raw_variable_index < static_cast<Index>(raw_variables.size()); raw_variable_index++)
         if(data(sample_index, raw_variable_index) == 1)
             return raw_variables[column_index_start].categories(raw_variable_index - column_index_start);
 
@@ -3111,7 +3111,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
     const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-    for (Index i = 0; i < raw_variables.size(); i++) {
+    for (Index i = 0; i < static_cast<Index>(raw_variables.size()); i++) {
         RawVariable& raw_variable = raw_variables[i];
         const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
