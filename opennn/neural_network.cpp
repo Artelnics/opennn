@@ -118,7 +118,7 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-    for(Index i = 0; i < input_names.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(input_names.size()); i++)
         if(input_names[i] == name) 
             return i;
 
@@ -168,7 +168,7 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-    for(Index i = 0; i < output_names.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(output_names.size()); i++)
         if(output_names[i] == name) 
             return i;
 
