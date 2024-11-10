@@ -13,14 +13,11 @@ TEST(GeneticAlgorithmTest, DefaultConstructor)
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)
 {
-
     TrainingStrategy training_strategy;
-    /*
-    //GeneticAlgorithm genetic_algorithm_1(&training_strategy);
-    //assert_true(genetic_algorithm_1.has_training_strategy(), LOG);
-*/
+    
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(genetic_algorithm.has_training_strategy(), true);
 }
 
 /*

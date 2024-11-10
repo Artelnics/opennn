@@ -11,8 +11,8 @@ namespace opennn
 
 struct ForwardPropagation
 {
-    ForwardPropagation(const Index& new_batch_samples_number = 0,
-                       NeuralNetwork* new_neural_network = nullptr);
+    ForwardPropagation(const Index& = 0,
+                       NeuralNetwork* = nullptr);
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 

@@ -1652,7 +1652,7 @@ void NeuralNetwork::print() const
     if(model_type != ModelType::ImageClassification)
         cout << "Inputs:" << endl
              << get_input_names() << endl;
-
+*/
     const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;
@@ -1663,7 +1663,7 @@ void NeuralNetwork::print() const
              << "Layer " << i << ": " << endl;
         layers[i]->print();
     }
-
+/*
     cout << "Outputs:" << endl
          << get_output_names() << endl
          << "Parameters:" << endl
@@ -1983,7 +1983,6 @@ ForwardPropagation::ForwardPropagation(const Index& new_batch_samples_number,
 
 void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
-
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;

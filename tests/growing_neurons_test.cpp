@@ -14,19 +14,16 @@ TEST(GrowingNeuronsTest, DefaultConstructor)
 
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
-
     TrainingStrategy training_strategy;
-    /*
+    
     GrowingNeurons growing_neurons(&training_strategy);
 
     EXPECT_EQ(growing_neurons.has_training_strategy(), true);
-*/
 }
 
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-/*
     TrainingStrategy training_strategy;
     GrowingNeurons growing_neurons(&training_strategy);
 

@@ -1,23 +1,10 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S T A T I S T I C S   T E S T   C L A S S                             
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#include "strings_utilities.h"
+#include "pch.h"
 
 #include "../opennn/statistics.h"
 #include "../opennn/histogram.h"
 
-namespace opennn
-{
 
-StatisticsTest::StatisticsTest() : UnitTesting()
-{   
-}
-
+/*
 
 void StatisticsTest::test_count_empty_bins()
 {
@@ -1295,97 +1282,4 @@ void StatisticsTest::test_percentiles()
     assert_true(abs(percentiles(9) - solution(9)) < type(1.0e-7), LOG);
 }
 
-
-void StatisticsTest::run_test_case()
-{
-    cout << "Running statistics test case...\n";
-
-    // Minimum
-
-    test_minimum();
-
-    // Maximun
-
-    test_maximum();
-
-    // Mean
-
-    test_mean();
-
-    // Median
-
-    test_median();
-
-    // Variance
-
-    test_variance();
-
-    // Assymetry
-
-    test_asymmetry();
-
-    // Kurtosis
-
-    test_kurtosis();
-
-    // Standard deviation
-
-    test_standard_deviation();
-
-    // Quartiles
-
-    test_quartiles();
-
-    // Box plot
-
-    test_box_plot();
-
-    // Histogram
-
-    test_count_empty_bins();
-    test_calculate_minimum_frequency();
-    test_calculate_maximum_frequency();
-    test_calculate_most_populated_bin();
-    test_calculate_minimal_centers();
-    test_calculate_maximal_centers();
-    test_calculate_bin();
-    test_calculate_frequency();
-    test_histogram();
-    test_total_frequencies();
-    test_histograms();
-
-    // Minimal indices
-
-    test_calculate_minimal_index();
-    test_calculate_minimal_indices();
-
-    // Maximal indices
-
-    test_calculate_maximal_index();
-    test_calculate_maximal_indices();
-
-    // Percentiles
-
-    test_percentiles();
-
-    cout << "End of descriptives test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

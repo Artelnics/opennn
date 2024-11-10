@@ -1,28 +1,11 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S T O C H A S T I C   G R A D I E N T   D E S C E N T   T E S T   C L A S S    
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
 #include "../opennn/transformer.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/language_data_set.h"
 
-namespace opennn
-{
 
-StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
-{
-    sum_squared_error.set(&neural_network, &data_set);
-
-    stochastic_gradient_descent.set_loss_index(&sum_squared_error);
-
-    stochastic_gradient_descent.set_display(false);
-}
-
-
+/*
 void StochasticGradientDescentTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -158,21 +141,20 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
     stochastic_gradient_descent.set_display(false);
-/*
-    training_results = stochastic_gradient_descent.perform_training();
-*/
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
 
+    training_results = stochastic_gradient_descent.perform_training();
+
+    assert_true(training_results.get_epochs_number() <= 1, LOG);
 
     // Test
 
     transformer.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
-/*
+
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
-*/
+
     assert_true(error < old_error, LOG);
 
     // Test
@@ -184,12 +166,11 @@ void StochasticGradientDescentTest::test_transformer_training()
     
     stochastic_gradient_descent.set_display(true);
     stochastic_gradient_descent.set_display_period(1000);
-/*
+
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
-*/
-    assert_true(error <= old_error, LOG);
 
+    assert_true(error <= old_error, LOG);
 }
 
 
@@ -202,41 +183,5 @@ void StochasticGradientDescentTest::test_to_XML()
     stochastic_gradient_descent.to_XML(file_stream);
 }
 
-
-void StochasticGradientDescentTest::run_test_case()
-{
-    cout << "Running stochastic gradient descent test case...\n";
-
-    test_constructor();
-
-    // Training
-
-    test_perform_training();
-
-    test_transformer_training();
-
-    // Serialization
-
-    test_to_XML();
-
-    cout << "End of stochastic gradient descent test case.\n\n";
 }
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

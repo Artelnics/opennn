@@ -11,38 +11,25 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
     CrossEntropyError3D cross_entropy_error_3d;
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(cross_entropy_error_3d.has_neural_network(), false);
+    EXPECT_EQ(cross_entropy_error_3d.has_data_set(), false);
 }
 
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
-    CrossEntropyError3D cross_entropy_error_3d;
-/*
-    batch_samples_number = 1;
-    inputs_number = 1;
-    input_dimensions = 0;
-    depth = 1;
+    DataSet data_set;
+
+    NeuralNetwork neural_network;
+
+    CrossEntropyError3D cross_entropy_error_3d(&neural_network, &data_set);
 
     // Data set
-
-    data.resize(batch_samples_number, 2 * inputs_number);
-    data.setValues({ {0, 0} });
-
-    data_set.set_data(data);
-
-    data_set.set_raw_variable_use(0, DataSet::VariableUse::Input);
-    data_set.set_raw_variable_use(1, DataSet::VariableUse::Target);
-
+/*
     data_set.set(DataSet::SampleUse::Training);
 
-    training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
-
-    input_variables_indices = data_set.get_input_variables_indices();
-    target_variables_indices = data_set.get_target_variables_indices();
-
-    batch.set(batch_samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    Batch batch(1, &data_set);
+    batch.fill({0}, {0}, {1});
 
     // Neural network
 

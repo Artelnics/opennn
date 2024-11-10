@@ -168,8 +168,6 @@ namespace opennn
 
 void ConvolutionalLayerTest::test_calculate_convolutions()
 {
-    cout << "test_calculate_convolutions\n";
-
     // 2 images 1 channel 1 kernel
 
     Tensor<unsigned char, 3> bmp_image_1;
@@ -244,8 +242,6 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
 void ConvolutionalLayerTest::test_calculate_activations()
 {
-    cout << "test_calculate_activations\n";
-
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations;
     Tensor<type, 4> activation_derivatives;
@@ -401,8 +397,6 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
 void ConvolutionalLayerTest::test_insert_padding()
 {
-    cout << "test_insert_padding\n";
-
     const Index input_images = 2;
     const Index kernels_number = 3;
 
@@ -442,8 +436,6 @@ void ConvolutionalLayerTest::test_insert_padding()
 
 void ConvolutionalLayerTest::test_forward_propagate()
 {
-    cout << "test_forward_propagate\n";
-
     // 2 images , 3 channels
 
     Tensor<unsigned char, 3> bmp_image_1;
@@ -545,8 +537,6 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
 void ConvolutionalLayerTest::test_back_propagate() 
 {
-    cout << "test_back_propagate\n";
-
     // 2 images , 3 channels
 
     Tensor<unsigned char, 3> bmp_image_1;
