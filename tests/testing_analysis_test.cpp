@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "testing_analysis_test.h"
-
 namespace opennn
 {
 

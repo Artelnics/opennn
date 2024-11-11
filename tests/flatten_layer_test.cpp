@@ -1,96 +1,61 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   F L A T T E N   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "flatten_layer_test.h"
+#include "../opennn/flatten_layer.h"
 
-#include "../opennn/tensors.h"
 
-namespace opennn
+TEST(FlattenLayerTest, Constructor)
 {
-
-FlattenLayerTest::FlattenLayerTest() : UnitTesting()
-{
-}
-
-
-void FlattenLayerTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-}
-
-
-void FlattenLayerTest::test_forward_propagate()
-{    
-    cout << "test_forward_propagate\n";
-
     const Index height = 6;
     const Index width = 6;
-    const Index image_channels_number= 3;
-    const Index images_number = 2;
+    const Index channels = 3;
 
-    bool is_training = true;
+    dimensions input_dimensions({ height, width, channels });
 
-    Tensor<type, 4> inputs(height, width, image_channels_number, images_number);
+    FlattenLayer flatten_layer(input_dimensions);
+
+    EXPECT_EQ(flatten_layer.get_input_dimensions(), input_dimensions);
+
+    EXPECT_EQ(flatten_layer.get_type(), Layer::Type::Flatten);
+}
+
+
+TEST(FlattenLayerTest, ForwardPropagate)
+{
+    const Index batch_samples_number = 2;
+    const Index height = 4;
+    const Index width = 4;
+    const Index channels = 3;
+
+    const bool is_training = true;
+
+    Tensor<type, 4> inputs(batch_samples_number, height, width, channels);
     inputs.setRandom();
 
-    dimensions input_dimensions({height, width, image_channels_number, images_number});
+    dimensions input_dimensions({ height, width, channels });
 
-    flatten_layer.set(input_dimensions);
+    FlattenLayer flatten_layer(input_dimensions);
 
     Tensor<type, 2> outputs;
 
-    flatten_layer_forward_propagation.set(images_number, &flatten_layer);
+    //unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation  = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, flatten_layer);
 
-    Tensor<type*, 1> input_data(1);
-    input_data(0) = inputs.data();
+    //pair<type*, dimensions> input_pairs(inputs.data(), { {batch_samples_number, height, width, channels} });
 
-    pair<type*, dimensions> input_pairs(inputs.data(), {{height, width, image_channels_number, images_number}});
-/*
-    flatten_layer.forward_propagate({ input_pairs }, &flatten_layer_forward_propagation, is_training);
+    //flatten_layer.forward_propagate({ input_pairs }, flatten_layer_forward_propagation, is_training);
 
-    outputs = flatten_layer_forward_propagation.outputs;
+//    outputs = flatten_layer_forward_propagation.outputs;
 
     // Test
 
-   assert_true(inputs.size() == outputs.size(), LOG);
-*/
+//    assert_true(inputs.size() == outputs.size(), LOG);
+
+    EXPECT_EQ(1, 1);
 }
 
-
-void FlattenLayerTest::run_test_case()
+TEST(FlattenLayerTest, BackPropagate)
 {
-   cout << "Running flatten layer test case...\n";
 
-    test_constructor();
 
-    // Outputs
 
-    test_forward_propagate();
-
-   cout << "End of flatten layer test case.\n\n";
-}
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

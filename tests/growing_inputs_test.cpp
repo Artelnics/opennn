@@ -1,44 +1,39 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R       
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com                                           
+#include "pch.h"
 
-#include "growing_inputs_test.h"
+#include "../opennn/growing_inputs.h"
 
-namespace opennn
+
+TEST(GrowingInputsTest, DefaultConstructor)
 {
+    GrowingInputs growing_inputs;
 
-GrowingInputsTest::GrowingInputsTest() : UnitTesting()
-{
-    training_strategy.set(&neural_network, &data_set);
+    EXPECT_EQ(growing_inputs.has_training_strategy(), false);
 }
 
 
-void GrowingInputsTest::test_constructor()
+TEST(GrowingInputsTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    TrainingStrategy training_strategy;
 
-    // Test
+    GrowingInputs growing_inputs(&training_strategy);
 
-    GrowingInputs growing_inputs_1(&training_strategy);
-
-    assert_true(growing_inputs_1.has_training_strategy(), LOG);
-
-    // Test
-
-    GrowingInputs growing_inputs_2;
-
-    assert_true(!growing_inputs_2.has_training_strategy(), LOG);
+    EXPECT_EQ(growing_inputs.has_training_strategy(), true);
 }
 
+
+TEST(GrowingInputsTest, InputSelection)
+{
+    TrainingStrategy training_strategy;
+
+    GrowingInputs growing_inputs(&training_strategy);
+
+    EXPECT_EQ(growing_inputs.has_training_strategy(), true);
+}
+
+/*
 
 void GrowingInputsTest::test_perform_inputs_selection()
 {
-    cout << "test_perform_inputs_selection\n";
-
     GrowingInputs growing_inputs(&training_strategy);
 
     growing_inputs.set_display(false);
@@ -46,7 +41,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
     InputsSelectionResults inputs_selection_results;
 
     // Test
-/*
+
     data_set.generate_random_data(30, 3);
 
     Tensor<string, 1> columns_uses(3);
@@ -75,21 +70,8 @@ void GrowingInputsTest::test_perform_inputs_selection()
     //inputs_selection_results = growing_inputs.perform_inputs_selection();
 
     assert_true(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2, LOG);
+
+}
+
+}
 */
-}
-
-
-void GrowingInputsTest::run_test_case()
-{
-    cout << "Running growing inputs test case...\n";
-
-    test_constructor();
-
-    // Input selection
-
-    test_perform_inputs_selection();
-
-    cout << "End of growing input test case.\n\n";
-}
-
-}

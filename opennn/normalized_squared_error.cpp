@@ -8,7 +8,7 @@
 
 #include "tensors.h"
 #include "normalized_squared_error.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn
@@ -106,7 +106,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<Index, 1> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
     const Index selection_samples_number = selection_indices.size();
 

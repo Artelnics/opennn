@@ -7,10 +7,10 @@
 namespace opennn
 {
 
-void Batch::fill(const Tensor<Index, 1>& samples_indices,
-                 const Tensor<Index, 1>& inputs_indices,
-                 const Tensor<Index, 1>& targets_indices,
-                 const Tensor<Index, 1>& context_indices)
+void Batch::fill(const vector<Index>& samples_indices,
+                 const vector<Index>& inputs_indices,
+                 const vector<Index>& targets_indices,
+                 const vector<Index>& context_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
@@ -106,9 +106,9 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 
 Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 {
-    const int n = omp_get_max_threads();
-    thread_pool = make_unique<ThreadPool>(n);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), n);
+    const unsigned int threads_number = thread::hardware_concurrency();
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
 }
@@ -116,6 +116,8 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {        
+    if (!new_data_set) return;
+
     batch_size = new_batch_size;
     data_set = new_data_set;
 

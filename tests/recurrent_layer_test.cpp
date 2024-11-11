@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-#include "recurrent_layer_test.h"
 #include "../opennn/tensors.h"
 
 namespace opennn
@@ -95,8 +94,7 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 /*
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
@@ -130,8 +128,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     parameters = recurrent_layer.get_parameters();
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 

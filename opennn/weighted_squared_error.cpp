@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "weighted_squared_error.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn
@@ -79,13 +79,16 @@ void WeightedSquaredError::set_weights()
 {
     if (!data_set) return;
 
-    if(data_set->get_variables_number(DataSet::VariableUse::Target) == 0)
+    const vector<DataSet::RawVariable>& target_raw_variables 
+        = data_set->get_raw_variables(DataSet::VariableUse::Target);
+
+    if(target_raw_variables.size() == 0)
     {
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
-         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1
+         && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
 
@@ -110,14 +113,17 @@ void WeightedSquaredError::set_normalization_coefficient()
 {
     if (!data_set) return;
 
-    if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 0)
+    const vector<DataSet::RawVariable>& target_raw_variables
+        = data_set->get_raw_variables(DataSet::VariableUse::Target);
+
+    if(target_raw_variables.size() == 0)
     {
         normalization_coefficient = type(1);
     }
-    else if(data_set->get_raw_variables(DataSet::VariableUse::Target).size() == 1
-         && data_set->get_raw_variables(DataSet::VariableUse::Target)(0).type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1
+         && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+        const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
         const Index negatives = data_set->calculate_used_negatives(target_variable_indices[0]);
 

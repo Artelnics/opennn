@@ -15,7 +15,7 @@
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
 #include "config.h"
@@ -104,7 +104,7 @@ bool NeuralNetwork::is_empty() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_input_names() const
+const vector<string>& NeuralNetwork::get_input_names() const
 {
     return input_names;
 }
@@ -119,7 +119,7 @@ string NeuralNetwork::get_input_name(const Index& index) const
 Index NeuralNetwork::get_input_index(const string& name) const
 {
     for(Index i = 0; i < input_names.size(); i++)
-        if(input_names(i) == name) 
+        if(input_names[i] == name) 
             return i;
 
     throw runtime_error("Input name not found: " + name);
@@ -154,7 +154,7 @@ string NeuralNetwork::get_model_type_string() const
 }
 
 
-const Tensor<string, 1>& NeuralNetwork::get_output_names() const
+const vector<string>& NeuralNetwork::get_output_names() const
 {
     return output_names;
 }
@@ -169,7 +169,7 @@ string NeuralNetwork::get_output_name(const Index& index) const
 Index NeuralNetwork::get_output_index(const string& name) const
 {
     for(Index i = 0; i < output_names.size(); i++)
-        if(output_names(i) == name) 
+        if(output_names[i] == name) 
             return i;
 
     throw runtime_error("Output name not found: " + name);
@@ -413,7 +413,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     input_names.resize(inputs_number);
 
     for(Index i = 0; i < inputs_number; i++)
-        input_names(i) = "input_" + to_string(i+1);
+        input_names[i] = "input_" + to_string(i+1);
 
     switch(model_type)
     {    
@@ -447,7 +447,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     output_names.resize(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        output_names(i) = "output_" + to_string(i+1);
+        output_names[i] = "output_" + to_string(i+1);
 }
 
 
@@ -462,7 +462,7 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                                dimensions{ complexity_dimensions[i] },
-                                               PerceptronLayer::ActivationFunction::Linear,
+                                               PerceptronLayer::ActivationFunction::RectifiedLinear,
                                                "perceptron_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
@@ -614,13 +614,13 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 }
 
 
-void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
+void NeuralNetwork::set_input_names(const vector<string>& new_inputs_names)
 {
     input_names = new_inputs_names;
 }
 
 
-void NeuralNetwork::set_output_namess(const Tensor<string, 1>& new_output_namess)
+void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
 {
     output_names = new_output_namess;
 }
@@ -651,10 +651,10 @@ void NeuralNetwork::set_default()
 
     layer_input_indices = vector<vector<Index>>();
 
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = new ThreadPool(threads_number);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 }
 
 
@@ -735,13 +735,18 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-/*
+
     if(layers.empty())
         return 0;
 
-    return layers[0]->get_inputs_number();
-*/
-    return 0;
+    dimensions input_dimensions = layers[0]->get_input_dimensions();
+
+    Index inputs_number = 1;
+    for (Index dimension : input_dimensions) {
+        inputs_number *= dimension;
+    }
+
+    return inputs_number;
 }
 
 
@@ -1165,9 +1170,9 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
-    Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
-    Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
-    Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
+    const Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
+    const Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
+    const Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
 
     const Index current_height = image_data.dimension(0);
     const Index current_width = image_data.dimension(1);
@@ -1177,23 +1182,35 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
         throw runtime_error("Error: Different channels number " + image_path + "\n");
 
     Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-
-    if (current_height != height || current_width != width)
-        bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-    else
-        resized_image_data = image_data;
-
+/*
+    (current_height != height || current_width != width)
+        ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
+        : resized_image_data = image_data;
+*/
     Tensor<type, 4> input_data(1, height, width, image_channels);
 
     const Index pixels_number = height * width * image_channels;
 
-    #pragma omp parallel for
+#pragma omp parallel for
     for (Index j = 0; j < pixels_number; j++)
         input_data(j) = resized_image_data(j);
 
     const Tensor<type, 2> outputs = calculate_outputs(input_data);
 
-    Index predicted_index = outputs(0);
+    Index predicted_index = -1;
+
+    if (outputs.size() > 1)
+    {
+        type max_value = outputs(0);
+        for (Index i = 1; i < outputs.dimension(1); ++i) {
+            if (outputs(i) > max_value) {
+                max_value = outputs(i);
+                predicted_index = i;
+            }
+        }
+    }
+    else
+        predicted_index = outputs(0);
 
     return predicted_index;
 }
@@ -1425,7 +1442,7 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
         if(!input_element->GetText())
             throw runtime_error("Input text is nullptr.");
 
-        input_names(i) = input_element->GetText();
+        input_names[i] = input_element->GetText();
 
         start_element = input_element;
     }
@@ -1625,7 +1642,7 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             throw runtime_error("Output index number (" + to_string(i+1) + ") does not match (" + output_element->Attribute("Item") + ").\n");
 
         if(output_element->GetText())
-            output_names(i) = output_element->GetText();
+            output_names[i] = output_element->GetText();
     }
 }
 
@@ -1633,11 +1650,11 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl;
-
+/*
     if(model_type != ModelType::ImageClassification)
         cout << "Inputs:" << endl
              << get_input_names() << endl;
-
+*/
     const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;
@@ -1648,11 +1665,12 @@ void NeuralNetwork::print() const
              << "Layer " << i << ": " << endl;
         layers[i]->print();
     }
-
+/*
     cout << "Outputs:" << endl
          << get_output_names() << endl
          << "Parameters:" << endl
          << get_parameters_number() << endl;
+*/
 }
 
 
@@ -1788,7 +1806,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name + " file.\n");
 
-    const Tensor<string, 1> output_names = get_output_names();
+    const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
@@ -1967,7 +1985,6 @@ ForwardPropagation::ForwardPropagation(const Index& new_batch_samples_number,
 
 void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
 {
-
     batch_samples_number = new_batch_samples_number;
 
     neural_network = new_neural_network;

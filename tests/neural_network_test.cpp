@@ -1,58 +1,60 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N E U R A L   N E T W O R K   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#include "neural_network_test.h"
+#include "pch.h"
 
 #include "../opennn/neural_network.h"
 
-namespace opennn
-{
 
-NeuralNetworkTest::NeuralNetworkTest() : UnitTesting()
+TEST(NeuralNetworkTest, DefaultConstructor)
 {
+    NeuralNetwork neural_network;
+
+    EXPECT_EQ(neural_network.is_empty(), true);
+    EXPECT_EQ(neural_network.get_layers_number(), 0);
 }
 
 
+TEST(NeuralNetworkTest, ApproximationConstructor)
+{
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+}
+
+
+TEST(NeuralNetworkTest, ClassificationConstructor)
+{
+    /*
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(neural_network.get_layers_number(), 3);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Probabilistic);
+*/
+}
+
+
+TEST(NeuralNetworkTest, ForecastingConstructor)
+{
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
+/*
+    EXPECT_EQ(neural_network.get_layers_number(), 4);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
+*/
+}
+
+/*
 void NeuralNetworkTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
-    Tensor<Layer*, 1> layers;    
-
-    NeuralNetwork neural_network_0;
-
-    assert_true(neural_network_0.is_empty(), LOG);
-    assert_true(neural_network_0.get_layers_number() == 0, LOG);
-
-    // Model type constructors
-
-    //  Approximation
-
-    NeuralNetwork neural_network_1(NeuralNetwork::ModelType::Approximation, {1}, {4}, {2});
-
-    assert_true(neural_network_1.get_layers_number() == 5, LOG);
-    assert_true(neural_network_1.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_1.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_1.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_1.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
-    assert_true(neural_network_1.get_layer(4)->get_type() == Layer::Type::Bounding, LOG);
-
-    // Classification
-
-    NeuralNetwork neural_network_2(NeuralNetwork::ModelType::Classification, {1}, {4}, {2});
-
-    assert_true(neural_network_2.get_layers_number() == 3, LOG);
-    assert_true(neural_network_2.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_2.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_2.get_layer(2)->get_type() == Layer::Type::Probabilistic, LOG);
-
     // Forecasting
-/*
+
     NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1}, {4}, {2});
 
     assert_true(neural_network_3.get_layers_number() == 5, LOG);
@@ -136,7 +138,7 @@ void NeuralNetworkTest::test_constructor()
 
     assert_true(neural_network_6.is_empty(), LOG);
     assert_true(neural_network_6.get_layers_number() == 0, LOG);
-*/
+
 }
 
 
@@ -247,7 +249,7 @@ void NeuralNetworkTest::test_add_layer()
     //   neural_network.add_layer(pooling_layer);
     //   assert_true(neural_network.get_layers_number() == 1, LOG);
     //   assert_true(neural_network.get_layer(0)->get_type() == Layer::Type::Pooling, LOG);
-*/
+
 }
 
 
@@ -266,7 +268,6 @@ void NeuralNetworkTest::test_calculate_outputs()
     Index parameters_number;
 
     Tensor<type, 1> parameters;
-/*
 
     // Test two layers perceptron with all zeros
 
@@ -420,7 +421,6 @@ void NeuralNetworkTest::test_calculate_outputs()
     assert_true(outputs.dimension(1) == outputs_number, LOG);
     assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(1,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
 }
 
 
@@ -437,7 +437,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
     Tensor<type, 1> point;
 
     Tensor<type, 2> directional_inputs;
-/*
+
     // Test
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {3, 4, 2});
@@ -482,7 +482,7 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
     assert_true(abs(directional_inputs(2,0) + type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(directional_inputs(3,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(directional_inputs(4,0) + type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-*/
+
 }
 
 
@@ -495,7 +495,6 @@ void NeuralNetworkTest::test_save()
     Index outputs_number;
 
     string file_name = "../data/neural_network.xml";
- /*
 
     // Empty neural network
 
@@ -514,14 +513,14 @@ void NeuralNetworkTest::test_save()
     outputs_number = 1;
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-    neural_network.save(file_name); */
+    neural_network.save(file_name); 
 }
 
 
 void NeuralNetworkTest::test_load()
 {
     cout << "test_load\n";
-/*
+
     const string file_name = "../data/neural_network.xml";
 
     // Test
@@ -531,13 +530,13 @@ void NeuralNetworkTest::test_load()
 
     neural_network.set();
     neural_network.load(file_name);
-*/
+
 }
 
 
 void NeuralNetworkTest::test_forward_propagate()
 {
-/*
+
     cout << "test_forward_propagate\n";
 
     {
@@ -688,46 +687,8 @@ void NeuralNetworkTest::test_forward_propagate()
             && abs(probabilistic_activations(1, 0) - 0.5) < type(1e-3)
             && abs(probabilistic_activations(2, 0) - 0.5) < type(1e-3), LOG);
     }
+
+}
+
+}
 */
-}
-
-
-void NeuralNetworkTest::run_test_case()
-{
-    cout << "Running neural network test case...\n";
-
-    test_constructor();   
- 
-    test_add_layer();
-
-    test_calculate_outputs();
-
-    test_calculate_directional_inputs();
-
-    test_forward_propagate();
-
-    test_save();
-
-    test_load();
-
-    cout << "End of neural network test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

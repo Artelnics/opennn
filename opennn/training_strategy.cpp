@@ -34,8 +34,6 @@ LossIndex* TrainingStrategy::get_loss_index()
 {
     switch(loss_method)
     {
-        case LossMethod::SUM_SQUARED_ERROR: return &sum_squared_error;
-
         case LossMethod::MEAN_SQUARED_ERROR: return &mean_squared_error;
 
         case LossMethod::NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
@@ -57,8 +55,6 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
     switch(optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT: return &gradient_descent;
-
     case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
 
     case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
@@ -83,12 +79,6 @@ bool TrainingStrategy::has_neural_network() const
 bool TrainingStrategy::has_data_set() const
 {
     return data_set;
-}
-
-
-GradientDescent* TrainingStrategy::get_gradient_descent()
-{
-    return &gradient_descent;
 }
 
 
@@ -119,12 +109,6 @@ StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent()
 AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 {
     return &adaptive_moment_estimation;
-}
-
-
-SumSquaredError* TrainingStrategy::get_sum_squared_error()
-{
-    return &sum_squared_error;
 }
 
 
@@ -175,9 +159,6 @@ string TrainingStrategy::write_loss_method() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "SUM_SQUARED_ERROR";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "MEAN_SQUARED_ERROR";
 
@@ -202,10 +183,7 @@ string TrainingStrategy::write_loss_method() const
 string TrainingStrategy::write_optimization_method() const
 {
     switch (optimization_method)
-    {
-    case OptimizationMethod::GRADIENT_DESCENT:
-        return "GRADIENT_DESCENT";
-    
+    { 
     case OptimizationMethod::CONJUGATE_GRADIENT:
         return "CONJUGATE_GRADIENT";
     
@@ -232,9 +210,6 @@ string TrainingStrategy::write_optimization_method_text() const
 {
     switch (optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT:
-        return "gradient descent";
-
     case OptimizationMethod::CONJUGATE_GRADIENT:
         return "conjugate gradient";
 
@@ -260,9 +235,6 @@ string TrainingStrategy::write_loss_method_text() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "Sum squared error";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "Mean squared error";
 
@@ -292,9 +264,11 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    set_neural_network(new_neural_network);
+    if(neural_network)
+        set_neural_network(new_neural_network);
 
-    set_data_set(new_data_set);
+    if(data_set)
+        set_data_set(new_data_set);
 
     set_default();
 }
@@ -302,9 +276,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
 
 void TrainingStrategy::set_loss_method(const string& new_loss_method)
 {
-    if(new_loss_method == "SUM_SQUARED_ERROR")
-        set_loss_method(LossMethod::SUM_SQUARED_ERROR);
-    else if(new_loss_method == "MEAN_SQUARED_ERROR")
+    if(new_loss_method == "MEAN_SQUARED_ERROR")
         set_loss_method(LossMethod::MEAN_SQUARED_ERROR);
     else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
         set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
@@ -335,9 +307,7 @@ void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_opt
 
 void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
 {
-    if(new_optimization_method == "GRADIENT_DESCENT")
-        set_optimization_method(OptimizationMethod::GRADIENT_DESCENT);
-    else if(new_optimization_method == "CONJUGATE_GRADIENT")
+    if(new_optimization_method == "CONJUGATE_GRADIENT")
         set_optimization_method(OptimizationMethod::CONJUGATE_GRADIENT);
     else if(new_optimization_method == "QUASI_NEWTON_METHOD")
         set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -378,7 +348,6 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 
 void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_number)
 {
-    sum_squared_error.set_threads_number(new_threads_number);
     mean_squared_error.set_threads_number(new_threads_number);
     normalized_squared_error.set_threads_number(new_threads_number);
     Minkowski_error.set_threads_number(new_threads_number);
@@ -389,7 +358,6 @@ void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_numb
 
 void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_threads_number)
 {
-    gradient_descent.set_threads_number(new_threads_number);
     conjugate_gradient.set_threads_number(new_threads_number);
     quasi_Newton_method.set_threads_number(new_threads_number);
     Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
@@ -400,7 +368,6 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 
 void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
-    gradient_descent.set_loss_index(new_loss_index);
     conjugate_gradient.set_loss_index(new_loss_index);
     stochastic_gradient_descent.set_loss_index(new_loss_index);
     adaptive_moment_estimation.set_loss_index(new_loss_index);
@@ -411,7 +378,6 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 
 void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
-    sum_squared_error.set_data_set(new_data_set);
     mean_squared_error.set_data_set(new_data_set);
     normalized_squared_error.set_data_set(new_data_set);
     cross_entropy_error.set_data_set(new_data_set);
@@ -423,7 +389,7 @@ void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 
 void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_network)
 {
-    sum_squared_error.set_neural_network(new_neural_network);
+   
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
     cross_entropy_error.set_neural_network(new_neural_network);
@@ -439,7 +405,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Loss index
 
-    sum_squared_error.set_display(display);
     mean_squared_error.set_display(display);
     normalized_squared_error.set_display(display);
     cross_entropy_error.set_display(display);
@@ -448,7 +413,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Optimization algorithm
 
-    gradient_descent.set_display(display);
     conjugate_gradient.set_display(display);
     stochastic_gradient_descent.set_display(display);
     adaptive_moment_estimation.set_display(display);
@@ -459,7 +423,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
 void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
-    gradient_descent.set_loss_goal(new_loss_goal);
     conjugate_gradient.set_loss_goal(new_loss_goal);
     quasi_Newton_method.set_loss_goal(new_loss_goal);
     Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
@@ -468,7 +431,6 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 
 void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    gradient_descent.set_maximum_selection_failures(maximum_selection_failures);
     conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
     quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
     Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
@@ -477,7 +439,6 @@ void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_sele
 
 void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
 {
-    gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
     stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
@@ -494,7 +455,6 @@ void TrainingStrategy::set_display_period(const int & display_period)
 
 void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
-    gradient_descent.set_maximum_time(maximum_time);
     conjugate_gradient.set_maximum_time(maximum_time);
     stochastic_gradient_descent.set_maximum_time(maximum_time);
     adaptive_moment_estimation.set_maximum_time(maximum_time);
@@ -520,10 +480,7 @@ TrainingResults TrainingStrategy::perform_training()
     set_display(display);
 
     switch(optimization_method)
-    {
-        case OptimizationMethod::GRADIENT_DESCENT:
-            return gradient_descent.perform_training();
-       
+    {  
         case OptimizationMethod::CONJUGATE_GRADIENT:
             return conjugate_gradient.perform_training();
 
@@ -618,9 +575,6 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         weighted_squared_error.write_regularization_XML(printer);
         break;
-    case LossMethod::SUM_SQUARED_ERROR:
-        sum_squared_error.write_regularization_XML(printer);
-        break;
     default:
         break;
     }
@@ -631,7 +585,6 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    gradient_descent.to_XML(printer);
     conjugate_gradient.to_XML(printer);
     stochastic_gradient_descent.to_XML(printer);
     adaptive_moment_estimation.to_XML(printer);
@@ -717,20 +670,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
     // Optimization method
 
     set_optimization_method(read_xml_string(optimization_algorithm_element, "OptimizationMethod"));
-
-    // Gradient descent
-
-    const tinyxml2::XMLElement* gradient_descent_element = optimization_algorithm_element->FirstChildElement("GradientDescent");
-    if (gradient_descent_element) {
-        tinyxml2::XMLDocument gradient_descent_document;
-        tinyxml2::XMLElement* gradient_descent_element_copy = gradient_descent_document.NewElement("GradientDescent");
-
-        for (const tinyxml2::XMLNode* node = gradient_descent_element->FirstChild(); node; node = node->NextSibling())
-            gradient_descent_element_copy->InsertEndChild(node->DeepClone(&gradient_descent_document));
-
-        gradient_descent_document.InsertEndChild(gradient_descent_element_copy);
-        gradient_descent.from_XML(gradient_descent_document);
-    }
 
     // Conjugate gradient
 

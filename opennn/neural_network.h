@@ -78,14 +78,14 @@ public:
 
    bool is_empty() const;
 
-   const Tensor<string, 1>& get_input_names() const;
+   const vector<string>& get_input_names() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
-   const Tensor<string, 1>& get_output_names() const;
+   const vector<string>& get_output_names() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
@@ -140,8 +140,8 @@ public:
 
    void set_model_type(const ModelType&);
    void set_model_type_string(const string&);
-   void set_inputs_names(const Tensor<string, 1>&);
-   void set_output_namess(const Tensor<string, 1>&);
+   void set_input_names(const vector<string>&);
+   void set_output_namess(const vector<string>&);
 
    void set_input_dimensions(const dimensions&);
 
@@ -254,9 +254,9 @@ protected:
 
    NeuralNetwork::ModelType model_type;
 
-   Tensor<string, 1> input_names;
+   vector<string> input_names;
 
-   Tensor<string, 1> output_names;
+   vector<string> output_names;
 
    vector<unique_ptr<Layer>> layers;
 
@@ -270,7 +270,7 @@ protected:
 };
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/forward_propagation_cuda.h"
 #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
 #endif
 
