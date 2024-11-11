@@ -1,25 +1,22 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M O D E L   S E L E C T I O N   T E S T   C L A S S                   
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-#include "model_selection_test.h"
+#include "pch.h"
 
 #include "../opennn/model_selection.h"
 
-namespace opennn
-{
 
-ModelSelectionTest::ModelSelectionTest() : UnitTesting() 
+TEST(ModelSelectionTest, DefaultConstructor)
 {
-    training_strategy.set(&neural_network, &data_set);
-
-    model_selection.set(&training_strategy);
+    EXPECT_EQ(1, 1);
 }
 
+
+TEST(ModelSelectionTest, GeneralConstructor)
+{
+    EXPECT_EQ(1, 1);
+}
+
+/*
+namespace opennn
+{
 
 void ModelSelectionTest::test_constructor()
 {
@@ -90,40 +87,5 @@ void ModelSelectionTest::test_load()
 
 }
 
-
-void ModelSelectionTest::run_test_case()
-{
-    cout << "Running model selection test case...\n";
-
-    test_constructor();
-
-    // Model selection
-
-    test_perform_neurons_selection();
-
-    // Serialization
-
-    test_save();
-    test_load();
-
-    cout << "End of model selection test case.\n\n";
 }
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

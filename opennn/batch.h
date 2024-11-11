@@ -19,15 +19,11 @@ struct Batch
 {
     Batch(const Index& = 0, DataSet* = nullptr);
 
-    virtual ~Batch();
-
     vector<pair<type*, dimensions>> get_input_pairs() const;
 
     pair<type*, dimensions> get_targets_pair() const;
 
     Index get_batch_samples_number() const;
-
-    bool is_empty() const;
 
     void set(const Index& = 0, DataSet* = nullptr);
 
@@ -64,8 +60,8 @@ struct Batch
 
     bool has_context = false;
 
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
 };
 
 #ifdef OPENNN_CUDA

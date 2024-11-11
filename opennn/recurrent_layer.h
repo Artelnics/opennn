@@ -40,22 +40,12 @@ public:
 
    explicit RecurrentLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   bool is_empty() const;
-
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
-
-   const Tensor<type, 3>& get_hidden_states() const;
 
    // Parameters
 
    Index get_timesteps() const;
-
-   Index get_biases_number() const;
-   Index get_input_weights_number() const;
-   Index get_recurrent_weights_number() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
@@ -64,11 +54,7 @@ public:
 
    const RecurrentLayer::ActivationFunction& get_activation_function() const;
 
-   string write_activation_function() const;
-
-   // Display messages
-
-   const bool& get_display() const;
+   string get_activation_function_string() const;
 
    // Set
 
@@ -78,9 +64,8 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
-   void set_input_shape(const Tensor<Index, 1>&);
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    // Parameters
 
@@ -92,10 +77,6 @@ public:
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
-
-   // Display messages
-
-   void set_display(const bool&);
 
    // Parameters initialization
 
@@ -128,17 +109,16 @@ public:
 
    // Expression
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_activation_function_expression() const;
+   string get_activation_function_string_expression() const;
 
    // Serialization
 
    void from_XML(const tinyxml2::XMLDocument&) final;
-
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    Index time_steps = 1;
 
@@ -151,8 +131,6 @@ protected:
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
    Tensor<type, 3> hidden_states;
-
-   bool display = true;
 
    Tensor<type, 2> empty;
 

@@ -10,12 +10,15 @@
 #if defined(EIGEN_USE_THREADS) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 // Runs an arbitrary function and then calls Notify() on the passed in
 // Notification.
-template <typename Function, typename... Args> struct FunctionWrapperWithNotification
-{
+template <typename Function, typename... Args>
+struct FunctionWrapperWithNotification {
   static void run(Notification* n, Function f, Args... args) {
     f(args...);
     if (n) {
@@ -24,8 +27,8 @@ template <typename Function, typename... Args> struct FunctionWrapperWithNotific
   }
 };
 
-template <typename Function, typename... Args> struct FunctionWrapperWithBarrier
-{
+template <typename Function, typename... Args>
+struct FunctionWrapperWithBarrier {
   static void run(Barrier* b, Function f, Args... args) {
     f(args...);
     if (b) {
@@ -53,11 +56,10 @@ class Allocator {
 struct ThreadPoolDevice {
   // The ownership of the thread pool remains with the caller.
   ThreadPoolDevice(ThreadPoolInterface* pool, int num_cores, Allocator* allocator = nullptr)
-      : pool_(pool), num_threads_(num_cores), allocator_(allocator) { }
+      : pool_(pool), num_threads_(num_cores), allocator_(allocator) {}
 
   EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
-    return allocator_ ? allocator_->allocate(num_bytes)
-        : internal::aligned_malloc(num_bytes);
+    return allocator_ ? allocator_->allocate(num_bytes) : internal::aligned_malloc(num_bytes);
   }
 
   EIGEN_STRONG_INLINE void deallocate(void* buffer) const {
@@ -68,15 +70,11 @@ struct ThreadPoolDevice {
     }
   }
 
-    EIGEN_STRONG_INLINE void* allocate_temp(size_t num_bytes) const {
-    return allocate(num_bytes);
-  }
+  EIGEN_STRONG_INLINE void* allocate_temp(size_t num_bytes) const { return allocate(num_bytes); }
 
-  EIGEN_STRONG_INLINE void deallocate_temp(void* buffer) const {
-    deallocate(buffer);
-  }
+  EIGEN_STRONG_INLINE void deallocate_temp(void* buffer) const { deallocate(buffer); }
 
-  template<typename Type>
+  template <typename Type>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Type get(Type data) const {
     return data;
   }
@@ -101,8 +99,7 @@ struct ThreadPoolDevice {
       // Launch the last 3 blocks on worker threads.
       for (size_t i = 1; i < num_threads; ++i) {
         enqueue_with_barrier(&barrier, [n, i, src_ptr, dst_ptr, blocksize] {
-          ::memcpy(dst_ptr + i * blocksize, src_ptr + i * blocksize,
-                   numext::mini(blocksize, n - (i * blocksize)));
+          ::memcpy(dst_ptr + i * blocksize, src_ptr + i * blocksize, numext::mini(blocksize, n - (i * blocksize)));
         });
       }
       // Launch the first block on the main thread.
@@ -111,34 +108,31 @@ struct ThreadPoolDevice {
     }
 #endif
   }
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-    memcpy(dst, src, n);
-  }
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-    memcpy(dst, src, n);
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const { memcpy(dst, src, n); }
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const { memcpy(dst, src, n); }
+
+  EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const { ::memset(buffer, c, n); }
+
+  template <typename T>
+  EIGEN_STRONG_INLINE void fill(T* begin, T* end, const T& value) const {
+    std::fill(begin, end, value);
   }
 
-  EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-    ::memset(buffer, c, n);
-  }
-
-  EIGEN_STRONG_INLINE int numThreads() const {
-    return num_threads_;
-  }
+  EIGEN_STRONG_INLINE int numThreads() const { return num_threads_; }
 
   // Number of theads available in the underlying thread pool. This number can
   // be different from the value returned by numThreads().
-  EIGEN_STRONG_INLINE int numThreadsInPool() const {
-    return pool_->NumThreads();
-  }
+  EIGEN_STRONG_INLINE int numThreadsInPool() const { return pool_->NumThreads(); }
 
-  EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
-    return l1CacheSize();
-  }
+  EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const { return l1CacheSize(); }
 
   EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
     // The l3 cache size is shared between all the cores.
     return l3CacheSize() / num_threads_;
+  }
+
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
+    // Nothing.  Threadpool device operations are synchronous.
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
@@ -147,38 +141,31 @@ struct ThreadPoolDevice {
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE Notification* enqueue(Function&& f,
-                                            Args&&... args) const {
+  EIGEN_STRONG_INLINE Notification* enqueue(Function&& f, Args&&... args) const {
     Notification* n = new Notification();
     pool_->Schedule(
-        std::bind(&FunctionWrapperWithNotification<Function, Args...>::run, n,
-                  std::move(f), args...));
+        std::bind(&FunctionWrapperWithNotification<Function, Args...>::run, n, std::forward<Function>(f), args...));
     return n;
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE void enqueue_with_barrier(Barrier* b, Function&& f,
-                                                Args&&... args) const {
+  EIGEN_STRONG_INLINE void enqueue_with_barrier(Barrier* b, Function&& f, Args&&... args) const {
     pool_->Schedule(
-        std::bind(&FunctionWrapperWithBarrier<Function, Args...>::run, b,
-                  std::move(f), args...));
+        std::bind(&FunctionWrapperWithBarrier<Function, Args...>::run, b, std::forward<Function>(f), args...));
   }
 
   template <class Function, class... Args>
-  EIGEN_STRONG_INLINE void enqueueNoNotification(Function&& f,
-                                                 Args&&... args) const {
+  EIGEN_STRONG_INLINE void enqueueNoNotification(Function&& f, Args&&... args) const {
     if (sizeof...(args) > 0) {
-      pool_->Schedule(std::bind(std::move(f), args...));
+      pool_->Schedule(std::bind(std::forward<Function>(f), args...));
     } else {
-      pool_->Schedule(std::move(f));
+      pool_->Schedule(std::forward<Function>(f));
     }
   }
 
   // Returns a logical thread index between 0 and pool_->NumThreads() - 1 if
   // called from one of the threads in pool_. Returns -1 otherwise.
-  EIGEN_STRONG_INLINE int currentThreadId() const {
-    return pool_->CurrentThreadId();
-  }
+  EIGEN_STRONG_INLINE int currentThreadId() const { return pool_->CurrentThreadId(); }
 
   // WARNING: This function is synchronous and will block the calling thread.
   //
@@ -187,14 +174,12 @@ struct ThreadPoolDevice {
   // size is chosen based on the iteration cost and resulting parallel
   // efficiency. If block_align is not nullptr, it is called to round up the
   // block size.
-  void parallelFor(Index n, const TensorOpCost& cost,
-                   std::function<Index(Index)> block_align,
+  void parallelFor(Index n, const TensorOpCost& cost, std::function<Index(Index)> block_align,
                    std::function<void(Index, Index)> f) const {
-    if (EIGEN_PREDICT_FALSE(n <= 0)){
+    if (EIGEN_PREDICT_FALSE(n <= 0)) {
       return;
-    // Compute small problems directly in the caller thread.
-    } else if (n == 1 || numThreads() == 1 ||
-               CostModel::numThreads(n, cost, static_cast<int>(numThreads())) == 1) {
+      // Compute small problems directly in the caller thread.
+    } else if (n == 1 || numThreads() == 1 || CostModel::numThreads(n, cost, static_cast<int>(numThreads())) == 1) {
       f(0, n);
       return;
     }
@@ -207,11 +192,10 @@ struct ThreadPoolDevice {
     // block_count leaves that do actual computations.
     Barrier barrier(static_cast<unsigned int>(block.count));
     std::function<void(Index, Index)> handleRange;
-    handleRange = [=, &handleRange, &barrier, &f](Index firstIdx,
-                                                  Index lastIdx) {
+    handleRange = [this, block, &handleRange, &barrier, &f](Index firstIdx, Index lastIdx) {
       while (lastIdx - firstIdx > block.size) {
         // Split into halves and schedule the second half on a different thread.
-        const Index midIdx = firstIdx + divup((lastIdx - firstIdx) / 2, block.size) * block.size;
+        const Index midIdx = firstIdx + numext::div_ceil((lastIdx - firstIdx) / 2, block.size) * block.size;
         pool_->Schedule([=, &handleRange]() { handleRange(midIdx, lastIdx); });
         lastIdx = midIdx;
       }
@@ -234,8 +218,7 @@ struct ThreadPoolDevice {
   }
 
   // Convenience wrapper for parallelFor that does not align blocks.
-  void parallelFor(Index n, const TensorOpCost& cost,
-                   std::function<void(Index, Index)> f) const {
+  void parallelFor(Index n, const TensorOpCost& cost, std::function<void(Index, Index)> f) const {
     parallelFor(n, cost, nullptr, std::move(f));
   }
 
@@ -246,13 +229,10 @@ struct ThreadPoolDevice {
   // 'done' callback. F accepts a half-open interval [first, last). Block size
   // is chosen based on the iteration cost and resulting parallel efficiency. If
   // block_align is not nullptr, it is called to round up the block size.
-  void parallelForAsync(Index n, const TensorOpCost& cost,
-                        std::function<Index(Index)> block_align,
-                        std::function<void(Index, Index)> f,
-                        std::function<void()> done) const {
+  void parallelForAsync(Index n, const TensorOpCost& cost, std::function<Index(Index)> block_align,
+                        std::function<void(Index, Index)> f, std::function<void()> done) const {
     // Compute small problems directly in the caller thread.
-    if (n <= 1 || numThreads() == 1 ||
-        CostModel::numThreads(n, cost, static_cast<int>(numThreads())) == 1) {
+    if (n <= 1 || numThreads() == 1 || CostModel::numThreads(n, cost, static_cast<int>(numThreads())) == 1) {
       f(0, n);
       done();
       return;
@@ -261,8 +241,7 @@ struct ThreadPoolDevice {
     // Compute block size and total count of blocks.
     ParallelForBlock block = CalculateParallelForBlock(n, cost, block_align);
 
-    ParallelForAsyncContext* const ctx =
-        new ParallelForAsyncContext(block.count, std::move(f), std::move(done));
+    ParallelForAsyncContext* const ctx = new ParallelForAsyncContext(block.count, std::move(f), std::move(done));
 
     // Recursively divide size into halves until we reach block_size.
     // Division code rounds mid to block_size, so we are guaranteed to get
@@ -270,9 +249,8 @@ struct ThreadPoolDevice {
     ctx->handle_range = [this, ctx, block](Index firstIdx, Index lastIdx) {
       while (lastIdx - firstIdx > block.size) {
         // Split into halves and schedule the second half on a different thread.
-        const Index midIdx = firstIdx + divup((lastIdx - firstIdx) / 2, block.size) * block.size;
-        pool_->Schedule(
-            [ctx, midIdx, lastIdx]() { ctx->handle_range(midIdx, lastIdx); });
+        const Index midIdx = firstIdx + numext::div_ceil((lastIdx - firstIdx) / 2, block.size) * block.size;
+        pool_->Schedule([ctx, midIdx, lastIdx]() { ctx->handle_range(midIdx, lastIdx); });
         lastIdx = midIdx;
       }
 
@@ -295,8 +273,7 @@ struct ThreadPoolDevice {
   }
 
   // Convenience wrapper for parallelForAsync that does not align blocks.
-  void parallelForAsync(Index n, const TensorOpCost& cost,
-                        std::function<void(Index, Index)> f,
+  void parallelForAsync(Index n, const TensorOpCost& cost, std::function<void(Index, Index)> f,
                         std::function<void()> done) const {
     parallelForAsync(n, cost, nullptr, std::move(f), std::move(done));
   }
@@ -313,12 +290,9 @@ struct ThreadPoolDevice {
   // For parallelForAsync we must keep passed in closures on the heap, and
   // delete them only after `done` callback finished.
   struct ParallelForAsyncContext {
-    ParallelForAsyncContext(Index block_count,
-                            std::function<void(Index, Index)> block_f,
+    ParallelForAsyncContext(Index block_count, std::function<void(Index, Index)> block_f,
                             std::function<void()> done_callback)
-        : count(block_count),
-          f(std::move(block_f)),
-          done(std::move(done_callback)) {}
+        : count(block_count), f(std::move(block_f)), done(std::move(done_callback)) {}
     ~ParallelForAsyncContext() { done(); }
 
     std::atomic<Index> count;
@@ -338,15 +312,12 @@ struct ThreadPoolDevice {
   // overheads; not too large to mitigate tail effect and potential load
   // imbalance and we also want number of blocks to be evenly dividable across
   // threads.
-  ParallelForBlock CalculateParallelForBlock(
-      const Index n, const TensorOpCost& cost,
-      std::function<Index(Index)> block_align) const {
+  ParallelForBlock CalculateParallelForBlock(const Index n, const TensorOpCost& cost,
+                                             std::function<Index(Index)> block_align) const {
     const double block_size_f = 1.0 / CostModel::taskSize(1, cost);
     const Index max_oversharding_factor = 4;
     Index block_size = numext::mini(
-        n, numext::maxi<Index>(
-               divup<Index>(n, max_oversharding_factor * numThreads()),
-               block_size_f));
+        n, numext::maxi<Index>(numext::div_ceil<Index>(n, max_oversharding_factor * numThreads()), block_size_f));
     const Index max_block_size = numext::mini(n, 2 * block_size);
 
     if (block_align) {
@@ -355,21 +326,19 @@ struct ThreadPoolDevice {
       block_size = numext::mini(n, new_block_size);
     }
 
-    Index block_count = divup(n, block_size);
+    Index block_count = numext::div_ceil(n, block_size);
 
     // Calculate parallel efficiency as fraction of total CPU time used for
     // computations:
     double max_efficiency =
-        static_cast<double>(block_count) /
-        (divup<int>(block_count, numThreads()) * numThreads());
+        static_cast<double>(block_count) / (numext::div_ceil<Index>(block_count, numThreads()) * numThreads());
 
     // Now try to increase block size up to max_block_size as long as it
     // doesn't decrease parallel efficiency.
-    for (Index prev_block_count = block_count;
-         max_efficiency < 1.0 && prev_block_count > 1;) {
+    for (Index prev_block_count = block_count; max_efficiency < 1.0 && prev_block_count > 1;) {
       // This is the next block size that divides size into a smaller number
       // of blocks than the current block_size.
-      Index coarser_block_size = divup(n, prev_block_count - 1);
+      Index coarser_block_size = numext::div_ceil(n, prev_block_count - 1);
       if (block_align) {
         Index new_block_size = block_align(coarser_block_size);
         eigen_assert(new_block_size >= coarser_block_size);
@@ -379,12 +348,11 @@ struct ThreadPoolDevice {
         break;  // Reached max block size. Stop.
       }
       // Recalculate parallel efficiency.
-      const Index coarser_block_count = divup(n, coarser_block_size);
+      const Index coarser_block_count = numext::div_ceil(n, coarser_block_size);
       eigen_assert(coarser_block_count < prev_block_count);
       prev_block_count = coarser_block_count;
-      const double coarser_efficiency =
-          static_cast<double>(coarser_block_count) /
-          (divup<int>(coarser_block_count, numThreads()) * numThreads());
+      const double coarser_efficiency = static_cast<double>(coarser_block_count) /
+                                        (numext::div_ceil<Index>(coarser_block_count, numThreads()) * numThreads());
       if (coarser_efficiency + 0.01 >= max_efficiency) {
         // Taking it.
         block_size = coarser_block_size;
@@ -403,7 +371,6 @@ struct ThreadPoolDevice {
   Allocator* allocator_;
 };
 
-
 }  // end namespace Eigen
 
-#endif // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_THREAD_POOL_H

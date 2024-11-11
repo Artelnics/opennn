@@ -13,7 +13,7 @@
 #include <sstream>
 
 #include "neural_network.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 
 namespace opennn
 {
@@ -55,7 +55,7 @@ public:
 
     void load_transformer(const string&);
 
-protected:
+private:
 
     string name = "transformer";
 

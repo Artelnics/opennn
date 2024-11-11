@@ -1,5 +1,5 @@
 #include "yolo_error.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
 

@@ -8,7 +8,7 @@
 
 #include "tensors.h"
 #include "mean_squared_error.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn
@@ -119,7 +119,7 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     output_deltas.device(*thread_pool_device) = errors;
 
-    divide_columns(thread_pool_device, output_deltas, squared_errors);
+    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 

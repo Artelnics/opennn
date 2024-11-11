@@ -26,21 +26,12 @@ public:
 
    explicit ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
 
-   dimensions get_output_dimensions() const;
-
-   Index get_inputs_number() const final;
    dimensions get_input_dimensions() const;
-   Index get_neurons_number() const final;
-
-   const bool& get_display() const;
+   dimensions get_output_dimensions() const;
 
    void set(const dimensions& = { 0, 0, 0, 0 });
 
-   void set_default();
-
    void set_min_max_range(const type& min, const type& max);
-
-   void set_display(const bool&);
 
    bool is_empty() const;
 
@@ -50,18 +41,15 @@ public:
 
    void print() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&) final;
-
+   void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    dimensions input_dimensions;
 
    type min_range;
    type max_range;
-
-   bool display = true;
 
 };
 

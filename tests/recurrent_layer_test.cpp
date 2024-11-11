@@ -36,7 +36,6 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
-    assert_true(recurrent_layer.get_biases_number() == 1, LOG);
 
     // Test
 
@@ -46,7 +45,6 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
-    assert_true(recurrent_layer.get_biases_number() == 3, LOG);
 }
 
 
@@ -97,8 +95,7 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 /*
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
@@ -132,8 +129,7 @@ void RecurrentLayerTest::test_forward_propagate()
 
     parameters = recurrent_layer.get_parameters();
 
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 

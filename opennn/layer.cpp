@@ -14,17 +14,16 @@ namespace opennn
 
 Layer::Layer()
 {
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 }
 
 
-Layer::~Layer()
+const bool& Layer::get_display() const
 {
-    delete thread_pool;
-    delete thread_pool_device;
+    return display;
 }
 
 
@@ -85,6 +84,9 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
 
     case Type::MultiheadAttention:
         return "MultiheadAttention";
+
+    case Type::Detection:
+        return "Detection";
 
     default:
         throw runtime_error("Unknown layer type.");
@@ -148,6 +150,9 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 
     if(this_layer_type == "MultiheadAttention")
         return Type::MultiheadAttention;
+
+    if(this_layer_type == "Detection")
+        return Type::Detection;
 
     throw runtime_error("Unknown layer type.");
 }
@@ -223,6 +228,9 @@ string Layer::get_type_string() const
     case Type::MultiheadAttention:
         return "MultiheadAttention";
 
+    case Type::Detection:
+        return "Detection";
+
     default:
         return "Unkown type";
     }
@@ -235,8 +243,15 @@ void Layer::set_name(const string& new_name)
 }
 
 
+void Layer::set_display(const bool& new_display)
+{
+    display = new_display;
+}
+
+
 void Layer::set_threads_number(const int& new_threads_number)
 {
+/*
     if(thread_pool) 
         delete thread_pool;
 
@@ -245,6 +260,7 @@ void Layer::set_threads_number(const int& new_threads_number)
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+*/
 }
 
 
@@ -275,6 +291,12 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
+dimensions Layer::get_input_dimensions() const
+{
+    return dimensions();
+}
+
+
 dimensions Layer::get_output_dimensions() const
 {
     return dimensions();
@@ -288,25 +310,14 @@ void Layer::forward_propagate(const vector<pair<type*, dimensions>>&,
 }
 
 
-Index Layer::get_inputs_number() const
+
+void Layer::set_input_dimensions(const dimensions&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }
 
 
-Index Layer::get_neurons_number() const
-{
-    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
-}
-
-
-void Layer::set_inputs_number(const Index&)
-{
-    throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
-}
-
-
-void Layer::set_neurons_number(const Index&)
+void Layer::set_output_dimensions(const dimensions&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
 }

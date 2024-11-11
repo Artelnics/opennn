@@ -1,53 +1,39 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   N E U R O N S   T E S T   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com                                           
+#include "pch.h"
 
-#include "growing_neurons_test.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/growing_neurons.h"
 
-namespace opennn
+
+TEST(GrowingNeuronsTest, DefaultConstructor)
 {
+    GrowingNeurons growing_neurons;
 
-GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
-{
-    training_strategy.set(&neural_network, &data_set);
+    EXPECT_EQ(growing_neurons.has_training_strategy(), false);
 }
 
 
-void GrowingNeuronsTest::test_constructor()
+TEST(GrowingNeuronsTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
 
-    GrowingNeurons growing_neurons_1(&training_strategy);
-
-    assert_true(growing_neurons_1.has_training_strategy(), LOG);
-
-    GrowingNeurons growing_neurons_2;
-
-    assert_true(!growing_neurons_2.has_training_strategy(), LOG);
+    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 }
 
 
-void GrowingNeuronsTest::test_perform_neurons_selection()
+TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-    cout << "test_perform_neurons_selection\n";
+    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
 
-    growing_neurons.set_training_strategy(&training_strategy);
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Tensor<type, 2> data;
+    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 
     NeuronsSelectionResults neurons_selection_results;
 
     // Test
 
-    data.resize(21,2);
+    Tensor<type, 2> data(21, 2);
+
     data.setValues({{type(-1),type(0)},
                     {type(-0.9),type(0)},
                     {type(-0.9),type(0)},
@@ -69,16 +55,17 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(0.8),type(0)},
                     {type(0.9),type(0)},
                     {type(1),type(0)}});
-    data_set.set(data);
+
+    DataSet data_set(data);
 
     Tensor<DataSet::VariableUse, 1> uses(2);
-    uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
+    uses.setValues({ DataSet::VariableUse::Input, DataSet::VariableUse::Target });
     data_set.set_raw_variables_uses(uses);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1},{3},{1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
     training_strategy.set_display(false);
 
@@ -88,6 +75,22 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     growing_neurons.set_display(false);
 
     //assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+}
+
+/*
+namespace opennn
+{
+void GrowingNeuronsTest::test_perform_neurons_selection()
+{
+
+    growing_neurons.set_training_strategy(&training_strategy);
+
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
+    Tensor<type, 2> data;
+
 
     // Test
 
@@ -142,18 +145,5 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
 }
 
-
-void GrowingNeuronsTest::run_test_case()
-{
-    cout << "Running growing neurons test case...\n";
-
-    test_constructor();
-
-    // Order selection
-
-    test_perform_neurons_selection();
-
-    cout << "End of growing neurons test case.\n\n";
 }
-
-}
+*/

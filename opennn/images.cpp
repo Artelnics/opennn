@@ -1,6 +1,6 @@
 #include "images.h"
 #include <stdexcept>
-#include <iostream>
+#include <cassert>
 
 namespace opennn
 {

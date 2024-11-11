@@ -30,32 +30,11 @@ dimensions ScalingLayer4D::get_output_dimensions() const
 }
 
 
-Index ScalingLayer4D::get_inputs_number() const
-{
-    return input_dimensions[0]*input_dimensions[1]*input_dimensions[2];
-}
-
-
-Index ScalingLayer4D::get_neurons_number() const
-{
-    // ??
-    return 0;
-}
-
-
-const bool& ScalingLayer4D::get_display() const
-{
-    return display;
-}
-
-
 void ScalingLayer4D::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
     set_min_max_range(type(0), type(255));
-
-    display = true;
 
     layer_type = Type::Scaling4D;
 
@@ -70,15 +49,9 @@ void ScalingLayer4D::set_min_max_range(const type& min, const type& max)
 }
 
 
-void ScalingLayer4D::set_display(const bool& new_display)
-{
-    display = new_display;
-}
-
-
 bool ScalingLayer4D::is_empty() const
 {
-    const Index inputs_number = get_neurons_number();
+    const Index inputs_number = get_output_dimensions()[0];
 
     return inputs_number == 0;
 }
@@ -123,8 +96,6 @@ void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
-
-    // Input dimensions
 
     set(string_to_dimensions(read_xml_string(scaling_layer_element, "InputDimensions")));
 

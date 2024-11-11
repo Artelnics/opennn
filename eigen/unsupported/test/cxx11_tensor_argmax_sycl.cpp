@@ -16,7 +16,6 @@
 
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int64_t
 #define EIGEN_USE_SYCL
-#define EIGEN_HAS_CONSTEXPR 1
 
 #include "main.h"
 
@@ -33,9 +32,9 @@ static void test_sycl_simple_argmax(const Eigen::SyclDevice& sycl_device) {
   Tensor<DenseIndex, 0, Layout, DenseIndex> out_max;
   Tensor<DenseIndex, 0, Layout, DenseIndex> out_min;
   in.setRandom();
-  in *= in.constant(100.0);
-  in(0, 0, 0) = -1000.0;
-  in(1, 1, 1) = 1000.0;
+  in *= in.constant(static_cast<DataType>(100.0));
+  in(0, 0, 0) = static_cast<DataType>(-1000.0);
+  in(1, 1, 1) = static_cast<DataType>(1000.0);
 
   std::size_t in_bytes = in.size() * sizeof(DataType);
   std::size_t out_bytes = out_max.size() * sizeof(DenseIndex);
@@ -94,7 +93,7 @@ static void test_sycl_argmax_dim(const Eigen::SyclDevice& sycl_device) {
             ix[3] = l;
             // suppose dim == 1, then for all i, k, l, set tensor(i, 0, k, l)
             // = 10.0
-            tensor(ix) = (ix[dim] != 0) ? -1.0 : 10.0;
+            tensor(ix) = static_cast<DataType>((ix[dim] != 0) ? -1.0 : 10.0);
           }
         }
       }
@@ -133,7 +132,7 @@ static void test_sycl_argmax_dim(const Eigen::SyclDevice& sycl_device) {
             ix[2] = k;
             ix[3] = l;
             // suppose dim == 1, then for all i, k, l, set tensor(i, 2, k, l) = 20.0
-            tensor(ix) = (ix[dim] != tensor.dimension(dim) - 1) ? -1.0 : 20.0;
+            tensor(ix) = static_cast<DataType>((ix[dim] != tensor.dimension(dim) - 1) ? -1.0 : 20.0);
           }
         }
       }
@@ -181,7 +180,7 @@ static void test_sycl_argmin_dim(const Eigen::SyclDevice& sycl_device) {
             ix[2] = k;
             ix[3] = l;
             // suppose dim == 1, then for all i, k, l, set tensor(i, 0, k, l) = -10.0
-            tensor(ix) = (ix[dim] != 0) ? 1.0 : -10.0;
+            tensor(ix) = static_cast<DataType>((ix[dim] != 0) ? 1.0 : -10.0);
           }
         }
       }
@@ -220,7 +219,7 @@ static void test_sycl_argmin_dim(const Eigen::SyclDevice& sycl_device) {
             ix[2] = k;
             ix[3] = l;
             // suppose dim == 1, then for all i, k, l, set tensor(i, 2, k, l) = -20.0
-            tensor(ix) = (ix[dim] != tensor.dimension(dim) - 1) ? 1.0 : -20.0;
+            tensor(ix) = static_cast<DataType>((ix[dim] != tensor.dimension(dim) - 1) ? 1.0 : -20.0);
           }
         }
       }
@@ -253,6 +252,7 @@ void sycl_argmax_test_per_device(const Device_Selector& d) {
 
 EIGEN_DECLARE_TEST(cxx11_tensor_argmax_sycl) {
   for (const auto& device : Eigen::get_sycl_supported_devices()) {
+    CALL_SUBTEST(sycl_argmax_test_per_device<half>(device));
     CALL_SUBTEST(sycl_argmax_test_per_device<float>(device));
   }
 }

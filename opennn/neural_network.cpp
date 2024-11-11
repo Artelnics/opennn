@@ -13,8 +13,9 @@
 #include <numeric>
 
 #include "tensors.h"
+#include "images.h"
 #include "neural_network.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
 #include "config.h"
@@ -34,6 +35,7 @@
 #include "flatten_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
+#include "detection_layer.h"
 
 namespace opennn
 {
@@ -461,7 +463,7 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                                dimensions{ complexity_dimensions[i] },
-                                               PerceptronLayer::ActivationFunction::Linear,
+                                               PerceptronLayer::ActivationFunction::RectifiedLinear,
                                                "perceptron_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
@@ -548,12 +550,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions convolution_stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-            kernel_dimensions,
-            ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-            convolution_stride_dimensions,
-            convolution_type,
-            "convolutional_layer_" + to_string(i+1)));
+        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+        //                                          kernel_dimensions,
+        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+        //                                          convolution_stride_dimensions,
+        //                                          convolution_type,
+        //    "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -565,7 +567,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pooling_stride_dimensions,
                                             padding_dimensions,
                                             pooling_method,
-                                            "pooling_layer_" + to_string(i + 1)));
+            "pooling_layer_" + to_string(i + 1)));
 
     }
 
@@ -627,8 +629,9 @@ void NeuralNetwork::set_output_namess(const Tensor<string, 1>& new_output_namess
 }
 
 
-void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
+void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
+/*
     input_names.resize(new_inputs_number);
 
     if(has(Layer::Type::Scaling2D))
@@ -641,6 +644,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
 
     layers[first_trainable_layer_index]->set_inputs_number(new_inputs_number);
+*/
 }
 
 
@@ -650,10 +654,10 @@ void NeuralNetwork::set_default()
 
     layer_input_indices = vector<vector<Index>>();
 
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = new ThreadPool(threads_number);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 }
 
 
@@ -733,10 +737,18 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
+
     if(layers.empty())
         return 0;
 
-    return layers[0]->get_inputs_number();
+    dimensions input_dimensions = layers[0]->get_input_dimensions();
+
+    Index inputs_number = 1;
+    for (Index dimension : input_dimensions) {
+        inputs_number *= dimension;
+    }
+
+    return inputs_number;
 }
 
 
@@ -857,7 +869,8 @@ bool NeuralNetwork::is_trainable(const Layer::Type& layer_type)
     return layer_type != Layer::Type::Scaling2D &&
            layer_type != Layer::Type::Scaling4D &&
            layer_type != Layer::Type::Unscaling &&
-           layer_type != Layer::Type::Bounding;
+           layer_type != Layer::Type::Bounding &&
+           layer_type != Layer::Type::Detection;
 }
 
 
@@ -878,7 +891,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     const Index layers_number = get_layers_number();
 
     for(Index i = layers_number-1; i >= 0 ; i--)
-        if (is_trainable(layers[i]->get_type()))
+        if (is_trainable(layers[i]->get_type()) || layers[i]->get_type() == Layer::Type::Detection)
             return i;
 
     throw runtime_error("The neural network has no trainable layers.");
@@ -1155,6 +1168,56 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 }
 
 
+Index NeuralNetwork::calculate_image_output(const string& image_path)
+{
+    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
+
+    const Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
+    const Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
+    const Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
+
+    const Index current_height = image_data.dimension(0);
+    const Index current_width = image_data.dimension(1);
+    const Index current_channels = image_data.dimension(2);
+
+    if (current_channels != image_channels)
+        throw runtime_error("Error: Different channels number " + image_path + "\n");
+
+    Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
+/*
+    (current_height != height || current_width != width)
+        ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
+        : resized_image_data = image_data;
+*/
+    Tensor<type, 4> input_data(1, height, width, image_channels);
+
+    const Index pixels_number = height * width * image_channels;
+
+#pragma omp parallel for
+    for (Index j = 0; j < pixels_number; j++)
+        input_data(j) = resized_image_data(j);
+
+    const Tensor<type, 2> outputs = calculate_outputs(input_data);
+
+    Index predicted_index = -1;
+
+    if (outputs.size() > 1)
+    {
+        type max_value = outputs(0);
+        for (Index i = 1; i < outputs.dimension(1); ++i) {
+            if (outputs(i) > max_value) {
+                max_value = outputs(i);
+                predicted_index = i;
+            }
+        }
+    }
+    else
+        predicted_index = outputs(0);
+
+    return predicted_index;
+}
+
+
 Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 {
     const Index layers_number = get_layers_number();
@@ -1172,12 +1235,12 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
         if (layer_type != Layer::Type::Perceptron) 
             continue;
 
-        information(perceptron_layer_index, 0) = to_string(layers[i]->get_inputs_number());
-        information(perceptron_layer_index, 1) = to_string(layers[i]->get_neurons_number());
+        information(perceptron_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(perceptron_layer_index, 1) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(layers[i].get());
 
-        information(perceptron_layer_index, 2) = perceptron_layer->write_activation_function();
+        information(perceptron_layer_index, 2) = perceptron_layer->get_activation_function_string();
 
         perceptron_layer_index++;
     }
@@ -1203,12 +1266,12 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
         if (layer_type != Layer::Type::Probabilistic) 
             continue;
 
-        information(probabilistic_layer_index,0) = to_string(layers[i]->get_inputs_number());
-        information(probabilistic_layer_index,1) = to_string(layers[i]->get_neurons_number());
+        information(probabilistic_layer_index,0) = to_string(layers[i]->get_input_dimensions()[0]);
+        information(probabilistic_layer_index,1) = to_string(layers[i]->get_output_dimensions()[0]);
 
         const ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(layers[i].get());
 
-        information(probabilistic_layer_index,2) = probabilistic_layer->write_activation_function();
+        information(probabilistic_layer_index,2) = probabilistic_layer->get_activation_function_string();
 
         probabilistic_layer_index++;
     }
@@ -1690,7 +1753,7 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_c();
+    file << get_expression_c();
     */
     file.close();
 }
@@ -1703,7 +1766,7 @@ void NeuralNetwork::save_expression_api(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_api();
+    file << get_expression_api();
     */
     file.close();
 }
@@ -1716,7 +1779,7 @@ void NeuralNetwork::save_expression_javascript(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
     /*
-    file << write_expression_javascript();
+    file << get_expression_javascript();
     */
     file.close();
 }
@@ -1729,7 +1792,7 @@ void NeuralNetwork::save_expression_python(const string& file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
 /*
-    file << write_expression_python();
+    file << get_expression_python();
 */
     file.close();
 }
@@ -1935,7 +1998,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
     const Index layers_number = neural_network_layers.size();
 
     layers.resize(layers_number);
-
+    
     for(Index i = 0; i < layers_number; i++)
     {
         switch (neural_network_layers[i]->get_type())
@@ -2006,6 +2069,10 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
         case Layer::Type::Normalization3D:
             layers[i] = make_unique<NormalizationLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+        break;
+
+        case Layer::Type::Detection:
+            layers[i] = make_unique<DetectionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
         break;
 
         default: cout << "Default" << endl; break;

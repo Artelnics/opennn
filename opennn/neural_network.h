@@ -143,7 +143,7 @@ public:
    void set_inputs_names(const Tensor<string, 1>&);
    void set_output_namess(const Tensor<string, 1>&);
 
-   void set_inputs_number(const Index&);
+   void set_input_dimensions(const dimensions&);
 
    void set_default();
 
@@ -203,6 +203,8 @@ public:
    }
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
+
+   Index calculate_image_output(const string&);
 
    // Serialization
 
@@ -268,7 +270,7 @@ protected:
 };
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/neural_network_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/forward_propagation_cuda.h"
 #include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
 #endif
 

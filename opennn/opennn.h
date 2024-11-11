@@ -43,8 +43,8 @@
 #include "neural_network.h"
 #include "auto_associative_neural_network.h"
 #include "transformer.h"
-#include "neural_network_forward_propagation.h"
 #include "non_max_suppression_layer.h"
+#include "forward_propagation.h"
 
 // Training strategy
 
@@ -56,11 +56,10 @@
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
-#include "sum_squared_error.h"
 #include "weighted_squared_error.h"
 
 #include "conjugate_gradient.h"
-#include "gradient_descent.h"
+
 #include "levenberg_marquardt_algorithm.h"
 #include "quasi_newton_method.h"
 #include "optimization_algorithm.h"
@@ -87,8 +86,6 @@
 #include "tensors.h"
 #include "statistics.h"
 #include "scaling.h"
-#include "codification.h"
-
 
 #endif
 

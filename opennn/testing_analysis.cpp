@@ -28,13 +28,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
 }
 
 
-TestingAnalysis::~TestingAnalysis()
-{
-    delete thread_pool;
-    delete thread_pool_device;
-}
-
-
 NeuralNetwork* TestingAnalysis::get_neural_network() const
 {
     return neural_network;
@@ -55,22 +48,21 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_default()
 {
+/*
     delete thread_pool;
     delete thread_pool_device;
 
-    const int n = omp_get_max_threads();
+    const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+*/
 }
 
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+//    thread_pool = make_unique<ThreadPool>(new_threads_number);
+//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
 }
 
 
@@ -121,7 +113,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        linear_correlation(i) = opennn::linear_correlation(thread_pool_device, output.chip(i,1), target.chip(i,1));
+        linear_correlation(i) = opennn::linear_correlation(thread_pool_device.get(), output.chip(i,1), target.chip(i,1));
 
     return linear_correlation;
 }
@@ -1965,7 +1957,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(thread_pool_device, error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_lags_number);
 
     return error_autocorrelations;
 }
@@ -1986,7 +1978,8 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(), 
+            inputs.chip(i,1), errors.chip(i,1), lags_number);
 
     return inputs_errors_cross_correlation;
 }

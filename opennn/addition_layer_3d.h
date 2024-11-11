@@ -32,19 +32,15 @@ public:
 
     explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
 
-    Index get_inputs_number() const final;
+    Index get_inputs_number() const;
     Index get_inputs_depth() const;
 
     dimensions get_output_dimensions() const final;
-
-    const bool& get_display() const;
 
     void set(const Index& = 0, const Index& = 0);
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
-
-    void set_display(const bool&);
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -62,13 +58,11 @@ public:
         #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
     #endif
 
-protected:
+private:
 
     Index inputs_number = 0;
 
     Index inputs_depth = 0;
-
-    bool display = true;
 };
 
 

@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "quasi_newton_method.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
 
@@ -225,11 +225,11 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device)
-    += self_kronecker_product(thread_pool_device, parameters_difference)
+    += self_kronecker_product(thread_pool_device.get(), parameters_difference)
     /parameters_difference_dot_gradient_difference(0);
 
     inverse_hessian.device(*thread_pool_device)
-    -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
+    -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
     / gradient_dot_hessian_dot_gradient(0);
 }
 
@@ -267,15 +267,15 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& op
     inverse_hessian.device(*thread_pool_device) = old_inverse_hessian;
 
     inverse_hessian.device(*thread_pool_device) 
-        += self_kronecker_product(thread_pool_device, parameters_difference)
+        += self_kronecker_product(thread_pool_device.get(), parameters_difference)
         / parameters_difference_dot_gradient_difference(0); 
 
     inverse_hessian.device(*thread_pool_device)
-        -= self_kronecker_product(thread_pool_device, old_inverse_hessian_dot_gradient_difference)
+        -= self_kronecker_product(thread_pool_device.get(), old_inverse_hessian_dot_gradient_difference)
         / gradient_dot_hessian_dot_gradient(0); 
 
     inverse_hessian.device(*thread_pool_device)
-        += self_kronecker_product(thread_pool_device, BFGS)*(gradient_dot_hessian_dot_gradient(0)); 
+        += self_kronecker_product(thread_pool_device.get(), BFGS)*(gradient_dot_hessian_dot_gradient(0));
 }
 
 

@@ -11,7 +11,7 @@
 
 template <typename T>
 int ref_clz(T val) {
-  static const int kNumBits = sizeof(T) * CHAR_BIT;
+  constexpr int kNumBits = sizeof(T) * CHAR_BIT;
   T kMsbMask = T(1) << (kNumBits - 1);
   int z = 0;
   for (; z < kNumBits && ((val & kMsbMask) == 0); ++z) {
@@ -22,7 +22,7 @@ int ref_clz(T val) {
 
 template <typename T>
 int ref_ctz(T val) {
-  static const int kNumBits = sizeof(T) * CHAR_BIT;
+  constexpr int kNumBits = sizeof(T) * CHAR_BIT;
   T kLsbMask = T(1);
   int z = 0;
   for (; z < kNumBits && ((val & kLsbMask) == 0); ++z) {

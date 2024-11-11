@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "weighted_squared_error.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn
@@ -40,7 +40,7 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-    if(has_data_set() && !data_set->is_empty())
+    if(has_data_set() && !data_set->get_samples_number() == 0)
     {
         set_weights();
 

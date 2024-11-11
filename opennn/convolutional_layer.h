@@ -51,17 +51,11 @@ public:
                                 const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
                                 const string = "convolutional_layer");
 
-    bool is_empty() const;
-
     bool get_batch_normalization() const;
-
-    Index get_biases_number() const;
-
-    Index get_synaptic_weights_number() const;
 
     ActivationFunction get_activation_function() const;
 
-    string write_activation_function() const;
+    string get_activation_function_string() const;
 
     dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const;
@@ -93,9 +87,6 @@ public:
     Index get_input_channels() const;
     Index get_input_height() const;
     Index get_input_width() const;
-
-    Index get_inputs_number() const;
-    Index get_neurons_number() const;
 
     Tensor<type, 1> get_parameters() const final;
     Index get_parameters_number() const final;
@@ -169,7 +160,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
     #endif
 
-protected:
+private:
 
    Tensor<type, 4> synaptic_weights;
 

@@ -100,8 +100,8 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
     //cout<<images.size()<<endl<<labels.size()<<endl;
 
     if (images.dimension(0) != labels.size()) {
-        cerr << "Images and labels file number do not match!" << endl;
-        //throw runtime_error("Images and labels file number do not match!");
+        // cerr << "Images and labels file number do not match!" << endl;
+        throw runtime_error("Images and labels file number do not match!");
     }
 
     set(images.size(), input_data_size, target_data_size);
@@ -663,8 +663,6 @@ Tensor<type, 3> convert_to_YOLO_grid_data(const Tensor<type, 2>& labels, const v
 
     Tensor<Index, 1> box_assignment = assign_boxes_to_anchors(labels, anchors);
 
-    //for(size_t i = 0; i < labels.size(); i++)
-    //{
     #pragma omp parallel for
     for(Index j = 0; j < labels.dimension(0); j++)
     {
@@ -680,23 +678,8 @@ Tensor<type, 3> convert_to_YOLO_grid_data(const Tensor<type, 2>& labels, const v
         target(cell_x, cell_y, 3 + box_assignment(j) * (5 + C)) = labels(j, 4);
         target(cell_x, cell_y, 4 + box_assignment(j) * (5 + C)) = 1.0;
         target(cell_x, cell_y, 5 + static_cast<Index>(labels(j,0)) + box_assignment(j) * (5 + C)) = 1.0;
-        // for(Index b = 0; b < B; b++)
-        // {
-        //     if(target(cell_x, cell_y, b * (5 + C)) == 0)
-        //     {
-        //         target(cell_x, cell_y, 0 + b * (5 + C)) = relative_x;
-        //         target(cell_x, cell_y, 1 + b * (5 + C)) = relative_y;
-        //         target(cell_x, cell_y, 2 + b * (5 + C)) = labels(j, 3);
-        //         target(cell_x, cell_y, 3 + b * (5 + C)) = labels(j, 4);
-        //         target(cell_x, cell_y, 4 + b * (5 + C)) = 1.0;
-        //         target(cell_x, cell_y, 5 + static_cast<Index>(labels(j,0)) + b * (5 + C)) = 1.0;
-        //         break;
-        //     }
-        //     continue;
-        // }
     }
 
-    //}
     return target;
 }
 

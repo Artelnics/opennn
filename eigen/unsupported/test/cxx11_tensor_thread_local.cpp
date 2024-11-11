@@ -11,7 +11,7 @@
 #include <unordered_set>
 
 #include "main.h"
-#include <Eigen/CXX11/ThreadPool>
+#include <Eigen/ThreadPool>
 
 struct Counter {
   Counter() = default;
@@ -28,9 +28,7 @@ struct Counter {
 };
 
 struct InitCounter {
-  void operator()(Counter& counter) {
-    counter.created_by = std::this_thread::get_id();
-  }
+  void operator()(Counter& counter) { counter.created_by = std::this_thread::get_id(); }
 };
 
 void test_simple_thread_local() {
@@ -53,8 +51,7 @@ void test_simple_thread_local() {
 
   barrier.Wait();
 
-  counter.ForEach(
-      [](std::thread::id, Counter& cnt) { VERIFY_IS_EQUAL(cnt.value(), 3); });
+  counter.ForEach([](std::thread::id, Counter& cnt) { VERIFY_IS_EQUAL(cnt.value(), 3); });
 }
 
 void test_zero_sized_thread_local() {
@@ -102,8 +99,7 @@ void test_large_number_of_tasks_no_spill() {
   VERIFY_IS_EQUAL(total, num_tasks);
   // Not all threads in a pool might be woken up to execute submitted tasks.
   // Also thread_pool.Schedule() might use current thread if queue is full.
-  VERIFY_IS_EQUAL(
-      unique_threads.size() <= (static_cast<size_t>(num_threads + 1)), true);
+  VERIFY_IS_EQUAL(unique_threads.size() <= (static_cast<size_t>(num_threads + 1)), true);
 }
 
 // Lock free thread local storage is too small to fit all the unique threads,
@@ -137,8 +133,7 @@ void test_large_number_of_tasks_with_spill() {
   VERIFY_IS_EQUAL(total, num_tasks);
   // Not all threads in a pool might be woken up to execute submitted tasks.
   // Also thread_pool.Schedule() might use current thread if queue is full.
-  VERIFY_IS_EQUAL(
-      unique_threads.size() <= (static_cast<size_t>(num_threads + 1)), true);
+  VERIFY_IS_EQUAL(unique_threads.size() <= (static_cast<size_t>(num_threads + 1)), true);
 }
 
 EIGEN_DECLARE_TEST(cxx11_tensor_thread_local) {

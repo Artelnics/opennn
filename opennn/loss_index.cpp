@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"
 #include "back_propagation.h"
@@ -18,13 +18,6 @@ namespace opennn
 LossIndex::LossIndex(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
     set(new_neural_network, new_data_set);
-}
-
-
-LossIndex::~LossIndex()
-{
-    delete thread_pool;
-    delete thread_pool_device;
 }
 
 
@@ -64,13 +57,10 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     data_set = new_data_set;
 
-    delete thread_pool;
-    delete thread_pool_device;
+    const unsigned int threads_number = thread::hardware_concurrency();
 
-    const int n = omp_get_max_threads();
-
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     regularization_method = RegularizationMethod::L2;
 }
@@ -78,11 +68,8 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if(thread_pool) delete thread_pool;
-    if(thread_pool_device) delete thread_pool_device;
-
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+//    thread_pool = make_unique<ThreadPool>(new_threads_number);
+//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
 }
 
 
@@ -140,11 +127,11 @@ void LossIndex::check() const
 
 
 void LossIndex::calculate_errors_lm(const Batch& batch,
-                                    const ForwardPropagation & neural_network_forward_propagation,
+                                    const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
 {
     const pair<type*, dimensions> outputs_pair
-        = neural_network_forward_propagation.get_last_trainable_layer_outputs_pair();
+        = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
@@ -172,7 +159,7 @@ void LossIndex::back_propagate(const Batch& batch,
                                ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
-    if(batch.is_empty()) return;
+//    if(batch.is_empty()) return;
 
     // Loss index
 
@@ -347,10 +334,10 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
             return type(0);
 
         case RegularizationMethod::L1: 
-            return l1_norm(thread_pool_device, parameters);
+            return l1_norm(thread_pool_device.get(), parameters);
 
         case RegularizationMethod::L2: 
-            return l2_norm(thread_pool_device, parameters);
+            return l2_norm(thread_pool_device.get(), parameters);
 
         default: 
             return type(0);
@@ -368,10 +355,10 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
         regularization_gradient.setZero(); return;
 
     case RegularizationMethod::L1:
-        l1_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+        l1_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
 
     case RegularizationMethod::L2:
-        l2_norm_gradient(thread_pool_device, parameters, regularization_gradient); return;
+        l2_norm_gradient(thread_pool_device.get(), parameters, regularization_gradient); return;
 
     default:
         return;
@@ -384,11 +371,11 @@ void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Te
     switch(regularization_method)
     {
     case RegularizationMethod::L1:
-        l1_norm_hessian(thread_pool_device, parameters, regularization_hessian);
+        l1_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
         return;
 
     case RegularizationMethod::L2:
-        l2_norm_hessian(thread_pool_device, parameters, regularization_hessian);
+        l2_norm_hessian(thread_pool_device.get(), parameters, regularization_hessian);
         return;
 
     default:
@@ -759,7 +746,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     const vector<pair<type*, dimensions>>& input_pairs = batch.get_input_pairs();
 
-    TensorMap<Tensor<type, 1>> inputs_vector = tensor_map_1(input_pairs[0]);
+    TensorMap<Tensor<type, 4>> inputs_vector = tensor_map_4(input_pairs[0]);
 
     for (Index i = 0; i < inputs_number; i++)
     {

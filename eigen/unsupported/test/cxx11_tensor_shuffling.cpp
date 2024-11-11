@@ -11,13 +11,12 @@
 
 #include <Eigen/CXX11/Tensor>
 
-using Eigen::Tensor;
 using Eigen::array;
+using Eigen::Tensor;
 
 template <int DataLayout>
-static void test_simple_shuffling()
-{
-  Tensor<float, 4, DataLayout> tensor(2,3,5,7);
+static void test_simple_shuffling() {
+  Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
   array<ptrdiff_t, 4> shuffles;
   shuffles[0] = 0;
@@ -37,7 +36,7 @@ static void test_simple_shuffling()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 5; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), no_shuffle(i,j,k,l));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), no_shuffle(i, j, k, l));
         }
       }
     }
@@ -59,18 +58,16 @@ static void test_simple_shuffling()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 5; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), shuffle(k,l,j,i));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), shuffle(k, l, j, i));
         }
       }
     }
   }
 }
 
-
 template <int DataLayout>
-static void test_expr_shuffling()
-{
-  Tensor<float, 4, DataLayout> tensor(2,3,5,7);
+static void test_expr_shuffling() {
+  Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
   array<ptrdiff_t, 4> shuffles;
@@ -89,8 +86,7 @@ static void test_expr_shuffling()
   array<ptrdiff_t, 4> dst_slice_start{{0, 0, 0, 0}};
 
   for (int i = 0; i < 5; ++i) {
-    result.slice(dst_slice_start, dst_slice_dim) =
-        tensor.slice(src_slice_start, src_slice_dim).shuffle(shuffles);
+    result.slice(dst_slice_start, dst_slice_dim) = tensor.slice(src_slice_start, src_slice_dim).shuffle(shuffles);
     src_slice_start[2] += 1;
     dst_slice_start[0] += 1;
   }
@@ -104,7 +100,7 @@ static void test_expr_shuffling()
     for (int j = 0; j < expected.dimension(1); ++j) {
       for (int k = 0; k < expected.dimension(2); ++k) {
         for (int l = 0; l < expected.dimension(3); ++l) {
-          VERIFY_IS_EQUAL(result(i,j,k,l), expected(i,j,k,l));
+          VERIFY_IS_EQUAL(result(i, j, k, l), expected(i, j, k, l));
         }
       }
     }
@@ -113,8 +109,7 @@ static void test_expr_shuffling()
   dst_slice_start[0] = 0;
   result.setRandom();
   for (int i = 0; i < 5; ++i) {
-    result.slice(dst_slice_start, dst_slice_dim) =
-        tensor.shuffle(shuffles).slice(dst_slice_start, dst_slice_dim);
+    result.slice(dst_slice_start, dst_slice_dim) = tensor.shuffle(shuffles).slice(dst_slice_start, dst_slice_dim);
     dst_slice_start[0] += 1;
   }
 
@@ -122,25 +117,23 @@ static void test_expr_shuffling()
     for (int j = 0; j < expected.dimension(1); ++j) {
       for (int k = 0; k < expected.dimension(2); ++k) {
         for (int l = 0; l < expected.dimension(3); ++l) {
-          VERIFY_IS_EQUAL(result(i,j,k,l), expected(i,j,k,l));
+          VERIFY_IS_EQUAL(result(i, j, k, l), expected(i, j, k, l));
         }
       }
     }
   }
 }
 
-
 template <int DataLayout>
-static void test_shuffling_as_value()
-{
-  Tensor<float, 4, DataLayout> tensor(2,3,5,7);
+static void test_shuffling_as_value() {
+  Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
   array<ptrdiff_t, 4> shuffles;
   shuffles[2] = 0;
   shuffles[3] = 1;
   shuffles[1] = 2;
   shuffles[0] = 3;
-  Tensor<float, 4, DataLayout> shuffle(5,7,3,2);
+  Tensor<float, 4, DataLayout> shuffle(5, 7, 3, 2);
   shuffle.shuffle(shuffles) = tensor;
 
   VERIFY_IS_EQUAL(shuffle.dimension(0), 5);
@@ -152,7 +145,7 @@ static void test_shuffling_as_value()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 5; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), shuffle(k,l,j,i));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), shuffle(k, l, j, i));
         }
       }
     }
@@ -163,24 +156,22 @@ static void test_shuffling_as_value()
   no_shuffle[1] = 1;
   no_shuffle[2] = 2;
   no_shuffle[3] = 3;
-  Tensor<float, 4, DataLayout> shuffle2(5,7,3,2);
+  Tensor<float, 4, DataLayout> shuffle2(5, 7, 3, 2);
   shuffle2.shuffle(shuffles) = tensor.shuffle(no_shuffle);
   for (int i = 0; i < 5; ++i) {
     for (int j = 0; j < 7; ++j) {
       for (int k = 0; k < 3; ++k) {
         for (int l = 0; l < 2; ++l) {
-          VERIFY_IS_EQUAL(shuffle2(i,j,k,l), shuffle(i,j,k,l));
+          VERIFY_IS_EQUAL(shuffle2(i, j, k, l), shuffle(i, j, k, l));
         }
       }
     }
   }
 }
 
-
 template <int DataLayout>
-static void test_shuffle_unshuffle()
-{
-  Tensor<float, 4, DataLayout> tensor(2,3,5,7);
+static void test_shuffle_unshuffle() {
+  Tensor<float, 4, DataLayout> tensor(2, 3, 5, 7);
   tensor.setRandom();
 
   // Choose a random permutation.
@@ -207,18 +198,16 @@ static void test_shuffle_unshuffle()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 5; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), shuffle(i,j,k,l));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), shuffle(i, j, k, l));
         }
       }
     }
   }
 }
 
-
 template <int DataLayout>
-static void test_empty_shuffling()
-{
-  Tensor<float, 4, DataLayout> tensor(2,3,0,7);
+static void test_empty_shuffling() {
+  Tensor<float, 4, DataLayout> tensor(2, 3, 0, 7);
   tensor.setRandom();
   array<ptrdiff_t, 4> shuffles;
   shuffles[0] = 0;
@@ -238,7 +227,7 @@ static void test_empty_shuffling()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 0; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), no_shuffle(i,j,k,l));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), no_shuffle(i, j, k, l));
         }
       }
     }
@@ -260,16 +249,14 @@ static void test_empty_shuffling()
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 0; ++k) {
         for (int l = 0; l < 7; ++l) {
-          VERIFY_IS_EQUAL(tensor(i,j,k,l), shuffle(k,l,j,i));
+          VERIFY_IS_EQUAL(tensor(i, j, k, l), shuffle(k, l, j, i));
         }
       }
     }
   }
 }
 
-
-EIGEN_DECLARE_TEST(cxx11_tensor_shuffling)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_shuffling) {
   CALL_SUBTEST(test_simple_shuffling<ColMajor>());
   CALL_SUBTEST(test_simple_shuffling<RowMajor>());
   CALL_SUBTEST(test_expr_shuffling<ColMajor>());

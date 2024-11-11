@@ -15,7 +15,7 @@
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int64_t
-#include <SYCL/sycl.hpp>
+#include <CL/sycl.hpp>
 #include <fstream>
 #include <iostream>
 #include <chrono>
@@ -29,36 +29,38 @@ using Eigen::Tensor;
 using Eigen::TensorMap;
 std::ofstream out("Result.txt");
 
-std::chrono::time_point<std::chrono::system_clock> get_time(){
+std::chrono::time_point<std::chrono::system_clock> get_time() {
   std::chrono::time_point<std::chrono::system_clock> start, end;
   return std::chrono::system_clock::now();
 }
 
-template<typename Start, typename End, typename TensorIndex>
-void finalizeBenchmark(Start start, End end, TensorIndex m_, TensorIndex k_, TensorIndex n_ , TensorIndex num_iters, std::string name){
-
-  std::chrono::duration<double> elapsed_seconds = end-start;
-  std::cout <<"Kernel Name : " << name << ", M : " << m_ << ",  N : " << n_ << ", K : " << k_ << " GFLOP/s : " <<
-  static_cast<float>((static_cast<int64_t>(2) * m_ * n_ * k_ * num_iters)/ elapsed_seconds.count()) * 1e-9 << "\n";
-    out <<"Kernel Name : " << name << ", M : " << m_ << ",  N : " << n_ << ", K : " << k_ << " GFLOP/s : " <<
-    static_cast<float>((static_cast<int64_t>(2) * m_ * n_ * k_ * num_iters)/ elapsed_seconds.count()) * 1e-9 << "\n";
+template <typename Start, typename End, typename TensorIndex>
+void finalizeBenchmark(Start start, End end, TensorIndex m_, TensorIndex k_, TensorIndex n_, TensorIndex num_iters,
+                       std::string name) {
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  std::cout << "Kernel Name : " << name << ", M : " << m_ << ",  N : " << n_ << ", K : " << k_ << " GFLOP/s : "
+            << static_cast<float>((static_cast<int64_t>(2) * m_ * n_ * k_ * num_iters) / elapsed_seconds.count()) * 1e-9
+            << "\n";
+  out << "Kernel Name : " << name << ", M : " << m_ << ",  N : " << n_ << ", K : " << k_ << " GFLOP/s : "
+      << static_cast<float>((static_cast<int64_t>(2) * m_ * n_ * k_ * num_iters) / elapsed_seconds.count()) * 1e-9
+      << "\n";
 }
 
 // do a contraction which is equivalent to a matrix multiplication
-template<typename T, typename Device, typename TensorIndex>
+template <typename T, typename Device, typename TensorIndex>
 void contraction(const Device& device_, TensorIndex num_iters, TensorIndex m_, TensorIndex k_, TensorIndex n_) {
   T* a_;
   T* b_;
   T* c_;
-  a_ = (T *) device_.allocate(m_ * k_ * sizeof(T));
-  b_ = (T *) device_.allocate(k_ * n_ * sizeof(T));
-  c_ = (T *) device_.allocate(m_ * n_ * sizeof(T));
+  a_ = (T*)device_.allocate(m_ * k_ * sizeof(T));
+  b_ = (T*)device_.allocate(k_ * n_ * sizeof(T));
+  c_ = (T*)device_.allocate(m_ * n_ * sizeof(T));
 
   // Initialize the content of the memory pools to prevent asan from
   // complaining.
-  device_.memset(a_, 12, m_ * k_ * sizeof(T));
-  device_.memset(b_, 23, k_ * n_ * sizeof(T));
-  device_.memset(c_, 31, m_ * n_ * sizeof(T));
+  device_.fill(a_, a_ + (m_ * k_), T(12));
+  device_.fill(b_, b_ + (k_ * n_), T(23));
+  device_.fill(c_, c_ + (m_ * n_), T(31));
 
   Eigen::array<TensorIndex, 2> sizeA;
   sizeA[0] = m_;
@@ -77,16 +79,16 @@ void contraction(const Device& device_, TensorIndex num_iters, TensorIndex m_, T
   typedef typename Tensor<T, 2>::DimensionPair DimPair;
   Eigen::array<DimPair, 1> dims;
   dims[0] = DimPair(1, 0);
-#ifdef EIGEN_USE_SYCL // warmup for sycl
+#ifdef EIGEN_USE_SYCL  // warmup for sycl
   for (int iter = 0; iter < 10; ++iter) {
     C.device(device_) = A.contract(B, dims);
-   }
+  }
 #endif
   auto start = get_time();
   for (int iter = 0; iter < num_iters; ++iter) {
     C.device(device_) = A.contract(B, dims);
   }
- auto end = get_time();
+  auto end = get_time();
   // Record the number of FLOPs executed per second (size_ multiplications and
   // additions for each value in the resulting tensor)
   finalizeBenchmark(start, end, m_, k_, n_, num_iters, "contraction");
@@ -96,23 +98,21 @@ void contraction(const Device& device_, TensorIndex num_iters, TensorIndex m_, T
   device_.synchronize();
 }
 
-
-
 // do a contraction which is equivalent to a matrix multiplication
-template<typename T, typename Device, typename TensorIndex>
+template <typename T, typename Device, typename TensorIndex>
 void contractionRowMajor(const Device& device_, TensorIndex num_iters, TensorIndex m_, TensorIndex k_, TensorIndex n_) {
   T* a_;
   T* b_;
   T* c_;
-  a_ = (T *) device_.allocate(m_ * k_ * sizeof(T));
-  b_ = (T *) device_.allocate(k_ * n_ * sizeof(T));
-  c_ = (T *) device_.allocate(m_ * n_ * sizeof(T));
+  a_ = (T*)device_.allocate(m_ * k_ * sizeof(T));
+  b_ = (T*)device_.allocate(k_ * n_ * sizeof(T));
+  c_ = (T*)device_.allocate(m_ * n_ * sizeof(T));
 
   // Initialize the content of the memory pools to prevent asan from
   // complaining.
-  device_.memset(a_, 12, m_ * k_ * sizeof(T));
-  device_.memset(b_, 23, k_ * n_ * sizeof(T));
-  device_.memset(c_, 31, m_ * n_ * sizeof(T));
+  device_.memset(a_, T(12), T(m_ * k_ * sizeof(T)));
+  device_.memset(b_, T(23), T(k_ * n_ * sizeof(T)));
+  device_.memset(c_, T(31), T(m_ * n_ * sizeof(T)));
 
   Eigen::array<TensorIndex, 2> sizeA;
   sizeA[0] = m_;
@@ -131,10 +131,10 @@ void contractionRowMajor(const Device& device_, TensorIndex num_iters, TensorInd
   typedef typename Tensor<T, 2>::DimensionPair DimPair;
   Eigen::array<DimPair, 1> dims;
   dims[0] = DimPair(1, 0);
-#ifdef EIGEN_USE_SYCL // warmup for sycl
+#ifdef EIGEN_USE_SYCL  // warmup for sycl
   for (int iter = 0; iter < 10; ++iter) {
     C.device(device_) = A.contract(B, dims);
-   }
+  }
 #endif
   auto start = get_time();
   for (int iter = 0; iter < num_iters; ++iter) {
@@ -150,15 +150,14 @@ void contractionRowMajor(const Device& device_, TensorIndex num_iters, TensorInd
   device_.synchronize();
 }
 
-
-template<typename T, typename Device, typename TensorIndex>
+template <typename T, typename Device, typename TensorIndex>
 void contractionAT(const Device& device_, TensorIndex num_iters, TensorIndex m_, TensorIndex k_, TensorIndex n_) {
   T* a_;
   T* b_;
   T* c_;
-  a_ = (T *) device_.allocate(m_ * k_ * sizeof(T));
-  b_ = (T *) device_.allocate(k_ * n_ * sizeof(T));
-  c_ = (T *) device_.allocate(m_ * n_ * sizeof(T));
+  a_ = (T*)device_.allocate(m_ * k_ * sizeof(T));
+  b_ = (T*)device_.allocate(k_ * n_ * sizeof(T));
+  c_ = (T*)device_.allocate(m_ * n_ * sizeof(T));
 
   // Initialize the content of the memory pools to prevent asan from
   // complaining.
@@ -182,10 +181,10 @@ void contractionAT(const Device& device_, TensorIndex num_iters, TensorIndex m_,
   typedef typename Tensor<T, 2>::DimensionPair DimPair;
   Eigen::array<DimPair, 1> dims;
   dims[0] = DimPair(0, 0);
-#ifdef EIGEN_USE_SYCL // warmup for sycl
+#ifdef EIGEN_USE_SYCL  // warmup for sycl
   for (int iter = 0; iter < 10; ++iter) {
     C.device(device_) = A.contract(B, dims);
-   }
+  }
 #endif
   auto start = get_time();
   for (int iter = 0; iter < num_iters; ++iter) {
@@ -199,17 +198,16 @@ void contractionAT(const Device& device_, TensorIndex num_iters, TensorIndex m_,
   device_.deallocate(b_);
   device_.deallocate(c_);
   device_.synchronize();
-
 }
 
-template<typename T, typename Device, typename TensorIndex>
+template <typename T, typename Device, typename TensorIndex>
 void contractionBT(const Device& device_, TensorIndex num_iters, TensorIndex m_, TensorIndex k_, TensorIndex n_) {
   T* a_;
   T* b_;
   T* c_;
-  a_ = (T *) device_.allocate(m_ * k_ * sizeof(T));
-  b_ = (T *) device_.allocate(k_ * n_ * sizeof(T));
-  c_ = (T *) device_.allocate(m_ * n_ * sizeof(T));
+  a_ = (T*)device_.allocate(m_ * k_ * sizeof(T));
+  b_ = (T*)device_.allocate(k_ * n_ * sizeof(T));
+  c_ = (T*)device_.allocate(m_ * n_ * sizeof(T));
 
   // Initialize the content of the memory pools to prevent asan from
   // complaining.
@@ -234,10 +232,10 @@ void contractionBT(const Device& device_, TensorIndex num_iters, TensorIndex m_,
   typedef typename Tensor<T, 2>::DimensionPair DimPair;
   Eigen::array<DimPair, 1> dims;
   dims[0] = DimPair(1, 1);
-#ifdef EIGEN_USE_SYCL // warmup for sycl
+#ifdef EIGEN_USE_SYCL  // warmup for sycl
   for (int iter = 0; iter < 10; ++iter) {
     C.device(device_) = A.contract(B, dims);
-   }
+  }
 #endif
   auto start = get_time();
   for (int iter = 0; iter < num_iters; ++iter) {
@@ -251,17 +249,16 @@ void contractionBT(const Device& device_, TensorIndex num_iters, TensorIndex m_,
   device_.deallocate(b_);
   device_.deallocate(c_);
   device_.synchronize();
-
 }
 
-template<typename T, typename Device, typename TensorIndex>
+template <typename T, typename Device, typename TensorIndex>
 void contractionABT(const Device& device_, TensorIndex num_iters, TensorIndex m_, TensorIndex k_, TensorIndex n_) {
   T* a_;
   T* b_;
   T* c_;
-  a_ = (T *) device_.allocate(m_ * k_ * sizeof(T));
-  b_ = (T *) device_.allocate(k_ * n_ * sizeof(T));
-  c_ = (T *) device_.allocate(m_ * n_ * sizeof(T));
+  a_ = (T*)device_.allocate(m_ * k_ * sizeof(T));
+  b_ = (T*)device_.allocate(k_ * n_ * sizeof(T));
+  c_ = (T*)device_.allocate(m_ * n_ * sizeof(T));
 
   // Initialize the content of the memory pools to prevent asan from
   // complaining.
@@ -286,10 +283,10 @@ void contractionABT(const Device& device_, TensorIndex num_iters, TensorIndex m_
   typedef typename Tensor<T, 2>::DimensionPair DimPair;
   Eigen::array<DimPair, 1> dims;
   dims[0] = DimPair(0, 1);
-#ifdef EIGEN_USE_SYCL // warmup for sycl
+#ifdef EIGEN_USE_SYCL  // warmup for sycl
   for (int iter = 0; iter < 10; ++iter) {
     C.device(device_) = A.contract(B, dims);
-   }
+  }
 #endif
   auto start = get_time();
   for (int iter = 0; iter < num_iters; ++iter) {
@@ -309,10 +306,10 @@ int main() {
   cl::sycl::gpu_selector selector;
   Eigen::QueueInterface queue(selector);
   Eigen::SyclDevice device(&queue);
-  int64_t num_iters =20;
-  for(int64_t m = 32; m <= 4096; m *= 2)
-    for(int64_t k = 32; k <= 4096; k *= 2)
-      for(int64_t n = 32; n <= 4096; n*= 2){
+  int64_t num_iters = 20;
+  for (int64_t m = 32; m <= 4096; m *= 2)
+    for (int64_t k = 32; k <= 4096; k *= 2)
+      for (int64_t n = 32; n <= 4096; n *= 2) {
         (contraction<float>(device, num_iters, m, k, n));
         (contractionRowMajor<float>(device, num_iters, m, k, n));
         (contractionAT<float>(device, num_iters, m, k, n));
@@ -320,6 +317,6 @@ int main() {
         (contractionABT<float>(device, num_iters, m, k, n));
       }
   return 0;
-  }
+}
 
-#endif // EIGEN_BENCH_CONTRACT_SYCL
+#endif  // EIGEN_BENCH_CONTRACT_SYCL

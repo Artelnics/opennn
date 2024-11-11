@@ -27,12 +27,12 @@ int main()
         // Data set
 
         //Random image data set 
-        //onst Index samples_number = 10;
+        //const Index samples_number = 10;
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
 
-        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
+        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 5);
 
         //image_data_set.set_image_data_random();
         
@@ -49,9 +49,7 @@ int main()
 
         image_data_set.read_bmp();
 
-        //image_data_set.print();      
-        
-        //image_data_set.set(DataSet::SampleUse::Training);
+        //image_data_set.print();
 
         // Neural network
 
@@ -78,6 +76,16 @@ int main()
         cout<<image_data_set.get_input_dimensions()[0]<<", "<<image_data_set.get_input_dimensions()[1]<<", "<<image_data_set.get_input_dimensions()[2]<<", "<<image_data_set.get_input_dimensions()[3]<<endl;
 
         // Testing analysis
+
+        neural_network.save("C:/xmltest/outputs.xml");
+
+        NeuralNetwork imported_neural_network;
+        imported_neural_network.load("C:/xmltest/outputs.xml");
+
+        Index prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
+        cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
+        prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
+        cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         

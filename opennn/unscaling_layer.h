@@ -9,7 +9,6 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-#include <iostream>
 #include <string>
 
 #include "config.h"
@@ -27,9 +26,7 @@ public:
 
    explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const final;
 
    Tensor<Descriptives, 1> get_descriptives() const; 
@@ -42,13 +39,11 @@ public:
    Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
 
-   const bool& get_display() const;
-
    void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
 
@@ -56,15 +51,12 @@ public:
 
    void set_min_max_range(const type min, const type max);
 
-
    void set_scalers(const Tensor<Scaler,1>&);
    void set_scalers(const string&);
    void set_scalers(const Tensor<string, 1>&);
    void set_scalers(const Scaler&);
 
    void set_scaler(const Index&, const string&);
-
-   void set_display(const bool&);
 
    bool is_empty() const;
 
@@ -79,11 +71,9 @@ public:
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-protected:
-
-   // MEMBERS
+private:
 
    Tensor<Descriptives, 1> descriptives;
 
@@ -91,8 +81,6 @@ protected:
 
    type min_range;
    type max_range;
-
-   bool display = true;
 };
 
 

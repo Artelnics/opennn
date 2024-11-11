@@ -11,7 +11,7 @@
 #include <ctime>
 
 #include "conjugate_gradient.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn
@@ -644,11 +644,9 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    set_display_period(read_xml_index(root_element, "DisplayPeriod"));
-    set_save_period(read_xml_index(root_element, "SavePeriod"));
-    set_neural_network_file_name(read_xml_string(root_element, "NeuralNetworkFileName"));
-    set_display(read_xml_bool(root_element, "Display"));
-    set_hardware_use(read_xml_string(root_element, "HardwareUse"));
+    //set_display_period(read_xml_index(root_element, "DisplayPeriod"));
+    //set_save_period(read_xml_index(root_element, "SavePeriod"));
+    //set_neural_network_file_name(read_xml_string(root_element, "NeuralNetworkFileName"));
 }
 
 

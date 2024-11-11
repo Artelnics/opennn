@@ -8,7 +8,7 @@
 
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
-#include "neural_network_forward_propagation.h"
+#include "forward_propagation.h"
 #include "adaptive_moment_estimation.h"
 #include "back_propagation.h"
 
@@ -294,7 +294,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 target_variable_indices,
                                 context_variable_indices);
 
-            cout<<"========="<<endl;
 
             // Neural network
 
@@ -302,7 +301,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
-            cout<<"========="<<endl;
 
             // Loss index
 
@@ -311,15 +309,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
 
 
-            cout<<"========="<<endl;
-
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
             //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-            
+
             //system("pause");
 
             training_error += training_back_propagation.error();
@@ -570,13 +566,9 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("AdaptiveMomentEstimation");
 
     add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
-
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
-
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
-
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));
-
     add_xml_element(printer, "HardwareUse", get_hardware_use());
 
     printer.CloseElement();

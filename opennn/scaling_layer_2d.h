@@ -26,11 +26,8 @@ public:
 
    explicit ScalingLayer2D(const dimensions& = {0});
 
-   dimensions get_output_dimensions() const;
-
-   Index get_inputs_number() const final;
    dimensions get_input_dimensions() const;
-   Index get_neurons_number() const final;
+   dimensions get_output_dimensions() const;
 
    Tensor<Descriptives, 1> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
@@ -45,14 +42,10 @@ public:
    Tensor<string, 1> write_scalers() const;
    Tensor<string, 1> write_scalers_text() const;
 
-   const bool& get_display() const;
-
    void set(const dimensions& = {0});
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
-
-   void set_default();
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
    void set_item_descriptives(const Index&, const Descriptives&);
@@ -72,8 +65,6 @@ public:
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 
-   void set_display(const bool&);
-
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -88,15 +79,14 @@ public:
 
    string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    void print() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&) final;
-
+   void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    dimensions input_dimensions;
 
@@ -106,8 +96,6 @@ protected:
 
    type min_range;
    type max_range;
-
-   bool display = true;
 };
 
 
