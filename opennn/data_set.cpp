@@ -35,8 +35,6 @@ DataSet::DataSet(const Index& new_samples_number,
                  const dimensions& new_target_dimensions)
 {
     set(new_samples_number, new_input_dimensions, new_target_dimensions);
-
-    set_default();
 }
 
 
@@ -1952,12 +1950,12 @@ void DataSet::set(const Index& new_samples_number,
     input_dimensions = new_input_dimensions;
 
     target_dimensions = new_target_dimensions;
-
-    cout << new_samples_number << endl;
     
     sample_uses.resize(new_samples_number);
 
     split_samples_random();
+
+    set_default();
 }
 
 

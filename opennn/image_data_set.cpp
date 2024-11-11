@@ -16,27 +16,22 @@ using namespace fs;
 namespace opennn
 {
 
-ImageDataSet::ImageDataSet() : DataSet()
+
+ImageDataSet::ImageDataSet(const Index& new_samples_number,
+                           const dimensions& new_input_dimensions,
+                           const dimensions& new_target_dimensions)
 {
-    set_default();
+
+
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input dimensions is not 3");
+
+    if (new_target_dimensions.size() != 1)
+        throw runtime_error("Target dimensions is not 1");
 
     model_type = ModelType::ImageClassification;
 
-    input_dimensions.resize(3);
-    input_dimensions = { 0,0,0 };
-}
-
-
-ImageDataSet::ImageDataSet(const Index& new_classes_number,
-                           const Index& new_height,
-                           const Index& new_width,
-                           const Index& new_channels,
-                           const Index& new_targets_number)
-{
-    if (new_targets_number > new_classes_number)
-        throw runtime_error("Target_number cannot be bigger than samples_number");
-
-    set(new_classes_number, new_height, new_width, new_channels, new_targets_number);
+    set(new_samples_number, new_input_dimensions, new_target_dimensions);
 }
 
 
@@ -123,17 +118,16 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
     return random_vertical_translation_minimum;
 }
 
-
+/*
 void ImageDataSet::set(const Index& new_images_number,
                        const Index& new_height,
                        const Index& new_width,
                        const Index& new_channels,
                        const Index& new_targets_number)
 {
-    set_default();
 
     model_type = ModelType::ImageClassification;
-
+    
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
     const Index inputs_number = new_height * new_width * new_channels;
     const Index raw_variables_number = inputs_number + 1;
@@ -181,7 +175,7 @@ void ImageDataSet::set(const Index& new_images_number,
     split_samples_random();
 
 }
-
+*/
 
 void ImageDataSet::set_image_data_random()
 {
@@ -656,7 +650,7 @@ void ImageDataSet::read_bmp()
         ? folders_number -1 
         : folders_number;
 
-    set(samples_number, height, width, image_channels, targets_number);
+    set(samples_number, { height, width, image_channels }, { targets_number });
 
     Tensor<string, 1> categories(targets_number);
 
