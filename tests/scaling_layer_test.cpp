@@ -17,6 +17,17 @@ TEST(ScalingLayerTest, DefaultConstructor)
 }
 
 
+TEST(ScalingLayerTest, GeneralConstructor)
+{
+/*
+    ScalingLayer2D scaling_layer_2d({1});
+
+    EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{ 1 });
+    EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{ 1 });
+*/
+}
+
+
 /*
 namespace opennn
 {

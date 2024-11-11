@@ -70,16 +70,10 @@ Index TimeSeriesDataSet::get_time_series_variables_number() const
     Index variables_number = 0;
 
     for(Index i = 0; i < time_series_raw_variables_number; i++)
-    {
         if(raw_variables[i].type == RawVariableType::Categorical)
-        {
             variables_number += time_series_raw_variables[i].categories.size();
-        }
         else
-        {
             variables_number++;
-        }
-    }
 
     return variables_number;
 }

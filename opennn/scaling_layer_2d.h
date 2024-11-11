@@ -88,8 +88,6 @@ public:
 
 private:
 
-   dimensions input_dimensions;
-
    Tensor<Descriptives, 1> descriptives;
 
    Tensor<Scaler, 1> scalers;

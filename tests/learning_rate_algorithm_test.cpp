@@ -58,7 +58,7 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
-    Tensor<Index, 3> samples_indices(0, 1, samples_number);
+    Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
     LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 

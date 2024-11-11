@@ -579,11 +579,13 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
     layer = new_layer;
     
     batch_samples_number = new_batch_samples_number;
-    
+
+    if (!layer) return;
+
     const Index neurons_number = layer->get_output_dimensions()[0];
-    
+
     outputs.resize(batch_samples_number, neurons_number);
-       
+
     activation_derivatives.resize(batch_samples_number, neurons_number);
 
     activation_derivatives.setConstant((type)NAN);

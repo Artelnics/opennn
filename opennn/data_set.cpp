@@ -479,17 +479,17 @@ Tensor<Index, 1> DataSet::get_sample_uses_vector() const
 }
 
 
-vector<vector<Index>> DataSet::get_batches(const vector<Index>& samples_indices,
+vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
                                            const Index& batch_samples_number,
                                            const bool& shuffle,
                                            const Index& new_buffer_size) const
 {
-    if(!shuffle) return split_samples(samples_indices, batch_samples_number);
+    if(!shuffle) return split_samples(sample_indices, batch_samples_number);
 
     random_device rng;
     mt19937 urng(rng());
 
-    const Index samples_number = samples_indices.size();
+    const Index samples_number = sample_indices.size();
 
     Index buffer_size = new_buffer_size;
     Index batches_number;
@@ -509,11 +509,9 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& samples_indices,
         batches_number = samples_number / batch_size;
     }
 
-//    Tensor<Index, 2> batches(batches_number, batch_size);
-
     vector<vector<Index>> batches(batches_number);
 
-    vector<Index> samples_copy(samples_indices);
+    vector<Index> samples_copy(sample_indices);
 
     // Shuffle
 
@@ -1912,6 +1910,7 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
+/*
     data_path.clear();
 
     if (new_samples_number == 0 
@@ -1956,6 +1955,7 @@ void DataSet::set(const Index& new_samples_number,
     split_samples_random();
 
     set_default();
+*/
 }
 
 
@@ -3444,7 +3444,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
 {
     const Index samples_number = get_used_samples_number();
-    const vector<Index> samples_indices = get_used_sample_indices();
+    const vector<Index> sample_indices = get_used_sample_indices();
 
     const Index raw_variables_number = get_raw_variables_number();
     const Index used_raw_variables_number = get_used_raw_variables_number();
@@ -3509,7 +3509,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 
             for(Index j = 0; j < samples_number; j++)
             {
-                const Tensor<type, 1> sample = get_sample_data(samples_indices[Index(j)]);
+                const Tensor<type, 1> sample = get_sample_data(sample_indices[Index(j)]);
 
                 if(sample(variable_index) < box_plots(i).first_quartile - cleaning_parameter*interquartile_range
                 || sample(variable_index) > box_plots(i).third_quartile + cleaning_parameter*interquartile_range)
@@ -3534,7 +3534,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
     const Index samples_number = get_used_samples_number();
-    const vector<Index> samples_indices = get_used_sample_indices();
+    const vector<Index> sample_indices = get_used_sample_indices();
 
     const Index raw_variables_number = get_raw_variables_number();
     const Index used_raw_variables_number = get_used_raw_variables_number();
@@ -3599,7 +3599,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
             for(Index j = 0; j < samples_number; j++)
             {
-                const Tensor<type, 1> sample = get_sample_data(samples_indices[Index(j)]);
+                const Tensor<type, 1> sample = get_sample_data(sample_indices[Index(j)]);
 
                 if(sample[variable_index] < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range)
                 || sample[variable_index] > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
@@ -3608,7 +3608,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
                     raw_variables_outliers++;
 
-                    data(samples_indices[Index(j)], variable_index) = numeric_limits<type>::quiet_NaN();
+                    data(sample_indices[Index(j)], variable_index) = numeric_limits<type>::quiet_NaN();
                 }
             }
 
@@ -4672,9 +4672,9 @@ void DataSet::fix_repeated_names()
 }
 
 
-vector<vector<Index>> DataSet::split_samples(const vector<Index>& samples_indices, const Index& new_batch_size) const
+vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
 {
-    const Index samples_number = samples_indices.size();
+    const Index samples_number = sample_indices.size();
 
     Index batches_number;
     Index batch_size = new_batch_size;
@@ -4698,7 +4698,7 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& samples_indice
         batches[i].resize(batch_size);
 
         for (Index j = 0; j < batch_size; ++j)
-            batches[i][j] = samples_indices[count++];
+            batches[i][j] = sample_indices[count++];
 
     }
 

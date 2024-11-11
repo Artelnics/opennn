@@ -15,14 +15,15 @@ TEST(DataSetTest, DefaultConstructor)
 TEST(DataSetTest, DimensionsConstructor)
 {
     DataSet data_set(1, {1}, {1});
-    /*
+    
     EXPECT_EQ(data_set.get_samples_number(), 0);
 
     EXPECT_EQ(data_set.get_variables_number(), 2);
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Input), 1);
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Target), 1);
-*/
+
 }
+
 
 /*
 void DataSetTest::test_calculate_variables_descriptives()
