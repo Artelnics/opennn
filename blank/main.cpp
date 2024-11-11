@@ -17,12 +17,10 @@
 #include <cstring>
 #include <time.h>
 
-using namespace std;
-
 // OpenNN includes
 #include "../opennn/opennn.h"
 
-
+using namespace std;
 using namespace opennn;
 
 int main()

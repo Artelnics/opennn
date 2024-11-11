@@ -15,23 +15,21 @@
 
 #include <Eigen/CXX11/Tensor>
 
-using Eigen::Tensor;
+using Eigen::ColMajor;
 using Eigen::Index;
 using Eigen::RowMajor;
-using Eigen::ColMajor;
+using Eigen::Tensor;
 using Eigen::internal::TensorBlockShapeType;
 
 static TensorOpCost zeroCost() { return {0, 0, 0}; }
 
-template<typename T>
+template <typename T>
 static const T& choose(int layout, const T& col, const T& row) {
   return layout == ColMajor ? col : row;
 }
 
 static TensorBlockShapeType RandomShape() {
-  return internal::random<bool>()
-         ? TensorBlockShapeType::kUniformAllDims
-         : TensorBlockShapeType::kSkewedInnerDims;
+  return internal::random<bool>() ? TensorBlockShapeType::kUniformAllDims : TensorBlockShapeType::kSkewedInnerDims;
 }
 
 template <int NumDims>
@@ -66,15 +64,13 @@ static void Debug(DSizes<Index, NumDims> dims) {
 }
 
 template <int Layout>
-static void test_block_mapper_sanity()
-{
+static void test_block_mapper_sanity() {
   typedef internal::TensorBlockMapper<2, Layout> TensorBlockMapper;
 
   DSizes<Index, 2> tensor_dims(100, 100);
 
   // Test uniform blocks.
-  TensorBlockMapper uniform_block_mapper(
-      tensor_dims, {TensorBlockShapeType::kUniformAllDims, 100, zeroCost()});
+  TensorBlockMapper uniform_block_mapper(tensor_dims, {TensorBlockShapeType::kUniformAllDims, 100, zeroCost()});
 
   VERIFY_IS_EQUAL(uniform_block_mapper.blockCount(), 100);
   VERIFY_IS_EQUAL(uniform_block_mapper.blockTotalSize(), 100);
@@ -85,8 +81,7 @@ static void test_block_mapper_sanity()
   VERIFY_IS_EQUAL(uniform_b0.dimensions().at(1), 10);
 
   // Test skewed to inner dims blocks.
-  TensorBlockMapper skewed_block_mapper(
-      tensor_dims, {TensorBlockShapeType::kSkewedInnerDims, 100, zeroCost()});
+  TensorBlockMapper skewed_block_mapper(tensor_dims, {TensorBlockShapeType::kSkewedInnerDims, 100, zeroCost()});
 
   VERIFY_IS_EQUAL(skewed_block_mapper.blockCount(), 100);
   VERIFY_IS_EQUAL(skewed_block_mapper.blockTotalSize(), 100);
@@ -99,11 +94,10 @@ static void test_block_mapper_sanity()
 
 // Given a TensorBlock "visit" every element accessible though it, and a keep an
 // index in the visited set. Verify that every coeff accessed only once.
-template<int NumDims, int Layout>
-static void UpdateCoeffSet(
-    const DSizes<Index, NumDims>& tensor_strides,
-    const internal::TensorBlockDescriptor<NumDims>& block,
-    Index first_coeff_index, int dim_index, std::set<Index>* visited_coeffs) {
+template <int NumDims, int Layout>
+static void UpdateCoeffSet(const DSizes<Index, NumDims>& tensor_strides,
+                           const internal::TensorBlockDescriptor<NumDims>& block, Index first_coeff_index,
+                           int dim_index, std::set<Index>* visited_coeffs) {
   const DSizes<Index, NumDims>& block_sizes = block.dimensions();
 
   for (int i = 0; i < block_sizes[dim_index]; ++i) {
@@ -113,8 +107,7 @@ static void UpdateCoeffSet(
       VERIFY_IS_EQUAL(inserted.second, true);
     } else {
       int next_dim_index = dim_index + choose(Layout, -1, 1);
-      UpdateCoeffSet<NumDims, Layout>(tensor_strides, block, first_coeff_index,
-                                         next_dim_index, visited_coeffs);
+      UpdateCoeffSet<NumDims, Layout>(tensor_strides, block, first_coeff_index, next_dim_index, visited_coeffs);
       first_coeff_index += tensor_strides[dim_index];
     }
   }
@@ -131,14 +124,11 @@ static void test_block_mapper_maps_every_element() {
   std::set<Index> coeff_set;
 
   // Try different combinations of block types and sizes.
-  TensorBlockMapper block_mapper(
-      dims, {RandomShape(), RandomTargetSize(dims), zeroCost()});
+  TensorBlockMapper block_mapper(dims, {RandomShape(), RandomTargetSize(dims), zeroCost()});
 
   for (int i = 0; i < block_mapper.blockCount(); ++i) {
     auto block = block_mapper.blockDescriptor(i);
-    UpdateCoeffSet<NumDims, Layout>(strides, block, block.offset(),
-                                    choose(Layout, NumDims - 1, 0),
-                                    &coeff_set);
+    UpdateCoeffSet<NumDims, Layout>(strides, block, block.offset(), choose(Layout, NumDims - 1, 0), &coeff_set);
   }
 
   // Verify that every coefficient in the original Tensor is accessible through
@@ -150,10 +140,8 @@ static void test_block_mapper_maps_every_element() {
 }
 
 template <int Layout, int NumDims>
-static Index GetInputIndex(Index output_index,
-                         const array<Index, NumDims>& output_to_input_dim_map,
-                         const array<Index, NumDims>& input_strides,
-                         const array<Index, NumDims>& output_strides) {
+static Index GetInputIndex(Index output_index, const array<Index, NumDims>& output_to_input_dim_map,
+                           const array<Index, NumDims>& input_strides, const array<Index, NumDims>& output_strides) {
   int input_index = 0;
   if (Layout == ColMajor) {
     for (int i = NumDims - 1; i > 0; --i) {
@@ -161,22 +149,19 @@ static Index GetInputIndex(Index output_index,
       input_index += idx * input_strides[output_to_input_dim_map[i]];
       output_index -= idx * output_strides[i];
     }
-    return input_index +
-           output_index * input_strides[output_to_input_dim_map[0]];
+    return input_index + output_index * input_strides[output_to_input_dim_map[0]];
   } else {
     for (int i = 0; i < NumDims - 1; ++i) {
       const Index idx = output_index / output_strides[i];
       input_index += idx * input_strides[output_to_input_dim_map[i]];
       output_index -= idx * output_strides[i];
     }
-    return input_index +
-           output_index * input_strides[output_to_input_dim_map[NumDims - 1]];
+    return input_index + output_index * input_strides[output_to_input_dim_map[NumDims - 1]];
   }
 }
 
 template <int Layout, int NumDims>
-static array<Index, NumDims> ComputeStrides(
-    const array<Index, NumDims>& sizes) {
+static array<Index, NumDims> ComputeStrides(const array<Index, NumDims>& sizes) {
   array<Index, NumDims> strides;
   if (Layout == ColMajor) {
     strides[0] = 1;
@@ -192,42 +177,37 @@ static array<Index, NumDims> ComputeStrides(
   return strides;
 }
 
-template<typename Scalar, typename StorageIndex, int Dim>
-class EqualityChecker
-{
-    const Scalar* input_data;
-    const DSizes<StorageIndex, Dim> &input_dims, &input_strides, &output_dims, &output_strides;
-    void check_recursive(const Scalar* input, const Scalar* output, int depth=0) const
-    {
-        if(depth==Dim)
-        {
-            VERIFY_IS_EQUAL(*input, *output);
-            return;
-        }
-
-        for(int i=0; i<output_dims[depth]; ++i)
-        {
-            check_recursive(input + i % input_dims[depth] * input_strides[depth], output + i*output_strides[depth], depth+1);
-        }
+template <typename Scalar, typename StorageIndex, int Dim>
+class EqualityChecker {
+  const Scalar* input_data;
+  const DSizes<StorageIndex, Dim>&input_dims, &input_strides, &output_dims, &output_strides;
+  void check_recursive(const Scalar* input, const Scalar* output, int depth = 0) const {
+    if (depth == Dim) {
+      VERIFY_IS_EQUAL(*input, *output);
+      return;
     }
-public:
-    EqualityChecker(const Scalar* input_data_,
-            const DSizes<StorageIndex, Dim> &input_dims_, const DSizes<StorageIndex, Dim> &input_strides_,
-            const DSizes<StorageIndex, Dim> &output_dims_, const DSizes<StorageIndex, Dim> &output_strides_)
-        : input_data(input_data_)
-        , input_dims(input_dims_), input_strides(input_strides_)
-        , output_dims(output_dims_), output_strides(output_strides_)
-        {}
 
-    void operator()(const Scalar* output_data) const
-    {
-        check_recursive(input_data, output_data);
+    for (int i = 0; i < output_dims[depth]; ++i) {
+      check_recursive(input + i % input_dims[depth] * input_strides[depth], output + i * output_strides[depth],
+                      depth + 1);
     }
+  }
+
+ public:
+  EqualityChecker(const Scalar* input_data_, const DSizes<StorageIndex, Dim>& input_dims_,
+                  const DSizes<StorageIndex, Dim>& input_strides_, const DSizes<StorageIndex, Dim>& output_dims_,
+                  const DSizes<StorageIndex, Dim>& output_strides_)
+      : input_data(input_data_),
+        input_dims(input_dims_),
+        input_strides(input_strides_),
+        output_dims(output_dims_),
+        output_strides(output_strides_) {}
+
+  void operator()(const Scalar* output_data) const { check_recursive(input_data, output_data); }
 };
 
 template <int Layout>
-static void test_uniform_block_shape()
-{
+static void test_uniform_block_shape() {
   typedef internal::TensorBlockDescriptor<5> TensorBlock;
   typedef internal::TensorBlockMapper<5, Layout> TensorBlockMapper;
 
@@ -235,8 +215,7 @@ static void test_uniform_block_shape()
     // Test shape 'UniformAllDims' with uniform 'max_coeff count'.
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 5 * 5 * 5 * 5 * 5;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     for (int i = 0; i < 5; ++i) {
       VERIFY_IS_EQUAL(5, block.dimensions()[i]);
@@ -249,8 +228,7 @@ static void test_uniform_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 7 * 5 * 5 * 5 * 5;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[0]);
     for (int i = 1; i < 5; ++i) {
@@ -260,8 +238,7 @@ static void test_uniform_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 5 * 5 * 5 * 5 * 6;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(6, block.dimensions()[4]);
     for (int i = 3; i >= 0; --i) {
@@ -275,8 +252,7 @@ static void test_uniform_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 5 * 5 * 5 * 5;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(11, block.dimensions()[0]);
     for (int i = 1; i < 5; ++i) {
@@ -286,8 +262,7 @@ static void test_uniform_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 5 * 5 * 5 * 5 * 7;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     for (int i = 3; i >= 0; --i) {
@@ -301,8 +276,7 @@ static void test_uniform_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(7, 5, 6, 17, 7);
     const Index max_coeff_count = 7 * 5 * 6 * 7 * 5;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[0]);
     VERIFY_IS_EQUAL(5, block.dimensions()[1]);
@@ -313,8 +287,7 @@ static void test_uniform_block_shape()
   } else {
     DSizes<Index, 5> dims(7, 5, 6, 9, 7);
     const Index max_coeff_count = 5 * 5 * 5 * 6 * 7;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     VERIFY_IS_EQUAL(6, block.dimensions()[3]);
@@ -328,8 +301,7 @@ static void test_uniform_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(7, 5, 6, 17, 7);
     const Index max_coeff_count = 7 * 5 * 6 * 17 * 7;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[0]);
     VERIFY_IS_EQUAL(5, block.dimensions()[1]);
@@ -340,8 +312,7 @@ static void test_uniform_block_shape()
   } else {
     DSizes<Index, 5> dims(7, 5, 6, 9, 7);
     const Index max_coeff_count = 7 * 5 * 6 * 9 * 7;
-    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims,
-                                          max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kUniformAllDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     VERIFY_IS_EQUAL(9, block.dimensions()[3]);
@@ -353,8 +324,7 @@ static void test_uniform_block_shape()
 }
 
 template <int Layout>
-static void test_skewed_inner_dim_block_shape()
-{
+static void test_skewed_inner_dim_block_shape() {
   typedef internal::TensorBlockDescriptor<5> TensorBlock;
   typedef internal::TensorBlockMapper<5, Layout> TensorBlockMapper;
 
@@ -362,9 +332,7 @@ static void test_skewed_inner_dim_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 10 * 1 * 1 * 1 * 1;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(10, block.dimensions()[0]);
     for (int i = 1; i < 5; ++i) {
@@ -374,9 +342,7 @@ static void test_skewed_inner_dim_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 1 * 1 * 1 * 1 * 6;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(6, block.dimensions()[4]);
     for (int i = 3; i >= 0; --i) {
@@ -389,9 +355,7 @@ static void test_skewed_inner_dim_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 1 * 1 * 1 * 1;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(11, block.dimensions()[0]);
     for (int i = 1; i < 5; ++i) {
@@ -401,9 +365,7 @@ static void test_skewed_inner_dim_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 1 * 1 * 1 * 1 * 7;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     for (int i = 3; i >= 0; --i) {
@@ -417,9 +379,7 @@ static void test_skewed_inner_dim_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 3 * 1 * 1 * 1;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(11, block.dimensions()[0]);
     VERIFY_IS_EQUAL(3, block.dimensions()[1]);
@@ -430,9 +390,7 @@ static void test_skewed_inner_dim_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 1 * 1 * 1 * 15 * 7;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     VERIFY_IS_EQUAL(15, block.dimensions()[3]);
@@ -447,9 +405,7 @@ static void test_skewed_inner_dim_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 5 * 5 * 1 * 1;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(11, block.dimensions()[0]);
     VERIFY_IS_EQUAL(5, block.dimensions()[1]);
@@ -461,9 +417,7 @@ static void test_skewed_inner_dim_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 1 * 1 * 5 * 17 * 7;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     VERIFY_IS_EQUAL(17, block.dimensions()[3]);
@@ -478,9 +432,7 @@ static void test_skewed_inner_dim_block_shape()
   if (Layout == ColMajor) {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 5 * 6 * 17 * 7;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(11, block.dimensions()[0]);
     VERIFY_IS_EQUAL(5, block.dimensions()[1]);
@@ -491,9 +443,7 @@ static void test_skewed_inner_dim_block_shape()
   } else {
     DSizes<Index, 5> dims(11, 5, 6, 17, 7);
     const Index max_coeff_count = 11 * 5 * 6 * 17 * 7;
-    TensorBlockMapper block_mapper(
-        dims,
-        {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
+    TensorBlockMapper block_mapper(dims, {TensorBlockShapeType::kSkewedInnerDims, max_coeff_count, zeroCost()});
     TensorBlock block = block_mapper.blockDescriptor(0);
     VERIFY_IS_EQUAL(7, block.dimensions()[4]);
     VERIFY_IS_EQUAL(17, block.dimensions()[3]);
@@ -505,8 +455,7 @@ static void test_skewed_inner_dim_block_shape()
 }
 
 template <int Layout>
-static void test_empty_dims(const internal::TensorBlockShapeType block_shape)
-{
+static void test_empty_dims(const internal::TensorBlockShapeType block_shape) {
   // Test blocking of tensors with zero dimensions:
   //  - we must not crash on asserts and divisions by zero
   //  - we must not return block with zero dimensions
@@ -517,8 +466,7 @@ static void test_empty_dims(const internal::TensorBlockShapeType block_shape)
 
     DSizes<Index, 1> dims(0);
     for (size_t max_coeff_count = 0; max_coeff_count < 2; ++max_coeff_count) {
-      TensorBlockMapper block_mapper(
-          dims, {block_shape, max_coeff_count, zeroCost()});
+      TensorBlockMapper block_mapper(dims, {block_shape, max_coeff_count, zeroCost()});
       VERIFY_IS_EQUAL(block_mapper.blockCount(), 0);
       VERIFY(block_mapper.blockTotalSize() >= 1);
     }
@@ -531,8 +479,7 @@ static void test_empty_dims(const internal::TensorBlockShapeType block_shape)
       for (int dim2 = 0; dim2 < 3; ++dim2) {
         DSizes<Index, 2> dims(dim1, dim2);
         for (size_t max_coeff_count = 0; max_coeff_count < 2; ++max_coeff_count) {
-          TensorBlockMapper block_mapper(
-              dims, {block_shape, max_coeff_count, zeroCost()});
+          TensorBlockMapper block_mapper(dims, {block_shape, max_coeff_count, zeroCost()});
           if (dim1 * dim2 == 0) {
             VERIFY_IS_EQUAL(block_mapper.blockCount(), 0);
           }
@@ -543,7 +490,7 @@ static void test_empty_dims(const internal::TensorBlockShapeType block_shape)
   }
 }
 
-#define TEST_LAYOUTS(NAME) \
+#define TEST_LAYOUTS(NAME)        \
   CALL_SUBTEST(NAME<ColMajor>()); \
   CALL_SUBTEST(NAME<RowMajor>())
 
@@ -560,7 +507,7 @@ static void test_empty_dims(const internal::TensorBlockShapeType block_shape)
   CALL_SUBTEST((NAME<TYPE, 5, RowMajor>()))
 
 #define TEST_LAYOUTS_WITH_ARG(NAME, ARG) \
-  CALL_SUBTEST(NAME<ColMajor>(ARG)); \
+  CALL_SUBTEST(NAME<ColMajor>(ARG));     \
   CALL_SUBTEST(NAME<RowMajor>(ARG))
 
 EIGEN_DECLARE_TEST(cxx11_tensor_block_access) {

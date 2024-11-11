@@ -93,7 +93,7 @@ void Transformer::set(const Index& input_length,
 
     input_embedding_layer->set_dropout_rate(dropout_rate);
     input_embedding_layer->set_name("input_embedding");
-    name = input_embedding_layer->get_name();
+    //name = input_embedding_layer->get_name();
     add_layer(std::move(input_embedding_layer));
     set_layer_inputs_indices("input_embedding", "input");
 
@@ -102,7 +102,7 @@ void Transformer::set(const Index& input_length,
 
     context_embedding_layer->set_dropout_rate(dropout_rate);
     context_embedding_layer->set_name("context_embedding");
-    name = context_embedding_layer->get_name();
+    //name = context_embedding_layer->get_name();
     add_layer(std::move(context_embedding_layer));
     set_layer_inputs_indices("context_embedding", "context");
 
@@ -117,7 +117,7 @@ void Transformer::set(const Index& input_length,
 
         context_self_attention_layer->set_dropout_rate(dropout_rate);
         context_self_attention_layer->set_name("context_self_attention_" + to_string(i+1));
-        name = context_self_attention_layer->get_name();
+        //name = context_self_attention_layer->get_name();
 
         add_layer(std::move(context_self_attention_layer));
 
@@ -132,7 +132,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<AdditionLayer3D>(context_length, embedding_depth);
 
         context_self_attention_addition_layer->set_name("context_self_attention_addition_" + to_string(i+1));
-        name = context_self_attention_addition_layer->get_name();
+        //name = context_self_attention_addition_layer->get_name();
 
         add_layer(std::move(context_self_attention_addition_layer));
 
@@ -147,7 +147,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<NormalizationLayer3D>(context_length, embedding_depth);
 
         context_self_attention_normalization_layer->set_name("context_self_attention_normalization_" + to_string(i+1));
-        name = context_self_attention_normalization_layer->get_name();
+        //name = context_self_attention_normalization_layer->get_name();
         
         add_layer(std::move(context_self_attention_normalization_layer));
         
@@ -159,7 +159,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<PerceptronLayer3D>(context_length, embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         encoder_internal_perceptron_layer->set_name("encoder_internal_perceptron_" + to_string(i+1));
-        name = encoder_internal_perceptron_layer->get_name();
+        //name = encoder_internal_perceptron_layer->get_name();
         
         add_layer(std::move(encoder_internal_perceptron_layer));
         
@@ -172,7 +172,7 @@ void Transformer::set(const Index& input_length,
 
         encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
         encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
-        name = encoder_external_perceptron_layer->get_name();
+        //name = encoder_external_perceptron_layer->get_name();
         
         add_layer(std::move(encoder_external_perceptron_layer));
         
@@ -184,7 +184,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<AdditionLayer3D>(context_length, embedding_depth);
         
         encoder_perceptron_addition_layer->set_name("encoder_perceptron_addition_" + to_string(i+1));
-        name = encoder_perceptron_addition_layer->get_name();
+        //name = encoder_perceptron_addition_layer->get_name();
         
         add_layer(std::move(encoder_perceptron_addition_layer));
         
@@ -196,7 +196,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<NormalizationLayer3D>(context_length, embedding_depth);
         
         encoder_perceptron_normalization_layer->set_name("encoder_perceptron_normalization_" + to_string(i+1));
-        name = encoder_perceptron_normalization_layer->get_name();
+        //name = encoder_perceptron_normalization_layer->get_name();
         
         add_layer(std::move(encoder_perceptron_normalization_layer));
         
@@ -212,7 +212,7 @@ void Transformer::set(const Index& input_length,
 
         input_self_attention_layer->set_dropout_rate(dropout_rate);
         input_self_attention_layer->set_name("input_self_attention_" + to_string(i+1));
-        name = input_self_attention_layer->get_name();
+        //name = input_self_attention_layer->get_name();
         add_layer(std::move(input_self_attention_layer));
 
         if(i == 0)
@@ -224,7 +224,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<AdditionLayer3D>(input_length, embedding_depth);
         
         input_self_attention_addition_layer->set_name("input_self_attention_addition_" + to_string(i+1));
-        name = input_self_attention_addition_layer->get_name();
+        //name = input_self_attention_addition_layer->get_name();
         add_layer(std::move(input_self_attention_addition_layer));
 
         if(i == 0)
@@ -235,7 +235,7 @@ void Transformer::set(const Index& input_length,
         unique_ptr<NormalizationLayer3D> input_self_attention_normalization_layer 
             = make_unique<NormalizationLayer3D>(input_length, embedding_depth);
         input_self_attention_normalization_layer->set_name("input_self_attention_normalization_" + to_string(i+1));
-        name = input_self_attention_normalization_layer->get_name();
+        //name = input_self_attention_normalization_layer->get_name();
         add_layer(std::move(input_self_attention_normalization_layer));
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i+1), "input_self_attention_addition_" + to_string(i+1));
 
@@ -244,21 +244,21 @@ void Transformer::set(const Index& input_length,
 
         cross_attention_layer->set_dropout_rate(dropout_rate);
         cross_attention_layer->set_name("cross_attention_" + to_string(i+1));
-        name = cross_attention_layer->get_name();
+        //name = cross_attention_layer->get_name();
         add_layer(std::move(cross_attention_layer));
         set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(layers_number)});
 
         unique_ptr<AdditionLayer3D> cross_attention_addition_layer 
             = make_unique<AdditionLayer3D>(input_length, embedding_depth);
         cross_attention_addition_layer->set_name("cross_attention_addition_" + to_string(i+1));
-        name = cross_attention_addition_layer->get_name();
+        //name = cross_attention_addition_layer->get_name();
         add_layer(std::move(cross_attention_addition_layer));
         set_layer_inputs_indices("cross_attention_addition_" + to_string(i+1), { "input_self_attention_normalization_" + to_string(i+1), "cross_attention_" + to_string(i+1) });
         
         unique_ptr<NormalizationLayer3D> cross_attention_normalization_layer 
             = make_unique<NormalizationLayer3D>(input_length, embedding_depth);
         cross_attention_normalization_layer->set_name("cross_attention_normalization_" + to_string(i+1));
-        name = cross_attention_normalization_layer->get_name();
+        //name = cross_attention_normalization_layer->get_name();
         add_layer(std::move(cross_attention_normalization_layer));
         set_layer_inputs_indices("cross_attention_normalization_" + to_string(i+1), "cross_attention_addition_" + to_string(i+1));
 
@@ -266,7 +266,7 @@ void Transformer::set(const Index& input_length,
             = make_unique<PerceptronLayer3D>(input_length, embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         decoder_internal_perceptron_layer->set_name("decoder_internal_perceptron_" + to_string(i+1));
-        name = decoder_internal_perceptron_layer->get_name();
+        //name = decoder_internal_perceptron_layer->get_name();
         add_layer(std::move(decoder_internal_perceptron_layer));
         set_layer_inputs_indices("decoder_internal_perceptron_" + to_string(i+1), "cross_attention_normalization_" + to_string(i+1));
 
@@ -275,21 +275,21 @@ void Transformer::set(const Index& input_length,
 
         decoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
         decoder_external_perceptron_layer->set_name("decoder_external_perceptron_" + to_string(i+1));
-        name = decoder_external_perceptron_layer->get_name();
+        //name = decoder_external_perceptron_layer->get_name();
         add_layer(std::move(decoder_external_perceptron_layer));
         set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));
 
         unique_ptr<AdditionLayer3D> decoder_perceptron_addition_layer 
             = make_unique<AdditionLayer3D>(input_length, embedding_depth);
         decoder_perceptron_addition_layer->set_name("decoder_perceptron_addition_" + to_string(i+1));
-        name = decoder_perceptron_addition_layer->get_name();
+        //name = decoder_perceptron_addition_layer->get_name();
         add_layer(std::move(decoder_perceptron_addition_layer));
         set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i+1), { "cross_attention_normalization_" + to_string(i+1), "decoder_external_perceptron_" + to_string(i+1) });
 
         unique_ptr<NormalizationLayer3D> decoder_perceptron_normalization_layer 
             = make_unique<NormalizationLayer3D>(input_length, embedding_depth);
         decoder_perceptron_normalization_layer->set_name("decoder_perceptron_normalization_" + to_string(i+1));
-        name = decoder_perceptron_normalization_layer->get_name();
+        //name = decoder_perceptron_normalization_layer->get_name();
         add_layer(std::move(decoder_perceptron_normalization_layer));
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i+1), "decoder_perceptron_addition_" + to_string(i+1));
     }
@@ -300,18 +300,16 @@ void Transformer::set(const Index& input_length,
         = make_unique<ProbabilisticLayer3D>(input_length, embedding_depth, input_dimensions);
     
     final_layer->set_name("probabilistic");
-    name = final_layer->get_name();
+    //name = final_layer->get_name();
     add_layer(std::move(final_layer));
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
-    for(Index i = 0; i < layer_input_indices.size(); i++){
-        cout<<layers[i]->get_name()<<endl;
-        for(Index j = 0; j < layer_input_indices[i].size(); j++){
-            if(layer_input_indices[i][j]>-1)
-            cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<" -> "<<layers[layer_input_indices[i][j]]->get_name()<<endl;
-            else{cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;}}
-        cout<<endl;}
-    // for(Index i = 0; i < layer_input_indices[i]; i++)
-    //         cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;
+    // for(Index i = 0; i < layer_input_indices.size(); i++){
+    //     cout<<layers[i]->get_name()<<endl;
+    //     for(Index j = 0; j < layer_input_indices[i].size(); j++){
+    //         if(layer_input_indices[i][j]>-1)
+    //         cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<" -> "<<layers[layer_input_indices[i][j]]->get_name()<<endl;
+    //         else{cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;}}
+    //     cout<<endl;}
 }
 
 
@@ -387,7 +385,8 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
 
         input(i) = type(prediction(0));
 
-        if(prediction(0) == end_indicator) break;
+        if(prediction(0) == end_indicator)
+            break;
     }
     
     ostringstream output_string;
@@ -412,9 +411,9 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
     //forward_propagate(input_pairs, forward_propagation, false);
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
+    const pair<type*, dimensions> output_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    return tensor_map_3(outputs_pair);
+    return tensor_map_3(output_pair);
 }
 
 

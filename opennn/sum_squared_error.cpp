@@ -95,7 +95,7 @@ void SumSquaredError::calculate_output_delta_lm(const Batch&,
 
     output_deltas.device(*thread_pool_device) = errors;
 
-    divide_columns(thread_pool_device, output_deltas, squared_errors);
+    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 

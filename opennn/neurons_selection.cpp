@@ -102,8 +102,6 @@ void NeuronsSelection::set_default()
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    // MEMBERS
-
     minimum_neurons = 1;
 
     // Heuristic value for the maximum_neurons

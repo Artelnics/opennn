@@ -16,7 +16,7 @@
 
 using Eigen::Tensor;
 
-template<typename T>
+template <typename T>
 void test_cuda_complex_cwise_ops() {
   const int kNumItems = 2;
   std::size_t complex_bytes = kNumItems * sizeof(std::complex<T>);
@@ -31,12 +31,9 @@ void test_cuda_complex_cwise_ops() {
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_in1(
-      d_in1, kNumItems);
-  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_in2(
-      d_in2, kNumItems);
-  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_out(
-      d_out, kNumItems);
+  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_in1(d_in1, kNumItems);
+  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_in2(d_in2, kNumItems);
+  Eigen::TensorMap<Eigen::Tensor<std::complex<T>, 1, 0, int>, Eigen::Aligned> gpu_out(d_out, kNumItems);
 
   const std::complex<T> a(3.14f, 2.7f);
   const std::complex<T> b(-10.6f, 1.4f);
@@ -44,14 +41,7 @@ void test_cuda_complex_cwise_ops() {
   gpu_in1.device(gpu_device) = gpu_in1.constant(a);
   gpu_in2.device(gpu_device) = gpu_in2.constant(b);
 
-  enum CwiseOp {
-    Add = 0,
-    Sub,
-    Mul,
-    Div,
-    Neg,
-    NbOps
-  };
+  enum CwiseOp { Add = 0, Sub, Mul, Div, Neg, NbOps };
 
   Tensor<std::complex<T>, 1, 0, int> actual(kNumItems);
   for (int op = Add; op < NbOps; op++) {
@@ -80,8 +70,8 @@ void test_cuda_complex_cwise_ops() {
       case NbOps:
         break;
     }
-    assert(cudaMemcpyAsync(actual.data(), d_out, complex_bytes, cudaMemcpyDeviceToHost,
-                           gpu_device.stream()) == cudaSuccess);
+    assert(cudaMemcpyAsync(actual.data(), d_out, complex_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) ==
+           cudaSuccess);
     assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
 
     for (int i = 0; i < kNumItems; ++i) {
@@ -94,9 +84,7 @@ void test_cuda_complex_cwise_ops() {
   cudaFree(d_out);
 }
 
-
-EIGEN_DECLARE_TEST(test_cxx11_tensor_complex_cwise_ops)
-{
+EIGEN_DECLARE_TEST(test_cxx11_tensor_complex_cwise_ops) {
   CALL_SUBTEST(test_cuda_complex_cwise_ops<float>());
   CALL_SUBTEST(test_cuda_complex_cwise_ops<double>());
 }

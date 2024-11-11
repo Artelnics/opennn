@@ -15,17 +15,14 @@
 
 template <typename MatrixType>
 void cod() {
-  STATIC_CHECK(( internal::is_same<typename CompleteOrthogonalDecomposition<MatrixType>::StorageIndex,int>::value ));
-
   Index rows = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE);
   Index cols = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE);
   Index cols2 = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE);
   Index rank = internal::random<Index>(1, (std::min)(rows, cols) - 1);
 
   typedef typename MatrixType::Scalar Scalar;
-  typedef Matrix<Scalar, MatrixType::RowsAtCompileTime,
-                 MatrixType::RowsAtCompileTime>
-      MatrixQType;
+  typedef typename MatrixType::RealScalar RealScalar;
+  typedef Matrix<Scalar, MatrixType::RowsAtCompileTime, MatrixType::RowsAtCompileTime> MatrixQType;
   MatrixType matrix;
   createRandomPIMatrixOfRank(rank, rows, cols, matrix);
   CompleteOrthogonalDecomposition<MatrixType> cod(matrix);
@@ -43,8 +40,7 @@ void cod() {
 
   MatrixType t;
   t.setZero(rows, cols);
-  t.topLeftCorner(rank, rank) =
-      cod.matrixT().topLeftCorner(rank, rank).template triangularView<Upper>();
+  t.topLeftCorner(rank, rank) = cod.matrixT().topLeftCorner(rank, rank).template triangularView<Upper>();
 
   MatrixType c = q * t * z * cod.colsPermutation().inverse();
   VERIFY_IS_APPROX(matrix, c);
@@ -55,20 +51,34 @@ void cod() {
   MatrixType exact_solution = MatrixType::Random(cols, cols2);
   MatrixType rhs = matrix * exact_solution;
   MatrixType cod_solution = cod.solve(rhs);
-  JacobiSVD<MatrixType> svd(matrix, ComputeThinU | ComputeThinV);
+  JacobiSVD<MatrixType, ComputeThinU | ComputeThinV> svd(matrix);
   MatrixType svd_solution = svd.solve(rhs);
   VERIFY_IS_APPROX(cod_solution, svd_solution);
 
   MatrixType pinv = cod.pseudoInverse();
   VERIFY_IS_APPROX(cod_solution, pinv * rhs);
+
+  // now construct a (square) matrix with prescribed determinant
+  Index size = internal::random<Index>(2, 20);
+  matrix.setZero(size, size);
+  for (int i = 0; i < size; i++) {
+    matrix(i, i) = internal::random<Scalar>();
+  }
+  Scalar det = matrix.diagonal().prod();
+  RealScalar absdet = numext::abs(det);
+  CompleteOrthogonalDecomposition<MatrixType> cod2(matrix);
+  cod2.compute(matrix);
+  q = cod2.householderQ();
+  matrix = q * matrix * q.adjoint();
+  VERIFY_IS_APPROX(det, cod2.determinant());
+  VERIFY_IS_APPROX(absdet, cod2.absDeterminant());
+  VERIFY_IS_APPROX(numext::log(absdet), cod2.logAbsDeterminant());
+  VERIFY_IS_APPROX(numext::sign(det), cod2.signDeterminant());
 }
 
 template <typename MatrixType, int Cols2>
 void cod_fixedsize() {
-  enum {
-    Rows = MatrixType::RowsAtCompileTime,
-    Cols = MatrixType::ColsAtCompileTime
-  };
+  enum { Rows = MatrixType::RowsAtCompileTime, Cols = MatrixType::ColsAtCompileTime };
   typedef typename MatrixType::Scalar Scalar;
   typedef CompleteOrthogonalDecomposition<Matrix<Scalar, Rows, Cols> > COD;
   int rank = internal::random<int>(1, (std::min)(int(Rows), int(Cols)) - 1);
@@ -88,7 +98,7 @@ void cod_fixedsize() {
   exact_solution.setRandom(Cols, Cols2);
   Matrix<Scalar, Rows, Cols2> rhs = matrix * exact_solution;
   Matrix<Scalar, Cols, Cols2> cod_solution = cod.solve(rhs);
-  JacobiSVD<MatrixType> svd(matrix, ComputeFullU | ComputeFullV);
+  JacobiSVD<MatrixType, ComputeFullU | ComputeFullV> svd(matrix);
   Matrix<Scalar, Cols, Cols2> svd_solution = svd.solve(rhs);
   VERIFY_IS_APPROX(cod_solution, svd_solution);
 
@@ -96,20 +106,19 @@ void cod_fixedsize() {
   VERIFY_IS_APPROX(cod_solution, pinv * rhs);
 }
 
-template<typename MatrixType> void qr()
-{
+template <typename MatrixType>
+void qr() {
   using std::sqrt;
 
-  STATIC_CHECK(( internal::is_same<typename ColPivHouseholderQR<MatrixType>::StorageIndex,int>::value ));
-
-  Index rows = internal::random<Index>(2,EIGEN_TEST_MAX_SIZE), cols = internal::random<Index>(2,EIGEN_TEST_MAX_SIZE), cols2 = internal::random<Index>(2,EIGEN_TEST_MAX_SIZE);
-  Index rank = internal::random<Index>(1, (std::min)(rows, cols)-1);
+  Index rows = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE), cols = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE),
+        cols2 = internal::random<Index>(2, EIGEN_TEST_MAX_SIZE);
+  Index rank = internal::random<Index>(1, (std::min)(rows, cols) - 1);
 
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
   typedef Matrix<Scalar, MatrixType::RowsAtCompileTime, MatrixType::RowsAtCompileTime> MatrixQType;
   MatrixType m1;
-  createRandomPIMatrixOfRank(rank,rows,cols,m1);
+  createRandomPIMatrixOfRank(rank, rows, cols, m1);
   ColPivHouseholderQR<MatrixType> qr(m1);
   VERIFY_IS_EQUAL(rank, qr.rank());
   VERIFY_IS_EQUAL(cols - qr.rank(), qr.dimensionOfKernel());
@@ -126,8 +135,7 @@ template<typename MatrixType> void qr()
 
   // Verify that the absolute value of the diagonal elements in R are
   // non-increasing until they reach the singularity threshold.
-  RealScalar threshold =
-      sqrt(RealScalar(rows)) * numext::abs(r(0, 0)) * NumTraits<Scalar>::epsilon();
+  RealScalar threshold = sqrt(RealScalar(rows)) * numext::abs(r(0, 0)) * NumTraits<Scalar>::epsilon();
   for (Index i = 0; i < (std::min)(rows, cols) - 1; ++i) {
     RealScalar x = numext::abs(r(i, i));
     RealScalar y = numext::abs(r(i + 1, i + 1));
@@ -136,8 +144,7 @@ template<typename MatrixType> void qr()
       for (Index j = 0; j < (std::min)(rows, cols); ++j) {
         std::cout << "i = " << j << ", |r_ii| = " << numext::abs(r(j, j)) << std::endl;
       }
-      std::cout << "Failure at i=" << i << ", rank=" << rank
-                << ", threshold=" << threshold << std::endl;
+      std::cout << "Failure at i=" << i << ", rank=" << rank << ", threshold=" << threshold << std::endl;
     }
     VERIFY_IS_APPROX_OR_LESS_THAN(y, x);
   }
@@ -148,43 +155,42 @@ template<typename MatrixType> void qr()
     MatrixType m2, m3;
     Index size = rows;
     do {
-      m1 = MatrixType::Random(size,size);
+      m1 = MatrixType::Random(size, size);
       qr.compute(m1);
-    } while(!qr.isInvertible());
+    } while (!qr.isInvertible());
     MatrixType m1_inv = qr.inverse();
-    m3 = m1 * MatrixType::Random(size,cols2);
+    m3 = m1 * MatrixType::Random(size, cols2);
     m2 = qr.solve(m3);
-    VERIFY_IS_APPROX(m2, m1_inv*m3);
+    VERIFY_IS_APPROX(m2, m1_inv * m3);
   }
 }
 
-template<typename MatrixType, int Cols2> void qr_fixedsize()
-{
-  using std::sqrt;
+template <typename MatrixType, int Cols2>
+void qr_fixedsize() {
   using std::abs;
+  using std::sqrt;
   enum { Rows = MatrixType::RowsAtCompileTime, Cols = MatrixType::ColsAtCompileTime };
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
-  int rank = internal::random<int>(1, (std::min)(int(Rows), int(Cols))-1);
-  Matrix<Scalar,Rows,Cols> m1;
-  createRandomPIMatrixOfRank(rank,Rows,Cols,m1);
-  ColPivHouseholderQR<Matrix<Scalar,Rows,Cols> > qr(m1);
+  int rank = internal::random<int>(1, (std::min)(int(Rows), int(Cols)) - 1);
+  Matrix<Scalar, Rows, Cols> m1;
+  createRandomPIMatrixOfRank(rank, Rows, Cols, m1);
+  ColPivHouseholderQR<Matrix<Scalar, Rows, Cols> > qr(m1);
   VERIFY_IS_EQUAL(rank, qr.rank());
   VERIFY_IS_EQUAL(Cols - qr.rank(), qr.dimensionOfKernel());
   VERIFY_IS_EQUAL(qr.isInjective(), (rank == Rows));
   VERIFY_IS_EQUAL(qr.isSurjective(), (rank == Cols));
   VERIFY_IS_EQUAL(qr.isInvertible(), (qr.isInjective() && qr.isSurjective()));
 
-  Matrix<Scalar,Rows,Cols> r = qr.matrixQR().template triangularView<Upper>();
-  Matrix<Scalar,Rows,Cols> c = qr.householderQ() * r * qr.colsPermutation().inverse();
+  Matrix<Scalar, Rows, Cols> r = qr.matrixQR().template triangularView<Upper>();
+  Matrix<Scalar, Rows, Cols> c = qr.householderQ() * r * qr.colsPermutation().inverse();
   VERIFY_IS_APPROX(m1, c);
 
-  check_solverbase<Matrix<Scalar,Cols,Cols2>, Matrix<Scalar,Rows,Cols2> >(m1, qr, Rows, Cols, Cols2);
+  check_solverbase<Matrix<Scalar, Cols, Cols2>, Matrix<Scalar, Rows, Cols2> >(m1, qr, Rows, Cols, Cols2);
 
   // Verify that the absolute value of the diagonal elements in R are
   // non-increasing until they reache the singularity threshold.
-  RealScalar threshold =
-      sqrt(RealScalar(Rows)) * (std::abs)(r(0, 0)) * NumTraits<Scalar>::epsilon();
+  RealScalar threshold = sqrt(RealScalar(Rows)) * (std::abs)(r(0, 0)) * NumTraits<Scalar>::epsilon();
   for (Index i = 0; i < (std::min)(int(Rows), int(Cols)) - 1; ++i) {
     RealScalar x = numext::abs(r(i, i));
     RealScalar y = numext::abs(r(i + 1, i + 1));
@@ -193,8 +199,7 @@ template<typename MatrixType, int Cols2> void qr_fixedsize()
       for (Index j = 0; j < (std::min)(int(Rows), int(Cols)); ++j) {
         std::cout << "i = " << j << ", |r_ii| = " << numext::abs(r(j, j)) << std::endl;
       }
-      std::cout << "Failure at i=" << i << ", rank=" << rank
-                << ", threshold=" << threshold << std::endl;
+      std::cout << "Failure at i=" << i << ", rank=" << rank << ", threshold=" << threshold << std::endl;
     }
     VERIFY_IS_APPROX_OR_LESS_THAN(y, x);
   }
@@ -207,20 +212,20 @@ template<typename MatrixType, int Cols2> void qr_fixedsize()
 // for rank-revealing QR. See
 // http://www.netlib.org/lapack/lawnspdf/lawn176.pdf
 // page 3 for more detail.
-template<typename MatrixType> void qr_kahan_matrix()
-{
-  using std::sqrt;
+template <typename MatrixType>
+void qr_kahan_matrix() {
   using std::abs;
+  using std::sqrt;
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::RealScalar RealScalar;
 
   Index rows = 300, cols = rows;
 
   MatrixType m1;
-  m1.setZero(rows,cols);
+  m1.setZero(rows, cols);
   RealScalar s = std::pow(NumTraits<RealScalar>::epsilon(), 1.0 / rows);
-  RealScalar c = std::sqrt(1 - s*s);
-  RealScalar pow_s_i(1.0); // pow(s,i)
+  RealScalar c = std::sqrt(1 - s * s);
+  RealScalar pow_s_i(1.0);  // pow(s,i)
   for (Index i = 0; i < rows; ++i) {
     m1(i, i) = pow_s_i;
     m1.row(i).tail(rows - i - 1) = -pow_s_i * c * MatrixType::Ones(1, rows - i - 1);
@@ -230,8 +235,7 @@ template<typename MatrixType> void qr_kahan_matrix()
   ColPivHouseholderQR<MatrixType> qr(m1);
   MatrixType r = qr.matrixQR().template triangularView<Upper>();
 
-  RealScalar threshold =
-      std::sqrt(RealScalar(rows)) * numext::abs(r(0, 0)) * NumTraits<Scalar>::epsilon();
+  RealScalar threshold = std::sqrt(RealScalar(rows)) * numext::abs(r(0, 0)) * NumTraits<Scalar>::epsilon();
   for (Index i = 0; i < (std::min)(rows, cols) - 1; ++i) {
     RealScalar x = numext::abs(r(i, i));
     RealScalar y = numext::abs(r(i + 1, i + 1));
@@ -240,29 +244,27 @@ template<typename MatrixType> void qr_kahan_matrix()
       for (Index j = 0; j < (std::min)(rows, cols); ++j) {
         std::cout << "i = " << j << ", |r_ii| = " << numext::abs(r(j, j)) << std::endl;
       }
-      std::cout << "Failure at i=" << i << ", rank=" << qr.rank()
-                << ", threshold=" << threshold << std::endl;
+      std::cout << "Failure at i=" << i << ", rank=" << qr.rank() << ", threshold=" << threshold << std::endl;
     }
     VERIFY_IS_APPROX_OR_LESS_THAN(y, x);
   }
 }
 
-template<typename MatrixType> void qr_invertible()
-{
-  using std::log;
+template <typename MatrixType>
+void qr_invertible() {
   using std::abs;
+  using std::log;
   typedef typename NumTraits<typename MatrixType::Scalar>::Real RealScalar;
   typedef typename MatrixType::Scalar Scalar;
 
-  int size = internal::random<int>(10,50);
+  int size = internal::random<int>(10, 50);
 
   MatrixType m1(size, size), m2(size, size), m3(size, size);
-  m1 = MatrixType::Random(size,size);
+  m1 = MatrixType::Random(size, size);
 
-  if (internal::is_same<RealScalar,float>::value)
-  {
+  if (internal::is_same<RealScalar, float>::value) {
     // let's build a matrix more stable to inverse
-    MatrixType a = MatrixType::Random(size,size*2);
+    MatrixType a = MatrixType::Random(size, size * 2);
     m1 += a * a.adjoint();
   }
 
@@ -272,17 +274,20 @@ template<typename MatrixType> void qr_invertible()
 
   // now construct a matrix with prescribed determinant
   m1.setZero();
-  for(int i = 0; i < size; i++) m1(i,i) = internal::random<Scalar>();
-  RealScalar absdet = abs(m1.diagonal().prod());
-  m3 = qr.householderQ(); // get a unitary
-  m1 = m3 * m1 * m3;
+  for (int i = 0; i < size; i++) m1(i, i) = internal::random<Scalar>();
+  Scalar det = m1.diagonal().prod();
+  RealScalar absdet = abs(det);
+  m3 = qr.householderQ();  // get a unitary
+  m1 = m3 * m1 * m3.adjoint();
   qr.compute(m1);
+  VERIFY_IS_APPROX(det, qr.determinant());
   VERIFY_IS_APPROX(absdet, qr.absDeterminant());
   VERIFY_IS_APPROX(log(absdet), qr.logAbsDeterminant());
+  VERIFY_IS_APPROX(numext::sign(det), qr.signDeterminant());
 }
 
-template<typename MatrixType> void qr_verify_assert()
-{
+template <typename MatrixType>
+void qr_verify_assert() {
   MatrixType tmp;
 
   ColPivHouseholderQR<MatrixType> qr;
@@ -296,12 +301,14 @@ template<typename MatrixType> void qr_verify_assert()
   VERIFY_RAISES_ASSERT(qr.isSurjective())
   VERIFY_RAISES_ASSERT(qr.isInvertible())
   VERIFY_RAISES_ASSERT(qr.inverse())
+  VERIFY_RAISES_ASSERT(qr.determinant())
   VERIFY_RAISES_ASSERT(qr.absDeterminant())
   VERIFY_RAISES_ASSERT(qr.logAbsDeterminant())
+  VERIFY_RAISES_ASSERT(qr.signDeterminant())
 }
 
-template<typename MatrixType> void cod_verify_assert()
-{
+template <typename MatrixType>
+void cod_verify_assert() {
   MatrixType tmp;
 
   CompleteOrthogonalDecomposition<MatrixType> cod;
@@ -315,35 +322,36 @@ template<typename MatrixType> void cod_verify_assert()
   VERIFY_RAISES_ASSERT(cod.isSurjective())
   VERIFY_RAISES_ASSERT(cod.isInvertible())
   VERIFY_RAISES_ASSERT(cod.pseudoInverse())
+  VERIFY_RAISES_ASSERT(cod.determinant())
   VERIFY_RAISES_ASSERT(cod.absDeterminant())
   VERIFY_RAISES_ASSERT(cod.logAbsDeterminant())
+  VERIFY_RAISES_ASSERT(cod.signDeterminant())
 }
 
-EIGEN_DECLARE_TEST(qr_colpivoting)
-{
-  for(int i = 0; i < g_repeat; i++) {
-    CALL_SUBTEST_1( qr<MatrixXf>() );
-    CALL_SUBTEST_2( qr<MatrixXd>() );
-    CALL_SUBTEST_3( qr<MatrixXcd>() );
-    CALL_SUBTEST_4(( qr_fixedsize<Matrix<float,3,5>, 4 >() ));
-    CALL_SUBTEST_5(( qr_fixedsize<Matrix<double,6,2>, 3 >() ));
-    CALL_SUBTEST_5(( qr_fixedsize<Matrix<double,1,1>, 1 >() ));
+EIGEN_DECLARE_TEST(qr_colpivoting) {
+  for (int i = 0; i < g_repeat; i++) {
+    CALL_SUBTEST_1(qr<MatrixXf>());
+    CALL_SUBTEST_2(qr<MatrixXd>());
+    CALL_SUBTEST_3(qr<MatrixXcd>());
+    CALL_SUBTEST_4((qr_fixedsize<Matrix<float, 3, 5>, 4>()));
+    CALL_SUBTEST_5((qr_fixedsize<Matrix<double, 6, 2>, 3>()));
+    CALL_SUBTEST_5((qr_fixedsize<Matrix<double, 1, 1>, 1>()));
   }
 
-  for(int i = 0; i < g_repeat; i++) {
-    CALL_SUBTEST_1( cod<MatrixXf>() );
-    CALL_SUBTEST_2( cod<MatrixXd>() );
-    CALL_SUBTEST_3( cod<MatrixXcd>() );
-    CALL_SUBTEST_4(( cod_fixedsize<Matrix<float,3,5>, 4 >() ));
-    CALL_SUBTEST_5(( cod_fixedsize<Matrix<double,6,2>, 3 >() ));
-    CALL_SUBTEST_5(( cod_fixedsize<Matrix<double,1,1>, 1 >() ));
+  for (int i = 0; i < g_repeat; i++) {
+    CALL_SUBTEST_1(cod<MatrixXf>());
+    CALL_SUBTEST_2(cod<MatrixXd>());
+    CALL_SUBTEST_3(cod<MatrixXcd>());
+    CALL_SUBTEST_4((cod_fixedsize<Matrix<float, 3, 5>, 4>()));
+    CALL_SUBTEST_5((cod_fixedsize<Matrix<double, 6, 2>, 3>()));
+    CALL_SUBTEST_5((cod_fixedsize<Matrix<double, 1, 1>, 1>()));
   }
 
-  for(int i = 0; i < g_repeat; i++) {
-    CALL_SUBTEST_1( qr_invertible<MatrixXf>() );
-    CALL_SUBTEST_2( qr_invertible<MatrixXd>() );
-    CALL_SUBTEST_6( qr_invertible<MatrixXcf>() );
-    CALL_SUBTEST_3( qr_invertible<MatrixXcd>() );
+  for (int i = 0; i < g_repeat; i++) {
+    CALL_SUBTEST_1(qr_invertible<MatrixXf>());
+    CALL_SUBTEST_2(qr_invertible<MatrixXd>());
+    CALL_SUBTEST_6(qr_invertible<MatrixXcf>());
+    CALL_SUBTEST_3(qr_invertible<MatrixXcd>());
   }
 
   CALL_SUBTEST_7(qr_verify_assert<Matrix3f>());
@@ -363,6 +371,6 @@ EIGEN_DECLARE_TEST(qr_colpivoting)
   // Test problem size constructors
   CALL_SUBTEST_9(ColPivHouseholderQR<MatrixXf>(10, 20));
 
-  CALL_SUBTEST_1( qr_kahan_matrix<MatrixXf>() );
-  CALL_SUBTEST_2( qr_kahan_matrix<MatrixXd>() );
+  CALL_SUBTEST_1(qr_kahan_matrix<MatrixXf>());
+  CALL_SUBTEST_2(qr_kahan_matrix<MatrixXd>());
 }

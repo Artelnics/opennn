@@ -60,8 +60,6 @@ public:
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 
-    const bool& get_display() const;
-
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
@@ -79,8 +77,6 @@ public:
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);
 
-    void set_display(const bool&);
-
     void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
@@ -88,7 +84,8 @@ public:
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    //void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -114,9 +111,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
     #endif
 
-protected:
-
-    // MEMBERS
+private:
 
     Index input_size;
 
@@ -147,8 +142,6 @@ protected:
     Tensor<type, 2> causal_mask;
 
     type dropout_rate = type(0);
-
-    bool display = true;
 
     const Eigen::array<Index, 1> projection_sum_index = { 3 };
     const Eigen::array<Index, 2> biases_derivatives_sum_indices = { 0, 2 };

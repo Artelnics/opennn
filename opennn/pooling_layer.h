@@ -33,10 +33,10 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    explicit PoolingLayer(const dimensions& = {0, 0, 0}, // Input dimensions {height,width,channels}
+    explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
                           const dimensions& = { 2, 2 }, // Pool dimensions {pool_height,pool_width}
                           const dimensions& = { 2, 2 }, // Stride dimensions {row_stride, column_stride}
-                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_heigth, padding_width}
+                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_height, padding_width}
                           const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
 
@@ -50,12 +50,10 @@ public:
     Index get_input_width() const;
     Index get_channels_number() const;
 
-    Index get_neurons_number() const;
-
     Index get_output_height() const;
     Index get_output_width() const;
 
-    Index get_padding_heigth() const;
+    Index get_padding_height() const;
     Index get_padding_width() const;
 
     Index get_row_stride() const;
@@ -77,7 +75,7 @@ public:
 
     void set_input_dimensions(const dimensions&);
 
-    void set_padding_heigth(const Index&);
+    void set_padding_height(const Index&);
     void set_padding_width(const Index&);
 
     void set_row_stride(const Index&);
@@ -125,7 +123,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     dimensions input_dimensions;
 
@@ -133,7 +131,7 @@ protected:
 
     Index pool_width = 1;
 
-    Index padding_heigth = 0;
+    Index padding_height = 0;
 
     Index padding_width = 0;
 

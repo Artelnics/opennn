@@ -1,0 +1,434 @@
+.test:linux:
+  extends: .common:linux:cross
+  stage: test
+  script:
+    - . ci/scripts/test.linux.script.sh
+  after_script:
+    - . ci/scripts/test.linux.after_script.sh
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
+
+##### x86-64 ###################################################################
+.test:linux:x86-64:
+  extends: .test:linux
+  variables:
+    EIGEN_CI_TARGET_ARCH: x86_64
+    EIGEN_CI_CROSS_TARGET_TRIPLE: x86_64-linux-gnu
+  tags:
+    - eigen-runner
+    - linux
+    - x86-64
+
+# GCC-6 (minimum on Ubuntu 18.04)
+.test:linux:x86-64:gcc-6:default:
+  extends: .test:linux:x86-64
+  image: ubuntu:18.04
+  needs: [ build:linux:cross:x86-64:gcc-6:default ]
+  variables:
+    EIGEN_CI_INSTALL: g++-6
+
+test:linux:x86-64:gcc-6:default:official:
+  extends: .test:linux:x86-64:gcc-6:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:gcc-6:default:unsupported:
+  extends: .test:linux:x86-64:gcc-6:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+# GCC-10 (modern stable)
+.test:linux:x86-64:gcc-10:default:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:gcc-10:default ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+
+test:linux:x86-64:gcc-10:default:official:
+  extends: .test:linux:x86-64:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:gcc-10:default:unsupported:
+  extends: .test:linux:x86-64:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:gcc-10:avx:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:gcc-10:avx ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+
+test:linux:x86-64:gcc-10:avx:official:
+  extends: .test:linux:x86-64:gcc-10:avx
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:gcc-10:avx:unsupported:
+  extends: .test:linux:x86-64:gcc-10:avx
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:gcc-10:avx2:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:gcc-10:avx2 ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+
+test:linux:x86-64:gcc-10:avx2:official:
+  extends: .test:linux:x86-64:gcc-10:avx2
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:gcc-10:avx2:unsupported:
+  extends: .test:linux:x86-64:gcc-10:avx2
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:gcc-10:avx512dq:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:gcc-10:avx512dq ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+  tags:
+    - eigen-runner
+    - linux
+    - x86-64
+    - avx512
+
+test:linux:x86-64:gcc-10:avx512dq:official:
+  extends: .test:linux:x86-64:gcc-10:avx512dq
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:gcc-10:avx512dq:unsupported:
+  extends: .test:linux:x86-64:gcc-10:avx512dq
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+# Clang-6 (minimum on Ubuntu 20.04)
+.test:linux:x86-64:clang-6:default:
+  extends: .test:linux:x86-64
+  image: ubuntu:20.04
+  needs: [ build:linux:cross:x86-64:clang-6:default ]
+  variables:
+    EIGEN_CI_INSTALL: g++-8 clang-6.0 lld-6.0
+
+test:linux:x86-64:clang-6:default:official:
+  extends: .test:linux:x86-64:clang-6:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:clang-6:default:unsupported:
+  extends: .test:linux:x86-64:clang-6:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+# Clang-12 (modern stable)
+.test:linux:x86-64:clang-12:default:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:clang-12:default ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+
+test:linux:x86-64:clang-12:default:official:
+  extends: .test:linux:x86-64:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:clang-12:default:unsupported:
+  extends: .test:linux:x86-64:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:clang-12:avx:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:clang-12:avx ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+
+test:linux:x86-64:clang-12:avx:official:
+  extends: .test:linux:x86-64:clang-12:avx
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:clang-12:avx:unsupported:
+  extends: .test:linux:x86-64:clang-12:avx
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:clang-12:avx2:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:clang-12:avx2 ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+
+test:linux:x86-64:clang-12:avx2:official:
+  extends: .test:linux:x86-64:clang-12:avx2
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:clang-12:avx2:unsupported:
+  extends: .test:linux:x86-64:clang-12:avx2
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:x86-64:clang-12:avx512dq:
+  extends: .test:linux:x86-64
+  needs: [ build:linux:cross:x86-64:clang-12:avx512dq ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+  tags:
+    - eigen-runner
+    - linux
+    - x86-64
+    - avx512
+
+test:linux:x86-64:clang-12:avx512dq:official:
+  extends: .test:linux:x86-64:clang-12:avx512dq
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:x86-64:clang-12:avx512dq:unsupported:
+  extends: .test:linux:x86-64:clang-12:avx512dq
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+##### CUDA #####################################################################
+.test:linux:cuda:
+  extends: .test:linux
+  allow_failure: true
+  variables:
+    EIGEN_CI_TEST_LABEL: gpu
+  tags:
+    - eigen-runner
+    - linux
+    - x86-64
+    - cuda
+
+# NVidia no longer provides docker images < CUDA 11.0.3.
+# # GCC-7, CUDA-9.2
+# test:linux:cuda-9.2:gcc-7:
+#   extends: .test:linux:cuda
+#   image: nvidia/cuda:9.2-devel-ubuntu18.04
+#   needs: [ build:linux:cuda-9.2:gcc-7 ]
+#   variables:
+#     EIGEN_CI_CXX_COMPILER: g++-7
+#     EIGEN_CI_CC_COMPILER: gcc-7
+
+# # Clang-10, CUDA-9.2
+# test:linux:cuda-9.2:clang-10:
+#   extends: .test:linux:cuda
+#   image: nvidia/cuda:9.2-devel-ubuntu18.04
+#   needs: [ build:linux:cuda-9.2:clang-10 ]
+#   variables:
+#     EIGEN_CI_CXX_COMPILER: clang++-10
+#     EIGEN_CI_CC_COMPILER: clang-10
+
+# # GCC-8, CUDA-10.2
+# test:linux:cuda-10.2:gcc-8:
+#   extends: .test:linux:cuda
+#   image: nvidia/cuda:10.2-devel-ubuntu18.04
+#   needs: [ build:linux:cuda-10.2:gcc-8 ]
+#   variables:
+#     EIGEN_CI_CXX_COMPILER: g++-8
+#     EIGEN_CI_CC_COMPILER: gcc-8
+
+# # Clang-10, CUDA-10.2
+# test:linux:cuda-10.2:clang-10:
+#   extends: .test:linux:cuda
+#   image: nvidia/cuda:10.2-devel-ubuntu18.04
+#   needs: [ build:linux:cuda-10.2:clang-10 ]
+#   variables:
+#     EIGEN_CI_CXX_COMPILER: clang++-10
+#     EIGEN_CI_CC_COMPILER: clang-10
+
+# GCC-10, CUDA-11.4
+test:linux:cuda-11.4:gcc-10:
+  extends: .test:linux:cuda
+  image: nvidia/cuda:11.4.3-devel-ubuntu20.04
+  needs: [ build:linux:cuda-11.4:gcc-10 ]
+  variables:
+    EIGEN_CI_CXX_COMPILER: g++-10
+    EIGEN_CI_CC_COMPILER: gcc-10
+
+# Clang-12, CUDA-11.4
+test:linux:cuda-11.4:clang-12:
+  extends: .test:linux:cuda
+  image: nvidia/cuda:11.4.3-devel-ubuntu20.04
+  needs: [ build:linux:cuda-11.4:clang-12 ]
+  variables:
+    EIGEN_CI_CXX_COMPILER: clang++-12
+    EIGEN_CI_CC_COMPILER: clang-12
+
+# GCC-10, CUDA-12.2
+test:linux:cuda-12.2:gcc-10:
+  extends: .test:linux:cuda
+  image: nvidia/cuda:12.2.0-devel-ubuntu20.04
+  needs: [ build:linux:cuda-12.2:gcc-10 ]
+  variables:
+    EIGEN_CI_CXX_COMPILER: g++-10
+    EIGEN_CI_CC_COMPILER: gcc-10
+
+# Clang-12, CUDA-12.2
+test:linux:cuda-12.2:clang-12:
+  extends: .test:linux:cuda
+  image: nvidia/cuda:12.2.0-devel-ubuntu20.04
+  needs: [ build:linux:cuda-12.2:clang-12 ]
+  variables:
+    EIGEN_CI_CXX_COMPILER: clang++-12
+    EIGEN_CI_CC_COMPILER: clang-12
+
+##### arm ######################################################################
+
+.test:linux:arm:
+  extends: .test:linux
+  variables:
+    EIGEN_CI_TARGET_ARCH: arm
+    EIGEN_CI_CROSS_TARGET_TRIPLE: arm-linux-gnueabihf
+    # Enable cross-compiled arm binary to run on aarch64.
+    EIGEN_CI_BEFORE_SCRIPT: "ln -s /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ && export LD_LIBRARY_PATH=/usr/arm-linux-gnueabihf/lib/"
+  tags:
+    - eigen-runner
+    - linux
+    - aarch64
+
+.test:linux:arm:gcc-10:default:
+  extends: .test:linux:arm
+  needs: [ build:linux:cross:arm:gcc-10:default ]
+  variables:
+    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf
+
+test:linux:arm:gcc-10:default:official:
+  extends: .test:linux:arm:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:arm:gcc-10:default:unsupported:
+  extends: .test:linux:arm:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:arm:clang-12:default:
+  extends: .test:linux:arm
+  needs: [ build:linux:cross:arm:clang-12:default ]
+  variables:
+    EIGEN_CI_CROSS_INSTALL: g++-10-arm-linux-gnueabihf clang-12
+
+test:linux:arm:clang-12:default:official:
+  extends: .test:linux:arm:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:arm:clang-12:default:unsupported:
+  extends: .test:linux:arm:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+##### aarch64 ##################################################################
+
+.test:linux:aarch64:
+  extends: .test:linux
+  variables:
+    EIGEN_CI_TARGET_ARCH: aarch64
+    EIGEN_CI_CROSS_TARGET_TRIPLE: aarch64-linux-gnu
+  tags:
+    - eigen-runner
+    - linux
+    - aarch64
+
+.test:linux:aarch64:gcc-10:default:
+  extends: .test:linux:aarch64
+  needs: [ build:linux:cross:aarch64:gcc-10:default ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+
+test:linux:aarch64:gcc-10:default:official:
+  extends: .test:linux:aarch64:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:aarch64:gcc-10:default:unsupported:
+  extends: .test:linux:aarch64:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:aarch64:clang-12:default:
+  extends: .test:linux:aarch64
+  needs: [ build:linux:cross:aarch64:clang-12:default ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+
+test:linux:aarch64:clang-12:default:official:
+  extends: .test:linux:aarch64:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:aarch64:clang-12:default:unsupported:
+  extends: .test:linux:aarch64:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+##### ppc64le ##################################################################
+
+.test:linux:ppc64le:
+  extends: .test:linux
+  variables:
+    EIGEN_CI_TARGET_ARCH: ppc64le
+    EIGEN_CI_CROSS_TARGET_TRIPLE: powerpc64le-linux-gnu
+  tags:
+    - eigen-runner
+    - linux
+    - ppc64le
+
+.test:linux:ppc64le:gcc-10:default:
+  extends: .test:linux:ppc64le
+  needs: [ build:linux:cross:ppc64le:gcc-10:default ]
+  variables:
+    EIGEN_CI_INSTALL: g++-10
+
+test:linux:ppc64le:gcc-10:default:official:
+  extends: .test:linux:ppc64le:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:ppc64le:gcc-10:default:unsupported:
+  extends: .test:linux:ppc64le:gcc-10:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+.test:linux:ppc64le:clang-12:default:
+  extends: .test:linux:ppc64le
+  needs: [ build:linux:cross:ppc64le:clang-12:default ]
+  variables:
+    EIGEN_CI_INSTALL: clang-12
+
+test:linux:ppc64le:clang-12:default:official:
+  extends: .test:linux:ppc64le:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Official
+
+test:linux:ppc64le:clang-12:default:unsupported:
+  extends: .test:linux:ppc64le:clang-12:default
+  variables:
+    EIGEN_CI_TEST_LABEL: Unsupported
+
+##### MR Smoke Tests ###########################################################
+
+test:linux:x86-64:gcc-10:default:smoketest:
+  extends: .test:linux:x86-64:gcc-10:default
+  needs: [ build:linux:cross:x86-64:gcc-10:default:smoketest ]
+  variables:
+    EIGEN_CI_TEST_LABEL: smoketest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+test:linux:x86-64:clang-12:default:smoketest:
+  extends: .test:linux:x86-64:clang-12:default
+  needs: [ build:linux:cross:x86-64:clang-12:default:smoketest ]
+  variables:
+    EIGEN_CI_TEST_LABEL: smoketest
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

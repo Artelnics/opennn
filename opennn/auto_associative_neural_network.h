@@ -60,8 +60,8 @@ public:
     void to_XML(tinyxml2::XMLPrinter&) const;
     void from_XML(const tinyxml2::XMLDocument&);
 
-    string write_expression_autoassociation_distances(string&, string&) const;
-    string write_expression_autoassociation_variables_distances(string&, string&) const;
+    string get_expression_autoassociation_distances(string&, string&) const;
+    string get_expression_autoassociation_variables_distances(string&, string&) const;
 
     Tensor<type, 2> calculate_multivariate_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
     Tensor<type, 1> calculate_samples_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);

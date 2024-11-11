@@ -1789,7 +1789,7 @@ void LanguageDataSet::read_csv_language_model()
 
     read_csv_2_simple();
 
-    read_csv_language_model();
+    read_csv_3_language_model();
 }
 
 // void DataSet::read_csv()

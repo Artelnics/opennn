@@ -45,28 +45,24 @@ public:
 
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
-    Index get_neurons_number() const final;
-
-    const bool& get_display() const;
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-//    void set_input_dimensions(const Index&);
-//    void set_inputs_number(const Index&);
-//    void set_depth(const Index&);
+    void set_input_dimensions(const Index&);
+    void set_inputs_number(const Index&);
+    void set_depth(const Index&);
+    void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 
     void set_embedding_weights();
-    void set_inputs_number(const Index& new_inputs_number);
-    void set_input_dimensions(const Index& new_inputs_dimension);
-    void set_depth(const Index& new_depth);
+    // void set_inputs_number(const Index& new_inputs_number);
+    // void set_input_dimensions(const Index& new_inputs_dimension);
+    // void set_depth(const Index& new_depth);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
     void set_parameters_random() final;
     void set_parameters_constant(const type&) final;
-
-    void set_display(const bool&);
 
     void dropout(Tensor<type, 3>&) const;
 
@@ -94,7 +90,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
     #endif
 
-protected:
+private:
 
     // MEMBERS
 
@@ -109,8 +105,6 @@ protected:
     type dropout_rate;
 
     bool positional_encoding;
-
-    bool display = true;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };

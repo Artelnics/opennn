@@ -466,7 +466,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GradientDescent");
 
     if(!root_element)
-        throw runtime_error("Gradient descent element is nullptr.\n");
+        throw runtime_error("GradientDescent element is nullptr.\n");
 
     // Learning rate algorithm
 

@@ -163,12 +163,6 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 }
 
 
-const bool& MultiheadAttentionLayer::get_display() const
-{
-    return display;
-}
-
-
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
@@ -187,8 +181,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
     scaling_factor = type(1) / type(sqrt(hidden_depth));
 
     name = "multihead_attention_layer";
-
-    display = true;
 
     layer_type = Type::MultiheadAttention;
 
@@ -373,12 +365,6 @@ void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 }
 
 
-void MultiheadAttentionLayer::set_display(const bool& new_display)
-{
-    display = new_display;
-}
-
-
 void MultiheadAttentionLayer::build_causal_mask()
 {
     constexpr type m_inf = -numeric_limits<type>::infinity();
@@ -450,7 +436,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
             sample_transformed_input.device(*thread_pool_device)
                 = sample_matrix.contract(head_weights, A_B);
 
-            sum_columns(thread_pool_device, head_biases, sample_transformed_input);
+            sum_columns(thread_pool_device.get(), head_biases, sample_transformed_input);
         }
     }
 }
@@ -489,32 +475,56 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
     outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
 
-    sum_matrices(thread_pool_device, projection_biases, outputs);
+    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
 }
 
 
+// void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
+//                                                        const Tensor<type, 4>& key,
+//                                                        Tensor<type, 4>& attention_scores,
+//                                                        Tensor<type, 4>& attention_weights) const
+// {
+//     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
+
+//     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
+
+//     if(use_causal_mask)
+//         apply_causal_mask(attention_scores);
+// /*
+//  * // @todo make sure about this
+//     softmax(attention_scores, attention_weights);
+// */
+
+//     softmax(attention_scores);
+//     attention_weights = attention_scores;
+
+// }
+
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
                                                        const Tensor<type, 4>& key,
-                                                       Tensor<type, 4>& attention_scores,
-                                                       Tensor<type, 4>& attention_weights) const
+                                                       Tensor<type, 4>& attention_scores) const
 {
-    batch_matrix_multiplication(thread_pool_device, key, query, attention_scores, A_BT);
+   batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
     if(use_causal_mask)
         apply_causal_mask(attention_scores);
-/*
+    /*
+ * // @todo make sure about this
     softmax(attention_scores, attention_weights);
 */
+
+    softmax(attention_scores);
 }
+
 
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,
                                                        const Tensor<type, 4>& attention_weights,
                                                        Tensor<type, 4>& attention_outputs) const 
 {
-    batch_matrix_multiplication(thread_pool_device, attention_weights, value, attention_outputs, AT_B);
+    batch_matrix_multiplication(thread_pool_device.get(), attention_weights, value, attention_outputs, AT_B);
 }
 
 
@@ -546,7 +556,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
             }
         }
     }
-*/   
+*/
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
@@ -573,7 +583,7 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
     Tensor<type, 2>& sample_matrix = multihead_attention_layer_forward_propagation->sample_matrix;
 
     Tensor<type, 4>& attention_scores = multihead_attention_layer_forward_propagation->attention_scores;
-    Tensor<type, 4>& attention_weights = multihead_attention_layer_forward_propagation->attention_weights;
+    //Tensor<type, 4>& attention_weights = multihead_attention_layer_forward_propagation->attention_weights;
 
     Tensor<type, 4>& attention_outputs = multihead_attention_layer_forward_propagation->attention_outputs;
 
@@ -585,24 +595,26 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
     calculate_transformation(context, key, key_weights, key_biases, sample_matrix);
     
     calculate_transformation(context, value, value_weights, value_biases, sample_matrix);
-    
+
+    // compute_attention_scores(query,
+    //                          key,
+    //                          attention_scores,
+    //                          attention_weights);
+
     compute_attention_scores(query,
                              key,
-                             attention_scores,
-                             attention_weights);
+                             attention_scores);
 
     if(is_training && dropout_rate > type(0)) 
-        dropout(attention_weights);
+        dropout(attention_scores);
     
     compute_attention_outputs(value,
-                              attention_weights,
+                              attention_scores,
                               attention_outputs);
 
     calculate_output_projection(attention_outputs,
                                 projection_outputs,
                                 outputs);
-    cout<<outputs.dimensions()<<endl;
-
 }
 
 
@@ -778,7 +790,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
         // VALUE DERIVATIVES
         
-        batch_matrix_multiplication(thread_pool_device, head_attention_weights, head_attention_output_derivatives, head_value_derivatives, A_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_weights, head_attention_output_derivatives, head_value_derivatives, A_B);
 
         // VALUE WEIGHTS DERIVATIVES
 
@@ -787,7 +799,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         
         // ATTENTION WEIGHTS DERIVATIVES
         
-        batch_matrix_multiplication(thread_pool_device, head_value, head_attention_output_derivatives, head_attention_weights_derivatives, A_BT);
+        batch_matrix_multiplication(thread_pool_device.get(), head_value, head_attention_output_derivatives, head_attention_weights_derivatives, A_BT);
 
         // ATTENTION SCORES DERIVATIVES
         
@@ -797,11 +809,11 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
         // QUERY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_scores_derivatives, head_key, head_query_derivatives, AT_B);
     
         // KEY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device, head_attention_scores_derivatives, head_query, head_key_derivatives, A_B);
+        batch_matrix_multiplication(thread_pool_device.get(), head_attention_scores_derivatives, head_query, head_key_derivatives, A_B);
 
         // QUERY WEIGHTS DERIVATIVES
 
@@ -905,10 +917,10 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 
 void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttentionLayer");
+    const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
 
     if(!multihead_attention_layer_element)
-        throw runtime_error("MultiheadAttentionLayer element is nullptr.\n");
+        throw runtime_error("MultiheadAttention element is nullptr.\n");
     
     set_name(read_xml_string(multihead_attention_layer_element, "Name"));
     set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
@@ -922,7 +934,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("MultiheadAttentionLayer");
+    printer.OpenElement("MultiheadAttention");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputSize", to_string(get_input_size()));

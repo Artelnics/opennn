@@ -40,11 +40,7 @@ public:
 
    explicit LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   bool is_empty() const;
-
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
-
+   dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
 
    Index get_timesteps() const;
@@ -55,15 +51,13 @@ public:
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
    const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
 
-   string write_activation_function() const;
+   string get_activation_function_string() const;
    string write_recurrent_activation_function() const;
-
-   const bool& get_display() const;
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
@@ -76,10 +70,6 @@ public:
    void set_recurrent_activation_function(const string&);
 
    void set_timesteps(const Index&);
-
-   // Display messages
-
-   void set_display(const bool&);
 
    // Parameters initialization
 
@@ -141,9 +131,9 @@ public:
 
    string write_recurrent_activation_function_expression() const;
 
-   string write_activation_function_expression() const;
+   string get_activation_function_string_expression() const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
    // Serialization
 
@@ -151,7 +141,7 @@ public:
 
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    Index time_steps = 3;
 
@@ -172,8 +162,6 @@ protected:
 
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
    ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
-
-   bool display = true;
 
    Tensor<type, 1> empty;
 

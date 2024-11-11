@@ -28,8 +28,6 @@ public:
 
    explicit OptimizationAlgorithm(LossIndex* = nullptr);
 
-   virtual ~OptimizationAlgorithm();
-
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
@@ -93,8 +91,8 @@ public:
 
 protected:
 
-   ThreadPool* thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device;
+   unique_ptr<ThreadPool> thread_pool;
+   unique_ptr<ThreadPoolDevice> thread_pool_device;
 
    LossIndex* loss_index = nullptr;
 

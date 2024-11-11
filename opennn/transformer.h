@@ -55,9 +55,9 @@ public:
 
     void load_transformer(const string&);
 
-protected:
+private:
 
-    //string name = "transformer";
+    string name = "transformer";
 
     Index input_length;
 
@@ -87,14 +87,12 @@ struct TransformerForwardPropagation : ForwardPropagation
 {
     // Constructors
 
-    TransformerForwardPropagation() {}
-
-    TransformerForwardPropagation(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
+    TransformerForwardPropagation(const Index& new_batch_samples = 0, NeuralNetwork* new_neural_network = nullptr)
     {
         set(new_batch_samples, new_neural_network);
     }
 
-    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
+    void set(const Index&, NeuralNetwork*);
 
     void print() const;
 
@@ -105,19 +103,3 @@ struct TransformerForwardPropagation : ForwardPropagation
 };
 
 #endif // TRANSFORMER_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

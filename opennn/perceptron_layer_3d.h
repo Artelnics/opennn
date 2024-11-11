@@ -40,40 +40,34 @@ public:
                               const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   Index get_inputs_number() const final;
+   Index get_inputs_number() const;
    Index get_inputs_depth() const;
-   Index get_neurons_number() const final;
+   Index get_neurons_number() const;
 
    dimensions get_output_dimensions() const final;
 
-   Index get_biases_number() const;
-   Index get_synaptic_weights_number() const;
    Index get_parameters_number() const final;
    type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const final;
 
    const PerceptronLayer3D::ActivationFunction& get_activation_function() const;
 
-   string write_activation_function() const;
-
-   const bool& get_display() const;
+   string get_activation_function_string() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   void set_inputs_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
    void set_inputs_depth(const Index&);
-   void set_neurons_number(const Index&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
-
-   void set_display(const bool&);
 
    void set_parameters_constant(const type&) final;
    void set_parameters_random() final;
@@ -109,7 +103,7 @@ public:
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
     #endif
 
-protected:
+private:
 
    Index inputs_number;
 
@@ -120,8 +114,6 @@ protected:
    ActivationFunction activation_function;
 
    type dropout_rate = type(0);
-
-   bool display = true;
 
    Tensor<type, 3> empty;
 

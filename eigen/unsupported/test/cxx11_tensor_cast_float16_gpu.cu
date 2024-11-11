@@ -30,22 +30,19 @@ void test_gpu_conversion() {
   Eigen::half* d_half = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
   float* d_conv = (float*)gpu_device.allocate(num_elem * sizeof(float));
 
-  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float(
-      d_float, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_half(
-      d_half, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_conv(
-      d_conv, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float(d_float, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_half(d_half, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_conv(d_conv, num_elem);
 
-  gpu_device.memcpyHostToDevice(d_float, floats.data(), num_elem*sizeof(float));
+  gpu_device.memcpyHostToDevice(d_float, floats.data(), num_elem * sizeof(float));
 
   gpu_half.device(gpu_device) = gpu_float.cast<Eigen::half>();
   gpu_conv.device(gpu_device) = gpu_half.cast<float>();
 
   Tensor<float, 1> initial(num_elem);
   Tensor<float, 1> final(num_elem);
-  gpu_device.memcpyDeviceToHost(initial.data(), d_float, num_elem*sizeof(float));
-  gpu_device.memcpyDeviceToHost(final.data(), d_conv, num_elem*sizeof(float));
+  gpu_device.memcpyDeviceToHost(initial.data(), d_float, num_elem * sizeof(float));
+  gpu_device.memcpyDeviceToHost(final.data(), d_conv, num_elem * sizeof(float));
   gpu_device.synchronize();
 
   for (int i = 0; i < num_elem; ++i) {
@@ -56,7 +53,6 @@ void test_gpu_conversion() {
   gpu_device.deallocate(d_half);
   gpu_device.deallocate(d_conv);
 }
-
 
 void test_fallback_conversion() {
   int num_elem = 101;
@@ -71,9 +67,7 @@ void test_fallback_conversion() {
   }
 }
 
-
-EIGEN_DECLARE_TEST(cxx11_tensor_cast_float16_gpu)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_cast_float16_gpu) {
   CALL_SUBTEST(test_gpu_conversion());
   CALL_SUBTEST(test_fallback_conversion());
 }

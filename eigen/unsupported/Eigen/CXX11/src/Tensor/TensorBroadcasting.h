@@ -10,39 +10,40 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H
 #define EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \class TensorBroadcasting
-  * \ingroup CXX11_Tensor_Module
-  *
-  * \brief Tensor broadcasting class.
-  *
-  *
-  */
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor broadcasting class.
+ *
+ *
+ */
 namespace internal {
-template<typename Broadcast, typename XprType>
-struct traits<TensorBroadcastingOp<Broadcast, XprType> > : public traits<XprType>
-{
+template <typename Broadcast, typename XprType>
+struct traits<TensorBroadcastingOp<Broadcast, XprType>> : public traits<XprType> {
   typedef typename XprType::Scalar Scalar;
   typedef traits<XprType> XprTraits;
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type _Nested;
-  static const int NumDimensions = XprTraits::NumDimensions;
-  static const int Layout = XprTraits::Layout;
+  typedef std::remove_reference_t<Nested> Nested_;
+  static constexpr int NumDimensions = XprTraits::NumDimensions;
+  static constexpr int Layout = XprTraits::Layout;
   typedef typename XprTraits::PointerType PointerType;
 };
 
-template<typename Broadcast, typename XprType>
-struct eval<TensorBroadcastingOp<Broadcast, XprType>, Eigen::Dense>
-{
+template <typename Broadcast, typename XprType>
+struct eval<TensorBroadcastingOp<Broadcast, XprType>, Eigen::Dense> {
   typedef const TensorBroadcastingOp<Broadcast, XprType> EIGEN_DEVICE_REF type;
 };
 
-template<typename Broadcast, typename XprType>
-struct nested<TensorBroadcastingOp<Broadcast, XprType>, 1, typename eval<TensorBroadcastingOp<Broadcast, XprType> >::type>
-{
+template <typename Broadcast, typename XprType>
+struct nested<TensorBroadcastingOp<Broadcast, XprType>, 1,
+              typename eval<TensorBroadcastingOp<Broadcast, XprType>>::type> {
   typedef TensorBroadcastingOp<Broadcast, XprType> type;
 };
 
@@ -51,24 +52,19 @@ struct is_input_scalar {
   static const bool value = false;
 };
 template <>
-struct is_input_scalar<Sizes<> > {
+struct is_input_scalar<Sizes<>> {
   static const bool value = true;
 };
-#ifndef EIGEN_EMULATE_CXX11_META_H
 template <typename std::ptrdiff_t... Indices>
-struct is_input_scalar<Sizes<Indices...> > {
-  static const bool value = (Sizes<Indices...>::total_size == 1);
+struct is_input_scalar<Sizes<Indices...>> {
+  static constexpr bool value = (Sizes<Indices...>::total_size == 1);
 };
-#endif
 
 }  // end namespace internal
 
-
-
-template<typename Broadcast, typename XprType>
-class TensorBroadcastingOp : public TensorBase<TensorBroadcastingOp<Broadcast, XprType>, ReadOnlyAccessors>
-{
-  public:
+template <typename Broadcast, typename XprType>
+class TensorBroadcastingOp : public TensorBase<TensorBroadcastingOp<Broadcast, XprType>, ReadOnlyAccessors> {
+ public:
   typedef typename Eigen::internal::traits<TensorBroadcastingOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
@@ -79,48 +75,46 @@ class TensorBroadcastingOp : public TensorBase<TensorBroadcastingOp<Broadcast, X
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBroadcastingOp(const XprType& expr, const Broadcast& broadcast)
       : m_xpr(expr), m_broadcast(broadcast) {}
 
-    EIGEN_DEVICE_FUNC
-    const Broadcast& broadcast() const { return m_broadcast; }
+  EIGEN_DEVICE_FUNC const Broadcast& broadcast() const { return m_broadcast; }
 
-    EIGEN_DEVICE_FUNC
-    const typename internal::remove_all<typename XprType::Nested>::type&
-    expression() const { return m_xpr; }
+  EIGEN_DEVICE_FUNC const internal::remove_all_t<typename XprType::Nested>& expression() const { return m_xpr; }
 
-  protected:
-    typename XprType::Nested m_xpr;
-    const Broadcast m_broadcast;
+ protected:
+  typename XprType::Nested m_xpr;
+  const Broadcast m_broadcast;
 };
 
-
 // Eval as rvalue
-template<typename Broadcast, typename ArgType, typename Device>
-struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
-{
+template <typename Broadcast, typename ArgType, typename Device>
+struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device> {
   typedef TensorBroadcastingOp<Broadcast, ArgType> XprType;
   typedef typename XprType::Index Index;
-  static const int NumDims = internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
+  static constexpr int NumDims = internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
   typedef DSizes<Index, NumDims> Dimensions;
   typedef typename XprType::Scalar Scalar;
   typedef typename TensorEvaluator<ArgType, Device>::Dimensions InputDimensions;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
-  static const int PacketSize = PacketType<CoeffReturnType, Device>::size;
-  protected: //  all the non-static fields must have the same access control, otherwise the TensorEvaluator wont be standard layout;
+  static constexpr int PacketSize = PacketType<CoeffReturnType, Device>::size;
+
+ protected:  //  all the non-static fields must have the same access control, otherwise the TensorEvaluator won't be
+             //  standard layout;
   bool isCopy, nByOne, oneByN;
-  public:
+
+ public:
   typedef StorageMemory<CoeffReturnType, Device> Storage;
   typedef typename Storage::Type EvaluatorPointerType;
 
   enum {
-    IsAligned         = TensorEvaluator<ArgType, Device>::IsAligned,
-    PacketAccess      = TensorEvaluator<ArgType, Device>::PacketAccess,
-    BlockAccess       = TensorEvaluator<ArgType, Device>::BlockAccess,
+    IsAligned = TensorEvaluator<ArgType, Device>::IsAligned,
+    PacketAccess = TensorEvaluator<ArgType, Device>::PacketAccess,
+    BlockAccess = TensorEvaluator<ArgType, Device>::BlockAccess,
     PreferBlockAccess = true,
-    Layout            = TensorEvaluator<ArgType, Device>::Layout,
-    RawAccess         = false
+    RawAccess = false
   };
+  static constexpr int Layout = TensorEvaluator<ArgType, Device>::Layout;
 
-  typedef typename internal::remove_const<Scalar>::type ScalarNoConst;
+  typedef std::remove_const_t<Scalar> ScalarNoConst;
 
   // We do block based broadcasting using a trick with 2x tensor rank and 0
   // strides. See block method implementation for details.
@@ -130,19 +124,18 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   typedef internal::TensorBlockDescriptor<NumDims, Index> TensorBlockDesc;
   typedef internal::TensorBlockScratchAllocator<Device> TensorBlockScratch;
 
-  typedef typename TensorEvaluator<const ArgType, Device>::TensorBlock
-      ArgTensorBlock;
+  typedef typename TensorEvaluator<const ArgType, Device>::TensorBlock ArgTensorBlock;
 
-  typedef typename internal::TensorMaterializedBlock<ScalarNoConst, NumDims,
-                                                     Layout, Index>
-      TensorBlock;
+  typedef typename internal::TensorMaterializedBlock<ScalarNoConst, NumDims, Layout, Index> TensorBlock;
   //===--------------------------------------------------------------------===//
 
   EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
-      : isCopy(false), nByOne(false), oneByN(false),
-        m_device(device), m_broadcast(op.broadcast()), m_impl(op.expression(), device)
-  {
-
+      : isCopy(false),
+        nByOne(false),
+        oneByN(false),
+        m_device(device),
+        m_broadcast(op.broadcast()),
+        m_impl(op.expression(), device) {
     // The broadcasting op doesn't change the rank of the tensor. One can't broadcast a scalar
     // and store the result in a scalar. Instead one should reshape the scalar into a N-D
     // tensor with N >= 1 of 1 element first and then broadcast.
@@ -161,15 +154,15 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       m_inputStrides[0] = 1;
       m_outputStrides[0] = 1;
       for (int i = 1; i < NumDims; ++i) {
-        m_inputStrides[i] = m_inputStrides[i-1] * input_dims[i-1];
-        m_outputStrides[i] = m_outputStrides[i-1] * m_dimensions[i-1];
+        m_inputStrides[i] = m_inputStrides[i - 1] * input_dims[i - 1];
+        m_outputStrides[i] = m_outputStrides[i - 1] * m_dimensions[i - 1];
       }
     } else {
-      m_inputStrides[NumDims-1] = 1;
-      m_outputStrides[NumDims-1] = 1;
-      for (int i = NumDims-2; i >= 0; --i) {
-        m_inputStrides[i] = m_inputStrides[i+1] * input_dims[i+1];
-        m_outputStrides[i] = m_outputStrides[i+1] * m_dimensions[i+1];
+      m_inputStrides[NumDims - 1] = 1;
+      m_outputStrides[NumDims - 1] = 1;
+      for (int i = NumDims - 2; i >= 0; --i) {
+        m_inputStrides[i] = m_inputStrides[i + 1] * input_dims[i + 1];
+        m_outputStrides[i] = m_outputStrides[i + 1] * m_dimensions[i + 1];
       }
     }
 
@@ -181,9 +174,9 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
           break;
         }
       }
-    } else if (input_dims[NumDims-1] == 1) {
+    } else if (input_dims[NumDims - 1] == 1) {
       nByOne = true;
-      for (int i = 0; i < NumDims-1; ++i) {
+      for (int i = 0; i < NumDims - 1; ++i) {
         if (m_broadcast[i] != 1) {
           nByOne = false;
           break;
@@ -194,10 +187,10 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     // Handle special format like NCHW, its input shape is '[1, N..., 1]' and
     // broadcast shape is '[N, 1..., N]'
     if (!oneByN && !nByOne) {
-      if (input_dims[0] == 1 && input_dims[NumDims-1] == 1 && NumDims > 2) {
+      if (input_dims[0] == 1 && input_dims[NumDims - 1] == 1 && NumDims > 2) {
         nByOne = true;
         oneByN = true;
-        for (int i = 1; i < NumDims-1; ++i) {
+        for (int i = 1; i < NumDims - 1; ++i) {
           if (m_broadcast[i] != 1) {
             nByOne = false;
             oneByN = false;
@@ -217,19 +210,15 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
 
 #ifdef EIGEN_USE_THREADS
   template <typename EvalSubExprsCallback>
-  EIGEN_STRONG_INLINE void evalSubExprsIfNeededAsync(
-      EvaluatorPointerType, EvalSubExprsCallback done) {
+  EIGEN_STRONG_INLINE void evalSubExprsIfNeededAsync(EvaluatorPointerType, EvalSubExprsCallback done) {
     m_impl.evalSubExprsIfNeededAsync(nullptr, [done](bool) { done(true); });
   }
 #endif  // EIGEN_USE_THREADS
 
-  EIGEN_STRONG_INLINE void cleanup() {
-    m_impl.cleanup();
-  }
+  EIGEN_STRONG_INLINE void cleanup() { m_impl.cleanup(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE CoeffReturnType coeff(Index index) const
-  {
-    if (internal::is_input_scalar<typename internal::remove_all<InputDimensions>::type>::value) {
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE CoeffReturnType coeff(Index index) const {
+    if (internal::is_input_scalar<internal::remove_all_t<InputDimensions>>::value) {
       return m_impl.coeff(0);
     }
 
@@ -279,8 +268,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     return inputIndex;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeffColMajor(Index index) const
-  {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeffColMajor(Index index) const {
     return m_impl.coeff(indexColMajor(index));
   }
 
@@ -314,27 +302,25 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     return inputIndex;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeffRowMajor(Index index) const
-  {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeffRowMajor(Index index) const {
     return m_impl.coeff(indexRowMajor(index));
   }
 
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE PacketReturnType packet(Index index) const
-  {
-    if (internal::is_input_scalar<typename internal::remove_all<InputDimensions>::type>::value) {
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE PacketReturnType packet(Index index) const {
+    if (internal::is_input_scalar<internal::remove_all_t<InputDimensions>>::value) {
       return internal::pset1<PacketReturnType>(m_impl.coeff(0));
     }
 
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       if (isCopy) {
-        #ifdef EIGEN_GPU_COMPILE_PHASE
+#ifdef EIGEN_GPU_COMPILE_PHASE
         // See PR 437: on NVIDIA P100 and K20m we observed a x3-4 speed up by enforcing
         // unaligned loads here. The reason is unclear though.
         return m_impl.template packet<Unaligned>(index);
-        #else
+#else
         return m_impl.template packet<LoadMode>(index);
-        #endif
+#endif
       } else if (oneByN && !nByOne) {
         return packetNByOne<LoadMode>(index);
       } else if (!oneByN && nByOne) {
@@ -346,12 +332,12 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       }
     } else {
       if (isCopy) {
-        #ifdef EIGEN_GPU_COMPILE_PHASE
+#ifdef EIGEN_GPU_COMPILE_PHASE
         // See above.
         return m_impl.template packet<Unaligned>(index);
-        #else
+#else
         return m_impl.template packet<LoadMode>(index);
-        #endif
+#endif
       } else if (oneByN && !nByOne) {
         return packetOneByN<LoadMode>(index);
       } else if (!oneByN && nByOne) {
@@ -364,14 +350,11 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
   }
 
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetOneByNByOne
-  (Index index) const
-  {
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetOneByNByOne(Index index) const {
+    eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
-    EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+    EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
     Index startDim, endDim;
     Index inputIndex, outputOffset, batchedIndex;
 
@@ -384,7 +367,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
 
     batchedIndex = index % m_outputStrides[startDim];
-    inputIndex   = batchedIndex / m_outputStrides[endDim];
+    inputIndex = batchedIndex / m_outputStrides[endDim];
     outputOffset = batchedIndex % m_outputStrides[endDim];
 
     if (outputOffset + PacketSize <= m_outputStrides[endDim]) {
@@ -407,24 +390,22 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
   }
 
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetOneByN(Index index) const
-  {
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetOneByN(Index index) const {
     // Consider the flattened tensor [v0, ..., vN],
     // Concatenates m_broadcast[dim] copies,
     //    [v0, ..., vN, v0, ..., vN, ... ]
     // with dim == NumDims - 1 for col-major, dim == 0 for row-major.
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
+    eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
     // Size of flattened tensor.
-    const Index M = (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ?
-                      m_inputStrides[NumDims - 1] : m_inputStrides[0];
+    const Index M =
+        (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ? m_inputStrides[NumDims - 1] : m_inputStrides[0];
     Index inputIndex = index % M;
     if (inputIndex + PacketSize <= M) {
       return m_impl.template packet<Unaligned>(inputIndex);
     } else {
-      EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+      EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
       EIGEN_UNROLL_LOOP
       for (int i = 0; i < PacketSize; ++i) {
         if (inputIndex > M - 1) {
@@ -436,25 +417,23 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
   }
 
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetNByOne(Index index) const
-  {
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetNByOne(Index index) const {
     // Consider the flattened tensor [v0, ..., vN],
     // Interleaves m_broadcast[dim] copies,
     //    [v0, v0, ..., v1, v1, ..., vN, vN, ... ]
     // with dim == 0 for col-major, dim == NumDims - 1 for row-major.
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index + PacketSize-1 < dimensions().TotalSize());
+    eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
-    const Index M = (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ?
-                      m_broadcast[0] : m_broadcast[NumDims - 1];
+    const Index M =
+        (static_cast<int>(Layout) == static_cast<int>(ColMajor)) ? m_broadcast[0] : m_broadcast[NumDims - 1];
 
-    Index inputIndex   = index / M;
+    Index inputIndex = index / M;
     Index outputOffset = index % M;
     if (outputOffset + PacketSize <= M) {
       return internal::pset1<PacketReturnType>(m_impl.coeff(inputIndex));
     } else {
-      EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+      EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
       EIGEN_UNROLL_LOOP
       for (int i = 0; i < PacketSize; ++i) {
         if (outputOffset < M) {
@@ -471,11 +450,9 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
 
   // Ignore the LoadMode and always use unaligned loads since we can't guarantee
   // the alignment at compile time.
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetColMajor(Index index) const
-  {
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetColMajor(Index index) const {
+    eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
     const Index originalIndex = index;
 
@@ -514,14 +491,14 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     if (innermostLoc + PacketSize <= m_impl.dimensions()[0]) {
       return m_impl.template packet<Unaligned>(inputIndex);
     } else {
-      EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+      EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
       values[0] = m_impl.coeff(inputIndex);
       EIGEN_UNROLL_LOOP
       for (int i = 1; i < PacketSize; ++i) {
         if (innermostLoc + i < m_impl.dimensions()[0]) {
-          values[i] = m_impl.coeff(inputIndex+i);
+          values[i] = m_impl.coeff(inputIndex + i);
         } else {
-          values[i] = coeffColMajor(originalIndex+i);
+          values[i] = coeffColMajor(originalIndex + i);
         }
       }
       PacketReturnType rslt = internal::pload<PacketReturnType>(values);
@@ -529,11 +506,9 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
   }
 
-  template<int LoadMode>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetRowMajor(Index index) const
-  {
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index+PacketSize-1 < dimensions().TotalSize());
+  template <int LoadMode>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packetRowMajor(Index index) const {
+    eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
     const Index originalIndex = index;
 
@@ -554,32 +529,32 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       index -= idx * m_outputStrides[i];
     }
     Index innermostLoc;
-    if (internal::index_statically_eq<Broadcast>(NumDims-1, 1)) {
-      eigen_assert(index < m_impl.dimensions()[NumDims-1]);
+    if (internal::index_statically_eq<Broadcast>(NumDims - 1, 1)) {
+      eigen_assert(index < m_impl.dimensions()[NumDims - 1]);
       innermostLoc = index;
     } else {
-      if (internal::index_statically_eq<InputDimensions>(NumDims-1, 1)) {
-        eigen_assert(index % m_impl.dimensions()[NumDims-1] == 0);
+      if (internal::index_statically_eq<InputDimensions>(NumDims - 1, 1)) {
+        eigen_assert(index % m_impl.dimensions()[NumDims - 1] == 0);
         innermostLoc = 0;
       } else {
-        innermostLoc = index % m_impl.dimensions()[NumDims-1];
+        innermostLoc = index % m_impl.dimensions()[NumDims - 1];
       }
     }
     inputIndex += innermostLoc;
 
     // Todo: this could be extended to the second dimension if we're not
     // broadcasting alongside the first dimension, and so on.
-    if (innermostLoc + PacketSize <= m_impl.dimensions()[NumDims-1]) {
+    if (innermostLoc + PacketSize <= m_impl.dimensions()[NumDims - 1]) {
       return m_impl.template packet<Unaligned>(inputIndex);
     } else {
-      EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+      EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
       values[0] = m_impl.coeff(inputIndex);
       EIGEN_UNROLL_LOOP
       for (int i = 1; i < PacketSize; ++i) {
-        if (innermostLoc + i < m_impl.dimensions()[NumDims-1]) {
-          values[i] = m_impl.coeff(inputIndex+i);
+        if (innermostLoc + i < m_impl.dimensions()[NumDims - 1]) {
+          values[i] = m_impl.coeff(inputIndex + i);
         } else {
-          values[i] = coeffRowMajor(originalIndex+i);
+          values[i] = coeffRowMajor(originalIndex + i);
         }
       }
       PacketReturnType rslt = internal::pload<PacketReturnType>(values);
@@ -587,44 +562,36 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost
-  costPerCoeff(bool vectorized) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool vectorized) const {
     double compute_cost = TensorOpCost::AddCost<Index>();
     if (!isCopy && NumDims > 0) {
       EIGEN_UNROLL_LOOP
       for (int i = NumDims - 1; i > 0; --i) {
         compute_cost += TensorOpCost::DivCost<Index>();
         if (internal::index_statically_eq<Broadcast>(i, 1)) {
-          compute_cost +=
-              TensorOpCost::MulCost<Index>() + TensorOpCost::AddCost<Index>();
+          compute_cost += TensorOpCost::MulCost<Index>() + TensorOpCost::AddCost<Index>();
         } else {
           if (!internal::index_statically_eq<InputDimensions>(i, 1)) {
-            compute_cost += TensorOpCost::MulCost<Index>() +
-                            TensorOpCost::ModCost<Index>() +
-                            TensorOpCost::AddCost<Index>();
+            compute_cost +=
+                TensorOpCost::MulCost<Index>() + TensorOpCost::ModCost<Index>() + TensorOpCost::AddCost<Index>();
           }
         }
-        compute_cost +=
-            TensorOpCost::MulCost<Index>() + TensorOpCost::AddCost<Index>();
+        compute_cost += TensorOpCost::MulCost<Index>() + TensorOpCost::AddCost<Index>();
       }
     }
-    return m_impl.costPerCoeff(vectorized) +
-           TensorOpCost(0, 0, compute_cost, vectorized, PacketSize);
+    return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, compute_cost, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-  internal::TensorBlockResourceRequirements getResourceRequirements() const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE internal::TensorBlockResourceRequirements getResourceRequirements() const {
     // TODO(wuke): Targeting L1 size is 30% faster than targeting L{-1} on large
     // tensors. But this might need further tuning.
     const size_t target_size = m_device.firstLevelCacheSize();
     return internal::TensorBlockResourceRequirements::merge(
-        m_impl.getResourceRequirements(),
-        internal::TensorBlockResourceRequirements::skewed<Scalar>(target_size));
+        m_impl.getResourceRequirements(), internal::TensorBlockResourceRequirements::skewed<Scalar>(target_size));
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBlock
-  block(TensorBlockDesc& desc, TensorBlockScratch& scratch,
-          bool /*root_of_expr_ast*/ = false) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBlock block(TensorBlockDesc& desc, TensorBlockScratch& scratch,
+                                                          bool /*root_of_expr_ast*/ = false) const {
     BlockBroadcastingParams params = blockBroadcastingParams(desc);
 
     if (params.inner_dim_size == 0 || params.bcast_dim_size == 0) {
@@ -632,8 +599,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     }
 
     // Prepare storage for the materialized broadcasting result.
-    const typename TensorBlock::Storage block_storage =
-        TensorBlock::prepareStorage(desc, scratch);
+    const typename TensorBlock::Storage block_storage = TensorBlock::prepareStorage(desc, scratch);
     ScalarNoConst* materialized_output = block_storage.data();
 
     // We potentially will need to materialize input blocks.
@@ -667,9 +633,8 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       Index bcast_offset = desc.offset() + output_offset;
 
       // Broadcast along the bcast dimension.
-      num_output_coeffs += BroadcastBlockAlongBcastDim(
-          params, bcast_offset, scratch, bcast_output, &materialized_input,
-          &materialized_input_size);
+      num_output_coeffs += BroadcastBlockAlongBcastDim(params, bcast_offset, scratch, bcast_output, &materialized_input,
+                                                       &materialized_input_size);
 
       // Switch to the next outer dimension.
       for (int j = 0; j < idx; ++j) {
@@ -690,16 +655,9 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
 
   Broadcast functor() const { return m_broadcast; }
-#ifdef EIGEN_USE_SYCL
-  // binding placeholder accessors to a command group handler for SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void bind(
-      cl::sycl::handler& cgh) const {
-    m_impl.bind(cgh);
-  }
-#endif
+
  private:
-  static const bool IsColMajor =
-      static_cast<int>(Layout) == static_cast<int>(ColMajor);
+  static constexpr bool IsColMajor = static_cast<int>(Layout) == static_cast<int>(ColMajor);
 
   // We will build a general case block broadcasting on top of broadcasting
   // primitive that will do broadcasting only for the inner dimension(s) along
@@ -746,8 +704,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     Index output_span;
   };
 
-  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE BlockBroadcastingParams
-  blockBroadcastingParams(TensorBlockDesc& desc) const {
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE BlockBroadcastingParams blockBroadcastingParams(TensorBlockDesc& desc) const {
     BlockBroadcastingParams params;
 
     params.input_dims = Dimensions(m_impl.dimensions());
@@ -791,8 +748,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       const int dim = IsColMajor ? i : NumDims - i - 1;
       params.input_block_sizes[dim] = 1;
     }
-    params.input_block_strides =
-        internal::strides<Layout>(params.input_block_sizes);
+    params.input_block_strides = internal::strides<Layout>(params.input_block_sizes);
 
     // Broadcast with the 0-stride trick: Create 1 extra dim for each
     // broadcast, set the input stride to 0.
@@ -821,8 +777,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       params.bcast_block_sizes[copy_dim] = params.input_dims[dim];
       params.bcast_block_sizes[broadcast_dim] = m_broadcast[dim];
       params.bcast_block_strides[copy_dim] = params.output_strides[dim];
-      params.bcast_block_strides[broadcast_dim] =
-          params.output_strides[dim] * params.input_dims[dim];
+      params.bcast_block_strides[broadcast_dim] = params.output_strides[dim] * params.input_dims[dim];
       params.bcast_input_strides[copy_dim] = params.input_block_strides[dim];
       params.bcast_input_strides[broadcast_dim] = 0;
     }
@@ -844,34 +799,26 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index BroadcastBlockAlongBcastDim(
-      BlockBroadcastingParams params, Index bcast_offset,
-      TensorBlockScratch& scratch, ScalarNoConst* materialized_output,
-      ScalarNoConst** materialized_input,
-      size_t* materialized_input_size) const {
+      BlockBroadcastingParams params, Index bcast_offset, TensorBlockScratch& scratch,
+      ScalarNoConst* materialized_output, ScalarNoConst** materialized_input, size_t* materialized_input_size) const {
     if (params.bcast_dim_size == 1) {
       // We just need one block read using the ready-set values above.
-      return BroadcastBlock(
-          params.input_block_sizes, params.input_block_strides,
-          params.bcast_block_sizes, params.bcast_block_strides,
-          params.bcast_input_strides, bcast_offset, 0, scratch,
-          materialized_output, materialized_input, materialized_input_size);
+      return BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                            params.bcast_block_strides, params.bcast_input_strides, bcast_offset, 0, scratch,
+                            materialized_output, materialized_input, materialized_input_size);
 
     } else if (params.input_dims[params.bcast_dim] == 1) {
       // Broadcast bcast dimension (< NumDims) by bcast_dim_size.
       const int broadcast_bcast_dim =
-          IsColMajor ? 2 * params.inner_dim_count + 1
-                     : 2 * NumDims - 2 * params.inner_dim_count - 2;
+          IsColMajor ? 2 * params.inner_dim_count + 1 : 2 * NumDims - 2 * params.inner_dim_count - 2;
 
       params.bcast_block_sizes[broadcast_bcast_dim] = params.bcast_dim_size;
       params.bcast_input_strides[broadcast_bcast_dim] = 0;
-      params.bcast_block_strides[broadcast_bcast_dim] =
-          params.output_strides[params.bcast_dim];
+      params.bcast_block_strides[broadcast_bcast_dim] = params.output_strides[params.bcast_dim];
 
-      return BroadcastBlock(
-          params.input_block_sizes, params.input_block_strides,
-          params.bcast_block_sizes, params.bcast_block_strides,
-          params.bcast_input_strides, bcast_offset, 0, scratch,
-          materialized_output, materialized_input, materialized_input_size);
+      return BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                            params.bcast_block_strides, params.bcast_input_strides, bcast_offset, 0, scratch,
+                            materialized_output, materialized_input, materialized_input_size);
 
     } else {
       // Keep track of the total number of the coefficients written to the
@@ -898,8 +845,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       // together.
 
       // Find a.
-      const Index bcast_dim_left_index =
-          bcast_offset / m_outputStrides[params.bcast_dim];
+      const Index bcast_dim_left_index = bcast_offset / m_outputStrides[params.bcast_dim];
 
       // Find b and c.
       const Index input_bcast_dim_size = params.input_dims[params.bcast_dim];
@@ -907,103 +853,79 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       // First multiple after a. This is b when <= bcast_dim_left_index +
       // bcast_dim_size.
       const Index first_multiple =
-          divup<Index>(bcast_dim_left_index, input_bcast_dim_size) *
-          input_bcast_dim_size;
+          numext::div_ceil<Index>(bcast_dim_left_index, input_bcast_dim_size) * input_bcast_dim_size;
 
       if (first_multiple <= bcast_dim_left_index + params.bcast_dim_size) {
         // b exists, so does c. Find it.
         const Index last_multiple =
-            (bcast_dim_left_index + params.bcast_dim_size) /
-            input_bcast_dim_size * input_bcast_dim_size;
+            (bcast_dim_left_index + params.bcast_dim_size) / input_bcast_dim_size * input_bcast_dim_size;
         const int copy_bcast_dim =
-            IsColMajor ? 2 * params.inner_dim_count
-                       : 2 * NumDims - 2 * params.inner_dim_count - 1;
+            IsColMajor ? 2 * params.inner_dim_count : 2 * NumDims - 2 * params.inner_dim_count - 1;
         const int broadcast_bcast_dim =
-            IsColMajor ? 2 * params.inner_dim_count + 1
-                       : 2 * NumDims - 2 * params.inner_dim_count - 2;
+            IsColMajor ? 2 * params.inner_dim_count + 1 : 2 * NumDims - 2 * params.inner_dim_count - 2;
 
         if (first_multiple > bcast_dim_left_index) {
           const Index head_size = first_multiple - bcast_dim_left_index;
           params.input_block_sizes[params.bcast_dim] = head_size;
           params.bcast_block_sizes[copy_bcast_dim] = head_size;
-          params.bcast_input_strides[copy_bcast_dim] =
-              params.input_block_strides[params.bcast_dim];
-          params.bcast_block_strides[copy_bcast_dim] =
-              params.output_strides[params.bcast_dim];
+          params.bcast_input_strides[copy_bcast_dim] = params.input_block_strides[params.bcast_dim];
+          params.bcast_block_strides[copy_bcast_dim] = params.output_strides[params.bcast_dim];
           params.bcast_block_sizes[broadcast_bcast_dim] = 1;
           params.bcast_input_strides[broadcast_bcast_dim] = 0;
           params.bcast_block_strides[broadcast_bcast_dim] =
-              params.output_strides[params.bcast_dim] *
-              params.input_dims[params.bcast_dim];
+              params.output_strides[params.bcast_dim] * params.input_dims[params.bcast_dim];
 
-          num_output_coeffs += BroadcastBlock(
-              params.input_block_sizes, params.input_block_strides,
-              params.bcast_block_sizes, params.bcast_block_strides,
-              params.bcast_input_strides, bcast_offset, 0, scratch,
-              materialized_output, materialized_input, materialized_input_size);
+          num_output_coeffs +=
+              BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                             params.bcast_block_strides, params.bcast_input_strides, bcast_offset, 0, scratch,
+                             materialized_output, materialized_input, materialized_input_size);
         }
         if (first_multiple < last_multiple) {
           params.input_block_sizes[params.bcast_dim] = input_bcast_dim_size;
           params.bcast_block_sizes[copy_bcast_dim] = input_bcast_dim_size;
-          params.bcast_input_strides[copy_bcast_dim] =
-              params.input_block_strides[params.bcast_dim];
-          params.bcast_block_strides[copy_bcast_dim] =
-              params.output_strides[params.bcast_dim];
-          params.bcast_block_sizes[broadcast_bcast_dim] =
-              (last_multiple - first_multiple) / input_bcast_dim_size;
+          params.bcast_input_strides[copy_bcast_dim] = params.input_block_strides[params.bcast_dim];
+          params.bcast_block_strides[copy_bcast_dim] = params.output_strides[params.bcast_dim];
+          params.bcast_block_sizes[broadcast_bcast_dim] = (last_multiple - first_multiple) / input_bcast_dim_size;
           params.bcast_input_strides[broadcast_bcast_dim] = 0;
           params.bcast_block_strides[broadcast_bcast_dim] =
-              params.output_strides[params.bcast_dim] *
-              params.input_dims[params.bcast_dim];
-          const Index offset = (first_multiple - bcast_dim_left_index) *
-                               m_outputStrides[params.bcast_dim];
+              params.output_strides[params.bcast_dim] * params.input_dims[params.bcast_dim];
+          const Index offset = (first_multiple - bcast_dim_left_index) * m_outputStrides[params.bcast_dim];
 
-          num_output_coeffs += BroadcastBlock(
-              params.input_block_sizes, params.input_block_strides,
-              params.bcast_block_sizes, params.bcast_block_strides,
-              params.bcast_input_strides, bcast_offset, offset, scratch,
-              materialized_output, materialized_input, materialized_input_size);
+          num_output_coeffs +=
+              BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                             params.bcast_block_strides, params.bcast_input_strides, bcast_offset, offset, scratch,
+                             materialized_output, materialized_input, materialized_input_size);
         }
         if (last_multiple < bcast_dim_left_index + params.bcast_dim_size) {
-          const Index tail_size =
-              bcast_dim_left_index + params.bcast_dim_size - last_multiple;
+          const Index tail_size = bcast_dim_left_index + params.bcast_dim_size - last_multiple;
           params.input_block_sizes[params.bcast_dim] = tail_size;
           params.bcast_block_sizes[copy_bcast_dim] = tail_size;
-          params.bcast_input_strides[copy_bcast_dim] =
-              params.input_block_strides[params.bcast_dim];
-          params.bcast_block_strides[copy_bcast_dim] =
-              params.output_strides[params.bcast_dim];
+          params.bcast_input_strides[copy_bcast_dim] = params.input_block_strides[params.bcast_dim];
+          params.bcast_block_strides[copy_bcast_dim] = params.output_strides[params.bcast_dim];
           params.bcast_block_sizes[broadcast_bcast_dim] = 1;
           params.bcast_input_strides[broadcast_bcast_dim] = 0;
           params.bcast_block_strides[broadcast_bcast_dim] =
-              params.output_strides[params.bcast_dim] *
-              params.input_dims[params.bcast_dim];
-          const Index offset = (last_multiple - bcast_dim_left_index) *
-                               m_outputStrides[params.bcast_dim];
+              params.output_strides[params.bcast_dim] * params.input_dims[params.bcast_dim];
+          const Index offset = (last_multiple - bcast_dim_left_index) * m_outputStrides[params.bcast_dim];
 
-          num_output_coeffs += BroadcastBlock(
-              params.input_block_sizes, params.input_block_strides,
-              params.bcast_block_sizes, params.bcast_block_strides,
-              params.bcast_input_strides, bcast_offset, offset, scratch,
-              materialized_output, materialized_input, materialized_input_size);
+          num_output_coeffs +=
+              BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                             params.bcast_block_strides, params.bcast_input_strides, bcast_offset, offset, scratch,
+                             materialized_output, materialized_input, materialized_input_size);
         }
       } else {
         // b and c do not exist.
         const int copy_bcast_dim =
-            IsColMajor ? 2 * params.inner_dim_count
-                       : 2 * NumDims - 2 * params.inner_dim_count - 1;
+            IsColMajor ? 2 * params.inner_dim_count : 2 * NumDims - 2 * params.inner_dim_count - 1;
         params.input_block_sizes[params.bcast_dim] = params.bcast_dim_size;
         params.bcast_block_sizes[copy_bcast_dim] = params.bcast_dim_size;
-        params.bcast_input_strides[copy_bcast_dim] =
-            params.input_block_strides[params.bcast_dim];
-        params.bcast_block_strides[copy_bcast_dim] =
-            params.output_strides[params.bcast_dim];
+        params.bcast_input_strides[copy_bcast_dim] = params.input_block_strides[params.bcast_dim];
+        params.bcast_block_strides[copy_bcast_dim] = params.output_strides[params.bcast_dim];
 
-        num_output_coeffs += BroadcastBlock(
-            params.input_block_sizes, params.input_block_strides,
-            params.bcast_block_sizes, params.bcast_block_strides,
-            params.bcast_input_strides, bcast_offset, 0, scratch,
-            materialized_output, materialized_input, materialized_input_size);
+        num_output_coeffs +=
+            BroadcastBlock(params.input_block_sizes, params.input_block_strides, params.bcast_block_sizes,
+                           params.bcast_block_strides, params.bcast_input_strides, bcast_offset, 0, scratch,
+                           materialized_output, materialized_input, materialized_input_size);
       }
 
       return num_output_coeffs;
@@ -1011,20 +933,15 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index BroadcastBlock(
-      const Dimensions& input_block_sizes,
-      const Dimensions& input_block_strides,
-      const BroadcastDimensions& bcast_block_sizes,
-      const BroadcastDimensions& bcast_block_strides,
-      const BroadcastDimensions& bcast_input_strides, Index bcast_offset,
-      Index offset, TensorBlockScratch& scratch,
-      ScalarNoConst* materialized_output, ScalarNoConst** materialized_input,
-      size_t* materialized_input_size) const {
+      const Dimensions& input_block_sizes, const Dimensions& input_block_strides,
+      const BroadcastDimensions& bcast_block_sizes, const BroadcastDimensions& bcast_block_strides,
+      const BroadcastDimensions& bcast_input_strides, Index bcast_offset, Index offset, TensorBlockScratch& scratch,
+      ScalarNoConst* materialized_output, ScalarNoConst** materialized_input, size_t* materialized_input_size) const {
     // ---------------------------------------------------------------------- //
     // Tensor block descriptor for reading block from the input.
     const Index input_offset = bcast_offset + offset;
-    TensorBlockDesc input_desc(
-        IsColMajor ? indexColMajor(input_offset) : indexRowMajor(input_offset),
-        input_block_sizes);
+    TensorBlockDesc input_desc(IsColMajor ? indexColMajor(input_offset) : indexRowMajor(input_offset),
+                               input_block_sizes);
 
     ArgTensorBlock input_block = m_impl.block(input_desc, scratch);
 
@@ -1043,20 +960,17 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       // Maybe reuse previously allocated buffer, or allocate a new one with a
       // scratch allocator.
       const size_t input_total_size = input_block_sizes.TotalSize();
-      if (*materialized_input == NULL ||
-          *materialized_input_size < input_total_size) {
+      if (*materialized_input == NULL || *materialized_input_size < input_total_size) {
         *materialized_input_size = input_total_size;
         void* mem = scratch.allocate(*materialized_input_size * sizeof(Scalar));
         *materialized_input = static_cast<ScalarNoConst*>(mem);
       }
 
-      typedef internal::TensorBlockAssignment<
-          ScalarNoConst, NumDims, typename ArgTensorBlock::XprType, Index>
+      typedef internal::TensorBlockAssignment<ScalarNoConst, NumDims, typename ArgTensorBlock::XprType, Index>
           TensorBlockAssignment;
 
       TensorBlockAssignment::Run(
-          TensorBlockAssignment::target(input_block_sizes, input_block_strides,
-                                        *materialized_input),
+          TensorBlockAssignment::target(input_block_sizes, input_block_strides, *materialized_input),
           input_block.expr());
 
       input_buffer = *materialized_input;
@@ -1065,26 +979,23 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
     // ---------------------------------------------------------------------- //
     // Copy data from materialized input block to the materialized output, using
     // given broadcast strides (strides with zeroes).
-    typedef internal::TensorBlockIO<ScalarNoConst, Index, 2 * NumDims, Layout>
-        TensorBlockIO;
+    typedef internal::TensorBlockIO<ScalarNoConst, Index, 2 * NumDims, Layout> TensorBlockIO;
 
     typename TensorBlockIO::Src src(bcast_input_strides, input_buffer);
-    typename TensorBlockIO::Dst dst(bcast_block_sizes, bcast_block_strides,
-                                      materialized_output + offset);
+    typename TensorBlockIO::Dst dst(bcast_block_sizes, bcast_block_strides, materialized_output + offset);
 
     return TensorBlockIO::Copy(dst, src);
   }
 
-protected:
+ protected:
   const Device EIGEN_DEVICE_REF m_device;
-  const typename internal::remove_reference<Broadcast>::type m_broadcast;
+  const std::remove_reference_t<Broadcast> m_broadcast;
   Dimensions m_dimensions;
   array<Index, NumDims> m_outputStrides;
   array<Index, NumDims> m_inputStrides;
   TensorEvaluator<ArgType, Device> m_impl;
 };
 
+}  // end namespace Eigen
 
-} // end namespace Eigen
-
-#endif // EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_BROADCASTING_H

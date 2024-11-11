@@ -130,7 +130,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
 void NormalizedSquaredError::set_default()
 {
-    if(has_neural_network() && has_data_set() && !data_set->is_empty())
+    if(has_neural_network() && has_data_set() && !data_set->get_samples_number() == 0)
     {
         set_normalization_coefficient();
         set_selection_normalization_coefficient();
@@ -264,7 +264,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 
     output_deltas.device(*thread_pool_device) = errors;
 
-    divide_columns(thread_pool_device, output_deltas, squared_errors);
+    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 

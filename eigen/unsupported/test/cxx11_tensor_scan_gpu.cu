@@ -21,9 +21,8 @@
 using Eigen::Tensor;
 typedef Tensor<float, 1>::DimensionPair DimPair;
 
-template<int DataLayout>
-void test_gpu_cumsum(int m_size, int k_size, int n_size)
-{
+template <int DataLayout>
+void test_gpu_cumsum(int m_size, int k_size, int n_size) {
   std::cout << "Testing for (" << m_size << "," << k_size << "," << n_size << ")" << std::endl;
   Tensor<float, 3, DataLayout> t_input(m_size, k_size, n_size);
   Tensor<float, 3, DataLayout> t_result(m_size, k_size, n_size);
@@ -31,7 +30,7 @@ void test_gpu_cumsum(int m_size, int k_size, int n_size)
 
   t_input.setRandom();
 
-  std::size_t t_input_bytes = t_input.size()  * sizeof(float);
+  std::size_t t_input_bytes = t_input.size() * sizeof(float);
   std::size_t t_result_bytes = t_result.size() * sizeof(float);
 
   float* d_t_input;
@@ -45,10 +44,10 @@ void test_gpu_cumsum(int m_size, int k_size, int n_size)
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> >
-      gpu_t_input(d_t_input, Eigen::array<int, 3>(m_size, k_size, n_size));
-  Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> >
-      gpu_t_result(d_t_result, Eigen::array<int, 3>(m_size, k_size, n_size));
+  Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> > gpu_t_input(d_t_input,
+                                                                     Eigen::array<int, 3>{m_size, k_size, n_size});
+  Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> > gpu_t_result(d_t_result,
+                                                                      Eigen::array<int, 3>{m_size, k_size, n_size});
 
   gpu_t_result.device(gpu_device) = gpu_t_input.cumsum(1);
   t_result = t_input.cumsum(1);
@@ -61,8 +60,7 @@ void test_gpu_cumsum(int m_size, int k_size, int n_size)
     if (Eigen::internal::isApprox(t_result(i), t_result_gpu(i), 1e-4f)) {
       continue;
     }
-    std::cout << "mismatch detected at index " << i << ": " << t_result(i)
-              << " vs " <<  t_result_gpu(i) << std::endl;
+    std::cout << "mismatch detected at index " << i << ": " << t_result(i) << " vs " << t_result_gpu(i) << std::endl;
     assert(false);
   }
 
@@ -70,9 +68,7 @@ void test_gpu_cumsum(int m_size, int k_size, int n_size)
   gpuFree((void*)d_t_result);
 }
 
-
-EIGEN_DECLARE_TEST(cxx11_tensor_scan_gpu)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_scan_gpu) {
   CALL_SUBTEST_1(test_gpu_cumsum<ColMajor>(128, 128, 128));
   CALL_SUBTEST_2(test_gpu_cumsum<RowMajor>(128, 128, 128));
 }

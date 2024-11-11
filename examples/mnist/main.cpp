@@ -25,16 +25,14 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
-
-        const char* filename = "C:/xmltest/data_set_mnist_binary.xml";
         
         //Random image data set 
-        //onst Index samples_number = 10;
+        //const Index samples_number = 10;
         //const Index image_height = 4;
         //const Index image_width = 4;
         //const Index channels = 1;
 
-        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 2);
+        //ImageDataSet image_data_set(samples_number, image_height, image_width, channels, 5);
 
         //image_data_set.set_image_data_random();
         
@@ -49,46 +47,14 @@ int main()
 
         image_data_set.read_bmp();
 
-        image_data_set.print();
-        /*
-        tinyxml2::XMLDocument doc;
-        tinyxml2::XMLPrinter printer;
-        image_data_set.to_XML(printer);
-        doc.Parse(printer.CStr());
-
-        if (doc.SaveFile(filename) == tinyxml2::XML_SUCCESS) {
-            cout << "XML saved in " << filename << endl;
-        }
-        else {
-            cout << "Error saving XML." << endl;
-            return 1;
-        }
-        */
-        
-        ImageDataSet loaded_image_data_set;
-
-        tinyxml2::XMLDocument loaded_doc;
-        if (loaded_doc.LoadFile(filename) == tinyxml2::XML_SUCCESS) {
-            loaded_image_data_set.from_XML(loaded_doc);
-            cout << "XML loaded from " << filename << endl;
-        }
-        else {
-            cout << "Error loading XML." << endl;
-            return 1;
-        }
-        
-        //image_data_set.set(DataSet::SampleUse::Training);
-
-        loaded_image_data_set.print();
-
-        //image_data_set.print_data();
+        //image_data_set.print();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            loaded_image_data_set.get_input_dimensions(),
+            image_data_set.get_input_dimensions(),
             { 1 },
-            loaded_image_data_set.get_target_dimensions());
+            image_data_set.get_target_dimensions());
 
         neural_network.print();
 
@@ -106,6 +72,11 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
+
+        Index prediction = neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
+        cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
+        prediction = neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
+        cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         

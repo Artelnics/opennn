@@ -4,9 +4,6 @@
 namespace Eigen {
 namespace internal {
 
-// Bessel functions only available for some compilers.
-#if EIGEN_HAS_AVX512_MATH
-
 F16_PACKET_FUNCTION(Packet16f, Packet16h, pbessel_i0)
 BF16_PACKET_FUNCTION(Packet16f, Packet16bf, pbessel_i0)
 
@@ -42,8 +39,6 @@ BF16_PACKET_FUNCTION(Packet16f, Packet16bf, pbessel_y0)
 
 F16_PACKET_FUNCTION(Packet16f, Packet16h, pbessel_y1)
 BF16_PACKET_FUNCTION(Packet16f, Packet16bf, pbessel_y1)
-
-#endif
 
 }  // namespace internal
 }  // namespace Eigen

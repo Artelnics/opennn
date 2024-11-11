@@ -25,13 +25,7 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
       data_set(new_data_set)
 {
     set_default();
-}
 
-
-TestingAnalysis::~TestingAnalysis()
-{
-    delete thread_pool;
-    delete thread_pool_device;
 }
 
 
@@ -55,22 +49,26 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_default()
 {
+/*
     delete thread_pool;
     delete thread_pool_device;
 
     const int n = omp_get_max_threads();
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+*/
 }
 
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
+/*
     if(thread_pool) delete thread_pool;
     if(thread_pool_device) delete thread_pool_device;
 
     thread_pool = new ThreadPool(new_threads_number);
     thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
+*/
 }
 
 
@@ -121,7 +119,7 @@ Tensor<Correlation, 1> TestingAnalysis::linear_correlation(const Tensor<type, 2>
     Tensor<Correlation, 1> linear_correlation(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        linear_correlation(i) = opennn::linear_correlation(thread_pool_device, output.chip(i,1), target.chip(i,1));
+        linear_correlation(i) = opennn::linear_correlation(thread_pool_device.get(), output.chip(i,1), target.chip(i,1));
 
     return linear_correlation;
 }
@@ -665,11 +663,10 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     Tensor<bool, 2> mask(batch_samples_number, outputs_number);
 
     Tensor<type, 0> cross_entropy_error;
-
-    mask.device(*thread_pool_device) = targets != targets.constant(0);
+    mask = targets != targets.constant(0);
 
     Tensor<type, 0> mask_sum;
-    mask_sum.device(*thread_pool_device) = mask.cast<type>().sum();
+    mask_sum = mask.cast<type>().sum();
 
 #pragma omp parallel for
 
@@ -677,9 +674,9 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
-    errors.device(*thread_pool_device) = errors * mask.cast<type>();
+    errors = errors * mask.cast<type>();
 
-    cross_entropy_error.device(*thread_pool_device) = errors.sum();
+    cross_entropy_error = errors.sum();
 
     return cross_entropy_error(0) / mask_sum(0);
 }
@@ -762,17 +759,17 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 
     Tensor<type, 0> accuracy;
 
-    mask.device(*thread_pool_device) = targets != targets.constant(0);
+    mask = targets != targets.constant(0);
 
     const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
-    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
+    predictions = outputs.argmax(2).cast<type>();
 
-    matches.device(*thread_pool_device) = predictions == targets;
+    matches = predictions == targets;
 
-    matches.device(*thread_pool_device) = matches && mask;
+    matches = matches && mask;
 
-    accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
+    accuracy = matches.cast<type>().sum() / mask_sum(0);
 
     return accuracy(0);
 }
@@ -1965,7 +1962,7 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        error_autocorrelations[i] = autocorrelations(thread_pool_device, error.chip(i,1), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(thread_pool_device.get(), error.chip(i,1), maximum_lags_number);
 
     return error_autocorrelations;
 }
@@ -1986,7 +1983,8 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device, inputs.chip(i,1), errors.chip(i,1), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(thread_pool_device.get(), 
+            inputs.chip(i,1), errors.chip(i,1), lags_number);
 
     return inputs_errors_cross_correlation;
 }

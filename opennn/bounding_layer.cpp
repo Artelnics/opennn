@@ -13,9 +13,9 @@ namespace opennn
 {
 
 
-BoundingLayer::BoundingLayer(const dimensions& neurons_number, const string& new_name) : Layer()
+BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
 {
-    set(neurons_number[0]);
+    set(output_dimensions);
 }
 
 
@@ -25,9 +25,9 @@ const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const
 }
 
 
-Index BoundingLayer::get_inputs_number() const
+dimensions BoundingLayer::get_input_dimensions() const
 {
-    return lower_bounds.dimension(0);
+    return { lower_bounds.dimension(0) };
 }
 
 
@@ -43,15 +43,9 @@ const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 }
 
 
-Index BoundingLayer::get_neurons_number() const
-{
-    return lower_bounds.dimension(0);
-}
-
-
 dimensions BoundingLayer::get_output_dimensions() const
 {
-    return { get_neurons_number() };
+    return { lower_bounds.dimension(0) };
 }
 
 
@@ -67,15 +61,9 @@ const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 }
 
 
-bool BoundingLayer::is_empty() const
+void BoundingLayer::set(const dimensions& new_output_dimensions, const string& new_name)
 {
-    return get_neurons_number() == 0;
-}
-
-
-void BoundingLayer::set(const Index& new_neurons_number, const string& new_name)
-{
-    set_neurons_number(new_neurons_number);
+    set_output_dimensions(new_output_dimensions);
 
     name = new_name;
 
@@ -102,26 +90,20 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 }
 
 
-void BoundingLayer::set_display(const bool& new_display)
+void BoundingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    display = new_display;
-}
-
-
-void BoundingLayer::set_inputs_number(const Index& new_inputs_number)
-{
-    lower_bounds.resize(new_inputs_number);
-    upper_bounds.resize(new_inputs_number);
+    lower_bounds.resize(new_input_dimensions[0]);
+    upper_bounds.resize(new_input_dimensions[0]);
 }
 
 
 void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bound)
 {
-    const Index neurons_number = get_neurons_number();
+    const dimensions output_dimensions = get_output_dimensions();
 
-    if(lower_bounds.size() != neurons_number)
+    if(lower_bounds.size() != output_dimensions[0])
     {
-        lower_bounds.resize(neurons_number);
+        lower_bounds.resize(output_dimensions[0]);
         lower_bounds.setConstant(-numeric_limits<type>::max());
     }
 
@@ -135,10 +117,10 @@ void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 }
 
 
-void BoundingLayer::set_neurons_number(const Index& new_neurons_number)
+void BoundingLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    lower_bounds.resize(new_neurons_number);
-    upper_bounds.resize(new_neurons_number);
+    lower_bounds.resize(new_output_dimensions[0]);
+    upper_bounds.resize(new_output_dimensions[0]);
 
     lower_bounds.setConstant(-numeric_limits<type>::max());
     upper_bounds.setConstant(numeric_limits<type>::max());
@@ -153,11 +135,11 @@ void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 
 void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bound)
 {
-    const Index neurons_number = get_neurons_number();
+    const dimensions output_dimensions = get_output_dimensions();
 
-    if(upper_bounds.size() != neurons_number)
+    if(upper_bounds.size() != output_dimensions[0])
     {
-        upper_bounds.resize(neurons_number);
+        upper_bounds.resize(output_dimensions[0]);
         upper_bounds.setConstant(numeric_limits<type>::max());
     }
 
@@ -209,20 +191,20 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::write_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string BoundingLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
 {
+    if (bounding_method == BoundingMethod::NoBounding)
+        return string();
+
     ostringstream buffer;
 
     buffer.precision(10);
 
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        const Index neurons_number = get_neurons_number();
+    const dimensions output_dimensions = get_output_dimensions();
 
-        for(Index i = 0; i < neurons_number; i++)
-            buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
-                   << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
-    }
+    for(Index i = 0; i < output_dimensions[0]; i++)
+        buffer << output_names[i] << " = max(" << lower_bounds[i] << ", " << input_names[i] << ")\n"
+               << output_names[i] << " = min(" << upper_bounds[i] << ", " << output_names[i] << ")\n";
 
     return buffer.str();
 }
@@ -238,13 +220,13 @@ void BoundingLayer::print() const
 
 void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 {
-    printer.OpenElement("BoundingLayer");
+    printer.OpenElement("Bounding");
 
-    add_xml_element(printer, "BoundingNeuronsNumber", to_string(get_neurons_number()));
+    const dimensions output_dimensions = get_input_dimensions();
 
-    const Index neurons_number = get_neurons_number();
+    add_xml_element(printer, "BoundingNeuronsNumber", to_string(output_dimensions[0]));
 
-    for (Index i = 0; i < neurons_number; i++) 
+    for (Index i = 0; i < output_dimensions[0]; i++) 
     {
         printer.OpenElement("Item");
         printer.PushAttribute("Index", unsigned(i + 1));
@@ -263,14 +245,14 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const auto* root_element = document.FirstChildElement("BoundingLayer");
+    const auto* root_element = document.FirstChildElement("Bounding");
     
     if (!root_element)
-        throw runtime_error("BoundingLayer element is nullptr.\n");
+        throw runtime_error("Bounding element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
 
-    set(neurons_number);
+    set({ neurons_number });
 
     const auto* item_element = root_element->FirstChildElement("Item");
 
@@ -301,9 +283,9 @@ BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& ne
 
 pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() const
 {
-    const Index neurons_number = layer->get_neurons_number();
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { batch_samples_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_samples_number, output_dimensions[0]}};
 }
 
 
@@ -311,7 +293,7 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number,
 {
     layer = new_layer;
 
-    const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_neurons_number();
+    const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_output_dimensions()[0];
 
     batch_samples_number = new_batch_samples_number;
 

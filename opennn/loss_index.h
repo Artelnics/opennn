@@ -35,8 +35,6 @@ public:
 
    explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   virtual ~LossIndex();
-
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
@@ -172,9 +170,8 @@ public:
 
 protected:
 
-   ThreadPool* thread_pool = nullptr;
-
-   ThreadPoolDevice* thread_pool_device = nullptr;
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
 
    NeuralNetwork* neural_network = nullptr;
 
