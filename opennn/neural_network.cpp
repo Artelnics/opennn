@@ -483,6 +483,8 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
 {
     const Index complexity_size = complexity_dimensions.size();
 
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                                dimensions{complexity_dimensions[i]},
@@ -501,6 +503,14 @@ void NeuralNetwork::set_forecasting(const dimensions& input_dimensions,
                                     const dimensions& output_dimensions)
 {
     add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    add_layer(make_unique<RecurrentLayer>(get_output_dimensions(),
+        dimensions{ complexity_dimensions[0] }));
+
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+        output_dimensions,
+        PerceptronLayer::ActivationFunction::HyperbolicTangent,
+        "recurrent_layer"));
 
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 

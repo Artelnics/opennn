@@ -116,7 +116,7 @@ public:
 
     // Samples get
 
-    inline Index get_samples_number() const {return sample_uses.size();}
+    inline Index get_samples_number() const {return data.dimension(0);}
 
     Index get_samples_number(const SampleUse&) const;
 
@@ -362,16 +362,16 @@ public:
 
     // Descriptives
 
-    Tensor<Descriptives, 1> calculate_variable_descriptives() const;
-    Tensor<Descriptives, 1> calculate_used_variable_descriptives() const;
+    vector<Descriptives> calculate_variable_descriptives() const;
+    vector<Descriptives> calculate_used_variable_descriptives() const;
 
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_positive_samples() const;
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_negative_samples() const;
-    Tensor<Descriptives, 1> calculate_raw_variables_descriptives_categories(const Index&) const;
+    vector<Descriptives> calculate_raw_variables_descriptives_positive_samples() const;
+    vector<Descriptives> calculate_raw_variables_descriptives_negative_samples() const;
+    vector<Descriptives> calculate_raw_variables_descriptives_categories(const Index&) const;
 
-    Tensor<Descriptives, 1> calculate_variable_descriptives(const VariableUse&) const;
+    vector<Descriptives> calculate_variable_descriptives(const VariableUse&) const;
  
-    Tensor<Descriptives, 1> calculate_testing_target_variables_descriptives() const;
+    vector<Descriptives> calculate_testing_target_variables_descriptives() const;
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
@@ -418,13 +418,13 @@ public:
 
     // Data scaling
 
-    Tensor<Descriptives, 1> scale_data();
+    vector<Descriptives> scale_data();
 
-    virtual Tensor<Descriptives, 1> scale_variables(const VariableUse&);
+    virtual vector<Descriptives> scale_variables(const VariableUse&);
 
     // Data unscaling
 
-    void unscale_variables(const VariableUse&, const Tensor<Descriptives, 1>&);
+    void unscale_variables(const VariableUse&, const vector<Descriptives>&);
 
     // Classification
 

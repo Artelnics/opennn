@@ -1,7 +1,5 @@
 #include "pch.h"
 
-#include <iostream>
-
 #include "../opennn/config.h"
 #include "../opennn/correlations.h"
 #include "../opennn/tensors.h"

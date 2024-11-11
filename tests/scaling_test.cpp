@@ -12,7 +12,7 @@ void ScalingTest::test_scale_data_mean_standard_deviation()
     Tensor<type, 2> matrix(10 + rand()%10, 1);
     Tensor<type, 2> scaled_matrix;
 
-    Tensor<Descriptives, 1> matrix_descriptives;
+    vector<Descriptives> matrix_descriptives;
 
     matrix.setRandom();
 
@@ -36,7 +36,7 @@ void ScalingTest::test_scale_data_minimum_maximum()
     Tensor<type, 2> matrix(10 + rand()%10, 1);
     Tensor<type, 2> scaled_matrix;
 
-    Tensor<Descriptives, 1> matrix_descriptives;
+    vector<Descriptives> matrix_descriptives;
 
     matrix.setRandom();
 
@@ -78,7 +78,7 @@ void ScalingTest::test_scale_data_standard_deviation()
     Tensor<type, 2> matrix(10 + rand()%10, 1);
     Tensor<type, 2> scaled_matrix;
 
-    Tensor<Descriptives, 1> matrix_descriptives;
+    vector<Descriptives> matrix_descriptives;
 
     matrix.setRandom();
 

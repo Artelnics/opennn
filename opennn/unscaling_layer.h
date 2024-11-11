@@ -29,7 +29,7 @@ public:
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const final;
 
-   Tensor<Descriptives, 1> get_descriptives() const; 
+   vector<Descriptives> get_descriptives() const; 
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
@@ -40,12 +40,12 @@ public:
    Tensor<string, 1> write_unscaling_method_text() const;
 
    void set(const Index& = 0, const string& = "unscaling_layer");
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
+   void set(const vector<Descriptives>&, const Tensor<Scaler, 1>&);
 
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives(const vector<Descriptives>&);
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
@@ -75,7 +75,7 @@ public:
 
 private:
 
-   Tensor<Descriptives, 1> descriptives;
+   vector<Descriptives> descriptives;
 
    Tensor<Scaler, 1> scalers;
 
