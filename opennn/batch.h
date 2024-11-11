@@ -35,6 +35,11 @@ struct Batch
 
     void print() const;
 
+    bool is_empty() const
+    {
+        return inputs_tensor.size() == 0;
+    }
+
     Index batch_size = 0;
 
     DataSet* data_set = nullptr;

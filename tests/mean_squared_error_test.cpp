@@ -27,24 +27,29 @@ TEST(MeanSquaredErrorTest, GeneralConstructor)
 }
 
 
+TEST(MeanSquaredErrorTest, BackPropagateEmpty)
+{
+
+}
+
+
 TEST(MeanSquaredErrorTest, BackPropagateApproximationZero)
 {
-    /*
-    DataSet data_set(1, 1, 1);
+    
+    DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(0));
 
     data_set.set(DataSet::SampleUse::Training);
     
     Batch batch(1, &data_set);
-
-    //batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill({0}, {0}, {1});
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-    neural_network.set_parameters_constant(type(0));
-    
+    neural_network.set_parameters_constant(type(0)); 
+/*
     ForwardPropagation forward_propagation(1, &neural_network);
 
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+    //neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 

@@ -7,42 +7,33 @@ TEST(GrowingInputsTest, DefaultConstructor)
 {
     GrowingInputs growing_inputs;
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(growing_inputs.has_training_strategy(), false);
 }
 
 
 TEST(GrowingInputsTest, GeneralConstructor)
 {
-//    GrowingInputs growing_inputs_1(&training_strategy);
+    TrainingStrategy training_strategy;
 
-//    assert_true(growing_inputs_1.has_training_strategy(), LOG);
+    GrowingInputs growing_inputs(&training_strategy);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(growing_inputs.has_training_strategy(), true);
+}
+
+
+TEST(GrowingInputsTest, InputSelection)
+{
+    TrainingStrategy training_strategy;
+
+    GrowingInputs growing_inputs(&training_strategy);
+
+    EXPECT_EQ(growing_inputs.has_training_strategy(), true);
 }
 
 /*
-namespace opennn
-{
-
-void GrowingInputsTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    // Test
-
-
-    // Test
-
-    GrowingInputs growing_inputs_2;
-
-    assert_true(!growing_inputs_2.has_training_strategy(), LOG);
-}
-
 
 void GrowingInputsTest::test_perform_inputs_selection()
 {
-    cout << "test_perform_inputs_selection\n";
-
     GrowingInputs growing_inputs(&training_strategy);
 
     growing_inputs.set_display(false);

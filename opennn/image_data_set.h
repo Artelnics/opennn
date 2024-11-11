@@ -51,8 +51,6 @@ class ImageDataSet : public DataSet
 
 public:
 
-    // DEFAULT CONSTRUCTOR
-
     explicit ImageDataSet();
 
     explicit ImageDataSet(const Index&, const Index&, const Index&, const Index&, const Index&);

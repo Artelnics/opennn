@@ -1,19 +1,23 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S C A L I N G   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "scaling_layer_test.h"
 
 #include "../opennn/neural_network.h"
-#include "../opennn/neural_network_forward_propagation.h".h"
-#include "../opennn/tensors.h"
+#include "../opennn/forward_propagation.h".h"
+#include "../opennn/scaling_layer_2d.h"
 #include "../opennn/descriptives.h"
 #include "../opennn/statistics.h"
 
+
+TEST(ScalingLayerTest, DefaultConstructor)
+{
+    ScalingLayer2D scaling_layer_2d;
+
+    EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{0});
+    EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{0});
+}
+
+
+/*
 namespace opennn
 {
 
@@ -29,7 +33,7 @@ void ScalingLayer2DTest::test_constructor()
     cout << "test_constructor\n";
 
     ScalingLayer2D scaling_layer_1;
-/*
+
     assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling2D, LOG);
     assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
 
@@ -37,7 +41,7 @@ void ScalingLayer2DTest::test_constructor()
 
     assert_true(scaling_layer_2.get_descriptives().size() == 3, LOG);
     assert_true(scaling_layer_2.get_scaling_methods().size() == 3, LOG);
-*/
+
 }
 
 
@@ -98,7 +102,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
+
     scaling_layer.forward_propagate({input_pairs},
                                     &scaling_layer_forward_propagation, true);
 
@@ -282,36 +286,6 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaled_input = inputs(1, 0) / inputs_descriptives(1).standard_deviation;
     assert_true(abs(outputs(1, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+
+}
 */
-}
-
-
-void ScalingLayer2DTest::run_test_case()
-{
-    cout << "Running scaling layer test case...\n";
-
-    test_constructor();
-
-    test_forward_propagate();
-
-    cout << "End of scaling layer test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library sl free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library sl distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

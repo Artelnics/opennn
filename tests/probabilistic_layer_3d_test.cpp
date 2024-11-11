@@ -1,11 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P R O B A B I L I S T I C   L A Y E R   3 D   T E S T   C L A S S           
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
+/*
 #include "probabilistic_layer_3d_test.h"
 
 #include "../opennn/tensors.h"
@@ -31,7 +26,7 @@ void ProbabilisticLayer3DTest::test_constructor()
         probabilistic_layer_3d_1.get_parameters_number() == 0, LOG);
 
     // Probabilistic neurons number constructor
-/*
+
     ProbabilisticLayer3D probabilistic_layer_3d_2;
 
     probabilistic_layer_3d_2.set_output_dimensions(0);
@@ -60,7 +55,7 @@ void ProbabilisticLayer3DTest::test_constructor()
         probabilistic_layer_3d_4.get_inputs_depth() == 2 &&
         probabilistic_layer_3d_4.get_neurons_number() == 3 &&
         probabilistic_layer_3d_4.get_parameters_number() == 9, LOG);
-*/
+
 }
 
 
@@ -79,10 +74,10 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
     Tensor<type, 3> combinations(1, 1, 1);
 
     probabilistic_layer_3d.set(1, 1, 1);
-/*
+
     probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
     probabilistic_layer_3d.set_biases(biases);
-*/
+
     probabilistic_layer_3d.calculate_combinations(inputs, combinations);
 
     assert_true(
@@ -97,7 +92,7 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
 void ProbabilisticLayer3DTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
-/*
+
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
     Tensor<type, 4> activation_derivatives;
@@ -213,7 +208,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
             activation_derivatives.dimension(3) == neurons_number, LOG);
 
         assert_true(check_softmax_derivatives(activations, activation_derivatives), LOG);
-    }*/
+    }
 }
 
 bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activation_derivatives) const
@@ -267,7 +262,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         inputs.setConstant(type(1));
         
         //Forward propagate
-/*
+
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
         
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
@@ -287,7 +282,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
-  */      
+       
     }
 
     {
@@ -308,7 +303,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         synaptic_weights.setValues({ {type(1),type(-1),type(0),type(1)},
                                     {type(2),type(-2),type(0),type(2)},
                                     {type(3),type(-3),type(0),type(3)}});
-/*
+
         probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
         probabilistic_layer_3d.set_biases(biases);
 
@@ -318,7 +313,7 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         //Forward propagate
 
         probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
-/*
+
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
                                                  &probabilistic_layer_3d_forward_propagation,
                                                  is_training);
@@ -342,41 +337,9 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
             outputs.dimension(2) == neurons_number, LOG);
 
         assert_true(correct_outputs, LOG);
-*/
+
     }
 }
 
-
-void ProbabilisticLayer3DTest::run_test_case()
-{
-    cout << "Running probabilistic layer test case...\n";
-
-    test_constructor();
-
-    // Forward propagate
-
-    test_calculate_combinations();
-    test_calculate_activations();
-
-    test_forward_propagate();
-
-    cout << "End of probabilistic layer test case.\n\n";
 }
-
-}
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

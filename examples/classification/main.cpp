@@ -45,20 +45,16 @@ int main()
 
         // Set input and target indices
 
-        Tensor<DataSet::RawVariable, 1> columns = data_set.get_raw_variables();
+        vector<DataSet::RawVariable> columns = data_set.get_raw_variables();
         Tensor<Index, 1> input_columns_indices(variables_number);
         Tensor<Index, 1> target_columns_indices(classes_number);
 
         for(Index i = 0; i < columns.size(); i ++)
         {
             if(i < variables_number)
-            {
                 input_columns_indices(i) = i;
-            }
             else
-            {
                 target_columns_indices(i-variables_number) = i;
-            }
         }
 /*
         data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);

@@ -159,7 +159,7 @@ void LossIndex::back_propagate(const Batch& batch,
                                ForwardPropagation& forward_propagation,
                                BackPropagation& back_propagation) const
 {
-//    if(batch.is_empty()) return;
+    if(batch.is_empty()) return;
 
     // Loss index
 

@@ -45,7 +45,7 @@ public:
     const Index& get_steps_ahead() const;
 
     Index get_time_series_raw_variables_number() const;
-    Tensor<RawVariable, 1> get_time_series_raw_variables() const;
+    const vector<RawVariable>& get_time_series_raw_variables() const;
 
     Index get_input_time_series_raw_variables_number() const;
     Index get_target_time_series_raw_variables_number() const;
@@ -98,7 +98,7 @@ private:
 
     Tensor<type, 2> time_series_data;
 
-    Tensor<RawVariable, 1> time_series_raw_variables;
+    vector<RawVariable> time_series_raw_variables;
 
     Index time_raw_variable_index = 0;
 };

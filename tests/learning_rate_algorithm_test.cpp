@@ -47,14 +47,14 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
     targets_number = 1;
     neurons_number = 1;
 
-    DataSet data_set(samples_number, inputs_number, targets_number);
+    DataSet data_set(1, {1}, {1});
     data_set.set_data_random();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, { neurons_number }, { targets_number });
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
 /*
-    batch.set(samples_number, &data_set);
-    forward_propagation.set(samples_number, &neural_network);
-    back_propagation.set(samples_number, &sum_squared_error);
+    Batch batch(1, &data_set);
+    ForwardPropagation forward_propagation(1, &neural_network);
+    back_propagation.set(1, &mean_squared_error);
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
@@ -78,7 +78,6 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
-
 
     // Test
 

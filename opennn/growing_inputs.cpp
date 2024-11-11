@@ -110,9 +110,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    const Tensor<string, 1> raw_variables_names = data_set->get_raw_variable_names();
+    const vector<string> raw_variables_names = data_set->get_raw_variable_names();
 
-    Tensor<string, 1> input_raw_variables_names;
+    vector<string> input_raw_variables_names;
 
     const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variable_pearson_correlations());
 
@@ -180,7 +180,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
                 input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
-                for(Index j = 0; j < input_raw_variables_number; j++) cout << "   " << input_raw_variables_names(j) << endl;
+                for(Index j = 0; j < input_raw_variables_number; j++) 
+                    cout << "   " << input_raw_variables_names[j] << endl;
             }
 
             type minimum_training_error = numeric_limits<type>::max();
@@ -326,7 +327,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     neural_network->set_input_dimensions({ data_set->get_variables_number(DataSet::VariableUse::Input) });
 
-    neural_network->set_inputs_names(data_set->get_variable_names(DataSet::VariableUse::Input));
+    neural_network->set_input_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {

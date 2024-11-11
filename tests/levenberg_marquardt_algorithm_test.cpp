@@ -1,36 +1,30 @@
 #include "pch.h"
 
+#include "../opennn/mean_squared_error.h"
 #include "../opennn/levenberg_marquardt_algorithm.h"
 
 
 TEST(LevenbergMarquardtAlgorithmTest, DefaultConstructor)
 {
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 
-//    assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
-
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), false);
 }
 
 
 TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 {
-//    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
+    MeanSquaredError mean_squared_error;
 
-//    assert_true(lma2.has_loss_index(), LOG);
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
 
 /*
-namespace opennn
-{
-
 void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     type old_error = numeric_limits<float>::max();
 
     Index samples_number;

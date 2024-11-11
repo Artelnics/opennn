@@ -26,7 +26,7 @@ public:
 
     explicit AutoAssociationDataSet();
 
-    Tensor<RawVariable, 1> get_associative_raw_variables() const;
+    vector<RawVariable> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;
     void set_auto_associative_samples_uses();
 
@@ -45,7 +45,7 @@ private:
 
     Tensor<type, 2> associative_data;
 
-    Tensor<RawVariable, 1> associative_raw_variables;
+    vector<RawVariable> associative_raw_variables;
 
 };
 

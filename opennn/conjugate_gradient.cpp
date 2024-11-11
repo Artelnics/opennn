@@ -267,8 +267,8 @@ TrainingResults ConjugateGradient::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const Tensor<string, 1> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const Tensor<string, 1> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
