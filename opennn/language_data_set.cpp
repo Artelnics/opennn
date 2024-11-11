@@ -1777,7 +1777,7 @@ void LanguageDataSet::read_csv_2_simple()
     set_default_raw_variables_uses();
 
     sample_uses.resize(samples_count);
-    sample_uses.setConstant(SampleUse::Training);
+    //sample_uses.set(SampleUse::Training);
 
     split_samples_random();
 

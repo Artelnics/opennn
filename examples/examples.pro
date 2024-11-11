@@ -18,6 +18,7 @@ SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += mnist
 SUBDIRS += rosenbrock
+# SUBDIRS += translation
 
 win32:{
 #QMAKE_CXXFLAGS+= -arch:AVX

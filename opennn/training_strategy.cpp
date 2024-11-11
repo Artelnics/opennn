@@ -472,11 +472,12 @@ void TrainingStrategy::set_default()
 
 
 TrainingResults TrainingStrategy::perform_training()
-{
+{//cout<<neural_network->get_layers().size()<<endl;
+    cout<<"Works properly"<<endl;
     if(neural_network->has(Layer::Type::Recurrent)
-    || neural_network->has(Layer::Type::LongShortTermMemory))
+        || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
-
+cout<<"Works properly"<<endl;
     set_display(display);
 
     switch(optimization_method)

@@ -40,6 +40,7 @@ int main()
 
         LanguageDataSet language_data_set;
 
+        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
         language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
 
         language_data_set.set_separator(DataSet::Separator::Tab);
@@ -54,9 +55,6 @@ int main()
         // cout<<completion_vocabulary.dimensions()<<endl;
         // cout<<completion_vocabulary<<endl;
         // cout<<context_vocabulary.dimensions()<<endl;
-        cout<<context_vocabulary(2)+context_vocabulary(58)+context_vocabulary(29)+context_vocabulary(50)+context_vocabulary(97)+context_vocabulary(54)+context_vocabulary(37)
-             +context_vocabulary(60)+context_vocabulary(119)+context_vocabulary(51)+context_vocabulary(19)+context_vocabulary(79)+context_vocabulary(22)+context_vocabulary(61)
-             +context_vocabulary(8)+context_vocabulary(3)<<endl;
 
         // Neural network
 
@@ -75,6 +73,7 @@ int main()
         Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
                                  depth, perceptron_depth, heads_number, number_of_layers });
 
+        transformer.set_model_type_string("TextClassification");
         transformer.set_dropout_rate(0);
 
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
@@ -95,13 +94,15 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(10800);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(72000);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
-
+        cout<<transformer.get_layers_number()<<endl;
+        for(Index i = 0 ; i<transformer.get_layers_number() ; i++)
+            cout<<"Layer "<<i<<": "<<transformer.get_layers()[i]->get_name()<<endl;
         TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis
@@ -114,7 +115,7 @@ int main()
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        // Save results
+        // Save results-
 
         transformer.save("data/ENtoES_model.xml");
 
