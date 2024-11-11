@@ -196,23 +196,6 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void ProbabilisticLayer::calculate_activations(const Tensor<type, 2>& combinations,
-                                               Tensor<type, 2>& activation_derivatives) const
-{
-    switch(activation_function)
-    {
-    case ActivationFunction::Logistic:
-        /*
-        logistic(combinations, activation_derivatives);
-        */
-        return;
-
-    default:
-        return;
-    }
-}
-
-
 void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            const bool& is_training)
@@ -337,6 +320,14 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
     type* squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
     memcpy(squared_errors_Jacobian_data + index, squared_errors_Jacobian_data, parameters_number * batch_samples_number*sizeof(type));
+}
+
+
+void ProbabilisticLayer::print() const
+{
+    cout << "Probabilistic layer" << endl;
+    cout << "Output dimensions: " << endl;
+    print_dimensions(get_output_dimensions());
 }
 
 

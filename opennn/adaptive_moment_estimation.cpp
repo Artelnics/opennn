@@ -141,7 +141,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results(maximum_epochs_number + 1);
-    
+
     check();
 
     // Start training

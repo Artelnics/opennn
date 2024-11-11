@@ -58,7 +58,7 @@ int main()
             image_data_set.get_target_dimensions());
 
         neural_network.print();
-
+        
         // Training strategy
  
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
