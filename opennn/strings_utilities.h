@@ -89,7 +89,7 @@ namespace opennn
     bool is_not_alnum(char &c);
     void remove_not_alnum(string &str);
 
-    bool find_string_in_tensor(Tensor<string, 1>&, const string&);
+    bool find_string_in_tensor(vector<string>&, const string&);
     string get_word_from_token(string&);
 
     string round_to_precision_string(const type&, const int&);

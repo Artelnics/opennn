@@ -1130,10 +1130,10 @@ bool is_not_alnum(char &c)
 // }
 
 
-bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
+bool find_string_in_tensor(vector<string>& t, const string& val)
 {
-    for(Index i = 0; i < t.dimension(0); i++)
-        if(t(i) == val) 
+    for(Index i = 0; i < t.size(); i++)
+        if(t[i] == val) 
             return true;
 
     return false;
