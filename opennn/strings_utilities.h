@@ -82,20 +82,20 @@ namespace opennn
     void replace_substring(Tensor<string, 1>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replac_substring_within_quotes(string&, const string&, const string&);
-    void replace_substring_in_string (Tensor<string, 1>&, string&, const string&);
+    void replace_substring_in_string (vector<string>&, string&, const string&);
 
     void display_progress_bar(const int&, const int&);
 
     bool is_not_alnum(char &c);
     void remove_not_alnum(string &str);
 
-    bool find_string_in_tensor(vector<string>&, const string&);
-    string get_word_from_token(string&);
+    bool contains(vector<string>&, const string&);
+    string get_first_word(string&);
 
     string round_to_precision_string(const type&, const int&);
 
     Tensor<string,1> sort_string_tensor(Tensor<string, 1>&);
-    Tensor<string,1> concatenate_string_tensors (const Tensor<string, 1>&, const Tensor<string, 1>&);
+    vector<string> concatenate_string_tensors (const vector<string>&, const vector<string>&);
 
     void print();
 

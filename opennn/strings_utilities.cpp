@@ -1130,21 +1130,21 @@ bool is_not_alnum(char &c)
 // }
 
 
-bool find_string_in_tensor(vector<string>& t, const string& val)
+bool contains(vector<string>& v, const string& str)
 {
-    for(Index i = 0; i < t.size(); i++)
-        if(t[i] == val) 
+    for(Index i = 0; i < v.size(); i++)
+        if(v[i] == str) 
             return true;
 
     return false;
 }
 
 
-string get_word_from_token(string& token)
+string get_first_word(string& line)
 {
     string word;
 
-    for(char& c : token)
+    for(char& c : line)
         if(c != ' ' && c != '=')
             word += c;
         else
@@ -1210,34 +1210,34 @@ Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
 }
 
 
-Tensor<string,1> concatenate_string_tensors(const Tensor<string, 1>& tensor_1, const Tensor<string, 1>& tensor_2)
+vector<string> concatenate_string_tensors(const vector<string>& tensor_1, const vector<string>& tensor_2)
 {
-    Tensor<string, 1> tensor = tensor_2;
+    vector<string> tensor = tensor_2;
 
-    for(int i = 0; i < tensor_1.dimension(0); i++)
-        push_back_string(tensor, tensor_1(i));
+    for(int i = 0; i < tensor_1.size(); i++)
+        tensor.push_back(tensor_1[i]);
 
     return tensor;
 }
 
 
-void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression, const string& keyword)
+void replace_substring_in_string (vector<string>& tokens, string& expression, const string& keyword)
 {
     string::size_type previous_pos = 0;
 
-    for(int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.size(); i++)
     {
-        const string found_token = tokens(i);
+        const string found_token = tokens[i];
         const string to_replace(found_token);
         const string newword = keyword + " " + found_token;
 
         string::size_type position = 0;
 
-        while((position = espression.find(to_replace, position)) != string::npos)
+        while((position = expression.find(to_replace, position)) != string::npos)
         {
             if(position > previous_pos)
             {
-                espression.replace(position, to_replace.length(), newword);
+                expression.replace(position, to_replace.length(), newword);
                 position += newword.length();
                 previous_pos = position;
                 break;
