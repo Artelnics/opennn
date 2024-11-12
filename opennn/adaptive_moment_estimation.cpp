@@ -178,9 +178,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
-    Tensor<Descriptives, 1> target_variables_descriptives;
+    vector<Descriptives> target_variables_descriptives;
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;

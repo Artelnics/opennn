@@ -1,32 +1,29 @@
 #include "pch.h"
 
+#include "../opennn/config.h"
 #include "../opennn/statistics.h"
 #include "../opennn/histogram.h"
 
-
-/*
-
-void StatisticsTest::test_count_empty_bins()
+TEST(StatisticsTest, CountEmptyBins)
 {
-    cout << "test_count_empty_bins\n";
-
-    Tensor<type, 1> centers;
+//    type a = 0;
+//    Tensor<type, 1> centers;
     Tensor<Index, 1> frecuencies;
-
+/*
     // Test
 
     Histogram histogram;
     assert_true(histogram.count_empty_bins() == 0, LOG);
-
+/*
     // Test
 
     centers.resize(3);
-    centers.setValues({type(1),type(2),type(3)});
+    centers.setValues({ type(1),type(2),type(3) });
 
     frecuencies.resize(3);
-    frecuencies.setValues({1,1,0});
+    frecuencies.setValues({ 1,1,0 });
 
-    Histogram histogram_1(centers,frecuencies);
+    Histogram histogram_1(centers, frecuencies);
     assert_true(histogram_1.count_empty_bins() == 1, LOG);
 
     // Test
@@ -37,22 +34,24 @@ void StatisticsTest::test_count_empty_bins()
     frecuencies.resize(3);
     frecuencies.setZero();
 
-    Histogram histogram_2(centers,frecuencies);
+    Histogram histogram_2(centers, frecuencies);
     assert_true(histogram_2.count_empty_bins() == 3, LOG);
 
     // Test
 
     centers.resize(3);
-    centers.setValues({type(1),type(2),type(3)});
+    centers.setValues({ type(1),type(2),type(3) });
 
     frecuencies.resize(3);
     frecuencies.setZero();
 
-    Histogram histogram_3(centers,frecuencies);
+    Histogram histogram_3(centers, frecuencies);
     assert_true(histogram_3.count_empty_bins() == 3, LOG);
+*/
 }
 
 
+/*
 void StatisticsTest::test_calculate_minimum_frequency()
 {
     cout << "test_calculate_minimun_frecuency\n";

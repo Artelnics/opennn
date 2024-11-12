@@ -1222,15 +1222,15 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
 /*
     if(has_scaling_layer_2d())
     {
-        const Tensor<Descriptives, 1> inputs_descriptives = neural_network.get_scaling_layer_2d()->get_descriptives();
+        const vector<Descriptives> inputs_descriptives = neural_network.get_scaling_layer_2d()->get_descriptives();
 
         for(int i = 0; i < inputs.dimension(0); i++)
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives(i).minimum + inputs_descriptives(i).maximum)/2 << "\" min=\"" << inputs_descriptives(i).minimum << "\" max=\"" << inputs_descriptives(i).maximum << "\" step=\"" << (inputs_descriptives(i).maximum - inputs_descriptives(i).minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl
+                   << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>" << endl
                    << "\n" << endl;

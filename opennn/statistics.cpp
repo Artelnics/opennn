@@ -1323,12 +1323,12 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
 }
 
 
-Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
+vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Descriptives, 1> descriptives(columns_number);
+    vector<Descriptives> descriptives(columns_number);
 
     Tensor<type, 1> column(rows_number);
 
@@ -1338,21 +1338,21 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
     {
         column = matrix.chip(i,1);
 
-        descriptives(i) = opennn::descriptives(column);
+        descriptives[i] = opennn::descriptives(column);
     }
 
     return descriptives;
 }
 
 
-Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
-                                     const vector<Index>& row_indices,
-                                     const vector<Index>& column_indices)
+vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
+                                  const vector<Index>& row_indices,
+                                  const vector<Index>& column_indices)
 {
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
 
-    Tensor<Descriptives, 1> descriptives(column_indices_size);
+    vector<Descriptives> descriptives(column_indices_size);
 
     Index row_index;
     Index column_index;
@@ -1419,7 +1419,10 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix,
     }
 
     for(Index i = 0; i < column_indices_size; i++)
-        descriptives(i).set(type(minimums(i)), type(maximums(i)), type(mean(i)), type(standard_deviation(i)));
+        descriptives[i].set(type(minimums(i)), 
+                            type(maximums(i)), 
+                            type(mean(i)), 
+                            type(standard_deviation(i)));
 
     return descriptives;
 }

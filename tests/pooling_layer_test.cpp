@@ -3,34 +3,39 @@
 #include "../opennn/pooling_layer.h"
 
 
-/*
-
-void PoolingLayerTest::test_constructor()
+TEST(PoolingLayerTest, DefaultConstructor)
 {
-    cout << "test_constructor\n";
+    PoolingLayer pooling_layer;
 
-    dimensions input_dimensions;
-    dimensions pool_dimensions;
-
-    input_dimensions = { 28, 29, 1 };
-    pool_dimensions = { 3, 2 };
-
-    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
-
-    assert_true(pooling_layer.get_input_height() == 28 
-                && pooling_layer.get_input_width() == 29 
-                && pooling_layer.get_channels_number() == 1, LOG);
-
-    assert_true(pooling_layer.get_pool_height() == 3 
-                && pooling_layer.get_pool_width() == 2, LOG);
-
+    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+//    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
+//    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
 }
 
 
-void PoolingLayerTest::test_forward_propagate_max_pooling()
+TEST(PoolingLayerTest, GeneralConstructor)
 {
-    cout << "test_forward_propagate_max_pooling" << endl;
+    const dimensions input_dimensions = { 28, 29, 1 };
+    const dimensions pool_dimensions = { 3, 2 };
 
+    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
+
+    //    assert_true(pooling_layer.get_input_height() == 28
+    //    && pooling_layer.get_input_width() == 29
+    //    && pooling_layer.get_channels_number() == 1, LOG);
+
+    //assert_true(pooling_layer.get_pool_height() == 3
+    //    && pooling_layer.get_pool_width() == 2, LOG);
+
+    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+    //    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
+    //    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
+}
+
+
+TEST(PoolingLayerTest, ForwardPropagateMaxPooling)
+{
+/*
     // 2 images 1 channel
 
     bool is_training = true;
@@ -83,8 +88,8 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
 
     pooling_layer.forward_propagate_max_pooling(inputs,
-                                                &pooling_layer_forward_propagation,
-                                                is_training);
+        &pooling_layer_forward_propagation,
+        is_training);
 
     outputs_pair = pooling_layer_forward_propagation.get_outputs_pair();
 
@@ -95,7 +100,15 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
     TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
     assert_true(outputs(0, 0, 0, 0) == type(255)
-                && outputs(1, 0, 0, 0) == type(254), LOG);
+        && outputs(1, 0, 0, 0) == type(254), LOG);
+*/
+}
+
+/*
+
+void PoolingLayerTest::test_forward_propagate_max_pooling()
+{
+    cout << "test_forward_propagate_max_pooling" << endl;
 
     // 2 images 3 channels
 

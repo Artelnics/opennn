@@ -576,7 +576,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
+vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -586,7 +586,7 @@ Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
 
     inputs_data.device(*thread_pool_device) = inputs_data / type(255);
 
-    return Tensor<Descriptives, 1>();
+    return vector<Descriptives>();
 }
 
 

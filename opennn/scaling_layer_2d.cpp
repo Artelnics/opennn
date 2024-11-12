@@ -33,7 +33,7 @@ dimensions ScalingLayer2D::get_output_dimensions() const
 }
 
 
-Tensor<Descriptives, 1> ScalingLayer2D::get_descriptives() const
+vector<Descriptives> ScalingLayer2D::get_descriptives() const
 {
     return descriptives;
 }
@@ -41,7 +41,7 @@ Tensor<Descriptives, 1> ScalingLayer2D::get_descriptives() const
 
 Descriptives ScalingLayer2D::get_descriptives(const Index& index) const
 {
-    return descriptives(index);
+    return descriptives[index];
 }
 
 
@@ -202,7 +202,7 @@ void ScalingLayer2D::set_min_max_range(const type& min, const type& max)
 }
 
 
-void ScalingLayer2D::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
+void ScalingLayer2D::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
 }
@@ -210,31 +210,31 @@ void ScalingLayer2D::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
 
 void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
-    descriptives(i) = item_descriptives;
+    descriptives[i] = item_descriptives;
 }
 
 
 void ScalingLayer2D::set_minimum(const Index& i, const type& new_minimum)
 {
-    descriptives(i).set_minimum(new_minimum);
+    descriptives[i].set_minimum(new_minimum);
 }
 
 
 void ScalingLayer2D::set_maximum(const Index& i, const type& new_maximum)
 {
-    descriptives(i).set_maximum(new_maximum);
+    descriptives[i].set_maximum(new_maximum);
 }
 
 
 void ScalingLayer2D::set_mean(const Index& i, const type& new_mean)
 {
-    descriptives(i).set_mean(new_mean);
+    descriptives[i].set_mean(new_mean);
 }
 
 
 void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
-    descriptives(i).set_standard_deviation(new_standard_deviation);
+    descriptives[i].set_standard_deviation(new_standard_deviation);
 }
 
 
@@ -344,7 +344,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
-        if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
+        if(abs(descriptives[i].standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
@@ -363,25 +363,25 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
         case Scaler::MinimumMaximum:
         {
             const type slope =
-                    (max_range-min_range)/(descriptives(i).maximum-descriptives(i).minimum);
+                    (max_range-min_range)/(descriptives[i].maximum-descriptives[i].minimum);
 
             const type intercept =
-                    (min_range*descriptives(i).maximum-max_range*descriptives(i).minimum)/(descriptives(i).maximum-descriptives(i).minimum);
+                    (min_range*descriptives[i].maximum-max_range*descriptives[i].minimum)/(descriptives[i].maximum-descriptives[i].minimum);
 
             output_column.device(*thread_pool_device) = intercept + slope * input_column;
         }
         break;
         case Scaler::MeanStandardDeviation:
         {
-            const type slope = type(1)/descriptives(i).standard_deviation;
+            const type slope = type(1)/descriptives[i].standard_deviation;
 
-            const type intercept = -descriptives(i).mean/descriptives(i).standard_deviation;
+            const type intercept = -descriptives[i].mean/descriptives[i].standard_deviation;
 
             output_column.device(*thread_pool_device) = intercept + slope*input_column;
         }
         break;
         case Scaler::StandardDeviation:
-            output_column.device(*thread_pool_device) = type(1/descriptives(i).standard_deviation)*input_column;
+            output_column.device(*thread_pool_device) = type(1/descriptives[i].standard_deviation)*input_column;
             break;
         case Scaler::Logarithm:
             output_column.device(*thread_pool_device) = input_column.log();
@@ -420,7 +420,7 @@ string ScalingLayer2D::write_minimum_maximum_expression(const Tensor<string, 1>&
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names(i) << " = 2*(" << input_names(i) << "-(" << descriptives(i).minimum << "))/(" << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-1;\n";
+        buffer << output_names(i) << " = 2*(" << input_names(i) << "-(" << descriptives[i].minimum << "))/(" << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-1;\n";
 
     return buffer.str();
 }
@@ -435,7 +435,7 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const Tensor<str
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names(i) << " = (" << input_names(i) << "-(" << descriptives(i).mean << "))/" << descriptives(i).standard_deviation << ";\n";
+        buffer << output_names(i) << " = (" << input_names(i) << "-(" << descriptives[i].mean << "))/" << descriptives[i].standard_deviation << ";\n";
 
     return buffer.str();
 }
@@ -450,7 +450,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const Tensor<string, 
     buffer.precision(10);
 
     for(Index i = 0; i < inputs_number; i++)
-        buffer << output_names(i) << " = " << input_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+        buffer << output_names(i) << " = " << input_names(i) << "/(" << descriptives[i].standard_deviation << ");\n";
 
     return buffer.str();
 }
@@ -474,15 +474,15 @@ string ScalingLayer2D::get_expression(const Tensor<string, 1>& input_names, cons
         case Scaler::MinimumMaximum:
             buffer << "scaled_" << input_names(i) 
                    << " = " << input_names(i) << "*(" << max_range << "-" << min_range << ")/("
-                   << descriptives(i).maximum << "-(" << descriptives(i).minimum << "))-" << descriptives(i).minimum << "*("
+                   << descriptives[i].maximum << "-(" << descriptives[i].minimum << "))-" << descriptives[i].minimum << "*("
                    << max_range << "-" << min_range << ")/("
-                   << descriptives(i).maximum << "-" << descriptives(i).minimum << ")+" << min_range << ";\n";
+                   << descriptives[i].maximum << "-" << descriptives[i].minimum << ")+" << min_range << ";\n";
             break;
         case Scaler::MeanStandardDeviation:
-            buffer << "scaled_" << input_names(i) << " = (" << input_names(i) << "-" << descriptives(i).mean << ")/" << descriptives(i).standard_deviation << ";\n";
+            buffer << "scaled_" << input_names(i) << " = (" << input_names(i) << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
             break;
         case Scaler::StandardDeviation:
-            buffer << "scaled_" << input_names(i) << " = " << input_names(i) << "/(" << descriptives(i).standard_deviation << ");\n";
+            buffer << "scaled_" << input_names(i) << " = " << input_names(i) << "/(" << descriptives[i].standard_deviation << ");\n";
             break;
         case Scaler::Logarithm:
             buffer << "scaled_" << input_names(i) << " = log(" << input_names(i) << ");\n";
@@ -514,7 +514,7 @@ void ScalingLayer2D::print() const
         cout << "Neuron " << i << endl
              << "Scaler " << scalers_text(i) << endl;
 
-        descriptives(i).print();
+        descriptives[i].print();
     }
 }
 
@@ -533,7 +533,7 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
     {
         printer.OpenElement("ScalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
-        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives[i].to_tensor()));
         add_xml_element(printer, "Scaler", scaling_methods_string(i));
 
         printer.CloseElement();  
