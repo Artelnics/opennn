@@ -40,8 +40,8 @@ int main()
 
         LanguageDataSet language_data_set;
 
-        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
+        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
+        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
 
         language_data_set.set_separator(DataSet::Separator::Tab);
 
@@ -94,15 +94,13 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(324);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(72000);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
-        cout<<transformer.get_layers_number()<<endl;
-        for(Index i = 0 ; i<transformer.get_layers_number() ; i++)
-            cout<<"Layer "<<i<<": "<<transformer.get_layers()[i]->get_name()<<endl;
+
         TrainingResults training_results = training_strategy.perform_training();
 
         // Testing analysis

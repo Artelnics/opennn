@@ -13,7 +13,7 @@ TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    EXPECT_TRUE(!adaptive_moment_estimation.has_loss_index());
+    EXPECT_EQ(adaptive_moment_estimation.has_loss_index(), false);
 }
 
 

@@ -15,25 +15,7 @@
 #include "config.h"
 #include "data_set.h"
 
-// Filesystem namespace
-
-// #ifdef __APPLE__
-// #include <Availability.h> // for deployment target to support pre-catalina targets without std::fs
-// #endif
-// #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || (defined(__cplusplus) && __cplusplus >= 201703L)) && defined(__has_include)
-// #if __has_include(<filesystem>) && (!defined(__MAC_OS_X_VERSION_MIN_REQUIRED) || __MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
-// #define GHC_USE_STD_FS
-// #include <filesystem>
-// namespace fs = std::filesystem;
-// #endif
-// #endif
-// #ifndef GHC_USE_STD_FS
-// #include "filesystem.h"
-// namespace fs = ghc::filesystem;
-// #endif
-
 #ifdef _WIN32
-    // Windows-specific includes
     #include <filesystem>
     namespace fs = std::filesystem;
 #else
@@ -51,9 +33,7 @@ class ImageDataSet : public DataSet
 
 public:
 
-    explicit ImageDataSet();
-
-    explicit ImageDataSet(const Index&, const Index&, const Index&, const Index&, const Index&);
+    explicit ImageDataSet(const Index & = 0, const dimensions & = { 0,0,0 }, const dimensions & = {0});
 
     Index get_channels_number() const;
     Index get_image_width() const;
@@ -70,9 +50,9 @@ public:
     type get_random_horizontal_translation_maximum() const;
     type get_random_vertical_translation_minimum() const;
     type get_random_vertical_translation_maximum() const;
-
+/*
     void set(const Index&, const Index&, const Index&, const Index&, const Index&);
-
+*/
     void set_image_data_random();
 
     void set_input_dimensions(const dimensions&);

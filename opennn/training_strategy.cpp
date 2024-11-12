@@ -264,10 +264,10 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    if(neural_network)
+    if (new_neural_network)
         set_neural_network(new_neural_network);
 
-    if(data_set)
+    if(new_data_set)
         set_data_set(new_data_set);
 
     set_default();
@@ -389,7 +389,6 @@ void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 
 void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_network)
 {
-   
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
     cross_entropy_error.set_neural_network(new_neural_network);
@@ -472,12 +471,11 @@ void TrainingStrategy::set_default()
 
 
 TrainingResults TrainingStrategy::perform_training()
-{//cout<<neural_network->get_layers().size()<<endl;
-    cout<<"Works properly"<<endl;
+{
     if(neural_network->has(Layer::Type::Recurrent)
         || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
-cout<<"Works properly"<<endl;
+
     set_display(display);
 
     switch(optimization_method)
