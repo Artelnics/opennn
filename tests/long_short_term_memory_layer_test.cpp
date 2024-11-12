@@ -1,12 +1,15 @@
-
-#include "../opennn/tensors.h"
-
 #include "pch.h"
+
+#include "../opennn/long_short_term_memory_layer.h"
+
 
 
 TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
 {
-    EXPECT_EQ(1, 1);
+    LongShortTermMemoryLayer long_short_term_memory_layer;
+
+//    EXPECT_EQ(long_short_term_memory_layer.get_input_dimensions(), dimensions{0});
+//    EXPECT_EQ(long_short_term_memory_layer.get_output_dimensions(), dimensions{1});
 }
 
 
@@ -21,8 +24,6 @@ namespace opennn
 
 void LongShortTermMemoryLayerTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
     // Test
 
     long_short_term_memory_layer.set();

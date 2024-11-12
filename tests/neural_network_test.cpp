@@ -5,51 +5,54 @@
 
 TEST(NeuralNetworkTest, DefaultConstructor)
 {
-    EXPECT_EQ(1, 1);
+    NeuralNetwork neural_network;
+
+    EXPECT_EQ(neural_network.is_empty(), true);
+    EXPECT_EQ(neural_network.get_layers_number(), 0);
 }
 
 
-TEST(NeuralNetworkTest, GeneralConstructor)
+TEST(NeuralNetworkTest, ApproximationConstructor)
 {
-    EXPECT_EQ(1, 1);
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
+}
+
+
+TEST(NeuralNetworkTest, ClassificationConstructor)
+{
+    /*
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(neural_network.get_layers_number(), 3);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Probabilistic);
+*/
+}
+
+
+TEST(NeuralNetworkTest, ForecastingConstructor)
+{
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
+/*
+    EXPECT_EQ(neural_network.get_layers_number(), 4);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
+*/
 }
 
 /*
-namespace opennn
-{
 void NeuralNetworkTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
-    Tensor<Layer*, 1> layers;    
-
-    NeuralNetwork neural_network_0;
-
-    assert_true(neural_network_0.is_empty(), LOG);
-    assert_true(neural_network_0.get_layers_number() == 0, LOG);
-
-    // Model type constructors
-
-    //  Approximation
-
-    NeuralNetwork neural_network_1(NeuralNetwork::ModelType::Approximation, {1}, {4}, {2});
-
-    assert_true(neural_network_1.get_layers_number() == 5, LOG);
-    assert_true(neural_network_1.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_1.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_1.get_layer(2)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_1.get_layer(3)->get_type() == Layer::Type::Unscaling, LOG);
-    assert_true(neural_network_1.get_layer(4)->get_type() == Layer::Type::Bounding, LOG);
-
-    // Classification
-
-    NeuralNetwork neural_network_2(NeuralNetwork::ModelType::Classification, {1}, {4}, {2});
-
-    assert_true(neural_network_2.get_layers_number() == 3, LOG);
-    assert_true(neural_network_2.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_2.get_layer(1)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_2.get_layer(2)->get_type() == Layer::Type::Probabilistic, LOG);
-
     // Forecasting
 
     NeuralNetwork neural_network_3(NeuralNetwork::ModelType::Forecasting, {1}, {4}, {2});

@@ -27,14 +27,18 @@ struct Batch
 
     void set(const Index& = 0, DataSet* = nullptr);
 
-    void fill(const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>&, 
-              const Tensor<Index, 1>& = Tensor<Index, 1>());
+    void fill(const vector<Index>&, 
+              const vector<Index>&, 
+              const vector<Index>&, 
+              const vector<Index>& = vector<Index>());
 
     Tensor<type, 2> perform_augmentation(const Tensor<type, 2>&);
 
     void print() const;
+
+    bool is_empty() const;
+
+    bool has_context() const;
 
     Index batch_size = 0;
 
@@ -42,23 +46,15 @@ struct Batch
 
     dimensions input_dimensions;
 
-    Tensor<type, 1> inputs_tensor;
-
-    type* input_data = nullptr;
+    Tensor<type, 1> input_tensor;
 
     dimensions targets_dimensions;
 
-    Tensor<type, 1> targets_tensor;
-
-    type* targets_data = nullptr;
+    Tensor<type, 1> target_tensor;
 
     dimensions context_dimensions;
 
     Tensor<type, 1> context_tensor;
-
-    type* context_data = nullptr;
-
-    bool has_context = false;
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;

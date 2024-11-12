@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "sum_squared_error_test.h"
-
 #include "../opennn/back_propagation.h"
 #include "../opennn/tensors.h"
 

@@ -10,8 +10,6 @@ TEST(ConjugateGradientTest, DefaultConstructor)
 
 //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
 //    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
-
-    EXPECT_EQ(1, 1);
 }
 
 
@@ -23,7 +21,6 @@ TEST(ConjugateGradientTest, GeneralConstructor)
     //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
     //    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
 
-    EXPECT_EQ(1, 1);
 }
 
 
@@ -52,7 +49,6 @@ TEST(ConjugateGradientTest, PrParameter)
     assert_true(PR_parameter >= type(0), LOG);
     assert_true(PR_parameter <= type(1), LOG);
 */
-    EXPECT_EQ(1, 1);
 }
 
 
@@ -64,7 +60,6 @@ TEST(ConjugateGradientTest, FrParameter)
     //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
     //    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
 
-    EXPECT_EQ(1, 1);
 }
 
 
@@ -101,8 +96,6 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
-    cout << "test_calculate_PR_training_direction\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -186,8 +179,6 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
 void ConjugateGradientTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     type old_error = numeric_limits<float>::max();
 
     type error;

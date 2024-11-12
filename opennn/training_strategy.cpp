@@ -266,9 +266,11 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    set_neural_network(new_neural_network);
+    if (new_neural_network)
+        set_neural_network(new_neural_network);
 
-    set_data_set(new_data_set);
+    if(new_data_set)
+        set_data_set(new_data_set);
 
     set_default();
 }

@@ -210,10 +210,10 @@ public:
 
    BinaryClassificationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
 
    // Multiple classification tests
 
@@ -224,7 +224,7 @@ public:
 
    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates() const;
 
-   Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
+   Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&) const;
 
    Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
 

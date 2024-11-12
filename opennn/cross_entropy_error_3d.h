@@ -26,7 +26,6 @@ public:
                         const ForwardPropagation&,
                         BackPropagation&) const final;
 
-
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const final;

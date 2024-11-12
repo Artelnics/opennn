@@ -5,21 +5,19 @@
 
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
-
     GeneticAlgorithm genetic_algorithm;
-    //assert_true(!genetic_algorithm_2.has_training_strategy(), LOG);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(genetic_algorithm.has_training_strategy(), false);
 }
 
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)
 {
-    //GeneticAlgorithm genetic_algorithm_1(&training_strategy);
-    //assert_true(genetic_algorithm_1.has_training_strategy(), LOG);
+    TrainingStrategy training_strategy;
+    
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(genetic_algorithm.has_training_strategy(), true);
 }
 
 /*

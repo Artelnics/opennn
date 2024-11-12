@@ -23,13 +23,13 @@ ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 
 dimensions ScalingLayer2D::get_input_dimensions() const
 {
-    return input_dimensions;
+    return dimensions{scalers.size()};
 }
 
 
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
-    return input_dimensions;
+    return dimensions{scalers.size()};
 }
 
 
@@ -168,8 +168,6 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     scalers.resize(new_inputs_number);
     scalers.setConstant(Scaler::MeanStandardDeviation);
-
-    input_dimensions = new_input_dimensions;
 
     name = "scaling_layer";
 

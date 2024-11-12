@@ -14,32 +14,29 @@ TEST(CrossEntropyErrorTest, DefaultConstructor)
 }
 
 
-TEST(CrossEntropyErrorTest, BackPropagate)
+TEST(CrossEntropyErrorTest, BackPropagateEmpty)
 {
-
     DataSet data_set;
-    /*
+
     Batch batch;
-    
+
     NeuralNetwork neural_network;
+
     ForwardPropagation forward_propagation;
 
     CrossEntropyError cross_entropy_error(&neural_network, &data_set);
     BackPropagation back_propagation;
 
-    //cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-*/
+    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+
 }
 
 /*
-namespace opennn
-{
 
 void CrossEntropyErrorTest::test_back_propagate()
 {
     cout << "test_back_propagate\n";
-
-    
+  
     // Test binary classification trivial
     {
         inputs_number = 1;

@@ -35,13 +35,17 @@ public:
 
     size_t size() const;
 
-    Tensor<type, 3> getImage(const Index&) /*const*/;
+    Tensor<type, 3> get_image(const Index&) const;
 
-    Tensor<type, 2> getLabel(const Index&) const;
+    Tensor<type, 2> get_label(const Index&) const;
 
-    vector<Tensor<type, 1>> getAnchors() const;
+    Tensor<type, 4> get_images() const;
 
-    string getClass(const Index&) const;
+    Tensor<type, 4> get_targets()const;
+
+    vector<Tensor<type, 1>> get_anchors() const;
+
+    string get_class(const Index&) const;
 
     void rotate_90_degrees(Tensor<type, 3>&, Tensor<type, 2>&);
 
@@ -51,24 +55,25 @@ public:
 
     void apply_data_augmentation(Tensor<type, 3>&, Tensor<type, 2>&);
 
+
 protected:
-    vector<Tensor<type, 1>> offsets;
-    Tensor<type, 4> images;
+    vector<Tensor<type, 1>> offsets;    
     vector<Tensor<type, 2>> raw_labels;
     vector<Tensor<type, 2>> labels;
     vector<string> labels_files;
     vector<string> images_files;
-    vector<string> classes;
+    Tensor<type, 4> images;
+    Tensor<type, 4> targets;
     vector<Tensor<type, 1>> anchors;
+    vector<string> classes;
+
 
     Index grid_size = 13;
     Index anchor_number = 5;
-    Index input_data_size = 416 * 416 * 3;
-    Index target_data_size;
 
     ModelType model_type = opennn::DataSet::ModelType::ObjectDetection;
-    dimensions input_dimensions = {416, 416, 3};
-    dimensions target_dimensions = {13, 13, 125};
+    // dimensions input_dimensions = {416, 416, 3};
+    // dimensions target_dimensions = {13, 13, 125};
 
     // Tensor<type, 4> targets_batch;
     // Tensor<type, 4> images_batch;

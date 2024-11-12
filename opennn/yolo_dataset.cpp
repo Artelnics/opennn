@@ -86,38 +86,21 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
         labels[i] = modified_label;
     }
 
-    target_data_size = grid_size * grid_size * anchor_number * (5 + classes.size());
+    anchors = calculate_anchors(labels, anchor_number);
 
-    vector<Tensor<type, 1>> anchors = calculate_anchors(labels, anchor_number);
-
-    vector<Tensor<type, 3>> converted_labels;
-    converted_labels.resize(images.size());
-
-    for(size_t lab = 0; lab < labels.size(); lab++)
-    {
-        converted_labels[lab] = convert_to_YOLO_grid_data(labels[lab], anchors, grid_size, anchor_number, classes.size());
-    }
-    //cout<<images.size()<<endl<<labels.size()<<endl;
-
-    if (images.dimension(0) != labels.size()) {
+    if (images.dimension(0) != (Index) labels.size()) {
         // cerr << "Images and labels file number do not match!" << endl;
         throw runtime_error("Images and labels file number do not match!");
     }
 
-    set(images.size(), input_data_size, target_data_size);
+    targets.resize(images.dimension(0), grid_size, grid_size, (Index) (anchor_number * (5 + classes.size())));
 
-// #pragma omp parallel for
-//     for(size_t i = 0; i < images.size(); i++)
-//     {
-//         for(Index j = 0; j <input_data_size; j++)
-//         {
-//             data(i,j) = images[i](j);
-//         }
-//         for(Index k = 0; k < target_data_size; k++)
-//         {
-//             data(i,k + input_data_size) = converted_labels[i](k);
-//         }
-//     }
+    for(Index img = 0; img < images.dimension(0); img++)
+    {
+        targets.chip(img, 0) = convert_to_YOLO_grid_data(labels[img], anchors, grid_size, anchor_number, classes.size());
+    }
+    //cout<<images.dimension(0)<<endl<<labels.size()<<endl;
+
 }
 
 YOLODataset::YOLODataset(const string& images_directory)
@@ -149,22 +132,32 @@ size_t YOLODataset::size() const
     return images.size();
 }
 
-Tensor<type, 3> YOLODataset::getImage(const Index& index) /*const*/
+Tensor<type, 3> YOLODataset::get_image(const Index& index) const
 {
     return images.chip(index, 0);
 }
 
-Tensor<type, 2> YOLODataset::getLabel(const Index& index) const
+Tensor<type, 2> YOLODataset::get_label(const Index& index) const
 {
     return labels[index];
 }
 
-vector<Tensor<type, 1>> YOLODataset::getAnchors() const
+Tensor<type, 4> YOLODataset::get_images() const
+{
+    return images;
+}
+
+Tensor<type, 4> YOLODataset::get_targets() const
+{
+    return targets;
+}
+
+vector<Tensor<type, 1>> YOLODataset::get_anchors() const
 {
     return anchors;
 }
 
-string YOLODataset::getClass(const Index& index) const
+string YOLODataset::get_class(const Index& index) const
 {
     return classes[index];
 }

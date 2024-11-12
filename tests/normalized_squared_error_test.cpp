@@ -1,65 +1,46 @@
 #include "pch.h"
 
 #include "../opennn/normalized_squared_error.h"
+#include "../opennn/forward_propagation.h"
 
 
 TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 {
-    NormalizedSquaredError normalized_squared_error_1;
+    NormalizedSquaredError normalized_squared_error;
 
-//    assert_true(!normalized_squared_error_1.has_neural_network(), LOG);
-//    assert_true(!normalized_squared_error_1.has_data_set(), LOG);
-
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(normalized_squared_error.has_neural_network(), false);
+    EXPECT_EQ(normalized_squared_error.has_data_set(), false);
 }
 
 
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
-//    NormalizedSquaredError normalized_squared_error_2(&neural_network, &data_set);
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-//    assert_true(normalized_squared_error_2.has_neural_network(), LOG);
-//    assert_true(normalized_squared_error_2.has_data_set(), LOG);
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(normalized_squared_error.has_neural_network(), true);
+    EXPECT_EQ(normalized_squared_error.has_data_set(), true);
 }
 
 
 TEST(NormalizedSquaredErrorTest, BackPropagate)
 {
-    //    NormalizedSquaredError normalized_squared_error_2(&neural_network, &data_set);
-
-    //    assert_true(normalized_squared_error_2.has_neural_network(), LOG);
-    //    assert_true(normalized_squared_error_2.has_data_set(), LOG);
-/*
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
-    neurons_number = 1;
-    bool is_training = true;
-
-    // Data set
-
-    data_set.set(samples_number, inputs_number, outputs_number);
+    DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(0));
 
     data_set.set(DataSet::SampleUse::Training);
 
-    training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+    Batch batch(1, &data_set);
+    batch.fill({0}, {0}, {1});
 
-    input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-    target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-    batch.set(samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    // Neural network
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, { neurons_number }, { outputs_number });
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
+    /*
+    ForwardPropagation forward_propagation(1, &neural_network);
 
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 

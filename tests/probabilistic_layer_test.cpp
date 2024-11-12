@@ -1,68 +1,30 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P R O B A B I L I S T I C   L A Y E R   T E S T   C L A S S           
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "probabilistic_layer_test.h"
+#include "../opennn/probabilistic_layer.h"
 
-#include "../opennn/tensors.h"
-
-namespace opennn
+TEST(ProbabilisticLayerTest, DefaultConstructor)
 {
+    ProbabilisticLayer probabilistic_layer;
 
-ProbabilisticLayerTest::ProbabilisticLayerTest() : UnitTesting()
-{    
+    EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{0});
+    EXPECT_EQ(probabilistic_layer.get_output_dimensions(), dimensions{0});
 }
 
 
-void ProbabilisticLayerTest::test_constructor()
+TEST(ProbabilisticLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    ProbabilisticLayer probabilistic_layer({1}, {2});
 
-    ProbabilisticLayer probabilistic_layer_1;
+    EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{ 1 });
+    EXPECT_EQ(probabilistic_layer.get_output_dimensions(), dimensions{ 2 });
+    EXPECT_EQ(probabilistic_layer.get_parameters_number(), 4);
+}
+
+
 /*
-    assert_true(
-        probabilistic_layer_1.get_inputs_number() == 0 &&
-        probabilistic_layer_1.get_neurons_number() == 0 &&
-        probabilistic_layer_1.get_parameters_number() == 0, LOG);
-
-    // Probabilistic neurons number constructor
-
-    ProbabilisticLayer probabilistic_layer_2;
-
-    probabilistic_layer_2.set_output_dimensions(0);
-
-    assert_true(
-        probabilistic_layer_2.get_inputs_number() == 0 &&
-        probabilistic_layer_2.get_neurons_number() == 0 &&
-        probabilistic_layer_2.get_parameters_number() == 0, LOG);
-
-    ProbabilisticLayer probabilistic_layer_3;
-
-    probabilistic_layer_3.set_output_dimensions(3);
-
-    assert_true(
-        probabilistic_layer_3.get_inputs_number() == 0 &&
-        probabilistic_layer_3.get_neurons_number() == 3 &&
-        probabilistic_layer_3.get_parameters_number() == 3, LOG);
-
-
-    ProbabilisticLayer probabilistic_layer_4(1, 2);
-
-    assert_true(
-        probabilistic_layer_4.get_inputs_number() == 1 &&
-        probabilistic_layer_4.get_neurons_number() == 2 &&
-        probabilistic_layer_4.get_parameters_number() == 4, LOG);
-*/
-}
-
 
 void ProbabilisticLayerTest::test_calculate_combinations()
 {
-    cout << "test_calculate_combinations\n";
 
     Tensor<type, 1> biases(1);
     Tensor<type, 2> synaptic_weights(1, 1);
@@ -72,13 +34,13 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     Tensor<type, 2> inputs(1, 1);
     inputs.setConstant(type(3));
-    /*
+    
     Tensor<type, 2> combinations(1, 1);
     probabilistic_layer.set(1, 1);
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
     probabilistic_layer.set_biases(biases);
-*/
+
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
     assert_true(combinations.rank() == 2
@@ -98,7 +60,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
     samples_number = 1;
     inputs_number = 1;
     neurons_number = 1;
-/*
+
     probabilistic_layer.set(inputs_number, neurons_number);
 
     combinations.resize(samples_number, neurons_number);
@@ -120,14 +82,14 @@ void ProbabilisticLayerTest::test_calculate_activations()
         activation_derivatives.dimension(1) == neurons_number, LOG);
 
     assert_true(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
-*/
+
 }
 
 
 void ProbabilisticLayerTest::test_forward_propagate()
 {
     cout << "test_forward_propagate\n";
-/*
+
     inputs_number = 2;
     neurons_number = 2;
     samples_number = 5;
@@ -145,6 +107,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
 
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
     input_pairs.first = inputs.data();
     input_pairs.second = {{samples_number, inputs_number}};
@@ -308,39 +271,8 @@ void ProbabilisticLayerTest::test_forward_propagate()
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 2, LOG);
     assert_true(abs(outputs(0,0) - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+
+}
+
+}
 */
-}
-
-
-void ProbabilisticLayerTest::run_test_case()
-{
-    cout << "Running probabilistic layer test case...\n";
-
-    test_constructor();
-
-    test_calculate_combinations();
-
-    test_calculate_activations();
-
-    test_forward_propagate();
-
-    cout << "End of probabilistic layer test case.\n\n";
-}
-
-}
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

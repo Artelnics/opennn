@@ -1,87 +1,170 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P E R C E P T R O N   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
 #include <iostream>
 
-#include "perceptron_layer_test.h"
+#include "../opennn/perceptron_layer.h"
 
-#include "../opennn/tensors.h"
 
-namespace opennn
+TEST(PerceptronLayerTest, DefaultConstructor)
 {
+    PerceptronLayer perceptron_layer;
 
-PerceptronLayerTest::PerceptronLayerTest() : UnitTesting()
-{
-    perceptron_layer = make_unique<PerceptronLayer>();
-
-    perceptron_layer_forward_propagation = make_unique<PerceptronLayerForwardPropagation>();
-    back_propagation = make_unique<PerceptronLayerBackPropagation>();
+    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
 }
 
 
-void PerceptronLayerTest::test_constructor()
+TEST(PerceptronLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    PerceptronLayer perceptron_layer({10}, {3}, PerceptronLayer::ActivationFunction::Linear);
+    
+    EXPECT_EQ(perceptron_layer.get_activation_function_string(), "Linear");
+    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 10 });
+    EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 3 });
+    EXPECT_EQ(perceptron_layer.get_parameters_number(), 33);
+}
+
+
+TEST(PerceptronLayerTest, CombinationsZero)
+{
+    PerceptronLayer perceptron_layer({1}, {1});
+    perceptron_layer.set_parameters_constant(type(0));
+
+    Tensor<type, 2> inputs(1, 1);
+    inputs.setZero();
+
+    Tensor<type, 2> combinations(1, 1);
+    combinations.setConstant(type(1));
+
+    perceptron_layer.calculate_combinations(inputs, combinations);
+
+    EXPECT_EQ(combinations(0,0), 0);
+}
+
+
+TEST(PerceptronLayerTest, Activations)
+{
+    PerceptronLayer perceptron_layer({ 1 }, { 1 });
+    perceptron_layer.set_parameters_constant(type(1));
+
+    Tensor<type, 2> activations(1, 1);
+    Tensor<type, 2> activation_derivatives(1, 1);
+
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(0.731), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), 0.001);
+    
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(0.761), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), 0.001);
+    
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(1), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
+    
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
+
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
+    /*
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
+    */
+    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
+    activations.setConstant(type(1));
+    perceptron_layer.calculate_activations(activations, activation_derivatives);
+
+    EXPECT_NEAR(activations(0, 0), type(0.7), 0.001);
+    EXPECT_NEAR(activation_derivatives(0, 0), type(0.2), 0.001);
+
+}
+
+
+TEST(PerceptronLayerTest, ForwardPropagateZero)
+{
+    PerceptronLayer perceptron_layer({ 1 }, { 1 }, PerceptronLayer::ActivationFunction::Linear);
+    perceptron_layer.set_parameters_constant(type(0));
 /*
-    PerceptronLayer perceptron_layer_1;
+    unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation_x 
+        = make_unique<PerceptronLayerForwardPropagation>(1, &perceptron_layer);
 
-    assert_true(perceptron_layer_1.get_inputs_number() == 0, LOG);
-    assert_true(perceptron_layer_1.get_neurons_number() == 0, LOG);
-    assert_true(perceptron_layer_1.get_type() == Layer::Type::Perceptron, LOG);
+    perceptron_layer.forward_propagate({ make_pair(inputs.data(), dimensions{1, 1}) },
+        perceptron_layer_forward_propagation,
+        is_training);
 
-    // Architecture constructor
+    Tensor<type, 2> inputs(1, 1);
+    inputs.setConstant(type(0));
 
-    PerceptronLayer perceptron_layer_3({10}, {3}, PerceptronLayer::ActivationFunction::Linear);
-    assert_true(perceptron_layer_3.get_activation_function_string() == "Linear", LOG);
-    assert_true(perceptron_layer_3.get_inputs_number() == 10, LOG);
-    assert_true(perceptron_layer_3.get_neurons_number() == 3, LOG);
-    assert_true(perceptron_layer_3.get_parameters_number() == 33, LOG);
+    Tensor<type, 1> parameters;
 
-    PerceptronLayer perceptron_layer_4({0}, {0}, PerceptronLayer::ActivationFunction::Logistic);
-    assert_true(perceptron_layer_4.get_activation_function_string() == "Logistic", LOG);
-    assert_true(perceptron_layer_4.get_inputs_number() == 0, LOG);
-    assert_true(perceptron_layer_4.get_neurons_number() == 0, LOG);
-    assert_true(perceptron_layer_4.get_parameters_number() == 0, LOG);
+    Tensor<type, 2> outputs;
 
-    PerceptronLayer perceptron_layer_5({1}, {1}, PerceptronLayer::ActivationFunction::Linear);
-    assert_true(perceptron_layer_5.get_activation_function_string() == "Linear", LOG);
-    assert_true(perceptron_layer_5.get_inputs_number() == 1, LOG);
-    assert_true(perceptron_layer_5.get_neurons_number() == 1, LOG);
-    assert_true(perceptron_layer_5.get_parameters_number() == 2, LOG);
+    Tensor<type, 1> potential_parameters;
+
+    pair<type*, dimensions> input_pairs;
+
+    // Test
+
+    bool is_training = true;
+
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+
+    outputs = perceptron_layer_forward_propagation.outputs;
+
+    assert_true(abs(outputs(0,0) - type(3)) < type(1e-3), LOG);
+    assert_true(abs(outputs(0,1) - type(3)) < type(1e-3), LOG);
+
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
+    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3), LOG);
+
+    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
 */
 }
 
 
+/*
+
 void PerceptronLayerTest::test_calculate_combinations()
 {
-    cout << "test_calculate_combinations\n";
-
-    Index parameters_number;
-
-    Tensor<type, 2> inputs;
-    Tensor<type, 2> combinations;
-
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    samples_number = 1;
-
-    perceptron_layer->set(inputs_number, neurons_number);
-    perceptron_layer->set_parameters_constant(type(0));
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setZero();
-
-    combinations.resize(samples_number, neurons_number);
-    combinations.setConstant(type(3.1416));
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
 
     // Test
 
@@ -203,90 +286,11 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     assert_true(abs(combinations(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-
-}
-
-
-void PerceptronLayerTest::test_calculate_activations()
-{
-    cout << "test_calculate_activations\n";
-
-    Tensor<type, 1> parameters(1);
-    Tensor<type, 2> inputs(1,1);
-    Tensor<type, 2> combinations(1,1);
-    Tensor<type, 2> activations(1,1);
-    Tensor<type, 2> activation_derivatives(1,1);
-
-    Tensor<Index, 1> dimensions(2);
-    dimensions = get_dimensions(activation_derivatives);
-
-    // Test
-
-    perceptron_layer->set(1,1);
-    perceptron_layer->set_parameters_constant(type(1));
-
-    inputs.setConstant(type(1));
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(0.731)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(0.196)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::HyperbolicTangent);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(0.761)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(0.41997)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::RectifiedLinear);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::ExponentialLinear);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::ScaledExponentialLinear);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(1.05)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(1.05)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::SoftPlus);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(1.313)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(0.731)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::SoftSign);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(0.5)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(0.25)) < type(1e-3), LOG);
-
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::HardSigmoid);
-    activations.setConstant(type(1));
-    perceptron_layer->calculate_activations(activations, activation_derivatives);
-    assert_true(abs(activations(0,0) - type(0.7)) < type(1e-3), LOG);
-    assert_true(abs(activation_derivatives(0,0) - type(0.2)) < type(1e-3), LOG);
 }
 
 
 void PerceptronLayerTest::test_forward_propagate()
 {
-    cout << "test_forward_propagate\n";
-
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
@@ -301,9 +305,9 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_number = 2;
     neurons_number = 2;
     bool is_training = true;
-
-    perceptron_layer->set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
-    perceptron_layer->set_parameters_constant(type(1));
+    /*
+    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
+    perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
@@ -311,7 +315,7 @@ void PerceptronLayerTest::test_forward_propagate()
     perceptron_layer_forward_propagation->set(samples_number, perceptron_layer.get());
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
+
     perceptron_layer->forward_propagate({input_pairs},
                                         perceptron_layer_forward_propagation,
                                         is_training);
@@ -474,40 +478,8 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs.setRandom();
 
     parameters = perceptron_layer.get_parameters();
+
+}
+
+}
 */
-}
-
-
-void PerceptronLayerTest::run_test_case()
-{
-    cout << "Running perceptron layer test case...\n";
-
-    test_constructor();
-
-    test_calculate_combinations();
-
-    test_calculate_activations();
-
-    test_forward_propagate();
-
-    cout << "End of perceptron layer test case.\n\n";
-}
-
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

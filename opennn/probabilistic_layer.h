@@ -134,9 +134,6 @@ public:
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
-    void calculate_activations(const Tensor<type, 2>&,
-                               Tensor<type, 2>&) const;
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
@@ -164,8 +161,9 @@ public:
     string write_activations(const Tensor<string, 1>&) const;
 
     void from_XML(const tinyxml2::XMLDocument&) final;
-
     void to_XML(tinyxml2::XMLPrinter&) const final;
+
+    void print() const;
 
 private:
 

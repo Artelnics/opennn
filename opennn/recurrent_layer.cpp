@@ -21,8 +21,6 @@ RecurrentLayer::RecurrentLayer(const Index& new_inputs_number,
                                const Index& new_timesteps) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_timesteps);
-
-    layer_type = Type::Recurrent;
 }
 
 

@@ -66,29 +66,17 @@ int main()
 
         // YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels");
 
-        YoloNetwork yolo({416, 416, 3}, train_dataset.getAnchors());
-
-        // TensorMap<Tensor<type, 4>> input_image(train_dataset.getImage(0).data(), {1, 416, 416, 3});
-        // cout<<yolo.calculate_outputs(input_image)<<endl;
-        // yolo.print();
-
-        // yolo.calculate_outputs(input_image);
+        YoloNetwork yolo({416, 416, 3}, train_dataset.get_anchors());
 
         // cout<<yolo.calculate_outputs(input_image)<<endl;
+        yolo.print();
 
+        // yolo.calculate_outputs(train_dataset.get_images());
 
+        cout<<yolo.calculate_outputs(train_dataset.get_images()).dimensions()<<endl;
 
 
 /*
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::YoloV2,
-                                     train_dataset.get_input_dimensions(),
-                                     { 1 },
-                                     train_dataset.get_target_dimensions());
-
-        neural_network.print();
-
-        training_strategy.perform_training();
-
         Tensor<Index, 1> training_indices = train_dataset.get_samples_uses_tensor();
 
         cout<<training_indices<<endl;
@@ -103,9 +91,9 @@ int main()
 
         cout<<"========"<<endl;
 
-        Tensor<Index, 2> training_batches = train_dataset.get_batches(training_indices, 200, true);
-        Tensor<Index, 2> validation_batches = train_dataset.get_batches(validation_indices, 200, true);
-        Tensor<Index, 2> testing_batches = train_dataset.get_batches(testing_indices, 200, true);
+        Tensor<Index, 2> training_batches = train_dataset.get_batches(training_indices, 32, true);
+        Tensor<Index, 2> validation_batches = train_dataset.get_batches(validation_indices, 32, true);
+        Tensor<Index, 2> testing_batches = train_dataset.get_batches(testing_indices, 32, true);
 */
 
 

@@ -126,12 +126,11 @@ struct InputsSelectionResults
             << "Inputs: " << endl;
 
        for(Index i = 0; i < optimal_input_raw_variables_names.size(); i++) 
-           cout << "   " << optimal_input_raw_variables_names(i) << endl;
+           cout << "   " << optimal_input_raw_variables_names[i] << endl;
 
        cout << "Optimum training error: " << optimum_training_error << endl
             << "Optimum selection error: " << optimum_selection_error << endl;
    }
-
 
    // Neural network
 
@@ -155,9 +154,9 @@ struct InputsSelectionResults
 
    type optimum_selection_error = numeric_limits<type>::max();
 
-   Tensor<string, 1> optimal_input_raw_variables_names;
+   vector<string> optimal_input_raw_variables_names;
 
-   Tensor<Index, 1> optimal_input_raw_variables_indices;
+   vector<Index> optimal_input_raw_variables_indices;
 
    Tensor<bool, 1> optimal_inputs;
 
