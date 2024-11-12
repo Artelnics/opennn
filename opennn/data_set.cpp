@@ -1913,8 +1913,9 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
+    input_dimensions = new_input_dimensions;
 
-    data_path.clear();
+    target_dimensions = new_target_dimensions;
 
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
@@ -1931,34 +1932,61 @@ void DataSet::set(const Index& new_samples_number,
                                                 1,
                                                 multiplies<Index>());
 
-    const Index new_variables_number = new_inputs_number + new_targets_number;
+    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+
+    const Index new_variables_number = new_inputs_number + targets_number;
 
     data.resize(new_samples_number, new_variables_number);
 
     raw_variables.resize(new_variables_number);
-    
-    for(Index i = 0; i < new_variables_number; i++)
-    {
-        RawVariable& raw_variable = raw_variables[i];
-
-        raw_variable.type = RawVariableType::Numeric;
-        raw_variable.name = "variable_" + to_string(i+1);
-
-        raw_variable.use = (i < new_inputs_number)
-            ? VariableUse::Input
-            : VariableUse::Target;
-    }
-
-    input_dimensions = new_input_dimensions;
-
-    target_dimensions = new_target_dimensions;
-    
-    sample_uses.resize(new_samples_number);
-
-    split_samples_random();
 
     set_default();
 
+    if (model_type == ModelType::ImageClassification)
+    {
+     
+        raw_variables.resize(new_inputs_number + 1);
+
+        for (Index i = 0; i < new_inputs_number; i++)
+            raw_variables[i].set("p_" + to_string(i + 1),
+                VariableUse::Input,
+                RawVariableType::Numeric,
+                Scaler::ImageMinMax);
+
+        Tensor<string, 1> categories(targets_number);
+        categories.setConstant("ABC");
+
+        if (targets_number == 1)
+            raw_variables[new_inputs_number].set("target",
+                VariableUse::Target,
+                RawVariableType::Binary,
+                Scaler::None,
+                categories);
+        else
+            raw_variables[new_inputs_number].set("target",
+                VariableUse::Target,
+                RawVariableType::Categorical,
+                Scaler::None,
+                categories);
+    }
+    else
+    {
+        for (Index i = 0; i < new_variables_number; i++)
+        {
+            RawVariable& raw_variable = raw_variables[i];
+
+            raw_variable.type = RawVariableType::Numeric;
+            raw_variable.name = "variable_" + to_string(i + 1);
+
+            raw_variable.use = (i < new_inputs_number)
+                ? VariableUse::Input
+                : VariableUse::Target;
+        }
+    }
+
+    sample_uses.resize(new_samples_number);
+
+    split_samples_random();
 }
 
 

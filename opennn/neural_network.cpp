@@ -810,17 +810,19 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
     const Index layers_number = get_layers_number();
 
     Index position = 0;
-
+    //cout << "layers_number: " << layers_number << endl;
     for(Index i = 0; i < layers_number; i++)
     {
+        //cout << "layer : " << i << endl;
         const Tensor<type, 1> layer_parameters = layers[i]->get_parameters();
 
         // @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
             parameters(j + position) = layer_parameters(j);
-
+        
         position += layer_parameters.size();
+        //cout << "exit" << endl;
     }
 
     return parameters;
