@@ -5,12 +5,10 @@
 
 TEST(ImageDataSetTest, DefaultConstructor)
 {
-    ImageDataSet data_set_1;
+    ImageDataSet image_data_set;
 
-//    assert_true(data_set_1.get_variables_number() == 0, LOG);
-//    assert_true(data_set_1.get_samples_number() == 0, LOG);
-
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(image_data_set.get_variables_number(), 0);
+    EXPECT_EQ(image_data_set.get_samples_number(), 0);
 }
 
 

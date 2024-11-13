@@ -70,16 +70,10 @@ Index TimeSeriesDataSet::get_time_series_variables_number() const
     Index variables_number = 0;
 
     for(Index i = 0; i < time_series_raw_variables_number; i++)
-    {
         if(raw_variables[i].type == RawVariableType::Categorical)
-        {
             variables_number += time_series_raw_variables[i].categories.size();
-        }
         else
-        {
             variables_number++;
-        }
-    }
 
     return variables_number;
 }
@@ -121,15 +115,15 @@ Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index
 }
 
 
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_raw_variables_names() const
+vector<string> TimeSeriesDataSet::get_time_series_raw_variables_names() const
 {
     const Index raw_variables_number = get_time_series_raw_variables_number();
 
-    Tensor<string, 1> raw_variables_names(raw_variables_number);
+    vector<string> raw_variables_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        raw_variables_names(i) = time_series_raw_variables[i].name;
+        raw_variables_names[i] = time_series_raw_variables[i].name;
     }
 
     return raw_variables_names;
@@ -195,20 +189,20 @@ Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices
 }
 
 
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_variable_names() const
+vector<string> TimeSeriesDataSet::get_time_series_variable_names() const
 {
     const Index variables_number = get_time_series_variables_number();
 
-    Tensor<string, 1> variable_names(variables_number);
+    vector<string> variable_names(variables_number);
 
     Index index = 0;
 
     for(Index i = 0; i < time_series_raw_variables.size(); i++)
         if(time_series_raw_variables[i].type == RawVariableType::Categorical)
             for(Index j = 0; j < time_series_raw_variables[i].categories.size(); j++)
-                variable_names(index++) = time_series_raw_variables[i].categories(j);
+                variable_names[index++] = time_series_raw_variables[i].categories[j];
         else
-            variable_names(index++) = time_series_raw_variables[i].name;
+            variable_names[index++] = time_series_raw_variables[i].name;
 
     return variable_names;
 }
@@ -659,11 +653,11 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            for(Index j = 0; j < data_file_preview(i).size(); j++)
+            for(Index j = 0; j < data_file_preview[i].size(); j++)
             {
-                file_stream.PushText(data_file_preview(i)(j).c_str());
+                file_stream.PushText(data_file_preview[i][j].c_str());
 
-                if(j != data_file_preview(i).size()-1)
+                if(j != data_file_preview[i].size()-1)
                 {
                     file_stream.PushText(",");
                 }
@@ -1099,13 +1093,13 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            const Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
+            const vector<string> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number[i].c_str());
             }
         }
 
@@ -1158,7 +1152,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                                 "does not match (" + row_element->Attribute("Item") + ").\n");
 
         if(row_element->GetText())
-            data_file_preview(i) = get_tokens(row_element->GetText(), " ");
+            data_file_preview[i] = get_tokens(row_element->GetText(), " ");
     }
 
     // Display

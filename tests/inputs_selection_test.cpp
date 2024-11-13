@@ -6,7 +6,7 @@
 
 TEST(InputsSelectionTest, DefaultConstructor)
 {
-    GrowingInputs gi2;
+//    InputsSelection inputs_selection;
 
 //    assert_true(!gi2.has_training_strategy(), LOG);
 

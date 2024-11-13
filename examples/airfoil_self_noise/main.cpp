@@ -14,6 +14,7 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
+#include "../../opennn/forward_propagation.h"
 
 
 using namespace opennn;
@@ -26,6 +27,14 @@ int main()
         srand(unsigned(time(nullptr)));
 
         cout << "Airfoil self noise" << endl;
+
+        DataSet data_set(1, { 1 }, { 1 });
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+
 /*
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
@@ -40,7 +49,7 @@ int main()
 */
 
         // Data set
-
+/*
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
         data_set.split_samples_random(0.99, 0.005, 0.005);

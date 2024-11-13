@@ -29,7 +29,7 @@ public:
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
 
-   Tensor<Descriptives, 1> get_descriptives() const;
+   vector<Descriptives> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 1> get_minimums() const;
@@ -39,15 +39,15 @@ public:
 
    Tensor<Scaler, 1> get_scaling_methods() const;
 
-   Tensor<string, 1> write_scalers() const;
-   Tensor<string, 1> write_scalers_text() const;
+   vector<string> write_scalers() const;
+   vector<string> write_scalers_text() const;
 
    void set(const dimensions& = {0});
 
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives(const vector<Descriptives>&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_minimum(const Index&, const type&);
@@ -58,7 +58,7 @@ public:
    void set_min_max_range(const type& min, const type& max);
 
    void set_scalers(const Tensor<Scaler, 1>&);
-   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const vector<string>&);
 
    void set_scaler(const Index&, const Scaler&);
    void set_scaler(const Index&, const string&);
@@ -71,15 +71,15 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
-   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
 
-   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
 
-   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
    void print() const;
 
@@ -88,9 +88,7 @@ public:
 
 private:
 
-   dimensions input_dimensions;
-
-   Tensor<Descriptives, 1> descriptives;
+   vector<Descriptives> descriptives;
 
    Tensor<Scaler, 1> scalers;
 

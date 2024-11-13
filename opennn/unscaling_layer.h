@@ -29,23 +29,23 @@ public:
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const final;
 
-   Tensor<Descriptives, 1> get_descriptives() const; 
+   vector<Descriptives> get_descriptives() const; 
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
    Tensor<Scaler, 1> get_unscaling_method() const;
 
-   Tensor<string, 1> write_unscaling_methods() const;
-   Tensor<string, 1> write_unscaling_method_text() const;
+   vector<string> write_unscaling_methods() const;
+   vector<string> write_unscaling_method_text() const;
 
    void set(const Index& = 0, const string& = "unscaling_layer");
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
+   void set(const vector<Descriptives>&, const Tensor<Scaler, 1>&);
 
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives(const vector<Descriptives>&);
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
@@ -53,7 +53,7 @@ public:
 
    void set_scalers(const Tensor<Scaler,1>&);
    void set_scalers(const string&);
-   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
 
    void set_scaler(const Index&, const string&);
@@ -64,18 +64,18 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
-   Tensor<string, 1> write_scalers_text() const;
+   vector<string> write_scalers_text() const;
 
    void print() const;
 
    void from_XML(const tinyxml2::XMLDocument&) final;
    void to_XML(tinyxml2::XMLPrinter&) const final;
 
-   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
 private:
 
-   Tensor<Descriptives, 1> descriptives;
+   vector<Descriptives> descriptives;
 
    Tensor<Scaler, 1> scalers;
 

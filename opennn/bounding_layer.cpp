@@ -191,7 +191,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string BoundingLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     if (bounding_method == BoundingMethod::NoBounding)
         return string();

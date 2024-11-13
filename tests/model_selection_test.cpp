@@ -5,7 +5,9 @@
 
 TEST(ModelSelectionTest, DefaultConstructor)
 {
-    EXPECT_EQ(1, 1);
+    ModelSelection model_selection;
+
+    EXPECT_EQ(model_selection.has_training_strategy(), false);
 }
 
 

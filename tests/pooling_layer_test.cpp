@@ -1,47 +1,41 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P O O L I N G   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include <iostream>
+#include "../opennn/pooling_layer.h"
 
-namespace opennn
+
+TEST(PoolingLayerTest, DefaultConstructor)
 {
+    PoolingLayer pooling_layer;
 
-PoolingLayerTest::PoolingLayerTest() : UnitTesting()
-{
+    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+//    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
+//    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
 }
 
 
-void PoolingLayerTest::test_constructor()
+TEST(PoolingLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
-/*
-    dimensions input_dimensions;
-    dimensions pool_dimensions;
-
-    input_dimensions = { 28, 29, 1 };
-    pool_dimensions = { 3, 2 };
+    const dimensions input_dimensions = { 28, 29, 1 };
+    const dimensions pool_dimensions = { 3, 2 };
 
     PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
 
-    assert_true(pooling_layer.get_input_height() == 28 
-                && pooling_layer.get_input_width() == 29 
-                && pooling_layer.get_channels_number() == 1, LOG);
+    //    assert_true(pooling_layer.get_input_height() == 28
+    //    && pooling_layer.get_input_width() == 29
+    //    && pooling_layer.get_channels_number() == 1, LOG);
 
-    assert_true(pooling_layer.get_pool_height() == 3 
-                && pooling_layer.get_pool_width() == 2, LOG);
-*/
+    //assert_true(pooling_layer.get_pool_height() == 3
+    //    && pooling_layer.get_pool_width() == 2, LOG);
+
+    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+    //    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
+    //    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
 }
 
 
-void PoolingLayerTest::test_forward_propagate_max_pooling()
+TEST(PoolingLayerTest, ForwardPropagateMaxPooling)
 {
-    cout << "test_forward_propagate_max_pooling" << endl;
-
+/*
     // 2 images 1 channel
 
     bool is_training = true;
@@ -56,7 +50,7 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
 
     dimensions input_dimensions;
     dimensions pool_dimensions;
-/*
+
     bmp_image_1 = read_bmp_image("../examples/mnist/data/images/one/1_0.bmp");
     bmp_image_2 = read_bmp_image("../examples/mnist/data/images/one/1_1.bmp");
 
@@ -94,8 +88,8 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
                 inputs(1, h, w, c) = type(bmp_image_2(h, w, c));
 
     pooling_layer.forward_propagate_max_pooling(inputs,
-                                                &pooling_layer_forward_propagation,
-                                                is_training);
+        &pooling_layer_forward_propagation,
+        is_training);
 
     outputs_pair = pooling_layer_forward_propagation.get_outputs_pair();
 
@@ -106,7 +100,15 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
     TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
     assert_true(outputs(0, 0, 0, 0) == type(255)
-                && outputs(1, 0, 0, 0) == type(254), LOG);
+        && outputs(1, 0, 0, 0) == type(254), LOG);
+*/
+}
+
+/*
+
+void PoolingLayerTest::test_forward_propagate_max_pooling()
+{
+    cout << "test_forward_propagate_max_pooling" << endl;
 
     // 2 images 3 channels
 
@@ -178,7 +180,6 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
         && outputs_2(1, 0, 2, 0) == type(255)
         && outputs_2(1, 0, 2, 1) == type(255)
         && round(outputs_2(1, 0, 2, 2)) == type(255), LOG);
-*/
 }
 
 
@@ -200,7 +201,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     dimensions input_dimensions;
     dimensions pool_dimensions;
-/*
+
     bmp_image_1 = read_bmp_image("../examples/mnist/data/images/one/1_0.bmp");
     bmp_image_2 = read_bmp_image("../examples/mnist/data/images/one/1_1.bmp");
 
@@ -352,38 +353,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
                 && outputs_2(1, 0, 2, 0) == type(255)
                 && outputs_2(1, 0, 2, 1) == type(255)
                 && round(outputs_2(1, 0, 2, 2)) == type(255), LOG);
+}
+
+}
 */
-}
-
-
-void PoolingLayerTest::run_test_case()
-{
-   cout << "Running pooling layer test case...\n";
-
-    test_constructor();
-
-    // Outputs
-
-    test_forward_propagate_average_pooling();
-    test_forward_propagate_max_pooling();
-
-   cout << "End of pooling layer test case.\n\n";
-}
-}
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

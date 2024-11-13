@@ -133,7 +133,7 @@ public:
    void set_layer_input_indices(const vector<vector<Index>>&);
    void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
-   void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const vector<string>&);
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 
@@ -224,8 +224,8 @@ public:
    void load(const string&);
    void load_parameters_binary(const string&);
 
-   Tensor<string, 1> get_layer_names() const;
-   Tensor<string, 1> get_layer_types_string() const;
+   vector<string> get_layer_names() const;
+   vector<string> get_layer_types_string() const;
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
@@ -236,6 +236,8 @@ public:
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
+
+   string get_expression() const;
 
    void save_expression_c(const string&) const;
    void save_expression_python(const string&) const;

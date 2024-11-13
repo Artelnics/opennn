@@ -35,22 +35,21 @@ TEST(MeanSquaredErrorTest, BackPropagateEmpty)
 
 TEST(MeanSquaredErrorTest, BackPropagateApproximationZero)
 {
-    /*
-    DataSet data_set(1, 1, 1);
+    
+    DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(0));
 
     data_set.set(DataSet::SampleUse::Training);
     
     Batch batch(1, &data_set);
-
-    //batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill({0}, {0}, {1});
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-    neural_network.set_parameters_constant(type(0));
-    
+    neural_network.set_parameters_constant(type(0)); 
+/*
     ForwardPropagation forward_propagation(1, &neural_network);
 
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+    //neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
@@ -846,13 +845,13 @@ void MeanSquaredErrorTest::test_back_propagate_lm()
 
 //       const Index samples_number = data_set.get_training_samples_number();
 
-//       const Tensor<Index, 1> samples_indices = data_set.get_sample_indices(SampleUse::Training);
+//       const Tensor<Index, 1> sample_indices = data_set.get_sample_indices(SampleUse::Training);
 //       const Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
 //       const Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
 
 //       Batch batch(samples_number, &data_set);
 
-//       batch.fill(samples_indices, input_variables_indices, target_variables_indices);
+//       batch.fill(sample_indices, input_variables_indices, target_variables_indices);
 
 //       Eigen::array<Eigen::Index, 4> extents = {0, 0, 0, 0};
 //       Eigen::array<Eigen::Index, 4> offsets = {batch.inputs_4d.dimension(0),

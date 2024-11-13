@@ -96,8 +96,6 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
-    cout << "test_calculate_PR_training_direction\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -181,8 +179,6 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
 void ConjugateGradientTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     type old_error = numeric_limits<float>::max();
 
     type error;

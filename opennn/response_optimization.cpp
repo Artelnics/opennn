@@ -263,8 +263,8 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 }
 
 
-void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>& names,
-                                                         const Tensor<string, 1>& conditions_string,
+void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& names,
+                                                         const vector<string>& conditions_string,
                                                          const Tensor<type, 1>& values)
 {
     const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
@@ -297,7 +297,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Tensor<string, 1>
 }
 
 
-Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(const Tensor<string, 1>& conditions_string) const
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(const vector<string>& conditions_string) const
 {
     const Index conditions_size = conditions_string.size();
 

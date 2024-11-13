@@ -232,8 +232,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    Tensor<Descriptives, 1> input_variables_descriptives;
-    Tensor<Descriptives, 1> target_variables_descriptives;
+    vector<Descriptives> input_variables_descriptives;
+    vector<Descriptives> target_variables_descriptives;
     if(!is_instance_of<LanguageDataSet>(data_set))
         input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 

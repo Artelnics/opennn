@@ -3,6 +3,7 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/data_set.h"
 #include "../opennn/minkowski_error.h"
+#include "../opennn/forward_propagation.h"
 
 
 TEST(MinkowskiErrorTest, DefaultConstructor)
@@ -28,26 +29,20 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 {
-/*
-    DataSet data_set(1, 1, 1);
+
+    DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(0));
     data_set.set(DataSet::SampleUse::Training);
 
-    const Tensor<Index, 1> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-    const Tensor<Index, 1> input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-    const Tensor<Index, 1> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
     Batch batch(1, &data_set);
-
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-    // Neural network
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
+    batch.fill({0}, {0}, {1});
+ 
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
-
-    forward_propagation.set(samples_number, &neural_network);
-    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+    
+//    ForwardPropagation forward_propagation(1, &neural_network);
+/*
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 

@@ -75,7 +75,7 @@ public:
     void save_time_series_data_binary(const string&) const;
 
     Index get_time_series_variables_number() const;
-    Tensor<string, 1> get_time_series_variable_names() const;
+    vector<string> get_time_series_variable_names() const;
 
     const Tensor<type, 2>& get_time_series_data() const;
 
@@ -84,7 +84,7 @@ public:
     void to_XML(tinyxml2::XMLPrinter&) const final;
     void from_XML(const tinyxml2::XMLDocument&) final;
 
-    Tensor<string, 1> get_time_series_raw_variables_names() const;
+    vector<string> get_time_series_raw_variables_names() const;
 
     Index get_time_series_time_raw_variable_index() const;
 

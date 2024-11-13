@@ -125,7 +125,7 @@ public:
 
     // Expression
 
-    virtual string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
+    virtual string get_expression(const vector<string>&, const vector<string>&) const 
     {
         return string();
     }

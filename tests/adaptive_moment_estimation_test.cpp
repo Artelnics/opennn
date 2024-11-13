@@ -33,7 +33,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
     
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
-    /*
+/*
     TrainingStrategy training_strategy(&neural_network, &data_set);
     
 //    training_strategy

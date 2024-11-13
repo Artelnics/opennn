@@ -48,8 +48,8 @@ int main()
 
         //language_data_set.set_raw_variables_scalers(Scaler::None);
 
-        Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
+        vector<string> completion_vocabulary = language_data_set.get_completion_vocabulary();
+        vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
 
         // Neural network
 

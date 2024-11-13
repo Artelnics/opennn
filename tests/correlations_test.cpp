@@ -1,7 +1,5 @@
 #include "pch.h"
 
-#include <iostream>
-
 #include "../opennn/config.h"
 #include "../opennn/correlations.h"
 #include "../opennn/tensors.h"
@@ -11,18 +9,12 @@
 TEST(CorrelationsTest, SpearmanCorrelations)
 {
 /*
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
-
-    const Index size = 10;
-
-    x.resize(size);
+    Tensor<type, 1> x(10);
     x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
-
-    y.resize(size);
+    Tensor<type, 1> y(10);
     y.setValues({ type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100) });
 
-    type solution = type(1);
+//    type solution = type(1);
 
 //    assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
 */
@@ -228,8 +220,6 @@ void CorrelationsTest::test_logarithmic_correlation()
 
 void CorrelationsTest::test_exponential_correlation()
 {
-    cout << "test_exponential_correlation\n";
-
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
@@ -300,8 +290,6 @@ void CorrelationsTest::test_power_correlation()
 
 void CorrelationsTest::test_autocorrelations()
 {
-    cout << "test_autocorrelations\n";
-
     Index size = 1000;
     Tensor<type, 1> x(size);
     initialize_sequential(x);
@@ -314,8 +302,6 @@ void CorrelationsTest::test_autocorrelations()
 
 void CorrelationsTest::test_cross_correlations()
 {
-    cout << "test_cross_correlations\n";
-
     Index size = 1000;
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);

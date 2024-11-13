@@ -16,13 +16,10 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer(const Index& new_inputs_number, 
-                               const Index& new_neurons_number, 
-                               const Index& new_timesteps) : Layer()
+RecurrentLayer::RecurrentLayer(const dimensions& new_input_dimensions, 
+                               const dimensions& new_output_dimensions) : Layer()
 {
-    set(new_inputs_number, new_neurons_number, new_timesteps);
-
-    layer_type = Type::Recurrent;
+    set(new_input_dimensions, new_output_dimensions);
 }
 
 
@@ -112,8 +109,9 @@ string RecurrentLayer::get_activation_function_string() const
 }
 
 
-void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
+void RecurrentLayer::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
+/*
     biases.resize(new_neurons_number);
 
     input_weights.resize(new_inputs_number, new_neurons_number);
@@ -133,6 +131,7 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
     name = "recurrent_layer";
 
     layer_type = Type::Recurrent;
+*/
 }
 
 
@@ -503,8 +502,8 @@ void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 }
 
 
-string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
-                                        const Tensor<string, 1>& output_names) const
+string RecurrentLayer::get_expression(const vector<string>& input_names,
+                                        const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -512,7 +511,7 @@ string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << output_names(j) << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";

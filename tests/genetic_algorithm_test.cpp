@@ -13,23 +13,44 @@ TEST(GeneticAlgorithmTest, DefaultConstructor)
 
 TEST(GeneticAlgorithmTest, GeneralConstructor)
 {
-
     TrainingStrategy training_strategy;
-    /*
-    //GeneticAlgorithm genetic_algorithm_1(&training_strategy);
-    //assert_true(genetic_algorithm_1.has_training_strategy(), LOG);
-*/
+    
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-    EXPECT_EQ(1, 1);
+    EXPECT_EQ(genetic_algorithm.has_training_strategy(), true);
 }
+
+
+TEST(GeneticAlgorithmTest, InitializePopulation)
+{
+    DataSet data_set(1, { 1 }, { 1 });
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
+
+//    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+//    GeneticAlgorithm genetic_algorithm(&training_strategy);
+//    genetic_algorithm.set_individuals_number(10);
+//    genetic_algorithm.initialize_population();
+
+//    const Tensor<bool, 2>& population = genetic_algorithm.get_population();
+//    const Tensor<bool, 1> gene = population.chip(0, 1);
+//    const Tensor<bool, 1> individual = population.chip(1, 0);
+
+//    assert_true(population.dimension(0) == individuals_number, LOG);
+//    assert_true(population.dimension(1) == inputs_number, LOG);
+//    assert_true(gene.size() == individuals_number, LOG);
+//    assert_true(individual.size() == inputs_number, LOG);
+
+
+}
+
 
 /*
 namespace opennn
 {
 void GeneticAlgorithmTest::test_initialize_population()
 {
-    cout << "test_initialize_population\n";
-
     Tensor<bool, 2> population;
     Tensor<bool, 1> individual;
     Tensor<bool, 1> gene;
