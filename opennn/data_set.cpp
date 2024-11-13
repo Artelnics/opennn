@@ -55,10 +55,10 @@ const bool& DataSet::get_display() const
 
 
 DataSet::RawVariable::RawVariable(const string& new_name,
-                        const VariableUse& new_raw_variable_use,
-                        const RawVariableType& new_type,
-                        const Scaler& new_scaler,
-                        const Tensor<string, 1>& new_categories)
+                                  const VariableUse& new_raw_variable_use,
+                                  const RawVariableType& new_type,
+                                  const Scaler& new_scaler,
+                                  const Tensor<string, 1>& new_categories)
 {
     name = new_name;
     scaler = new_scaler;
@@ -1934,6 +1934,8 @@ void DataSet::set(const Index& new_samples_number,
 
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
 
+    target_dimensions = { targets_number };
+
     const Index new_variables_number = new_inputs_number + targets_number;
 
     data.resize(new_samples_number, new_variables_number);
@@ -1944,6 +1946,10 @@ void DataSet::set(const Index& new_samples_number,
     
     if (model_type == ModelType::ImageClassification)
     {
+        const Index raw_variables_number = new_inputs_number + 1;
+
+        raw_variables.resize(raw_variables_number);
+        
         for (Index i = 0; i < new_inputs_number; i++)
             raw_variables[i].set("p_" + to_string(i + 1),
                 VariableUse::Input,
@@ -1952,19 +1958,19 @@ void DataSet::set(const Index& new_samples_number,
 
         Tensor<string, 1> categories(targets_number);
         categories.setConstant("ABC");
-
+        
         if (targets_number == 1)
-            raw_variables[new_inputs_number].set("target",
+            raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Binary,
                 Scaler::None,
                 categories);
         else
-            raw_variables[new_inputs_number].set("target",
+            raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
                 Scaler::None,
-                categories);              
+                categories);
     }
     else
     {

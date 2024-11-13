@@ -1,13 +1,16 @@
 #include "pch.h"
 
-#include "../opennn/training_strategy.h"
+#include <iostream>
+#include <string>
+#include <exception>
 
-#define PERFORMANCE_TESTS
+#include "../opennn/opennn.h"
 
-#ifdef PERFORMANCE_TESTS
+using namespace opennn;
 
-TEST(PerformanceTest, Rosenbrock) 
+TEST(PerformanceTest, Rosenbrock)
 {
+
 /*
     const Index samples_number = 1000000;
     const Index inputs_number = 1000;
@@ -47,13 +50,11 @@ TEST(PerformanceTest, ImageClassification)
     const Index image_width = 4;
     const Index channels = 3;
     const Index targets = 2;
-
+    
     ImageDataSet image_data_set(samples_number, { image_height, image_width, channels }, { targets });
-
     image_data_set.set_image_data_random();
-
-    image_data_set.print();
-
+    //image_data_set.set(DataSet::SampleUse::Training);
+    
     const dimensions complexity_dimensions = { 8 };
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
@@ -75,4 +76,3 @@ TEST(PerformanceTest, ImageClassification)
     EXPECT_EQ(1, 1);
 }
 
-#endif
