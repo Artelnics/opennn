@@ -50,7 +50,7 @@ public:
 
     void set_distances_box_plot(BoxPlot&);
     void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
-    void set_variables_distances_names(const Tensor<string, 1>&);
+    void set_variables_distances_names(const vector<string>&);
     void set_distances_descriptives(Descriptives&);
 
     void box_plot_from_XML(const tinyxml2::XMLDocument&);
@@ -66,7 +66,7 @@ public:
     Tensor<type, 2> calculate_multivariate_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
     Tensor<type, 1> calculate_samples_distances(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
-    void save_autoassociation_outputs(const Tensor<type, 1>&,const Tensor<string, 1>&, const string&) const;
+    void save_autoassociation_outputs(const Tensor<type, 1>&,const vector<string>&, const string&) const;
 
 private:
 
@@ -76,7 +76,7 @@ private:
 
     Descriptives distances_descriptives;
 
-    Tensor<string, 1> variables_distances_names;
+    vector<string> variables_distances_names;
 
 };
 };

@@ -15,34 +15,33 @@ TEST(DataSetTest, DefaultConstructor)
 TEST(DataSetTest, DimensionsConstructor)
 {
     DataSet data_set(1, {1}, {1});
-    /*
-    EXPECT_EQ(data_set.get_samples_number(), 0);
 
+    EXPECT_EQ(data_set.get_samples_number(), 1);
     EXPECT_EQ(data_set.get_variables_number(), 2);
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Input), 1);
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::Target), 1);
-*/
 }
+
+
+TEST(DataSetTest, VariablesDescriptives)
+{
+    DataSet data_set(1, { 1 }, { 1 });
+    data_set.set_data_constant(type(0));
+
+//    vector<Descriptives> variables_descriptives = data_set.calculate_variable_descriptives();
+
+//    assert_true(variables_descriptives.size() == 1, LOG);
+
+//    assert_true(abs(variables_descriptives[0].minimum) < type(NUMERIC_LIMITS_MIN), LOG);
+//    assert_true(abs(variables_descriptives[0].maximum) < type(NUMERIC_LIMITS_MIN), LOG);
+//    assert_true(abs(variables_descriptives[0].mean) < type(NUMERIC_LIMITS_MIN), LOG);
+//    assert_true(abs(variables_descriptives[0].standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
+}
+
 
 /*
 void DataSetTest::test_calculate_variables_descriptives()
 {
-    Tensor<Descriptives, 1> variables_descriptives;
-
-    // Test
-
-    data_set.set(1, 1);
-
-    data_set.set_data_constant(type(0));
-
-    variables_descriptives = data_set.calculate_variable_descriptives();
-
-    assert_true(variables_descriptives.size() == 1, LOG);
-
-    assert_true(abs(variables_descriptives[0].minimum) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(variables_descriptives[0].maximum) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(variables_descriptives[0].mean) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(variables_descriptives[0].standard_deviation) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
@@ -106,7 +105,7 @@ void DataSetTest::test_calculate_input_variables_descriptives()
 {
     cout << "test_calculate_input_variables_descriptives\n";
 
-    Tensor<Descriptives, 1> input_variables_descriptives;
+    vector<Descriptives> input_variables_descriptives;
 
     // Test
 
@@ -197,7 +196,7 @@ void DataSetTest::test_scale_data()
 {
     cout << "test_scale_data\n";
 
-    Tensor<Descriptives, 1> data_descriptives;
+    vector<Descriptives> data_descriptives;
     Tensor<type, 2> scaled_data;
 
     // Test

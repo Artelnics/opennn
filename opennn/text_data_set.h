@@ -22,18 +22,11 @@ class TextDataSet : public DataSet
 
 public:
 
-    // DEFAULT CONSTRUCTOR
-
     explicit TextDataSet();
-
-//    string get_text_separator_string();
 
     const Index& get_short_words_length() const;
     const Index& get_long_words_length() const;
     const Tensor<Index,1>& get_words_frequencies() const;
-
-    //    void set_text_separator(const Separator&);
-    //    void set_text_separator(const string&);
 
     Tensor<string, 2> get_text_data_file_preview() const;
 
@@ -59,7 +52,7 @@ private:
 
     Tensor<Index, 1> words_frequencies;
 
-    Tensor<string, 1> stop_words;
+    vector<string> stop_words;
 
     Tensor<string, 2> text_data_file_preview;
 };

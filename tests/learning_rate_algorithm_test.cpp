@@ -25,41 +25,22 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {
-/*
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-    Index neurons_number;
-
-    Batch batch;
-
-    ForwardPropagation forward_propagation;
-
-    BackPropagation back_propagation;
-
-    LearningRateAlgorithm::Triplet triplet;
-
-    OptimizationAlgorithmData optimization_data;
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-    neurons_number = 1;
-
-    DataSet data_set(samples_number, { inputs_number }, { targets_number });
+    DataSet data_set(1, {1}, {1});
     data_set.set_data_random();
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, { neurons_number }, { targets_number });
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
+
+    Batch batch(1, &data_set);
+
+//    ForwardPropagation forward_propagation(1, &neural_network);
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+//    BackPropagation back_propagation(1, &mean_squared_error);
+
+    //LearningRateAlgorithm::Triplet triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 /*
-    batch.set(samples_number, &data_set);
-    forward_propagation.set(samples_number, &neural_network);
-    back_propagation.set(samples_number, &sum_squared_error);
-
-    //triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
-
-    Tensor<Index, 3> samples_indices(0, 1, samples_number);
+    Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
     LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
 

@@ -23,17 +23,21 @@ UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const str
 
 dimensions UnscalingLayer::get_input_dimensions() const
 {
-    return { descriptives.size()};
+    const Index neurons_number = descriptives.size();
+
+    return {neurons_number};
 }
 
 
 dimensions UnscalingLayer::get_output_dimensions() const
 {
-    return { descriptives.size()};
+    const Index neurons_number = descriptives.size();
+
+    return { neurons_number };
 }
 
 
-Tensor<Descriptives, 1> UnscalingLayer::get_descriptives() const
+vector<Descriptives> UnscalingLayer::get_descriptives() const
 {
     return descriptives;
 }
@@ -73,8 +77,8 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names, 
-                                        const Tensor<string, 1>& output_names) const
+string UnscalingLayer::get_expression(const vector<string>& input_names,
+                                        const vector<string>& output_names) const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
@@ -91,20 +95,20 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 
         case Scaler::None:
         
-            buffer << output_names(i) << " = " << input_names(i) << ";\n";
+            buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
 
         case Scaler::MinimumMaximum:
         
-            if(abs(descriptives(i).minimum - descriptives(i).maximum) < type(NUMERIC_LIMITS_MIN))
+            if(abs(descriptives[i].minimum - descriptives[i].maximum) < type(NUMERIC_LIMITS_MIN))
             {
-                buffer << output_names[i] << "=" << descriptives(i).minimum <<";\n";
+                buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
             }
             else
             {
-                const type slope = (descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+                const type slope = (descriptives[i].maximum-descriptives[i].minimum)/(max_range-min_range);
 
-                const type intercept = descriptives(i).minimum - min_range*(descriptives(i).maximum-descriptives(i).minimum)/(max_range-min_range);
+                const type intercept = descriptives[i].minimum - min_range*(descriptives[i].maximum-descriptives[i].minimum)/(max_range-min_range);
 
                 buffer << output_names[i] << "=" << input_names[i] << "*" << slope << "+" << intercept<<";\n";
             }
@@ -112,13 +116,13 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 
         case Scaler::MeanStandardDeviation:
         
-            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives(i).standard_deviation <<"+"<< descriptives(i).mean <<";\n";
+            buffer << output_names[i] << "=" << input_names[i] << "*" << descriptives[i].standard_deviation <<"+"<< descriptives[i].mean <<";\n";
         
             break;
 
         case  Scaler::StandardDeviation:
         
-            buffer << output_names[i] << "=" <<  input_names(i) << "*" << descriptives(i).standard_deviation <<";\n";
+            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
         
             break;
 
@@ -142,11 +146,11 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
+vector<string> UnscalingLayer::write_unscaling_methods() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -166,11 +170,11 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
+vector<string> UnscalingLayer::write_unscaling_method_text() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -220,7 +224,7 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 }
 
 
-void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+void UnscalingLayer::set(const vector<Descriptives>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
 {
     descriptives = new_descriptives;
 }
@@ -234,7 +238,7 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
 }
 
 
-void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
+void UnscalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
 }
@@ -269,12 +273,12 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_scalers)
+void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
 {
     const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
-        set_scaler(i, new_scalers(i));
+        set_scaler(i, new_scalers[i]);
 }
 
 
@@ -327,13 +331,13 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     {
         const Scaler& scaler = scalers(i);
 
-        const Descriptives& descriptive = descriptives(i);
+        const Descriptives& descriptive = descriptives[i];
 
         const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
 
-        if(abs(descriptives(i).standard_deviation) < type(NUMERIC_LIMITS_MIN))
+        if(abs(descriptives[i].standard_deviation) < type(NUMERIC_LIMITS_MIN))
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
@@ -380,11 +384,11 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_scalers_text() const
+vector<string> UnscalingLayer::write_scalers_text() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -410,14 +414,14 @@ void UnscalingLayer::print() const
 
     const Index inputs_number = get_input_dimensions()[0];
 
-    const Tensor<string, 1> scalers_text = write_scalers_text();
+    const vector<string> scalers_text = write_scalers_text();
 
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Neuron " << i << endl
-             << "Scaler " << scalers_text(i) << endl;
+             << "Scaler " << scalers_text[i] << endl;
 
-        descriptives(i).print();
+        descriptives[i].print();
     }
 }
 
@@ -430,15 +434,15 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "UnscalingNeuronsNumber", to_string(output_dimensions[0]));
 
-    const Tensor<string, 1> scalers = write_unscaling_methods();
+    const vector<string> scalers = write_unscaling_methods();
 
     for (Index i = 0; i < output_dimensions[0]; i++) 
     {
         printer.OpenElement("UnscalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
 
-        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives(i).to_tensor()));
-        add_xml_element(printer, "Scaler", scalers(i));
+        add_xml_element(printer, "Descriptives", tensor_to_string(descriptives[i].to_tensor()));
+        add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
     }
@@ -475,7 +479,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if (descriptives_element->GetText())
         {
-            const Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+            const vector<string> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
             descriptives[i].set(
                 type(stof(splitted_descriptives[0])),
                 type(stof(splitted_descriptives[1])),

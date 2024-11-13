@@ -25,8 +25,8 @@ public:
 
     explicit LanguageDataSet();
 
-    Tensor<string, 1> get_context_vocabulary() const;
-    Tensor<string, 1> get_completion_vocabulary() const;
+    vector<string> get_context_vocabulary() const;
+    vector<string> get_completion_vocabulary() const;
 
     Index get_context_vocabulary_size() const;
     Index get_completion_vocabulary_size() const;
@@ -36,11 +36,11 @@ public:
 
     const Tensor<Index, 1>& get_context_variables_dimensions() const;
 
-    const Tensor<Tensor<string, 1>, 1> get_documents() const;
-    const Tensor<Tensor<string, 1>, 1> get_targets() const;
+    const Tensor<vector<string>, 1> get_documents() const;
+    const Tensor<vector<string>, 1> get_targets() const;
 
     void set_default_raw_variables_uses();
-    void set_raw_variables_uses(const Tensor<string, 1>& new_raw_variables_uses);
+    void set_raw_variables_uses(const vector<string>& new_raw_variables_uses);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);
 
     void set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions);
@@ -57,20 +57,20 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
     void to_XML(tinyxml2::XMLPrinter&) const;
 
-    void import_vocabulary(const string&, Tensor<string, 1>&);
+    void import_vocabulary(const string&, vector<string>&);
 
-    const Tensor<string, 1> calculate_vocabulary(const Tensor<Tensor<string, 1>, 1>& tokens,
-                                                 const Index& vocabulary_size,
-                                                 const vector<string>& reserved_tokens,
-                                                 const Index& upper_threshold = 10000000,
-                                                 const Index& lower_threshold = 10,
-                                                 const Index& iterations_number = 4,
-                                                 const Index& max_input_tokens = 5000000,
-                                                 const Index& max_token_length = 50,
-                                                 const Index& max_unique_chars = 1000,
-                                                 const float& slack_ratio = 0.05,
-                                                 const bool& include_joiner_token = true,
-                                                 const string& joiner = "##");
+    vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
+                                         const Index& vocabulary_size,
+                                         const vector<string>& reserved_tokens,
+                                         const Index& upper_threshold = 10000000,
+                                         const Index& lower_threshold = 10,
+                                         const Index& iterations_number = 4,
+                                         const Index& max_input_tokens = 5000000,
+                                         const Index& max_token_length = 50,
+                                         const Index& max_unique_chars = 1000,
+                                         const float& slack_ratio = 0.05,
+                                         const bool& include_joiner_token = true,
+                                         const string& joiner = "##");
 
     void load_documents(const string&);
 
@@ -84,8 +84,8 @@ public:
 
     void read_txt_language_model();
 
-//    void write_data_file_whitespace(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
-    void write_data_file_wordpiece(ofstream&, const Tensor<Tensor<string, 1>, 1>&, const Tensor<Tensor<string, 1>, 1>&);
+//    void write_data_file_whitespace(ofstream&, const Tensor<vector<string>, 1>&, const Tensor<vector<string>, 1>&);
+    void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
 
 private:
 
@@ -95,11 +95,11 @@ private:
 
     // LARGE LANGUAGE MODEL
 
-    Tensor<string, 1> context_vocabulary;
+    vector<string> context_vocabulary;
 
     string context_vocabulary_path;
 
-    Tensor<string, 1> completion_vocabulary;
+    vector<string> completion_vocabulary;
 
     string completion_vocabulary_path;
 
@@ -109,9 +109,9 @@ private:
 
     Index max_context_length = 0;
 
-    Tensor<Tensor<string, 1>, 1> documents;
+    Tensor<vector<string>, 1> documents;
 
-    Tensor<Tensor<string, 1>, 1> targets;
+    Tensor<vector<string>, 1> targets;
 };
 
 }

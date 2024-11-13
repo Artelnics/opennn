@@ -27,13 +27,11 @@ TEST(CrossEntropyErrorTest, BackPropagateEmpty)
     CrossEntropyError cross_entropy_error(&neural_network, &data_set);
     BackPropagation back_propagation;
 
-//    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
 
 }
 
 /*
-namespace opennn
-{
 
 void CrossEntropyErrorTest::test_back_propagate()
 {

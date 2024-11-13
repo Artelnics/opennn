@@ -133,7 +133,7 @@ public:
 
    string get_activation_function_string_expression() const;
 
-   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
    // Serialization
 

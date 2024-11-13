@@ -171,7 +171,7 @@ void AutoAssociativeNeuralNetwork::set_distances_descriptives(Descriptives& new_
 }
 
 
-void AutoAssociativeNeuralNetwork::set_variables_distances_names(const Tensor<string, 1>& new_variables_distances_names)
+void AutoAssociativeNeuralNetwork::set_variables_distances_names(const vector<string>& new_variables_distances_names)
 {
     variables_distances_names = new_variables_distances_names;
 }
@@ -334,7 +334,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
         if(variable_box_plot_element->GetText())
         {
             const char* new_box_plot_parameters_element = variable_box_plot_element->GetText();
-            Tensor<string,1> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, "\\");
+            vector<string> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, "\\");
             variables_distances_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
             multivariate_distances_box_plot[i].minimum = type(stof(splitted_box_plot_parameters_element[1]));
             multivariate_distances_box_plot[i].first_quartile = type(stof(splitted_box_plot_parameters_element[2]));
@@ -438,7 +438,7 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::calculate_samples_distances(type* 
 }
 
 
-void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const Tensor<string, 1>& types_vector, const string& file_name) const
+void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const vector<string>& types_vector, const string& file_name) const
 {
     ofstream file(file_name.c_str());
 
@@ -453,9 +453,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file << "Sample distance" << ";" << "Sample type" << "\n";
 
     for(Index i = 0; i < samples_number; i++)
-    {
-        file << distances_vector(i) << ";" << types_vector(i) << "\n";
-    }
+        file << distances_vector(i) << ";" << types_vector[i] << "\n";
 
     file.close();
 }
@@ -676,7 +674,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
         file_stream.OpenElement("VariableBoxPlot");
 
-        buffer.str(""); buffer << variables_distances_names(i).c_str();
+        buffer.str(""); buffer << variables_distances_names[i].c_str();
         file_stream.PushText(buffer.str().c_str());
         file_stream.PushText("\\");
 

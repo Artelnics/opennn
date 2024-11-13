@@ -123,20 +123,20 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
 {
 
     if (new_input_dimensions.size() != 1) 
-        throw runtime_error("Input dimensions rank is not 1");
+        throw runtime_error("Input dimensions size is not 1");
 
     if (new_output_dimensions.size() != 1)
-        throw runtime_error("Output dimensions rank is not 1");   
+        throw runtime_error("Output dimensions size is not 1");   
 
     biases.resize(new_output_dimensions[0]);    
     synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
-    activation_function = new_activation_function;
+    set_activation_function(new_activation_function);
 
-    name = new_name;
-
+    set_name(new_name);
+    
     layer_type = Layer::Type::Perceptron;
 }
 
@@ -472,8 +472,8 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 }
 
 
-string PerceptronLayer::get_expression(const Tensor<string, 1>& input_names,
-                                         const Tensor<string, 1>& output_names) const
+string PerceptronLayer::get_expression(const vector<string>& input_names,
+                                         const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -579,11 +579,13 @@ void PerceptronLayerForwardPropagation::set(const Index &new_batch_samples_numbe
     layer = new_layer;
     
     batch_samples_number = new_batch_samples_number;
-    
+
+    if (!layer) return;
+
     const Index neurons_number = layer->get_output_dimensions()[0];
-    
+
     outputs.resize(batch_samples_number, neurons_number);
-       
+
     activation_derivatives.resize(batch_samples_number, neurons_number);
 
     activation_derivatives.setConstant((type)NAN);

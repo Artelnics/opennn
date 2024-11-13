@@ -16,7 +16,7 @@ struct WordBag
 {
     explicit WordBag() {}
 
-    Tensor<string, 1> words;
+    vector<string> words;
     Tensor<Index, 1> frequencies;
     Tensor<double, 1> percentages;
 
@@ -32,7 +32,7 @@ struct WordBag
         cout << "Word bag size: " << words_size << endl;
 
         for(Index i = 0; i < words_size; i++)
-            cout << words(i) << ": frequency= " << frequencies(i) << ", percentage= " << percentages(i) << endl;
+            cout << words[i] << ": frequency= " << frequencies(i) << ", percentage= " << percentages(i) << endl;
     }
 };
 

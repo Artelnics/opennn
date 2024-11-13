@@ -16,27 +16,22 @@ using namespace fs;
 namespace opennn
 {
 
-ImageDataSet::ImageDataSet() : DataSet()
+
+ImageDataSet::ImageDataSet(const Index& new_samples_number,
+                           const dimensions& new_input_dimensions,
+                           const dimensions& new_target_dimensions)
 {
-    set_default();
+
+
+    if (new_input_dimensions.size() != 3)
+        throw runtime_error("Input dimensions is not 3");
+
+    if (new_target_dimensions.size() != 1)
+        throw runtime_error("Target dimensions is not 1");
 
     model_type = ModelType::ImageClassification;
 
-    input_dimensions.resize(3);
-    input_dimensions = { 0,0,0 };
-}
-
-
-ImageDataSet::ImageDataSet(const Index& new_classes_number,
-                           const Index& new_height,
-                           const Index& new_width,
-                           const Index& new_channels,
-                           const Index& new_targets_number)
-{
-    if (new_targets_number > new_classes_number)
-        throw runtime_error("Target_number cannot be bigger than samples_number");
-
-    set(new_classes_number, new_height, new_width, new_channels, new_targets_number);
+    set(new_samples_number, new_input_dimensions, new_target_dimensions);
 }
 
 
@@ -124,65 +119,6 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
 }
 
 
-void ImageDataSet::set(const Index& new_images_number,
-                       const Index& new_height,
-                       const Index& new_width,
-                       const Index& new_channels,
-                       const Index& new_targets_number)
-{
-    set_default();
-
-    model_type = ModelType::ImageClassification;
-
-    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
-    const Index inputs_number = new_height * new_width * new_channels;
-    const Index raw_variables_number = inputs_number + 1;
-    const Index variables_number = inputs_number + targets_number;
-
-    // Dimensions
-
-    input_dimensions = { new_height, new_width, new_channels };
-
-    target_dimensions = { targets_number };
-
-    // Data
-
-    data.resize(new_images_number, variables_number);
-
-    // Variables
-
-    raw_variables.resize(raw_variables_number);
-
-    for(Index i = 0; i < inputs_number; i++)
-        raw_variables[i].set("p_" + to_string(i + 1), 
-                             VariableUse::Input, 
-                             RawVariableType::Numeric,
-                             Scaler::ImageMinMax);
-
-    Tensor<string, 1> categories(targets_number);
-    categories.setConstant("ABC");
-
-    if(targets_number == 1)
-        raw_variables[raw_variables_number - 1].set("target",
-                                                    VariableUse::Target,
-                                                    RawVariableType::Binary,
-                                                    Scaler::None,
-                                                    categories);
-    else
-        raw_variables[raw_variables_number - 1].set("target",
-                                                    VariableUse::Target,
-                                                    RawVariableType::Categorical,
-                                                    Scaler::None,
-                                                    categories);
-
-    // Samples
-
-    sample_uses.resize(new_images_number);
-    split_samples_random();
-
-}
-
-
 void ImageDataSet::set_image_data_random()
 {
     const Index height = input_dimensions[0];
@@ -202,7 +138,7 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = rand() % 256;
+                data(i, j) = rand() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -230,7 +166,7 @@ void ImageDataSet::set_image_data_random()
             for (Index i = 0; i < images_number[k]; i++)
             {
                 for (Index j = 0; j < inputs_number; j++)
-                    data(current_sample, j) = rand() % 256;
+                    data(current_sample, j) = rand() % 255;
 
                 data(current_sample, k + inputs_number) = 1;
 
@@ -582,7 +518,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
+vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -592,7 +528,7 @@ Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
 
     inputs_data.device(*thread_pool_device) = inputs_data / type(255);
 
-    return Tensor<Descriptives, 1>();
+    return vector<Descriptives>();
 }
 
 
@@ -656,12 +592,12 @@ void ImageDataSet::read_bmp()
         ? folders_number -1 
         : folders_number;
 
-    set(samples_number, height, width, image_channels, targets_number);
+    set(samples_number, { height, width, image_channels }, { targets_number });
 
-    Tensor<string, 1> categories(targets_number);
+    vector<string> categories(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        categories(i) = directory_path[i].filename().string();
+        categories[i] = directory_path[i].filename().string();
 
     raw_variables[raw_variables_number-1].set_categories(categories);
 

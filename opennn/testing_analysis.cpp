@@ -261,7 +261,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives() const
+vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() const
 {
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
@@ -273,7 +273,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
+vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
                                                                                 const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> difference = (targets-outputs).abs();
@@ -282,7 +282,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_absolute_errors_descriptives(
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptives() const
+vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives() const
 {
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
@@ -294,7 +294,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 }
 
 
-Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptives(const Tensor<type, 2>& targets,
+vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const Tensor<type, 2>& targets,
                                                                                   const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> difference = type(100)*(targets-outputs).abs()/targets;
@@ -303,7 +303,7 @@ Tensor<Descriptives, 1> TestingAnalysis::calculate_percentage_errors_descriptive
 }
 
 
-Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descriptives() const
+vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
     // Neural network
 
@@ -313,7 +313,7 @@ Tensor<Tensor<Descriptives, 1>, 1> TestingAnalysis::calculate_error_data_descrip
 
     // Testing analysis stuff
 
-    Tensor<Tensor<Descriptives, 1>, 1> descriptives(outputs_number);
+    vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor<type, 3> error_data = calculate_error_data();
 
@@ -340,7 +340,7 @@ void TestingAnalysis::print_error_data_descriptives() const
 
     const vector<string> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics = calculate_error_data_descriptives();
+    const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_descriptives();
 
     for(Index i = 0; i < targets_number; i++)
         cout << targets_name[i] << endl
@@ -1693,7 +1693,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels) const
+                                                                      const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -1713,7 +1713,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
         if(actual_class != predicted_class) continue;
 
-        well_lassified_samples(number_of_well_classified, 0) = labels(i);
+        well_lassified_samples(number_of_well_classified, 0) = labels[i];
         class_name = target_variables_names[actual_class];
         well_lassified_samples(number_of_well_classified, 1) = class_name;
         class_name = target_variables_names[predicted_class];
@@ -1732,7 +1732,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels) const
+                                                                      const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -1764,7 +1764,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 
         if(actual_class == predicted_class) continue;
 
-        misclassified_samples(j, 0) = labels(i);
+        misclassified_samples(j, 0) = labels[i];
         class_name = target_variables_names[actual_class];
         misclassified_samples(j, 1) = class_name;
         class_name = target_variables_names[predicted_class];
@@ -1783,7 +1783,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 
 void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
-                                                    const Tensor<string, 1>& labels,
+                                                    const vector<string>& labels,
                                                     const string& file_name) const
 {
     const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1806,7 +1806,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
 
 void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                  const Tensor<type, 2>& outputs,
-                                                 const Tensor<string, 1>& labels,
+                                                 const vector<string>& labels,
                                                  const string& file_name) const
 {
     const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
@@ -1829,7 +1829,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
 
 void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type, 2>& targets,
                                                               const Tensor<type, 2>& outputs,
-                                                              const Tensor<string, 1>& labels,
+                                                              const vector<string>& labels,
                                                               const string& file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1853,7 +1853,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
 
 void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2>& targets,
                                                             const Tensor<type, 2>& outputs,
-                                                            const Tensor<string, 1>& labels,
+                                                            const vector<string>& labels,
                                                             const string& statistics_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
@@ -1876,7 +1876,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
 
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                          const Tensor<type, 2>& outputs,
-                                                                         const Tensor<string, 1>& labels,
+                                                                         const vector<string>& labels,
                                                                          const string& histogram_file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1911,7 +1911,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                           const Tensor<type, 2>& outputs,
-                                                                          const Tensor<string, 1>& labels,
+                                                                          const vector<string>& labels,
                                                                           const string& histogram_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
