@@ -977,16 +977,16 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
 void TimeSeriesDataSet::fill_gaps()
 {   
-/*
+
     type start_time = 50;
     type end_time = 100;
 
     type period = 2;
 
-    type new_time_series_samples_number = (end_time - start_time)/period;
-    type new_time_series_variables_number = time_series_data.dimension(1);
+    type new_samples_number = (end_time - start_time)/period;
+    type new_variables_number = get_variables_number();
 
-    Tensor<type, 2> new_time_series_data(new_time_series_samples_number,  new_time_series_variables_number);
+    Tensor<type, 2> new_data(new_samples_number,  new_variables_number);
 
     type timestamp = 0;
 
@@ -997,33 +997,25 @@ void TimeSeriesDataSet::fill_gaps()
 
     Tensor<type, 1> sample;
 
-    for(Index i = 0; i < new_time_series_samples_number; i++)
+    for(Index i = 0; i < new_samples_number; i++)
     {
         new_timestamp = start_time + i*period;
-        timestamp = time_series_data(row_index, column_index);
+        timestamp = new_data(row_index, column_index);
 
         if(new_timestamp == timestamp)
         {
-            sample = time_series_data.chip(row_index, 0);
-
-            new_time_series_data.chip(i, 0) = sample;
+            data.chip(i, 0) = data.chip(row_index, 0);
 
             row_index++;
         }
     }
-
-    if(true)
-    {
-        throw runtime_error("Specify here the error");
-    }
-*/
 }
 
 
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-/*
-    const Index samples_number = time_series_data.dimension(0);
+
+    const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
     {
@@ -1031,15 +1023,15 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
                             "is greater than samples number (" + to_string(samples_number) + ") \n");
     }
 
-    const Index raw_variables_number = get_time_series_raw_variables_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Target);
 
     Index input_target_numeric_raw_variables_number = 0;
 
@@ -1049,20 +1041,18 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     {
         if(i < input_raw_variables_number)
         {
-            const Index raw_variable_index = input_raw_variables_indices(i);
+            const Index raw_variable_index = input_raw_variable_indices[i];
 
-            const RawVariableType input_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType input_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(input_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(count);
+            const Index raw_variable_index = target_raw_variable_indices[count];
 
-            const RawVariableType target_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
                 input_target_numeric_raw_variables_number++;
@@ -1087,11 +1077,11 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables[i].use != VariableUse::None
-        && time_series_raw_variables[i].type == RawVariableType::Numeric)
+        if(raw_variables[i].use != VariableUse::None
+        && raw_variables[i].type == RawVariableType::Numeric)
         {
-            input_i = get_time_series_raw_variable_data(i);
-            cout << "Calculating " << time_series_raw_variables[i].name << " autocorrelations" << endl;
+            input_i = get_raw_variable_data(i);
+            cout << "Calculating " << raw_variables[i].name << " autocorrelations" << endl;
         }
         else
         {
@@ -1103,44 +1093,31 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
 
         for(Index j = 0; j < new_lags_number; j++)
-        {
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
-        }
 
         counter_i++;
     }
 
     return autocorrelations;
-*/
-    return Tensor<type, 2>();
 }
 
 
 Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lags_number) const
 {
-/*
-    const Index samples_number = time_series_data.dimension(0);
+    const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
-    {
-        ostringstream buffer;
+        throw runtime_error("Lags number(" + to_string(lags_number) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
-               << "Lags number(" << lags_number << ") is greater than samples number (" << samples_number << ") \n";
+    const Index raw_variables_number = get_raw_variables_number();
 
-        throw runtime_error(buffer.str());
-    }
-
-    const Index raw_variables_number = get_time_series_raw_variables_number();
-
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     Index input_target_numeric_raw_variables_number = 0;
     int count = 0;
@@ -1149,20 +1126,18 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     {
         if(i < input_raw_variables_number)
         {
-            const Index raw_variable_index = input_raw_variables_indices(i);
+            const Index raw_variable_index = input_raw_variable_indices[i];
 
-            const RawVariableType input_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType input_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(input_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(count);
+            const Index raw_variable_index = target_raw_variable_indices[count];
 
-            const RawVariableType target_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
                 input_target_numeric_raw_variables_number++;
@@ -1194,25 +1169,25 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables[i].use == VariableUse::None
-        || time_series_raw_variables[i].type != RawVariableType::Numeric)
+        if(raw_variables[i].use == VariableUse::None
+        || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
-        input_i = get_time_series_raw_variable_data(i);
+        input_i = get_raw_variable_data(i);
 
-        if (display) cout << "Calculating " << time_series_raw_variables[i].name << " cross correlations:" << endl;
+        if (display) cout << "Calculating " << raw_variables[i].name << " cross correlations:" << endl;
 
         counter_j = 0;
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables[j].use == VariableUse::None
-            || time_series_raw_variables[j].type == RawVariableType::Numeric)
+            if(raw_variables[j].use == VariableUse::None
+            || raw_variables[j].type == RawVariableType::Numeric)
                 continue;
 
-            input_j = get_time_series_raw_variable_data(j);
+            input_j = get_raw_variable_data(j);
 
-            if(display) cout << "   vs. " << time_series_raw_variables[j].name << endl;
+            if(display) cout << "   vs. " << raw_variables[j].name << endl;
  
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
@@ -1230,8 +1205,6 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     }
 
     return cross_correlations;
-*/
-    return Tensor<type, 3>();
 }
 
 }

@@ -1088,13 +1088,13 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    Tensor<Index, 1> input_raw_variables_indices(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    Tensor<Index, 1> input_raw_variable_indices(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    Tensor<Index, 1> target_raw_variables_indices(1);
-    target_raw_variables_indices.setValues({3});
+    Tensor<Index, 1> target_raw_variable_indices(1);
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     Tensor<Correlation, 2> input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
     
@@ -1111,12 +1111,12 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.setValues({0, 1});
+    input_raw_variable_indices.setValues({0, 1});
 
-    target_raw_variables_indices.resize(2);
-    target_raw_variables_indices.setValues({2,3});
+    target_raw_variable_indices.resize(2);
+    target_raw_variable_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
@@ -1132,12 +1132,12 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    target_raw_variables_indices.setValues({3});
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
@@ -1158,12 +1158,12 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    target_raw_variables_indices.setValues({3});
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
@@ -1179,13 +1179,13 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set("../../datasets/correlation_tests.csv", ",", false);
 
-    input_raw_variables_indices.resize(2);
-    input_raw_variables_indices.setValues({0, 3});
+    input_raw_variable_indices.resize(2);
+    input_raw_variable_indices.setValues({0, 3});
 
-    target_raw_variables_indices.resize(1);
-    target_raw_variables_indices.setValues({4});
+    target_raw_variable_indices.resize(1);
+    target_raw_variable_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_raw_variable_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
@@ -1255,13 +1255,13 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
     data_set.set("../../../opennn/datasets/correlation_tests_with_nan.csv",',', false);
 
-    input_raw_variables_indices.resize(2);
-    input_raw_variables_indices.setValues({0, 3});
+    input_raw_variable_indices.resize(2);
+    input_raw_variable_indices.setValues({0, 3});
 
-    target_raw_variables_indices.resize(1);
-    target_raw_variables_indices.setValues({4});
+    target_raw_variable_indices.resize(1);
+    target_raw_variable_indices.setValues({4});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     input_target_correlations = data_set.calculate_input_target_raw_variable_pearson_correlations();
 
@@ -1345,13 +1345,13 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    Tensor<Index, 1> input_raw_variables_indices(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    Tensor<Index, 1> input_raw_variable_indices(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    Tensor<Index, 1> target_raw_variables_indices(1);
-    target_raw_variables_indices.setValues({3});
+    Tensor<Index, 1> target_raw_variable_indices(1);
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     Tensor<Correlation, 2> inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
@@ -1376,11 +1376,11 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.setValues({0, 1});
+    input_raw_variable_indices.setValues({0, 1});
 
-    target_raw_variables_indices.setValues({2,3});
+    target_raw_variable_indices.setValues({2,3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
@@ -1401,12 +1401,12 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    target_raw_variables_indices.setValues({3});
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
     
     inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
@@ -1437,12 +1437,12 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set_data(data);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 1, 2});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 1, 2});
 
-    target_raw_variables_indices.setValues({3});
+    target_raw_variable_indices.setValues({3});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
     /*
     inputs_correlations = data_set.calculate_input_raw_variable_pearson_correlations();
 
@@ -1477,13 +1477,13 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
     data_set.set("../../datasets/correlation_tests.csv",',', false);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 3, 4});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 3, 4});
 
-    target_raw_variables_indices.resize(1);
-    target_raw_variables_indices.setValues({5});
+    target_raw_variable_indices.resize(1);
+    target_raw_variable_indices.setValues({5});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 
@@ -1599,13 +1599,13 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
     data_set.set_missing_values_label("NA");
     data_set.set("../../datasets/correlation_tests_with_nan.csv",',', false);
 
-    input_raw_variables_indices.resize(3);
-    input_raw_variables_indices.setValues({0, 3, 4});
+    input_raw_variable_indices.resize(3);
+    input_raw_variable_indices.setValues({0, 3, 4});
 
-    target_raw_variables_indices.resize(1);
-    target_raw_variables_indices.setValues({6});
+    target_raw_variable_indices.resize(1);
+    target_raw_variable_indices.setValues({6});
 
-    data_set.set_input_target_raw_variables_indices(input_raw_variables_indices, target_raw_variables_indices);
+    data_set.set_input_target_raw_variables_indices(input_raw_variable_indices, target_raw_variable_indices);
 
     inputs_correlations = data_set.calculate_input_raw_variable_correlations()(0);
 

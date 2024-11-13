@@ -2069,11 +2069,11 @@ vector<string> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_cor
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const vector<Index> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        const Index input_raw_variable_index = input_raw_variables_indices[i];
+        const Index input_raw_variable_index = input_raw_variable_indices[i];
 
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
@@ -2474,8 +2474,8 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const vector<Index> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
-    const vector<Index> target_raw_variables_indices = get_raw_variable_indices(VariableUse::Target);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Target);
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
@@ -2485,14 +2485,14 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        const Index input_raw_variable_index = input_raw_variables_indices[i];
+        const Index input_raw_variable_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data 
             = get_raw_variable_data(input_raw_variable_index, used_sample_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
-            const Index target_raw_variable_index = target_raw_variables_indices[j];
+            const Index target_raw_variable_index = target_raw_variable_indices[j];
 
             const Tensor<type, 2> target_raw_variable_data 
                 = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
@@ -2510,8 +2510,8 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_cor
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
     const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
-    const vector<Index> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
-    const vector<Index> target_raw_variables_indices = get_raw_variable_indices(VariableUse::Target);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Target);
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
@@ -2519,13 +2519,13 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_cor
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        const Index input_index = input_raw_variables_indices[i];
+        const Index input_index = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_raw_variable_data = get_raw_variable_data(input_index, used_sample_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
         {
-            const Index target_index = target_raw_variables_indices[j];
+            const Index target_index = target_raw_variable_indices[j];
 
             const Tensor<type, 2> target_raw_variable_data = get_raw_variable_data(target_index, used_sample_indices);
 
@@ -2625,7 +2625,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 {
     // list to return
 
-    const vector<Index> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
 
@@ -2633,7 +2633,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 
     for (Index i = 0; i < input_raw_variables_number; i++)
     {
-        const Index current_input_index_i = input_raw_variables_indices[i];
+        const Index current_input_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
@@ -2646,7 +2646,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 
         for (Index j = i+1; j < input_raw_variables_number; j++)
         {
-            const Index current_input_index_j = input_raw_variables_indices[j];
+            const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
                 correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
@@ -2664,7 +2664,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 
 Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlations() const
 {
-    const vector<Index> input_raw_variables_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
 
@@ -2672,7 +2672,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlatio
 
     for(Index i = 0; i < input_raw_variables_number; i++)
     {
-        const Index input_raw_variable_index_i = input_raw_variables_indices[i];
+        const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
         const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
 
@@ -2685,7 +2685,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlatio
 
         for(Index j = i + 1; j < input_raw_variables_number; j++)
         {
-            const Index input_raw_variable_index_j = input_raw_variables_indices[j];
+            const Index input_raw_variable_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(input_raw_variable_index_j);
 
