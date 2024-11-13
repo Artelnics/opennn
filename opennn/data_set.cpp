@@ -203,7 +203,7 @@ void DataSet::RawVariable::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.OpenElement("Categories");
 
-        for(Index i = 0; i < categories.size(); i++)
+        for(size_t i = 0; i < categories.size(); i++)
         {
             file_stream.PushText(categories[i].c_str());
 
@@ -782,7 +782,7 @@ vector<string> DataSet::get_variable_names() const
 
     for(Index i = 0; i < raw_variables_number; i++)
         if(raw_variables[i].type == RawVariableType::Categorical)
-            for(Index j = 0; j < raw_variables[i].categories.size(); j++)
+            for(size_t j = 0; j < raw_variables[i].categories.size(); j++)
                 variable_names[index++] = raw_variables[i].categories[j];
         else
             variable_names[index++] = raw_variables[i].name;
@@ -1107,7 +1107,7 @@ void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_use
         throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
                             "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
-    for(Index i = 0; i < new_raw_variables_uses.size(); i++)
+    for(size_t i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables[i].set_use(new_raw_variables_uses[i]);
 
     input_dimensions = {get_variables_number(VariableUse::Input)};
@@ -1160,10 +1160,10 @@ void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_
 {
     set_raw_variables(VariableUse::None);
 
-    for(Index i = 0; i < input_raw_variables.size(); i++)
+    for(size_t i = 0; i < input_raw_variables.size(); i++)
         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(Index i = 0; i < target_raw_variables.size(); i++)
+    for(size_t i = 0; i < target_raw_variables.size(); i++)
         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
 }
 
@@ -1650,7 +1650,7 @@ vector<Index> DataSet::get_variable_indices(const Index& raw_variable_index) con
     {
         vector<Index> indices(raw_variable.categories.size());
 
-        for(Index j = 0; j < raw_variable.categories.size(); j++)
+        for(size_t j = 0; j < raw_variable.categories.size(); j++)
             indices[j] = index + j;
 
         return indices;
@@ -2721,7 +2721,7 @@ void DataSet::print_data_file_preview() const
 
     for(Index i = 0;  i < size; i++)
     {
-        for(Index j = 0; j < data_file_preview[i].size(); j++)
+        for(size_t j = 0; j < data_file_preview[i].size(); j++)
             cout << data_file_preview[i][j] << " ";
 
         cout << endl;
@@ -4072,7 +4072,7 @@ void DataSet::read_csv()
         {
             rows_missing_values_number ++;
 
-            for(Index i = 0; i < tokens.size(); i++)
+            for(size_t i = 0; i < tokens.size(); i++)
             {
                 if(tokens[i].empty() || tokens[i] == missing_values_label)
                 {
@@ -4399,7 +4399,7 @@ bool DataSet::has_selection() const
 
 bool DataSet::has_missing_values(const vector<string>& row) const
 {
-    for(Index i = 0; i < row.size(); i++)
+    for(size_t i = 0; i < row.size(); i++)
         if(row[i].empty() || row[i] == missing_values_label)
             return true;
 

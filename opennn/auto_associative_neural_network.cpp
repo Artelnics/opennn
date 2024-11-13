@@ -668,7 +668,7 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.CloseElement();
 
-    for(Index i = 0; i < variables_distances_names.size(); i++)
+    for(size_t i = 0; i < variables_distances_names.size(); i++)
     {
         // Scaling neuron
 
