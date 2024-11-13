@@ -20,6 +20,7 @@
 #include "correlation.h"
 #include "scaling.h"
 
+using namespace tinyxml2;
 using namespace Eigen;
 
 namespace opennn
@@ -102,8 +103,8 @@ public:
 
         void set_categories(const vector<string>&);
 
-        virtual void from_XML(const tinyxml2::XMLDocument&);
-        virtual void to_XML(tinyxml2::XMLPrinter&) const;
+        virtual void from_XML(const XMLDocument&);
+        virtual void to_XML(XMLPrinter&) const;
 
         void print() const;
     };
@@ -451,8 +452,8 @@ public:
 
     virtual void print() const;
 
-    virtual void from_XML(const tinyxml2::XMLDocument&);
-    virtual void to_XML(tinyxml2::XMLPrinter&) const;
+    virtual void from_XML(const XMLDocument&);
+    virtual void to_XML(XMLPrinter&) const;
 
     void save(const string&) const;
     void load(const string&);

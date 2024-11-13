@@ -18,9 +18,6 @@
 
 namespace opennn
 {
-
-
-
 string write_comments_c()
 {
     return
@@ -630,13 +627,13 @@ string get_expression_api(const NeuralNetwork& neural_network)
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
+    vector<vector<string>> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
-        input_names[i] = inputs_outputs_buffer(0)(i);
+    for(Index i = 0; i < inputs_outputs_buffer[0].size();i++)
+        input_names[i] = inputs_outputs_buffer[0][i];
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).size();i++)
-        output_names[i] = inputs_outputs_buffer(1)(i);
+    for(Index i = 0; i < inputs_outputs_buffer[1].size();i++)
+        output_names[i] = inputs_outputs_buffer[1][i];
 
     string line;
     string expression = neural_network.get_expression();
@@ -724,13 +721,13 @@ string get_expression_api(const NeuralNetwork& neural_network)
     size_t substring_length8;
 
     string new_word;
-/*
+
     vector<string> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
     found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
 
-    for(int i = 0; i < tokens.size(); i++)
+    for(int i = 0; i < lines.size(); i++)
     {
-        string t = tokens[i];
+        string t = lines[i];
 
         substring_length0 = t.find(target_string0);
         substring_length1 = t.find(target_string1);
@@ -750,8 +747,6 @@ string get_expression_api(const NeuralNetwork& neural_network)
 
         for(int i = 0; i < found_tokens_and_input_names.size(); i++)
         {
-            new_word.clear();
-
             new_word = "$" + found_tokens_and_input_names[i];
 
             replace_all_word_appearances(t, found_tokens_and_input_names[i], new_word);
@@ -861,7 +856,7 @@ string get_expression_api(const NeuralNetwork& neural_network)
     replace_all_appearances(out, "_$", "_");
 
     return out;
-*/
+
 return string();
 }
 
@@ -954,6 +949,7 @@ string soft_plus_javascript()
     "}\n";
 }
 
+
 string softsign_javascript()
 {
     return
@@ -1029,13 +1025,13 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
 
     buffer_to_fix << header_javascript();
      
-     Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
+    vector<vector<string>> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
-        input_names[i] = inputs_outputs_buffer(0)(i);
+    for(Index i = 0; i < inputs_number;i++)
+        input_names[i] = inputs_outputs_buffer[0][i];
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).size();i++)
-        output_names[i] = inputs_outputs_buffer(1)(i);
+    for(Index i = 0; i < outputs_number;i++)
+        output_names[i] = inputs_outputs_buffer[1][i];
 
     ostringstream buffer;
 
@@ -1464,16 +1460,16 @@ string get_expression_python(const NeuralNetwork& neural_network)
            << "\toutputs = model.calculate_outputs(sample)\n" << endl
            << "Inputs Names: \t" << endl;
 
-    Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    vector<vector<string>> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
-    for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
+    for(Index i = 0; i < inputs_outputs_buffer[0].size();i++)
     {
-        inputs[i] = inputs_outputs_buffer(0)(i);
+        inputs[i] = inputs_outputs_buffer[0][i];
         buffer << "\t" << i << ") " << inputs[i] << endl;
     }
 
-    for(Index i = 0; i < inputs_outputs_buffer(1).size();i++)
-        outputs[i] = inputs_outputs_buffer(1)(i);
+    for(Index i = 0; i < inputs_outputs_buffer[1].size();i++)
+        outputs[i] = inputs_outputs_buffer[1][i];
 
     buffer << "You can predict with a batch of samples using calculate_batch_output method\t" << endl
            << "IMPORTANT: input batch must be <class 'numpy.ndarray'> type\t" << endl
@@ -1705,8 +1701,6 @@ string get_expression_python(const NeuralNetwork& neural_network)
         string line = lines[i];
 
         sufix = "np.";
-        new_word.clear();
-        key_word.clear();
 
         for(int i = 0; i < found_tokens.size(); i++)
         {
@@ -1716,8 +1710,6 @@ string get_expression_python(const NeuralNetwork& neural_network)
         }
 
         sufix = "NeuralNetwork.";
-        new_word.clear();
-        key_word.clear();
             
         for(int i = 0; i < found_mathematical_expressions.size(); i++)
         {
@@ -1830,7 +1822,7 @@ string replace_reserved_keywords(const string& str)
         if (token.size() > 1 && token.back() != ';') 
             token += ';'; 
 
-        push_back_string(tokens, token);
+        tokens.push_back(token);
     }
 
     for (Index i = 0; i < tokens.size(); i++)
@@ -1845,7 +1837,7 @@ string replace_reserved_keywords(const string& str)
                 break;
 
         if (word.size() > 1)
-            push_back_string(found_tokens, word);
+            found_tokens.push_back(word);
     }
 
     new_variable = found_tokens[found_tokens.size() - 1];
@@ -1871,7 +1863,7 @@ string replace_reserved_keywords(const string& str)
                  + " = "
                  + new_variable
                  + ";";
-                push_back_string(out, out_string);
+                out.push_back(out_string);
                 break;
 
                 //Php
@@ -1882,7 +1874,7 @@ string replace_reserved_keywords(const string& str)
                  + "$"
                  + new_variable
                  + ";";
-                push_back_string(out, out_string);
+                out.push_back(out_string);
                 break;
 
                 //Python
@@ -1890,7 +1882,7 @@ string replace_reserved_keywords(const string& str)
                 out_string = old_variable
                  + " = "
                  + new_variable;
-                push_back_string(out, out_string);
+                out.push_back(out_string);
                 break;
 
                 //C
@@ -1900,7 +1892,7 @@ string replace_reserved_keywords(const string& str)
                  + " = "
                  + new_variable
                  + ";";
-                push_back_string(out, out_string);
+                out.push_back(out_string);
                 break;
 
             default:

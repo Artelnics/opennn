@@ -80,12 +80,13 @@ const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() cons
 }
 
 
-const Tensor<vector<string>, 1> LanguageDataSet::get_documents() const
+const vector<vector<string>> LanguageDataSet::get_documents() const
 {
     return documents;
 }
 
-const Tensor<vector<string>, 1> LanguageDataSet::get_targets() const
+
+const vector<vector<string>> LanguageDataSet::get_targets() const
 {
     return targets;
 }
@@ -184,7 +185,7 @@ Tensor<string, 2> LanguageDataSet::get_text_data_file_preview() const
 }
 
 
-void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -541,17 +542,14 @@ void LanguageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 {
-
-    ostringstream buffer;
-
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
@@ -565,14 +563,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // RawVariables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
     // Raw variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
         throw runtime_error("RawVariablesNumber element is nullptr.\n");
@@ -588,11 +586,11 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
+    const XMLElement* start_element = raw_variables_number_element;
 
     for(Index i = 0; i < new_raw_variables_number; i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -618,14 +616,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples
 
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
     // Samples number
 
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
+    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
         throw runtime_error("Samples number element is nullptr.\n");
@@ -641,7 +639,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples uses
 
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");
@@ -651,14 +649,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values
 
-    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
     // Missing values method
 
-    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
     if(!missing_values_method_element)
         throw runtime_error("Missing values method element is nullptr.\n");
@@ -668,7 +666,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values number
 
-    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
     if(!missing_values_number_element)
         throw runtime_error("Missing values number element is nullptr.\n");
@@ -680,7 +678,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Raw variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("");
+        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("");
 
         if(!raw_variables_missing_values_number_element)
             throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
@@ -698,7 +696,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Rows missing values number
 
-        const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
+        const XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 
         if(!rows_missing_values_number_element)
             throw runtime_error("Rows missing values number element is nullptr.\n");
@@ -709,14 +707,14 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Preview data
 
-    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n");
 
     // Preview size
 
-    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
         throw runtime_error("Preview size element is nullptr.\n");
@@ -739,7 +737,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            const XMLElement* row_element = start_element->NextSiblingElement("Row");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
@@ -753,7 +751,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            const XMLElement* row_element = start_element->NextSiblingElement("Row");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
@@ -765,7 +763,7 @@ void LanguageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Target");
+            const XMLElement* row_element = start_element->NextSiblingElement("Target");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
@@ -1185,7 +1183,7 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
                                                               const bool& include_joiner_token,
                                                               const string& joiner)
 {
-
+/*
     const vector<string> total_tokens = tokens_list(tokens);
 
     const vector<pair<string, int>> word_counts = count_words(total_tokens);
@@ -1201,7 +1199,7 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
                                                      include_joiner_token,
                                                      joiner,
                                                      reserved_tokens};
-
+   
     const auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
 
     const vector<pair<string, int>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
@@ -1218,6 +1216,8 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
         vocabulary_tensor[i] = vocabulary[i];
 
     return vocabulary_tensor;
+*/
+    return vector<string>();
 }
 
 
@@ -1233,18 +1233,18 @@ void LanguageDataSet::load_documents(const string& path)
     if(!file.is_open())
         throw runtime_error("Cannot open data file: " + path + "\n");
 
-    Tensor<vector<string>, 1> documents_copy(documents);
+    vector<vector<string>> documents_copy(documents);
 
     documents.resize(original_size + 1);
 
-    Tensor<vector<string>, 1> targets_copy(targets);
+    vector<vector<string>> targets_copy(targets);
 
     targets.resize(original_size + 1);
 
     for(Index i = 0; i < original_size; i++)
     {
-        documents[i] = documents_copy(i);
-        targets(i) = targets_copy(i);
+        documents[i] = documents_copy[i];
+        targets[i] = targets_copy[i];
     }
 
     Index lines_count = 0;
@@ -1331,8 +1331,8 @@ void LanguageDataSet::load_documents(const string& path)
         document_target.data() + lines_count,
         document_target_copy.data());
 
-    documents(original_size) = document_copy;
-    targets(original_size) = document_target_copy;
+    documents[original_size] = document_copy;
+    targets[original_size] = document_target_copy;
 
     file.close();
 }
@@ -1730,7 +1730,7 @@ void LanguageDataSet::read_csv_2_simple()
 
     if(display) cout << "Setting data dimensions..." << endl;
 
-    const string separator_char = get_separator_string();
+    const string separator_string = get_separator_string();
 
     const Index raw_variables_number = get_raw_variables_number();
     const Index raw_raw_variables_number = get_has_rows_labels() ? raw_variables_number + 1 : raw_variables_number;
@@ -1747,7 +1747,7 @@ void LanguageDataSet::read_csv_2_simple()
 
         if(line.empty()) continue;
 
-        tokens_count = count_tokens(line, separator_char);
+        tokens_count = count_tokens(line, separator_string);
 
         if(tokens_count != raw_raw_variables_number)
         {
@@ -1848,8 +1848,8 @@ void LanguageDataSet::read_csv_language_model()
 
 //     cout << "Processing documents..." << endl;
 
-//     const Tensor<vector<string>, 1> context_tokens = preprocess_language_documents(context);
-//     const Tensor<vector<string>, 1> completion_tokens = preprocess_language_documents(completion);
+//     const vector<vector<string>> context_tokens = preprocess_language_documents(context);
+//     const vector<vector<string>> completion_tokens = preprocess_language_documents(completion);
 
 //     bool imported_vocabulary = false;
 
@@ -1962,15 +1962,15 @@ void LanguageDataSet::read_txt_language_model()
 
     load_documents(data_path);
 
-    Index entry_number = documents(0).size();
+    Index entry_number = documents[0].size();
 
     for(Index i = 1; i < documents.size(); i++)
         entry_number += documents[i].size();
 
-    Index completion_entry_number = targets(0).size();
+    Index completion_entry_number = targets[0].size();
 
     for(Index i = 1; i < targets.size(); i++)
-        completion_entry_number += targets(i).size();
+        completion_entry_number += targets[i].size();
 
     if(entry_number != completion_entry_number)
         throw runtime_error("Context number of entries (" + to_string(entry_number) + ") not equal to completion number of entries (" + to_string(completion_entry_number) + ").\n");
@@ -1988,7 +1988,7 @@ void LanguageDataSet::read_txt_language_model()
     entry_index = 0;
 
     for (Index i = 0; i < targets.size(); i++)
-        for (Index j = 0; j < targets(i).size(); j++)
+        for (Index j = 0; j < targets[i].size(); j++)
             completion[entry_index++] = targets[i][j];
 
     cout << "Processing documents..." << endl;
@@ -2100,8 +2100,8 @@ void LanguageDataSet::read_txt_language_model()
 
 
 // void LanguageDataSet::write_data_file_whitespace(ofstream& file,
-//                                                  const Tensor<vector<string>, 1>& context_tokens,
-//                                                  const Tensor<vector<string>, 1>& completion_tokens)
+//                                                  const vector<vector<string>>& context_tokens,
+//                                                  const vector<vector<string>>& completion_tokens)
 // {
 //     const Index entry_number = context_tokens.dimension(0);
 

@@ -595,20 +595,23 @@ void GeneticAlgorithm::perform_selection()
 
 Tensor<Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indexes(std::count(selection.data(), selection.data() + selection.size(), 1));
+/*
+    Tensor<Index,1> selection_indices(std::count(selection.data(), selection.data() + selection.size(), 1));
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
     {
         if(selection(i))
         {
-            selection_indexes(activated_index_count) = i;
+            selection_indices(activated_index_count) = i;
 
             activated_index_count++;
         }
     }
 
-    return selection_indexes;
+    return selection_indices;
+*/
+    return Tensor<Index, 1>();
 }
 
 
@@ -950,6 +953,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 void GeneticAlgorithm::check_categorical_raw_variables()
 {
+/*
     TrainingStrategy* training_strategy = get_training_strategy();
 
     DataSet* data_set = training_strategy->get_data_set();
@@ -978,7 +982,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
             {
                 const Tensor<bool, 1> individual = population.chip(j, 0);
 
-                if(!(find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
+                if(!(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
                 {
                     const Index random_index = rand() % categories_number;
 
@@ -993,6 +997,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
             raw_variable_index++;
         }
     }
+*/
 }
 
 
@@ -1279,7 +1284,7 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
+void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GeneticAlgorithm");
 
@@ -1294,9 +1299,9 @@ void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
+void GeneticAlgorithm::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
+    const XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
 
     if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
@@ -1329,7 +1334,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 
         if (file.is_open())
         {
-            tinyxml2::XMLPrinter printer;
+            XMLPrinter printer;
             to_XML(printer);
 
             file << printer.CStr();
@@ -1352,7 +1357,7 @@ void GeneticAlgorithm::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

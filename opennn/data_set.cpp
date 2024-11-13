@@ -153,7 +153,7 @@ void DataSet::RawVariable::set_categories(const vector<string>& new_categories)
 }
 
 
-void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& document)
+void DataSet::RawVariable::from_XML(const XMLDocument& document)
 {
     name = read_xml_string(document.FirstChildElement(), "Name");
     set_scaler(read_xml_string(document.FirstChildElement(), "Scaler"));
@@ -168,7 +168,7 @@ void DataSet::RawVariable::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void DataSet::RawVariable::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void DataSet::RawVariable::to_XML(XMLPrinter& file_stream) const
 {
     // Name
 
@@ -2037,7 +2037,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
 {
     const Index samples_number = get_samples_number();
 
-    Tensor<Index, 1> repeated_samples(0);
+    Tensor<Index, 1> repeated_samples;
 
     Tensor<type, 1> sample_i;
     Tensor<type, 1> sample_j;
@@ -2055,7 +2055,7 @@ Tensor<Index, 1> DataSet::unuse_repeated_samples()
             {
                 set_sample_use(j, SampleUse::None);
 
-                push_back_index(repeated_samples, j);
+                push_back(repeated_samples, j);
             }
         }
     }
@@ -2913,7 +2913,7 @@ void DataSet::set_data_random()
 }
 
 
-void DataSet::to_XML(tinyxml2::XMLPrinter& printer) const
+void DataSet::to_XML(XMLPrinter& printer) const
 {
     if (model_type == ModelType::Forecasting)
         throw runtime_error("Forecasting");
@@ -2970,13 +2970,13 @@ void DataSet::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document) 
+void DataSet::from_XML(const XMLDocument& data_set_document) 
 {
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
     if (!data_set_element) 
         throw runtime_error("Data set element is nullptr.\n");
     
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
     if (!data_source_element) 
         throw runtime_error("Data source element is nullptr.\n");
     
@@ -2987,16 +2987,16 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
     if (!raw_variables_element) {
         throw runtime_error("RawVariables element is nullptr.\n");
     }
     set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
-    const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
     for (Index i = 0; i < raw_variables.size(); i++) {
         RawVariable& raw_variable = raw_variables[i];
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if (raw_variable_element->Attribute("Item") != std::to_string(i + 1)) {
@@ -3018,7 +3018,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     }
 
     // Samples
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
     if (!samples_element) {
         throw runtime_error("Samples element is nullptr.\n");
     }
@@ -3026,7 +3026,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
 
     // Missing values
-    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
     if (!missing_values_element) {
         throw runtime_error("Missing values element is nullptr.\n");
     }
@@ -3065,11 +3065,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
    
-    print_dimensions(get_input_dimensions());
+    print_vector(get_input_dimensions());
          
     cout << "Target variables dimensions: ";
     
-    print_dimensions(get_target_dimensions());
+    print_vector(get_target_dimensions());
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -3090,7 +3090,7 @@ void DataSet::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter document;
+    XMLPrinter document;
 
     to_XML(document);
 
@@ -3100,7 +3100,7 @@ void DataSet::save(const string& file_name) const
 
 void DataSet::load(const string& file_name)
 {
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

@@ -170,7 +170,7 @@ string MeanSquaredError::get_error_type_text() const
 }
 
 
-void MeanSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("MeanSquaredError");
 

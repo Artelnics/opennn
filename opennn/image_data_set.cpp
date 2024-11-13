@@ -270,7 +270,7 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 }
 
 
-void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ImageDataSet::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("ImageDataSet");
 
@@ -425,16 +425,16 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 {
-    const tinyxml2::XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
+    const XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
 
     if (!image_data_set_element)
         throw runtime_error("ImageDataSet element is nullptr.\n");
 
     // Data Source
 
-    const tinyxml2::XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
 
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
@@ -469,7 +469,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw Variables
 
-    const tinyxml2::XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
 
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
@@ -478,13 +478,13 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     set_raw_variables_number(raw_variables_number);
 
-    const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     Index target_count = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         raw_variables[i].name = read_xml_string(start_element, "Name");
@@ -507,7 +507,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if (has_sample_ids)
         sample_ids = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
 
-    const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");

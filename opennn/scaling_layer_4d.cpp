@@ -76,11 +76,11 @@ void ScalingLayer4D::print() const
 {
     cout << "Scaling layer 4D" << endl;
 
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
 }
 
 
-void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& printer) const
+void ScalingLayer4D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Scaling4D");
 
@@ -90,9 +90,9 @@ void ScalingLayer4D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ScalingLayer4D::from_XML(const tinyxml2::XMLDocument& document)
+void ScalingLayer4D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
+    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
 
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");

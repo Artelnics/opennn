@@ -603,7 +603,7 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& printer) const
+void ConjugateGradient::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ConjugateGradient");
 
@@ -621,20 +621,20 @@ void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
+void ConjugateGradient::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
+    const XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if (!root_element) 
         throw runtime_error("Conjugate gradient element is nullptr.\n");
     
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
-    const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
     if (learning_rate_algorithm_element) 
     {
-        tinyxml2::XMLDocument learning_rate_algorithm_document;
+        XMLDocument learning_rate_algorithm_document;
         learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }

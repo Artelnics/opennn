@@ -81,8 +81,8 @@ public:
 
     void print() const final;
 
-    void to_XML(tinyxml2::XMLPrinter&) const final;
-    void from_XML(const tinyxml2::XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) final;
 
     vector<string> get_time_series_raw_variables_names() const;
 

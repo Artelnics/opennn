@@ -1723,64 +1723,6 @@ bool contains(const vector<string>& data, const string& value)
     return it != (copy.data()+copy.size());
 }
 
-
-void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<Index, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_element;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_string(vector<string>& old_vector, const string& new_string)
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    vector<string> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector[i] = old_vector[i];
-
-    new_vector[new_size-1] = new_string;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_type(Tensor<type, 1>& vector, const type& new_value)
-{
-    const Index old_size = vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<type, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = vector(i);
-
-    new_vector(new_size-1) = new_value;
-
-    vector = new_vector;
-}
-
-
 vector<string> to_string_tensor(const Tensor<type, 1>& x)
 {
     vector<string> data(x.size());
@@ -1835,15 +1777,6 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index
                                             matrix.dimension(0));
 
     return column;
-}
-
-
-void print_dimensions(const dimensions& new_dimensions)
-{
-    for(size_t i = 0; i < new_dimensions.size(); i++)
-        cout << new_dimensions[i] << " ";
-
-    cout << endl;
 }
 
 

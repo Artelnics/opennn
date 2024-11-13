@@ -554,7 +554,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
+void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
 
@@ -568,10 +568,10 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
+void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
 {
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
+    const XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");

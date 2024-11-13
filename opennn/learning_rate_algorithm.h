@@ -172,9 +172,9 @@ public:
 
    // Serialization
       
-   void from_XML(const tinyxml2::XMLDocument&);   
+   void from_XML(const XMLDocument&);   
 
-   void to_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(XMLPrinter&) const;
 
 private:
 

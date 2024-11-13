@@ -2236,7 +2236,7 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
+void TestingAnalysis::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TestingAnalysis");
 
@@ -2246,9 +2246,9 @@ void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
+void TestingAnalysis::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
+    const XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
 
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
@@ -2264,7 +2264,7 @@ void TestingAnalysis::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
 
     to_XML(printer);
 
@@ -2276,7 +2276,7 @@ void TestingAnalysis::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

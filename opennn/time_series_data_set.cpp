@@ -406,15 +406,15 @@ void TimeSeriesDataSet::print() const
          << "Number of targets: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
 
     cout << "Target variables dimensions: ";
 
-    print_dimensions(target_dimensions);
+    print_vector(target_dimensions);
 }
 
 
-void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("TimeSeriesDataSet");
 
@@ -676,25 +676,25 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
     // Data set element
 
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
+    const XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
         throw runtime_error("Path element is nullptr.\n");
@@ -704,7 +704,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
+    const XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
         if(separator_element->GetText())
@@ -712,21 +712,21 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
+    const XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
         set_has_header(raw_variables_names_element->GetText() == string("1"));
 
     // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
+    const XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
         set_has_ids(rows_label_element->GetText() == string("1"));
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
+    const XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
         if(missing_values_label_element->GetText())
@@ -736,7 +736,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Lags number
 
-    const tinyxml2::XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
+    const XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
 
     if(!lags_number_element)
         throw runtime_error("Lags number element is nullptr.\n");
@@ -746,7 +746,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Steps ahead
 
-    const tinyxml2::XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
+    const XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
 
     if(!steps_ahead_element)
         throw runtime_error("Steps ahead element is nullptr.\n");
@@ -756,7 +756,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time raw_variable
 
-    const tinyxml2::XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
+    const XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
 
     if(!time_raw_variable_element)
         throw runtime_error("Time raw_variable element is nullptr.\n");
@@ -766,7 +766,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Group by raw_variable
 
-    const tinyxml2::XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
+    const XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
 
     if(!group_by_raw_variable_element)
         throw runtime_error("Group by raw_variable element is nullptr.\n");
@@ -776,7 +776,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
+    const XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
         if(codification_element->GetText())
@@ -784,14 +784,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
     // Raw variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
         throw runtime_error("RawVariablesNumber element is nullptr.\n");
@@ -801,11 +801,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
+    const XMLElement* start_element = raw_variables_number_element;
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -813,7 +813,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Name
 
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
+        const XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
 
         if(!name_element)
             throw runtime_error("Name element is nullptr.\n");
@@ -827,7 +827,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Scaler
 
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
+        const XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
 
         if(!scaler_element)
             throw runtime_error("Scaler element is nullptr.\n");
@@ -841,7 +841,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // raw_variable use
 
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
+        const XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
         if(!use_element)
             throw runtime_error("Raw variable use element is nullptr.\n");
@@ -855,7 +855,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Type
 
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
+        const XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
 
         if(!type_element)
             throw runtime_error("Type element is nullptr.\n");
@@ -871,7 +871,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             // Categories
 
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
+            const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if(!categories_element)
                 throw runtime_error("Categories element is nullptr.\n");
@@ -887,11 +887,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
+    const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
     // Time series raw_variables number
 
-    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
+    const XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
     if(!time_series_raw_variables_number_element)
         throw runtime_error("Time seires raw_variables number element is nullptr.\n");
@@ -907,13 +907,13 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_start_element = time_series_raw_variables_number_element;
+    const XMLElement* time_series_start_element = time_series_raw_variables_number_element;
 
     if(time_series_new_raw_variables_number > 0)
     {
         for(Index i = 0; i < time_series_new_raw_variables_number; i++)
         {
-            const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
+            const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
             time_series_start_element = time_series_raw_variable_element;
 
             if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -922,7 +922,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Name
 
-            const tinyxml2::XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
+            const XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
 
             if(!time_series_name_element)
                 throw runtime_error("Time series name element is nullptr.\n");
@@ -936,7 +936,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Scaler
 
-            const tinyxml2::XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
+            const XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
 
             if(!time_series_scaler_element)
                 throw runtime_error("Time series scaler element is nullptr.\n");
@@ -950,7 +950,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
+            const XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
 
             if(!time_series_raw_variable_use_element)
                 throw runtime_error("Time series raw_variable use element is nullptr.\n");
@@ -964,7 +964,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Type
 
-            const tinyxml2::XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
+            const XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
 
             if(!time_series_type_element)
                 throw runtime_error("Time series type element is nullptr.\n");
@@ -979,7 +979,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 // Categories
 
-                const tinyxml2::XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
+                const XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
 
                 if(!time_series_categories_element)
                     throw runtime_error("Time series categories element is nullptr.\n");
@@ -1000,7 +1000,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
+        const XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
             throw runtime_error("Rows labels element is nullptr.\n");
@@ -1024,14 +1024,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples
 
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
     // Samples number
 
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
+    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
         throw runtime_error("Samples number element is nullptr.\n");
@@ -1047,7 +1047,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples uses
 
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");
@@ -1057,14 +1057,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values
 
-    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
     // Missing values method
 
-    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
     if(!missing_values_method_element)
         throw runtime_error("Missing values method element is nullptr.\n");
@@ -1074,7 +1074,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values number
 
-    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
     if(!missing_values_number_element)
         throw runtime_error("Missing values number element is nullptr.\n");
@@ -1086,7 +1086,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Raw variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
+        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
             throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
@@ -1105,7 +1105,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Rows missing values number
 
-        const tinyxml2::XMLElement* rows_missing_values_number_element
+        const XMLElement* rows_missing_values_number_element
             = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 
         if(!rows_missing_values_number_element)
@@ -1117,14 +1117,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Preview data
 
-    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n");
 
     // Preview size
 
-    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
         throw runtime_error("Preview size element is nullptr.\n");
@@ -1144,7 +1144,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     for(Index i = 0; i < new_preview_size; i++)
     {
-        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+        const XMLElement* row_element = start_element->NextSiblingElement("Row");
         start_element = row_element;
 
         if(row_element->Attribute("Item") != to_string(i+1))
@@ -1157,7 +1157,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));

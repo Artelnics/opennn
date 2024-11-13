@@ -96,8 +96,8 @@ public:
                         const Index&,
                         Tensor<type, 1>&) const final;
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) final;
+   void to_XML(XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"

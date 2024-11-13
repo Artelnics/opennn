@@ -55,7 +55,7 @@ namespace opennn
     string replace_non_allowed_programming_expressions(string&);
 
     vector<string> fix_get_expression_outputs(const string&, const vector<string>&, const string&);
-    Tensor<vector<string>, 1> fix_input_output_variables(vector<string>&, vector<string>&, ostringstream&);
+    vector<vector<string>> fix_input_output_variables(vector<string>&, vector<string>&, ostringstream&);
 
     //int WordOccurrence(char *sentence, char *word);
 
@@ -119,14 +119,14 @@ namespace opennn
     vector<string> tokens_list(const vector<vector<string>>&);
     void to_lower(string&);
     void to_lower(vector<string>&);
-//    void to_lower(Tensor<vector<string>, 1>&);
+//    void to_lower(vector<vector<string>>&);
     void split_punctuation(vector<string>&);
     void delete_non_printable_chars(vector<string>&);
     void delete_extra_spaces(vector<string>&);
     void delete_non_alphanumeric(vector<string>&);
     vector<vector<string>> get_tokens(const vector<string>&, const string&);
     void delete_blanks(vector<string>&);
-    void delete_blanks(Tensor<vector<string>, 1>&);
+    void delete_blanks(vector<vector<string>>&);
 
     vector<vector<string>> preprocess_language_documents(const vector<string>&);
 
@@ -144,13 +144,13 @@ namespace opennn
 
     Index get_long_words_length();
 
-    Tensor<vector<string>,1> get_documents();
+    vector<vector<string>> get_documents();
 
-    Tensor<vector<string>, 1> get_targets();
+    vector<vector<string>> get_targets();
 
     vector<string> get_stop_words();
 
-    Tensor<Index, 1> get_words_number(const Tensor<vector<string>, 1>&);
+    Tensor<Index, 1> get_words_number(const vector<vector<string>>&);
 
     Tensor<Index, 1> get_sentences_number(const vector<string>&);
 
@@ -178,15 +178,15 @@ namespace opennn
 
     void filter_not_equal_to(vector<string>&, const vector<string>&);
 
-    //Tensor<vector<string>, 1> get_tokens(const vector<string>&);
+    //vector<vector<string>> get_tokens(const vector<string>&);
 
-    vector<string> detokenize(const Tensor<vector<string>, 1>&);
+    vector<string> detokenize(const vector<vector<string>>&);
 
-    Index count(const Tensor<vector<string>, 1>&);
+    Index count(const vector<vector<string>>&);
 
     Index calculate_weight(const vector<string>&, const WordBag&);
 
-    vector<string> join(const Tensor<vector<string>, 1>&);
+    vector<string> join(const vector<vector<string>>&);
 
     // Preprocess
 
@@ -228,27 +228,27 @@ namespace opennn
 
     WordBag calculate_word_bag(const vector<string>&);
 
-//    WordBag calculate_word_bag_minimum_frequency(const Tensor<vector<string>, 1>&, const Index&);
+//    WordBag calculate_word_bag_minimum_frequency(const vector<vector<string>>&, const Index&);
 
-//    WordBag calculate_word_bag_minimum_percentage(const Tensor<vector<string>, 1>&, const double&);
+//    WordBag calculate_word_bag_minimum_percentage(const vector<vector<string>>&, const double&);
 
-//    WordBag calculate_word_bag_minimum_ratio(const Tensor<vector<string>, 1>&, const double&);
+//    WordBag calculate_word_bag_minimum_ratio(const vector<vector<string>>&, const double&);
 
-//    WordBag calculate_word_bag_total_frequency(const Tensor<vector<string>, 1>&, const Index&);
+//    WordBag calculate_word_bag_total_frequency(const vector<vector<string>>&, const Index&);
 
-//    WordBag calculate_word_bag_maximum_size(const Tensor<vector<string>, 1>&, const Index&);
+//    WordBag calculate_word_bag_maximum_size(const vector<vector<string>>&, const Index&);
 
     // Algorithms
 
-    Tensor<vector<string>, 1> preprocess(const vector<string>&);
+    vector<vector<string>> preprocess(const vector<string>&);
 
-    Tensor<vector<string>, 1> preprocess_language_model(const vector<string>&);
+    vector<vector<string>> preprocess_language_model(const vector<string>&);
 
-//    Tensor<double, 1> get_words_presence_percentage(const Tensor<vector<string>, 1>&, const vector<string>&);
+//    Tensor<double, 1> get_words_presence_percentage(const vector<vector<string>>&, const vector<string>&);
 
-//    Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<vector<string>, 1>&, const Index&, const Index&);
+//    Tensor<string, 2> calculate_combinated_words_frequency(const vector<vector<string>>&, const Index&, const Index&);
 
-//    Tensor<string, 2> top_words_correlations(const Tensor<vector<string>, 1>&, const double&, const Tensor<Index, 1>&);
+//    Tensor<string, 2> top_words_correlations(const vector<vector<string>>&, const double&, const Tensor<Index, 1>&);
 
     bool is_vowel(char);
 
@@ -266,7 +266,7 @@ namespace opennn
     void stem(vector<string>&);
     void stem(vector<vector<string>>&);
 
-//    void print_tokens(const Tensor<vector<string>,1>&);
+//    void print_tokens(const vector<vector<string>>&);
 }
 
 #endif // OPENNNSTRINGS_H

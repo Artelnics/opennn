@@ -324,7 +324,7 @@ string NormalizedSquaredError::get_error_type_text() const
 }
 
 
-void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizedSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("NormalizedSquaredError");
 
@@ -332,9 +332,9 @@ void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) const
+void NormalizedSquaredError::from_XML(const XMLDocument& document) const
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 
     if(!root_element)
         throw runtime_error("Normalized squared element is nullptr.\n");

@@ -264,9 +264,9 @@ public:
 
    // Serialization
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const XMLDocument&);
 
-   virtual void to_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(XMLPrinter&) const;
 
    void save(const string&) const;
    void load(const string&);

@@ -34,8 +34,8 @@ public:
     void set_long_words_length(const Index&);
     //    void set_words_frequencies(const Tensor<Index,1>&);
 
-    void from_XML(const tinyxml2::XMLDocument&);
-    void to_XML(tinyxml2::XMLPrinter&) const;
+    void from_XML(const XMLDocument&);
+    void to_XML(XMLPrinter&) const;
 
     Tensor<type, 1> sentence_to_data(const string&) const;
 

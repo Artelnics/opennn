@@ -218,7 +218,7 @@ void BoundingLayer::print() const
 }
 
 
-void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void BoundingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Bounding");
 
@@ -243,7 +243,7 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void BoundingLayer::from_XML(const XMLDocument& document)
 {
     const auto* root_element = document.FirstChildElement("Bounding");
     

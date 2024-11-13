@@ -36,8 +36,8 @@ public:
 
     const Tensor<Index, 1>& get_context_variables_dimensions() const;
 
-    const Tensor<vector<string>, 1> get_documents() const;
-    const Tensor<vector<string>, 1> get_targets() const;
+    const vector<vector<string>> get_documents() const;
+    const vector<vector<string>> get_targets() const;
 
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const vector<string>& new_raw_variables_uses);
@@ -54,8 +54,8 @@ public:
 
     Tensor<string, 2> get_text_data_file_preview() const;
 
-    void from_XML(const tinyxml2::XMLDocument&);
-    void to_XML(tinyxml2::XMLPrinter&) const;
+    void from_XML(const XMLDocument&);
+    void to_XML(XMLPrinter&) const;
 
     void import_vocabulary(const string&, vector<string>&);
 
@@ -84,7 +84,7 @@ public:
 
     void read_txt_language_model();
 
-//    void write_data_file_whitespace(ofstream&, const Tensor<vector<string>, 1>&, const Tensor<vector<string>, 1>&);
+//    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
     void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
 
 private:
@@ -109,9 +109,9 @@ private:
 
     Index max_context_length = 0;
 
-    Tensor<vector<string>, 1> documents;
+    vector<vector<string>> documents;
 
-    Tensor<vector<string>, 1> targets;
+    vector<vector<string>> targets;
 };
 
 }

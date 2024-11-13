@@ -124,6 +124,7 @@ void fill_tokens(const string& text, const string& separator, vector<string>& to
 
 Index count_tokens(const string& text, const string& separator)
 {
+/*
     Index tokens_number = 0;
 
     string::size_type position = 0;
@@ -142,7 +143,9 @@ Index count_tokens(const string& text, const string& separator)
         tokens_number--;
 
     return tokens_number + 1;
-}
+    */
+    return 0;
+ }
 
 
 vector<string> get_tokens(const string& text, const string& separator)
@@ -1437,7 +1440,7 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 //}
 
 
-Index count_tokens(const Tensor<vector<string>, 1>& tokens)
+Index count_tokens(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
@@ -1450,7 +1453,7 @@ Index count_tokens(const Tensor<vector<string>, 1>& tokens)
 }
 
 
-vector<string> tokens_list(const Tensor<vector<string>, 1>& documents_tokens)
+vector<string> tokens_list(const vector<vector<string>>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
@@ -1531,7 +1534,7 @@ void delete_blanks(vector<string>& words)
 }
 
 
-void delete_blanks(Tensor<vector<string>, 1>& documents_tokens)
+void delete_blanks(vector<vector<string>>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
@@ -1768,7 +1771,7 @@ string to_string(vector<string> token)
 }
 
 
-vector<string> detokenize(const Tensor<vector<string>, 1>& tokens)
+vector<string> detokenize(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
@@ -1827,7 +1830,7 @@ void delete_words(vector<vector<string>>& documents_words, const vector<string>&
 }
 
 
-void delete_short_long_words(Tensor<vector<string>,1>& documents_words,
+void delete_short_long_words(vector<vector<string>>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
 {
@@ -1848,7 +1851,7 @@ void delete_short_long_words(Tensor<vector<string>,1>& documents_words,
 }
 
 
-void delete_numbers(Tensor<vector<string>,1>& documents_words)
+void delete_numbers(vector<vector<string>>& documents_words)
 {
     const Index documents_number = documents_words.size();
 
@@ -1861,7 +1864,7 @@ void delete_numbers(Tensor<vector<string>,1>& documents_words)
 }
 
 
-void delete_emails(Tensor<vector<string>,1>& documents)
+void delete_emails(vector<vector<string>>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -1895,7 +1898,7 @@ void delete_emails(Tensor<vector<string>,1>& documents)
 }
 
 
-void replace_accented_words(Tensor<vector<string>, 1>& documents)
+void replace_accented_words(vector<vector<string>>& documents)
 {
     const Index documents_size = documents.size();
 
@@ -2036,7 +2039,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 }
 
 
-//WordBag calculate_word_bag_minimum_frequency(const Tensor<vector<string>,1>& tokens,
+//WordBag calculate_word_bag_minimum_frequency(const vector<vector<string>>& tokens,
 //                                             const Index& minimum_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
@@ -2059,7 +2062,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_percentage(const Tensor<vector<string>,1>& tokens,
+// WordBag calculate_word_bag_minimum_percentage(const vector<vector<string>>& tokens,
 //                                               const double& minimum_percentage)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
@@ -2082,7 +2085,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_ratio(const Tensor<vector<string>,1>& tokens,
+// WordBag calculate_word_bag_minimum_ratio(const vector<vector<string>>& tokens,
 //                                          const double& minimum_ratio)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
@@ -2109,7 +2112,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 // }
 
 
-// WordBag calculate_word_bag_total_frequency(const Tensor<vector<string>,1>& tokens,
+// WordBag calculate_word_bag_total_frequency(const vector<vector<string>>& tokens,
 //                                            const Index& total_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
@@ -2134,7 +2137,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 // }
 
 
-// WordBag calculate_word_bag_maximum_size(const Tensor<vector<string>,1>& tokens,
+// WordBag calculate_word_bag_maximum_size(const vector<vector<string>>& tokens,
 //                                         const Index& maximum_size)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
@@ -2172,7 +2175,7 @@ WordBag calculate_word_bag(const vector<string>& words)
 // }
 
 
-Tensor<vector<string>,1> preprocess(const vector<string>& documents)
+vector<vector<string>> preprocess(const vector<string>& documents)
 {
 /*
     vector<string> documents_copy(documents);
@@ -2187,7 +2190,7 @@ Tensor<vector<string>,1> preprocess(const vector<string>& documents)
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<vector<string>,1> tokens = get_tokens(documents_copy);
+    vector<vector<string>> tokens = get_tokens(documents_copy);
 
     delete_stop_words(tokens);
 
@@ -2205,11 +2208,11 @@ Tensor<vector<string>,1> preprocess(const vector<string>& documents)
 
     return tokens;
 */
-    return Tensor<vector<string>,1>();
+    return vector<vector<string>>();
 }
 
 
-Tensor<vector<string>,1> preprocess_language_model(const vector<string>& documents)
+vector<vector<string>> preprocess_language_model(const vector<string>& documents)
 {
 /*
     vector<string> documents_copy(documents);
@@ -2224,7 +2227,7 @@ Tensor<vector<string>,1> preprocess_language_model(const vector<string>& documen
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<vector<string>,1> tokens = get_tokens(documents_copy);
+    vector<vector<string>> tokens = get_tokens(documents_copy);
 
     delete_emails(tokens);
 
@@ -2232,11 +2235,11 @@ Tensor<vector<string>,1> preprocess_language_model(const vector<string>& documen
 
     return tokens;
 */
-    return Tensor<vector<string>, 1>();
+    return vector<vector<string>>();
 }
 
 
-Tensor<Index, 1> get_words_number(const Tensor<vector<string>,1>& tokens)
+Tensor<Index, 1> get_words_number(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
@@ -2262,7 +2265,7 @@ Tensor<Index, 1> get_sentences_number(const vector<string>& documents)
 }
 
 
-// Tensor<double, 1> get_words_presence_percentage(const Tensor<vector<string>, 1>& tokens,
+// Tensor<double, 1> get_words_presence_percentage(const vector<vector<string>>& tokens,
 //                                                 const vector<string>& words_name)
 // {
 //     Tensor<double, 1> word_presence_percentage(words_name.size());
@@ -2287,7 +2290,7 @@ Tensor<Index, 1> get_sentences_number(const vector<string>& documents)
 
 
 /*
-Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<vector<string>, 1>& tokens,
+Tensor<string, 2> calculate_combinated_words_frequency(const vector<vector<string>>& tokens,
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
 {
@@ -2354,7 +2357,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<vector<strin
 */
 
 /*
-Tensor<string, 2> top_words_correlations(const Tensor<vector<string>, 1>& tokens,
+Tensor<string, 2> top_words_correlations(const vector<vector<string>>& tokens,
                                          const double& minimum_percentage,
                                          const Tensor<Index, 1>& targets)
 {
@@ -2739,7 +2742,7 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 }
 */
 
-void print_tokens(const Tensor<vector<string>,1>& tokens)
+void print_tokens(const vector<vector<string>>& tokens)
 {
     for(Index i = 0; i < tokens.size(); i++)
     {
@@ -2881,7 +2884,7 @@ void stem(vector<string>& words)
 }
 
 
-void stem(Tensor<vector<string>, 1>& words)
+void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
