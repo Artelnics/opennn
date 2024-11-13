@@ -94,8 +94,8 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(324);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(72000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1200);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(75600);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
@@ -115,7 +115,7 @@ int main()
 
         // Save results-
 
-        transformer.save("data/ENtoES_model.xml");
+        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
         cout << "Bye!" << endl;
         return 0;

@@ -663,8 +663,6 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     Tensor<type, 0> mask_sum;
     mask_sum = mask.cast<type>().sum();
 
-#pragma omp parallel for
-
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));

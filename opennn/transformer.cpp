@@ -409,7 +409,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
     ForwardPropagation forward_propagation(input.dimension(0), this);
 
-    //forward_propagate(input_pairs, forward_propagation, false);
+    forward_propagate(input_pairs, forward_propagation, false);
 
     const pair<type*, dimensions> output_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 

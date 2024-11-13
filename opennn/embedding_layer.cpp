@@ -60,7 +60,7 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
-    return {};
+    return {inputs_number};
 }
 
 

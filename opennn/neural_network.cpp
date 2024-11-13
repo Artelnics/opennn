@@ -1113,7 +1113,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     const Index batch_samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(batch_samples_number, this);        
+    ForwardPropagation forward_propagation(batch_samples_number, this);
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
@@ -1121,7 +1121,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagation.print();
 
-    const pair<type*, dimensions> outputs_pair 
+    const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
     return tensor_map_2(outputs_pair);

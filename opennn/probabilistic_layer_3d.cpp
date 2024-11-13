@@ -261,7 +261,7 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
     
     calculate_combinations(inputs, outputs);
 
-    if(is_training)
+    //if(is_training)
         calculate_activations(outputs);
     //else competitive(outputs, outputs);
 }
