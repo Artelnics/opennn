@@ -265,7 +265,7 @@ public:
     void set_default_raw_variables_names();
 
     void set_raw_variables_uses(const vector<string>&);
-    void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
+    void set_raw_variables_uses(const vector<VariableUse>&);
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
@@ -361,8 +361,6 @@ public:
 
     void set_data_constant(const type&);
 
-    void set_data_random();
-
     // Descriptives
 
     vector<Descriptives> calculate_variable_descriptives() const;
@@ -443,8 +441,8 @@ public:
 
     // Data generation
 
-    void generate_random_data(const Index&, const Index&);
-    void generate_Rosenbrock_data(const Index&, const Index&);
+    void set_data_random();
+    void set_data_rosenbrock();
     void generate_sum_data(const Index&, const Index&);
     void generate_classification_data(const Index&, const Index&, const Index&);
 

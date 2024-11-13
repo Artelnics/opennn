@@ -34,16 +34,16 @@ public:
     Index get_context_length() const;
     Index get_completion_length() const;
 
-    const Tensor<Index, 1>& get_context_variables_dimensions() const;
+    const dimensions& get_context_dimensions() const;
 
     const vector<vector<string>> get_documents() const;
     const vector<vector<string>> get_targets() const;
 
     void set_default_raw_variables_uses();
     void set_raw_variables_uses(const vector<string>& new_raw_variables_uses);
-    void set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses);
+    void set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses);
 
-    void set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions);
+    void set_context_dimensions(const dimensions& new_context_dimensions);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
@@ -60,17 +60,17 @@ public:
     void import_vocabulary(const string&, vector<string>&);
 
     vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
-                                         const Index& vocabulary_size,
-                                         const vector<string>& reserved_tokens,
-                                         const Index& upper_threshold = 10000000,
-                                         const Index& lower_threshold = 10,
-                                         const Index& iterations_number = 4,
-                                         const Index& max_input_tokens = 5000000,
-                                         const Index& max_token_length = 50,
-                                         const Index& max_unique_chars = 1000,
-                                         const float& slack_ratio = 0.05,
-                                         const bool& include_joiner_token = true,
-                                         const string& joiner = "##");
+                                        const Index& vocabulary_size,
+                                        const vector<string>& reserved_tokens,
+                                        const Index& upper_threshold = 10000000,
+                                        const Index& lower_threshold = 10,
+                                        const Index& iterations_number = 4,
+                                        const Index& max_input_tokens = 5000000,
+                                        const Index& max_token_length = 50,
+                                        const Index& max_unique_chars = 1000,
+                                        const float& slack_ratio = 0.05,
+                                        const bool& include_joiner_token = true,
+                                        const string& joiner = "##");
 
     void load_documents(const string&);
 
@@ -89,8 +89,6 @@ public:
 
 private:
 
-//    Separator text_separator = Separator::Tab;
-
     Tensor<string, 2> text_data_file_preview;
 
     // LARGE LANGUAGE MODEL
@@ -103,7 +101,7 @@ private:
 
     string completion_vocabulary_path;
 
-    Tensor<Index, 1> context_dimensions = Tensor<Index, 1>(1);
+    dimensions context_dimensions = dimensions{ 0 };
 
     Index max_completion_length = 0;
 

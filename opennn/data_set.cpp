@@ -223,10 +223,13 @@ void DataSet::RawVariable::print() const
          << "Use: " << get_use_string() << endl
          << "Type: " << get_type_string() << endl
          << "Scaler: " << get_scaler_string() << endl;
-/*
-    if(categories.size() != 0)
-         cout << "Categories: " << categories << endl;
-*/
+
+    if (categories.size() != 0)
+    {
+        cout << "Categories: " << endl;
+        print_vector(categories);
+    }
+
 }
 
 
@@ -1116,7 +1119,7 @@ void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_use
 }
 
 
-void DataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses)
+void DataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
@@ -1917,14 +1920,7 @@ void DataSet::set_model_type(const DataSet::ModelType& new_model_type)
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-/*
-    const Index samples_number = new_data.dimension(0);
-    const Index variables_number = new_data.dimension(1);
-
-    set(samples_number, variables_number);
-
     data = new_data;
-*/
 }
 
 
@@ -3518,32 +3514,20 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
-void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
+void DataSet::set_data_rosenbrock()
 {
-/*
-    set(samples_number, variables_number);
+    const Index samples_number = get_samples_number();
+    const Index variables_number = get_variables_number();
 
-    set_random(data);
-*/
-}
-
-
-void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
-{
-/*
-    const Index inputs_number = variables_number-1;
-
-    set(samples_number, variables_number);
-
-    set_random(data);
+    set_data_random();
     
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
         type rosenbrock(0);
 
-        for(Index j = 0; j < inputs_number-1; j++)
+        for(Index j = 0; j < variables_number-1; j++)
         {
             const type value = data(i, j);
             const type next_value = data(i, j+1);
@@ -3551,17 +3535,13 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
             rosenbrock += (type(1) - value)*(type(1) - value) + type(100)*(next_value-value*value)*(next_value-value*value);
         }
 
-        data(i, inputs_number) = rosenbrock;
+        data(i, variables_number-1) = rosenbrock;
     }
-
-    set_default_raw_variables_uses();    
-*/
 }
 
 
 void DataSet::generate_classification_data(const Index& samples_number, const Index& variables_number, const Index& classes_number)
 {
-    cout << "Generating Classification Data..." << endl;
 /*
     set(samples_number, variables_number + classes_number);
 
@@ -3581,7 +3561,6 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
         data(i, variables_number + random_class) = 1;
     }
 */
-    cout << "Done." << endl;
 }
 
 

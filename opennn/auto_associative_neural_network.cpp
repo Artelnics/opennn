@@ -171,9 +171,9 @@ void AutoAssociativeNeuralNetwork::set_distances_descriptives(Descriptives& new_
 }
 
 
-void AutoAssociativeNeuralNetwork::set_variables_distances_names(const vector<string>& new_variables_distances_names)
+void AutoAssociativeNeuralNetwork::set_variable_distance_names(const vector<string>& new_variable_distance_names)
 {
-    variables_distances_names = new_variables_distances_names;
+    variable_distance_names = new_variable_distance_names;
 }
 
 
@@ -319,7 +319,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const XMLDocum
     const Index variables_number = Index(atoi(variables_number_element->GetText()));
 
     multivariate_distances_box_plot.resize(variables_number);
-    variables_distances_names.resize(variables_number);
+    variable_distance_names.resize(variables_number);
 
     const XMLElement* start_element = variables_number_element;
 
@@ -335,7 +335,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const XMLDocum
         {
             const char* new_box_plot_parameters_element = variable_box_plot_element->GetText();
             vector<string> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, "\\");
-            variables_distances_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
+            variable_distance_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
             multivariate_distances_box_plot[i].minimum = type(stof(splitted_box_plot_parameters_element[1]));
             multivariate_distances_box_plot[i].first_quartile = type(stof(splitted_box_plot_parameters_element[2]));
             multivariate_distances_box_plot[i].median = type(stof(splitted_box_plot_parameters_element[3]));
@@ -662,19 +662,19 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("VariablesNumber");
 
     buffer.str("");
-    buffer << variables_distances_names.size();
+    buffer << variable_distance_names.size();
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    for(Index i = 0; i < variables_distances_names.size(); i++)
+    for(Index i = 0; i < variable_distance_names.size(); i++)
     {
         // Scaling neuron
 
         file_stream.OpenElement("VariableBoxPlot");
 
-        buffer.str(""); buffer << variables_distances_names[i].c_str();
+        buffer.str(""); buffer << variable_distance_names[i].c_str();
         file_stream.PushText(buffer.str().c_str());
         file_stream.PushText("\\");
 

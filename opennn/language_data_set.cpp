@@ -21,7 +21,7 @@ namespace opennn
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
     context_dimensions.resize(1);
-    context_dimensions.setZero();
+    context_dimensions[0] = 0;
 }
 
 
@@ -74,7 +74,7 @@ Index LanguageDataSet::get_completion_length() const
 }
 
 
-const Tensor<Index, 1>& LanguageDataSet::get_context_variables_dimensions() const
+const dimensions& LanguageDataSet::get_context_dimensions() const
 {
     return context_dimensions;
 }
@@ -106,20 +106,20 @@ void LanguageDataSet::set_raw_variables_uses(const vector<string>& new_raw_varia
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
+    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
 }
 
 
-void LanguageDataSet::set_raw_variables_uses(const Tensor<VariableUse, 1>& new_raw_variables_uses)
+void LanguageDataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
     context_dimensions.resize(1);
-    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
+    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
 }
 
 
-void LanguageDataSet::set_context_variables_dimensions(const Tensor<Index, 1>& new_context_dimensions)
+void LanguageDataSet::set_context_dimensions(const dimensions& new_context_dimensions)
 {
     context_dimensions = new_context_dimensions;
 }
@@ -175,7 +175,7 @@ void LanguageDataSet::set_default()
 
     context_dimensions.resize(1);
 
-    context_dimensions.setConstant(get_variables_number(DataSet::VariableUse::Context));
+    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
 }
 
 
@@ -1902,7 +1902,7 @@ void LanguageDataSet::read_csv_language_model()
 //     ofstream file;
 //     file.open(transformed_data_path);
 
-//     // @todo maybe context does NOT need start and end tokens
+     // @todo maybe context does NOT need start and end tokens
 
 //     for(Index i  = type(0); i < max_context_length + 2; i++) // there is start and end indicators
 //         file << "context_token_position_" << i << ";";

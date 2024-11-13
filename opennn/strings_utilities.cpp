@@ -22,57 +22,6 @@
 namespace opennn
 {
 
-//Index count_tokens(string& text, const char& separator)
-//{
-//    trim(text);
-
-//    Index tokens_count = 0;
-
-    // Skip delimiters at beginning.
-
-//    string::size_type last_position = text.find_first_not_of(separator, 0);
-
-    // Find first "non-delimiter".
-
-//    string::size_type position = text.find_first_of(separator, last_position);
-
-//    while(string::npos != position || string::npos != last_position)
-//    {
-        // Found a token, add it to the vector
-
-//        tokens_count++;
-
-        // Skip delimiters.  Note the "not_of"
-
-//        last_position = text.find_first_not_of(separator, position);
-
-        // Find next "non-delimiter"
-
-//        position = text.find_first_of(separator, last_position);
-//    }
-
-//    return tokens_count;
-//}
-
-
-// Index count_tokens(const string& text, const char& separator)
-// {
-//     Index tokens_number = count(text.begin(), text.end(), separator);
-
-//     if(text[0] == separator)
-//     {
-//         tokens_number--;
-//     }
-
-//     if(text[text.size() - 1] == separator)
-//     {
-//         tokens_number--;
-//     }
-
-//     return tokens_number + 1;
-// }
-
-
 void fill_tokens(const string& text, const string& separator, vector<string>& tokens)
 {
     fill(tokens.begin(), tokens.end(), "");

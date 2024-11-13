@@ -32,20 +32,6 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
-
-    transform_time_series();
-}
-
-
-Index TimeSeriesDataSet::get_time_series_raw_variables_number() const
-{
-    return time_series_raw_variables.size();
-}
-
-
-const vector<DataSet::RawVariable>& TimeSeriesDataSet::get_time_series_raw_variables() const
-{
-    return time_series_raw_variables;
 }
 
 
@@ -63,22 +49,6 @@ const string& TimeSeriesDataSet::get_group_by_column() const
 }
 
 
-Index TimeSeriesDataSet::get_time_series_variables_number() const
-{
-    const Index time_series_raw_variables_number = time_series_raw_variables.size();
-
-    Index variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Categorical)
-            variables_number += time_series_raw_variables[i].categories.size();
-        else
-            variables_number++;
-
-    return variables_number;
-}
-
-
 const Index& TimeSeriesDataSet::get_lags_number() const
 {
     return lags_number;
@@ -88,139 +58,6 @@ const Index& TimeSeriesDataSet::get_lags_number() const
 const Index& TimeSeriesDataSet::get_steps_ahead() const
 {
     return steps_ahead;
-}
-
-
-Index TimeSeriesDataSet::get_time_series_data_rows_number() const
-{
-    return time_series_data.dimension(0);
-}
-
-
-Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index& raw_variable_index) const
-{
-    Index raw_variables_number = 1;
-
-    const Index rows_number = time_series_data.dimension(0);
-
-    if(time_series_raw_variables[raw_variable_index].type == RawVariableType::Categorical)
-    {
-        raw_variables_number = time_series_raw_variables[raw_variable_index].get_categories_number();
-    }
-
-    const Eigen::array<Index, 2> extents = {rows_number, raw_variables_number};
-    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)[0]};
-
-    return time_series_data.slice(offsets, extents);
-}
-
-
-vector<string> TimeSeriesDataSet::get_time_series_raw_variables_names() const
-{
-    const Index raw_variables_number = get_time_series_raw_variables_number();
-
-    vector<string> raw_variables_names(raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        raw_variables_names[i] = time_series_raw_variables[i].name;
-    }
-
-    return raw_variables_names;
-}
-
-
-Index TimeSeriesDataSet::get_input_time_series_raw_variables_number() const
-{
-    Index input_raw_variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].use == VariableUse::Input)
-        {
-            input_raw_variables_number++;
-        }
-    }
-
-    return input_raw_variables_number;
-}
-
-
-Index TimeSeriesDataSet::get_target_time_series_raw_variables_number() const
-{
-    Index target_raw_variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].use == VariableUse::Target)
-        {
-            target_raw_variables_number++;
-        }
-    }
-
-    return target_raw_variables_number;
-}
-
-
-Index TimeSeriesDataSet::get_time_series_time_raw_variable_index() const
-{
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].type == RawVariableType::DateTime) return i;
-    }
-
-    return Index(NAN);
-}
-
-
-Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices() const
-{
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
-
-    Tensor<Index, 1> target_raw_variables_indices(target_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].use == VariableUse::Target)
-            target_raw_variables_indices(index++) = i;
-
-    return target_raw_variables_indices;
-}
-
-
-vector<string> TimeSeriesDataSet::get_time_series_variable_names() const
-{
-    const Index variables_number = get_time_series_variables_number();
-
-    vector<string> variable_names(variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].type == RawVariableType::Categorical)
-            for(Index j = 0; j < time_series_raw_variables[i].categories.size(); j++)
-                variable_names[index++] = time_series_raw_variables[i].categories[j];
-        else
-            variable_names[index++] = time_series_raw_variables[i].name;
-
-    return variable_names;
-}
-
-
-Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices() const
-{
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-
-    Tensor<Index, 1> input_raw_variables_indices(input_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].use == VariableUse::Input)
-            input_raw_variables_indices(index++) = i;
-
-    return input_raw_variables_indices;
 }
 
 
@@ -236,19 +73,6 @@ void TimeSeriesDataSet::set_steps_ahead_number(const Index& new_steps_ahead_numb
 }
 
 
-void TimeSeriesDataSet::set_time_series_raw_variables_number(const Index& new_variables_number)
-{
-    time_series_raw_variables.resize(new_variables_number);
-}
-
-
-void TimeSeriesDataSet::set_time_series_data(const Tensor<type, 2>& new_data)
-{
-    time_series_data = new_data;
-}
-
-
-
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
 //    time_column = new_time_column;
@@ -258,135 +82,6 @@ void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 void TimeSeriesDataSet::set_group_by_raw_variable(const string& new_group_by_column)
 {
 //    group_by_column = new_group_by_column;
-}
-
-
-void TimeSeriesDataSet::transform_time_series_raw_variables()
-{
-    cout << "Transforming time series raw variables..." << endl;
-
-    // Categorical raw_variables?
-
-    time_series_raw_variables = raw_variables;
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    vector<RawVariable> new_raw_variables;
-
-    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
-
-    if(time_raw_variables_number == 0)
-        new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
-    else if(time_raw_variables_number == 1)
-        new_raw_variables.resize((raw_variables_number-1)*(lags_number+steps_ahead));
-    else
-        throw runtime_error("More than 1 time variable.");
-
-    Index lag_index = lags_number - 1;
-    Index ahead_index = 0;
-    Index raw_variable_index = 0;
-    Index new_raw_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number*(lags_number+steps_ahead); i++)
-    {
-        raw_variable_index = i%raw_variables_number;
-
-        const RawVariable& raw_variable = raw_variables[raw_variable_index];
-
-        if(time_series_raw_variables[raw_variable_index].type == RawVariableType::DateTime) continue;
-
-        if(i < lags_number*raw_variables_number)
-        {            
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_lag_" + to_string(lag_index);
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::Input);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-        }
-        else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
-        {            
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_ahead_" + to_string(ahead_index);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::Target);
-        }
-        else
-        {
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_ahead_" + to_string(ahead_index);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::None);
-        }
-
-        new_raw_variable_index++;
-
-        if(lag_index > 0 && raw_variable_index == raw_variables_number - 1)
-            lag_index--;
-        else if(raw_variable_index == raw_variables_number - 1)
-            ahead_index++;
-    }
-
-    raw_variables = new_raw_variables;
-}
-
-
-void TimeSeriesDataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;
-
-    // Categorical / Time raw_variables?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-
-    const Index new_variables_number = time_raw_variables_number == 1
-                                     ? (old_variables_number - 1) * (lags_number + steps_ahead)
-                                     : old_variables_number * (lags_number + steps_ahead);
-
-    time_series_data = data;
-
-    data.resize(new_samples_number, new_variables_number);
-
-    Index index = 0;
-
-    for(Index j = 0; j < old_variables_number; j++)
-    {
-        if(raw_variables[get_raw_variable_index(j)].type == RawVariableType::DateTime)
-        {
-            index++;
-            continue;
-        }
-
-        for(Index i = 0; i < lags_number+steps_ahead; i++)
-        {
-            copy(time_series_data.data() + i + j * old_samples_number,
-                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
-                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
-        }
-    }
-
-    sample_uses.resize(new_samples_number);
-
-    split_samples_random();
-}
-
-
-void TimeSeriesDataSet::transform_time_series()
-{
-    cout << "Transforming time series..." << endl;
-
-    if(lags_number == 0 || steps_ahead == 0) return;
-
-    transform_time_series_data();
-
-    transform_time_series_raw_variables();
-
-    split_samples_sequential();
-
-    unuse_constant_raw_variables();
 }
 
 
@@ -416,6 +111,7 @@ void TimeSeriesDataSet::print() const
 
 void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 {
+    /*
     file_stream.OpenElement("TimeSeriesDataSet");
 
     // Data file
@@ -471,7 +167,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Time raw variable
-/*
+
     file_stream.OpenElement("TimeRawVariable");
     file_stream.PushText(get_time_raw_variable().c_str());
     file_stream.CloseElement();
@@ -487,7 +183,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-*/
+
     // Codification
 
     file_stream.OpenElement("Codification");
@@ -544,7 +240,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("TimeSeriesRawVariable");
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            time_series_raw_variables[i].to_XML(file_stream);
+            //time_series_raw_variables[i].to_XML(file_stream);
             file_stream.CloseElement();
         }
 
@@ -593,7 +289,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("MissingValuesNumber");
     file_stream.PushText(to_string(missing_values_number).c_str());
     file_stream.CloseElement();
-/*
+
     if(missing_values_number > 0)
     {
         // Raw variables missing values number
@@ -628,13 +324,13 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-*/
+
     // Missing values
 
     file_stream.CloseElement();
 
     // Preview data
-/*
+
     file_stream.OpenElement("PreviewData");
 
     file_stream.OpenElement("PreviewSize");
@@ -669,15 +365,17 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
     // Close preview data
 
     file_stream.CloseElement();
-*/
+
     // Close data set
 
     file_stream.CloseElement();
+*/
 }
 
 
 void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
+/*
     // Data set element
 
     const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
@@ -1161,6 +859,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
+*/
 }
 
 
@@ -1277,7 +976,8 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 // @todo Complete method following the structure.
 
 void TimeSeriesDataSet::fill_gaps()
-{    
+{   
+/*
     type start_time = 50;
     type end_time = 100;
 
@@ -1316,12 +1016,13 @@ void TimeSeriesDataSet::fill_gaps()
     {
         throw runtime_error("Specify here the error");
     }
-
+*/
 }
 
 
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
+/*
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -1410,11 +1111,14 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     }
 
     return autocorrelations;
+*/
+    return Tensor<type, 2>();
 }
 
 
 Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lags_number) const
 {
+/*
     const Index samples_number = time_series_data.dimension(0);
 
     if(lags_number > samples_number)
@@ -1526,66 +1230,8 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     }
 
     return cross_correlations;
-}
-
-
-void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_data_file_name)
-{
-    ifstream file;
-
-    file.open(time_series_data_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open binary file: " + time_series_data_file_name + "\n");
-
-    streamsize size = sizeof(Index);
-
-    Index columns_number = 0;
-    Index rows_number = 0;
-
-    file.read(reinterpret_cast<char*>(&columns_number), size);
-    file.read(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(type);
-
-    time_series_data.resize(rows_number, columns_number);
-
-    const Index total_elements = rows_number * columns_number;
-
-    file.read(reinterpret_cast<char*>(time_series_data.data()), total_elements * size);
-
-    file.close();
-}
-
-
-void TimeSeriesDataSet::save_time_series_data_binary(const string& binary_data_file_name) const
-{
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open data binary file.");
-
-    // Write data
-
-    streamsize size = sizeof(Index);
-
-    Index columns_number = time_series_data.dimension(1);
-    Index rows_number = time_series_data.dimension(0);
-
-    cout << "Saving binary data file..." << endl;
-
-    file.write(reinterpret_cast<char*>(&columns_number), size);
-    file.write(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(type);
-
-    const Index total_elements = columns_number * rows_number;
-    
-    file.write(reinterpret_cast<const char*>(time_series_data.data()), total_elements * size);
-
-    file.close();
-
-    cout << "Binary data file saved." << endl;
+*/
+    return Tensor<type, 3>();
 }
 
 }

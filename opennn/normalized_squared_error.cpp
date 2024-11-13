@@ -87,7 +87,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    // @todo add pragma 
+    #pragma omp parallel for reduction(+:normalization_coefficient)
 
     for(Index i = 0; i < target_samples_number; i++)
         for(Index j = 0; j < target_variables_number; j++)

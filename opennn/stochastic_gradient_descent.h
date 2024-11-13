@@ -104,7 +104,7 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    explicit StochasticGradientDescentData(StochasticGradientDescent*);
+    explicit StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
 
     void set(StochasticGradientDescent* = nullptr);
 

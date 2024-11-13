@@ -521,25 +521,31 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
                                          const dimensions& complexity_dimensions, 
                                          const dimensions& output_dimensions)
 {
-// @todo
-
     add_layer(make_unique<ScalingLayer2D>(input_dimensions));
-/*
+
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
 
-    add_layer(make_unique<PerceptronLayer>(input_dimensions[0], mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                "mapping_layer");
+    add_layer(make_unique<PerceptronLayer>(input_dimensions, 
+                                           dimensions{mapping_neurons_number}, 
+                                           PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                           "mapping_layer"));
 
-    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, bottle_neck_neurons_number, PerceptronLayer::ActivationFunction::Linear),
-                "bottleneck_layer");
+    add_layer(make_unique<PerceptronLayer>(dimensions{ mapping_neurons_number },
+                                           dimensions{ bottle_neck_neurons_number },
+                                           PerceptronLayer::ActivationFunction::Linear,
+                                           "bottleneck_layer"));
 
-    add_layer(make_unique<PerceptronLayer>(bottle_neck_neurons_number, mapping_neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent),
-                "demapping_layer");
+    add_layer(make_unique<PerceptronLayer>(dimensions{ bottle_neck_neurons_number },
+                                           dimensions{ mapping_neurons_number },
+                                           PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                                           "demapping_layer"));
 
-    add_layer(make_unique<PerceptronLayer>(mapping_neurons_number, output_dimensions[0], PerceptronLayer::ActivationFunction::Linear),
-                "output_layer");
-*/
+    add_layer(make_unique<PerceptronLayer>(dimensions{ mapping_neurons_number },
+                                           dimensions{ output_dimensions }, 
+                                           PerceptronLayer::ActivationFunction::Linear,
+                                           "output_layer"));
+
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 }
 

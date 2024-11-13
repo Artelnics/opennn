@@ -388,9 +388,10 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
     Index raw_variables_active;
 
     type arrow;
-/*
+
     for(Index i = 0; i < individuals_number; i++)
     {
+/*
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
@@ -419,9 +420,8 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         for(Index j = 0; j < genes_number; j++)
             population(i, j) = individual_variables(j);
-    }
 */
-    cout << "Initial population: \n" << population << endl;
+    }
 }
 
 
