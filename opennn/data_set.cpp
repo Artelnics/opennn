@@ -55,29 +55,29 @@ const bool& DataSet::get_display() const
 
 
 DataSet::RawVariable::RawVariable(const string& new_name,
-                        const VariableUse& new_raw_variable_use,
-                        const RawVariableType& new_type,
-                        const Scaler& new_scaler,
-                        const Tensor<string, 1>& new_categories)
+                                  const VariableUse& new_raw_variable_use,
+                                  const RawVariableType& new_type,
+                                  const Scaler& new_scaler,
+                                  const Tensor<string, 1>& new_categories)
 {
     name = new_name;
-    scaler = new_scaler;
     use = new_raw_variable_use;
     type = new_type;
+    scaler = new_scaler;
     categories = new_categories;
 }
 
 
 void DataSet::RawVariable::set(const string& new_name,
-    const VariableUse& new_raw_variable_use,
-    const RawVariableType& new_type,
-    const Scaler& new_scaler,
-    const Tensor<string, 1>& new_categories)
+                               const VariableUse& new_raw_variable_use,
+                               const RawVariableType& new_type,
+                               const Scaler& new_scaler,
+                               const Tensor<string, 1>& new_categories)
 {
     name = new_name;
-    scaler = new_scaler;
     use = new_raw_variable_use;
     type = new_type;
+    scaler = new_scaler;
     categories = new_categories;
 }
 
@@ -1934,6 +1934,8 @@ void DataSet::set(const Index& new_samples_number,
 
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
 
+    target_dimensions = { targets_number };
+
     const Index new_variables_number = new_inputs_number + targets_number;
 
     data.resize(new_samples_number, new_variables_number);
@@ -1941,33 +1943,30 @@ void DataSet::set(const Index& new_samples_number,
     raw_variables.resize(new_variables_number);
 
     set_default();
-
+    
     if (model_type == ModelType::ImageClassification)
     {
-     
-        raw_variables.resize(new_inputs_number + 1);
+        
+        const Index raw_variables_number = new_inputs_number + 1;
+
+        raw_variables.resize(raw_variables_number);
 
         for (Index i = 0; i < new_inputs_number; i++)
             raw_variables[i].set("p_" + to_string(i + 1),
                 VariableUse::Input,
                 RawVariableType::Numeric,
                 Scaler::ImageMinMax);
-
-        Tensor<string, 1> categories(targets_number);
-        categories.setConstant("ABC");
-
+        
         if (targets_number == 1)
-            raw_variables[new_inputs_number].set("target",
+            raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Binary,
-                Scaler::None,
-                categories);
+                Scaler::None); 
         else
-            raw_variables[new_inputs_number].set("target",
+            raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
-                Scaler::None,
-                categories);
+                Scaler::None);     
     }
     else
     {
@@ -1983,7 +1982,7 @@ void DataSet::set(const Index& new_samples_number,
                 : VariableUse::Target;
         }
     }
-
+    
     sample_uses.resize(new_samples_number);
 
     split_samples_random();
@@ -2767,7 +2766,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     map<type,string>::iterator it;
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
+        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
@@ -2902,7 +2901,7 @@ void DataSet::print_top_inputs_correlations() const
     map<type,string> ::iterator it;
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
+        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 

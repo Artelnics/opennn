@@ -138,7 +138,7 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = rand() % 256;
+                data(i, j) = rand() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -166,7 +166,7 @@ void ImageDataSet::set_image_data_random()
             for (Index i = 0; i < images_number[k]; i++)
             {
                 for (Index j = 0; j < inputs_number; j++)
-                    data(current_sample, j) = rand() % 256;
+                    data(current_sample, j) = rand() % 255;
 
                 data(current_sample, k + inputs_number) = 1;
 

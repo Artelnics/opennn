@@ -190,10 +190,10 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const Index& layer_index) cons
 
 const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& name) const
 {
-    const Tensor<string, 1> layer_names = get_layer_names();
+    const vector<string> layer_names = get_layer_names();
 
     for(Index i = 0; i < layer_names.size(); i++)
-        if(layer_names(i) == name)
+        if(layer_names[i] == name)
             return layers[i];
 
     throw runtime_error("Layer not found in neural network");
@@ -624,9 +624,9 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 }
 
 
-void NeuralNetwork::set_input_names(const vector<string>& new_inputs_names)
+void NeuralNetwork::set_input_names(const vector<string>& new_input_namess)
 {
-    input_names = new_inputs_names;
+    input_names = new_input_namess;
 }
 
 
@@ -697,36 +697,36 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vec
 
 
 void NeuralNetwork::set_layer_inputs_indices(const string& name, 
-                                             const Tensor<string, 1>& new_layer_inputs_names)
+                                             const Tensor<string, 1>& new_layer_input_namess)
 {
     const Index layer_index = get_layer_index(name);
 
-    const Index size = new_layer_inputs_names.size();
+    const Index size = new_layer_input_namess.size();
 
     vector<Index> new_layer_input_indices(size);
 
     for(Index i = 0; i < size; i++)
-        new_layer_input_indices[i] = get_layer_index(new_layer_inputs_names(i));
+        new_layer_input_indices[i] = get_layer_index(new_layer_input_namess(i));
 
     layer_input_indices[layer_index] = new_layer_input_indices;
 }
 
 
 void NeuralNetwork::set_layer_inputs_indices(const string& name, 
-                                             const initializer_list<string>& new_layer_inputs_names_list)
+                                             const initializer_list<string>& new_layer_input_namess_list)
 {
-    Tensor<string, 1> new_layer_inputs_names(new_layer_inputs_names_list.size());
-    new_layer_inputs_names.setValues(new_layer_inputs_names_list);
+    Tensor<string, 1> new_layer_input_namess(new_layer_input_namess_list.size());
+    new_layer_input_namess.setValues(new_layer_input_namess_list);
 
-    set_layer_inputs_indices(name, new_layer_inputs_names);
+    set_layer_inputs_indices(name, new_layer_input_namess);
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& new_layer_inputs_name)
+void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& new_layer_input_names)
 {
     const Index layer_index = get_layer_index(name);
 
-    layer_input_indices[layer_index] = {get_layer_index(new_layer_inputs_name)};
+    layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
 }
 
 
@@ -810,10 +810,9 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
     const Index layers_number = get_layers_number();
 
     Index position = 0;
-    //cout << "layers_number: " << layers_number << endl;
+
     for(Index i = 0; i < layers_number; i++)
     {
-        //cout << "layer : " << i << endl;
         const Tensor<type, 1> layer_parameters = layers[i]->get_parameters();
 
         // @todo use memcpy
@@ -822,7 +821,6 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
             parameters(j + position) = layer_parameters(j);
         
         position += layer_parameters.size();
-        //cout << "exit" << endl;
     }
 
     return parameters;
@@ -1100,6 +1098,80 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     forward_propagate(input_pair, forward_propagation, is_training);
 
     set_parameters(original_parameters);
+}
+
+
+string NeuralNetwork::get_expression() const
+{
+    /*
+    const Index layers_number = neural_network.get_layers_number();
+
+    const vector<unique_ptr<Layer>>& layers = neural_network.get_layers();
+    const vector<string> layer_names = neural_network.get_layer_names();
+
+    vector<string> input_names = neural_network.get_input_names();
+    vector<string> output_names = neural_network.get_output_names();
+
+    const Index inputs_number = input_names.size();
+
+    string aux_name;
+
+    for (int i = 0; i < inputs_number; i++)
+    if (!input_names[i].empty())
+    input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
+    else
+    input_names[i] = "input_" + to_string(i);
+
+    Index layer_neurons_number;
+
+    vector<string> scaled_input_names(inputs_number);
+    vector<string> unscaled_output_namess(inputs_number);
+
+    ostringstream buffer;
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+    if (i == layers_number - 1)
+    {
+    for (int j = 0; j < output_names.size(); j++)
+    if (!output_names[j].empty())
+    output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
+    else
+    output_names[j] = "output_" + to_string(i);
+
+    //buffer << layers[i]->get_expression(input_names, output_names) << endl;
+    }
+    else
+    {
+
+    layer_neurons_number = layers[i]->get_neurons_number();
+    output_namess_vector.resize(layer_neurons_number);
+
+    for (Index j = 0; j < layer_neurons_number; j++)
+    {
+    if (layer_names[i] == "scaling_layer")
+    {
+    output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
+    scaled_input_names[j] = output_names[j];
+    }
+    else
+    {
+    output_names[j] = layer_names[i] + "_output_" + to_string(j);
+    }
+    }
+
+    //            buffer << layers[i]->get_expression(input_names, output_names) << endl;
+    //            input_namess_vector = output_namess_vector;
+    //            unscaled_output_namess = input_namess_vector;
+    }
+    }
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+    return expression;
+    */
+    return string();
 }
 
 
@@ -1848,11 +1920,11 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_na
 }
 
 
-Tensor<string, 1> NeuralNetwork::get_layer_names() const
+vector<string> NeuralNetwork::get_layer_names() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<string, 1> layer_names(layers_number);
+    vector<string> layer_names(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
         layer_names[i] = layers[i]->get_name();
@@ -1861,11 +1933,11 @@ Tensor<string, 1> NeuralNetwork::get_layer_names() const
 }
 
 
-Tensor<string, 1> NeuralNetwork::get_layer_types_string() const
+vector<string> NeuralNetwork::get_layer_types_string() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<string, 1> layer_types(layers_number);
+    vector<string> layer_types(layers_number);
 
     for(Index i = 0; i < layers_number; i++)
         layer_types[i] = layers[i]->get_type_string();
