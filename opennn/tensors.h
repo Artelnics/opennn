@@ -210,7 +210,7 @@ Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
 string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
-string string_tensor_to_string(const Tensor<string, 1>&, const string& = " ");
+string string_tensor_to_string(const vector<string>&, const string& = " ");
 
 Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
 

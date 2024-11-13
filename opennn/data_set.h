@@ -225,6 +225,11 @@ public:
 
     const bool& get_display() const;
 
+    bool is_empty()
+    {
+        return data.size() == 0;
+    }
+
     bool get_augmentation() const;
 
     // Set
@@ -351,8 +356,8 @@ public:
 
     Tensor<Index, 1> unuse_repeated_samples();
 
-    Tensor<string, 1> unuse_uncorrelated_raw_variables(const type& = type(0.25));
-    Tensor<string, 1> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
+    vector<string> unuse_uncorrelated_raw_variables(const type& = type(0.25));
+    vector<string> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
 
     // Initialization
 

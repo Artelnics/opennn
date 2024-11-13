@@ -119,7 +119,7 @@ public:
    vector<Descriptives> calculate_percentage_errors_descriptives() const;
    vector<Descriptives> calculate_percentage_errors_descriptives(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<vector<Descriptives>, 1> calculate_error_data_descriptives() const;
+   vector<vector<Descriptives>> calculate_error_data_descriptives() const;
    void print_error_data_descriptives() const;
 
    Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
