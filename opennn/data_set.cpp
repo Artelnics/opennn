@@ -69,10 +69,10 @@ DataSet::RawVariable::RawVariable(const string& new_name,
 
 
 void DataSet::RawVariable::set(const string& new_name,
-    const VariableUse& new_raw_variable_use,
-    const RawVariableType& new_type,
-    const Scaler& new_scaler,
-    const Tensor<string, 1>& new_categories)
+                               const VariableUse& new_raw_variable_use,
+                               const RawVariableType& new_type,
+                               const Scaler& new_scaler,
+                               const Tensor<string, 1>& new_categories)
 {
     name = new_name;
     scaler = new_scaler;
@@ -1941,12 +1941,9 @@ void DataSet::set(const Index& new_samples_number,
     raw_variables.resize(new_variables_number);
 
     set_default();
-
+    
     if (model_type == ModelType::ImageClassification)
     {
-     
-        raw_variables.resize(new_inputs_number + 1);
-
         for (Index i = 0; i < new_inputs_number; i++)
             raw_variables[i].set("p_" + to_string(i + 1),
                 VariableUse::Input,
@@ -1967,7 +1964,7 @@ void DataSet::set(const Index& new_samples_number,
                 VariableUse::Target,
                 RawVariableType::Categorical,
                 Scaler::None,
-                categories);
+                categories);              
     }
     else
     {
@@ -1983,7 +1980,7 @@ void DataSet::set(const Index& new_samples_number,
                 : VariableUse::Target;
         }
     }
-
+    
     sample_uses.resize(new_samples_number);
 
     split_samples_random();
