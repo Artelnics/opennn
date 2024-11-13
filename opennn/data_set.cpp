@@ -2764,7 +2764,7 @@ void DataSet::print_top_input_target_raw_variables_correlations() const
     map<type,string>::iterator it;
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
+        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
@@ -2899,7 +2899,7 @@ void DataSet::print_top_inputs_correlations() const
     map<type,string> ::iterator it;
 
     for(it = top_correlation.begin(); it != top_correlation.end(); it++)
-        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
+        cout << "Correlation: " << (*it).first << "  between  " << (*it).second << endl;
 }
 
 
