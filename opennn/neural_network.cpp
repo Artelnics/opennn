@@ -696,29 +696,28 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vec
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name, 
-                                             const Tensor<string, 1>& new_layer_input_namess)
+void NeuralNetwork::set_layer_inputs_indices(const string& name,
+                                             const vector<string>& new_layer_input_names)
 {
     const Index layer_index = get_layer_index(name);
 
-    const Index size = new_layer_input_namess.size();
+    const Index size = new_layer_input_names.size();
 
     vector<Index> new_layer_input_indices(size);
 
     for(Index i = 0; i < size; i++)
-        new_layer_input_indices[i] = get_layer_index(new_layer_input_namess(i));
+        new_layer_input_indices[i] = get_layer_index(new_layer_input_names[i]);
 
     layer_input_indices[layer_index] = new_layer_input_indices;
 }
 
 
 void NeuralNetwork::set_layer_inputs_indices(const string& name, 
-                                             const initializer_list<string>& new_layer_input_namess_list)
+                                             const initializer_list<string>& new_layer_input_names_list)
 {
-    Tensor<string, 1> new_layer_input_namess(new_layer_input_namess_list.size());
-    new_layer_input_namess.setValues(new_layer_input_namess_list);
+    const vector<string> new_layer_input_names = new_layer_input_names_list;
 
-    set_layer_inputs_indices(name, new_layer_input_namess);
+    set_layer_inputs_indices(name, new_layer_input_names);
 }
 
 

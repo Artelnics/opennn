@@ -19,7 +19,7 @@ TextDataSet::TextDataSet() : DataSet()
 {
     stop_words.resize(242);
 
-    stop_words.setValues(
+    stop_words =
     { "i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
      "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
      "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
@@ -35,7 +35,7 @@ TextDataSet::TextDataSet() : DataSet()
      "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
      "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
      "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-     "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" });
+     "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" };
 }
 
 
@@ -891,7 +891,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number
+            vector<string> new_raw_variables_missing_values_number
                 = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
@@ -979,7 +979,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
             if(row_element->GetText())
             {
-                data_file_preview(i) = get_tokens(row_element->GetText(), ",");
+                data_file_preview[i] = get_tokens(row_element->GetText(), ",");
             }
         }
     }
@@ -1042,12 +1042,12 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
     const Index raw_variables_number = get_raw_variables_number();
     const vector<string> raw_variables_names = get_raw_variable_names();
 
-    const Tensor<string, 1> tokens = get_tokens(sentence, " ");
+    const vector<string> tokens = get_tokens(sentence, " ");
 
     Tensor<type, 1> vector_x(raw_variables_number - 1);
     vector_x.setZero();
 
-    const Tensor<Tensor<string,1>,1> words = preprocess(tokens);
+    const Tensor<vector<string>,1> words = preprocess(tokens);
 /*
     const WordBag word_bag = calculate_word_bag(words);
 
@@ -1055,9 +1055,9 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if(contains(raw_variables_names, word_bag.words(i)))
+        if(contains(raw_variables_names, word_bag.words[i]))
         {
-            auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
+            auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words[i]);
             const Index index = it - raw_variables_names.data();
 
             vector_x(index) = type(word_bag.frequencies(i));
@@ -1069,44 +1069,44 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
 /*
 
-Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
+Tensor<vector<string>,1> stem(const Tensor<vector<string>,1>& tokens)
 {
     const Index documents_number = tokens.size();
 
-    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
+    Tensor<vector<string>,1> new_tokenized_documents(documents_number);
 
     // Set vowels and suffixes
 
-    Tensor<string,1> vowels(6);
+    vector<string> vowels(6);
     vowels.setValues({"a","e","i","o","u","y"});
 
-    Tensor<string,1> double_consonants(9);
+    vector<string> double_consonants(9);
     double_consonants.setValues({"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"});
 
-    Tensor<string,1> li_ending(10);
+    vector<string> li_ending(10);
     li_ending.setValues({"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"});
 
     const Index step0_suffixes_size = 3;
 
-    Tensor<string,1> step0_suffixes(step0_suffixes_size);
+    vector<string> step0_suffixes(step0_suffixes_size);
 
     step0_suffixes.setValues({"'s'", "'s", "'"});
 
     const Index step1a_suffixes_size = 6;
 
-    Tensor<string,1> step1a_suffixes(step1a_suffixes_size);
+    vector<string> step1a_suffixes(step1a_suffixes_size);
 
     step1a_suffixes.setValues({"sses", "ied", "ies", "us", "ss", "s"});
 
     const Index step1b_suffixes_size = 6;
 
-    Tensor<string,1> step1b_suffixes(step1b_suffixes_size);
+    vector<string> step1b_suffixes(step1b_suffixes_size);
 
     step1b_suffixes.setValues({"eedly", "ingly", "edly", "eed", "ing", "ed"});
 
     const Index step2_suffixes_size = 25;
 
-    Tensor<string,1> step2_suffixes(step2_suffixes_size);
+    vector<string> step2_suffixes(step2_suffixes_size);
 
     step2_suffixes.setValues({"ization",
                               "ational",
@@ -1135,13 +1135,13 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 
     const Index step3_suffixes_size = 9;
 
-    Tensor<string,1> step3_suffixes(step3_suffixes_size);
+    vector<string> step3_suffixes(step3_suffixes_size);
 
     step3_suffixes.setValues({"ational", "tional", "alize", "icate", "iciti", "ative", "ical", "ness", "ful"});
 
     const Index step4_suffixes_size = 18;
 
-    Tensor<string,1> step4_suffixes(step4_suffixes_size);
+    vector<string> step4_suffixes(step4_suffixes_size);
 
     step4_suffixes.setValues({"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
                               "ive", "ize", "ion", "al", "er", "ic"});
@@ -1192,7 +1192,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 #pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string,1> current_document = tokens(i);
+        vector<string> current_document = tokens[i];
 
         replace_substring(current_document, "’", "'");
         replace_substring(current_document, "‘", "'");
@@ -1233,7 +1233,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                 }
             }
 
-            Tensor<string,1> r1_r2(2);
+            vector<string> r1_r2(2);
 
             r1_r2 = get_r1_r2(current_word, vowels);
 
@@ -1780,8 +1780,8 @@ void TextDataSet::read_txt()
 
     file.seekg (0, ios::beg);
 
-    Tensor<string, 1> documents(documents_number);
-    Tensor<string, 1> targets(documents_number);
+    vector<string> documents(documents_number);
+    vector<string> targets(documents_number);
 
     Index index = 0;
 
@@ -1796,12 +1796,12 @@ void TextDataSet::read_txt()
         if(tokens_number != 2)
             throw runtime_error("More than one separator in line: " + line + "\n");
 
-        const Tensor<string, 1> line_tokens = get_tokens(line, separator_string);
+        const vector<string> line_tokens = get_tokens(line, separator_string);
 
-        documents(index) = line_tokens(0);
-        targets(index) = line_tokens(1);
+        documents[index] = line_tokens[0];
+        targets[index] = line_tokens[1];
 
-        if(count_tokens(targets(index), "2") != 1)
+        if(count_tokens(targets[index], "2") != 1)
             throw runtime_error("More than one target in line: " + line + "\n");
 
         index++;
@@ -1819,9 +1819,9 @@ void TextDataSet::read_txt()
     delete_extra_spaces(documents);
     delete_non_alphanumeric(documents);
 
-    cout << documents << endl;
+    //cout << documents << endl;
 
-    Tensor<Tensor<string,1>,1> documents_words = get_tokens(documents, " ");
+    vector<vector<string>> documents_words = get_tokens(documents, " ");
 
     cout << "Processing documents..." << endl;
 
@@ -1843,7 +1843,7 @@ void TextDataSet::read_txt()
 
     cout << "Calculating wordbag..." << endl;
 
-    const Tensor<string, 1> tokens = tokens_list(documents_words);
+    const vector<string> tokens = tokens_list(documents_words);
 
 //    cout << tokens << endl;
 
@@ -1853,7 +1853,7 @@ void TextDataSet::read_txt()
 
 //    set_words_frequencies(word_bag.frequencies);
 
-    const Tensor<string, 1> raw_variables_names = word_bag.words;
+    const vector<string> raw_variables_names = word_bag.words;
     const Index raw_variables_number = word_bag.size();
 
     Tensor<type, 1> row(raw_variables_number);
@@ -1870,7 +1870,7 @@ void TextDataSet::read_txt()
     new_file.open(new_data_source_path);
 
     for(Index i  = 0; i < raw_variables_number; i++)
-        new_file << raw_variables_names(i) << ";";
+        new_file << raw_variables_names[i] << ";";
 
     new_file << "target" << "\n";
 
@@ -1897,17 +1897,17 @@ void TextDataSet::read_txt()
     {
         row.setZero();
 
-        const Tensor<string, 1> document_tokens = documents_words(i);
+        const vector<string> document_tokens = documents_words[i];
 
         const Index tokens_number = document_tokens.size();
 
         for(Index j = 0; j < tokens_number; j++)
         {
-            const string token = documents_words(i)(j);
+            const string token = documents_words[i][j];
 
             for(Index k = 0; k < raw_variables_number; k++)
             {
-                if(token == raw_variables_names(k))
+                if(token == raw_variables_names[k])
                     row(k)++;
             }
         }
@@ -1915,7 +1915,7 @@ void TextDataSet::read_txt()
         for(Index k = 0; k < raw_variables_number; k++)
             new_file << row(k) << ";";
 
-        new_file << targets(i) << "\n";
+        new_file << targets[i] << "\n";
     }
 
     new_file.close();

@@ -2018,7 +2018,7 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
 }
 
 
-string LongShortTermMemoryLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string LongShortTermMemoryLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     ostringstream buffer;
 

@@ -151,14 +151,14 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    string write_binary_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-    string write_logistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-    string write_competitive_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+    string write_binary_expression(const vector<string>&, const vector<string>&) const;
+    string write_logistic_expression(const vector<string>&, const vector<string>&) const;
+    string write_competitive_expression(const vector<string>&, const vector<string>&) const;
+    string write_softmax_expression(const vector<string>&, const vector<string>&) const;
 
-    string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-    string write_combinations(const Tensor<string, 1>&) const;
-    string write_activations(const Tensor<string, 1>&) const;
+    string get_expression(const vector<string>&, const vector<string>&) const final;
+    string write_combinations(const vector<string>&) const;
+    string write_activations(const vector<string>&) const;
 
     void from_XML(const tinyxml2::XMLDocument&) final;
     void to_XML(tinyxml2::XMLPrinter&) const final;

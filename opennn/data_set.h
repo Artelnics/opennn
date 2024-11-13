@@ -64,13 +64,13 @@ public:
                     const DataSet::VariableUse& = DataSet::VariableUse::None,
                     const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
-                    const Tensor<string, 1>& = Tensor<string, 1>());
+                    const vector<string>& = vector<string>());
 
         void set(const string& = "",
                  const DataSet::VariableUse& = DataSet::VariableUse::None,
                  const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                  const Scaler& = Scaler::MeanStandardDeviation,
-                 const Tensor<string, 1>& = Tensor<string, 1>());
+                 const vector<string>& = vector<string>());
 
         string name;
 
@@ -78,7 +78,7 @@ public:
 
         DataSet::RawVariableType type = DataSet::RawVariableType::None;
 
-        Tensor<string, 1> categories;
+        vector<string> categories;
 
         Scaler scaler = Scaler::None;
 
@@ -100,7 +100,7 @@ public:
 
         void set_type(const string&);
 
-        void set_categories(const Tensor<string, 1>&);
+        void set_categories(const vector<string>&);
 
         virtual void from_XML(const tinyxml2::XMLDocument&);
         virtual void to_XML(tinyxml2::XMLPrinter&) const;
@@ -196,7 +196,7 @@ public:
     Tensor<type, 1> get_sample(const Index&) const;
     void add_sample(const Tensor<type, 1>&);
 
-    Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
+    vector<vector<string>> get_data_file_preview() const;
 
     // Members get
 
@@ -208,7 +208,7 @@ public:
     const bool& get_header_line() const;
     const bool& get_has_sample_ids() const;
 
-    Tensor<string, 1> get_sample_ids() const;
+    vector<string> get_sample_ids() const;
 
     const Separator& get_separator() const;
     string get_separator_string() const;
@@ -219,7 +219,7 @@ public:
 
     const string& get_missing_values_label() const;
 
-    static Tensor<string, 1> get_default_raw_variables_names(const Index&);
+    static vector<string> get_default_raw_variables_names(const Index&);
 
     Index get_gmt() const;
 
@@ -234,9 +234,6 @@ public:
 
     // Set
 
-    void set();
-    void set(const Tensor<type, 2>&);
-//    void set(const Index&, const Index&);
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
@@ -255,8 +252,8 @@ public:
     void set_sample_use(const Index&, const SampleUse&);
     void set_sample_use(const Index&, const string&);
 
-    void set_sample_uses(const Tensor<SampleUse, 1>&);
-    void set_sample_uses(const Tensor<string, 1>&);
+    void set_sample_uses(const vector<SampleUse>&);
+    void set_sample_uses(const vector<string>&);
     void set_sample_uses(const Tensor<Index, 1>&, const SampleUse);
 
     // Raw variables set
@@ -266,11 +263,11 @@ public:
 
     void set_default_raw_variables_names();
 
-    void set_raw_variables_uses(const Tensor<string, 1>&);
+    void set_raw_variables_uses(const vector<string>&);
     void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
-    void set_input_target_raw_variable_indices(const Tensor<string, 1>&, const Tensor<string, 1>&);
+    void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
     void set_input_raw_variables_unused();
 
     //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
@@ -283,7 +280,7 @@ public:
 
     void set_raw_variable_types(const RawVariableType&);
 
-    void set_raw_variable_names(const Tensor<string, 1>&);
+    void set_raw_variable_names(const vector<string>&);
 
     void set_raw_variables_number(const Index&);
 
@@ -340,7 +337,7 @@ public:
 
     bool has_selection() const;
 
-    bool has_missing_values(const Tensor<string, 1>&) const;
+    bool has_missing_values(const vector<string>&) const;
 
     // Splitting
 
@@ -517,10 +514,8 @@ public:
 
     void read_csv();
 
-
-
     void prepare_line(string&) const;
-    void process_tokens(Tensor<string, 1>&);
+    void process_tokens(vector<string>&);
 
     void open_file(const string&, ifstream&) const;
     void open_file(const string&, ofstream&) const;
@@ -559,7 +554,7 @@ protected:
 
     vector<SampleUse> sample_uses;
 
-    Tensor<string, 1> sample_ids;
+    vector<string> sample_ids;
 
     // Raw variables
 
@@ -585,7 +580,7 @@ protected:
 
     Codification codification = Codification::UTF8;
 
-    Tensor<Tensor<string, 1>, 1> data_file_preview;
+    vector<vector<string>> data_file_preview;
 
     Index gmt = 0;
 

@@ -52,7 +52,7 @@ private:
 
     Tensor<Index, 1> words_frequencies;
 
-    Tensor<string, 1> stop_words;
+    vector<string> stop_words;
 
     Tensor<string, 2> text_data_file_preview;
 };

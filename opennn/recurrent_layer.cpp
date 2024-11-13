@@ -502,8 +502,8 @@ void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 }
 
 
-string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
-                                        const Tensor<string, 1>& output_names) const
+string RecurrentLayer::get_expression(const vector<string>& input_names,
+                                        const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -511,7 +511,7 @@ string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << output_names(j) << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";

@@ -630,7 +630,7 @@ string get_expression_api(const NeuralNetwork& neural_network)
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
+    Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
         input_names[i] = inputs_outputs_buffer(0)(i);
@@ -730,7 +730,7 @@ string get_expression_api(const NeuralNetwork& neural_network)
 
     for(int i = 0; i < tokens.size(); i++)
     {
-        string t = tokens(i);
+        string t = tokens[i];
 
         substring_length0 = t.find(target_string0);
         substring_length1 = t.find(target_string1);
@@ -1029,7 +1029,7 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
 
     buffer_to_fix << header_javascript();
      
-     Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
+     Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
         input_names[i] = inputs_outputs_buffer(0)(i);
@@ -1464,7 +1464,7 @@ string get_expression_python(const NeuralNetwork& neural_network)
            << "\toutputs = model.calculate_outputs(sample)\n" << endl
            << "Inputs Names: \t" << endl;
 
-    Tensor<Tensor<string,1>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
+    Tensor<vector<string>, 1> inputs_outputs_buffer = fix_input_output_variables(inputs, outputs, buffer);
 
     for(Index i = 0; i < inputs_outputs_buffer(0).size();i++)
     {
@@ -2039,7 +2039,7 @@ void fix_input_names(vector<string>& input_names)
 {
     const Index inputs_number = input_names.size();
 
-    Tensor<string,1> input_names(inputs_number);
+    vector<string> input_names(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
         if(input_names[i].empty())

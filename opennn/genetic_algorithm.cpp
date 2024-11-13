@@ -1224,32 +1224,32 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
     const Index individuals_number = get_individuals_number();
 
-    Tensor<string, 1> labels(6);
-    Tensor<string, 1> values(6);
+    vector<string> labels(6);
+    vector<string> values(6);
 
     Tensor<string, 2> string_matrix(labels.size(), 2);
 
-    labels(0) = "Population size";
-    values(0) = to_string(individuals_number);
+    labels[0] = "Population size";
+    values[0] = to_string(individuals_number);
 
-    labels(1) = "Elitism size";
-    values(1) = to_string(elitism_size);
+    labels[1] = "Elitism size";
+    values[1] = to_string(elitism_size);
 
-    labels(2) = "Mutation rate";
-    values(2) = to_string(mutation_rate);
+    labels[2] = "Mutation rate";
+    values[2] = to_string(mutation_rate);
 
-    labels(3) = "Selection loss goal";
-    values(3) = to_string(selection_error_goal);
+    labels[3] = "Selection loss goal";
+    values[3] = to_string(selection_error_goal);
 
-    labels(4) = "Maximum Generations number";
-    values(4) = to_string(maximum_epochs_number);
+    labels[4] = "Maximum Generations number";
+    values[4] = to_string(maximum_epochs_number);
 
-    labels(5) = "Maximum time";
-    values(5) = to_string(maximum_time);
-
+    labels[5] = "Maximum time";
+    values[5] = to_string(maximum_time);
+/*
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-
+*/
     return string_matrix;
 }
 

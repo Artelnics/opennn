@@ -115,8 +115,8 @@ Index count_NAN(const Tensor<type, 2>&);
 
 //Index count_true(const Tensor<bool, 1>&);
 
-Index count_empty(const Tensor<string, 1>&);
-Index count_not_empty(const Tensor<string, 1>&);
+Index count_empty(const vector<string>&);
+Index count_not_empty(const vector<string>&);
 
 Index count_less_than(const Tensor<Index, 1>&, const Index&);
 Index count_between(Tensor<type, 1>&, const type&, const type&);
@@ -129,7 +129,7 @@ Index count_greater_than(const Tensor<Index, 1>&, const Index&);
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
-Tensor<string, 1> sort_by_rank(const Tensor<string,1>&, const Tensor<Index,1>&);
+vector<string> sort_by_rank(const vector<string>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
@@ -140,10 +140,10 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Index, 1>&, const Index&
 Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>&, const Index&);
 
 void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
-void delete_indices(Tensor<string,1>&, const Tensor<Index,1>&);
+void delete_indices(vector<string>&, const Tensor<Index,1>&);
 void delete_indices(Tensor<double,1>&, const Tensor<Index,1>&);
 
-//Tensor<string, 1> get_first(const Tensor<string,1>&, const Index&);
+//vector<string> get_first(const vector<string>&, const Index&);
 //Tensor<Index, 1> get_first(const Tensor<Index,1>&, const Index&);
 
 //void scrub_missing_values(Tensor<type, 2>&, const type&);
@@ -179,7 +179,7 @@ void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, co
 
 bool contains(const Tensor<size_t, 1>&, const size_t&);
 bool contains(const Tensor<type, 1>&, const type&);
-bool contains(const Tensor<string, 1>&, const string&);
+bool contains(const vector<string>&, const string&);
 bool contains(const Tensor<Index, 1>&, const Index&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
@@ -187,7 +187,7 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, con
 // Assemble 
 
 Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>&, const Tensor<string, 1>&);
+vector<string> assemble_text_vector_vector(const vector<string>&, const vector<string>&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
 Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
@@ -197,7 +197,7 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type
 // Push back
 
 void push_back_index(Tensor<Index, 1>&, const Index&);
-void push_back_string(Tensor<string, 1>&, const string&);
+void push_back_string(vector<string>&, const string&);
 void push_back_type(Tensor<type, 1>&, const type&);
 
 Tensor<Tensor<Index, 1>, 1> push_back(const Tensor<Tensor<Index, 1>&, 1>, const Tensor<Index, 1>&);
@@ -212,7 +212,7 @@ string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
 string string_tensor_to_string(const vector<string>&, const string& = " ");
 
-Tensor<string, 1> to_string_tensor(const Tensor<type, 1>&);
+vector<string> to_string_tensor(const Tensor<type, 1>&);
 
 type round_to_precision(type, const int&);
 //Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);

@@ -133,7 +133,7 @@ public:
    void set_layer_input_indices(const vector<vector<Index>>&);
    void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
-   void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const vector<string>&);
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 

@@ -92,7 +92,7 @@ private:
 
     // Object detection
 
-    Tensor<string, 1> labels_tokens;
+    vector<string> labels_tokens;
 
     Index width_no_padding = 0;
 

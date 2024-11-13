@@ -594,10 +594,10 @@ void ImageDataSet::read_bmp()
 
     set(samples_number, { height, width, image_channels }, { targets_number });
 
-    Tensor<string, 1> categories(targets_number);
+    vector<string> categories(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        categories(i) = directory_path[i].filename().string();
+        categories[i] = directory_path[i].filename().string();
 
     raw_variables[raw_variables_number-1].set_categories(categories);
 

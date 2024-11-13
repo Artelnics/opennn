@@ -40,8 +40,8 @@ int main()
         /*
         text_data_set.split_samples_random();
 
-        const Tensor<string, 1> input_words = text_data_set.get_input_raw_variables_names();
-        const Tensor<string, 1> targets_names = text_data_set.get_target_variables_names();
+        const vector<string> input_words = text_data_set.get_input_raw_variables_names();
+        const vector<string> targets_names = text_data_set.get_target_variables_names();
 
         const Index words_number = text_data_set.get_variables_number(VariableUse::Input);
         const Index target_variables_number = text_data_set.get_variables_number(VariableUse::Target);

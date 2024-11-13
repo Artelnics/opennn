@@ -226,9 +226,9 @@ public:
 
    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&) const;
 
-   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
+   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&) const;
 
-   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
+   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&) const;
 
    // Save
 
@@ -236,19 +236,19 @@ public:
 
    void save_multiple_classification_tests(const string&) const;
 
-   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
    void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
    void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 

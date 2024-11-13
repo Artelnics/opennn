@@ -73,9 +73,9 @@ namespace opennn
 // }
 
 
-void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& text, const string& separator, vector<string>& tokens)
 {
-    tokens.setConstant("");
+    fill(tokens.begin(), tokens.end(), "");
 
     // Skip delimiters at beginning.
 
@@ -145,11 +145,11 @@ Index count_tokens(const string& text, const string& separator)
 }
 
 
-Tensor<string, 1> get_tokens(const string& text, const string& separator)
+vector<string> get_tokens(const string& text, const string& separator)
 {
     const Index tokens_number = count_tokens(text, separator);
 
-    Tensor<string,1> tokens(tokens_number);
+    vector<string> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
@@ -194,9 +194,9 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
 Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(text, separator);
+    const vector<string> tokens = get_tokens(text, separator);
 
-    const Index tokens_size = tokens.dimension(0);
+    const Index tokens_size = tokens.size();
 
     Tensor<type, 1> type_vector(tokens_size);
 
@@ -218,9 +218,9 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 
 Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(text, separator);
+    const vector<string> tokens = get_tokens(text, separator);
 
-    const Index tokens_size = tokens.dimension(0);
+    const Index tokens_size = tokens.size();
 
     Tensor<Index, 1> index_vector(tokens_size);
 
@@ -244,28 +244,28 @@ Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 }
 
 
-Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
+vector<string> get_unique_elements(const vector<string>& tokens)
 {
     string result;
 
     for(Index i = 0; i < tokens.size(); i++)
-        if(!contains_substring(result, " " + tokens(i) + " "))
-            result += tokens(i) + " ";
+        if(!contains_substring(result, " " + tokens[i] + " "))
+            result += tokens[i] + " ";
 
     return get_tokens(result, " ");
 }
 
 
-Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
+Tensor<Index, 1> count_unique(const vector<string>& tokens)
 {
-    const Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+    const vector<string> unique_elements = get_unique_elements(tokens);
 
     const Index unique_size = unique_elements.size();
 
     Tensor<Index, 1> unique_count(unique_size);
 
     for(Index i = 0; i < unique_size; i++)
-        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
+        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements[i]));
 
     return unique_count;
 }
@@ -300,7 +300,7 @@ bool is_numeric_string(const string& text)
 }
 
 
-// bool is_constant_string(const Tensor<string, 1>& string_list)
+// bool is_constant_string(const vector<string>& string_list)
 // {
 //     const string str0 = string_list[0];
 
@@ -403,7 +403,7 @@ bool starts_with(const string& word, const string& starting)
 //}
 
 
-// bool ends_with(const string& word, const Tensor<string,1>& endings)
+// bool ends_with(const string& word, const vector<string>& endings)
 // {
 //     const Index endings_size = endings.size();
 
@@ -1020,7 +1020,7 @@ string prepend(const string& pre, const string& text)
 }
 
 
-bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
+bool is_numeric_string_vector(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
@@ -1030,7 +1030,7 @@ bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 }
 
 
-bool has_numbers(const Tensor<string, 1>& string_list)
+bool has_numbers(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
@@ -1040,7 +1040,7 @@ bool has_numbers(const Tensor<string, 1>& string_list)
 }
 
 
-bool has_strings(const Tensor<string, 1>& string_list)
+bool has_strings(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
@@ -1050,7 +1050,7 @@ bool has_strings(const Tensor<string, 1>& string_list)
 }
 
 
-bool is_not_numeric(const Tensor<string, 1>& string_list)
+bool is_not_numeric(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
@@ -1060,7 +1060,7 @@ bool is_not_numeric(const Tensor<string, 1>& string_list)
 }
 
 
-bool is_mixed(const Tensor<string, 1>& string_list)
+bool is_mixed(const vector<string>& string_list)
 {
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
@@ -1087,17 +1087,17 @@ void delete_non_printable_chars(string& text)
 }
 
 
-void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
+void replace_substring(vector<string>& data, const string& find_what, const string& replace_with)
 {
-    const Index size = vector.dimension(0);
+    const Index size = data.size();
 
     for(Index i = 0; i < size; i++)
     {
         size_t position = 0;
 
-        while((position = vector(i).find(find_what, position)) != string::npos)
+        while((position = data[i].find(find_what, position)) != string::npos)
         {
-            vector(i).replace(position, find_what.length(), replace_with);
+            data[i].replace(position, find_what.length(), replace_with);
 
             position += replace_with.length();
         }
@@ -1192,7 +1192,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 
 // @todo clean this method Clang-tidy gives warnings.
 
-Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
+vector<string> sort_string_tensor(vector<string>& tensor)
 {
     auto compare_string_length = [](const string& a, const string& b)
     {
@@ -1204,7 +1204,7 @@ Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
     sort(tensor_as_vector.begin(), tensor_as_vector.end(), compare_string_length);
 
     for(int i = 0; i < tensor.size(); i++)
-        tensor(i) = tensor_as_vector[i];
+        tensor[i] = tensor_as_vector[i];
 
     return tensor;
 }
@@ -1437,36 +1437,36 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 //}
 
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
+Index count_tokens(const Tensor<vector<string>, 1>& tokens)
 {
     const Index documents_number = tokens.size();
 
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
-        count += tokens(i).size();
+        count += tokens[i].size();
 
     return count;
 }
 
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
+vector<string> tokens_list(const Tensor<vector<string>, 1>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
     const Index total_tokens_number = count_tokens(documents_tokens);
 
-    Tensor<string, 1> total_tokens(total_tokens_number);
+    vector<string> total_tokens(total_tokens_number);
 
     Index position = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        copy(documents_tokens(i).data(),
-             documents_tokens(i).data() + documents_tokens(i).size(),
+        copy(documents_tokens[i].data(),
+             documents_tokens[i].data() + documents_tokens[i].size(),
              total_tokens.data() + position);
 
-        position += documents_tokens(i).size();
+        position += documents_tokens[i].size();
     }
 
     return total_tokens;
@@ -1479,46 +1479,43 @@ void to_lower(string& text)
 }
 
 
-void to_lower(Tensor<string, 1>& documents)
+void to_lower(vector<string>& documents)
 {
     const Index documents_number = documents.size();
 
     for(Index i = 0; i < documents_number; i++)
-        to_lower(documents(i));
+        to_lower(documents[i]);
 }
 
 
-void to_lower(Tensor<Tensor<string, 1>, 1>& text)
+void to_lower(vector<vector<string>>& text)
 {
     for(Index i = 0; i < text.size(); i++)
-        to_lower(text(i));
+        to_lower(text[i]);
 }
 
 
-Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, const string& separator)
+vector<vector<string>> get_tokens(const vector<string>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
-    Tensor<Tensor<string, 1>, 1> tokens(documents_number);
-
-
+    vector<vector<string>> tokens(documents_number);
     //#pragma omp parallel for
 
     for(Index i = 0; i < documents_number-1; i++)
-    tokens(i) = get_tokens(documents(i), separator);
-
+        tokens[i] = get_tokens(documents[i], separator);
 
     return tokens;
 }
 
 
-void delete_blanks(Tensor<string, 1>& words)
+void delete_blanks(vector<string>& words)
 {
     const Index words_number = words.size();
 
     const Index empty_number = count_empty(words);
 
-    Tensor<string, 1> vector_copy(words);
+    vector<string> vector_copy(words);
 
     words.resize(words_number - empty_number);
 
@@ -1526,15 +1523,15 @@ void delete_blanks(Tensor<string, 1>& words)
 
     for(Index i = 0; i < words_number; i++)
     {
-        trim(vector_copy(i));
+        trim(vector_copy[i]);
 
-        if(!vector_copy(i).empty())
-            words(index++) = vector_copy(i);
+        if(!vector_copy[i].empty())
+            words[index++] = vector_copy[i];
     }
 }
 
 
-void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
+void delete_blanks(Tensor<vector<string>, 1>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
@@ -1542,25 +1539,24 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        const Index new_size = count_not_empty(documents_tokens(i));
+        const Index new_size = count_not_empty(documents_tokens[i]);
 
-        Tensor<string, 1> new_document_tokens(new_size);
+        vector<string> new_document_tokens(new_size);
 
         Index index = 0;
 
-        for(Index j = 0; j < documents_tokens(i).size(); j++)
-            if(!documents_tokens(i)(j).empty())
-                new_document_tokens(index++) = documents_tokens(i)(j);
+        for(Index j = 0; j < documents_tokens[i].size(); j++)
+            if(!documents_tokens[i][j].empty())
+                new_document_tokens[index++] = documents_tokens[i][j];
 
-        documents_tokens(i) = new_document_tokens;
+        documents_tokens[i] = new_document_tokens;
     }
 }
 
 
-Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
+vector<vector<string>> preprocess_language_documents(const vector<string>& documents)
 {
-
-    Tensor<string, 1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -1572,18 +1568,16 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     delete_non_alphanumeric(documents_copy);
 
-    return get_tokens(documents_copy," ");
-
-    //return Tensor<Tensor<string, 1>, 1>();
+    return get_tokens(documents_copy, " ");
 }
 
 
-vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
+vector<pair<string, int>> count_words(const vector<string>& total_tokens)
 {
     unordered_map<string, int> count;
 
     for(Index i = 0; i < total_tokens.size(); i++)
-        count[total_tokens(i)]++;
+        count[total_tokens[i]]++;
 
     vector<pair<string, int>> word_counts(count.begin(), count.end());
 
@@ -1599,7 +1593,7 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
 }
 
 
-void delete_punctuation(Tensor<string, 1>& documents) 
+void delete_punctuation(vector<string>& documents)
 {
     replace_substring(documents, "�", " ");
     replace_substring(documents, "\"", " ");
@@ -1657,9 +1651,9 @@ void delete_punctuation(Tensor<string, 1>& documents)
 }
 
 
-void delete_extra_spaces(Tensor<string, 1>& documents) 
+void delete_extra_spaces(vector<string>& documents)
 {
-    Tensor<string, 1> new_documents(documents);
+    vector<string> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
     {
@@ -1673,26 +1667,26 @@ void delete_extra_spaces(Tensor<string, 1>& documents)
 }
 
 
-void delete_breaks_and_tabs(Tensor<string, 1>& documents) 
+void delete_breaks_and_tabs(vector<string>& documents)
 {
     for(Index i = 0; i < documents.size(); i++)
     {                
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\r', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\n', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\t', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\f', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\r', ' ');
     }
 }
 
 
-void delete_non_printable_chars(Tensor<string, 1>& documents) 
+void delete_non_printable_chars(vector<string>& documents)
 {
     for(Index i = 0; i < documents.size(); i++) 
-        delete_non_printable_chars(documents(i));
+        delete_non_printable_chars(documents[i]);
 }
 
 
-void split_punctuation(Tensor<string, 1>& documents) 
+void split_punctuation(vector<string>& documents)
 {
     replace_substring(documents, "�", " � ");
     replace_substring(documents, "\"", " \" ");
@@ -1750,9 +1744,9 @@ void split_punctuation(Tensor<string, 1>& documents)
 }
 
 
-void delete_non_alphanumeric(Tensor<string, 1>& documents)
+void delete_non_alphanumeric(vector<string>& documents)
 {
-    Tensor<string, 1> new_documents(documents);
+    vector<string> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
         new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
@@ -1761,51 +1755,51 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
 }
 
 
-string to_string(Tensor<string, 1> token)
+string to_string(vector<string> token)
 {
     string word;
 
     for(Index i = 0; i < token.size() - 1; i++)
-        word += token(i) + " ";
+        word += token[i] + " ";
 
-    word += token(token.size() - 1);
+    word += token[token.size() - 1];
 
     return word;
 }
 
 
-Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>& tokens)
+vector<string> detokenize(const Tensor<vector<string>, 1>& tokens)
 {
     const Index documents_number = tokens.size();
 
-    Tensor<string, 1> new_documents(documents_number);
+    vector<string> new_documents(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        new_documents[i] = to_string(tokens(i));
+        new_documents[i] = to_string(tokens[i]);
 
     return new_documents;
 }
 
 
-void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& delete_words) 
+void filter_not_equal_to(vector<string>& document, const vector<string>& delete_words)
 {
     for(Index i = 0; i < document.size(); i++)
     {
-        const Index tokens_number = count_tokens(document(i), " ");
-        const Tensor<string, 1> tokens = get_tokens(document(i), " ");
+        const Index tokens_number = count_tokens(document[i], " ");
+        const vector<string> tokens = get_tokens(document[i], " ");
 
         string result;
 
         for(Index j = 0; j < tokens_number; j++)
-            if(!contains(delete_words, tokens(j)))
-                result += tokens(j) + " ";
+            if(!contains(delete_words, tokens[j]))
+                result += tokens[j] + " ";
 
-        document(i) = result;
+        document[i] = result;
     }
 }
 
 
-void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
+void delete_words(vector<vector<string>>& documents_words, const vector<string>& deletion_words)
 {
     const Index documents_number = documents_words.size();
 
@@ -1815,15 +1809,15 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<st
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words(i).size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
-            const string word = documents_words(i)(j);
+            const string word = documents_words[i][j];
 
             for(Index k = 0; k < deletion_words_number; k++)
             {
-                if(word == deletion_words(k))
+                if(word == deletion_words[k])
                 {
-                    documents_words(i)(j).clear();
+                    documents_words[i][j].clear();
 
                     continue;
                 }
@@ -1833,7 +1827,7 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<st
 }
 
 
-void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
+void delete_short_long_words(Tensor<vector<string>,1>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
 {
@@ -1843,31 +1837,31 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words(i).size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
-            const Index length = documents_words(i)(j).length();
+            const Index length = documents_words[i][j].length();
 
             if(length <= minimum_length || length >= maximum_length)
-                documents_words(i)(j).clear();
+                documents_words[i][j].clear();
         }
     }
 }
 
 
-void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
+void delete_numbers(Tensor<vector<string>,1>& documents_words)
 {
     const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
-        for(Index j = 0; j < documents_words(i).size(); j++)
-            if(is_numeric_string(documents_words(i)(j)))
-                documents_words(i)(j).clear();
+        for(Index j = 0; j < documents_words[i].size(); j++)
+            if(is_numeric_string(documents_words[i][j]))
+                documents_words[i][j].clear();
 }
 
 
-void delete_emails(Tensor<Tensor<string,1>,1>& documents)
+void delete_emails(Tensor<vector<string>,1>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -1875,12 +1869,12 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        const Tensor<string, 1> document = documents(i);
+        const vector<string> document = documents[i];
 
         for(Index j = 0; j < document.size(); j++)
         {
             /*
-            Tensor<string, 1> tokens = get_tokens(document(j));
+            vector<string> tokens = get_tokens(document(j));
 
             string result;
 
@@ -1896,20 +1890,20 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 */
         }
 
-        documents(i) = document;
+        documents[i] = document;
     }
 }
 
 
-void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
+void replace_accented_words(Tensor<vector<string>, 1>& documents)
 {
     const Index documents_size = documents.size();
 
     #pragma omp parallel for
 
     for(Index i = 0; i < documents_size; i++)
-        for(Index j = 0; j < documents(i).size(); j++)
-            replace_accented_words(documents(i)(j));
+        for(Index j = 0; j < documents[i].size(); j++)
+            replace_accented_words(documents[i][j]);
 }
 
 
@@ -1950,7 +1944,7 @@ void replace_accented_words(string& word)
 }
 
 
-Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
+vector<string> get_r1_r2(const string& word, const vector<string>& vowels)
 {
     const Index word_length = word.length();
 
@@ -1978,14 +1972,11 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
         }
     }
 
-    Tensor<string,1> r1_r2(2);
-    r1_r2.setValues({ r1, r2 });
-
-    return r1_r2;
+    return vector<string>({ r1, r2 });
 }
 
 
-string get_rv(const string& word, const Tensor<string,1>& vowels)
+string get_rv(const string& word, const vector<string>& vowels)
 {
     string rv;
 
@@ -2025,7 +2016,7 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-WordBag calculate_word_bag(const Tensor<string,1>& words)
+WordBag calculate_word_bag(const vector<string>& words)
 {
     WordBag word_bag;
 
@@ -2045,12 +2036,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 }
 
 
-//WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//WordBag calculate_word_bag_minimum_frequency(const Tensor<vector<string>,1>& tokens,
 //                                             const Index& minimum_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2068,12 +2059,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_minimum_percentage(const Tensor<vector<string>,1>& tokens,
 //                                               const double& minimum_percentage)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2091,12 +2082,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_minimum_ratio(const Tensor<vector<string>,1>& tokens,
 //                                          const double& minimum_ratio)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2118,12 +2109,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_total_frequency(const Tensor<vector<string>,1>& tokens,
 //                                            const Index& total_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     const Tensor<string,1> words = word_bag.words;
+//     const vector<string> words = word_bag.words;
 //     const Tensor<Index, 1> frequencies = word_bag.frequencies;
 
 //     Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
@@ -2143,12 +2134,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_maximum_size(const Tensor<vector<string>,1>& tokens,
 //                                         const Index& maximum_size)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     const Tensor<string, 1> words = word_bag.words;
+//     const vector<string> words = word_bag.words;
 //     const Tensor<Index ,1> frequencies = word_bag.frequencies;
 
 //     word_bag.words = get_first(words, maximum_size);
@@ -2158,11 +2149,11 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
+// Index calculate_weight(const vector<string>& document_words, const WordBag& word_bag)
 // {
 //     Index weight = 0;
 
-//     const Tensor<string, 1> bag_words = word_bag.words;
+//     const vector<string> bag_words = word_bag.words;
 
 //     const Tensor<Index, 1> bag_frequencies = word_bag.frequencies;
 
@@ -2181,10 +2172,10 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
+Tensor<vector<string>,1> preprocess(const vector<string>& documents)
 {
 /*
-    Tensor<string,1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -2196,7 +2187,7 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
+    Tensor<vector<string>,1> tokens = get_tokens(documents_copy);
 
     delete_stop_words(tokens);
 
@@ -2214,14 +2205,14 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     return tokens;
 */
-    return Tensor<Tensor<string,1>,1>();
+    return Tensor<vector<string>,1>();
 }
 
 
-Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& documents)
+Tensor<vector<string>,1> preprocess_language_model(const vector<string>& documents)
 {
 /*
-    Tensor<string,1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -2233,7 +2224,7 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
+    Tensor<vector<string>,1> tokens = get_tokens(documents_copy);
 
     delete_emails(tokens);
 
@@ -2241,38 +2232,38 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     return tokens;
 */
-    return Tensor<Tensor<string,1>, 1>();
+    return Tensor<vector<string>, 1>();
 }
 
 
-Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
+Tensor<Index, 1> get_words_number(const Tensor<vector<string>,1>& tokens)
 {
     const Index documents_number = tokens.size();
 
     Tensor<Index, 1> words_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        words_number(i) = tokens(i).size();
+        words_number(i) = tokens[i].size();
 
     return words_number;
 }
 
 
-Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
+Tensor<Index, 1> get_sentences_number(const vector<string>& documents)
 {
     const Index documents_number = documents.size();
 
     Tensor<Index, 1> sentences_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        sentences_number(i) = count_tokens(documents(i), ".");
+        sentences_number(i) = count_tokens(documents[i], ".");
 
     return sentences_number;
 }
 
 
-// Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
-//                                                 const Tensor<string, 1>& words_name)
+// Tensor<double, 1> get_words_presence_percentage(const Tensor<vector<string>, 1>& tokens,
+//                                                 const vector<string>& words_name)
 // {
 //     Tensor<double, 1> word_presence_percentage(words_name.size());
 
@@ -2282,7 +2273,7 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
 //         for(Index j = 0; j < tokens.size(); j++)
 //         {
-//             if(contains(tokens(j),words_name(i)))
+//             if(contains(tokens[j],words_name(i)))
 //             {
 //                 sum = sum + 1;
 //             }
@@ -2296,14 +2287,14 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
 
 /*
-Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
+Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<vector<string>, 1>& tokens,
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
 {
-    const Tensor<string, 1> words = tokens_list(tokens);
+    const vector<string> words = tokens_list(tokens);
 
     const WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
-    const Tensor<string, 1> words_name = top_word_bag.words;
+    const vector<string> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
         throw runtime_error("Words number must be greater than 1.\n");
@@ -2324,7 +2315,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         }
     }
 
-    Tensor<string, 1> combinated_words(combinated_words_size);
+    vector<string> combinated_words(combinated_words_size);
 
     Index index = 0;
 
@@ -2347,7 +2338,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         }
     }
 
-//    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words )));
+//    const vector<string> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words )));
 
 //    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
 
@@ -2363,19 +2354,19 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
 */
 
 /*
-Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
+Tensor<string, 2> top_words_correlations(const Tensor<vector<string>, 1>& tokens,
                                          const double& minimum_percentage,
                                          const Tensor<Index, 1>& targets)
 {
     const WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
-    const Tensor<string, 1> words_name = top_word_bag.words;
+    const vector<string> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
     {
         cout << "There are no words with such high percentage of appearance" << endl;
     }
 
-    Tensor<string, 1> new_documents(tokens.size());
+    vector<string> new_documents(tokens.size());
 
     for(size_t i = 0; i < tokens.size(); i++)
     {
@@ -2443,7 +2434,7 @@ string generate_word(TextGenerationAlphabet& text_generation_alphabet, const str
 
     //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+    //    vector<string> punctuation_signs(6); // @todo change for multiple letters predicted
 
     //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
 
@@ -2534,7 +2525,7 @@ Tensor<type, 2> TextGenerationAlphabet::get_data_tensor()
 }
 
 
-Tensor<string, 1> TextGenerationAlphabet::get_alphabet()
+vector<string> TextGenerationAlphabet::get_alphabet()
 {
     return alphabet;
 }
@@ -2568,7 +2559,7 @@ void TextGenerationAlphabet::set_data_tensor(const Tensor<type, 2>& new_data_ten
 }
 
 
-void TextGenerationAlphabet::set_alphabet(const Tensor<string, 1>& new_alphabet)
+void TextGenerationAlphabet::set_alphabet(const vector<string>& new_alphabet)
 {
     alphabet = new_alphabet;
 }
@@ -2748,12 +2739,12 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 }
 */
 
-void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
+void print_tokens(const Tensor<vector<string>,1>& tokens)
 {
     for(Index i = 0; i < tokens.size(); i++)
     {
-        for(Index j = 0; j < tokens(i).size(); j++)
-            cout << tokens(i)(j) << " - ";
+        for(Index j = 0; j < tokens[i].size(); j++)
+            cout << tokens[i][j] << " - ";
 
         cout << endl;
     }
@@ -2883,26 +2874,20 @@ string stem(const string& word)
 }
 
 
-void stem(Tensor<string, 1>& words)
+void stem(vector<string>& words)
 {
     for(Index i = 0; i < words.size(); i++)
-    {
-        words(i) = stem(words(i));
-    }
+        words[i] = stem(words[i]);
 }
 
 
-void stem(Tensor<Tensor<string, 1>, 1>& words)
+void stem(Tensor<vector<string>, 1>& words)
 {
     #pragma omp parallel for
 
     for(Index i = 0; i < words.size(); i++)
-    {
-        for(Index j = 0; j < words(i).size(); j++)
-        {
-            stem(words(i)(j));
-        }
-    }
+        for(Index j = 0; j < words[i].size(); j++)
+            stem(words[i][j]);
 }
 
 }
