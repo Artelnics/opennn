@@ -53,7 +53,7 @@ TEST(PerformanceTest, ImageClassification)
     
     ImageDataSet image_data_set(samples_number, { image_height, image_width, channels }, { targets });
     image_data_set.set_image_data_random();
-    //image_data_set.set(DataSet::SampleUse::Training);
+    image_data_set.set(DataSet::SampleUse::Training);
     
     const dimensions complexity_dimensions = { 8 };
 
@@ -61,17 +61,18 @@ TEST(PerformanceTest, ImageClassification)
         image_data_set.get_input_dimensions(),
         complexity_dimensions,
         image_data_set.get_target_dimensions());
-
+    
     TrainingStrategy training_strategy(&neural_network, &image_data_set);
-
+    
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
     training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
     training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
     training_strategy.set_display_period(1);
-
+    
     training_strategy.perform_training();
+    
     
     EXPECT_EQ(1, 1);
 }

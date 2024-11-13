@@ -69,8 +69,8 @@ public:
         void set(const string& = "",
                  const DataSet::VariableUse& = DataSet::VariableUse::None,
                  const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
-                 const Scaler & = Scaler::MeanStandardDeviation,
-                 const Tensor<string, 1> & = Tensor<string, 1>());
+                 const Scaler& = Scaler::MeanStandardDeviation,
+                 const Tensor<string, 1>& = Tensor<string, 1>());
 
         string name;
 

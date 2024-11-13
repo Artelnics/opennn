@@ -61,9 +61,9 @@ DataSet::RawVariable::RawVariable(const string& new_name,
                                   const Tensor<string, 1>& new_categories)
 {
     name = new_name;
-    scaler = new_scaler;
     use = new_raw_variable_use;
     type = new_type;
+    scaler = new_scaler;
     categories = new_categories;
 }
 
@@ -75,9 +75,9 @@ void DataSet::RawVariable::set(const string& new_name,
                                const Tensor<string, 1>& new_categories)
 {
     name = new_name;
-    scaler = new_scaler;
     use = new_raw_variable_use;
     type = new_type;
+    scaler = new_scaler;
     categories = new_categories;
 }
 
@@ -1946,31 +1946,27 @@ void DataSet::set(const Index& new_samples_number,
     
     if (model_type == ModelType::ImageClassification)
     {
+        
         const Index raw_variables_number = new_inputs_number + 1;
 
         raw_variables.resize(raw_variables_number);
-        
+
         for (Index i = 0; i < new_inputs_number; i++)
             raw_variables[i].set("p_" + to_string(i + 1),
                 VariableUse::Input,
                 RawVariableType::Numeric,
                 Scaler::ImageMinMax);
-
-        Tensor<string, 1> categories(targets_number);
-        categories.setConstant("ABC");
         
         if (targets_number == 1)
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Binary,
-                Scaler::None,
-                categories);
+                Scaler::None); 
         else
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
-                Scaler::None,
-                categories);
+                Scaler::None);     
     }
     else
     {
