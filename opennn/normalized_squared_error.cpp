@@ -36,22 +36,29 @@ type NormalizedSquaredError::get_selection_normalization_coefficient() const
 void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
-
+    cout << "llega 0" << endl;
     if(neural_network->has(Layer::Type::Recurrent)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
+    {
+        cout << "llega 1" << endl;
         set_normalization_coefficient();
+        cout << "llega 2" << endl;
+    }
+    
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
+    cout << "aaaa 1" << endl;
     const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-
+    cout << "aaaa 2" << endl;
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
+    cout << "aaaa 4" << endl;
 }
 
 
@@ -150,7 +157,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     const Index size = targets.dimension(0);
 
     type normalization_coefficient = type(0);
-
+    cout << "b 0" << endl;
     Tensor<type, 0> norm;
 
     for(Index i = 0; i < size; i++)
@@ -159,10 +166,10 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
         normalization_coefficient += norm(0);
     }
-
+    cout << "b 1" << endl;
     if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) 
         normalization_coefficient = type(1);
-
+    cout << "normalization_coefficient: " << normalization_coefficient << endl;
     return normalization_coefficient;
 }
 

@@ -71,8 +71,7 @@ TEST(PerformanceTest, ImageClassification)
     training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
     training_strategy.set_display_period(1);
     
-    training_strategy.perform_training();
-    
+    training_strategy.perform_training(); 
     
     EXPECT_EQ(1, 1);
 }
