@@ -104,7 +104,7 @@ Index count_less_than(const Tensor<Index, 1>&, const Index&);
 Index count_between(Tensor<type, 1>&, const type&, const type&);
 
 Index count_less_than(const Tensor<double, 1>&, const double&);
-Index count_greater_than(const Tensor<Index, 1>&, const Index&);
+Index count_greater_than(const vector<Index>&, const Index&);
 
 //void save_csv(const Tensor<type,2>&, const string&);
 
@@ -118,8 +118,8 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Index, 1>&, const Index&);
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>&, const Index&);
+vector<Index> get_elements_greater_than(const vector<Index>&, const Index&);
+vector<Index> get_elements_greater_than(const vector<vector<Index>>&, const Index&);
 
 void delete_indices(Tensor<Index,1>&, const Tensor<Index,1>&);
 void delete_indices(vector<string>&, const Tensor<Index,1>&);
@@ -156,7 +156,7 @@ bool contains(const Tensor<Index, 1>&, const Index&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+vector<Index> join_vector_vector(const vector<Index>&, const vector<Index>&);
 vector<string> assemble_text_vector_vector(const vector<string>&, const vector<string>&);
 
 Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);

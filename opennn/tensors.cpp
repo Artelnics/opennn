@@ -882,44 +882,44 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 }
 
 
-Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+Index count_greater_than(const vector<Index>& data, const Index& bound)
 {
     Index count = 0;
 
     #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < vector.size(); i++)
-        if(vector(i) > bound)
+    for(Index i = 0; i < data.size(); i++)
+        if(data[i] > bound)
             count++;
 
     return count;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<Index>& data, const Index& bound)
 {
-    const Index indices_size = count_greater_than(vector, bound);
+    const Index indices_size = count_greater_than(data, bound);
 
-    Tensor<Index, 1> indices(indices_size);
+    vector<Index> indices(indices_size);
 
     Index index = 0;
 
-    for(Index i  = type(0); i < vector.size(); i++)
-         if(vector(i) > bound)
-             indices(index++) = vector(i);
+    for(Index i  = type(0); i < data.size(); i++)
+         if(data[i] > bound)
+             indices[index++] = data[i];
 
     return indices;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, const Index& bound)
 {
     const Index vectors_number = vectors.size();
 
-    Tensor<Index, 1> indices(0);
+    vector<Index> indices(0);
 
     for(Index i = 0; i < vectors_number; i++)
     {
-        const Tensor<Index, 1> indices_vector = get_elements_greater_than(vectors(i), bound);
+        const vector<Index> indices_vector = get_elements_greater_than(vectors[i], bound);
 
         indices = join_vector_vector(indices, indices_vector);
     }
@@ -1405,11 +1405,11 @@ Index count_not_empty(const vector<string>& strings)
 }
 
 
-Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
+vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
     const Index size = x.size() + y.size();
 
-    Tensor<Index, 1> data(size);
+    vector<Index> data(size);
 
     memcpy(data.data(), x.data(), x.size() * sizeof(Index));
 

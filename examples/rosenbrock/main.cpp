@@ -6,16 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 

@@ -17,43 +17,24 @@ namespace opennn
 
 TextDataSet::TextDataSet() : DataSet()
 {
-    stop_words.resize(242);
-
-    stop_words =
-    { "i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
-     "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-     "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
-     "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
-     "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
-     "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
-     "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
-     "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
-     "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
-     "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
-     "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
-     "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
-     "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
-     "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
-     "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-     "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" };
 }
 
 
 const Index& TextDataSet::get_short_words_length() const
 {
-    return short_words_length;
+    return short_word_length;
 }
 
 
 const Index& TextDataSet::get_long_words_length() const
 {
-    return long_words_length;
+    return long_word_length;
 }
 
 
 const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 {
-    return words_frequencies;
+    return word_frequencies;
 }
 
 
@@ -65,19 +46,19 @@ Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
 
 void TextDataSet::set_short_words_length(const Index& new_short_words_length)
 {
-    short_words_length = new_short_words_length;
+    short_word_length = new_short_words_length;
 }
 
 
 void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 {
-    long_words_length = new_long_words_length;
+    long_word_length = new_long_words_length;
 }
 
 
 //void TextDataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
 //{
-//    words_frequencies = new_words_frequencies;
+//    word_frequencies = new_words_frequencies;
 //}
 
 
@@ -140,13 +121,13 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
     // Short words length
 
     file_stream.OpenElement("ShortWordsLength");
-    file_stream.PushText(to_string(short_words_length).c_str());
+    file_stream.PushText(to_string(short_word_length).c_str());
     file_stream.CloseElement();
 
     // Long words length
 
     file_stream.OpenElement("LongWordsLength");
-    file_stream.PushText(to_string(long_words_length).c_str());
+    file_stream.PushText(to_string(long_word_length).c_str());
     file_stream.CloseElement();
 
     // Stop words list
@@ -328,13 +309,13 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("WordsFrequencies");
 
-        for(Index i = 0; i < words_frequencies.size(); i++)
+        for(Index i = 0; i < word_frequencies.size(); i++)
         {
             buffer.str("");
-            buffer << words_frequencies(i);
+            buffer << word_frequencies(i);
 
             file_stream.PushText(buffer.str().c_str());
-            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+            if(i != word_frequencies.size()-1) file_stream.PushText(" ");
 
         }
 
@@ -1038,9 +1019,8 @@ const XMLElement* start_element = raw_variables_number_element;
 
 Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
-
     const Index raw_variables_number = get_raw_variables_number();
-    const vector<string> raw_variables_names = get_raw_variable_names();
+    const vector<string> raw_variable_names = get_raw_variable_names();
 
     const vector<string> tokens = get_tokens(sentence, " ");
 
@@ -1055,10 +1035,10 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if(contains(raw_variables_names, word_bag.words[i]))
+        if(contains(raw_variable_names, word_bag.words[i]))
         {
-            auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words[i]);
-            const Index index = it - raw_variables_names.data();
+            auto it = find(raw_variable_names.data(), raw_variable_names.data() + raw_variable_names.size(), word_bag.words[i]);
+            const Index index = it - raw_variable_names.data();
 
             vector_x(index) = type(word_bag.frequencies(i));
         }
@@ -1827,7 +1807,7 @@ void TextDataSet::read_txt()
 
     delete_words(documents_words, stop_words);
 
-    delete_short_long_words(documents_words, short_words_length, long_words_length);
+    delete_short_long_words(documents_words, short_word_length, long_word_length);
 
     replace_accented_words(documents_words);
 
@@ -1853,7 +1833,7 @@ void TextDataSet::read_txt()
 
 //    set_words_frequencies(word_bag.frequencies);
 
-    const vector<string> raw_variables_names = word_bag.words;
+    const vector<string> raw_variable_names = word_bag.words;
     const Index raw_variables_number = word_bag.size();
 
     Tensor<type, 1> row(raw_variables_number);
@@ -1870,7 +1850,7 @@ void TextDataSet::read_txt()
     new_file.open(new_data_source_path);
 
     for(Index i  = 0; i < raw_variables_number; i++)
-        new_file << raw_variables_names[i] << ";";
+        new_file << raw_variable_names[i] << ";";
 
     new_file << "target" << "\n";
 
@@ -1891,7 +1871,7 @@ void TextDataSet::read_txt()
 
 //    row.setZero();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
@@ -1903,13 +1883,11 @@ void TextDataSet::read_txt()
 
         for(Index j = 0; j < tokens_number; j++)
         {
-            const string token = documents_words[i][j];
+            const string word = documents_words[i][j];
 
             for(Index k = 0; k < raw_variables_number; k++)
-            {
-                if(token == raw_variables_names[k])
+                if(word == raw_variable_names[k])
                     row(k)++;
-            }
         }
 
         for(Index k = 0; k < raw_variables_number; k++)

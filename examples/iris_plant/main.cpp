@@ -6,15 +6,9 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a classical pattern recognition problem.
-
-
-
 #include <iostream>
 #include <string>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 
@@ -47,7 +41,7 @@ int main()
 
         neural_network.save("../data/neural_network.xml");
         neural_network.load("../data/neural_network.xml");
-/*
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -71,9 +65,7 @@ int main()
         const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
         cout << "\nInputs:\n" << inputs << endl;
-
         cout << "\nOutputs:\n" << outputs << endl;
-
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
         // Save results
@@ -82,7 +74,7 @@ int main()
 
         neural_network.save_expression_c("data/neural_network.c");
         neural_network.save_expression_python("data/neural_network.py");
-*/
+
         cout << "Bye!" << endl;
 
         return 0;

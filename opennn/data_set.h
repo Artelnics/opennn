@@ -255,7 +255,7 @@ public:
 
     void set_sample_uses(const vector<SampleUse>&);
     void set_sample_uses(const vector<string>&);
-    void set_sample_uses(const Tensor<Index, 1>&, const SampleUse);
+    void set_sample_uses(const vector<Index>&, const SampleUse&);
 
     // Raw variables set
 
@@ -433,9 +433,9 @@ public:
 
     // Tuckey outlier detection
 
-    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+    vector<vector<Index>> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& = type(1.5));
+    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const type& = type(1.5));
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 

@@ -154,9 +154,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set) ? true : false;
+    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
+    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
    
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);

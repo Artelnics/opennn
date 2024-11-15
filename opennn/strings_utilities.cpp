@@ -2198,7 +2198,7 @@ vector<vector<string>> preprocess(const vector<string>& documents)
 
     delete_stop_words(tokens);
 
-    delete_short_long_words(tokens, short_words_length, long_words_length);
+    delete_short_long_words(tokens, short_word_length, long_word_length);
 
     replace_accented_words(tokens);
 

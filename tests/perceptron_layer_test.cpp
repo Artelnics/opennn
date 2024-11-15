@@ -122,7 +122,7 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
     PerceptronLayer perceptron_layer({ 1 }, { 1 }, PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(0));
 /*
-    unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation_x 
+    unique_ptr<PerceptronLayerForwardPropagation> perceptron_layer_forward_propagation 
         = make_unique<PerceptronLayerForwardPropagation>(1, &perceptron_layer);
 
     perceptron_layer.forward_propagate({ make_pair(inputs.data(), dimensions{1, 1}) },

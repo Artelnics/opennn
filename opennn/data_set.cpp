@@ -595,7 +595,6 @@ void DataSet::set_sample_uses(const vector<string>& new_uses)
     const Index samples_number = get_samples_number();
 
     for(Index i = 0; i < samples_number; i++)
-    {
         if(new_uses[i] == "Training" || new_uses[i] == "0")
             sample_uses[i] = SampleUse::Training;
         else if(new_uses[i] == "Selection" || new_uses[i] == "1")
@@ -606,14 +605,13 @@ void DataSet::set_sample_uses(const vector<string>& new_uses)
             sample_uses[i] = SampleUse::None;
         else
             throw runtime_error("Unknown sample use: " + new_uses[i] + ".\n");
-    }
 }
 
 
-void DataSet::set_sample_uses(const Tensor<Index, 1>& indices, const SampleUse sample_use)
+void DataSet::set_sample_uses(const vector<Index>& indices, const SampleUse& sample_use)
 {
     for(Index i = 0; i < indices.size(); i++)
-        set_sample_use(indices(i), sample_use);
+        set_sample_use(indices[i], sample_use);
 }
 
 
@@ -945,12 +943,12 @@ vector<string> DataSet::get_raw_variable_names() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    vector<string> raw_variables_names(raw_variables_number);
+    vector<string> raw_variable_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
-        raw_variables_names[i] = raw_variables[i].name;
+        raw_variable_names[i] = raw_variables[i].name;
 
-    return raw_variables_names;
+    return raw_variable_names;
 }
 
 
@@ -2200,11 +2198,9 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             binary_frequencies.setZero();
 
             for (Index j = 0; j < used_samples_number; j++)
-            {
                 binary_frequencies(abs(data(used_sample_indices[j], variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
                     ? 0
                     : 1)++;
-            }
 
             histograms(used_raw_variable_index).frequencies = binary_frequencies;
             variable_index++;
@@ -3324,7 +3320,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 }
 
 
-Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
+vector<vector<Index>> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
 {
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
@@ -3333,13 +3329,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
     const Index used_raw_variables_number = get_used_raw_variables_number();
     const vector<Index> used_raw_variables_indices = get_used_raw_variables_indices();
 
-    Tensor<Tensor<Index, 1>, 1> return_values(2);
+    vector<vector<Index>> return_values(2);
 
-    return_values(0).resize(samples_number);
-    return_values(1).resize(used_raw_variables_number);
-
-    return_values(0).setZero();
-    return_values(1).setZero();
+    return_values[0].resize(samples_number, 0);
+    return_values[1].resize(used_raw_variables_number, 0);
 
     const Tensor<BoxPlot, 1> box_plots = calculate_raw_variables_box_plots();
 
@@ -3397,13 +3390,13 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
                 if(sample(variable_index) < box_plots(i).first_quartile - cleaning_parameter*interquartile_range
                 || sample(variable_index) > box_plots(i).third_quartile + cleaning_parameter*interquartile_range)
                 {
-                    return_values(0)(j) = 1;
+                    return_values[0][j] = 1;
 
                     raw_variables_outliers++;
                 }
             }
 
-            return_values(1)(used_variable_index) = raw_variables_outliers;
+            return_values[1][used_variable_index] = raw_variables_outliers;
 
             variable_index++;
             used_variable_index++;
@@ -3414,7 +3407,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
 }
 
 
-Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
+vector<vector<Index>> DataSet::replace_Tukey_outliers_with_NaN(const type& cleaning_parameter)
 {
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
@@ -3423,13 +3416,10 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
     const Index used_raw_variables_number = get_used_raw_variables_number();
     const vector<Index> used_raw_variables_indices = get_used_raw_variables_indices();
 
-    Tensor<Tensor<Index, 1>, 1> return_values(2);
+    vector<vector<Index>> return_values(2);
 
-    return_values(0).resize(samples_number);
-    return_values(1).resize(used_raw_variables_number);
-
-    return_values(0).setZero();
-    return_values(1).setZero();
+    return_values[0].resize(samples_number, 0);
+    return_values[1].resize(used_raw_variables_number, 0);
 
     const Tensor<BoxPlot, 1> box_plots = calculate_raw_variables_box_plots();
 
@@ -3487,7 +3477,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
                 if(sample[variable_index] < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range)
                 || sample[variable_index] > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
                 {
-                    return_values(0)(Index(j)) = 1;
+                    return_values[0][Index(j)] = 1;
 
                     raw_variables_outliers++;
 
@@ -3495,7 +3485,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
                 }
             }
 
-            return_values(1)(used_variable_index) = raw_variables_outliers;
+            return_values[1][used_variable_index] = raw_variables_outliers;
 
             variable_index++;
             used_variable_index++;
@@ -3508,9 +3498,9 @@ Tensor<Tensor<Index, 1>, 1> DataSet::replace_Tukey_outliers_with_NaN(const type&
 
 void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 {
-    const Tensor<Tensor<Index, 1>, 1> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
+    const vector<vector<Index>> outliers_indices = calculate_Tukey_outliers(cleaning_parameter);
 
-    const Tensor<Index, 1> outliers_samples = get_elements_greater_than(outliers_indices, 0);
+    const vector<Index> outliers_samples = get_elements_greater_than(outliers_indices, 0);
 
     set_sample_uses(outliers_samples, DataSet::SampleUse::None);
 }
@@ -4145,12 +4135,12 @@ void DataSet::read_csv()
 
 vector<string> DataSet::get_default_raw_variables_names(const Index& raw_variables_number)
 {
-    vector<string> raw_variables_names(raw_variables_number);
+    vector<string> raw_variable_names(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
-        raw_variables_names[i] = "variable_" + to_string(i+1);
+        raw_variable_names[i] = "variable_" + to_string(i+1);
 
-    return raw_variables_names;
+    return raw_variable_names;
 }
 
 

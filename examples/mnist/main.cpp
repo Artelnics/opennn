@@ -91,7 +91,6 @@ int main()
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
         
-
         cout << "Bye!" << endl;
         
         return 0;

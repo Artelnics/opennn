@@ -13,14 +13,6 @@
 namespace opennn
 {
 
-// EmbeddingLayer::EmbeddingLayer() : Layer()
-// {
-//     set();
-
-//     layer_type = Type::Embedding;
-// }
-
-
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
                                const Index& new_inputs_number,
                                const Index& new_depth,

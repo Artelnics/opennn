@@ -11,6 +11,7 @@
 #include <numeric>
 #include <regex>
 #include <codecvt>
+#include <algorithm>
 
 #include "language_data_set.h"
 #include "strings_utilities.h"
@@ -20,25 +21,8 @@ namespace opennn
 
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
-    context_dimensions.resize(1);
-    context_dimensions[0] = 0;
+    context_dimensions = { 0 };
 }
-
-
-// string LanguageDataSet::get_text_separator_string() const
-// {
-//     switch(text_separator)
-//     {
-//     case Separator::Tab:
-//         return "Tab";
-
-//     case Separator::Semicolon:
-//         return "Semicolon";
-
-//     default:
-//         return string();
-//     }
-// }
 
 
 vector<string> LanguageDataSet::get_context_vocabulary() const
@@ -105,8 +89,7 @@ void LanguageDataSet::set_raw_variables_uses(const vector<string>& new_raw_varia
 {
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
-    context_dimensions.resize(1);
-    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
+    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -114,8 +97,7 @@ void LanguageDataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_
 {
     DataSet::set_raw_variables_uses(new_raw_variables_uses);
 
-    context_dimensions.resize(1);
-    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
+    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -173,9 +155,7 @@ void LanguageDataSet::set_default()
 {
     DataSet::set_default();
 
-    context_dimensions.resize(1);
-
-    context_dimensions[0] = get_variables_number(DataSet::VariableUse::Context);
+    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -839,12 +819,8 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
     set<char> seen_chars;
 
     for(const auto& [word, _] : word_counts)
-    {
         for(char c : word)
-        {
             seen_chars.insert(c);
-        }
-    }
 
     return seen_chars;
 }
@@ -858,18 +834,14 @@ map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
     for(const string& token : input_tokens)
     {
         if(output_tokens.find(token) == output_tokens.end())
-        {
             output_tokens[token] = 1;
-        }
 
         if(include_joiner_token)
         {
-            string joined_token = joiner + token;
+            const string joined_token = joiner + token;
 
             if(output_tokens.find(joined_token) == output_tokens.end())
-            {
                 output_tokens[joined_token] = 1;
-            }
         }
     }
 
@@ -906,12 +878,11 @@ vector<int> get_split_indices(const string& word,
         }
 
         if(end == start)
-        {
             return {};
-        }
 
         start = end;
     }
+
     return indices;
 }
 
@@ -919,13 +890,15 @@ vector<int> get_split_indices(const string& word,
 tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_counts, int upper_threshold, int lower_threshold)
 {
     vector<int> counts;
-    for(const auto& [_, count] : word_counts)    counts.push_back(count);
 
-    int max_count = *max_element(counts.begin(), counts.end());
-    int min_count = *min_element(counts.begin(), counts.end());
+    for(const auto& [_, count] : word_counts)    
+        counts.push_back(count);
 
-    int upper_search = upper_threshold == -1 ? max_count : min(upper_threshold, max_count);
-    int lower_search = lower_threshold == -1 ? min_count : max(lower_threshold, min_count);
+    const int max_count = *max_element(counts.begin(), counts.end());
+    const int min_count = *min_element(counts.begin(), counts.end());
+
+    const int upper_search = upper_threshold == -1 ? max_count : min(upper_threshold, max_count);
+    const int lower_search = lower_threshold == -1 ? min_count : max(lower_threshold, min_count);
 
     return { upper_search, lower_search };
 }
@@ -939,10 +912,9 @@ vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_coun
 
     for(const auto& [word, count] : word_counts)
     {
-        if(word.size() > max_token_length || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
-        {
+        if(word.size() > max_token_length 
+        || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
             continue;
-        }
 
         trimmed_counts.push_back({ word, count });
     }
@@ -956,37 +928,37 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
     map<char, int> character_counts;
 
     for(const auto& [word, count] : trimmed_counts)
-    {
         for(char c : word)
-        {
             character_counts[c] += count;
-        }
-    }
 
     vector<pair<char, int>> sorted_counts(character_counts.begin(), character_counts.end());
 
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, int>& a, const pair<char, int>& b)
-        {
-            if(a.second != b.second)
-                return a.second > b.second;
-            return a.first < b.first;
-        }
+    {
+        if(a.second != b.second)
+            return a.second > b.second;
+
+        return a.first < b.first;
+    }
 );
 
     set<char> allowed_characters;
-    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)    allowed_characters.insert(sorted_counts[i].first);
+
+    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)    
+        allowed_characters.insert(sorted_counts[i].first);
 
     return allowed_characters;
 }
+
 
 vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed_counts, const set<char>& allowed_characters, int max_input_tokens)
 {
     vector<pair<string, int>> sorted_counts = trimmed_counts;
 
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, int>& a, const pair<string, int>& b)
-        {
-            return a.second > b.second;
-        }
+    {
+        return a.second > b.second;
+    }
 );
 
     vector<pair<string, int>> filtered_counts;
@@ -1006,9 +978,7 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
         }
 
         if(has_unallowed_characters)
-        {
             continue;
-        }
 
         filtered_counts.push_back({ word, count });
     }
@@ -1016,15 +986,17 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
     return filtered_counts;
 }
 
+
 vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
-    const set<char>& character_tokens,
-    const map<string, int>& current_tokens)
+                                         const set<char>& character_tokens,
+                                         const map<string, int>& current_tokens)
 {
     vector<string> vocabulary;
     vocabulary.insert(vocabulary.end(), reserved_tokens.begin(), reserved_tokens.end());
 
     vector<string> sorted_character_tokens;
-    for(const char ch : character_tokens)    sorted_character_tokens.push_back(string(1, ch));
+    for(const char ch : character_tokens)    
+        sorted_character_tokens.push_back(string(1, ch));
 
     sort(sorted_character_tokens.begin(), sorted_character_tokens.end());
     vocabulary.insert(vocabulary.end(), sorted_character_tokens.begin(), sorted_character_tokens.end());
@@ -1038,9 +1010,7 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
 );
 
     for(const auto& [token, _] : sorted_tokens)
-    {
         vocabulary.push_back(token);
-    }
 
     set<string> seen_tokens;
     vector<string> final_vocabulary;
@@ -1062,9 +1032,12 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                                                    int threshold,
                                                    const WordpieceAlgorithmParameters& parameters)
 {
-    set<char> character_tokens = extract_character_tokens(word_counts);
+    const set<char> character_tokens = extract_character_tokens(word_counts);
+
     set<string> string_tokens;
-    for(const char ch : character_tokens)    string_tokens.insert(string(1, ch));
+
+    for(const char ch : character_tokens)    
+        string_tokens.insert(string(1, ch));
 
     map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
 
@@ -1084,7 +1057,8 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
             else
             {
                 split_indices = get_split_indices(word, current_tokens, parameters.include_joiner_token, parameters.joiner);
-                if(split_indices.empty()) continue;
+                if(split_indices.empty()) 
+                    continue;
             }
 
             size_t start = 0;
@@ -1093,13 +1067,14 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
                 for(int end = start + 1; end <= word.size(); ++end)
                 {
                     string subtoken = word.substr(start, end - start);
-                    int length = subtoken.size();
+                    const int length = subtoken.size();
 
                     if(parameters.include_joiner_token && start > 0)    
                         subtoken = parameters.joiner + subtoken;
 
                     subtokens[length][subtoken] += count;
                 }
+
                 start = split_index;
             }
         }
@@ -1110,7 +1085,8 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
         {
             for(const auto& [token, count] : subtokens[length])
             {
-                if(count >= threshold)    next_tokens[token] = count;
+                if(count >= threshold)    
+                    next_tokens[token] = count;
 
                 if(token.size() > length)
                 {
@@ -1118,7 +1094,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 
                     for(size_t i = 1 + joiner_length; i <= length + joiner_length; i++)
                     {
-                        string prefix = token.substr(0, i);
+                        const string prefix = token.substr(0, i);
 
                         if(subtokens[i - joiner_length].find(prefix) != subtokens[i - joiner_length].end())
                             subtokens[i - joiner_length][prefix] -= count;
@@ -1145,9 +1121,9 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 
 
 vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>>& word_counts,
-    int lower_bound,
-    int upper_bound,
-    const WordpieceAlgorithmParameters& parameters)
+                                                  int lower_bound,
+                                                  int upper_bound,
+                                                  const WordpieceAlgorithmParameters& parameters)
 {
     const int threshold = (upper_bound + lower_bound) / 2;
 
@@ -1155,8 +1131,7 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
 
     const int current_vocabulary_size = current_vocabulary.size();
 
-    int slack = parameters.slack_ratio * parameters.vocabulary_size;
-    if(slack < 0)    slack = 0;
+    const int slack = max(0, int(parameters.slack_ratio * parameters.vocabulary_size));
 
     const bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
 
@@ -1171,17 +1146,17 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>
 
 
 vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>>& tokens,
-                                                              const Index& vocabulary_size,
-                                                              const vector<string>& reserved_tokens,
-                                                              const Index& upper_threshold,
-                                                              const Index& lower_threshold,
-                                                              const Index& interations_number,
-                                                              const Index& max_input_tokens,
-                                                              const Index& max_token_length,
-                                                              const Index& max_unique_characters,
-                                                              const float& slack_ratio,
-                                                              const bool& include_joiner_token,
-                                                              const string& joiner)
+                                                     const Index& vocabulary_size,
+                                                     const vector<string>& reserved_tokens,
+                                                     const Index& upper_threshold,
+                                                     const Index& lower_threshold,
+                                                     const Index& interations_number,
+                                                     const Index& max_input_tokens,
+                                                     const Index& max_token_length,
+                                                     const Index& max_unique_characters,
+                                                     const float& slack_ratio,
+                                                     const bool& include_joiner_token,
+                                                     const string& joiner)
 {
 /*
     const vector<string> total_tokens = tokens_list(tokens);
@@ -1298,7 +1273,6 @@ void LanguageDataSet::load_documents(const string& path)
                 document[lines_count] += tokens[0].substr(delimiter.length(), tokens[0].size());
             else
                 document[lines_count] += " " + tokens[0];
-
 
             lines_count++;
         }
@@ -1788,25 +1762,6 @@ void LanguageDataSet::read_csv_language_model()
 
     read_csv_3_language_model();
 }
-
-// void DataSet::read_csv()
-// {
-//     read_csv_1();
-
-//     if(!has_time_raw_variables() && !has_categorical_raw_variables())
-//     {
-//         read_csv_2_simple();
-
-//         read_csv_3_simple();
-//     }
-//     else
-//     {
-//         read_csv_2_complete();
-
-//         read_csv_3_complete();
-//     }
-// }
-
 
 // void LanguageDataSet::read_txt_language_model()
 // {

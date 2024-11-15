@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/forward_propagation.h"
 #include "../opennn/neural_network.h"
 
 
@@ -40,7 +41,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
 {
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
 
-//    EXPECT_EQ(neural_network.get_layers_number(), 4);
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
 //    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
 //    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
 //    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
@@ -78,6 +79,18 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 }
 
 
+TEST(NeuralNetworkTest, ForwardPropagate)
+{
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1}, dimensions{1}));
+
+//    ForwardPropagation forward_propagation(1, &neural_network);
+
+//    EXPECT_EQ(1, 0);
+}
+
+
 TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 {
     NeuralNetwork neural_network;
@@ -106,7 +119,7 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
 /*
 
-void NeuralNetworkTest::test_calculate_outputs()
+TEST(NeuralNetworkTest, calculate_outputs)
 {
 
     // Test
@@ -243,10 +256,8 @@ void NeuralNetworkTest::test_calculate_outputs()
 }
 
 
-void NeuralNetworkTest::test_calculate_directional_inputs()
+TEST(NeuralNetworkTest, calculate_directional_inputs)
 {
-    cout << "test_calculate_directional_inputs\n";
-
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
     Tensor<type, 2> trainable_outputs;

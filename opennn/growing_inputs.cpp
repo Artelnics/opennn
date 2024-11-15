@@ -110,7 +110,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    const vector<string> raw_variables_names = data_set->get_raw_variable_names();
+    const vector<string> raw_variable_names = data_set->get_raw_variable_names();
 
     vector<string> input_raw_variables_names;
 
