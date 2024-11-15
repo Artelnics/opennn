@@ -90,7 +90,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 }
 
 
-Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
+vector<Index> GeneticAlgorithm::get_original_unused_raw_variables()
 {
     return original_unused_raw_variables_indices;
 }
@@ -252,7 +252,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     for(Index i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
-            original_unused_raw_variables_indices(index++) = i;
+            original_unused_raw_variables_indices[index++] = i;
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
 
@@ -271,11 +271,10 @@ void GeneticAlgorithm::initialize_population_random()
 
     // Original inputs raw_variables
 
-    original_input_raw_variables.resize(raw_variables_number);
-    original_input_raw_variables.setConstant(false);
+    original_input_raw_variables.resize(raw_variables_number, false);
 
     for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
-        original_input_raw_variables(original_input_raw_variables_indices[i]) = true;
+        original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
 
     // Initialization a random population
 
@@ -316,7 +315,7 @@ void GeneticAlgorithm::initialize_population_random()
             const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
-                if(original_input_raw_variables(j))
+                if(original_input_raw_variables[j])
                     individual_raw_variables_false(j) = true;
 
             individual_variables = get_individual_variables(individual_raw_variables_false);
@@ -683,7 +682,7 @@ void GeneticAlgorithm::perform_crossover()
                 Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(descendent_genes);
 
                 for(Index j = 0; j < raw_variables_number; j++)
-                    if(original_input_raw_variables(j))
+                    if(original_input_raw_variables[j])
                         individual_raw_variables_false(j) = true;
 
                 descendent_genes = get_individual_variables(individual_raw_variables_false);
@@ -741,8 +740,8 @@ void GeneticAlgorithm::perform_mutation()
             const vector<DataSet::RawVariable>& raw_variables = training_strategy->get_data_set()->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
-                if(original_input_raw_variables(j))
-                    individual_raw_variables_false(j) = true;
+                if(original_input_raw_variables[j])
+                    individual_raw_variables_false[j] = true;
 
             new_individual_variables = get_individual_variables(individual_raw_variables_false);
         }
@@ -928,7 +927,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     // Set neural network stuff
 
@@ -939,7 +938,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
@@ -1046,7 +1045,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     for(Index i = 0; i < original_input_raw_variables.size(); i++)
     {
-        if(individual_raw_variables(i) && original_input_raw_variables(i))
+        if(individual_raw_variables(i) && original_input_raw_variables[i])
         {
             inputs_pre_indexes(i) = true;
 
@@ -1141,7 +1140,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& indi
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(original_input_raw_variables(i))
+        if(original_input_raw_variables[i])
         {
             if(raw_variables[i].type == DataSet::RawVariableType::Categorical)
             {

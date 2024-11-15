@@ -148,11 +148,11 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(abs(outputs(0,0) - type(3)) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - type(3)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(1e-3));
 
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3));
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3));
 
     EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
@@ -174,9 +174,9 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     perceptron_layer->calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2, LOG);
-    assert_true(combinations.dimension(0) == 1, LOG);
-    assert_true(abs(combinations(0,0) - type(7)) < type(1e-5), LOG);
+    EXPECT_EQ(combinations.rank() == 2);
+    EXPECT_EQ(combinations.dimension(0) == 1);
+    EXPECT_EQ(abs(combinations(0,0) - type(7)) < type(1e-5));
 
     // Test
 
@@ -195,10 +195,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     perceptron_layer->calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2, LOG);
-    assert_true(combinations.dimension(0) == samples_number, LOG);
-    assert_true(combinations.dimension(1) == neurons_number, LOG);
-    assert_true(abs(combinations(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(combinations.rank() == 2);
+    EXPECT_EQ(combinations.dimension(0) == samples_number);
+    EXPECT_EQ(combinations.dimension(1) == neurons_number);
+    EXPECT_EQ(abs(combinations(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -216,10 +216,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     perceptron_layer->calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2, LOG);
-    assert_true(combinations.dimension(0) == 2, LOG);
-    assert_true(combinations.dimension(1) == 4, LOG);
-    assert_true(abs(combinations(0,0) - type(3.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(combinations.rank() == 2);
+    EXPECT_EQ(combinations.dimension(0) == 2);
+    EXPECT_EQ(combinations.dimension(1) == 4);
+    EXPECT_EQ(abs(combinations(0,0) - type(3.5)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -239,10 +239,10 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     perceptron_layer->calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2, LOG);
-    assert_true(combinations.dimension(0) == samples_number, LOG);
-    assert_true(combinations.dimension(1) == neurons_number, LOG);
-    assert_true(Index(combinations(0,0)) == 2, LOG);
+    EXPECT_EQ(combinations.rank() == 2);
+    EXPECT_EQ(combinations.dimension(0) == samples_number);
+    EXPECT_EQ(combinations.dimension(1) == neurons_number);
+    EXPECT_EQ(Index(combinations(0,0)) == 2);
 
     // Test
 
@@ -256,12 +256,12 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     parameters_number = perceptron_layer->get_parameters_number();
 
-    assert_true(parameters_number == 2, LOG);
+    EXPECT_EQ(parameters_number == 2);
 
     const Tensor<type, 1> parameters = perceptron_layer->get_parameters();
 
-    assert_true(abs(parameters(0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(parameters(1) - type(-0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(parameters(0) - type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(parameters(1) - type(-0.5)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -280,11 +280,11 @@ void PerceptronLayerTest::test_calculate_combinations()
 
     perceptron_layer->calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2, LOG);
-    assert_true(combinations.dimension(0) == 1, LOG);
-    assert_true(combinations.dimension(1) == 1, LOG);
+    EXPECT_EQ(combinations.rank() == 2);
+    EXPECT_EQ(combinations.dimension(0) == 1);
+    EXPECT_EQ(combinations.dimension(1) == 1);
 
-    assert_true(abs(combinations(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(combinations(0,0)) < type(NUMERIC_LIMITS_MIN));
 
 }
 
@@ -322,11 +322,11 @@ void PerceptronLayerTest::test_forward_propagate()
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(abs(outputs(0,0) - type(3)) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - type(3)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(1e-3));
 
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3));
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3));
 
     // Test
 
@@ -350,10 +350,10 @@ void PerceptronLayerTest::test_forward_propagate()
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(abs(outputs(0,0) - type(0.99505)) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - type(0.99505)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(0.00986)) < type(1e-3), LOG);
-    assert_true(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(0.00986)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(outputs(0,0) - type(0.99505)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - type(0.99505)) < type(1e-3));
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(0.00986)) < type(1e-3));
+    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(0.00986)) < type(1e-3));
 
     // Test
 
@@ -387,11 +387,11 @@ void PerceptronLayerTest::test_forward_propagate()
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(Index(outputs(0,0)) == 7, LOG);
-    assert_true(Index(outputs(1,0)) == -5, LOG);
-    assert_true(Index(outputs(2,0)) == 1, LOG);
+    EXPECT_EQ(outputs.dimension(0) == 1);
+    EXPECT_EQ(outputs.dimension(1) == 4);
+    EXPECT_EQ(Index(outputs(0,0)) == 7);
+    EXPECT_EQ(Index(outputs(1,0)) == -5);
+    EXPECT_EQ(Index(outputs(2,0)) == 1);
 
     // Test
 
@@ -414,9 +414,9 @@ void PerceptronLayerTest::test_forward_propagate()
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 2, LOG);
-    assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.dimension(0) == 1);
+    EXPECT_EQ(outputs.dimension(1) == 2);
+    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -443,9 +443,9 @@ void PerceptronLayerTest::test_forward_propagate()
 
     outputs = perceptron_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 2, LOG);
-    assert_true(abs(outputs(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.dimension(0) == 1);
+    EXPECT_EQ(outputs.dimension(1) == 2);
+    EXPECT_EQ(abs(outputs(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN));
 
     // Test 5
 

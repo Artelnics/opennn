@@ -118,12 +118,15 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
-    Tensor<Index, 1> correlations_indexes(original_input_raw_variables_number);
+    vector<Index> correlation_indices(original_input_raw_variables_number);
+/*
+    initialize_sequential(correlation_indices);
+*/
+    iota(correlation_indices.begin(), correlation_indices.end(), 0);
 
-    initialize_sequential(correlations_indexes);
 
-    sort(correlations_indexes.data(),
-         correlations_indexes.data() + correlations_indexes.size(),
+    sort(correlation_indices.data(),
+         correlation_indices.data() + correlation_indices.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
     vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
@@ -131,7 +134,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
     for(Index i = 0; i < correlations_rank_descending.size(); i++) 
-        correlations_rank_descending(i) = input_raw_variable_indices[correlations_indexes[i]];
+        correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
     data_set->set_input_raw_variables_unused();
 
@@ -319,7 +322,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     set_maximum_inputs_number(data_set->get_raw_variables_number(DataSet::VariableUse::Input));
 
@@ -332,7 +335,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 

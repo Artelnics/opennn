@@ -19,11 +19,11 @@ void ProbabilisticLayer3DTest::test_constructor()
 
     ProbabilisticLayer3D probabilistic_layer_3d_1;
 
-    assert_true(
+    EXPECT_EQ(
         probabilistic_layer_3d_1.get_inputs_number() == 0 &&
         probabilistic_layer_3d_1.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_1.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_1.get_parameters_number() == 0, LOG);
+        probabilistic_layer_3d_1.get_parameters_number() == 0);
 
     // Probabilistic neurons number constructor
 
@@ -31,30 +31,30 @@ void ProbabilisticLayer3DTest::test_constructor()
 
     probabilistic_layer_3d_2.set_output_dimensions(0);
 
-    assert_true(
+    EXPECT_EQ(
         probabilistic_layer_3d_2.get_inputs_number() == 0 &&
         probabilistic_layer_3d_2.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_2.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_2.get_parameters_number() == 0, LOG);
+        probabilistic_layer_3d_2.get_parameters_number() == 0);
 
     ProbabilisticLayer3D probabilistic_layer_3d_3;
 
     probabilistic_layer_3d_3.set_output_dimensions(3);
 
-    assert_true(
+    EXPECT_EQ(
         probabilistic_layer_3d_3.get_inputs_number() == 0 &&
         probabilistic_layer_3d_3.get_inputs_depth() == 0 &&
         probabilistic_layer_3d_3.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_3.get_parameters_number() == 3, LOG);
+        probabilistic_layer_3d_3.get_parameters_number() == 3);
 
 
     ProbabilisticLayer3D probabilistic_layer_3d_4(1, 2, 3);
 
-    assert_true(
+    EXPECT_EQ(
         probabilistic_layer_3d_4.get_inputs_number() == 1 &&
         probabilistic_layer_3d_4.get_inputs_depth() == 2 &&
         probabilistic_layer_3d_4.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_4.get_parameters_number() == 9, LOG);
+        probabilistic_layer_3d_4.get_parameters_number() == 9);
 
 }
 
@@ -80,12 +80,12 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
 
     probabilistic_layer_3d.calculate_combinations(inputs, combinations);
 
-    assert_true(
+    EXPECT_EQ(
         combinations.rank() == 3 &&
         combinations.dimension(0) == 1 &&
         combinations.dimension(1) == 1 &&
-        combinations.dimension(2) == 1, LOG);
-    assert_true(abs(combinations(0, 0, 0) - type(7)) < type(1e-5), LOG);
+        combinations.dimension(2) == 1);
+    EXPECT_EQ(abs(combinations(0, 0, 0) - type(7)) < type(1e-5));
 }
 
 
@@ -120,14 +120,14 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
                                                                  activations,
                                                                  activation_derivatives);
 
-        assert_true(
+        EXPECT_EQ(
             activation_derivatives.rank() == 4 &&
             activation_derivatives.dimension(0) == samples_number &&
             activation_derivatives.dimension(1) == inputs_number &&
             activation_derivatives.dimension(2) == neurons_number &&
-            activation_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.dimension(3) == neurons_number);
 
-        assert_true(activation_derivatives(0, 0, 0, 0) == type(0), LOG);
+        EXPECT_EQ(activation_derivatives(0, 0, 0, 0) == type(0));
     }
 
 
@@ -154,17 +154,17 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
                                                                  activations,
                                                                  activation_derivatives);
 
-        assert_true(
+        EXPECT_EQ(
             activation_derivatives.rank() == 4 &&
             activation_derivatives.dimension(0) == samples_number &&
             activation_derivatives.dimension(1) == inputs_number &&
             activation_derivatives.dimension(2) == neurons_number &&
-            activation_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.dimension(3) == neurons_number);
 
-        assert_true(check_softmax_derivatives(activations, activation_derivatives), LOG);
+        EXPECT_EQ(check_softmax_derivatives(activations, activation_derivatives));
         
         /*
-        assert_true(
+        EXPECT_EQ(
             abs(activation_derivatives(0, 0, 0, 0) - (activations(0, 0, 0) - activations(0, 0, 0) * activations(0, 0, 0))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 0, 1) - (-activations(0, 0, 0) * activations(0, 0, 1))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 0, 2) - (-activations(0, 0, 0) * activations(0, 0, 2))) < type(1e-3) &&
@@ -173,7 +173,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
             abs(activation_derivatives(0, 0, 1, 2) - (-activations(0, 0, 1) * activations(0, 0, 2))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 2, 0) - (-activations(0, 0, 2) * activations(0, 0, 0))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 2, 1) - (-activations(0, 0, 2) * activations(0, 0, 1))) < type(1e-3) &&
-            abs(activation_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3), LOG);
+            abs(activation_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3));
         
     }
 
@@ -200,14 +200,14 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
                                                                  activations,
                                                                  activation_derivatives);
 
-        assert_true(
+        EXPECT_EQ(
             activation_derivatives.rank() == 4 &&
             activation_derivatives.dimension(0) == samples_number &&
             activation_derivatives.dimension(1) == inputs_number &&
             activation_derivatives.dimension(2) == neurons_number &&
-            activation_derivatives.dimension(3) == neurons_number, LOG);
+            activation_derivatives.dimension(3) == neurons_number);
 
-        assert_true(check_softmax_derivatives(activations, activation_derivatives), LOG);
+        EXPECT_EQ(check_softmax_derivatives(activations, activation_derivatives));
     }
 }
 
@@ -276,12 +276,12 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         for(Index i = 0; i < outputs.size(); i++)
             if(abs(outputs(i) - type(0.5) > type(1e-3))) correct_outputs = false;
 
-        assert_true(
+        EXPECT_EQ(
             outputs.dimension(0) == samples_number &&
             outputs.dimension(1) == inputs_number &&
-            outputs.dimension(2) == neurons_number, LOG);
+            outputs.dimension(2) == neurons_number);
 
-        assert_true(correct_outputs, LOG);
+        EXPECT_EQ(correct_outputs);
        
     }
 
@@ -331,12 +331,12 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         for(Index i = 0; i < outputs.size(); i++)
             if(abs(outputs(i) - softmax_solution(i) > type(1e-3))) correct_outputs = false;
 
-        assert_true(
+        EXPECT_EQ(
             outputs.dimension(0) == samples_number &&
             outputs.dimension(1) == inputs_number &&
-            outputs.dimension(2) == neurons_number, LOG);
+            outputs.dimension(2) == neurons_number);
 
-        assert_true(correct_outputs, LOG);
+        EXPECT_EQ(correct_outputs);
 
     }
 }

@@ -8,7 +8,7 @@ TEST(InputsSelectionTest, DefaultConstructor)
 {
 //    InputsSelection inputs_selection;
 
-//    assert_true(!gi2.has_training_strategy(), LOG);
+//    EXPECT_EQ(!gi2.has_training_strategy());
 
     EXPECT_EQ(1, 1);
 }
@@ -18,7 +18,7 @@ TEST(InputsSelectionTest, GeneralConstructor)
 {
 //    GrowingInputs gi1(&training_strategy);
 
-//    assert_true(gi1.has_training_strategy(), LOG);
+//    EXPECT_EQ(gi1.has_training_strategy());
 
     EXPECT_EQ(1, 1);
 }

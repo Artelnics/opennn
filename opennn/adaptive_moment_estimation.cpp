@@ -177,9 +177,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
-    vector<Descriptives> target_variables_descriptives;
+    vector<Descriptives> target_variable_descriptives;
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
@@ -215,16 +215,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
 
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
+        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
@@ -454,10 +454,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
+    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
     

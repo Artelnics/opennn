@@ -366,13 +366,13 @@ public:
     vector<Descriptives> calculate_variable_descriptives() const;
     vector<Descriptives> calculate_used_variable_descriptives() const;
 
-    vector<Descriptives> calculate_raw_variables_descriptives_positive_samples() const;
-    vector<Descriptives> calculate_raw_variables_descriptives_negative_samples() const;
-    vector<Descriptives> calculate_raw_variables_descriptives_categories(const Index&) const;
+    vector<Descriptives> calculate_raw_variable_descriptives_positive_samples() const;
+    vector<Descriptives> calculate_raw_variable_descriptives_negative_samples() const;
+    vector<Descriptives> calculate_raw_variable_descriptives_categories(const Index&) const;
 
     vector<Descriptives> calculate_variable_descriptives(const VariableUse&) const;
  
-    vector<Descriptives> calculate_testing_target_variables_descriptives() const;
+    vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 

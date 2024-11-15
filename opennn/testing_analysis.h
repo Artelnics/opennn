@@ -77,13 +77,13 @@ public:
 
     struct BinaryClassificationRates
     {
-        Tensor<Index, 1> true_positives_indices;
+        vector<Index> true_positives_indices;
 
-        Tensor<Index, 1> false_positives_indices;
+        vector<Index> false_positives_indices;
 
-        Tensor<Index, 1> false_negatives_indices;
+        vector<Index> false_negatives_indices;
 
-        Tensor<Index, 1> true_negatives_indices;
+        vector<Index> true_negatives_indices;
     };
 
    // Get
@@ -210,10 +210,10 @@ public:
 
    BinaryClassificationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
 
    // Multiple classification tests
 

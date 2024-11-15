@@ -27,8 +27,6 @@ class ConjugateGradient : public OptimizationAlgorithm
 
 public:
 
-   // Enumerations
-
    enum class TrainingDirectionMethod{PR, FR};
 
    explicit ConjugateGradient(LossIndex* = nullptr);   

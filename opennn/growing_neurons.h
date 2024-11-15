@@ -22,17 +22,11 @@ class GrowingNeurons : public NeuronsSelection
 
 public:
 
-    // Constructors
-
     explicit GrowingNeurons(TrainingStrategy* = nullptr);
-
-    // Get
 
     const Index& get_step() const;
 
     const Index& get_maximum_selection_failures() const;
-
-    // Set
 
     void set_default();
 
@@ -40,11 +34,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection
-
     NeuronsSelectionResults perform_neurons_selection() final;
-
-    // Serialization
 
     Tensor<string, 2> to_string_matrix() const;
     
@@ -57,9 +47,9 @@ public:
 
 private:
 
-   Index neurons_increment;
+   Index neurons_increment = 0;
 
-   Index maximum_selection_failures;
+   Index maximum_selection_failures = 0;
 
 };
 

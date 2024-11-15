@@ -55,7 +55,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     //inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2, LOG);
+    EXPECT_EQ(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2);
 
     // Test
 
@@ -69,7 +69,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     //inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2, LOG);
+    EXPECT_EQ(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2);
 
 }
 

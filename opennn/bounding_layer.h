@@ -26,11 +26,7 @@ public:
 
    explicit BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
 
-   // Enumerations
-
    enum class BoundingMethod{NoBounding, Bounding};
-
-   // Get
 
    dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;

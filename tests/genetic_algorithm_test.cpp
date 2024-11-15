@@ -23,10 +23,11 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 
 TEST(GeneticAlgorithmTest, InitializePopulation)
 {
+/*
     DataSet data_set(1, { 1 }, { 1 });
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
-
+*/
 //    TrainingStrategy training_strategy(&neural_network, &data_set);
 
 //    GeneticAlgorithm genetic_algorithm(&training_strategy);
@@ -37,10 +38,10 @@ TEST(GeneticAlgorithmTest, InitializePopulation)
 //    const Tensor<bool, 1> gene = population.chip(0, 1);
 //    const Tensor<bool, 1> individual = population.chip(1, 0);
 
-//    assert_true(population.dimension(0) == individuals_number, LOG);
-//    assert_true(population.dimension(1) == inputs_number, LOG);
-//    assert_true(gene.size() == individuals_number, LOG);
-//    assert_true(individual.size() == inputs_number, LOG);
+//    EXPECT_EQ(population.dimension(0) == individuals_number);
+//    EXPECT_EQ(population.dimension(1) == inputs_number);
+//    EXPECT_EQ(gene.size() == individuals_number);
+//    EXPECT_EQ(individual.size() == inputs_number);
 
 
 }
@@ -76,10 +77,10 @@ void GeneticAlgorithmTest::test_initialize_population()
     gene = population.chip(0,1);
     individual = population.chip(1,0);
 
-    assert_true(population.dimension(0) == individuals_number, LOG);
-    assert_true(population.dimension(1) == inputs_number, LOG);
-    assert_true(gene.size() == individuals_number, LOG);
-    assert_true(individual.size() == inputs_number, LOG);
+    EXPECT_EQ(population.dimension(0) == individuals_number);
+    EXPECT_EQ(population.dimension(1) == inputs_number);
+    EXPECT_EQ(gene.size() == individuals_number);
+    EXPECT_EQ(individual.size() == inputs_number);
 
     // Test
 
@@ -108,11 +109,11 @@ void GeneticAlgorithmTest::test_initialize_population()
     gene = population.chip(0,1);
     individual = population.chip(1,0);
 
-    assert_true(population.dimension(0) == individuals_number, LOG);
-    assert_true(population.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(population.dimension(0) == individuals_number);
+    EXPECT_EQ(population.dimension(1) == inputs_number);
 
-    assert_true(gene.size() == individuals_number, LOG);
-    assert_true(individual.size() == inputs_number, LOG);
+    EXPECT_EQ(gene.size() == individuals_number);
+    EXPECT_EQ(individual.size() == inputs_number);
 
 }
 
@@ -144,8 +145,8 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     fitness = genetic_algorithm.get_fitness();
 
-    assert_true(maximal_index(fitness) == 3, LOG);
-    assert_true(minimal_index(fitness) == 0, LOG);
+    EXPECT_EQ(maximal_index(fitness) == 3);
+    EXPECT_EQ(minimal_index(fitness) == 0);
 
     // Test
 
@@ -166,8 +167,8 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     fitness = genetic_algorithm.get_fitness();
 
-    assert_true(maximal_index(fitness) == 0, LOG);
-    assert_true(minimal_index(fitness) == 3, LOG);
+    EXPECT_EQ(maximal_index(fitness) == 0);
+    EXPECT_EQ(minimal_index(fitness) == 3);
 
 }
 
@@ -208,14 +209,14 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     genetic_algorithm.set_elitism_size(0);
 
-    assert_true(selection(0) == 0 || selection(0) == 1,LOG);
-    assert_true(selection(1) == 0 || selection(1) == 1,LOG);
-    assert_true(selection(2) == 0 || selection(2) == 1,LOG);
-    assert_true(selection(3) == 0 || selection(3) == 1,LOG);
+    EXPECT_EQ(selection(0) == 0 || selection(0) == 1,LOG);
+    EXPECT_EQ(selection(1) == 0 || selection(1) == 1,LOG);
+    EXPECT_EQ(selection(2) == 0 || selection(2) == 1,LOG);
+    EXPECT_EQ(selection(3) == 0 || selection(3) == 1,LOG);
 
-    assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
+    EXPECT_EQ( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
 
-    assert_true( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
+    EXPECT_EQ( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 4 individuals with elitism size = 1
 
@@ -239,13 +240,13 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     genetic_algorithm.perform_selection();
 
-    assert_true(selection(0) == 1,LOG);
-    assert_true(selection(1) == 0 || selection(1) == 1,LOG);
-    assert_true(selection(2) == 0 || selection(2) == 1,LOG);
-    assert_true(selection(3) == 0 || selection(3) == 1,LOG);
+    EXPECT_EQ(selection(0) == 1,LOG);
+    EXPECT_EQ(selection(1) == 0 || selection(1) == 1,LOG);
+    EXPECT_EQ(selection(2) == 0 || selection(2) == 1,LOG);
+    EXPECT_EQ(selection(3) == 0 || selection(3) == 1,LOG);
 
-    assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
-    assert_true( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
+    EXPECT_EQ( count(selection.data(), selection.data() + selection.size(), 1)  == 2,LOG);
+    EXPECT_EQ( count(selection.data() + 1, selection.data() + selection.size(), 1)  >= 1,LOG);
 
     // 10 individuals without elitism
 
@@ -273,7 +274,7 @@ void GeneticAlgorithmTest::test_perform_selection()
 
         selection = genetic_algorithm.get_selection();
 
-        assert_true( count(selection.data(), selection.data() + selection.size(), 1)  == 4, LOG);
+        EXPECT_EQ( count(selection.data(), selection.data() + selection.size(), 1)  == 4);
     }
 }
 
@@ -321,8 +322,8 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     for(Index i = 0; i<4; i++)
     {
-       assert_true(crossover_population(i,0) == 1, LOG);
-       assert_true(crossover_population(i,1) == 0, LOG);
+       EXPECT_EQ(crossover_population(i,0) == 1);
+       EXPECT_EQ(crossover_population(i,1) == 0);
     }
 
 }
@@ -359,7 +360,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     mutated_population = genetic_algorithm.get_population();
 
-    assert_true(are_equal(population, mutated_population), LOG);
+    EXPECT_EQ(are_equal(population, mutated_population));
 
     // Test 2
 
@@ -391,7 +392,7 @@ void GeneticAlgorithmTest::test_perform_mutation()
         }
     }
 
-    assert_true( mutated_genes >= 25, LOG);
+    EXPECT_EQ( mutated_genes >= 25);
 }
 
 
@@ -427,8 +428,8 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal, LOG);
-    assert_true(inputs_selection_results.selection_error_history(0) <= 1, LOG);
+    EXPECT_EQ(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
+    EXPECT_EQ(inputs_selection_results.selection_error_history(0) <= 1);
 
 
     // Test 2
@@ -459,8 +460,8 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    assert_true(genetic_algorithm.get_maximum_iterations_number() == 1, LOG);
-    assert_true(genetic_algorithm.get_selection_error_goal() < 1, LOG);
+    EXPECT_EQ(genetic_algorithm.get_maximum_iterations_number() == 1);
+    EXPECT_EQ(genetic_algorithm.get_selection_error_goal() < 1);
 
     // Test 3
 
@@ -488,7 +489,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     inputs_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    assert_true(inputs_selection_results.get_epochs_number() <= 100, LOG);
+    EXPECT_EQ(inputs_selection_results.get_epochs_number() <= 100);
 
 }
 

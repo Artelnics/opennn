@@ -621,6 +621,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
                                    const type& selection_samples_ratio,
                                    const type& testing_samples_ratio)
 {
+
     random_device rng;
     mt19937 urng(rng());
 
@@ -637,15 +638,16 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     const Index sum_samples_number = training_samples_number + selection_samples_number + testing_samples_number;
 
-
     if(sum_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
     const Index samples_number = get_samples_number();
+    
+    vector<Index> indices(samples_number);
 
-    Tensor<Index, 1> indices;
+//    initialize_sequential(indices, 0, 1, samples_number-1);
 
-    initialize_sequential(indices, 0, 1, samples_number-1);
+    iota(indices.begin(), indices.end(), 0);
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
@@ -655,7 +657,7 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
         while (assigned_count < count) 
         {
-            const Index index = indices(i++);
+            const Index index = indices[i++];
 
             if (sample_uses[index] != SampleUse::None) 
             {
@@ -670,7 +672,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     assign_sample_use(SampleUse::Training, training_samples_number, index);
     assign_sample_use(SampleUse::Selection, selection_samples_number, index);
     assign_sample_use(SampleUse::Testing, testing_samples_number, index);
-
 }
 
 
@@ -1787,6 +1788,7 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
+
     input_dimensions = new_input_dimensions;
 
     target_dimensions = new_target_dimensions;
@@ -1817,10 +1819,9 @@ void DataSet::set(const Index& new_samples_number,
     raw_variables.resize(new_variables_number);
 
     set_default();
-    
+
     if (model_type == ModelType::ImageClassification)
-    {
-        
+    {        
         const Index raw_variables_number = new_inputs_number + 1;
 
         raw_variables.resize(raw_variables_number);
@@ -1856,10 +1857,11 @@ void DataSet::set(const Index& new_samples_number,
                 : VariableUse::Target;
         }
     }
-    
+
     sample_uses.resize(new_samples_number);
 
     split_samples_random();
+
 }
 
 
@@ -2310,7 +2312,7 @@ vector<Descriptives> DataSet::calculate_used_variable_descriptives() const
 }
 
 
-vector<Descriptives> DataSet::calculate_raw_variables_descriptives_positive_samples() const
+vector<Descriptives> DataSet::calculate_raw_variable_descriptives_positive_samples() const
 {
     const Index target_index = get_variable_indices(DataSet::VariableUse::Target)[0];
 
@@ -2344,7 +2346,7 @@ vector<Descriptives> DataSet::calculate_raw_variables_descriptives_positive_samp
 }
 
 
-vector<Descriptives> DataSet::calculate_raw_variables_descriptives_negative_samples() const
+vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_samples() const
 {
     const Index target_index = get_variable_indices(DataSet::VariableUse::Target)[0];
 
@@ -2378,7 +2380,7 @@ vector<Descriptives> DataSet::calculate_raw_variables_descriptives_negative_samp
 }
 
 
-vector<Descriptives> DataSet::calculate_raw_variables_descriptives_categories(const Index& class_index) const
+vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(const Index& class_index) const
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
@@ -2421,7 +2423,7 @@ vector<Descriptives> DataSet::calculate_variable_descriptives(const VariableUse&
 }
 
 
-vector<Descriptives> DataSet::calculate_testing_target_variables_descriptives() const
+vector<Descriptives> DataSet::calculate_testing_target_variable_descriptives() const
 {
     const vector<Index> testing_indices = get_sample_indices(SampleUse::Testing);
 
@@ -2774,7 +2776,7 @@ vector<Descriptives> DataSet::scale_data()
 {
     const Index variables_number = get_variables_number();
 
-    const vector<Descriptives> variables_descriptives = calculate_variable_descriptives();
+    const vector<Descriptives> variable_descriptives = calculate_variable_descriptives();
 
     Index raw_variable_index;
 
@@ -2788,15 +2790,15 @@ vector<Descriptives> DataSet::scale_data()
             break;
 
         case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, i, variables_descriptives[i]);
+            scale_minimum_maximum(data, i, variable_descriptives[i]);
             break;
 
         case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, i, variables_descriptives[i]);
+            scale_mean_standard_deviation(data, i, variable_descriptives[i]);
             break;
 
         case Scaler::StandardDeviation:
-            scale_standard_deviation(data, i, variables_descriptives[i]);
+            scale_standard_deviation(data, i, variable_descriptives[i]);
             break;
 
         case Scaler::Logarithm:
@@ -2808,7 +2810,7 @@ vector<Descriptives> DataSet::scale_data()
         }
     }
 
-    return variables_descriptives;
+    return variable_descriptives;
 }
 
 
@@ -2819,7 +2821,7 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
     const Tensor<Scaler, 1> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
-    const vector<Descriptives> input_variables_descriptives = calculate_variable_descriptives(variable_use);
+    const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
@@ -2829,15 +2831,15 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
             break;
 
         case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, input_variable_indices[i], input_variables_descriptives[i]);
+            scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, input_variable_indices[i], input_variables_descriptives[i]);
+            scale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::StandardDeviation:
-            scale_standard_deviation(data, input_variable_indices[i], input_variables_descriptives[i]);
+            scale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::Logarithm:
@@ -2849,12 +2851,12 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
         }
     }
 
-    return input_variables_descriptives;
+    return input_variable_descriptives;
 }
 
 
 void DataSet::unscale_variables(const VariableUse& variable_use, 
-                                const vector<Descriptives>& input_variables_descriptives)
+                                const vector<Descriptives>& input_variable_descriptives)
 {
     const Index input_variables_number = get_variables_number(variable_use);
 
@@ -2870,15 +2872,15 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
             break;
 
         case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, input_variable_indices[i], input_variables_descriptives[i]);
+            unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variables_descriptives[i]);
+            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, input_variable_indices[i], input_variables_descriptives[i]);
+            unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
             break;
 
         case Scaler::Logarithm:
