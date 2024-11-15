@@ -111,6 +111,7 @@ int main()
         transformer.save("data/ENtoES_model.xml");
 
         cout << "Bye!" << endl;
+
         return 0;
     }
     catch(const exception& e)
@@ -122,7 +123,7 @@ int main()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

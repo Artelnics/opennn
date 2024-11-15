@@ -15,7 +15,10 @@
 namespace opennn
 {
 
-TimeSeriesDataSet::TimeSeriesDataSet() : DataSet()
+TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
+                                     const dimensions& new_input_dimensions,
+                                     const dimensions& new_target_dimensions)
+    :DataSet(new_samples_number, new_input_dimensions, new_target_dimensions)
 {
 }
 
@@ -24,14 +27,9 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
                                      const string& separator,
                                      const bool& has_header,
                                      const bool& has_sample_ids,
-                                     const Index& new_lags_number,
-                                     const Index& new_steps_ahead,
                                      const Codification& data_codification)
+    :DataSet(data_path, separator, has_header, has_sample_ids, data_codification)
 {
-    set(data_path, separator, has_header, has_sample_ids, data_codification);
-
-    lags_number = new_lags_number;
-    steps_ahead = new_steps_ahead;
 }
 
 

@@ -26,7 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-
+/*
 //        srand(unsigned(time(nullptr)));
 
         // Data Set
@@ -63,7 +63,7 @@ int main()
         training_strategy.set_maximum_time(86400);
 
         training_strategy.perform_training();
-
+*/
         cout << "End Rosenbrock" << endl;
 
         return 0;

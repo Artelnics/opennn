@@ -22,14 +22,14 @@ class TimeSeriesDataSet : public DataSet
 
 public:
 
-    explicit TimeSeriesDataSet();
+    explicit TimeSeriesDataSet(const Index& = 0,
+                               const dimensions& = {},
+                               const dimensions& = {});
 
     explicit TimeSeriesDataSet(const string&,
                                const string&,
-                               const bool&,
-                               const bool&,
-                               const Index& = 3,
-                               const Index& = 2,
+                               const bool& = true,
+                               const bool& = false,
                                const Codification& = Codification::UTF8);
 
     void fill_gaps();

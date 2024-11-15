@@ -238,7 +238,7 @@ public:
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
-//    void set(const Tensor<type, 1>&, const Index&);
+
     void set_default();
 
     void set_model_type_string(const string&);
