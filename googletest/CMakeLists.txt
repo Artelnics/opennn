@@ -33,6 +33,9 @@ if (COMMAND pre_project_set_up_hermetic_build)
   pre_project_set_up_hermetic_build()
 endif()
 
+set(GOOGLETEST_VERSION "1.12.1" CACHE STRING "GoogleTest version")
+
+
 ########################################################################
 #
 # Project-wide settings.
@@ -43,8 +46,6 @@ endif()
 # as ${gtest_SOURCE_DIR} and to the root binary directory as
 # ${gtest_BINARY_DIR}.
 # Language "C" is required for find_package(Threads).
-
-set(GOOGLETEST_VERSION "1.12.1" CACHE STRING "GoogleTest version")  # Replace with the appropriate version number
 
 # Project version.
 

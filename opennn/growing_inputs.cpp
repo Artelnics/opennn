@@ -106,7 +106,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set = loss_index->get_data_set();
 
-    const vector<Index> target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
@@ -126,12 +126,12 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
          correlations_indexes.data() + correlations_indexes.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    vector<Index> input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
-    Tensor<Index, 1> correlations_rank_descending(input_raw_variables_indices.size());
+    Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
     for(Index i = 0; i < correlations_rank_descending.size(); i++) 
-        correlations_rank_descending(i) = input_raw_variables_indices[correlations_indexes[i]];
+        correlations_rank_descending(i) = input_raw_variable_indices[correlations_indexes[i]];
 
     data_set->set_input_raw_variables_unused();
 
@@ -315,7 +315,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-    data_set->set_input_target_raw_variable_indices(inputs_selection_results.optimal_input_raw_variables_indices, target_raw_variables_indices);
+    data_set->set_input_target_raw_variable_indices(inputs_selection_results.optimal_input_raw_variables_indices, target_raw_variable_indices);
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
@@ -346,46 +346,46 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    Tensor<string, 1> labels(8);
-    Tensor<string, 1> values(8);
+    vector<string> labels(8);
+    vector<string> values(8);
 
-    labels(0) = "Trials number";
-    values(0) = to_string(trials_number);
+    labels[0] = "Trials number";
+    values[0] = to_string(trials_number);
 
-    labels(1) = "Selection error goal";
-    values(1) = to_string(selection_error_goal);
+    labels[1] = "Selection error goal";
+    values[1] = to_string(selection_error_goal);
 
-    labels(2) = "Maximum selection failures";
-    values(2) = to_string(maximum_selection_failures);
+    labels[2] = "Maximum selection failures";
+    values[2] = to_string(maximum_selection_failures);
 
-    labels(3) = "Maximum inputs number";
-    values(3) = to_string(maximum_inputs_number);
+    labels[3] = "Maximum inputs number";
+    values[3] = to_string(maximum_inputs_number);
 
-    labels(4) = "Minimum correlations";
-    values(4) = to_string(minimum_correlation);
+    labels[4] = "Minimum correlations";
+    values[4] = to_string(minimum_correlation);
 
-    labels(5) = "Maximum correlation";
-    values(5) = to_string(maximum_correlation);
+    labels[5] = "Maximum correlation";
+    values[5] = to_string(maximum_correlation);
 
-    labels(6) = "Maximum iterations number";
-    values(6) = to_string(maximum_epochs_number);
+    labels[6] = "Maximum iterations number";
+    values[6] = to_string(maximum_epochs_number);
 
-    labels(7) = "Maximum time";
-    values(7) = to_string(maximum_time);
+    labels[7] = "Maximum time";
+    values[7] = to_string(maximum_time);
 
     const Index rows_number = labels.size();
     const Index raw_variables_number = 2;
 
     Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-
+/*
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-
+*/
     return string_matrix;
 }
 
 
-void GrowingInputs::to_XML(tinyxml2::XMLPrinter& printer) const
+void GrowingInputs::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingInputs");
 
@@ -403,9 +403,9 @@ void GrowingInputs::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
+void GrowingInputs::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingInputs");
+    const XMLElement* root_element = document.FirstChildElement("GrowingInputs");
 
     if(!root_element)
         throw runtime_error("GrowingInputs element is nullptr.\n");
@@ -430,7 +430,7 @@ void GrowingInputs::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
     to_XML(printer);
     file << printer.CStr();
 }
@@ -440,7 +440,7 @@ void GrowingInputs::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

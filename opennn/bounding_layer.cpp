@@ -191,7 +191,7 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::get_expression(const Tensor<string, 1>& input_names, const Tensor<string, 1>& output_names) const
+string BoundingLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     if (bounding_method == BoundingMethod::NoBounding)
         return string();
@@ -218,7 +218,7 @@ void BoundingLayer::print() const
 }
 
 
-void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void BoundingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Bounding");
 
@@ -243,7 +243,7 @@ void BoundingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void BoundingLayer::from_XML(const XMLDocument& document)
 {
     const auto* root_element = document.FirstChildElement("Bounding");
     

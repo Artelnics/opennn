@@ -178,7 +178,7 @@ void StochasticGradientDescentTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    tinyxml2::XMLPrinter file_stream;
+    XMLPrinter file_stream;
 
     stochastic_gradient_descent.to_XML(file_stream);
 }

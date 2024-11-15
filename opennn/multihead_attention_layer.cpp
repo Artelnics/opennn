@@ -887,9 +887,9 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 }
 
 
-void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
+void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
+    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
 
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiheadAttention element is nullptr.\n");
@@ -904,7 +904,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void MultiheadAttentionLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiheadAttention");
 

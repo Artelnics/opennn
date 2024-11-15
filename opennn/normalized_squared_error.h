@@ -74,9 +74,9 @@ public:
    string get_loss_method() const final;
    string get_error_type_text() const final;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&) const;
+   virtual void from_XML(const XMLDocument&) const;
 
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 //protected:
 

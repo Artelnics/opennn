@@ -620,7 +620,7 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& printer) const
+void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("QuasiNewtonMethod");
 
@@ -670,21 +670,21 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 }
 
 
-void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
+void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
+    const XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
     if (!root_element) 
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
     set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
 
-    const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
     if (!learning_rate_algorithm_element) 
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
     
-    tinyxml2::XMLDocument learning_rate_algorithm_document;
+    XMLDocument learning_rate_algorithm_document;
     learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
     learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
 

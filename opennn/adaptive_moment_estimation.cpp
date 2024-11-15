@@ -161,7 +161,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     vector<Index> context_variable_indices;
-
+    
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
@@ -229,14 +229,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
-
+    
     // Loss index
 
     loss_index->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-
+    
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -554,7 +554,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
+void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
 
@@ -568,10 +568,10 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
+void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
 {
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
+    const XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");

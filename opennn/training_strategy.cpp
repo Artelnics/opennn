@@ -379,9 +379,7 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
     mean_squared_error.set_data_set(new_data_set);
-    cout << "0" << endl;
     normalized_squared_error.set_data_set(new_data_set);
-    cout << "1" << endl;
     cross_entropy_error.set_data_set(new_data_set);
     cross_entropy_error_3d.set_data_set(new_data_set);
     weighted_squared_error.set_data_set(new_data_set);
@@ -546,7 +544,7 @@ void TrainingStrategy::print() const
 }
 
 
-void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
+void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TrainingStrategy");
 
@@ -600,12 +598,12 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
+void TrainingStrategy::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
+    const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
-    const tinyxml2::XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
+    const XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
     if (!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
 
     // Loss method
@@ -614,12 +612,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minkowski error
 
-    const tinyxml2::XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
+    const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
     if (minkowski_error_element) {
-        tinyxml2::XMLDocument minkowski_document;
-        tinyxml2::XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
+        XMLDocument minkowski_document;
+        XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
 
-        for (const tinyxml2::XMLNode* node = minkowski_error_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = minkowski_error_element->FirstChild(); node; node = node->NextSibling())
             minkowski_error_element_copy->InsertEndChild(node->DeepClone(&minkowski_document));
 
         minkowski_document.InsertEndChild(minkowski_error_element_copy);
@@ -628,12 +626,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Cross entropy error
 
-    const tinyxml2::XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
+    const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
     if (cross_entropy_element) {
-        tinyxml2::XMLDocument cross_entropy_document;
-        tinyxml2::XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
+        XMLDocument cross_entropy_document;
+        XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
 
-        for (const tinyxml2::XMLNode* node = cross_entropy_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = cross_entropy_element->FirstChild(); node; node = node->NextSibling())
             cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));
 
         cross_entropy_document.InsertEndChild(cross_entropy_error_element_copy);
@@ -642,12 +640,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Weighted squared error
 
-    const tinyxml2::XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
+    const XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
     if (weighted_squared_error_element) {
-        tinyxml2::XMLDocument weighted_squared_error_document;
-        tinyxml2::XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
+        XMLDocument weighted_squared_error_document;
+        XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
 
-        for (const tinyxml2::XMLNode* node = weighted_squared_error_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = weighted_squared_error_element->FirstChild(); node; node = node->NextSibling())
             weighted_squared_error_element_copy->InsertEndChild(node->DeepClone(&weighted_squared_error_document));
 
         weighted_squared_error_document.InsertEndChild(weighted_squared_error_element_copy);
@@ -656,16 +654,16 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    const tinyxml2::XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
+    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
     if (regularization_element) {
-        tinyxml2::XMLDocument regularization_document;
+        XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         get_loss_index()->regularization_from_XML(regularization_document);
     }
 
     // Optimization algorithm
 
-    const tinyxml2::XMLElement* optimization_algorithm_element = root_element->FirstChildElement("OptimizationAlgorithm");
+    const XMLElement* optimization_algorithm_element = root_element->FirstChildElement("OptimizationAlgorithm");
     if (!optimization_algorithm_element) throw runtime_error("OptimizationAlgorithm element is nullptr.\n");
 
     // Optimization method
@@ -674,12 +672,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Conjugate gradient
 
-    const tinyxml2::XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
+    const XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
     if (conjugate_gradient_element) {
-        tinyxml2::XMLDocument conjugate_gradient_document;
-        tinyxml2::XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
+        XMLDocument conjugate_gradient_document;
+        XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
 
-        for (const tinyxml2::XMLNode* node = conjugate_gradient_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = conjugate_gradient_element->FirstChild(); node; node = node->NextSibling())
             conjugate_gradient_element_copy->InsertEndChild(node->DeepClone(&conjugate_gradient_document));
 
         conjugate_gradient_document.InsertEndChild(conjugate_gradient_element_copy);
@@ -688,12 +686,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Stochastic gradient descent
 
-    const tinyxml2::XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
+    const XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
     if (stochastic_gradient_descent_element) {
-        tinyxml2::XMLDocument stochastic_gradient_document;
-        tinyxml2::XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
+        XMLDocument stochastic_gradient_document;
+        XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
 
-        for (const tinyxml2::XMLNode* node = stochastic_gradient_descent_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = stochastic_gradient_descent_element->FirstChild(); node; node = node->NextSibling())
             stochastic_gradient_element_copy->InsertEndChild(node->DeepClone(&stochastic_gradient_document));
 
         stochastic_gradient_document.InsertEndChild(stochastic_gradient_element_copy);
@@ -702,12 +700,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Adaptive moment estimation
 
-    const tinyxml2::XMLElement* adaptive_moment_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
+    const XMLElement* adaptive_moment_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
     if (adaptive_moment_element) {
-        tinyxml2::XMLDocument adaptive_moment_document;
-        tinyxml2::XMLElement* adaptive_moment_element_copy = adaptive_moment_document.NewElement("AdaptiveMomentEstimation");
+        XMLDocument adaptive_moment_document;
+        XMLElement* adaptive_moment_element_copy = adaptive_moment_document.NewElement("AdaptiveMomentEstimation");
 
-        for (const tinyxml2::XMLNode* node = adaptive_moment_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = adaptive_moment_element->FirstChild(); node; node = node->NextSibling())
             adaptive_moment_element_copy->InsertEndChild(node->DeepClone(&adaptive_moment_document));
 
         adaptive_moment_document.InsertEndChild(adaptive_moment_element_copy);
@@ -716,12 +714,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Quasi-Newton method
 
-    const tinyxml2::XMLElement* quasi_newton_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
+    const XMLElement* quasi_newton_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
     if (quasi_newton_element) {
-        tinyxml2::XMLDocument quasi_newton_document;
-        tinyxml2::XMLElement* quasi_newton_element_copy = quasi_newton_document.NewElement("QuasiNewtonMethod");
+        XMLDocument quasi_newton_document;
+        XMLElement* quasi_newton_element_copy = quasi_newton_document.NewElement("QuasiNewtonMethod");
 
-        for (const tinyxml2::XMLNode* node = quasi_newton_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = quasi_newton_element->FirstChild(); node; node = node->NextSibling())
             quasi_newton_element_copy->InsertEndChild(node->DeepClone(&quasi_newton_document));
 
         quasi_newton_document.InsertEndChild(quasi_newton_element_copy);
@@ -730,12 +728,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
     // Levenberg-Marquardt
 
-    const tinyxml2::XMLElement* levenberg_marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
+    const XMLElement* levenberg_marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
     if (levenberg_marquardt_element) {
-        tinyxml2::XMLDocument levenberg_document;
-        tinyxml2::XMLElement* levenberg_element_copy = levenberg_document.NewElement("LevenbergMarquardt");
+        XMLDocument levenberg_document;
+        XMLElement* levenberg_element_copy = levenberg_document.NewElement("LevenbergMarquardt");
 
-        for (const tinyxml2::XMLNode* node = levenberg_marquardt_element->FirstChild(); node; node = node->NextSibling())
+        for (const XMLNode* node = levenberg_marquardt_element->FirstChild(); node; node = node->NextSibling())
             levenberg_element_copy->InsertEndChild(node->DeepClone(&levenberg_document));
 
         levenberg_document.InsertEndChild(levenberg_element_copy);
@@ -755,7 +753,7 @@ void TrainingStrategy::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
     to_XML(printer);
     file << printer.CStr();
 }
@@ -765,7 +763,7 @@ void TrainingStrategy::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

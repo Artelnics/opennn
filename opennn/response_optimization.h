@@ -52,9 +52,9 @@ public:
    void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   void set_inputs_outputs_conditions(const Tensor<string, 1>&, const Tensor<string, 1>&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_inputs_outputs_conditions(const vector<string>&, const vector<string>&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   Tensor<Condition, 1> get_conditions(const Tensor<string, 1>&) const;
+   Tensor<Condition, 1> get_conditions(const vector<string>&) const;
    Tensor<Tensor<type, 1>, 1> get_values_conditions(const Tensor<Condition, 1>&, const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_inputs() const;
@@ -85,10 +85,7 @@ private:
 
 struct ResponseOptimizationResults
 {
-    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network)
-    {
-        neural_network = new_neural_network;
-    }
+    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
     DataSet* data_set = nullptr;
 

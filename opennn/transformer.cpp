@@ -291,13 +291,13 @@ void Transformer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void Transformer::set_input_vocabulary(const Tensor<string, 1>& new_input_vocabulary)
+void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void Transformer::set_context_vocabulary(const Tensor<string, 1>& new_context_vocabulary)
+void Transformer::set_context_vocabulary(const vector<string>& new_context_vocabulary)
 {
     context_vocabulary = new_context_vocabulary;
 }
@@ -313,8 +313,9 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     type start_indicator = 2;
     type end_indicator = 3;
     //}
-    
-    const Tensor<Tensor<string, 1>, 1> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
+
+    // @todo
+    const vector<vector<string>> context_tokens/* = preprocess_language_documents(tensor_wrapper(context_string))*/;
 
     const Index batch_samples_number = 1;
 
@@ -322,9 +323,9 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     context.setZero();
     context(0) = start_indicator;
     
-    //if(!imported_vocabulary)    tokenize_whitespace(context_tokens(0), context);
+    //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
     //else
-    tokenize_wordpiece(context_tokens(0), context);
+    tokenize_wordpiece(context_tokens[0], context);
     
     Tensor<type, 2> input(batch_samples_number, input_length);
     input.setZero();
@@ -388,7 +389,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 }
 
 
-// void Transformer::tokenize_whitespace(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
+// void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 // {
 //     const Index context_vocabulary_size = context_vocabulary.size();
 
@@ -398,7 +399,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //     {
 //         if(j < context_tokens.size())
 //         {
-//             auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens(j));
+//             auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens[j]);
 
 //             const Index word_index = it - context_vocabulary.data();
 
@@ -420,12 +421,12 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 // }
 
 
-void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Tensor<type, 2>& context)
+void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
     unordered_map<std::string, type> context_vocabulary_map;
 
     for(Index i = 0; i < context_vocabulary.size(); i++)
-        context_vocabulary_map[context_vocabulary(i)] = type(i);
+        context_vocabulary_map[context_vocabulary[i]] = type(i);
 
     Index token_counter = 1;
     bool line_ended = false;
@@ -441,14 +442,13 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
     {
         if(j < context_tokens.size() && token_counter < context_length - 1)
         {
-            word = context_tokens(j);
+            word = context_tokens[j];
 
             wordpiece_entry = context_vocabulary_map.find(word);
 
             if(wordpiece_entry != context_vocabulary_map.end())
             {
-                context(token_counter) = wordpiece_entry->second;
-                token_counter++;
+                context(token_counter++) = wordpiece_entry->second;
                 continue;
             }
 
@@ -467,8 +467,7 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 
                 if(wordpiece_entry != context_vocabulary_map.end())
                 {
-                    context(token_counter) = wordpiece_entry->second;
-                    token_counter++;
+                    context(token_counter++) = wordpiece_entry->second;
 
                     rest = word.substr(wordpiece_length);
 
@@ -513,14 +512,14 @@ void Transformer::tokenize_wordpiece(const Tensor<string, 1>& context_tokens, Te
 //     {
 //         if(predictions(i) == 2)   break;
 
-//         output_string << input_vocabulary(Index(predictions(i))) << " ";
+//         output_string << input_vocabulary[Index(predictions(i))] << " ";
 //     }
 // }
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
-    output_string << input_vocabulary(Index(predictions(1)));
+    output_string << input_vocabulary[Index(predictions(1))];
 
     string current_prediction;
 
@@ -528,16 +527,12 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
     {
         if(predictions(i) == 3)   break;
 
-        current_prediction = input_vocabulary(Index(predictions(i)));
+        current_prediction = input_vocabulary[Index(predictions(i))];
 
         if(current_prediction.substr(0, 2) == "##")
-        {
             output_string << current_prediction.substr(2);
-        }
         else
-        {
             output_string << " " << current_prediction;
-        }
     }
 }
 

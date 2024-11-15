@@ -17,7 +17,6 @@ namespace opennn
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
-    set_default();
 }
 
 
@@ -36,29 +35,23 @@ type NormalizedSquaredError::get_selection_normalization_coefficient() const
 void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
-    cout << "llega 0" << endl;
+
     if(neural_network->has(Layer::Type::Recurrent)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
     {
-        cout << "llega 1" << endl;
-        set_normalization_coefficient();
-        cout << "llega 2" << endl;
+        //set_normalization_coefficient(); //@todo fix crash
     }
-    
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    cout << "aaaa 1" << endl;
-    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-    cout << "aaaa 2" << endl;
+    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean(); 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
-    cout << "aaaa 4" << endl;
 }
 
 
@@ -94,7 +87,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    // @todo add pragma 
+    #pragma omp parallel for reduction(+:normalization_coefficient)
 
     for(Index i = 0; i < target_samples_number; i++)
         for(Index j = 0; j < target_variables_number; j++)
@@ -157,7 +150,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     const Index size = targets.dimension(0);
 
     type normalization_coefficient = type(0);
-    cout << "b 0" << endl;
+
     Tensor<type, 0> norm;
 
     for(Index i = 0; i < size; i++)
@@ -166,10 +159,10 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
         normalization_coefficient += norm(0);
     }
-    cout << "b 1" << endl;
+
     if(type(normalization_coefficient) < type(NUMERIC_LIMITS_MIN)) 
         normalization_coefficient = type(1);
-    cout << "normalization_coefficient: " << normalization_coefficient << endl;
+
     return normalization_coefficient;
 }
 
@@ -331,7 +324,7 @@ string NormalizedSquaredError::get_error_type_text() const
 }
 
 
-void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizedSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("NormalizedSquaredError");
 
@@ -339,9 +332,9 @@ void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) const
+void NormalizedSquaredError::from_XML(const XMLDocument& document) const
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 
     if(!root_element)
         throw runtime_error("Normalized squared element is nullptr.\n");

@@ -77,8 +77,8 @@ Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names, 
-                                        const Tensor<string, 1>& output_names) const
+string UnscalingLayer::get_expression(const vector<string>& input_names,
+                                        const vector<string>& output_names) const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
@@ -95,7 +95,7 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 
         case Scaler::None:
         
-            buffer << output_names(i) << " = " << input_names(i) << ";\n";
+            buffer << output_names[i] << " = " << input_names[i] << ";\n";
             break;
 
         case Scaler::MinimumMaximum:
@@ -122,7 +122,7 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 
         case  Scaler::StandardDeviation:
         
-            buffer << output_names[i] << "=" <<  input_names(i) << "*" << descriptives[i].standard_deviation <<";\n";
+            buffer << output_names[i] << "=" <<  input_names[i] << "*" << descriptives[i].standard_deviation <<";\n";
         
             break;
 
@@ -146,11 +146,11 @@ string UnscalingLayer::get_expression(const Tensor<string, 1>& input_names,
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
+vector<string> UnscalingLayer::write_unscaling_methods() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -170,11 +170,11 @@ Tensor<string, 1> UnscalingLayer::write_unscaling_methods() const
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_unscaling_method_text() const
+vector<string> UnscalingLayer::write_unscaling_method_text() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -273,12 +273,12 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void UnscalingLayer::set_scalers(const Tensor<string, 1>& new_scalers)
+void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
 {
     const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
-        set_scaler(i, new_scalers(i));
+        set_scaler(i, new_scalers[i]);
 }
 
 
@@ -384,11 +384,11 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-Tensor<string, 1> UnscalingLayer::write_scalers_text() const
+vector<string> UnscalingLayer::write_scalers_text() const
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<string, 1> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(neurons_number);
 
     for(Index i = 0; i < neurons_number; i++)
         if(scalers[i] == Scaler::None)
@@ -414,19 +414,19 @@ void UnscalingLayer::print() const
 
     const Index inputs_number = get_input_dimensions()[0];
 
-    const Tensor<string, 1> scalers_text = write_scalers_text();
+    const vector<string> scalers_text = write_scalers_text();
 
     for(Index i = 0; i < inputs_number; i++)
     {
         cout << "Neuron " << i << endl
-             << "Scaler " << scalers_text(i) << endl;
+             << "Scaler " << scalers_text[i] << endl;
 
         descriptives[i].print();
     }
 }
 
 
-void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void UnscalingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");
 
@@ -434,7 +434,7 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 
     add_xml_element(printer, "UnscalingNeuronsNumber", to_string(output_dimensions[0]));
 
-    const Tensor<string, 1> scalers = write_unscaling_methods();
+    const vector<string> scalers = write_unscaling_methods();
 
     for (Index i = 0; i < output_dimensions[0]; i++) 
     {
@@ -442,7 +442,7 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
         printer.PushAttribute("Index", int(i + 1));
 
         add_xml_element(printer, "Descriptives", tensor_to_string(descriptives[i].to_tensor()));
-        add_xml_element(printer, "Scaler", scalers(i));
+        add_xml_element(printer, "Scaler", scalers[i]);
 
         printer.CloseElement();
     }
@@ -451,9 +451,9 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void UnscalingLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Unscaling");
+    const XMLElement* root_element = document.FirstChildElement("Unscaling");
 
     if(!root_element)
         throw runtime_error("Unscaling element is nullptr.\n");
@@ -461,10 +461,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
     set(neurons_number);
 
-    const tinyxml2::XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
+    const XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
 
     for (Index i = 0; i < neurons_number; i++) {
-        const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
+        const XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
         if (!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
@@ -475,11 +475,11 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
         }
 
-        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
+        const XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
 
         if (descriptives_element->GetText())
         {
-            const Tensor<string, 1> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
+            const vector<string> splitted_descriptives = get_tokens(descriptives_element->GetText(), " ");
             descriptives[i].set(
                 type(stof(splitted_descriptives[0])),
                 type(stof(splitted_descriptives[1])),

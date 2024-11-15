@@ -1679,7 +1679,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
         {
             if(!isnan(column(i)))
             {
-                push_back_type(sorted_column, column(i));
+                push_back(sorted_column, column(i));
                 rows_number++;
             }
         }
@@ -1714,9 +1714,9 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
     {
         if(!isnan(column(i)))
         {
-            push_back_type(sorted_column, column(i));
+            push_back(sorted_column, column(i));
 
-            //push_back_type(sorted_column, column(i));
+            //push_back(sorted_column, column(i));
             rows_number++;
         }
     }
@@ -1755,7 +1755,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
         for(Index i = 0; i < column.size(); i++)
             if(!isnan(column(i)))
-                push_back_type(sorted_column,column(i));
+                push_back(sorted_column,column(i));
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
@@ -1792,7 +1792,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix,
             const Index row_index = row_indices[k];
 
             if(!isnan(matrix(row_index, column_index)))
-                push_back_type(sorted_column, matrix(row_index, column_index));
+                push_back(sorted_column, matrix(row_index, column_index));
         }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());

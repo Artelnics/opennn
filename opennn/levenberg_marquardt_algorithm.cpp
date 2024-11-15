@@ -541,7 +541,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 }
 
 
-void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
+void LevenbergMarquardtAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LevenbergMarquardt");
 
@@ -556,9 +556,9 @@ void LevenbergMarquardtAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
+void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
+    const XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
 
     if(!root_element)
         throw runtime_error("Levenberg-Marquardt algorithm element is nullptr.\n");

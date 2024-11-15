@@ -32,20 +32,6 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
 
     lags_number = new_lags_number;
     steps_ahead = new_steps_ahead;
-
-    transform_time_series();
-}
-
-
-Index TimeSeriesDataSet::get_time_series_raw_variables_number() const
-{
-    return time_series_raw_variables.size();
-}
-
-
-const vector<DataSet::RawVariable>& TimeSeriesDataSet::get_time_series_raw_variables() const
-{
-    return time_series_raw_variables;
 }
 
 
@@ -63,22 +49,6 @@ const string& TimeSeriesDataSet::get_group_by_column() const
 }
 
 
-Index TimeSeriesDataSet::get_time_series_variables_number() const
-{
-    const Index time_series_raw_variables_number = time_series_raw_variables.size();
-
-    Index variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Categorical)
-            variables_number += time_series_raw_variables[i].categories.size();
-        else
-            variables_number++;
-
-    return variables_number;
-}
-
-
 const Index& TimeSeriesDataSet::get_lags_number() const
 {
     return lags_number;
@@ -88,139 +58,6 @@ const Index& TimeSeriesDataSet::get_lags_number() const
 const Index& TimeSeriesDataSet::get_steps_ahead() const
 {
     return steps_ahead;
-}
-
-
-Index TimeSeriesDataSet::get_time_series_data_rows_number() const
-{
-    return time_series_data.dimension(0);
-}
-
-
-Tensor<type, 2> TimeSeriesDataSet::get_time_series_raw_variable_data(const Index& raw_variable_index) const
-{
-    Index raw_variables_number = 1;
-
-    const Index rows_number = time_series_data.dimension(0);
-
-    if(time_series_raw_variables[raw_variable_index].type == RawVariableType::Categorical)
-    {
-        raw_variables_number = time_series_raw_variables[raw_variable_index].get_categories_number();
-    }
-
-    const Eigen::array<Index, 2> extents = {rows_number, raw_variables_number};
-    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(raw_variable_index)[0]};
-
-    return time_series_data.slice(offsets, extents);
-}
-
-
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_raw_variables_names() const
-{
-    const Index raw_variables_number = get_time_series_raw_variables_number();
-
-    Tensor<string, 1> raw_variables_names(raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        raw_variables_names(i) = time_series_raw_variables[i].name;
-    }
-
-    return raw_variables_names;
-}
-
-
-Index TimeSeriesDataSet::get_input_time_series_raw_variables_number() const
-{
-    Index input_raw_variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].use == VariableUse::Input)
-        {
-            input_raw_variables_number++;
-        }
-    }
-
-    return input_raw_variables_number;
-}
-
-
-Index TimeSeriesDataSet::get_target_time_series_raw_variables_number() const
-{
-    Index target_raw_variables_number = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].use == VariableUse::Target)
-        {
-            target_raw_variables_number++;
-        }
-    }
-
-    return target_raw_variables_number;
-}
-
-
-Index TimeSeriesDataSet::get_time_series_time_raw_variable_index() const
-{
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-    {
-        if(time_series_raw_variables[i].type == RawVariableType::DateTime) return i;
-    }
-
-    return Index(NAN);
-}
-
-
-Tensor<Index, 1> TimeSeriesDataSet::get_target_time_series_raw_variables_indices() const
-{
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
-
-    Tensor<Index, 1> target_raw_variables_indices(target_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].use == VariableUse::Target)
-            target_raw_variables_indices(index++) = i;
-
-    return target_raw_variables_indices;
-}
-
-
-Tensor<string, 1> TimeSeriesDataSet::get_time_series_variable_names() const
-{
-    const Index variables_number = get_time_series_variables_number();
-
-    Tensor<string, 1> variable_names(variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].type == RawVariableType::Categorical)
-            for(Index j = 0; j < time_series_raw_variables[i].categories.size(); j++)
-                variable_names(index++) = time_series_raw_variables[i].categories(j);
-        else
-            variable_names(index++) = time_series_raw_variables[i].name;
-
-    return variable_names;
-}
-
-
-Tensor<Index, 1> TimeSeriesDataSet::get_input_time_series_raw_variables_indices() const
-{
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-
-    Tensor<Index, 1> input_raw_variables_indices(input_raw_variables_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < time_series_raw_variables.size(); i++)
-        if(time_series_raw_variables[i].use == VariableUse::Input)
-            input_raw_variables_indices(index++) = i;
-
-    return input_raw_variables_indices;
 }
 
 
@@ -236,19 +73,6 @@ void TimeSeriesDataSet::set_steps_ahead_number(const Index& new_steps_ahead_numb
 }
 
 
-void TimeSeriesDataSet::set_time_series_raw_variables_number(const Index& new_variables_number)
-{
-    time_series_raw_variables.resize(new_variables_number);
-}
-
-
-void TimeSeriesDataSet::set_time_series_data(const Tensor<type, 2>& new_data)
-{
-    time_series_data = new_data;
-}
-
-
-
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
 //    time_column = new_time_column;
@@ -258,135 +82,6 @@ void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 void TimeSeriesDataSet::set_group_by_raw_variable(const string& new_group_by_column)
 {
 //    group_by_column = new_group_by_column;
-}
-
-
-void TimeSeriesDataSet::transform_time_series_raw_variables()
-{
-    cout << "Transforming time series raw variables..." << endl;
-
-    // Categorical raw_variables?
-
-    time_series_raw_variables = raw_variables;
-
-    const Index raw_variables_number = get_raw_variables_number();
-
-    vector<RawVariable> new_raw_variables;
-
-    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
-
-    if(time_raw_variables_number == 0)
-        new_raw_variables.resize(raw_variables_number*(lags_number+steps_ahead));
-    else if(time_raw_variables_number == 1)
-        new_raw_variables.resize((raw_variables_number-1)*(lags_number+steps_ahead));
-    else
-        throw runtime_error("More than 1 time variable.");
-
-    Index lag_index = lags_number - 1;
-    Index ahead_index = 0;
-    Index raw_variable_index = 0;
-    Index new_raw_variable_index = 0;
-
-    for(Index i = 0; i < raw_variables_number*(lags_number+steps_ahead); i++)
-    {
-        raw_variable_index = i%raw_variables_number;
-
-        const RawVariable& raw_variable = raw_variables[raw_variable_index];
-
-        if(time_series_raw_variables[raw_variable_index].type == RawVariableType::DateTime) continue;
-
-        if(i < lags_number*raw_variables_number)
-        {            
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_lag_" + to_string(lag_index);
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::Input);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-        }
-        else if(i == raw_variables_number*(lags_number+steps_ahead) - 1)
-        {            
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_ahead_" + to_string(ahead_index);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::Target);
-        }
-        else
-        {
-            new_raw_variables[new_raw_variable_index].name = raw_variable.name + "_ahead_" + to_string(ahead_index);
-            new_raw_variables[new_raw_variable_index].type = raw_variable.type;
-            new_raw_variables[new_raw_variable_index].categories = raw_variable.categories;
-            new_raw_variables[new_raw_variable_index].set_use(VariableUse::None);
-        }
-
-        new_raw_variable_index++;
-
-        if(lag_index > 0 && raw_variable_index == raw_variables_number - 1)
-            lag_index--;
-        else if(raw_variable_index == raw_variables_number - 1)
-            ahead_index++;
-    }
-
-    raw_variables = new_raw_variables;
-}
-
-
-void TimeSeriesDataSet::transform_time_series_data()
-{
-    cout << "Transforming time series data..." << endl;
-
-    // Categorical / Time raw_variables?
-
-    const Index old_samples_number = data.dimension(0);
-    const Index old_variables_number = data.dimension(1);
-
-    const Index time_raw_variables_number = get_raw_variables_number(VariableUse::Time);
-
-    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
-
-    const Index new_variables_number = time_raw_variables_number == 1
-                                     ? (old_variables_number - 1) * (lags_number + steps_ahead)
-                                     : old_variables_number * (lags_number + steps_ahead);
-
-    time_series_data = data;
-
-    data.resize(new_samples_number, new_variables_number);
-
-    Index index = 0;
-
-    for(Index j = 0; j < old_variables_number; j++)
-    {
-        if(raw_variables[get_raw_variable_index(j)].type == RawVariableType::DateTime)
-        {
-            index++;
-            continue;
-        }
-
-        for(Index i = 0; i < lags_number+steps_ahead; i++)
-        {
-            copy(time_series_data.data() + i + j * old_samples_number,
-                 time_series_data.data() + i + j * old_samples_number + old_samples_number - lags_number - steps_ahead + 1,
-                 data.data() + i * (old_variables_number - index) * new_samples_number + (j - index) * new_samples_number);
-        }
-    }
-
-    sample_uses.resize(new_samples_number);
-
-    split_samples_random();
-}
-
-
-void TimeSeriesDataSet::transform_time_series()
-{
-    cout << "Transforming time series..." << endl;
-
-    if(lags_number == 0 || steps_ahead == 0) return;
-
-    transform_time_series_data();
-
-    transform_time_series_raw_variables();
-
-    split_samples_sequential();
-
-    unuse_constant_raw_variables();
 }
 
 
@@ -406,16 +101,17 @@ void TimeSeriesDataSet::print() const
          << "Number of targets: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
 
     cout << "Target variables dimensions: ";
 
-    print_dimensions(target_dimensions);
+    print_vector(target_dimensions);
 }
 
 
-void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 {
+    /*
     file_stream.OpenElement("TimeSeriesDataSet");
 
     // Data file
@@ -471,7 +167,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 
     // Time raw variable
-/*
+
     file_stream.OpenElement("TimeRawVariable");
     file_stream.PushText(get_time_raw_variable().c_str());
     file_stream.CloseElement();
@@ -487,7 +183,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
-*/
+
     // Codification
 
     file_stream.OpenElement("Codification");
@@ -544,7 +240,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("TimeSeriesRawVariable");
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            time_series_raw_variables[i].to_XML(file_stream);
+            //time_series_raw_variables[i].to_XML(file_stream);
             file_stream.CloseElement();
         }
 
@@ -593,7 +289,7 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MissingValuesNumber");
     file_stream.PushText(to_string(missing_values_number).c_str());
     file_stream.CloseElement();
-/*
+
     if(missing_values_number > 0)
     {
         // Raw variables missing values number
@@ -628,13 +324,13 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
-*/
+
     // Missing values
 
     file_stream.CloseElement();
 
     // Preview data
-/*
+
     file_stream.OpenElement("PreviewData");
 
     file_stream.OpenElement("PreviewSize");
@@ -653,11 +349,11 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            for(Index j = 0; j < data_file_preview(i).size(); j++)
+            for(Index j = 0; j < data_file_preview[i].size(); j++)
             {
-                file_stream.PushText(data_file_preview(i)(j).c_str());
+                file_stream.PushText(data_file_preview[i][j].c_str());
 
-                if(j != data_file_preview(i).size()-1)
+                if(j != data_file_preview[i].size()-1)
                 {
                     file_stream.PushText(",");
                 }
@@ -669,32 +365,34 @@ void TimeSeriesDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close preview data
 
     file_stream.CloseElement();
-*/
+
     // Close data set
 
     file_stream.CloseElement();
+*/
 }
 
 
-void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
+/*
     // Data set element
 
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
+    const XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
         throw runtime_error("Path element is nullptr.\n");
@@ -704,7 +402,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
+    const XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
         if(separator_element->GetText())
@@ -712,21 +410,21 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
+    const XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
         set_has_header(raw_variables_names_element->GetText() == string("1"));
 
     // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
+    const XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
         set_has_ids(rows_label_element->GetText() == string("1"));
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
+    const XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
         if(missing_values_label_element->GetText())
@@ -736,7 +434,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Lags number
 
-    const tinyxml2::XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
+    const XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
 
     if(!lags_number_element)
         throw runtime_error("Lags number element is nullptr.\n");
@@ -746,7 +444,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Steps ahead
 
-    const tinyxml2::XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
+    const XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
 
     if(!steps_ahead_element)
         throw runtime_error("Steps ahead element is nullptr.\n");
@@ -756,7 +454,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time raw_variable
 
-    const tinyxml2::XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
+    const XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
 
     if(!time_raw_variable_element)
         throw runtime_error("Time raw_variable element is nullptr.\n");
@@ -766,7 +464,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Group by raw_variable
 
-    const tinyxml2::XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
+    const XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
 
     if(!group_by_raw_variable_element)
         throw runtime_error("Group by raw_variable element is nullptr.\n");
@@ -776,7 +474,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
+    const XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
         if(codification_element->GetText())
@@ -784,14 +482,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
     // Raw variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
         throw runtime_error("RawVariablesNumber element is nullptr.\n");
@@ -801,11 +499,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* start_element = raw_variables_number_element;
+    const XMLElement* start_element = raw_variables_number_element;
 
     for(Index i = 0; i < raw_variables.size(); i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -813,7 +511,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Name
 
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
+        const XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
 
         if(!name_element)
             throw runtime_error("Name element is nullptr.\n");
@@ -827,7 +525,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Scaler
 
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
+        const XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
 
         if(!scaler_element)
             throw runtime_error("Scaler element is nullptr.\n");
@@ -841,7 +539,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // raw_variable use
 
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
+        const XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
         if(!use_element)
             throw runtime_error("Raw variable use element is nullptr.\n");
@@ -855,7 +553,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
         // Type
 
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
+        const XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
 
         if(!type_element)
             throw runtime_error("Type element is nullptr.\n");
@@ -871,7 +569,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             // Categories
 
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
+            const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if(!categories_element)
                 throw runtime_error("Categories element is nullptr.\n");
@@ -887,11 +585,11 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
+    const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
     // Time series raw_variables number
 
-    const tinyxml2::XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
+    const XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
     if(!time_series_raw_variables_number_element)
         throw runtime_error("Time seires raw_variables number element is nullptr.\n");
@@ -907,13 +605,13 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const tinyxml2::XMLElement* time_series_start_element = time_series_raw_variables_number_element;
+    const XMLElement* time_series_start_element = time_series_raw_variables_number_element;
 
     if(time_series_new_raw_variables_number > 0)
     {
         for(Index i = 0; i < time_series_new_raw_variables_number; i++)
         {
-            const tinyxml2::XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
+            const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
             time_series_start_element = time_series_raw_variable_element;
 
             if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
@@ -922,7 +620,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Name
 
-            const tinyxml2::XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
+            const XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
 
             if(!time_series_name_element)
                 throw runtime_error("Time series name element is nullptr.\n");
@@ -936,7 +634,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Scaler
 
-            const tinyxml2::XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
+            const XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
 
             if(!time_series_scaler_element)
                 throw runtime_error("Time series scaler element is nullptr.\n");
@@ -950,7 +648,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // raw_variable use
 
-            const tinyxml2::XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
+            const XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
 
             if(!time_series_raw_variable_use_element)
                 throw runtime_error("Time series raw_variable use element is nullptr.\n");
@@ -964,7 +662,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             // Type
 
-            const tinyxml2::XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
+            const XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
 
             if(!time_series_type_element)
                 throw runtime_error("Time series type element is nullptr.\n");
@@ -979,7 +677,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             {
                 // Categories
 
-                const tinyxml2::XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
+                const XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
 
                 if(!time_series_categories_element)
                     throw runtime_error("Time series categories element is nullptr.\n");
@@ -1000,7 +698,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
+        const XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
             throw runtime_error("Rows labels element is nullptr.\n");
@@ -1024,14 +722,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples
 
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
     // Samples number
 
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
+    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
         throw runtime_error("Samples number element is nullptr.\n");
@@ -1047,7 +745,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples uses
 
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");
@@ -1057,14 +755,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values
 
-    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
     // Missing values method
 
-    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
     if(!missing_values_method_element)
         throw runtime_error("Missing values method element is nullptr.\n");
@@ -1074,7 +772,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values number
 
-    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
     if(!missing_values_number_element)
         throw runtime_error("Missing values number element is nullptr.\n");
@@ -1086,26 +784,26 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     {
         // Raw variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
+        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
             throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            const Tensor<string, 1> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
+            const vector<string> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
             for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
             {
-                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number(i).c_str());
+                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number[i].c_str());
             }
         }
 
         // Rows missing values number
 
-        const tinyxml2::XMLElement* rows_missing_values_number_element
+        const XMLElement* rows_missing_values_number_element
             = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 
         if(!rows_missing_values_number_element)
@@ -1117,14 +815,14 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Preview data
 
-    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n");
 
     // Preview size
 
-    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
         throw runtime_error("Preview size element is nullptr.\n");
@@ -1144,7 +842,7 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     for(Index i = 0; i < new_preview_size; i++)
     {
-        const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+        const XMLElement* row_element = start_element->NextSiblingElement("Row");
         start_element = row_element;
 
         if(row_element->Attribute("Item") != to_string(i+1))
@@ -1152,15 +850,16 @@ void TimeSeriesDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                                 "does not match (" + row_element->Attribute("Item") + ").\n");
 
         if(row_element->GetText())
-            data_file_preview(i) = get_tokens(row_element->GetText(), " ");
+            data_file_preview[i] = get_tokens(row_element->GetText(), " ");
     }
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
+*/
 }
 
 
@@ -1277,16 +976,17 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 // @todo Complete method following the structure.
 
 void TimeSeriesDataSet::fill_gaps()
-{    
+{   
+
     type start_time = 50;
     type end_time = 100;
 
     type period = 2;
 
-    type new_time_series_samples_number = (end_time - start_time)/period;
-    type new_time_series_variables_number = time_series_data.dimension(1);
+    type new_samples_number = (end_time - start_time)/period;
+    type new_variables_number = get_variables_number();
 
-    Tensor<type, 2> new_time_series_data(new_time_series_samples_number,  new_time_series_variables_number);
+    Tensor<type, 2> new_data(new_samples_number,  new_variables_number);
 
     type timestamp = 0;
 
@@ -1297,32 +997,25 @@ void TimeSeriesDataSet::fill_gaps()
 
     Tensor<type, 1> sample;
 
-    for(Index i = 0; i < new_time_series_samples_number; i++)
+    for(Index i = 0; i < new_samples_number; i++)
     {
         new_timestamp = start_time + i*period;
-        timestamp = time_series_data(row_index, column_index);
+        timestamp = new_data(row_index, column_index);
 
         if(new_timestamp == timestamp)
         {
-            sample = time_series_data.chip(row_index, 0);
-
-            new_time_series_data.chip(i, 0) = sample;
+            data.chip(i, 0) = data.chip(row_index, 0);
 
             row_index++;
         }
     }
-
-    if(true)
-    {
-        throw runtime_error("Specify here the error");
-    }
-
 }
 
 
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-    const Index samples_number = time_series_data.dimension(0);
+
+    const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
     {
@@ -1330,15 +1023,15 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
                             "is greater than samples number (" + to_string(samples_number) + ") \n");
     }
 
-    const Index raw_variables_number = get_time_series_raw_variables_number();
+    const Index raw_variables_number = get_raw_variables_number();
 
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Target);
 
     Index input_target_numeric_raw_variables_number = 0;
 
@@ -1348,20 +1041,18 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     {
         if(i < input_raw_variables_number)
         {
-            const Index raw_variable_index = input_raw_variables_indices(i);
+            const Index raw_variable_index = input_raw_variable_indices[i];
 
-            const RawVariableType input_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType input_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(input_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(count);
+            const Index raw_variable_index = target_raw_variable_indices[count];
 
-            const RawVariableType target_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
                 input_target_numeric_raw_variables_number++;
@@ -1386,11 +1077,11 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables[i].use != VariableUse::None
-        && time_series_raw_variables[i].type == RawVariableType::Numeric)
+        if(raw_variables[i].use != VariableUse::None
+        && raw_variables[i].type == RawVariableType::Numeric)
         {
-            input_i = get_time_series_raw_variable_data(i);
-            cout << "Calculating " << time_series_raw_variables[i].name << " autocorrelations" << endl;
+            input_i = get_raw_variable_data(i);
+            cout << "Calculating " << raw_variables[i].name << " autocorrelations" << endl;
         }
         else
         {
@@ -1402,9 +1093,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
 
         for(Index j = 0; j < new_lags_number; j++)
-        {
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
-        }
 
         counter_i++;
     }
@@ -1415,28 +1104,20 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 
 Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lags_number) const
 {
-    const Index samples_number = time_series_data.dimension(0);
+    const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
-    {
-        ostringstream buffer;
+        throw runtime_error("Lags number(" + to_string(lags_number) + ") is greater than samples number (" + to_string(samples_number) + ") \n");
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 3> calculate_cross_correlations(const Index& lags_number) const method.\n"
-               << "Lags number(" << lags_number << ") is greater than samples number (" << samples_number << ") \n";
+    const Index raw_variables_number = get_raw_variables_number();
 
-        throw runtime_error(buffer.str());
-    }
-
-    const Index raw_variables_number = get_time_series_raw_variables_number();
-
-    const Index input_raw_variables_number = get_input_time_series_raw_variables_number();
-    const Index target_raw_variables_number = get_target_time_series_raw_variables_number();
+    const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
+    const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
     const Index input_target_raw_variables_number = input_raw_variables_number + target_raw_variables_number;
 
-    const Tensor<Index, 1> input_raw_variables_indices = get_input_time_series_raw_variables_indices();
-    const Tensor<Index, 1> target_raw_variables_indices = get_target_time_series_raw_variables_indices();
+    const vector<Index> input_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
+    const vector<Index> target_raw_variable_indices = get_raw_variable_indices(VariableUse::Input);
 
     Index input_target_numeric_raw_variables_number = 0;
     int count = 0;
@@ -1445,20 +1126,18 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     {
         if(i < input_raw_variables_number)
         {
-            const Index raw_variable_index = input_raw_variables_indices(i);
+            const Index raw_variable_index = input_raw_variable_indices[i];
 
-            const RawVariableType input_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType input_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(input_raw_variable_type == RawVariableType::Numeric)
-            {
                 input_target_numeric_raw_variables_number++;
-            }
         }
         else
         {
-            const Index raw_variable_index = target_raw_variables_indices(count);
+            const Index raw_variable_index = target_raw_variable_indices[count];
 
-            const RawVariableType target_raw_variable_type = time_series_raw_variables[raw_variable_index].type;
+            const RawVariableType target_raw_variable_type = raw_variables[raw_variable_index].type;
 
             if(target_raw_variable_type == RawVariableType::Numeric)
                 input_target_numeric_raw_variables_number++;
@@ -1490,25 +1169,25 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(time_series_raw_variables[i].use == VariableUse::None
-        || time_series_raw_variables[i].type != RawVariableType::Numeric)
+        if(raw_variables[i].use == VariableUse::None
+        || raw_variables[i].type != RawVariableType::Numeric)
             continue;
 
-        input_i = get_time_series_raw_variable_data(i);
+        input_i = get_raw_variable_data(i);
 
-        if (display) cout << "Calculating " << time_series_raw_variables[i].name << " cross correlations:" << endl;
+        if (display) cout << "Calculating " << raw_variables[i].name << " cross correlations:" << endl;
 
         counter_j = 0;
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            if(time_series_raw_variables[j].use == VariableUse::None
-            || time_series_raw_variables[j].type == RawVariableType::Numeric)
+            if(raw_variables[j].use == VariableUse::None
+            || raw_variables[j].type == RawVariableType::Numeric)
                 continue;
 
-            input_j = get_time_series_raw_variable_data(j);
+            input_j = get_raw_variable_data(j);
 
-            if(display) cout << "   vs. " << time_series_raw_variables[j].name << endl;
+            if(display) cout << "   vs. " << raw_variables[j].name << endl;
  
             const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
             const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
@@ -1526,66 +1205,6 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
     }
 
     return cross_correlations;
-}
-
-
-void TimeSeriesDataSet::load_time_series_data_binary(const string& time_series_data_file_name)
-{
-    ifstream file;
-
-    file.open(time_series_data_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open binary file: " + time_series_data_file_name + "\n");
-
-    streamsize size = sizeof(Index);
-
-    Index columns_number = 0;
-    Index rows_number = 0;
-
-    file.read(reinterpret_cast<char*>(&columns_number), size);
-    file.read(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(type);
-
-    time_series_data.resize(rows_number, columns_number);
-
-    const Index total_elements = rows_number * columns_number;
-
-    file.read(reinterpret_cast<char*>(time_series_data.data()), total_elements * size);
-
-    file.close();
-}
-
-
-void TimeSeriesDataSet::save_time_series_data_binary(const string& binary_data_file_name) const
-{
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open data binary file.");
-
-    // Write data
-
-    streamsize size = sizeof(Index);
-
-    Index columns_number = time_series_data.dimension(1);
-    Index rows_number = time_series_data.dimension(0);
-
-    cout << "Saving binary data file..." << endl;
-
-    file.write(reinterpret_cast<char*>(&columns_number), size);
-    file.write(reinterpret_cast<char*>(&rows_number), size);
-
-    size = sizeof(type);
-
-    const Index total_elements = columns_number * rows_number;
-    
-    file.write(reinterpret_cast<const char*>(time_series_data.data()), total_elements * size);
-
-    file.close();
-
-    cout << "Binary data file saved." << endl;
 }
 
 }

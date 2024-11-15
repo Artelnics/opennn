@@ -502,8 +502,8 @@ void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 }
 
 
-string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
-                                        const Tensor<string, 1>& output_names) const
+string RecurrentLayer::get_expression(const vector<string>& input_names,
+                                        const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -511,7 +511,7 @@ string RecurrentLayer::get_expression(const Tensor<string, 1>& input_names,
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
-        buffer << output_names(j) << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(Index i = 0; i < input_names.size() - 1; i++)
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
@@ -536,21 +536,23 @@ string RecurrentLayer::get_activation_function_string_expression() const
 }
 
 
-void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
+void RecurrentLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");
+    const XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");
 
     if(!recurrent_layer_element)
-        throw runtime_error("Recurrent element is nullptr.\n");
+        throw runtime_error("Recurrent layer element is nullptr.\n");
 
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "ActivationFunction"));
+/*
     set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "));
+*/
 }
 
 
-void RecurrentLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void RecurrentLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 

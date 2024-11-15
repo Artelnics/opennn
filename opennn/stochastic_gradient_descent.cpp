@@ -521,7 +521,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
+void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("StochasticGradientDescent");
 
@@ -536,9 +536,9 @@ void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
+void StochasticGradientDescent::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
+    const XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
 
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");

@@ -17,9 +17,11 @@ TEMPLATE = app
 
 DESTDIR = "$$PWD/bin"
 
-# Define paths for sources and headers
-# INCLUDEPATH += ../googletest/include
-INCLUDEPATH += $$PWD/../googletest/include/gtest
+GTEST_DIR = ../googletest
+
+SOURCES += $$GTEST_DIR/src/gtest-all.cc
+INCLUDEPATH += $$GTEST_DIR/include
+INCLUDEPATH += $$GTEST_DIR
 
 SOURCES += test.cpp \
            adaptive_moment_estimation_test.cpp \
@@ -45,6 +47,7 @@ SOURCES += test.cpp \
            neural_network_test.cpp \
            neurons_selection_test.cpp \
            normalized_squared_error_test.cpp \
+		   performance_test.cpp \
            pch.cpp  # Precompiled header source
 
 # Include more test files if needed by uncommenting
@@ -55,10 +58,6 @@ SOURCES += test.cpp \
 
 # Precompiled Header
 HEADERS += pch.h
-
-# GoogleTest Library Setup
-# You may need to modify the paths below if the location of gtest is different.
-LIBS += -L$$PWD/../googletest/include -lgtest -lgtest_main
 
 # Enable precompiled headers in Qt
 QMAKE_CXXFLAGS += -include pch.h

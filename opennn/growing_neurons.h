@@ -48,9 +48,9 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
     
-    void from_XML(const tinyxml2::XMLDocument&);
+    void from_XML(const XMLDocument&);
 
-    void to_XML(tinyxml2::XMLPrinter&) const;    
+    void to_XML(XMLPrinter&) const;    
 
     void save(const string&) const;
     void load(const string&);
