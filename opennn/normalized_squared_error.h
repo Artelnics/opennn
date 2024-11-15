@@ -78,7 +78,7 @@ public:
 
    void to_XML(XMLPrinter&) const final;
 
-private:
+//protected:
 
    type normalization_coefficient = type(NAN);
 

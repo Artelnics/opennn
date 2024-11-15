@@ -535,7 +535,7 @@ vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 void ImageDataSet::read_bmp()
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
-
+    
     vector<fs::path> directory_path;
     vector<string> image_path;
 
@@ -549,7 +549,7 @@ void ImageDataSet::read_bmp()
 
     Tensor<Index, 1> images_number(folders_number + 1);
     images_number.setZero();
-
+    
     Index samples_number = 0;
 
     for(Index i = 0; i < folders_number; i++)
@@ -565,7 +565,7 @@ void ImageDataSet::read_bmp()
 
         images_number[i+1] = samples_number;
     }
-
+    
     Index height, width, image_channels;
 
     if (input_dimensions[0] > 0 && input_dimensions[1] > 0 && input_dimensions[2] > 0)
@@ -582,7 +582,7 @@ void ImageDataSet::read_bmp()
         width = image_data.dimension(1);
         image_channels = image_data.dimension(2);
     }
-
+    
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;
 
@@ -591,7 +591,7 @@ void ImageDataSet::read_bmp()
     const Index targets_number = (folders_number == 2) 
         ? folders_number -1 
         : folders_number;
-
+    
     set(samples_number, { height, width, image_channels }, { targets_number });
 
     vector<string> categories(targets_number);

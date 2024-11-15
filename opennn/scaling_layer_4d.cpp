@@ -127,7 +127,7 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number
 
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
+    outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]); 
 }
 
 

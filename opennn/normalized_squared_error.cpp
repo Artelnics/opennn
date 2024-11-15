@@ -17,7 +17,6 @@ namespace opennn
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
-    set_default();
 }
 
 
@@ -41,14 +40,15 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
-        set_normalization_coefficient();
+    {
+        //set_normalization_coefficient(); //@todo fix crash
+    }
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-
+    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean(); 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);

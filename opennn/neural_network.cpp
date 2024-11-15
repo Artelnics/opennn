@@ -1664,30 +1664,28 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
     layer_input_indices.clear(); // @todo .clear because they are already saved from Add layers for (is this code needed?)
     layer_input_indices.resize(layers.size());
 
-    for(const XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
+    for (const tinyxml2::XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
         layer_inputs_indices_element;
         layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
     {
         int layer_index;
 
-        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != XML_SUCCESS) {
+        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS) {
             throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
         }
 
         const char* text = layer_inputs_indices_element->GetText();
         if (!text) {
-            throw runtime_error("Error: LayerInputsIndices element is missing a value.\n");
+            throw runtime_error("Text is nullptr for LayerInputsIndices element.");
         }
 
-        Index input_index;
-        try {
-            input_index = stoi(text);
-        }
-        catch (const invalid_argument&) {
-            throw runtime_error("Error: LayerInputsIndices value is not a valid integer.\n");
+        vector<Index> input_index = string_to_dimensions(string(text), " ");
+
+        if (layer_index >= layer_input_indices.size()) {
+            layer_input_indices.resize(layer_index + 1);
         }
 
-        layer_input_indices[layer_index].push_back(input_index);
+        layer_input_indices[layer_index] = input_index;
     }
 }
 
