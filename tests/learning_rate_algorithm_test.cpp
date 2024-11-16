@@ -25,6 +25,7 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {
+    /*
     DataSet data_set(1, {1}, {1});
     data_set.set_data_random();
 
@@ -39,7 +40,7 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 //    BackPropagation back_propagation(1, &mean_squared_error);
 
     //LearningRateAlgorithm::Triplet triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
-/*
+
     Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
     LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
@@ -48,10 +49,10 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
     Tensor<type, 1> training_direction;
     type initial_learning_rate = 0.0;
 
-//    assert_true(triplet.A.first <= triplet.U.first, LOG);
-//    assert_true(triplet.U.first <= triplet.B.first, LOG);
-//    assert_true(triplet.A.second >= triplet.U.second, LOG);
-//    assert_true(triplet.U.second <= triplet.B.second, LOG);
+//    EXPECT_EQ(triplet.A.first <= triplet.U.first);
+//    EXPECT_EQ(triplet.U.first <= triplet.B.first);
+//    EXPECT_EQ(triplet.A.second >= triplet.U.second);
+//    EXPECT_EQ(triplet.U.second <= triplet.B.second);
 */
 }
 
@@ -74,10 +75,10 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+    EXPECT_EQ(triplet.A.first <= triplet.U.first);
+    EXPECT_EQ(triplet.U.first <= triplet.B.first);
+    EXPECT_EQ(triplet.A.second >= triplet.U.second);
+    EXPECT_EQ(triplet.U.second <= triplet.B.second);
 
     // Test
 
@@ -107,10 +108,10 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+    EXPECT_EQ(triplet.A.first <= triplet.U.first);
+    EXPECT_EQ(triplet.U.first <= triplet.B.first);
+    EXPECT_EQ(triplet.A.second >= triplet.U.second);
+    EXPECT_EQ(triplet.U.second <= triplet.B.second);
 
     // Test
 
@@ -124,10 +125,10 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     //triplet = learning_rate_algorithm.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+    EXPECT_EQ(triplet.A.first <= triplet.U.first);
+    EXPECT_EQ(triplet.U.first <= triplet.B.first);
+    EXPECT_EQ(triplet.A.second >= triplet.U.second);
+    EXPECT_EQ(triplet.U.second <= triplet.B.second);
 }
 
 
@@ -160,8 +161,8 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
     pair<type, type> directional_point
             = learning_rate_algorithm.calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
 
-    assert_true(directional_point.first >= type(0), LOG);
-    assert_true(directional_point.second < loss, LOG);
+    EXPECT_EQ(directional_point.first >= type(0));
+    EXPECT_EQ(directional_point.second < loss);
 
 }
 
@@ -196,8 +197,8 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
     pair<type, type> directional_point
            = learning_rate_algorithm.calculate_directional_point(1e-2, training_direction, initial_learning_rate);
 
-    assert_true(directional_point.first >= type(0), LOG);
-    assert_true(directional_point.second < 1e-2, LOG);
+    EXPECT_EQ(directional_point.first >= type(0));
+    EXPECT_EQ(directional_point.second < 1e-2);
 
 }
 

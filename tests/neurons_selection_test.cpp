@@ -13,13 +13,13 @@ void NeuronsSelectionTest::test_constructor()
 
     GrowingNeurons growing_neurons_1(&training_strategy);
 
-    assert_true(growing_neurons_1.has_training_strategy(), LOG);
+    EXPECT_EQ(growing_neurons_1.has_training_strategy());
 
     // Test
 
     GrowingNeurons growing_neurons_2;
 
-    assert_true(!growing_neurons_2.has_training_strategy(), LOG);
+    EXPECT_EQ(!growing_neurons_2.has_training_strategy());
 }
 
 }

@@ -268,7 +268,7 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 }
 
 
-void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& printer) const
+void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GrowingNeurons");
 
@@ -284,9 +284,9 @@ void GrowingNeurons::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
+void GrowingNeurons::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
+    const XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
 
     if(!root_element)
         throw runtime_error("GrowingNeurons element is nullptr.\n");
@@ -308,7 +308,7 @@ void GrowingNeurons::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
     to_XML(printer);
     file << printer.CStr();
 }
@@ -318,7 +318,7 @@ void GrowingNeurons::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

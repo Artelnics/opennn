@@ -6,18 +6,12 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a classical pattern recognition problem.
-
-
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <cstring>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 
@@ -48,8 +42,8 @@ int main()
 
         language_data_set.set_raw_variable_scalers(Scaler::None);
 
-        Tensor<string, 1>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1>& context_vocabulary = language_data_set.get_context_vocabulary();
+        vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
 
         // Neural network
 

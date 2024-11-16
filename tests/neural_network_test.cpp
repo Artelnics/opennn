@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/forward_propagation.h"
 #include "../opennn/neural_network.h"
 
 
@@ -40,7 +41,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
 {
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
 
-//    EXPECT_EQ(neural_network.get_layers_number(), 4);
+    EXPECT_EQ(neural_network.get_layers_number(), 5);
 //    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
 //    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
 //    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
@@ -67,14 +68,26 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
     NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number, filters_dimensions, outputs_number);
 
     cout << "Layers number: " << neural_network_4.get_layers_number() << endl;
-    assert_true(neural_network_4.get_layers_number() == 6, LOG); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
-    assert_true(neural_network_4.get_layer(0)->get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(neural_network_4.get_layer(1)->get_type() == Layer::Type::Convolutional, LOG);
-    assert_true(neural_network_4.get_layer(2)->get_type() == Layer::Type::Pooling, LOG);
-    assert_true(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten, LOG);
-    assert_true(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron, LOG);
-    assert_true(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic, LOG);
+    EXPECT_EQ(neural_network_4.get_layers_number() == 6); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
+    EXPECT_EQ(neural_network_4.get_layer(0)->get_type() == Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network_4.get_layer(1)->get_type() == Layer::Type::Convolutional);
+    EXPECT_EQ(neural_network_4.get_layer(2)->get_type() == Layer::Type::Pooling);
+    EXPECT_EQ(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten);
+    EXPECT_EQ(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic);
 */
+}
+
+
+TEST(NeuralNetworkTest, ForwardPropagate)
+{
+    NeuralNetwork neural_network;
+
+    neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1}, dimensions{1}));
+
+//    ForwardPropagation forward_propagation(1, &neural_network);
+
+//    EXPECT_EQ(1, 0);
 }
 
 
@@ -106,7 +119,7 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
 /*
 
-void NeuralNetworkTest::test_calculate_outputs()
+TEST(NeuralNetworkTest, calculate_outputs)
 {
 
     // Test
@@ -125,12 +138,12 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == batch_samples_number * outputs_number, LOG);
-    assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0,3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0,4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.size() == batch_samples_number * outputs_number);
+    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,4)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -143,9 +156,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 2, LOG);
-    assert_true(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0,1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.size() == 2);
+    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -158,11 +171,11 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 3, LOG);
+    EXPECT_EQ(outputs.size() == 3);
 
-    assert_true(abs(outputs(0,0) - 3.2847) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - 3.2847) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,2) - 3.2847) < type(1e-3), LOG);
+    EXPECT_EQ(abs(outputs(0,0) - 3.2847) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - 3.2847) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,2) - 3.2847) < type(1e-3));
 
     // Test
 
@@ -182,9 +195,9 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == outputs_number, LOG);
-    assert_true(abs(outputs(0,0) - 0) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - 0) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == outputs_number);
+    EXPECT_EQ(abs(outputs(0,0) - 0) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - 0) < type(1e-3));
 
     // Test
 
@@ -201,8 +214,8 @@ void NeuralNetworkTest::test_calculate_outputs()
    
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 1, LOG);
-    assert_true(abs(outputs(0,0) - 0) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == 1);
+    EXPECT_EQ(abs(outputs(0,0) - 0) < type(1e-3));
 
     // Test
 
@@ -215,8 +228,8 @@ void NeuralNetworkTest::test_calculate_outputs()
    
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 1, LOG);
-    assert_true(abs(outputs(0,0) - type(0.5)) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == 1);
+    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(1e-3));
 
     // Test 7
 
@@ -237,16 +250,14 @@ void NeuralNetworkTest::test_calculate_outputs()
 
     outputs = neural_network.calculate_outputs(inputs);
 
-    assert_true(outputs.dimension(1) == outputs_number, LOG);
-    assert_true(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1,0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.dimension(1) == outputs_number);
+    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(1,0)) < type(NUMERIC_LIMITS_MIN));
 }
 
 
-void NeuralNetworkTest::test_calculate_directional_inputs()
+TEST(NeuralNetworkTest, calculate_directional_inputs)
 {
-    cout << "test_calculate_directional_inputs\n";
-
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
     Tensor<type, 2> trainable_outputs;
@@ -271,8 +282,8 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 
     directional_inputs = neural_network.calculate_directional_inputs(0, point, type(0), type(0), 0);
 
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 0, LOG);
+    EXPECT_EQ(directional_inputs.rank() == 2);
+    EXPECT_EQ(directional_inputs.dimension(0) == 0);
 
     // Test
 
@@ -280,12 +291,12 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 
     directional_inputs = neural_network.calculate_directional_inputs(2, point, type(-1), type(1), 3);
 
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 3, LOG);
-    assert_true(directional_inputs.dimension(1) == 3, LOG);
-    assert_true(abs(directional_inputs(0,2) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(1,2) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(2,2) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(directional_inputs.rank() == 2);
+    EXPECT_EQ(directional_inputs.dimension(0) == 3);
+    EXPECT_EQ(directional_inputs.dimension(1) == 3);
+    EXPECT_EQ(abs(directional_inputs(0,2) + type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(1,2) - type(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(2,2) - type(1)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -293,14 +304,14 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 
     directional_inputs = neural_network.calculate_directional_inputs(0, point, type(-4), type(0), 5);
 
-    assert_true(directional_inputs.rank() == 2, LOG);
-    assert_true(directional_inputs.dimension(0) == 5, LOG);
-    assert_true(directional_inputs.dimension(1) == 3, LOG);
-    assert_true(abs(directional_inputs(0,0) + type(4)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(1,0) + type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(2,0) + type(2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(3,0) + type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(directional_inputs(4,0) + type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(directional_inputs.rank() == 2);
+    EXPECT_EQ(directional_inputs.dimension(0) == 5);
+    EXPECT_EQ(directional_inputs.dimension(1) == 3);
+    EXPECT_EQ(abs(directional_inputs(0,0) + type(4)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(1,0) + type(3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(2,0) + type(2)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(3,0) + type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(directional_inputs(4,0) + type(0)) < type(NUMERIC_LIMITS_MIN));
 
 }
 
@@ -415,12 +426,12 @@ void NeuralNetworkTest::test_forward_propagate()
 
         Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
-        assert_true(perceptron_activations.dimension(0) == 5, LOG);
-        assert_true(abs(perceptron_activations(0, 0) - type(0.952)) < type(1e-3), LOG);
-        assert_true(abs(perceptron_activations(1, 0) - type(0.993)) < type(1e-3), LOG);
-        assert_true(abs(perceptron_activations(2, 0) - type(0.999)) < type(1e-3), LOG);
-        assert_true(abs(perceptron_activations(3, 0) - type(0.731)) < type(1e-3), LOG);
-        assert_true(abs(perceptron_activations(4, 0) - type(0.731)) < type(1e-3), LOG);
+        EXPECT_EQ(perceptron_activations.dimension(0) == 5);
+        EXPECT_EQ(abs(perceptron_activations(0, 0) - type(0.952)) < type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(1, 0) - type(0.993)) < type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(2, 0) - type(0.999)) < type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(3, 0) - type(0.731)) < type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(4, 0) - type(0.731)) < type(1e-3));
     }
 
     {
@@ -437,13 +448,13 @@ void NeuralNetworkTest::test_forward_propagate()
         data_set.set_target();
         data_set.set(DataSet::SampleUse::Training);
 
-        Tensor<Index, 1> input_raw_variables_indices(inputs_number);
-        input_raw_variables_indices.setValues({ 0,1,2,3 });
+        Tensor<Index, 1> input_raw_variable_indices(inputs_number);
+        input_raw_variable_indices.setValues({ 0,1,2,3 });
 
         Tensor<bool, 1> input_raw_variables_use(4);
         input_raw_variables_use.setConstant(true);
 
-        data_set.set_input_raw_variables(input_raw_variables_indices, input_raw_variables_use);
+        data_set.set_input_raw_variables(input_raw_variable_indices, input_raw_variables_use);
 
         training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
         input_variables_indices = data_set.get_input_variables_indices();
@@ -496,15 +507,15 @@ void NeuralNetworkTest::test_forward_propagate()
 
         Tensor<type, 2> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 
-        assert_true(perceptron_activations.dimension(0) == 3, LOG);
-        assert_true(abs(perceptron_activations(0, 0) - type(0.993)) < type(1e-3)
+        EXPECT_EQ(perceptron_activations.dimension(0) == 3);
+        EXPECT_EQ(abs(perceptron_activations(0, 0) - type(0.993)) < type(1e-3)
             && abs(perceptron_activations(1, 0) - type(0.731)) < type(1e-3)
-            && abs(perceptron_activations(2, 0) - type(0.268)) < type(1e-3), LOG);
+            && abs(perceptron_activations(2, 0) - type(0.268)) < type(1e-3));
 
-        assert_true(probabilistic_activations.dimension(0) == 3, LOG);
-        assert_true(abs(probabilistic_activations(0, 0) - 0.5) < type(1e-3)
+        EXPECT_EQ(probabilistic_activations.dimension(0) == 3);
+        EXPECT_EQ(abs(probabilistic_activations(0, 0) - 0.5) < type(1e-3)
             && abs(probabilistic_activations(1, 0) - 0.5) < type(1e-3)
-            && abs(probabilistic_activations(2, 0) - 0.5) < type(1e-3), LOG);
+            && abs(probabilistic_activations(2, 0) - 0.5) < type(1e-3));
     }
 }
 }

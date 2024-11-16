@@ -22,8 +22,6 @@ class AutoAssociativeNeuralNetwork : public NeuralNetwork
 
 public:
 
-   // Constructors
-
    explicit AutoAssociativeNeuralNetwork();
 
     BoxPlot get_auto_associative_distances_box_plot() const;
@@ -50,15 +48,15 @@ public:
 
     void set_distances_box_plot(BoxPlot&);
     void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
-    void set_variables_distances_names(const vector<string>&);
+    void set_variable_distance_names(const vector<string>&);
     void set_distances_descriptives(Descriptives&);
 
-    void box_plot_from_XML(const tinyxml2::XMLDocument&);
-    void distances_descriptives_from_XML(const tinyxml2::XMLDocument&);
-    void multivariate_box_plot_from_XML(const tinyxml2::XMLDocument&);
+    void box_plot_from_XML(const XMLDocument&);
+    void distances_descriptives_from_XML(const XMLDocument&);
+    void multivariate_box_plot_from_XML(const XMLDocument&);
 
-    void to_XML(tinyxml2::XMLPrinter&) const;
-    void from_XML(const tinyxml2::XMLDocument&);
+    void to_XML(XMLPrinter&) const;
+    void from_XML(const XMLDocument&);
 
     string get_expression_autoassociation_distances(string&, string&) const;
     string get_expression_autoassociation_variables_distances(string&, string&) const;
@@ -76,7 +74,7 @@ private:
 
     Descriptives distances_descriptives;
 
-    vector<string> variables_distances_names;
+    vector<string> variable_distance_names;
 
 };
 };

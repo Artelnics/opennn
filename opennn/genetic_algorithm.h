@@ -101,17 +101,17 @@ public:
 
     vector<Index> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
 
-    void set_unused_raw_variables(Tensor<Index, 1>&);
+    void set_unused_raw_variables(vector<Index>&);
 
-    Tensor<Index, 1> get_original_unused_raw_variables();
+    vector<Index> get_original_unused_raw_variables();
 
     InputsSelectionResults perform_inputs_selection ()  final;
 
     Tensor<string, 2> to_string_matrix() const;
 
-    void from_XML(const tinyxml2::XMLDocument&);
+    void from_XML(const XMLDocument&);
 
-    void to_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(XMLPrinter&) const;
 
     void print() const;
     
@@ -123,11 +123,11 @@ public:
 
 private:
     
-    Tensor<Index, 1> initial_raw_variables_indices;
-    Tensor<bool, 1> original_input_raw_variables;
+    vector<Index> initial_raw_variables_indices;
+    vector<bool> original_input_raw_variables;
 
-    Tensor<Index, 1> original_unused_raw_variables_indices;
-    Tensor<bool, 1> original_unused_raw_variables;
+    vector<Index> original_unused_raw_variables_indices;
+    vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> inputs_activation_probabilities;
 

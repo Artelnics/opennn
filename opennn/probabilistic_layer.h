@@ -160,8 +160,8 @@ public:
     string write_combinations(const vector<string>&) const;
     string write_activations(const vector<string>&) const;
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void to_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
 
     void print() const;
 

@@ -2103,9 +2103,9 @@ string LongShortTermMemoryLayer::get_expression(const vector<string>& input_name
 }
 
 
-void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
+void LongShortTermMemoryLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemory");
+    const XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemory");
 
     if(!lstm_layer_element)
         throw runtime_error("LongShortTermMemory element is nullptr.\n");
@@ -2116,11 +2116,13 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
     set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
     set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
     set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
+/*
     set_parameters(to_type_vector(read_xml_string(lstm_layer_element, "Parameters"), " "));
+*/
 }
 
 
-void LongShortTermMemoryLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void LongShortTermMemoryLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LongShortTermMemory");
 

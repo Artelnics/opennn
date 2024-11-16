@@ -273,8 +273,8 @@ TrainingResults ConjugateGradient::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-    vector<Descriptives> target_variables_descriptives;
+    const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    vector<Descriptives> target_variable_descriptives;
 
     // Neural network
 
@@ -283,16 +283,16 @@ TrainingResults ConjugateGradient::perform_training()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
+        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
     }
 
     Batch training_batch(training_samples_number, data_set);
@@ -443,10 +443,10 @@ TrainingResults ConjugateGradient::perform_training()
             neural_network->save(neural_network_file_name);
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
+    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
 
@@ -603,7 +603,7 @@ string ConjugateGradient::write_training_direction_method() const
 }
 
 
-void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& printer) const
+void ConjugateGradient::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ConjugateGradient");
 
@@ -621,20 +621,20 @@ void ConjugateGradient::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
+void ConjugateGradient::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
+    const XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
 
     if (!root_element) 
         throw runtime_error("Conjugate gradient element is nullptr.\n");
     
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
-    const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
     if (learning_rate_algorithm_element) 
     {
-        tinyxml2::XMLDocument learning_rate_algorithm_document;
+        XMLDocument learning_rate_algorithm_document;
         learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
     }

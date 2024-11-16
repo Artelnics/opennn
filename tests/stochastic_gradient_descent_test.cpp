@@ -11,12 +11,12 @@ void StochasticGradientDescentTest::test_constructor()
     cout << "test_constructor\n";
 
     StochasticGradientDescent stochastic_gradient_descent_1;
-    assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
+    EXPECT_EQ(!stochastic_gradient_descent_1.has_loss_index());
 
     // Loss index constructor
 
     StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
-    assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
+    EXPECT_EQ(stochastic_gradient_descent_2.has_loss_index());
 }
 
 
@@ -44,7 +44,7 @@ void StochasticGradientDescentTest::test_perform_training()
     stochastic_gradient_descent.set_display(false);
     training_results = stochastic_gradient_descent.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -59,7 +59,7 @@ void StochasticGradientDescentTest::test_perform_training()
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -73,7 +73,7 @@ void StochasticGradientDescentTest::test_perform_training()
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -87,7 +87,7 @@ void StochasticGradientDescentTest::test_perform_training()
 
     training_results = stochastic_gradient_descent.perform_training();
 
-    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
 }
 
 
@@ -144,7 +144,7 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     training_results = stochastic_gradient_descent.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -155,7 +155,7 @@ void StochasticGradientDescentTest::test_transformer_training()
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -170,7 +170,7 @@ void StochasticGradientDescentTest::test_transformer_training()
     training_results = stochastic_gradient_descent.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 }
 
 
@@ -178,7 +178,7 @@ void StochasticGradientDescentTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    tinyxml2::XMLPrinter file_stream;
+    XMLPrinter file_stream;
 
     stochastic_gradient_descent.to_XML(file_stream);
 }

@@ -404,7 +404,7 @@ type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& 
 }
 
 
-void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
+void LearningRateAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LearningRateAlgorithm");
 
@@ -415,9 +415,9 @@ void LearningRateAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
+void LearningRateAlgorithm::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LearningRateAlgorithm");
+    const XMLElement* root_element = document.FirstChildElement("LearningRateAlgorithm");
 
     if(!root_element)
         throw runtime_error("Learning rate algorithm element is nullptr.\n");

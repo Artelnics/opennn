@@ -20,6 +20,7 @@
 #include "correlation.h"
 #include "scaling.h"
 
+using namespace tinyxml2;
 using namespace Eigen;
 
 namespace opennn
@@ -102,8 +103,8 @@ public:
 
         void set_categories(const vector<string>&);
 
-        virtual void from_XML(const tinyxml2::XMLDocument&);
-        virtual void to_XML(tinyxml2::XMLPrinter&) const;
+        virtual void from_XML(const XMLDocument&);
+        virtual void to_XML(XMLPrinter&) const;
 
         void print() const;
     };
@@ -237,7 +238,7 @@ public:
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const string&);
     void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
-//    void set(const Tensor<type, 1>&, const Index&);
+
     void set_default();
 
     void set_model_type_string(const string&);
@@ -254,7 +255,7 @@ public:
 
     void set_sample_uses(const vector<SampleUse>&);
     void set_sample_uses(const vector<string>&);
-    void set_sample_uses(const Tensor<Index, 1>&, const SampleUse);
+    void set_sample_uses(const vector<Index>&, const SampleUse&);
 
     // Raw variables set
 
@@ -264,7 +265,7 @@ public:
     void set_default_raw_variables_names();
 
     void set_raw_variables_uses(const vector<string>&);
-    void set_raw_variables_uses(const Tensor<VariableUse, 1>&);
+    void set_raw_variables_uses(const vector<VariableUse>&);
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
@@ -360,20 +361,18 @@ public:
 
     void set_data_constant(const type&);
 
-    void set_data_random();
-
     // Descriptives
 
     vector<Descriptives> calculate_variable_descriptives() const;
     vector<Descriptives> calculate_used_variable_descriptives() const;
 
-    vector<Descriptives> calculate_raw_variables_descriptives_positive_samples() const;
-    vector<Descriptives> calculate_raw_variables_descriptives_negative_samples() const;
-    vector<Descriptives> calculate_raw_variables_descriptives_categories(const Index&) const;
+    vector<Descriptives> calculate_raw_variable_descriptives_positive_samples() const;
+    vector<Descriptives> calculate_raw_variable_descriptives_negative_samples() const;
+    vector<Descriptives> calculate_raw_variable_descriptives_categories(const Index&) const;
 
     vector<Descriptives> calculate_variable_descriptives(const VariableUse&) const;
  
-    vector<Descriptives> calculate_testing_target_variables_descriptives() const;
+    vector<Descriptives> calculate_testing_target_variable_descriptives() const;
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
@@ -434,16 +433,16 @@ public:
 
     // Tuckey outlier detection
 
-    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = type(1.5)) const;
+    vector<vector<Index>> calculate_Tukey_outliers(const type& = type(1.5)) const;
 
-    Tensor<Tensor<Index, 1>, 1> replace_Tukey_outliers_with_NaN(const type& = type(1.5));
+    vector<vector<Index>> replace_Tukey_outliers_with_NaN(const type& = type(1.5));
 
     void unuse_Tukey_outliers(const type& = type(1.5));
 
     // Data generation
 
-    void generate_random_data(const Index&, const Index&);
-    void generate_Rosenbrock_data(const Index&, const Index&);
+    void set_data_random();
+    void set_data_rosenbrock();
     void generate_sum_data(const Index&, const Index&);
     void generate_classification_data(const Index&, const Index&, const Index&);
 
@@ -451,8 +450,8 @@ public:
 
     virtual void print() const;
 
-    virtual void from_XML(const tinyxml2::XMLDocument&);
-    virtual void to_XML(tinyxml2::XMLPrinter&) const;
+    virtual void from_XML(const XMLDocument&);
+    virtual void to_XML(XMLPrinter&) const;
 
     void save(const string&) const;
     void load(const string&);

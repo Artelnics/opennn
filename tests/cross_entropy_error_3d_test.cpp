@@ -51,10 +51,10 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-    assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
-    assert_true(back_propagation.gradient.size() == neural_network.get_parameters_number(), LOG);
+    EXPECT_EQ(abs(back_propagation.error) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
-    assert_true(is_zero(back_propagation.gradient), LOG);
+    EXPECT_EQ(is_zero(back_propagation.gradient));
 */
     EXPECT_EQ(1, 1);
 }
@@ -112,11 +112,11 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.gradient.size() == neural_network.get_parameters_number(), LOG);
+    EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
     numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
 
-    assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 */
     EXPECT_EQ(1, 1);
 }
@@ -190,11 +190,11 @@ void CrossEntropyError3DTest::test_back_propagate()
         back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
-        assert_true(back_propagation.gradient.size() == neural_network.get_parameters_number(), LOG);
+        EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 }
 
@@ -212,7 +212,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
     Index heads_number;
     Index layers_number;
 
-    Tensor<Index, 1> context_variables_indices;
+    vector<Index> context_variables_indices;
 
     Transformer transformer;
 
@@ -260,13 +260,13 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         
-        assert_true(back_propagation.gradient.size() == transformer.get_parameters_number(), LOG);
+        EXPECT_EQ(back_propagation.gradient.size() == transformer.get_parameters_number());
         
         numerical_gradient = cross_entropy_error_3d.calculate_numerical_gradient();
 
         const bool equal_gradients = are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1));
         
-        assert_true(equal_gradients, LOG);
+        EXPECT_EQ(equal_gradients);
         
         // debugging
 
@@ -316,7 +316,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
                 
         Tensor<type, 0> average_difference = (back_propagation.gradient - numerical_gradient).abs().mean();
         
-        assert_true(average_difference(0) < type(1.0e-2), LOG);
+        EXPECT_EQ(average_difference(0) < type(1.0e-2));
 
         Tensor<type, 0> max_difference = (back_propagation.gradient - numerical_gradient).abs().maximum();
         cout << "Max difference: " << max_difference(0) << endl;        

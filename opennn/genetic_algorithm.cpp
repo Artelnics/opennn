@@ -90,7 +90,7 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 }
 
 
-Tensor<Index, 1> GeneticAlgorithm::get_original_unused_raw_variables()
+vector<Index> GeneticAlgorithm::get_original_unused_raw_variables()
 {
     return original_unused_raw_variables_indices;
 }
@@ -244,15 +244,15 @@ void GeneticAlgorithm::initialize_population_random()
 
     Index unused_number = 0;
 
-    for(Index i = 0; i < static_cast<Index>(raw_variables.size()); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
             unused_number++;
 
     original_unused_raw_variables_indices.resize(unused_number);
 
-    for(Index i = 0; i < static_cast<Index>(raw_variables.size()); i++)
+    for(Index i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
-            original_unused_raw_variables_indices(index++) = i;
+            original_unused_raw_variables_indices[index++] = i;
 
     const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
 
@@ -271,11 +271,10 @@ void GeneticAlgorithm::initialize_population_random()
 
     // Original inputs raw_variables
 
-    original_input_raw_variables.resize(raw_variables_number);
-    original_input_raw_variables.setConstant(false);
+    original_input_raw_variables.resize(raw_variables_number, false);
 
-    for(Index i = 0; i < static_cast<Index>(original_input_raw_variables_indices.size()); i++)
-        original_input_raw_variables(original_input_raw_variables_indices[i]) = true;
+    for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
+        original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
 
     // Initialization a random population
 
@@ -316,7 +315,7 @@ void GeneticAlgorithm::initialize_population_random()
             const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
-                if(original_input_raw_variables(j))
+                if(original_input_raw_variables[j])
                     individual_raw_variables_false(j) = true;
 
             individual_variables = get_individual_variables(individual_raw_variables_false);
@@ -388,9 +387,10 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
     Index raw_variables_active;
 
     type arrow;
-/*
+
     for(Index i = 0; i < individuals_number; i++)
     {
+/*
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
@@ -419,9 +419,8 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
         for(Index j = 0; j < genes_number; j++)
             population(i, j) = individual_variables(j);
-    }
 */
-    cout << "Initial population: \n" << population << endl;
+    }
 }
 
 
@@ -595,20 +594,23 @@ void GeneticAlgorithm::perform_selection()
 
 Tensor<Index,1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indexes(std::count(selection.data(), selection.data() + selection.size(), 1));
+/*
+    Tensor<Index,1> selection_indices(std::count(selection.data(), selection.data() + selection.size(), 1));
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
     {
         if(selection(i))
         {
-            selection_indexes(activated_index_count) = i;
+            selection_indices(activated_index_count) = i;
 
             activated_index_count++;
         }
     }
 
-    return selection_indexes;
+    return selection_indices;
+*/
+    return Tensor<Index, 1>();
 }
 
 
@@ -680,7 +682,7 @@ void GeneticAlgorithm::perform_crossover()
                 Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(descendent_genes);
 
                 for(Index j = 0; j < raw_variables_number; j++)
-                    if(original_input_raw_variables(j))
+                    if(original_input_raw_variables[j])
                         individual_raw_variables_false(j) = true;
 
                 descendent_genes = get_individual_variables(individual_raw_variables_false);
@@ -738,8 +740,8 @@ void GeneticAlgorithm::perform_mutation()
             const vector<DataSet::RawVariable>& raw_variables = training_strategy->get_data_set()->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
-                if(original_input_raw_variables(j))
-                    individual_raw_variables_false(j) = true;
+                if(original_input_raw_variables[j])
+                    individual_raw_variables_false[j] = true;
 
             new_individual_variables = get_individual_variables(individual_raw_variables_false);
         }
@@ -925,7 +927,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
     // Set neural network stuff
 
@@ -936,7 +938,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
@@ -950,6 +952,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 void GeneticAlgorithm::check_categorical_raw_variables()
 {
+/*
     TrainingStrategy* training_strategy = get_training_strategy();
 
     DataSet* data_set = training_strategy->get_data_set();
@@ -978,7 +981,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
             {
                 const Tensor<bool, 1> individual = population.chip(j, 0);
 
-                if(!(find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
+                if(!(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
                 {
                     const Index random_index = rand() % categories_number;
 
@@ -993,6 +996,7 @@ void GeneticAlgorithm::check_categorical_raw_variables()
             raw_variable_index++;
         }
     }
+*/
 }
 
 
@@ -1041,7 +1045,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     for(Index i = 0; i < original_input_raw_variables.size(); i++)
     {
-        if(individual_raw_variables(i) && original_input_raw_variables(i))
+        if(individual_raw_variables(i) && original_input_raw_variables[i])
         {
             inputs_pre_indexes(i) = true;
 
@@ -1136,7 +1140,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& indi
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        if(original_input_raw_variables(i))
+        if(original_input_raw_variables[i])
         {
             if(raw_variables[i].type == DataSet::RawVariableType::Categorical)
             {
@@ -1279,7 +1283,7 @@ Index GeneticAlgorithm::weighted_random(const Tensor<type, 1>& weights) //¿void
 }
 
 
-void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
+void GeneticAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("GeneticAlgorithm");
 
@@ -1294,9 +1298,9 @@ void GeneticAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
+void GeneticAlgorithm::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
+    const XMLElement* root = document.FirstChildElement("GeneticAlgorithm");
 
     if(!root)
         throw runtime_error("GeneticAlgorithm element is nullptr.\n");
@@ -1329,7 +1333,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 
         if (file.is_open())
         {
-            tinyxml2::XMLPrinter printer;
+            XMLPrinter printer;
             to_XML(printer);
 
             file << printer.CStr();
@@ -1352,7 +1356,7 @@ void GeneticAlgorithm::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

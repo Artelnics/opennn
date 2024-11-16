@@ -85,10 +85,7 @@ private:
 
 struct ResponseOptimizationResults
 {
-    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network)
-    {
-        neural_network = new_neural_network;
-    }
+    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
     DataSet* data_set = nullptr;
 

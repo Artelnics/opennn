@@ -43,11 +43,11 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
-    assert_true(combinations.rank() == 2
+    EXPECT_EQ(combinations.rank() == 2
              && combinations.dimension(0) == 1
-             && combinations.dimension(1) == 1, LOG);
+             && combinations.dimension(1) == 1);
 
-    assert_true(abs(combinations(0, 0) - type(7)) < type(1e-5), LOG);
+    EXPECT_EQ(abs(combinations(0, 0) - type(7)) < type(1e-5));
 }
 
 
@@ -74,14 +74,14 @@ void ProbabilisticLayerTest::test_calculate_activations()
     probabilistic_layer.calculate_activations(combinations,
                                               activation_derivatives);
 
-    assert_true(abs(activations(0, 0) - type(0.175)) < type(1e-2), LOG);
+    EXPECT_EQ(abs(activations(0, 0) - type(0.175)) < type(1e-2));
 
-    assert_true(
+    EXPECT_EQ(
         activation_derivatives.rank() == 2 &&
         activation_derivatives.dimension(0) == inputs_number &&
-        activation_derivatives.dimension(1) == neurons_number, LOG);
+        activation_derivatives.dimension(1) == neurons_number);
 
-    assert_true(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3), LOG);
+    EXPECT_EQ(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3));
 
 }
 
@@ -118,10 +118,10 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     outputs = probabilistic_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == neurons_number , LOG);
-    assert_true(abs(outputs(0,0) - type(0.5)) < type(1e-3), LOG);
-    assert_true(abs(outputs(0,1) - type(0.5)) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == neurons_number );
+    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0,1) - type(0.5)) < type(1e-3));
     
     // Test 1
 
@@ -164,13 +164,13 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     TensorMap<Tensor<type, 2>> outputs_test_1 = probabilistic_layer_forward_propagation.outputs;
 
-    assert_true(outputs_test_1.rank() == 2, LOG);
-    assert_true(outputs_test_1.dimension(0) == 1, LOG);
-    assert_true(outputs_test_1.dimension(1) == 4, LOG);
-    assert_true(abs(outputs_test_1(0, 0) - sol_(0)) < type(1e-3), LOG);
-    assert_true(abs(outputs_test_1(1, 0) - sol_(1)) < type(1e-3), LOG);
-    assert_true(abs(outputs_test_1(2, 0) - sol_(2)) < type(1e-3), LOG);
-    assert_true(abs(outputs_test_1(3, 0) - sol_(3)) < type(1e-3), LOG);
+    EXPECT_EQ(outputs_test_1.rank() == 2);
+    EXPECT_EQ(outputs_test_1.dimension(0) == 1);
+    EXPECT_EQ(outputs_test_1.dimension(1) == 4);
+    EXPECT_EQ(abs(outputs_test_1(0, 0) - sol_(0)) < type(1e-3));
+    EXPECT_EQ(abs(outputs_test_1(1, 0) - sol_(1)) < type(1e-3));
+    EXPECT_EQ(abs(outputs_test_1(2, 0) - sol_(2)) < type(1e-3));
+    EXPECT_EQ(abs(outputs_test_1(3, 0) - sol_(3)) < type(1e-3));
 
     // Test 2
 
@@ -197,12 +197,12 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> outputs_test_2 = probabilistic_layer_forward_propagation.outputs;
 
-    assert_true(outputs_test_2.dimension(0) == 1, LOG);
-    assert_true(outputs_test_2.dimension(1) == 4, LOG);
-    assert_true(Index(outputs_test_2(0,0)) == 1, LOG);
-    assert_true(Index(outputs_test_2(0,1)) == 0, LOG);
-    assert_true(Index(outputs_test_2(0,2)) == 0, LOG);
-    assert_true(Index(outputs_test_2(0,3)) == 0, LOG);
+    EXPECT_EQ(outputs_test_2.dimension(0) == 1);
+    EXPECT_EQ(outputs_test_2.dimension(1) == 4);
+    EXPECT_EQ(Index(outputs_test_2(0,0)) == 1);
+    EXPECT_EQ(Index(outputs_test_2(0,1)) == 0);
+    EXPECT_EQ(Index(outputs_test_2(0,2)) == 0);
+    EXPECT_EQ(Index(outputs_test_2(0,3)) == 0);
 
     // Test 3
 
@@ -241,12 +241,12 @@ void ProbabilisticLayerTest::test_forward_propagate()
     div = perceptron_sol.exp().sum();
     sol_ = perceptron_sol.exp() / div(0);
     
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(abs(outputs(0,0) - sol_(0)) < type(1e-3), LOG);
-    assert_true(abs(outputs(1,0) - sol_(1)) < type(1e-3), LOG);
-    assert_true(abs(outputs(2,0) - sol_(2)) < type(1e-3), LOG);
-    assert_true(abs(outputs(3,0) - sol_(3)) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.dimension(0) == 1);
+    EXPECT_EQ(outputs.dimension(1) == 4);
+    EXPECT_EQ(abs(outputs(0,0) - sol_(0)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(1,0) - sol_(1)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(2,0) - sol_(2)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(3,0) - sol_(3)) < type(1e-3));
     
     // Test  4
 
@@ -268,9 +268,9 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     outputs = probabilistic_layer_forward_propagation.outputs;
     
-    assert_true(outputs.dimension(0) == 1, LOG);
-    assert_true(outputs.dimension(1) == 2, LOG);
-    assert_true(abs(outputs(0,0) - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.dimension(0) == 1);
+    EXPECT_EQ(outputs.dimension(1) == 2);
+    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(NUMERIC_LIMITS_MIN));
 
 }
 

@@ -16,6 +16,7 @@
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
 
+
 namespace opennn
 {
 
@@ -38,51 +39,34 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-    explicit RecurrentLayer(const dimensions & = {}, const dimensions& = {});
+   explicit RecurrentLayer(const dimensions & = {}, const dimensions& = {});
 
    dimensions get_input_dimensions() const final;
    dimensions get_output_dimensions() const final;
-
-   // Parameters
 
    Index get_timesteps() const;
 
    Index get_parameters_number() const final;
    Tensor<type, 1> get_parameters() const final;
 
-   // Activation functions
-
    const RecurrentLayer::ActivationFunction& get_activation_function() const;
 
    string get_activation_function_string() const;
 
-   // Set
-
    void set(const dimensions& = {}, const dimensions& = {});
-
-   // Architecture
 
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   // Parameters
-
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
-
-   // Activation functions
+   void set_parameters(const Tensor<type, 1>&, const Index&) final;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
 
-   // Parameters initialization
-
    void set_parameters_constant(const type&) final;
-
    void set_parameters_random() final;
-
-   // Forward propagation
 
    void calculate_combinations(const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
@@ -94,8 +78,6 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
-   // Back propagation
-
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index& ,
                         Tensor<type, 1>&) const final;
@@ -105,16 +87,12 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const final;
 
-   // Expression
-
    string get_expression(const vector<string>&, const vector<string>&) const final;
 
    string get_activation_function_string_expression() const;
 
-   // Serialization
-
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) final;
+   void to_XML(XMLPrinter&) const final;
 
 private:
 

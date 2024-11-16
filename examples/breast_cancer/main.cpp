@@ -6,14 +6,8 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a pattern recognition problem.
-
-
-
 #include <iostream>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 
@@ -33,16 +27,16 @@ int main()
 
         data_set.save("../data/data_set.xml");
         data_set.load("../data/data_set.xml");
-/*
-        const Index input_variables_number = data_set.get_variables_number(VariableUse::Input);
-        const Index target_variables_number = data_set.get_variables_number(VariableUse::Target);
+
+        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         // Neural network
 
         const Index neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                     {input_variables_number, neurons_number, target_variables_number});
+            { input_variables_number }, { neurons_number }, { target_variables_number });
 
         neural_network.print();
 
@@ -55,7 +49,7 @@ int main()
 
 
         // OKR
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
@@ -87,7 +81,7 @@ int main()
         // OKR
         cout << " \n write_loss_method \n" << training_strategy.write_loss_method_text();
         cout << " \n write_opt_method \n" << training_strategy.write_optimization_method_text();
-*/
+
         return 0;
     }
     catch(const exception& e)
@@ -100,7 +94,7 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

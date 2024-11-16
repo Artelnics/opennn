@@ -138,9 +138,9 @@ void PoolingLayer::print() const
 {
     cout << "Pooling layer" << endl;
     cout << "Input dimensions: " << endl;
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 
@@ -501,7 +501,7 @@ void PoolingLayer::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 }
 
 
-void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void PoolingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Pooling");
 
@@ -519,9 +519,9 @@ void PoolingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void PoolingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void PoolingLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* pooling_layer_element = document.FirstChildElement("Pooling");
+    const XMLElement* pooling_layer_element = document.FirstChildElement("Pooling");
 
     if(!pooling_layer_element)
         throw runtime_error("PoolingLayer layer element is nullptr.\batch_index");

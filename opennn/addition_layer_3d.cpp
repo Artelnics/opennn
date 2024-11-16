@@ -99,7 +99,7 @@ void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& inpu
 }
 
 
-void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
+void AdditionLayer3D::from_XML(const XMLDocument& document)
 {
     const auto* addition_layer_element = document.FirstChildElement("Addition3D");
 
@@ -112,7 +112,7 @@ void AdditionLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void AdditionLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
+void AdditionLayer3D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Addition3D");
 

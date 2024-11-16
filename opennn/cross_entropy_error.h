@@ -53,9 +53,9 @@ public:
 
    // Serialization
       
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const XMLDocument&);
 
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"

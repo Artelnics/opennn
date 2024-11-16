@@ -28,12 +28,13 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
+/*
     DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(1));
     
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
-/*
+
     TrainingStrategy training_strategy(&neural_network, &data_set);
     
 //    training_strategy
@@ -43,7 +44,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 
     training_results = adaptive_moment_estimation.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 */
 }
 
@@ -95,7 +96,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     adaptive_moment_estimation.set_maximum_time(1000.0);
     training_results = adaptive_moment_estimation.perform_training();
 
-    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
 */
 }
 
@@ -124,7 +125,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         error = training_results.get_training_error();
 
-        assert_true(error < old_error, LOG);
+        EXPECT_EQ(error < old_error);
         
         old_error = error;
 
@@ -135,7 +136,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
         error = training_results.get_training_error();
 
-        assert_true(error - old_error < type(1e-2), LOG);
+        EXPECT_EQ(error - old_error < type(1e-2));
         
     }
 
@@ -167,10 +168,10 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         /*
         training_results = adaptive_moment_estimation.perform_training();
 
-        //assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+        //EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
     //}
 
-        assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+        EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
         
     }
 

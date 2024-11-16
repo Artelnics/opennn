@@ -327,11 +327,11 @@ void ProbabilisticLayer::print() const
 {
     cout << "Probabilistic layer" << endl;
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 
-void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void ProbabilisticLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic");
 
@@ -345,9 +345,9 @@ void ProbabilisticLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
+void ProbabilisticLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic");
+    const XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic");
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic layer element is nullptr.\n");

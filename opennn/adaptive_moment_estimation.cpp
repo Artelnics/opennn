@@ -154,14 +154,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set) ? true : false;
+    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
+    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
    
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     vector<Index> context_variable_indices;
-
+    
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
@@ -177,9 +177,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
-    vector<Descriptives> target_variables_descriptives;
+    vector<Descriptives> target_variable_descriptives;
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
@@ -215,28 +215,28 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
 
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
+        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
-
+    
     // Loss index
 
     loss_index->set_normalization_coefficient();
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-
+    
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -454,10 +454,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
+    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
     
@@ -554,7 +554,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 }
 
 
-void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
+void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
 
@@ -568,10 +568,10 @@ void AdaptiveMomentEstimation::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
+void AdaptiveMomentEstimation::from_XML(const XMLDocument& document)
 {
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
+    const XMLElement* root_element = document.FirstChildElement("AdaptiveMomentEstimation");
 
     if(!root_element)
         throw runtime_error("Adaptive moment estimation element is nullptr.\n");
