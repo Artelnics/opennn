@@ -203,7 +203,7 @@ void DataSet::RawVariable::to_XML(XMLPrinter& file_stream) const
 
         file_stream.OpenElement("Categories");
 
-        for(Index i = 0; i < categories.size(); i++)
+        for(size_t i = 0; i < categories.size(); i++)
         {
             file_stream.PushText(categories[i].c_str());
 
@@ -610,7 +610,7 @@ void DataSet::set_sample_uses(const vector<string>& new_uses)
 
 void DataSet::set_sample_uses(const vector<Index>& indices, const SampleUse& sample_use)
 {
-    for(Index i = 0; i < indices.size(); i++)
+    for(size_t i = 0; i < indices.size(); i++)
         set_sample_use(indices[i], sample_use);
 }
 
@@ -784,7 +784,7 @@ vector<string> DataSet::get_variable_names() const
 
     for(Index i = 0; i < raw_variables_number; i++)
         if(raw_variables[i].type == RawVariableType::Categorical)
-            for(Index j = 0; j < raw_variables[i].categories.size(); j++)
+            for(size_t j = 0; j < raw_variables[i].categories.size(); j++)
                 variable_names[index++] = raw_variables[i].categories[j];
         else
             variable_names[index++] = raw_variables[i].name;
@@ -1109,7 +1109,7 @@ void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_use
         throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
                             "must be equal to raw_variables size (" + to_string(raw_variables.size()) + "). \n");
 
-    for(Index i = 0; i < new_raw_variables_uses.size(); i++)
+    for(size_t i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables[i].set_use(new_raw_variables_uses[i]);
 
     input_dimensions = {get_variables_number(VariableUse::Input)};
@@ -1126,7 +1126,7 @@ void DataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variable
         throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
                             "must be equal to raw_variables size (" + to_string(raw_variables.size()) + ").\n");
 
-    for(Index i = 0; i < new_raw_variables_uses.size(); i++)
+    for(size_t i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables[i].set_use(new_raw_variables_uses[i]);
 
     input_dimensions = {get_variables_number(VariableUse::Input)};
@@ -1149,10 +1149,10 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 {
     set_raw_variables(VariableUse::None);
 
-    for(Index i = 0; i < input_raw_variables.size(); i++)
+    for(size_t i = 0; i < input_raw_variables.size(); i++)
         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(Index i = 0; i < target_raw_variables.size(); i++)
+    for(size_t i = 0; i < target_raw_variables.size(); i++)
         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
 }
 
@@ -1162,10 +1162,10 @@ void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_
 {
     set_raw_variables(VariableUse::None);
 
-    for(Index i = 0; i < input_raw_variables.size(); i++)
+    for(size_t i = 0; i < input_raw_variables.size(); i++)
         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(Index i = 0; i < target_raw_variables.size(); i++)
+    for(size_t i = 0; i < target_raw_variables.size(); i++)
         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
 }
 
@@ -1210,7 +1210,7 @@ void DataSet::set_raw_variable_type(const string& name, const RawVariableType& n
 
 void DataSet::set_raw_variable_types(const RawVariableType& new_type)
 {
-    for(Index i = 0; i < raw_variables.size(); i ++)
+    for(size_t i = 0; i < raw_variables.size(); i ++)
         raw_variables[i].type = new_type;
 }
 
@@ -1652,7 +1652,7 @@ vector<Index> DataSet::get_variable_indices(const Index& raw_variable_index) con
     {
         vector<Index> indices(raw_variable.categories.size());
 
-        for(Index j = 0; j < raw_variable.categories.size(); j++)
+        for(size_t j = 0; j < raw_variable.categories.size(); j++)
             indices[j] = index + j;
 
         return indices;
@@ -1717,7 +1717,7 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
     if(raw_variables[column_index_start].type != RawVariableType::Categorical)
         throw runtime_error("The specified raw_variable is not of categorical type.");
 
-    for(Index raw_variable_index = column_index_start; raw_variable_index < raw_variables.size(); raw_variable_index++)
+    for(size_t raw_variable_index = column_index_start; raw_variable_index < raw_variables.size(); raw_variable_index++)
         if(data(sample_index, raw_variable_index) == 1)
             return raw_variables[column_index_start].categories[raw_variable_index - column_index_start];
 
@@ -2715,7 +2715,7 @@ void DataSet::print_data_file_preview() const
 
     for(Index i = 0;  i < size; i++)
     {
-        for(Index j = 0; j < data_file_preview[i].size(); j++)
+        for(size_t j = 0; j < data_file_preview[i].size(); j++)
             cout << data_file_preview[i][j] << " ";
 
         cout << endl;
@@ -2988,7 +2988,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
     const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-    for (Index i = 0; i < raw_variables.size(); i++) {
+    for (size_t i = 0; i < raw_variables.size(); i++) {
         RawVariable& raw_variable = raw_variables[i];
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
@@ -4043,7 +4043,7 @@ void DataSet::read_csv()
         {
             rows_missing_values_number ++;
 
-            for(Index i = 0; i < tokens.size(); i++)
+            for(size_t i = 0; i < tokens.size(); i++)
             {
                 if(tokens[i].empty() || tokens[i] == missing_values_label)
                 {
@@ -4370,7 +4370,7 @@ bool DataSet::has_selection() const
 
 bool DataSet::has_missing_values(const vector<string>& row) const
 {
-    for(Index i = 0; i < row.size(); i++)
+    for(size_t i = 0; i < row.size(); i++)
         if(row[i].empty() || row[i] == missing_values_label)
             return true;
 

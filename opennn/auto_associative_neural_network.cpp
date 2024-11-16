@@ -476,7 +476,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
     // Inputs names
 
-    for(Index i = 0; i < input_names.size(); i++)
+    for(size_t i = 0; i < input_names.size(); i++)
     {
         file_stream.OpenElement("Input");
 
@@ -668,7 +668,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    for(Index i = 0; i < variable_distance_names.size(); i++)
+    for(size_t i = 0; i < variable_distance_names.size(); i++)
     {
         // Scaling neuron
 

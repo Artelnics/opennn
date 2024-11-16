@@ -887,7 +887,7 @@ Index count_greater_than(const vector<Index>& data, const Index& bound)
     Index count = 0;
 
     #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < data.size(); i++)
+    for(size_t i = 0; i < data.size(); i++)
         if(data[i] > bound)
             count++;
 
@@ -903,7 +903,7 @@ vector<Index> get_elements_greater_than(const vector<Index>& data, const Index& 
 
     Index index = 0;
 
-    for(Index i  = type(0); i < data.size(); i++)
+    for(size_t i  = type(0); i < data.size(); i++)
          if(data[i] > bound)
              indices[index++] = data[i];
 

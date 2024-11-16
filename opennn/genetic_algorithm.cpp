@@ -244,13 +244,13 @@ void GeneticAlgorithm::initialize_population_random()
 
     Index unused_number = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(size_t i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
             unused_number++;
 
     original_unused_raw_variables_indices.resize(unused_number);
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(size_t i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
             original_unused_raw_variables_indices[index++] = i;
 
@@ -273,7 +273,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     original_input_raw_variables.resize(raw_variables_number, false);
 
-    for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
 
     // Initialization a random population
@@ -1043,7 +1043,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     Index original_input_index = 0;
 
-    for(Index i = 0; i < original_input_raw_variables.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables.size(); i++)
     {
         if(individual_raw_variables(i) && original_input_raw_variables[i])
         {

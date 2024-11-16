@@ -425,7 +425,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 {
     unordered_map<std::string, type> context_vocabulary_map;
 
-    for(Index i = 0; i < context_vocabulary.size(); i++)
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
     Index token_counter = 1;
@@ -440,7 +440,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
     for(Index j = 0; j < context_length - 1; j++)
     {
-        if(j < context_tokens.size() && token_counter < context_length - 1)
+        if(j < Index(context_tokens.size()) && token_counter < context_length - 1)
         {
             word = context_tokens[j];
 

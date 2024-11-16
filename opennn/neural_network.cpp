@@ -167,7 +167,7 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-    for(Index i = 0; i < output_names.size(); i++)
+    for(size_t i = 0; i < output_names.size(); i++)
         if(output_names[i] == name) 
             return i;
 
@@ -191,7 +191,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& name) const
 {
     const vector<string> layer_names = get_layer_names();
 
-    for(Index i = 0; i < layer_names.size(); i++)
+    for(size_t i = 0; i < layer_names.size(); i++)
         if(layer_names[i] == name)
             return layers[i];
 
