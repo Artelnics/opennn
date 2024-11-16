@@ -519,7 +519,7 @@ void ScalingLayer2D::print() const
 }
 
 
-void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
+void ScalingLayer2D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Scaling2D");
 
@@ -543,9 +543,9 @@ void ScalingLayer2D::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
+void ScalingLayer2D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* scaling_layer_element = document.FirstChildElement("Scaling2D");
+    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling2D");
 
     if(!scaling_layer_element)
         throw runtime_error("Scaling2D element is nullptr.\n");
@@ -555,10 +555,10 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
     const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
     set({ neurons_number });
 
-    const tinyxml2::XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
+    const XMLElement* start_element = scaling_layer_element->FirstChildElement("NeuronsNumber");
 
     for (Index i = 0; i < neurons_number; i++) {
-        const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
+        const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         if (!scaling_neuron_element) {
             throw runtime_error("Scaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
@@ -571,7 +571,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
         }
 
         // Descriptives
-        const tinyxml2::XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
+        const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
         if (!descriptives_element) {
             throw runtime_error("Descriptives element " + std::to_string(i + 1) + " is nullptr.\n");
         }
@@ -585,7 +585,7 @@ void ScalingLayer2D::from_XML(const tinyxml2::XMLDocument& document)
             );
         }
 
-        const tinyxml2::XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
+        const XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
         if (!scaling_method_element) {
             throw runtime_error("Scaling method element " + std::to_string(i + 1) + " is nullptr.\n");
         }

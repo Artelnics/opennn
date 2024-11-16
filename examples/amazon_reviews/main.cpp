@@ -6,16 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 
@@ -37,21 +33,21 @@ int main()
         text_data_set.set_separator(DataSet::Separator::Tab);
 
         text_data_set.read_txt();
-        /*
+        
         text_data_set.split_samples_random();
 
-        const vector<string> input_words = text_data_set.get_input_raw_variables_names();
-        const vector<string> targets_names = text_data_set.get_target_variables_names();
+        const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
+        const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Input);
 
-        const Index words_number = text_data_set.get_variables_number(VariableUse::Input);
-        const Index target_variables_number = text_data_set.get_variables_number(VariableUse::Target);
+        const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
 
         // Neural Network
 
         const Index hidden_neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-            {words_number , hidden_neurons_number, target_variables_number});
+            { words_number }, { hidden_neurons_number }, { target_variables_number });
 
         neural_network.print();
 
@@ -97,7 +93,7 @@ int main()
 
         neural_network.save_expression_c("../data/amazon_reviews.txt");
         neural_network.save_expression_python("../data/amazon_reviews.py");
-        */
+        
         cout << "Good bye!" << endl;
 
         return 0;

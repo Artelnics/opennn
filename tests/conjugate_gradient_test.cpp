@@ -6,20 +6,20 @@
 TEST(ConjugateGradientTest, DefaultConstructor) 
 {
     ConjugateGradient conjugate_gradient_1;
-//    assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
+//    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
 //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
-//    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
+//    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 }
 
 
 TEST(ConjugateGradientTest, GeneralConstructor)
 {
     ConjugateGradient conjugate_gradient_1;
-    //    assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
+    //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
     //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
-    //    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
+    //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 
 }
 
@@ -46,8 +46,8 @@ TEST(ConjugateGradientTest, PrParameter)
 
     PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
-    assert_true(PR_parameter >= type(0), LOG);
-    assert_true(PR_parameter <= type(1), LOG);
+    EXPECT_EQ(PR_parameter >= type(0));
+    EXPECT_EQ(PR_parameter <= type(1));
 */
 }
 
@@ -55,10 +55,10 @@ TEST(ConjugateGradientTest, PrParameter)
 TEST(ConjugateGradientTest, FrParameter)
 {
     ConjugateGradient conjugate_gradient;
-    //    assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
+    //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
     //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
-    //    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
+    //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 
 }
 
@@ -88,8 +88,8 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
     FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
 
-    assert_true(FR_parameter >= type(0), LOG);
-    assert_true(FR_parameter <= type(1), LOG);
+    EXPECT_EQ(FR_parameter >= type(0));
+    EXPECT_EQ(FR_parameter <= type(1));
 
 }
 
@@ -132,7 +132,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 
     conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-    assert_true(training_direction.size() == parameters_number, LOG);
+    EXPECT_EQ(training_direction.size() == parameters_number);
 }
 
 
@@ -172,7 +172,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
     conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-    assert_true(training_direction.size() == parameters_number, LOG);
+    EXPECT_EQ(training_direction.size() == parameters_number);
 
 }
 
@@ -199,7 +199,7 @@ void ConjugateGradientTest::test_perform_training()
     conjugate_gradient.set_display(false);
     training_results = conjugate_gradient.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -214,7 +214,7 @@ void ConjugateGradientTest::test_perform_training()
     training_results = conjugate_gradient.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -226,7 +226,7 @@ void ConjugateGradientTest::test_perform_training()
     training_results = conjugate_gradient.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -241,7 +241,7 @@ void ConjugateGradientTest::test_perform_training()
 
     training_results = conjugate_gradient.perform_training();
 
-    //assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    //EXPECT_EQ(training_results.get_loss() <= training_loss_goal);
 
     // Minimum loss decrease
 
@@ -256,7 +256,7 @@ void ConjugateGradientTest::test_perform_training()
 
     training_results = conjugate_gradient.perform_training();
 
-    //assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+    //EXPECT_EQ(training_results.get_loss_decrease() <= minimum_loss_decrease);
 
 }
 

@@ -882,44 +882,44 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 }
 
 
-Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+Index count_greater_than(const vector<Index>& data, const Index& bound)
 {
     Index count = 0;
 
     #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < vector.size(); i++)
-        if(vector(i) > bound)
+    for(Index i = 0; i < data.size(); i++)
+        if(data[i] > bound)
             count++;
 
     return count;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<Index>& data, const Index& bound)
 {
-    const Index indices_size = count_greater_than(vector, bound);
+    const Index indices_size = count_greater_than(data, bound);
 
-    Tensor<Index, 1> indices(indices_size);
+    vector<Index> indices(indices_size);
 
     Index index = 0;
 
-    for(Index i  = type(0); i < vector.size(); i++)
-         if(vector(i) > bound)
-             indices(index++) = vector(i);
+    for(Index i  = type(0); i < data.size(); i++)
+         if(data[i] > bound)
+             indices[index++] = data[i];
 
     return indices;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, const Index& bound)
 {
     const Index vectors_number = vectors.size();
 
-    Tensor<Index, 1> indices(0);
+    vector<Index> indices(0);
 
     for(Index i = 0; i < vectors_number; i++)
     {
-        const Tensor<Index, 1> indices_vector = get_elements_greater_than(vectors(i), bound);
+        const vector<Index> indices_vector = get_elements_greater_than(vectors[i], bound);
 
         indices = join_vector_vector(indices, indices_vector);
     }
@@ -1405,11 +1405,11 @@ Index count_not_empty(const vector<string>& strings)
 }
 
 
-Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
+vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
     const Index size = x.size() + y.size();
 
-    Tensor<Index, 1> data(size);
+    vector<Index> data(size);
 
     memcpy(data.data(), x.data(), x.size() * sizeof(Index));
 
@@ -1723,64 +1723,6 @@ bool contains(const vector<string>& data, const string& value)
     return it != (copy.data()+copy.size());
 }
 
-
-void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<Index, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_element;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_string(vector<string>& old_vector, const string& new_string)
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    vector<string> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector[i] = old_vector[i];
-
-    new_vector[new_size-1] = new_string;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_type(Tensor<type, 1>& vector, const type& new_value)
-{
-    const Index old_size = vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<type, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = vector(i);
-
-    new_vector(new_size-1) = new_value;
-
-    vector = new_vector;
-}
-
-
 vector<string> to_string_tensor(const Tensor<type, 1>& x)
 {
     vector<string> data(x.size());
@@ -1835,15 +1777,6 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index
                                             matrix.dimension(0));
 
     return column;
-}
-
-
-void print_dimensions(const dimensions& new_dimensions)
-{
-    for(size_t i = 0; i < new_dimensions.size(); i++)
-        cout << new_dimensions[i] << " ";
-
-    cout << endl;
 }
 
 

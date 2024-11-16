@@ -426,7 +426,7 @@ void UnscalingLayer::print() const
 }
 
 
-void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void UnscalingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");
 
@@ -451,9 +451,9 @@ void UnscalingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void UnscalingLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Unscaling");
+    const XMLElement* root_element = document.FirstChildElement("Unscaling");
 
     if(!root_element)
         throw runtime_error("Unscaling element is nullptr.\n");
@@ -461,10 +461,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
     set(neurons_number);
 
-    const tinyxml2::XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
+    const XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
 
     for (Index i = 0; i < neurons_number; i++) {
-        const tinyxml2::XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
+        const XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
         if (!unscaling_neuron_element) {
             throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
         }
@@ -475,7 +475,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
         }
 
-        const tinyxml2::XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
+        const XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");
 
         if (descriptives_element->GetText())
         {

@@ -36,7 +36,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
 
-    assert_true(long_short_term_memory_layer.get_parameters_number() == 12, LOG);
+    EXPECT_EQ(long_short_term_memory_layer.get_parameters_number() == 12);
 
     // Test
 
@@ -46,7 +46,7 @@ void LongShortTermMemoryLayerTest::test_constructor()
 
     long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
 
-    assert_true(long_short_term_memory_layer.get_parameters_number() == 72, LOG);
+    EXPECT_EQ(long_short_term_memory_layer.get_parameters_number() == 72);
 }
 
 
@@ -84,9 +84,9 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
 
     long_short_term_memory_layer.forward_propagate({input_pairs}, &long_short_term_layer_forward_propagation, is_training);
 
-    assert_true(long_short_term_layer_forward_propagation.outputs.rank() == 2, LOG);
-    assert_true(long_short_term_layer_forward_propagation.outputs.dimension(0) == 1, LOG);
-    assert_true(long_short_term_layer_forward_propagation.outputs.dimension(1) == inputs.dimension(1), LOG);
+    EXPECT_EQ(long_short_term_layer_forward_propagation.outputs.rank() == 2);
+    EXPECT_EQ(long_short_term_layer_forward_propagation.outputs.dimension(0) == 1);
+    EXPECT_EQ(long_short_term_layer_forward_propagation.outputs.dimension(1) == inputs.dimension(1));
 
 }
 

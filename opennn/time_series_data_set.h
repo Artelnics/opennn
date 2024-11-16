@@ -22,43 +22,26 @@ class TimeSeriesDataSet : public DataSet
 
 public:
 
-   // DEFAULT CONSTRUCTOR
-
-    explicit TimeSeriesDataSet();
+    explicit TimeSeriesDataSet(const Index& = 0,
+                               const dimensions& = {},
+                               const dimensions& = {});
 
     explicit TimeSeriesDataSet(const string&,
                                const string&,
-                               const bool&,
-                               const bool&,
-                               const Index& = 3,
-                               const Index& = 2,
+                               const bool& = true,
+                               const bool& = false,
                                const Codification& = Codification::UTF8);
 
-    void transform_time_series();
-    void transform_time_series_raw_variables();
-    void transform_time_series_data();
     void fill_gaps();
-
-    Index get_time_series_data_rows_number() const;
 
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
-
-    Index get_time_series_raw_variables_number() const;
-    const vector<RawVariable>& get_time_series_raw_variables() const;
-
-    Index get_input_time_series_raw_variables_number() const;
-    Index get_target_time_series_raw_variables_number() const;
-
-    Tensor<Index, 1> get_input_time_series_raw_variables_indices() const;
-    Tensor<Index, 1> get_target_time_series_raw_variables_indices() const;
 
     const string& get_time_raw_variable() const;
 
     void set_time_series_data(const Tensor<type, 2>&);
     void set_time_series_raw_variables_number(const Index&);
 
-    Tensor<type, 2> get_time_series_raw_variable_data(const Index&) const;
     const string& get_group_by_column() const;
 
     void set_lags_number(const Index&);
@@ -70,19 +53,10 @@ public:
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
-    void load_time_series_data_binary(const string&);
-
-    void save_time_series_data_binary(const string&) const;
-
-    Index get_time_series_variables_number() const;
-    vector<string> get_time_series_variable_names() const;
-
-    const Tensor<type, 2>& get_time_series_data() const;
-
     void print() const final;
 
-    void to_XML(tinyxml2::XMLPrinter&) const final;
-    void from_XML(const tinyxml2::XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) final;
 
     vector<string> get_time_series_raw_variables_names() const;
 
@@ -95,10 +69,6 @@ private:
     Index lags_number = 0;
 
     Index steps_ahead = 0;
-
-    Tensor<type, 2> time_series_data;
-
-    vector<RawVariable> time_series_raw_variables;
 
     Index time_raw_variable_index = 0;
 };

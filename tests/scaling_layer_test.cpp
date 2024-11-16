@@ -45,13 +45,13 @@ void ScalingLayer2DTest::test_constructor()
 
     ScalingLayer2D scaling_layer_1;
 
-    assert_true(scaling_layer_1.get_type() == Layer::Type::Scaling2D, LOG);
-    assert_true(scaling_layer_1.get_neurons_number() == 0, LOG);
+    EXPECT_EQ(scaling_layer_1.get_type() == Layer::Type::Scaling2D);
+    EXPECT_EQ(scaling_layer_1.get_neurons_number() == 0);
 
     ScalingLayer2D scaling_layer_2({ 3 });
 
-    assert_true(scaling_layer_2.get_descriptives().size() == 3, LOG);
-    assert_true(scaling_layer_2.get_scaling_methods().size() == 3, LOG);
+    EXPECT_EQ(scaling_layer_2.get_descriptives().size() == 3);
+    EXPECT_EQ(scaling_layer_2.get_scaling_methods().size() == 3);
 
 }
 
@@ -93,10 +93,10 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
     
     // Test
 
@@ -120,12 +120,12 @@ void ScalingLayer2DTest::test_forward_propagate()
     outputs = scaling_layer_forward_propagation.outputs;
 
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN));
     
     // Test
 
@@ -149,10 +149,10 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = scaling_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    assert_true(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
     
     // Test
 
@@ -185,12 +185,12 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = scaling_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    assert_true(abs(outputs(0,0) - type(-1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1,0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(2,0) - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0,0) - type(-1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(1,0) - type(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(2,0) - type(1)) < type(NUMERIC_LIMITS_MIN));
     
     // Test
 
@@ -220,12 +220,12 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = scaling_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
     type scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation - inputs_descriptives(0).mean / inputs_descriptives(0).standard_deviation;
 
-    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
 
     // Test
     
@@ -255,12 +255,12 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = scaling_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == inputs_number, LOG);
-    assert_true(outputs.dimension(1) == samples_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == inputs_number);
+    EXPECT_EQ(outputs.dimension(1) == samples_number);
 
     scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
 
-    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -289,14 +289,14 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     outputs = scaling_layer_forward_propagation.outputs;
 
-    assert_true(outputs.dimension(0) == samples_number, LOG);
-    assert_true(outputs.dimension(1) == inputs_number, LOG);
+    EXPECT_EQ(outputs.dimension(0) == samples_number);
+    EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
     scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
-    assert_true(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
 
     scaled_input = inputs(1, 0) / inputs_descriptives(1).standard_deviation;
-    assert_true(abs(outputs(1, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(outputs(1, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
 
 }
 */

@@ -29,7 +29,7 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 {
-
+/*
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(0));
     data_set.set(DataSet::SampleUse::Training);
@@ -41,7 +41,7 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
     neural_network.set_parameters_constant(type(0));
     
 //    ForwardPropagation forward_propagation(1, &neural_network);
-/*
+
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
@@ -49,13 +49,13 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
     back_propagation.set(samples_number, &minkowski_error);
     minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-    assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+    EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+    EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-    assert_true(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN, LOG);
-    assert_true(back_propagation.gradient.size() == inputs_number + inputs_number * neurons_number + outputs_number + outputs_number * neurons_number, LOG);
+    EXPECT_EQ(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(back_propagation.gradient.size() == inputs_number + inputs_number * neurons_number + outputs_number + outputs_number * neurons_number);
 
-    assert_true(is_zero(back_propagation.gradient), LOG);
+    EXPECT_EQ(is_zero(back_propagation.gradient));
 */
 }
 
@@ -119,10 +119,10 @@ void MinkowskiErrorTest::test_back_propagate()
 
         numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
     }
 
@@ -160,14 +160,14 @@ void MinkowskiErrorTest::test_back_propagate()
 
         numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error() - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
+        EXPECT_EQ(back_propagation.error() - type(0.5) < type(NUMERIC_LIMITS_MIN));
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -208,13 +208,13 @@ void MinkowskiErrorTest::test_back_propagate()
 
         numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
         // @todo
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
     }
 
@@ -251,10 +251,10 @@ void MinkowskiErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &minkowski_error);
         minkowski_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(is_zero(back_propagation.gradient, type(1e-3)), LOG);
+        EXPECT_EQ(is_zero(back_propagation.gradient, type(1e-3)));
 
     }
 
@@ -296,12 +296,12 @@ void MinkowskiErrorTest::test_back_propagate()
         numerical_gradient = minkowski_error.calculate_numerical_gradient();
 
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= type(0), LOG);
+        EXPECT_EQ(back_propagation.error() >= type(0));
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
     }
 }

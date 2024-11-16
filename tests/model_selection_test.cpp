@@ -25,11 +25,11 @@ void ModelSelectionTest::test_constructor()
     cout << "test_constructor\n";
 
     ModelSelection model_selection_1(&training_strategy);
-    assert_true(model_selection_1.has_training_strategy(), LOG);
+    EXPECT_EQ(model_selection_1.has_training_strategy());
 
     ModelSelection model_selection_2;
 
-    assert_true(!model_selection_2.has_training_strategy(), LOG);
+    EXPECT_EQ(!model_selection_2.has_training_strategy());
 }
 
 
@@ -55,10 +55,10 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     results = model_selection.perform_neurons_selection();
 
-    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS, LOG);
-    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS, LOG);
-    assert_true(results.optimum_selection_error != 0.0, LOG);
-    assert_true(results.optimal_neurons_number >= 1 , LOG);
+    EXPECT_EQ(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+    EXPECT_EQ(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
+    EXPECT_EQ(results.optimum_selection_error != 0.0);
+    EXPECT_EQ(results.optimal_neurons_number >= 1 );
 }
 
 

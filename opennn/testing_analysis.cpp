@@ -1456,10 +1456,10 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets,
-                                                                  const Tensor<type, 2>& outputs,
-                                                                  const vector<Index>& testing_indices,
-                                                                  const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets,
+                                                               const Tensor<type, 2>& outputs,
+                                                               const vector<Index>& testing_indices,
+                                                               const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -1471,7 +1471,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
         if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
             true_positives_indices_copy(index++) = testing_indices[i];
 
-    Tensor<Index, 1> true_positives_indices(index);
+    vector<Index> true_positives_indices(index);
 
     copy(true_positives_indices_copy.data(),
          true_positives_indices_copy.data() + index,
@@ -1481,22 +1481,22 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets,
-                                                                   const Tensor<type, 2>& outputs,
-                                                                   const vector<Index>& testing_indices,
-                                                                   const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets,
+                                                                const Tensor<type, 2>& outputs,
+                                                                const vector<Index>& testing_indices,
+                                                                const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_positives_indices_copy(rows_number);
+    vector<Index> false_positives_indices_copy(rows_number);
 
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-            false_positives_indices_copy(index++) = testing_indices[i];
+            false_positives_indices_copy[index++] = testing_indices[i];
 
-    Tensor<Index, 1> false_positives_indices(index);
+    vector<Index> false_positives_indices(index);
 
     copy(false_positives_indices_copy.data(),
          false_positives_indices_copy.data() + index,
@@ -1506,22 +1506,22 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
+vector<Index> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
                                                                    const Tensor<type, 2>& outputs,
                                                                    const vector<Index>& testing_indices,
                                                                    const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_negatives_indices_copy(rows_number);
+    vector<Index> false_negatives_indices_copy(rows_number);
 
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-            false_negatives_indices_copy(index++) = testing_indices[i];
+            false_negatives_indices_copy[index++] = testing_indices[i];
 
-    Tensor<Index, 1> false_negatives_indices(index);
+    vector<Index> false_negatives_indices(index);
 
     copy(false_negatives_indices_copy.data(),
          false_negatives_indices_copy.data() + index,
@@ -1531,10 +1531,10 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
-                                                                  const Tensor<type, 2>& outputs,
-                                                                  const vector<Index>& testing_indices,
-                                                                  const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
+                                                               const Tensor<type, 2>& outputs,
+                                                               const vector<Index>& testing_indices,
+                                                               const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -1546,7 +1546,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
         if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
             true_negatives_indices_copy(index++) = testing_indices[i];
 
-    Tensor<Index, 1> true_negatives_indices(index);
+    vector<Index> true_negatives_indices(index);
 
     copy(true_negatives_indices_copy.data(),
          true_negatives_indices_copy.data() + index,
@@ -2236,7 +2236,7 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
+void TestingAnalysis::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TestingAnalysis");
 
@@ -2246,9 +2246,9 @@ void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
+void TestingAnalysis::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
+    const XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
 
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
@@ -2264,7 +2264,7 @@ void TestingAnalysis::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
 
     to_XML(printer);
 
@@ -2276,7 +2276,7 @@ void TestingAnalysis::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

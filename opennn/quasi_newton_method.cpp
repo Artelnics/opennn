@@ -417,8 +417,8 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    vector<Descriptives> input_variables_descriptives;
-    vector<Descriptives> target_variables_descriptives;
+    vector<Descriptives> input_variable_descriptives;
+    vector<Descriptives> target_variable_descriptives;
 
     // Neural network
 
@@ -432,20 +432,20 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
 
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
+        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
     }
 
     Batch training_batch(training_samples_number, data_set);
@@ -603,10 +603,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
         if(stop_training) break;
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
+    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
 
@@ -620,7 +620,7 @@ string QuasiNewtonMethod::write_optimization_algorithm_type() const
 }
 
 
-void QuasiNewtonMethod::to_XML(tinyxml2::XMLPrinter& printer) const
+void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("QuasiNewtonMethod");
 
@@ -670,21 +670,21 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 }
 
 
-void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
+void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
+    const XMLElement* root_element = document.FirstChildElement("QuasiNewtonMethod");
 
     if (!root_element) 
         throw runtime_error("Quasi-Newton method element is nullptr.\n");
     
     set_inverse_hessian_approximation_method(read_xml_string(root_element, "InverseHessianApproximationMethod"));
 
-    const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+    const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
     
     if (!learning_rate_algorithm_element) 
         throw runtime_error("Learning rate algorithm element is nullptr.\n");
     
-    tinyxml2::XMLDocument learning_rate_algorithm_document;
+    XMLDocument learning_rate_algorithm_document;
     learning_rate_algorithm_document.InsertFirstChild(learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document));
     learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
 

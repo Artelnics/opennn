@@ -118,7 +118,10 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
+   void set(const NeuralNetwork::ModelType&, 
+            const dimensions& = {}, 
+            const dimensions& = {},
+            const dimensions& = {});
 
    void set_approximation(const dimensions&, const dimensions&, const dimensions&);
    void set_classification(const dimensions&, const dimensions&, const dimensions&);
@@ -210,12 +213,12 @@ public:
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   void from_XML(const tinyxml2::XMLDocument&);
-   void inputs_from_XML(const tinyxml2::XMLDocument&);
-   void layers_from_XML(const tinyxml2::XMLDocument&);
-   void outputs_from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const XMLDocument&);
+   void inputs_from_XML(const XMLDocument&);
+   void layers_from_XML(const XMLDocument&);
+   void outputs_from_XML(const XMLDocument&);
 
-   void to_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(XMLPrinter&) const;
 
    void print() const;
    void save(const string&) const;

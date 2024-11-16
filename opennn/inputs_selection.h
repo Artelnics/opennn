@@ -80,8 +80,8 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    Tensor<Index, 1> original_input_raw_variables_indices;
-    Tensor<Index, 1> original_target_raw_variables_indices;
+    vector<Index> original_input_raw_variables_indices;
+    vector<Index> original_target_raw_variables_indices;
 
     Index trials_number = 1;
 

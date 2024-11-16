@@ -508,9 +508,9 @@ void PerceptronLayer::print() const
 }
 
 
-void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
+void PerceptronLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron");
+    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron");
 
     if(!perceptron_layer_element)
         throw runtime_error("PerceptronLayer element is nullptr.\n");
@@ -523,7 +523,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void PerceptronLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void PerceptronLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Perceptron");
 

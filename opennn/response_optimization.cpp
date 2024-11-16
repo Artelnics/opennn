@@ -551,6 +551,12 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
 }
 
 
+ResponseOptimizationResults::ResponseOptimizationResults(NeuralNetwork* new_neural_network)
+{
+    neural_network = new_neural_network;
+}
+
+
 void ResponseOptimizationResults::print() const
 {
     const Index inputs_number = neural_network->get_inputs_number();

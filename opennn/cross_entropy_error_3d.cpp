@@ -111,24 +111,24 @@ string CrossEntropyError3D::get_error_type_text() const
 }
 
 
-void CrossEntropyError3D::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void CrossEntropyError3D::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("CrossEntropyError3D");
     file_stream.CloseElement();
 }
 
 
-void CrossEntropyError3D::from_XML(const tinyxml2::XMLDocument& document)
+void CrossEntropyError3D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError3D");
+    const XMLElement* root_element = document.FirstChildElement("CrossEntropyError3D");
 
     if(!root_element)
         throw runtime_error("Cross entropy error element is nullptr.\n");
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    XMLDocument regularization_document;
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
     regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
     regularization_from_XML(regularization_document);
 }

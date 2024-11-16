@@ -824,13 +824,13 @@ void ConvolutionalLayer::print() const
 {
     cout << "Convolutional layer" << endl;
     cout << "Input dimensions: " << endl;
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 
-void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void ConvolutionalLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Convolutional");
 
@@ -850,9 +850,9 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
+void ConvolutionalLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
+    const XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
 
     if (!convolutional_layer_element) 
         throw runtime_error("Convolutional layer element is nullptr.\n");

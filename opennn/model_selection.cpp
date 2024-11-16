@@ -197,7 +197,7 @@ InputsSelectionResults ModelSelection::perform_inputs_selection()
 }
 
 
-void ModelSelection::to_XML(tinyxml2::XMLPrinter& printer) const
+void ModelSelection::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("ModelSelection");
 
@@ -216,41 +216,41 @@ void ModelSelection::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
+void ModelSelection::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("ModelSelection");
+    const XMLElement* root_element = document.FirstChildElement("ModelSelection");
     
     if (!root_element) 
         throw runtime_error("Model Selection element is nullptr.\n");
     
-    const tinyxml2::XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
+    const XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
 
     if (neurons_selection_element) 
     {
         set_neurons_selection_method(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
 
-        const tinyxml2::XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
+        const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
         if (growing_neurons_element) {
-            tinyxml2::XMLDocument growing_neurons_document;
+            XMLDocument growing_neurons_document;
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
             growing_neurons.from_XML(growing_neurons_document);
         }
     }
 
-    const tinyxml2::XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
+    const XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
     if (inputs_selection_element) {
         set_inputs_selection_method(read_xml_string(inputs_selection_element, "InputsSelectionMethod"));
 
-        const tinyxml2::XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
+        const XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
         if (growing_inputs_element) {
-            tinyxml2::XMLDocument growing_inputs_document;
+            XMLDocument growing_inputs_document;
             growing_inputs_document.InsertFirstChild(growing_inputs_element->DeepClone(&growing_inputs_document));
             growing_inputs.from_XML(growing_inputs_document);
         }
 
-        const tinyxml2::XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
+        const XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
         if (genetic_algorithm_element) {
-            tinyxml2::XMLDocument genetic_algorithm_document;
+            XMLDocument genetic_algorithm_document;
             genetic_algorithm_document.InsertFirstChild(genetic_algorithm_element->DeepClone(&genetic_algorithm_document));
             genetic_algorithm.from_XML(genetic_algorithm_document);
         }
@@ -295,7 +295,7 @@ void ModelSelection::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
     to_XML(printer);
     file << printer.CStr();
 }
@@ -303,7 +303,7 @@ void ModelSelection::save(const string& file_name) const
 
 void ModelSelection::load(const string& file_name)
 {
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

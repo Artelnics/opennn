@@ -171,22 +171,22 @@ void AutoAssociativeNeuralNetwork::set_distances_descriptives(Descriptives& new_
 }
 
 
-void AutoAssociativeNeuralNetwork::set_variables_distances_names(const vector<string>& new_variables_distances_names)
+void AutoAssociativeNeuralNetwork::set_variable_distance_names(const vector<string>& new_variable_distance_names)
 {
-    variables_distances_names = new_variables_distances_names;
+    variable_distance_names = new_variable_distance_names;
 }
 
 
-void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument& document)
+void AutoAssociativeNeuralNetwork::box_plot_from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
+    const XMLElement* root_element = document.FirstChildElement("BoxPlotDistances");
 
     if(!root_element)
         throw runtime_error("BoxPlotDistances element is nullptr.\n");
 
     // Minimum
 
-    const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
+    const XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
 
     if(!minimum_element)
         throw runtime_error("Minimum element is nullptr.\n");
@@ -198,7 +198,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
 
     // First Quartile
 
-    const tinyxml2::XMLElement* first_quartile_element = root_element->FirstChildElement("FirstQuartile");
+    const XMLElement* first_quartile_element = root_element->FirstChildElement("FirstQuartile");
 
     if(!first_quartile_element)
         throw runtime_error("FirstQuartile element is nullptr.\n");
@@ -208,7 +208,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
 
     // Median
 
-    const tinyxml2::XMLElement* median_element = root_element->FirstChildElement("Median");
+    const XMLElement* median_element = root_element->FirstChildElement("Median");
 
     if(!median_element)
         throw runtime_error("Median element is nullptr.\n");
@@ -218,7 +218,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
 
     // ThirdQuartile
 
-    const tinyxml2::XMLElement* third_quartile_element = root_element->FirstChildElement("ThirdQuartile");
+    const XMLElement* third_quartile_element = root_element->FirstChildElement("ThirdQuartile");
 
     if(!third_quartile_element)
         throw runtime_error("ThirdQuartile element is nullptr.\n");
@@ -228,7 +228,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
 
     // Maximum
 
-    const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
+    const XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
 
     if(!maximum_element)
         throw runtime_error("Maximum element is nullptr.\n");
@@ -238,18 +238,18 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const tinyxml2::XMLDocument
 }
 
 
-void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml2::XMLDocument& document)
+void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocument& document)
 {
     ostringstream buffer;
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
+    const XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
 
     if(!root_element)
         throw runtime_error("DistancesDescriptives element is nullptr.\n");
 
     // Minimum
 
-    const tinyxml2::XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
+    const XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
 
     if(!minimum_element)
         throw runtime_error("Minimum element is nullptr.\n");
@@ -259,7 +259,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
 
     // First Quartile
 
-    const tinyxml2::XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
+    const XMLElement* maximum_element = root_element->FirstChildElement("Maximum");
 
     if(!maximum_element)
         throw runtime_error("Maximum element is nullptr.\n");
@@ -271,7 +271,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
 
     // Median
 
-    const tinyxml2::XMLElement* mean_element = root_element->FirstChildElement("Mean");
+    const XMLElement* mean_element = root_element->FirstChildElement("Mean");
 
     if(!mean_element)
         throw runtime_error("Mean element is nullptr.\n");
@@ -285,7 +285,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
 
     // ThirdQuartile
 
-    const tinyxml2::XMLElement* standard_deviation_element = root_element->FirstChildElement("StandardDeviation");
+    const XMLElement* standard_deviation_element = root_element->FirstChildElement("StandardDeviation");
 
     if(!standard_deviation_element)
         throw runtime_error("StandardDeviation element is nullptr.\n");
@@ -302,16 +302,16 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const tinyxml
 }
 
 
-void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2::XMLDocument& document)
+void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const XMLDocument& document)
 {
     ostringstream buffer;
 
-    const tinyxml2::XMLElement* multivariate_distances_element = document.FirstChildElement("MultivariateDistancesBoxPlot");
+    const XMLElement* multivariate_distances_element = document.FirstChildElement("MultivariateDistancesBoxPlot");
 
     if(!multivariate_distances_element)
         throw runtime_error("MultivariateDistancesBoxPlot element is nullptr.\n");
 
-    const tinyxml2::XMLElement* variables_number_element = multivariate_distances_element->FirstChildElement("VariablesNumber");
+    const XMLElement* variables_number_element = multivariate_distances_element->FirstChildElement("VariablesNumber");
 
     if(!variables_number_element)
         throw runtime_error("Variables Number element is nullptr.\n");
@@ -319,13 +319,13 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
     const Index variables_number = Index(atoi(variables_number_element->GetText()));
 
     multivariate_distances_box_plot.resize(variables_number);
-    variables_distances_names.resize(variables_number);
+    variable_distance_names.resize(variables_number);
 
-    const tinyxml2::XMLElement* start_element = variables_number_element;
+    const XMLElement* start_element = variables_number_element;
 
     for(Index i = 0; i < variables_number; i++)
     {
-        const tinyxml2::XMLElement* variable_box_plot_element = start_element->NextSiblingElement("VariableBoxPlot");
+        const XMLElement* variable_box_plot_element = start_element->NextSiblingElement("VariableBoxPlot");
         start_element = variable_box_plot_element;
 
         if(!variable_box_plot_element)
@@ -335,7 +335,7 @@ void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const tinyxml2
         {
             const char* new_box_plot_parameters_element = variable_box_plot_element->GetText();
             vector<string> splitted_box_plot_parameters_element = get_tokens(new_box_plot_parameters_element, "\\");
-            variables_distances_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
+            variable_distance_names[i] = static_cast<string>(splitted_box_plot_parameters_element[0]);
             multivariate_distances_box_plot[i].minimum = type(stof(splitted_box_plot_parameters_element[1]));
             multivariate_distances_box_plot[i].first_quartile = type(stof(splitted_box_plot_parameters_element[2]));
             multivariate_distances_box_plot[i].median = type(stof(splitted_box_plot_parameters_element[3]));
@@ -458,7 +458,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file.close();
 }
 
-void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -662,19 +662,19 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
     file_stream.OpenElement("VariablesNumber");
 
     buffer.str("");
-    buffer << variables_distances_names.size();
+    buffer << variable_distance_names.size();
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    for(Index i = 0; i < variables_distances_names.size(); i++)
+    for(Index i = 0; i < variable_distance_names.size(); i++)
     {
         // Scaling neuron
 
         file_stream.OpenElement("VariableBoxPlot");
 
-        buffer.str(""); buffer << variables_distances_names[i].c_str();
+        buffer.str(""); buffer << variable_distance_names[i].c_str();
         file_stream.PushText(buffer.str().c_str());
         file_stream.PushText("\\");
 
@@ -712,22 +712,22 @@ void AutoAssociativeNeuralNetwork::to_XML(tinyxml2::XMLPrinter& file_stream) con
 }
 
 
-void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
+void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 {
     ostringstream buffer;
 
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
+    const XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
 
     if(!root_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Inputs");
+        const XMLElement* element = root_element->FirstChildElement("Inputs");
 
         if(element)
         {
-            tinyxml2::XMLDocument inputs_document;
+            XMLDocument inputs_document;
             inputs_document.InsertFirstChild(element->DeepClone(&inputs_document));
             inputs_from_XML(inputs_document);
         }
@@ -735,11 +735,11 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
 
     // Layers
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Layers");
+        const XMLElement* element = root_element->FirstChildElement("Layers");
 
         if(element)
         {
-            tinyxml2::XMLDocument layers_document;
+            XMLDocument layers_document;
             layers_document.InsertFirstChild(element->DeepClone(&layers_document));
             layers_from_XML(layers_document);
         }
@@ -747,11 +747,11 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
 
     // Outputs
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
+        const XMLElement* element = root_element->FirstChildElement("Outputs");
 
         if(element)
         {
-            tinyxml2::XMLDocument outputs_document;
+            XMLDocument outputs_document;
             outputs_document.InsertFirstChild(element->DeepClone(&outputs_document));
             outputs_from_XML(outputs_document);
         }
@@ -759,32 +759,32 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
 
 
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
+        const XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
 
         if(element)
         {
-            tinyxml2::XMLDocument box_plot_document;
+            XMLDocument box_plot_document;
             box_plot_document.InsertFirstChild(element->DeepClone(&box_plot_document));
             box_plot_from_XML(box_plot_document);
         }
     }
 
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
+        const XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
 
         if(element)
         {
-            tinyxml2::XMLDocument distances_descriptives_document;
+            XMLDocument distances_descriptives_document;
             distances_descriptives_document.InsertFirstChild(element->DeepClone(&distances_descriptives_document));
             distances_descriptives_from_XML(distances_descriptives_document);
         }
     }
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
+    const XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
 
     if(element)
     {
-        tinyxml2::XMLDocument multivariate_box_plot_document;
+        XMLDocument multivariate_box_plot_document;
         multivariate_box_plot_document.InsertFirstChild(element->DeepClone(&multivariate_box_plot_document));
 
         multivariate_box_plot_from_XML(multivariate_box_plot_document);
@@ -792,7 +792,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const tinyxml2::XMLDocument& documen
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+    const XMLElement* display_element = root_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
