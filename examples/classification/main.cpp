@@ -49,7 +49,7 @@ int main()
         Tensor<Index, 1> input_columns_indices(variables_number);
         Tensor<Index, 1> target_columns_indices(classes_number);
 
-        for(Index i = 0; i < columns.size(); i ++)
+        for(size_t i = 0; i < columns.size(); i ++)
         {
             if(i < variables_number)
                 input_columns_indices(i) = i;
