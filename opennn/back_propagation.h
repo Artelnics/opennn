@@ -44,8 +44,11 @@ struct BackPropagation
 
     Tensor<type, 0> accuracy;
     Tensor<type, 2> predictions;
+    Tensor<type, 4> yolo_predictions;
     Tensor<bool, 2> matches;
+    Tensor<bool, 4> yolo_matches;
     Tensor<bool, 2> mask;
+    Tensor<bool, 4> yolo_mask;
     bool built_mask = false;
 };
 

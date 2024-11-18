@@ -176,6 +176,9 @@ string TrainingStrategy::write_loss_method() const
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "CROSS_ENTROPY_ERROR";
 
+    case LossMethod::YOLO_ERROR:
+        return "YOLO_ERROR";
+
     default:
         return string();
     }
@@ -252,6 +255,9 @@ string TrainingStrategy::write_loss_method_text() const
     case LossMethod::CROSS_ENTROPY_ERROR:
         return "Cross entropy error";
 
+    case LossMethod::YOLO_ERROR:
+        return "YOLO error";
+
     default:
         return string();
     }
@@ -269,7 +275,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     if (new_neural_network)
         set_neural_network(new_neural_network);
 
-    if(new_data_set)
+    if (new_data_set)
         set_data_set(new_data_set);
 
     set_default();
@@ -357,6 +363,7 @@ void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_numb
     Minkowski_error.set_threads_number(new_threads_number);
     weighted_squared_error.set_threads_number(new_threads_number);
     cross_entropy_error.set_threads_number(new_threads_number);
+    yolo_error.set_threads_number(new_threads_number);
 }
 
 
@@ -383,11 +390,12 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
     mean_squared_error.set_data_set(new_data_set);
-    normalized_squared_error.set_data_set(new_data_set);
+    //normalized_squared_error.set_data_set(new_data_set); @todo fix crash
     cross_entropy_error.set_data_set(new_data_set);
     cross_entropy_error_3d.set_data_set(new_data_set);
     weighted_squared_error.set_data_set(new_data_set);
     Minkowski_error.set_data_set(new_data_set);
+    yolo_error.set_data_set(new_data_set);
 }
 
 
@@ -399,6 +407,7 @@ void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_n
     cross_entropy_error_3d.set_neural_network(new_neural_network);
     weighted_squared_error.set_neural_network(new_neural_network);
     Minkowski_error.set_neural_network(new_neural_network);
+    yolo_error.set_neural_network(new_neural_network);
 }
 
 
@@ -413,6 +422,7 @@ void TrainingStrategy::set_display(const bool& new_display)
     cross_entropy_error.set_display(display);
     weighted_squared_error.set_display(display);
     Minkowski_error.set_display(display);
+    yolo_error.set_display(display);
 
     // Optimization algorithm
 
@@ -561,6 +571,7 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
     Minkowski_error.to_XML(printer);
     cross_entropy_error.to_XML(printer);
     weighted_squared_error.to_XML(printer);
+    yolo_error.to_XML(printer);
 
     switch (loss_method) {
     case LossMethod::MEAN_SQUARED_ERROR:
@@ -577,6 +588,9 @@ void TrainingStrategy::to_XML(tinyxml2::XMLPrinter& printer) const
         break;
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         weighted_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::YOLO_ERROR:
+        yolo_error.write_regularization_XML(printer);
         break;
     default:
         break;

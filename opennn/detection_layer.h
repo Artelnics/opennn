@@ -15,11 +15,11 @@ class DetectionLayer : public Layer
 {
 public:
     explicit DetectionLayer(const dimensions&,                      // Input dimensions (output of the last convolutional)
-                            const Index& = 5,                       // Number of boxes per grid cell
+                            const vector<Tensor<type, 1>>&,                           // Number of boxes per grid cell (given by the number of anchors you calculated)
                             const string = "detection_layer");
 
     void set(const dimensions&,
-             const Index&,
+             const vector<Tensor<type, 1>>&,
              const string = "detection_layer");
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -40,9 +40,10 @@ public:
 protected:
     dimensions input_dimensions;
     Index boxes_per_cell;
-    Index box_info = 5;         //x_center, y_center, width, height and object_confidence
-    Index classes_number = 20;  //for the VOC2007 dataset
+    Index box_info = 5;         // x_center, y_center, width, height and object_confidence
+    Index classes_number;       // For VOC2007 dataset there are 20 classes
     Index grid_size;
+    vector<Tensor<type, 1>> anchors;
 };
 
 struct DetectionLayerForwardPropagation : LayerForwardPropagation

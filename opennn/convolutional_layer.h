@@ -40,7 +40,8 @@ public:
                                   ScaledExponentialLinear,
                                   SoftPlus,
                                   SoftSign,
-                                  HardSigmoid};
+                                  HardSigmoid,
+                                  LeakyRectifiedLinear};
 
     enum class ConvolutionType{Valid, Same};
 

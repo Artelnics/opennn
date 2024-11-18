@@ -484,6 +484,8 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
 {
     const Index complexity_size = complexity_dimensions.size();
 
+    add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
                                                dimensions{complexity_dimensions[i]},
@@ -502,6 +504,14 @@ void NeuralNetwork::set_forecasting(const dimensions& input_dimensions,
                                     const dimensions& output_dimensions)
 {
     add_layer(make_unique<ScalingLayer2D>(input_dimensions));
+
+    add_layer(make_unique<RecurrentLayer>(get_output_dimensions(),
+        dimensions{ complexity_dimensions[0] }));
+
+    add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+        output_dimensions,
+        PerceptronLayer::ActivationFunction::HyperbolicTangent,
+        "recurrent_layer"));
 
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 
@@ -803,17 +813,19 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
     const Index layers_number = get_layers_number();
 
     Index position = 0;
-
+    //cout << "layers_number: " << layers_number << endl;
     for(Index i = 0; i < layers_number; i++)
     {
+        //cout << "layer : " << i << endl;
         const Tensor<type, 1> layer_parameters = layers[i]->get_parameters();
 
         // @todo use memcpy
 
         for(Index j = 0; j < layer_parameters.size(); j++)
             parameters(j + position) = layer_parameters(j);
-
+        
         position += layer_parameters.size();
+        //cout << "exit" << endl;
     }
 
     return parameters;
@@ -891,7 +903,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     const Index layers_number = get_layers_number();
 
     for(Index i = layers_number-1; i >= 0 ; i--)
-        if (is_trainable(layers[i]->get_type()) || layers[i]->get_type() == Layer::Type::Detection)
+        if (is_trainable(layers[i]->get_type()))
             return i;
 
     throw runtime_error("The neural network has no trainable layers.");
@@ -1067,9 +1079,12 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
-    const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
+    const Index last_layer_index = has(Layer::Type::Detection) ? last_trainable_layer_index + 1
+                                                               : is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair);
+
+    cout<<layers_number<<", "<<last_layer_index<<endl;
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
@@ -2079,11 +2094,18 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
 pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pair() const
 {
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
-
-    const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
-
-    return layer_forward_propagation->get_outputs_pair();
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::YoloV2)
+    {
+        const Index detection_layer_index = neural_network->get_last_trainable_layer_index() + 1;
+        const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[detection_layer_index];
+        return layer_forward_propagation->get_outputs_pair();
+    }
+    else
+    {
+        const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+        const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
+        return layer_forward_propagation->get_outputs_pair();
+    }
 }
 
 

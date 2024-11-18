@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "language_data_set.h"
+#include "yolo_dataset.h"
 #include "cross_entropy_error_3d.h"
 #include "forward_propagation.h"
 #include "adaptive_moment_estimation.h"
@@ -147,14 +148,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-    
+
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
 
+
     const bool has_selection = data_set->has_selection();
     
     const bool is_language_model = is_instance_of<LanguageDataSet>(data_set) ? true : false;
+
+    // const bool is_yolo_model = is_instance_of<YOLODataset>(data_set) ? true : false;
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index) ? true : false;
    
@@ -177,9 +181,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    const Tensor<Descriptives, 1> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
-    Tensor<Descriptives, 1> target_variables_descriptives;
+    vector<Descriptives> target_variables_descriptives;
 
     Index training_batch_samples_number = 0;
     Index selection_batch_samples_number = 0;
@@ -276,6 +280,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         const Index training_batches_number = training_batches.size();
 
+        // cout<<training_batches_number<<endl<<endl<<endl;
+
+
         cout<<"========"<<endl;
         training_error = type(0);
 
@@ -287,10 +294,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
+            cout<<"=========training========="<<endl;
+
+
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
                                 context_variable_indices);
+
+            cout<<"=========batch========="<<endl;
+
 
 
             // Neural network
@@ -298,6 +311,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
+
+            cout<<"=========fprop========="<<endl;
+
 
 
             // Loss index

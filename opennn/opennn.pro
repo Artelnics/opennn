@@ -139,7 +139,8 @@ HEADERS += \
     opennn.h \
     yolo_dataset.h \
     yolo_error.h \
-    yolo_network.h
+    yolo_network.h \
+    forward_propagation.h \
 
 SOURCES += \
     cross_entropy_error_3d.cpp \

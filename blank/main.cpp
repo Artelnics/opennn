@@ -68,12 +68,95 @@ int main()
 
         YoloNetwork yolo({416, 416, 3}, train_dataset.get_anchors());
 
-        // cout<<yolo.calculate_outputs(input_image)<<endl;
-        yolo.print();
-
+        // yolo.print();
         // yolo.calculate_outputs(train_dataset.get_images());
 
-        cout<<yolo.calculate_outputs(train_dataset.get_images()).dimensions()<<endl;
+        cout<<yolo.calculate_outputs(train_dataset.get_images())<<endl;
+
+
+
+        // cout<<yolo.calculate_outputs(train_dataset.get_images()).dimensions()<<endl;
+
+        // cout<<train_dataset.get_targets()<<endl;
+
+
+
+        // TrainingStrategy training_strategy(&yolo, &train_dataset);
+
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::YOLO_ERROR);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3);
+        // training_strategy.set_display_period(1);
+
+
+        // training_strategy.perform_training();
+
+
+
+
+
+
+
+
+        // // Softmax
+
+        // Tensor<type, 2> test_data(2, 20);
+        // test_data.setConstant(1);
+        // for(Index j = 0; j < test_data.dimension(0); j++)
+        //     for(Index i = 0 ; i < 15; i++)
+        //         test_data(j, i) = i * (j + 1);
+
+        // cout<<test_data<<endl<<endl;
+
+        // const Eigen::array<Index, 1> dimension{{1}};
+
+        // const Eigen::array<Index, 2> range_2{ {2, 1} };
+        // const Eigen::array<Index, 2> expand_softmax_dim{ {1, 5}};
+        // // Tensor<type, 1> softmax_results(20);
+        // for(Index i = 0; i < 2; i++)
+        // {
+        //     Tensor<type, 2> class_probabilities =  test_data.slice(Eigen::array<Index, 2>{0, i * 10 + 5},
+        //                                                        Eigen::array<Index, 2>{2, 5});
+
+        //     // test_data/*.device(*thread_pool_device) */= test_data - test_data.maximum(dimension)
+        //     //                                                              .eval()
+        //     //                                                              .reshape(range_2)
+        //     //                                                              .broadcast(expand_softmax_dim);
+        //     // test_data/*.device(*thread_pool_device)*/ = test_data.exp();
+        //     // test_data/*.device(*thread_pool_device)*/ = test_data / test_data.sum(dimension)
+        //     //                                                              .eval()
+        //     //                                                              .reshape(range_2)
+        //     //                                                              .broadcast(expand_softmax_dim);
+
+        //     class_probabilities = class_probabilities - class_probabilities.maximum(dimension)
+        //                                                                    .eval()
+        //                                                                    .reshape(range_2)
+        //                                                                    .broadcast(expand_softmax_dim);
+        //     class_probabilities = class_probabilities.exp();
+        //     class_probabilities = class_probabilities / class_probabilities.sum(dimension)
+        //                                                                    .eval()
+        //                                                                    .reshape(range_2)
+        //                                                                    .broadcast(expand_softmax_dim);
+        //     test_data.slice(Eigen::array<Index, 2>{0, i * 10 + 5},
+        //                     Eigen::array<Index, 2>{2, 5}) = class_probabilities;
+
+        // }
+        // cout<<test_data<<endl<<endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*

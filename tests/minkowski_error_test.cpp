@@ -36,11 +36,12 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 
     Batch batch(1, &data_set);
     batch.fill({0}, {0}, {1});
-    
+ 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
-    /*
-    ForwardPropagation forward_propagation(1, &neural_network);
+    
+//    ForwardPropagation forward_propagation(1, &neural_network);
+/*
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index

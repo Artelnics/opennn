@@ -118,64 +118,6 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
     return random_vertical_translation_minimum;
 }
 
-/*
-void ImageDataSet::set(const Index& new_images_number,
-                       const Index& new_height,
-                       const Index& new_width,
-                       const Index& new_channels,
-                       const Index& new_targets_number)
-{
-
-    model_type = ModelType::ImageClassification;
-    
-    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
-    const Index inputs_number = new_height * new_width * new_channels;
-    const Index raw_variables_number = inputs_number + 1;
-    const Index variables_number = inputs_number + targets_number;
-
-    // Dimensions
-
-    input_dimensions = { new_height, new_width, new_channels };
-
-    target_dimensions = { targets_number };
-
-    // Data
-
-    data.resize(new_images_number, variables_number);
-
-    // Variables
-
-    raw_variables.resize(raw_variables_number);
-
-    for(Index i = 0; i < inputs_number; i++)
-        raw_variables[i].set("p_" + to_string(i + 1), 
-                             VariableUse::Input, 
-                             RawVariableType::Numeric,
-                             Scaler::ImageMinMax);
-
-    Tensor<string, 1> categories(targets_number);
-    categories.setConstant("ABC");
-
-    if(targets_number == 1)
-        raw_variables[raw_variables_number - 1].set("target",
-                                                    VariableUse::Target,
-                                                    RawVariableType::Binary,
-                                                    Scaler::None,
-                                                    categories);
-    else
-        raw_variables[raw_variables_number - 1].set("target",
-                                                    VariableUse::Target,
-                                                    RawVariableType::Categorical,
-                                                    Scaler::None,
-                                                    categories);
-
-    // Samples
-
-    sample_uses.resize(new_images_number);
-    split_samples_random();
-
-}
-*/
 
 void ImageDataSet::set_image_data_random()
 {
@@ -576,7 +518,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 }
 
 
-Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
+vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 {
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
@@ -586,7 +528,7 @@ Tensor<Descriptives, 1> ImageDataSet::scale_variables(const VariableUse&)
 
     inputs_data.device(*thread_pool_device) = inputs_data / type(255);
 
-    return Tensor<Descriptives, 1>();
+    return vector<Descriptives>();
 }
 
 

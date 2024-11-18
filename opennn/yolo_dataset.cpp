@@ -22,7 +22,8 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
     sort(images_files.begin(), images_files.end());
 
-    images.resize(images_files.size(), 416, 416, 3);
+    images.resize(images_files.size());
+    tensor_images.resize(images_files.size(), 416, 416, 3);
     offsets.resize(images_files.size());
 
     #pragma omp parallel for
@@ -30,8 +31,9 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
     {
         Tensor<type, 1> image_offsets;
 
-        images.chip(i,0) = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets), false);
+        images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets), false);
         offsets[i] = image_offsets;
+        tensor_images.chip(i,0) = images[i];
 
     }
 
@@ -88,18 +90,38 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
     anchors = calculate_anchors(labels, anchor_number);
 
-    if (images.dimension(0) != (Index) labels.size()) {
+    if (images.size() != labels.size()) {
         // cerr << "Images and labels file number do not match!" << endl;
         throw runtime_error("Images and labels file number do not match!");
     }
 
-    targets.resize(images.dimension(0), grid_size, grid_size, (Index) (anchor_number * (5 + classes.size())));
+    targets.resize(images.size());
+    tensor_targets.resize(images.size(), 13, 13, 125);
 
-    for(Index img = 0; img < images.dimension(0); img++)
+    for(size_t img = 0; img < images.size(); img++)
     {
-        targets.chip(img, 0) = convert_to_YOLO_grid_data(labels[img], anchors, grid_size, anchor_number, classes.size());
+        targets[img] = convert_to_YOLO_grid_data(labels[img], anchors, grid_size, anchor_number, classes.size());
+        tensor_targets.chip(img, 0) = targets[img];
     }
     //cout<<images.dimension(0)<<endl<<labels.size()<<endl;
+
+    target_dimensions = {{grid_size, grid_size, (Index) (anchor_number * (5 + classes.size()))}};
+
+    input_dimensions = {{416, 416, 3}};
+
+    set(images.size(), input_dimensions, target_dimensions);
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < images[i].size(); j++)
+        {
+            data(i, j) = images[i](j);
+        }
+        for(Index k = 0; k < targets[i].size(); k++)
+        {
+            data(i, k + input_dimensions[0]*input_dimensions[1]*input_dimensions[2]) = targets[i](k);
+        }
+    }
 
 }
 
@@ -114,17 +136,15 @@ YOLODataset::YOLODataset(const string& images_directory)
     }
     sort(images_files.begin(), images_files.end());
 
-    images.resize(images_files.size(), 416, 416, 3);
+    images.resize(images_files.size());
 
 #pragma omp parallel for
     for(size_t i = 0; i < images_files.size(); i++)
     {
-        images.chip(i, 0) = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>()), false);
+        images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>()), false);
     }
 
     model_type = opennn::DataSet::ModelType::ObjectDetection;
-    input_dimensions = {416, 416, 3};
-    target_dimensions = {13, 13, 125};
 }
 
 size_t YOLODataset::size() const
@@ -134,7 +154,7 @@ size_t YOLODataset::size() const
 
 Tensor<type, 3> YOLODataset::get_image(const Index& index) const
 {
-    return images.chip(index, 0);
+    return images[index];
 }
 
 Tensor<type, 2> YOLODataset::get_label(const Index& index) const
@@ -143,13 +163,13 @@ Tensor<type, 2> YOLODataset::get_label(const Index& index) const
 }
 
 Tensor<type, 4> YOLODataset::get_images() const
-{
-    return images;
+{    
+    return tensor_images;
 }
 
 Tensor<type, 4> YOLODataset::get_targets() const
 {
-    return targets;
+    return tensor_targets;
 }
 
 vector<Tensor<type, 1>> YOLODataset::get_anchors() const

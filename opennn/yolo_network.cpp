@@ -48,6 +48,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
     const dimensions pooling_stride_dimensions = { 2, 2 };
     const dimensions padding_dimensions = { 0, 0 };
     const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
+    const ConvolutionalLayer::ActivationFunction activation_function = ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear;
 
     // add_layer(make_unique<ScalingLayer4D>((dimensions){height, width, channels}));
 
@@ -56,7 +57,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
     add_layer(make_unique<ConvolutionalLayer> (/*get_output_dimensions(),*/
                                               (dimensions){height, width, channels},
                                               (dimensions){3, 3, channels, 32},
-                                              ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                              activation_function,
                                               convolution_stride_dimensions,
                                               convolution_type,
                                               "Convolutional layer 1"));
@@ -71,7 +72,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 64},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                 activation_function,
                                                  convolution_stride_dimensions,
                                                  convolution_type,
                                                  "Convolutional layer 2"));
@@ -85,27 +86,27 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 2"));
 
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 128},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 3"));
+
+    // // // layers[5]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 64},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 4"));
+
+    // // // layers[6]->set_parameters_constant(1);
+
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 128},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 3"));
-
-    // layers[5]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 64},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 4"));
-
-    // layers[6]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 128},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                 activation_function,
                                                  convolution_stride_dimensions,
                                                  convolution_type,
                                                  "Convolutional layer 5"));
@@ -119,27 +120,27 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 3"));
 
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 256},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 6"));
+
+    // // // layers[9]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 128},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 7"));
+
+    // // // layers[10]->set_parameters_constant(1);
+
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 256},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 6"));
-
-    // layers[9]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 128},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 7"));
-
-    // layers[10]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 256},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                 activation_function,
                                                  convolution_stride_dimensions,
                                                  convolution_type,
                                                  "Convolutional layer 8"));
@@ -156,48 +157,48 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 512},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                 activation_function,
                                                  convolution_stride_dimensions,
                                                  convolution_type,
                                                  "Convolutional layer 9"));
 
     // layers[13]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 256},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 10"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 10"));
 
     // layers[14]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 512},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 11"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 11"));
 
-    // layers[15]->set_parameters_constant(1);
+    // // // layers[15]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 256},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 12"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 12"));
 
-    // layers[16]->set_parameters_constant(1);
+    // // // layers[16]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 512},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 13"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 13"));
 
-    // layers[17]->set_parameters_constant(1);
+    // // // layers[17]->set_parameters_constant(1);
 
     add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                            pool_dimensions,
@@ -206,63 +207,90 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 5"));
 
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 14"));
+
+    // // // layers[19]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 512},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 15"));
+
+    // // // layers[20]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 16"));
+
+    // // // layers[21]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 512},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 17"));
+
+    // // // layers[22]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 18"));
+
+    // // // layers[23]->set_parameters_constant(1);
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 19"));
+
+    // // // layers[24]->set_parameters_constant(1)
+
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 20"));
+
+    // // // layers[25]->set_parameters_constant(1)
+
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 14"));
+                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
+                                              activation_function,
+                                              convolution_stride_dimensions,
+                                              convolution_type,
+                                              "Convolutional layer 21"));
 
-    // layers[19]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 512},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 15"));
-
-    // layers[20]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 16"));
-
-    // layers[21]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 512},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 17"));
-
-    // layers[22]->set_parameters_constant(1);
-
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                                 ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 18"));
-
-    // layers[23]->set_parameters_constant(1);
+    // // // layers[26]->set_parameters_constant(1)
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){1, 1, get_output_dimensions()[2], 125},
                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
                                                  convolution_stride_dimensions,
                                                  convolution_type,
-                                                 "Convolutional layer 19"));
+                                                 "Convolutional layer 22"));
 
-    // layers[24]->set_parameters_constant(1);
+    // layers[27]->set_parameters_constant(1);
 
-    add_layer(make_unique<DetectionLayer>(get_output_dimensions(),
-                                          5,
-                                          "Detection layer"));
+    // add_layer(make_unique<DetectionLayer>(get_output_dimensions(),
+    //                                       anchors,
+    //                                       "Detection layer"));
 
 }
 

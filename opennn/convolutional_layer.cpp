@@ -198,6 +198,8 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
 
     case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
+    case ActivationFunction::LeakyRectifiedLinear: leaky_rectified_linear(activations, activation_derivatives, 0.1); return;
+
     default: return;
     }
 }

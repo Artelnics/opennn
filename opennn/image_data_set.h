@@ -26,7 +26,7 @@ class ImageDataSet : public DataSet
 
 public:
 
-    explicit ImageDataSet(const Index & = 0, const dimensions & = { 0,0,0 }, const dimensions & = {0});
+    explicit ImageDataSet(const Index& = 0, const dimensions& = { 0,0,0 }, const dimensions& = {0});
 
     Index get_channels_number() const;
     Index get_image_width() const;
@@ -43,9 +43,7 @@ public:
     type get_random_horizontal_translation_maximum() const;
     type get_random_vertical_translation_minimum() const;
     type get_random_vertical_translation_maximum() const;
-/*
-    void set(const Index&, const Index&, const Index&, const Index&, const Index&);
-*/
+
     void set_image_data_random();
 
     void set_input_dimensions(const dimensions&);
@@ -64,7 +62,7 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-    Tensor<Descriptives, 1> scale_variables(const VariableUse&) final;
+    vector<Descriptives> scale_variables(const VariableUse&) final;
 
     void read_bmp();
 

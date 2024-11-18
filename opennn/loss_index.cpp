@@ -388,7 +388,12 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 ForwardPropagation& forward_propagation,
                                                 BackPropagation& back_propagation) const
 {
+    cout<<"=========delta========="<<endl;
+
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
+
+    cout<<"========delta=========="<<endl;
+
 
     const Index layers_number = layers.size();
 
@@ -397,11 +402,20 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
+    cout<<"========delta=========="<<endl;
+
+
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs
         = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
 
+    cout<<"========delta=========="<<endl;
+
+
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation.get_layer_delta_pairs();
+
+    cout<<"========delta=========="<<endl;
+
 
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
@@ -591,6 +605,9 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 
     const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
+
+    cout<<"========delta2=========="<<endl;
+
     
     const vector<unique_ptr<LayerBackPropagation>>& layer_back_propagations = neural_network.get_layers();
 
@@ -601,6 +618,9 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
     Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
     Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
 
+    cout<<"========delta2=========="<<endl;
+
+
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
         if (i == last_trainable_layer_index)
@@ -609,13 +629,18 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 
             continue;
         }
+        cout<<"========delta2=========="<<endl;
 
         for (Index j = 0; j < Index(layer_input_indices[i].size()); j++)
         {
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
+            cout<<"========delta3=========="<<endl;
+
             input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs();
+
+            cout<<"========delta3=========="<<endl;
 
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }

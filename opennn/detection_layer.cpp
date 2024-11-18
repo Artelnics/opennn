@@ -14,25 +14,27 @@ DetectionLayerForwardPropagation::DetectionLayerForwardPropagation(
 }
 
 DetectionLayer::DetectionLayer(const dimensions& new_input_dimensions,
-                               const Index& new_boxes_per_cell,
+                               const vector<Tensor<type, 1>>& new_anchors,
                                const string name)
 {
     layer_type = Layer::Type::Detection;
 
     // cout<<"==============="<<endl;
 
-    set(new_input_dimensions, new_boxes_per_cell, name);
+    set(new_input_dimensions, new_anchors, name);
 }
 
-void DetectionLayer::set(const dimensions& new_input_dimensions, const Index& new_boxes_per_cel, const string name)
+void DetectionLayer::set(const dimensions& new_input_dimensions, const vector<Tensor<type, 1>>& new_anchors, const string name)
 {
     if(new_input_dimensions.size() != 3)
         throw runtime_error("Dimensions must be 3");
 
     input_dimensions = new_input_dimensions;
-    boxes_per_cell = new_boxes_per_cel;
-    classes_number = new_input_dimensions[2] / new_boxes_per_cel - box_info;
+    anchors = new_anchors;
+    boxes_per_cell = new_anchors.size();
+    classes_number = (new_input_dimensions[2] / boxes_per_cell) - box_info;
     grid_size = new_input_dimensions[0];
+
 
     // cout<<"==============="<<endl;
 
@@ -42,7 +44,7 @@ void DetectionLayer::set(const dimensions& new_input_dimensions, const Index& ne
 
 void DetectionLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                       const bool& is_training)
+                                       const bool&)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
@@ -86,25 +88,26 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
 
     const Index box_data_size = box_info + classes_number;
 
+    const Eigen::array<Index, 4> range_4{ { batch_size, grid_size, grid_size, 1 }};
+    const Eigen::array<Index, 4> expand_softmax_dim{ { 1, 1, 1, classes_number} };
+
     for(Index box = 0; box < boxes_per_cell; box++)
     {
 
-        //Softmax
+        // Softmax
 
         Index class_start = box * box_data_size + box_info;
 
         Tensor<type, 4> class_probabilities =  inputs.slice(Eigen::array<Index, 4>{0, 0, 0, class_start},
                                                     Eigen::array<Index, 4>{batch_size, grid_size, grid_size, classes_number});
 
-        const Eigen::array<Index, 4> range_4{ { batch_size, grid_size, grid_size, 1 }};
-        const Eigen::array<Index, 4> expand_softmax_dim{ { 1, 1, 1, classes_number} };
 
-        class_probabilities.device(*thread_pool_device) = class_probabilities - class_probabilities.maximum(softmax_dimension)
+        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities - class_probabilities.maximum(softmax_dimension)
                                                                                                    .eval()
                                                                                                    .reshape(range_4)
                                                                                                    .broadcast(expand_softmax_dim);
-        class_probabilities.device(*thread_pool_device) = class_probabilities.exp();
-        class_probabilities.device(*thread_pool_device) = class_probabilities / class_probabilities.sum(softmax_dimension)
+        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities.exp();
+        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities / class_probabilities.sum(softmax_dimension)
                                                                                                    .eval()
                                                                                                    .reshape(range_4)
                                                                                                    .broadcast(expand_softmax_dim);
@@ -113,12 +116,13 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, classes_number}) = class_probabilities;
 
 
-        //Logistic
+        // Logistic
 
         Tensor<type, 4> normalized_centers =  inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 0},
                                                            Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2});
 
-        normalized_centers.device(*thread_pool_device) = (type(1) + (-normalized_centers).exp()).inverse();
+        normalized_centers/*.device(*thread_pool_device)*/ = (type(1) + (-normalized_centers).exp()).inverse();
+
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0,  box * box_data_size + 0},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}) = normalized_centers;
@@ -127,23 +131,45 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
         Tensor<type, 4> object_probability = inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size +  4},
                                                           Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 1});
 
-        object_probability.device(*thread_pool_device) = (type(1) + (-object_probability).exp()).inverse();
+        object_probability/*.device(*thread_pool_device)*/ = (type(1) + (-object_probability).exp()).inverse();
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0,  box * box_data_size + 4},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 1}) = object_probability;
 
 
-        //Exponential
+        // Exponential
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})
-                  .device(*thread_pool_device)
+                  // .device(*thread_pool_device)
             =  inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
                            Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}).exp();
 
+
+      //  Box dimensions detection
+
+        Tensor<type, 4> box_detections = detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 0},
+                                                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 4});
+
+        for(Index i = 0; i < batch_size; i++)
+        {
+            for(Index j = 0; j < grid_size; j++)
+            {
+                for(Index k = 0; k < grid_size; k++)
+                {
+                    box_detections(i,j,k,0) += k;
+                    box_detections(i,j,k,1) += j;
+                    box_detections(i,j,k,2) *= anchors[box](0);
+                    box_detections(i,j,k,3) *= anchors[box](1);
+                }
+            }
+        }
+        detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 0},
+                         Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 4}) = box_detections;
     }
 
-    // cout<<detections.slice(Eigen::array<Index, 4>{0, 0, 0, 2}, Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})<<endl<<endl<<endl<<endl;
+    // cout<<detections<<endl;
+    // cout<<detections.slice(Eigen::array<Index, 4>{0, 0, 0, 5}, Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 20})<<endl<<endl<<endl<<endl;
 }
 
 void DetectionLayer::print() const

@@ -29,7 +29,7 @@ public:
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
 
-   Tensor<Descriptives, 1> get_descriptives() const;
+   vector<Descriptives> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 1> get_minimums() const;
@@ -47,7 +47,7 @@ public:
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives(const vector<Descriptives>&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_minimum(const Index&, const type&);
@@ -88,7 +88,7 @@ public:
 
 private:
 
-   Tensor<Descriptives, 1> descriptives;
+   vector<Descriptives> descriptives;
 
    Tensor<Scaler, 1> scalers;
 

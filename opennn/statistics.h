@@ -84,8 +84,8 @@ namespace opennn
  Descriptives descriptives(const Tensor<type, 1>&);
 
  // Descriptives matrix
- Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&);
- Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
+ vector<Descriptives> descriptives(const Tensor<type, 2>&);
+ vector<Descriptives> descriptives(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&);
 
  // Histograms
  Histogram histogram(const Tensor<type, 1>&, const Index&  = 10);
