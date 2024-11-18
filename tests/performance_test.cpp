@@ -42,12 +42,19 @@ TEST(PerformanceTest, Rosenbrock)
 
 TEST(PerformanceTest, ImageClassification)
 {
-    /*
-    const dimensions complexity_dimensions = { 8 };
+    const Index samples_number = 6;
+    const Index image_height = 4;
+    const Index image_width = 4;
+    const Index channels = 3;
+    const Index targets = 2;
 
-    ImageDataSet image_data_set(100, { 100, 100, 3 }, {2});
+    ImageDataSet image_data_set(samples_number, { image_height, image_width, channels }, { targets });
 
     image_data_set.set_image_data_random();
+
+    image_data_set.print();
+
+    const dimensions complexity_dimensions = { 8 };
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
         image_data_set.get_input_dimensions(),
@@ -64,7 +71,7 @@ TEST(PerformanceTest, ImageClassification)
     training_strategy.set_display_period(1);
 
     training_strategy.perform_training();
-    */
+    
     EXPECT_EQ(1, 1);
 }
 

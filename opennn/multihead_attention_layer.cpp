@@ -265,9 +265,10 @@ void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
 
 
 void MultiheadAttentionLayer::set_weights()
-{
-    hidden_depth = Index(depth / heads_number); //depth;
-
+{   if(heads_number != 0)
+        hidden_depth = Index(depth / heads_number); //depth;
+    else
+        hidden_depth = 0;
     query_weights.resize(depth, hidden_depth, heads_number);
     query_biases.resize(hidden_depth, heads_number);
 

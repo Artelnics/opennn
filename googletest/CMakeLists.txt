@@ -52,6 +52,10 @@ set(GOOGLETEST_VERSION "1.12.1" CACHE STRING "GoogleTest version")
 cmake_minimum_required(VERSION 3.13)
 project(gtest VERSION ${GOOGLETEST_VERSION} LANGUAGES CXX C)
 
+# Requiere C++11 para el soporte de std::mutex y std::condition_variable
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (COMMAND set_up_hermetic_build)
   set_up_hermetic_build()
 endif()

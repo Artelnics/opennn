@@ -1871,8 +1871,9 @@ TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 {
-    if(x_pair.second.size() != 3)
-        throw runtime_error("Dimensions must be 3");
+    if(x_pair.second.size() != 3){
+        cout<<x_pair.second.size()<<endl;
+        throw runtime_error("Dimensions must be 3");}
 
     return TensorMap<Tensor<type, 3>>(x_pair.first,
                                       x_pair.second[0],

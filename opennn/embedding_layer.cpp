@@ -137,7 +137,7 @@ void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 
 
 void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
-{  
+{
     embedding_weights.resize(new_inputs_dimension, get_depth());
 
     set_parameters_random();
@@ -185,14 +185,15 @@ void EmbeddingLayer::set_parameters_random()
     const type maximum = type(0.05);
 
     // First row must be 0s because input value 0 is padding
-    
+    if(embedding_weights.dimension(0)!=0){
     embedding_weights.chip(0, 0).setConstant(0);
-    
+
     #pragma omp parallel for
 
     for(Index i = 1; i < embedding_weights.dimension(0); i++)
         for(Index j = 0; j < embedding_weights.dimension(1); j++)
             embedding_weights(i, j) = minimum + (maximum - minimum)* type(rand() / (RAND_MAX + 1.0));
+    }
 }
 
 
@@ -346,7 +347,7 @@ void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
     printer.OpenElement("Embedding");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "InputDimensions", dimensions_to_string({get_input_dimension()}));
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
     add_xml_element(printer, "Depth", to_string(get_depth()));
     add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));

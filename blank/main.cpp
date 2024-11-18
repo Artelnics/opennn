@@ -40,8 +40,8 @@ int main()
 
         LanguageDataSet language_data_set;
 
-        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
+        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
+        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
 
         language_data_set.set_separator(DataSet::Separator::Tab);
 
@@ -81,29 +81,35 @@ int main()
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
 
-        // Training strategy
+        // // Training strategy
 
-        TrainingStrategy training_strategy(&transformer, &language_data_set);
+        // TrainingStrategy training_strategy(&transformer, &language_data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
 
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
+        // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1200);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(75600);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(4000);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(237600);
+        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+        // training_strategy.get_adaptive_moment_estimation()->set_display(true);
+        // training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
 
-        TrainingResults training_results = training_strategy.perform_training();
+        // TrainingResults training_results = training_strategy.perform_training();
+
+        // // Save results-
+
+        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
         // Testing analysis
+
+        transformer.load("/home/artelnics/Escritorio/andres_alonso/ViT/Weights/ENtoES_model.xml");
 
         const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 
@@ -112,10 +118,6 @@ int main()
         cout << "TESTING ANALYSIS:" << endl;
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
-
-        // Save results-
-
-        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
         cout << "Bye!" << endl;
         return 0;

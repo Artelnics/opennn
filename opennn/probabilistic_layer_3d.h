@@ -49,6 +49,7 @@ public:
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
+   void set_inputs_number(const Index);
    void set_input_dimensions(const dimensions&) final;
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) final;

@@ -124,6 +124,10 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
     decision_threshold = type(0.5);
 }
 
+void ProbabilisticLayer3D::set_inputs_number(const Index new_inputs_number)
+{
+    inputs_number = new_inputs_number;
+}
 
 void ProbabilisticLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
@@ -152,6 +156,12 @@ void ProbabilisticLayer3D::set_output_dimensions(const dimensions& new_output_di
 
     synaptic_weights.resize(inputs_depth, new_neurons_number);
 */
+    const Index inputs_depth = get_inputs_depth();
+    const Index neurons_number = new_output_dimensions[0];
+
+    biases.resize(neurons_number);
+
+    synaptic_weights.resize(inputs_depth, neurons_number);
 }
 
 
@@ -230,7 +240,6 @@ void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
 {
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
-
     sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
@@ -258,12 +267,13 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
         static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
     
     Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
-    
+
     calculate_combinations(inputs, outputs);
 
     //if(is_training)
         calculate_activations(outputs);
-    //else competitive(outputs, outputs);
+    //else competitive(outputs);
+
 }
 
 
@@ -375,15 +385,15 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3D element is nullptr.\n");
-/*
+
     set_name(read_xml_string(probabilistic_layer_element, "Name"));
     set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(probabilistic_layer_element, "InputsDepth"));
-    set_output_dimensions(read_xml_index(probabilistic_layer_element, "NeuronsNumber"));
+    set_output_dimensions({read_xml_index(probabilistic_layer_element, "NeuronsNumber")});
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
-*/
+
 }
 
 

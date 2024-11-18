@@ -267,7 +267,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     if (new_neural_network)
         set_neural_network(new_neural_network);
 
-    if(new_data_set)
+    if (new_data_set)
         set_data_set(new_data_set);
 
     set_default();
@@ -379,7 +379,7 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
 {
     mean_squared_error.set_data_set(new_data_set);
-    normalized_squared_error.set_data_set(new_data_set);
+    //normalized_squared_error.set_data_set(new_data_set); @todo fix crash
     cross_entropy_error.set_data_set(new_data_set);
     cross_entropy_error_3d.set_data_set(new_data_set);
     weighted_squared_error.set_data_set(new_data_set);

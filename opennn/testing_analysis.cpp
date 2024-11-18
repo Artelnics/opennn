@@ -1994,6 +1994,9 @@ pair<type, type> TestingAnalysis::test_transformer() const
     const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
     const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
     const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+    // const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Training, DataSet::VariableUse::Input);
+    // const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Training, DataSet::VariableUse::Context);
+    // const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Training, DataSet::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
@@ -2014,6 +2017,45 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
+    cout<<"English:"<<endl;
+    cout<<testing_context.chip(10,0)<<endl;
+    for(Index i = 0; i < testing_context.dimension(1); i++){
+        cout<<language_data_set->get_context_vocabulary()(Index(testing_context(10,i)))<<" ";
+    }
+    cout<<endl;
+    cout<<endl;
+    cout<<"Spanish:"<<endl;
+    cout<<testing_input.chip(10,0)<<endl;
+    for(Index i = 0; i < testing_input.dimension(1); i++){
+        cout<<language_data_set->get_completion_vocabulary()(Index(testing_input(10,i)))<<" ";
+    }
+    cout<<endl;
+    cout<<endl;
+    cout<<"Prediction:"<<endl;
+
+    for(Index j = 0; j < outputs.dimension(1); j++){
+        type max = outputs(10, j, 0);
+        Index index = 0;
+        for(Index i = 1; i < outputs.dimension(2); i++){
+            if(max < outputs(10,j,i)){
+                index = i;
+                max = outputs(10,j,i);
+            }else{continue;}
+        }
+        cout<<index<<" ";
+    }
+    cout<<endl;
+    for(Index j = 0; j < outputs.dimension(1); j++){
+        type max = outputs(10, j, 0);
+        Index index = 0;
+        for(Index i = 1; i < outputs.dimension(2); i++){
+            if(max < outputs(10,j,i)){
+                index = i;
+                max = outputs(10,j,i);
+            }else{continue;}
+        }
+        cout<<language_data_set->get_completion_vocabulary()(index)<<" ";
+    }
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
     const type accuracy = calculate_masked_accuracy(outputs, testing_target);
