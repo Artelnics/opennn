@@ -13,7 +13,6 @@
 #include "tensors.h"
 #include "neural_network.h"
 
-#include <string>
 #include <unordered_map>
 
 namespace opennn

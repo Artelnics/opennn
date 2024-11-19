@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "statistics.h"
 #include "tensors.h"
 
@@ -1580,9 +1582,9 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
 
     // Mean
 
-    Tensor<type, 1> mean(column_indices_size);
+    Tensor<type, 1> mean(column_indices_size); // @todo check test crash here
     mean.setZero();
-
+    
     for(Index j = 0; j < column_indices_size; j++)
     {
         column_index = column_indices[j];
@@ -1601,7 +1603,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
 
         mean(j) /= type(count);
     }
-
+    
     return mean;
 }
 

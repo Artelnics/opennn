@@ -9,9 +9,6 @@
 #ifndef ScalingLayer4D_H
 #define ScalingLayer4D_H
 
-#include <iostream>
-#include <string>
-
 #include "scaling.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

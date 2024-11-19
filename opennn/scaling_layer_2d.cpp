@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <numeric>
+#include "pch.h"
 
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"

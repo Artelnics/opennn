@@ -9,8 +9,6 @@
 #ifndef KMEANS_H
 #define KMEANS_H
 
-#include <string>
-
 #include "config.h"
 
 using namespace std;

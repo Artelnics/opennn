@@ -9,8 +9,6 @@
 #ifndef AUTOASSOCIATIVENEURALNETWORK_H
 #define AUTOASSOCIATIVENEURALNETWORK_H
 
-#include <string>
-
 #include "neural_network.h"
 #include "box_plot.h"
 

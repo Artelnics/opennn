@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <stdexcept>
-#include <ctime>
-#include <algorithm>
+#include "pch.h"
 
 #include "tensors.h"
 #include "correlations.h"

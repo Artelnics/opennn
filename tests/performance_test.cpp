@@ -4,7 +4,8 @@
 #include <string>
 #include <exception>
 
-#include "../opennn/opennn.h"
+
+
 
 using namespace opennn;
 
@@ -50,14 +51,10 @@ TEST(PerformanceTest, ImageClassification)
     const Index image_width = 4;
     const Index channels = 3;
     const Index targets = 2;
-/*
+
     ImageDataSet image_data_set(samples_number, { image_height, image_width, channels }, { targets });
     image_data_set.set_image_data_random();
     image_data_set.set(DataSet::SampleUse::Training);
-
-    //ImageDataSet image_data_set;
-    //image_data_set.set_data_source_path("C:/binary_mnist");
-    //image_data_set.read_bmp();
     
     const dimensions complexity_dimensions = { 8 };
 
@@ -66,20 +63,17 @@ TEST(PerformanceTest, ImageClassification)
         complexity_dimensions,
         image_data_set.get_target_dimensions());
 
-    const Index batch_samples_number = 6;
-    ForwardPropagation training_forward_propagation(batch_samples_number, &neural_network);
-
-    //TrainingStrategy training_strategy(&neural_network, &image_data_set);
+    TrainingStrategy training_strategy(&neural_network, &image_data_set);
    
-    //training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-    //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-    //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-    //training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
-    //training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
-    //training_strategy.set_display_period(1);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
+    training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2);
+    training_strategy.set_display_period(1);
     
-    //training_strategy.perform_training(); 
-*/
+    training_strategy.perform_training();
+
     EXPECT_EQ(1, 1);
 }
 

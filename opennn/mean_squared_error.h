@@ -9,8 +9,6 @@
 #ifndef MEANSQUAREDERROR_H
 #define MEANSQUAREDERROR_H
 
-#include <string>
-
 #include "loss_index.h"
 #include "data_set.h"
 

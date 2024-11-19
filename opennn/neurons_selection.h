@@ -9,9 +9,6 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-#include <iostream>
-#include <string>
-
 #include "config.h"
 #include "training_strategy.h"
 

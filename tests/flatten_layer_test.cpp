@@ -37,13 +37,14 @@ TEST(FlattenLayerTest, ForwardPropagate)
 
     Tensor<type, 2> outputs;
 
-    //unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation  = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, flatten_layer);
+    unique_ptr<FlattenLayerForwardPropagation> flatten_layer_forward_propagation  = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, &flatten_layer);
+    //unique_ptr<LayerForwardPropagation> layer_forward_propagation  = make_unique<LayerForwardPropagation>(batch_samples_number, &flatten_layer);
 
-    //pair<type*, dimensions> input_pairs(inputs.data(), { {batch_samples_number, height, width, channels} });
+    pair<type*, dimensions> input_pairs(inputs.data(), { {batch_samples_number, height, width, channels} });
 
-    //flatten_layer.forward_propagate({ input_pairs }, flatten_layer_forward_propagation, is_training);
+    //flatten_layer.forward_propagate({ input_pairs }, layer_forward_propagation, is_training);
 
-//    outputs = flatten_layer_forward_propagation.outputs;
+    outputs = flatten_layer_forward_propagation.get()->outputs;
 
     // Test
 

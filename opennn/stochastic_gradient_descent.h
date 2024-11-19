@@ -9,16 +9,6 @@
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H
 
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-
 #include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
