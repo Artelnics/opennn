@@ -29,11 +29,11 @@ void ImageDataSetTest::test_constructor()
 
     ImageDataSet data_set_2(5, 3, 3, 3, 2);
 
-    assert_true(data_set_2.get_samples_number() == 5, LOG);
-    assert_true(data_set_2.get_image_height() == 3, LOG);
-    assert_true(data_set_2.get_image_width() == 3, LOG);
-    assert_true(data_set_2.get_channels_number() == 3, LOG);
-    assert_true(data_set_2.get_raw_variables_number(DataSet::VariableUse::Target), LOG);
+    EXPECT_EQ(data_set_2.get_samples_number() == 5);
+    EXPECT_EQ(data_set_2.get_image_height() == 3);
+    EXPECT_EQ(data_set_2.get_image_width() == 3);
+    EXPECT_EQ(data_set_2.get_channels_number() == 3);
+    EXPECT_EQ(data_set_2.get_raw_variables_number(DataSet::VariableUse::Target));
 }
 
 }

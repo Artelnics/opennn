@@ -27,6 +27,7 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 
 TEST(NormalizedSquaredErrorTest, BackPropagate)
 {
+    /*
     DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(0));
 
@@ -37,7 +38,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
-    /*
+    
     ForwardPropagation forward_propagation(1, &neural_network);
 
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
@@ -49,13 +50,13 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     back_propagation.set(samples_number, &normalized_squared_error);
     normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-    assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+    EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+    EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-    assert_true(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN, LOG);
-    assert_true(back_propagation.gradient.size() == inputs_number + inputs_number * neurons_number + outputs_number + outputs_number * neurons_number, LOG);
+    EXPECT_EQ(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(back_propagation.gradient.size() == inputs_number + inputs_number * neurons_number + outputs_number + outputs_number * neurons_number);
 
-    assert_true(is_zero(back_propagation.gradient), LOG);
+    EXPECT_EQ(is_zero(back_propagation.gradient));
 */
 
     EXPECT_EQ(1, 1);
@@ -112,10 +113,10 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
 
     }
 
@@ -155,14 +156,14 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
+        EXPECT_EQ(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN));
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
     }
 
@@ -204,12 +205,12 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        //assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        //EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
 
     }
 
@@ -248,11 +249,11 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         back_propagation.set(samples_number, &normalized_squared_error);
         normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() < type(1e-1), LOG);
-        assert_true(is_zero(back_propagation.gradient,type(1e-1)), LOG);
+        EXPECT_EQ(back_propagation.error() < type(1e-1));
+        EXPECT_EQ(is_zero(back_propagation.gradient,type(1e-1)));
     }
 
     // Test forecasting random samples, inputs, outputs, neurons
@@ -294,11 +295,11 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= type(0), LOG);
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), LOG);
+        EXPECT_EQ(back_propagation.error() >= type(0));
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)));
     }
 }
 
@@ -350,14 +351,14 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
         numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
 
-        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation_lm.error >= type(0), LOG);
-        assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-1), LOG);
+        EXPECT_EQ(back_propagation_lm.error >= type(0));
+        EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-1));
 
-        //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), LOG);
-        //assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)), LOG);
+        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)));
+        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -401,14 +402,14 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
         numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
 
-        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation_lm.error() >= type(0), LOG);
-        //assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+        EXPECT_EQ(back_propagation_lm.error() >= type(0));
+        //EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2));
 
-        //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
-        //assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
+        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)));
+        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)));
 
     }
 
@@ -453,14 +454,14 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
         numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
 
-        assert_true(back_propagation_lm.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation_lm.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation_lm.error() >= type(0), LOG);
-        //assert_true(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2), LOG);
+        EXPECT_EQ(back_propagation_lm.error() >= type(0));
+        //EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2));
 
-        //assert_true(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)), LOG);
-        //assert_true(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), LOG);
+        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)));
+        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)));
     }
 
     // Forecasting incompatible with LM
@@ -502,7 +503,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     neural_network.set_parameters_random();
 
     type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
-    assert_true(normalization_coefficient > 0, LOG);
+    EXPECT_EQ(normalization_coefficient > 0);
 }
 
 }

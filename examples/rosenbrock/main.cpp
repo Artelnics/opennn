@@ -6,16 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <time.h>
-
-
 
 #include "../../opennn/opennn.h"
 
@@ -26,7 +22,7 @@ int main()
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-
+/*
 //        srand(unsigned(time(nullptr)));
 
         // Data Set
@@ -63,7 +59,7 @@ int main()
         training_strategy.set_maximum_time(86400);
 
         training_strategy.perform_training();
-
+*/
         cout << "End Rosenbrock" << endl;
 
         return 0;

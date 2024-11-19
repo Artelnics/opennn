@@ -379,9 +379,9 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 }
 
 
-void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
+void ProbabilisticLayer3D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic3D");
+    const XMLElement* probabilistic_layer_element = document.FirstChildElement("Probabilistic3D");
 
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3D element is nullptr.\n");
@@ -397,7 +397,7 @@ void ProbabilisticLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void ProbabilisticLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
+void ProbabilisticLayer3D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Probabilistic3D");
 

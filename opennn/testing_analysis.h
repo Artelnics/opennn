@@ -77,13 +77,13 @@ public:
 
     struct BinaryClassificationRates
     {
-        Tensor<Index, 1> true_positives_indices;
+        vector<Index> true_positives_indices;
 
-        Tensor<Index, 1> false_positives_indices;
+        vector<Index> false_positives_indices;
 
-        Tensor<Index, 1> false_negatives_indices;
+        vector<Index> false_negatives_indices;
 
-        Tensor<Index, 1> true_negatives_indices;
+        vector<Index> true_negatives_indices;
     };
 
    // Get
@@ -119,7 +119,7 @@ public:
    vector<Descriptives> calculate_percentage_errors_descriptives() const;
    vector<Descriptives> calculate_percentage_errors_descriptives(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<vector<Descriptives>, 1> calculate_error_data_descriptives() const;
+   vector<vector<Descriptives>> calculate_error_data_descriptives() const;
    void print_error_data_descriptives() const;
 
    Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
@@ -210,10 +210,10 @@ public:
 
    BinaryClassificationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
-   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
+   vector<Index> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
 
    // Multiple classification tests
 
@@ -226,9 +226,9 @@ public:
 
    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&) const;
 
-   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
+   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&) const;
 
-   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
+   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&) const;
 
    // Save
 
@@ -236,19 +236,19 @@ public:
 
    void save_multiple_classification_tests(const string&) const;
 
-   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
-   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
    void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
+   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
 
    void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
@@ -264,9 +264,9 @@ public:
 
    // Serialization
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const XMLDocument&);
 
-   virtual void to_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(XMLPrinter&) const;
 
    void save(const string&) const;
    void load(const string&);

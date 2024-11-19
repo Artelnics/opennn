@@ -83,8 +83,8 @@ public:
                          const Index& index, 
                          Tensor<type, 1>& gradient) const;
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void to_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"

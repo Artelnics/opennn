@@ -47,7 +47,7 @@ TEST(FlattenLayerTest, ForwardPropagate)
 
     // Test
 
-//    assert_true(inputs.size() == outputs.size(), LOG);
+//    EXPECT_EQ(inputs.size() == outputs.size());
 
     EXPECT_EQ(1, 1);
 }

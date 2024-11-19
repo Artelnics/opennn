@@ -402,9 +402,9 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
 }
 
 
-void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
+void PerceptronLayer3D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3D");
+    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3D");
 
     if(!perceptron_layer_element)
         throw runtime_error("Perceptron3D element is nullptr.\n");
@@ -419,7 +419,7 @@ void PerceptronLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void PerceptronLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
+void PerceptronLayer3D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Perceptron3D");
 

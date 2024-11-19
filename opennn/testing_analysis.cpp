@@ -304,7 +304,7 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(c
 }
 
 
-Tensor<vector<Descriptives>, 1> TestingAnalysis::calculate_error_data_descriptives() const
+vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives() const
 {
     // Neural network
 
@@ -314,7 +314,7 @@ Tensor<vector<Descriptives>, 1> TestingAnalysis::calculate_error_data_descriptiv
 
     // Testing analysis stuff
 
-    Tensor<vector<Descriptives>, 1> descriptives(outputs_number);
+    vector<vector<Descriptives>> descriptives(outputs_number);
 
     Tensor<type, 3> error_data = calculate_error_data();
 
@@ -341,7 +341,7 @@ void TestingAnalysis::print_error_data_descriptives() const
 
     const vector<string> targets_name = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<vector<Descriptives>, 1> error_data_statistics = calculate_error_data_descriptives();
+    const vector<vector<Descriptives>> error_data_statistics = calculate_error_data_descriptives();
 
     for(Index i = 0; i < targets_number; i++)
         cout << targets_name[i] << endl
@@ -1454,10 +1454,10 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets,
-                                                                  const Tensor<type, 2>& outputs,
-                                                                  const vector<Index>& testing_indices,
-                                                                  const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_true_positive_samples(const Tensor<type, 2>& targets,
+                                                               const Tensor<type, 2>& outputs,
+                                                               const vector<Index>& testing_indices,
+                                                               const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -1469,7 +1469,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
         if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
             true_positives_indices_copy(index++) = testing_indices[i];
 
-    Tensor<Index, 1> true_positives_indices(index);
+    vector<Index> true_positives_indices(index);
 
     copy(true_positives_indices_copy.data(),
          true_positives_indices_copy.data() + index,
@@ -1479,22 +1479,22 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_positive_samples(const Tensor<t
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets,
-                                                                   const Tensor<type, 2>& outputs,
-                                                                   const vector<Index>& testing_indices,
-                                                                   const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_false_positive_samples(const Tensor<type, 2>& targets,
+                                                                const Tensor<type, 2>& outputs,
+                                                                const vector<Index>& testing_indices,
+                                                                const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_positives_indices_copy(rows_number);
+    vector<Index> false_positives_indices_copy(rows_number);
 
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
-            false_positives_indices_copy(index++) = testing_indices[i];
+            false_positives_indices_copy[index++] = testing_indices[i];
 
-    Tensor<Index, 1> false_positives_indices(index);
+    vector<Index> false_positives_indices(index);
 
     copy(false_positives_indices_copy.data(),
          false_positives_indices_copy.data() + index,
@@ -1504,22 +1504,22 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_positive_samples(const Tensor<
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
+vector<Index> TestingAnalysis::calculate_false_negative_samples(const Tensor<type, 2>& targets,
                                                                    const Tensor<type, 2>& outputs,
                                                                    const vector<Index>& testing_indices,
                                                                    const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> false_negatives_indices_copy(rows_number);
+    vector<Index> false_negatives_indices_copy(rows_number);
 
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
-            false_negatives_indices_copy(index++) = testing_indices[i];
+            false_negatives_indices_copy[index++] = testing_indices[i];
 
-    Tensor<Index, 1> false_negatives_indices(index);
+    vector<Index> false_negatives_indices(index);
 
     copy(false_negatives_indices_copy.data(),
          false_negatives_indices_copy.data() + index,
@@ -1529,10 +1529,10 @@ Tensor<Index, 1> TestingAnalysis::calculate_false_negative_samples(const Tensor<
 }
 
 
-Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
-                                                                  const Tensor<type, 2>& outputs,
-                                                                  const vector<Index>& testing_indices,
-                                                                  const type& decision_threshold) const
+vector<Index> TestingAnalysis::calculate_true_negative_samples(const Tensor<type, 2>& targets,
+                                                               const Tensor<type, 2>& outputs,
+                                                               const vector<Index>& testing_indices,
+                                                               const type& decision_threshold) const
 {
     const Index rows_number = targets.dimension(0);
 
@@ -1544,7 +1544,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_true_negative_samples(const Tensor<t
         if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
             true_negatives_indices_copy(index++) = testing_indices[i];
 
-    Tensor<Index, 1> true_negatives_indices(index);
+    vector<Index> true_negatives_indices(index);
 
     copy(true_negatives_indices_copy.data(),
          true_negatives_indices_copy.data() + index,
@@ -1691,7 +1691,7 @@ Tensor<Tensor<Index,1>, 2> TestingAnalysis::calculate_multiple_classification_ra
 
 Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels) const
+                                                                      const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -1711,7 +1711,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
         if(actual_class != predicted_class) continue;
 
-        well_lassified_samples(number_of_well_classified, 0) = labels(i);
+        well_lassified_samples(number_of_well_classified, 0) = labels[i];
         class_name = target_variables_names[actual_class];
         well_lassified_samples(number_of_well_classified, 1) = class_name;
         class_name = target_variables_names[predicted_class];
@@ -1730,7 +1730,7 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<type, 2>& targets,
                                                                       const Tensor<type, 2>& outputs,
-                                                                      const Tensor<string, 1>& labels) const
+                                                                      const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -1762,7 +1762,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 
         if(actual_class == predicted_class) continue;
 
-        misclassified_samples(j, 0) = labels(i);
+        misclassified_samples(j, 0) = labels[i];
         class_name = target_variables_names[actual_class];
         misclassified_samples(j, 1) = class_name;
         class_name = target_variables_names[predicted_class];
@@ -1781,7 +1781,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 
 void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
-                                                    const Tensor<string, 1>& labels,
+                                                    const vector<string>& labels,
                                                     const string& file_name) const
 {
     const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1804,7 +1804,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
 
 void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                  const Tensor<type, 2>& outputs,
-                                                 const Tensor<string, 1>& labels,
+                                                 const vector<string>& labels,
                                                  const string& file_name) const
 {
     const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
@@ -1827,7 +1827,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
 
 void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type, 2>& targets,
                                                               const Tensor<type, 2>& outputs,
-                                                              const Tensor<string, 1>& labels,
+                                                              const vector<string>& labels,
                                                               const string& file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1851,7 +1851,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
 
 void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2>& targets,
                                                             const Tensor<type, 2>& outputs,
-                                                            const Tensor<string, 1>& labels,
+                                                            const vector<string>& labels,
                                                             const string& statistics_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
@@ -1874,7 +1874,7 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
 
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                          const Tensor<type, 2>& outputs,
-                                                                         const Tensor<string, 1>& labels,
+                                                                         const vector<string>& labels,
                                                                          const string& histogram_file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
@@ -1909,7 +1909,7 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                           const Tensor<type, 2>& outputs,
-                                                                          const Tensor<string, 1>& labels,
+                                                                          const vector<string>& labels,
                                                                           const string& histogram_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
@@ -2014,20 +2014,20 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     for(Index i = 0; i < testing_batch_size; i++)
         testing_target.chip(i, 0) = target.chip(i, 0);
-
+cout<<"Works properly"<<endl;
     Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
-
+cout<<"Works properly"<<endl;
     cout<<"English:"<<endl;
     cout<<testing_context.chip(10,0)<<endl;
     for(Index i = 0; i < testing_context.dimension(1); i++){
-        cout<<language_data_set->get_context_vocabulary()(Index(testing_context(10,i)))<<" ";
+        cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
     }
     cout<<endl;
     cout<<endl;
     cout<<"Spanish:"<<endl;
     cout<<testing_input.chip(10,0)<<endl;
     for(Index i = 0; i < testing_input.dimension(1); i++){
-        cout<<language_data_set->get_completion_vocabulary()(Index(testing_input(10,i)))<<" ";
+        cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
     }
     cout<<endl;
     cout<<endl;
@@ -2054,7 +2054,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
                 max = outputs(10,j,i);
             }else{continue;}
         }
-        cout<<language_data_set->get_completion_vocabulary()(index)<<" ";
+        cout<<language_data_set->get_completion_vocabulary()[index]<<" ";
     }
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
@@ -2276,7 +2276,7 @@ type TestingAnalysis::calculate_logloss() const
 }
 
 
-void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
+void TestingAnalysis::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("TestingAnalysis");
 
@@ -2286,9 +2286,9 @@ void TestingAnalysis::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
+void TestingAnalysis::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
+    const XMLElement* root_element = document.FirstChildElement("TestingAnalysis");
 
     if(!root_element)
         throw runtime_error("Testing analysis element is nullptr.\n");
@@ -2304,7 +2304,7 @@ void TestingAnalysis::save(const string& file_name) const
     if (!file.is_open())
         return;
 
-    tinyxml2::XMLPrinter printer;
+    XMLPrinter printer;
 
     to_XML(printer);
 
@@ -2316,7 +2316,7 @@ void TestingAnalysis::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

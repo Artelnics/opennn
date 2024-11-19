@@ -138,7 +138,7 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = rand() % 256;
+                data(i, j) = rand() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -166,7 +166,7 @@ void ImageDataSet::set_image_data_random()
             for (Index i = 0; i < images_number[k]; i++)
             {
                 for (Index j = 0; j < inputs_number; j++)
-                    data(current_sample, j) = rand() % 256;
+                    data(current_sample, j) = rand() % 255;
 
                 data(current_sample, k + inputs_number) = 1;
 
@@ -270,7 +270,7 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 }
 
 
-void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void ImageDataSet::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("ImageDataSet");
 
@@ -425,16 +425,16 @@ void ImageDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 {
-    const tinyxml2::XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
+    const XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataSet");
 
     if (!image_data_set_element)
         throw runtime_error("ImageDataSet element is nullptr.\n");
 
     // Data Source
 
-    const tinyxml2::XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
 
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
@@ -469,7 +469,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw Variables
 
-    const tinyxml2::XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
 
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
@@ -478,13 +478,13 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     set_raw_variables_number(raw_variables_number);
 
-    const tinyxml2::XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     Index target_count = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         raw_variables[i].name = read_xml_string(start_element, "Name");
@@ -507,7 +507,7 @@ void ImageDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
     if (has_sample_ids)
         sample_ids = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
 
-    const tinyxml2::XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
@@ -535,7 +535,7 @@ vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 void ImageDataSet::read_bmp()
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
-
+    
     vector<fs::path> directory_path;
     vector<string> image_path;
 
@@ -549,7 +549,7 @@ void ImageDataSet::read_bmp()
 
     Tensor<Index, 1> images_number(folders_number + 1);
     images_number.setZero();
-
+    
     Index samples_number = 0;
 
     for(Index i = 0; i < folders_number; i++)
@@ -565,7 +565,7 @@ void ImageDataSet::read_bmp()
 
         images_number[i+1] = samples_number;
     }
-
+    
     Index height, width, image_channels;
 
     if (input_dimensions[0] > 0 && input_dimensions[1] > 0 && input_dimensions[2] > 0)
@@ -582,7 +582,7 @@ void ImageDataSet::read_bmp()
         width = image_data.dimension(1);
         image_channels = image_data.dimension(2);
     }
-
+    
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;
 
@@ -591,13 +591,13 @@ void ImageDataSet::read_bmp()
     const Index targets_number = (folders_number == 2) 
         ? folders_number -1 
         : folders_number;
-
+    
     set(samples_number, { height, width, image_channels }, { targets_number });
 
-    Tensor<string, 1> categories(targets_number);
+    vector<string> categories(targets_number);
 
     for(Index i = 0; i < targets_number; i++)
-        categories(i) = directory_path[i].filename().string();
+        categories[i] = directory_path[i].filename().string();
 
     raw_variables[raw_variables_number-1].set_categories(categories);
 

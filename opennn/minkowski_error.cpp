@@ -121,7 +121,7 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
-void MinkowskiError::to_XML(tinyxml2::XMLPrinter& printer) const
+void MinkowskiError::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MinkowskiError");
 
@@ -131,9 +131,9 @@ void MinkowskiError::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
+void MinkowskiError::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("MinkowskiError");
+    const XMLElement* root_element = document.FirstChildElement("MinkowskiError");
 
     if(!root_element)
         throw runtime_error("Minkowski error element is nullptr.\n");

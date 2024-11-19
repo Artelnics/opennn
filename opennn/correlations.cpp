@@ -540,8 +540,10 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     }
 
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
-/*
-    DataSet data_set(data);
+
+    DataSet data_set(x_filtered.size(), {1}, {1});
+
+    data_set.set_data(data);
 
     data_set.set(DataSet::SampleUse::Training);
 
@@ -594,7 +596,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     if(correlation.b < type(0))
         correlation.r *= type(-1);
-*/
+
     return correlation;
 }
 
@@ -622,8 +624,11 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     const Tensor<type, 1> x_rank = calculate_spearman_ranks(x_filtered);
 
     const Tensor<type, 2> data = assemble_vector_vector(x_rank, y_filtered);
-/*
-    DataSet data_set(data);
+
+    DataSet data_set(x_filtered.size(), {1}, {1});
+
+    data_set.set_data(data);
+
     data_set.set(DataSet::SampleUse::Training);
 
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
@@ -672,7 +677,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.b = coefficients(1);
 
     if(correlation.b < type(0)) correlation.r *= type(-1);
-*/
+
     return correlation;
 }
 
@@ -714,8 +719,8 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
         target_columns_indices[i] = i + 1;
- /*
-    DataSet data_set(data);
+ 
+    DataSet data_set(x_filtered.size(), {1}, {y_filtered.dimension(1)});
 
     data_set.set_input_target_raw_variable_indices(input_columns_indices, target_columns_indices);
 
@@ -763,7 +768,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     correlation.lower_confidence = z_correlation_to_r_correlation(confidence_interval_z(0));
 
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
-*/
+
     return correlation;
 }
 
@@ -829,8 +834,10 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     for(Index i = 0; i < y_filtered.dimension(1); i++)
         target_columns_indices[i] = x_filtered.dimension(1)+i;
-/*
-    DataSet data_set(data);
+
+    DataSet data_set(x_filtered.dimension(0), { x_filtered.dimension(1) }, { x_filtered.dimension(1) });
+
+    data_set.set_data(data);
 
     data_set.set_input_target_raw_variable_indices(input_columns_indices, target_columns_indices);
 
@@ -881,7 +888,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     correlation.upper_confidence = z_correlation_to_r_correlation(confidence_interval_z(1));
 
     correlation.form = Correlation::Form::Logistic;
-*/
+
     return correlation;
 }
 

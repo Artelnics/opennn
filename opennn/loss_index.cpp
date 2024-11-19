@@ -435,7 +435,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 }
 
 
-void LossIndex::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LossIndex::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("LossIndex");
 
@@ -443,9 +443,9 @@ void LossIndex::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
+void LossIndex::regularization_from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Regularization");
+    const XMLElement* root_element = document.FirstChildElement("Regularization");
 
     if(!root_element)
         throw runtime_error("Regularization tag not found.\n");
@@ -454,7 +454,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     set_regularization_method(new_regularization_method);
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
+    const XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
 
     if(element)
     {
@@ -472,7 +472,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
+void LossIndex::write_regularization_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("Regularization");
     
@@ -506,17 +506,17 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 }
 
 
-void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
+void LossIndex::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
 
     if(!root_element)
         throw runtime_error("Mean squared element is nullptr.\n");
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    XMLDocument regularization_document;
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
     regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
     regularization_from_XML(regularization_document);
 }

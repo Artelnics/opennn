@@ -50,7 +50,7 @@ public:
 
    // Serialization
 
-   void to_XML(tinyxml2::XMLPrinter &) const final;
+   void to_XML(XMLPrinter &) const final;
 
    string get_loss_method() const final;
    string get_error_type_text() const final;

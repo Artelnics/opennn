@@ -37,7 +37,9 @@ namespace opennn
  type maximum(const Tensor<type, 1>&, const vector<Index>&);
  Index maximum(const Tensor<Index, 1>&);
  //type maximum(const Tensor<type, 2>&);
- Tensor<type, 1> column_maximums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
+ Tensor<type, 1> column_maximums(const Tensor<type, 2>&, 
+	                             const vector<Index>& = vector<Index>(), 
+	                             const vector<Index>& = vector<Index>());
 
  // Range
  type range(const Tensor<type, 1>&);
@@ -81,7 +83,7 @@ namespace opennn
  BoxPlot box_plot(const Tensor<type, 1>&, const vector<Index>&);
 
  // Descriptives vector
- Descriptives descriptives(const Tensor<type, 1>&);
+ Descriptives vector_descriptives(const Tensor<type, 1>&);
 
  // Descriptives matrix
  vector<Descriptives> descriptives(const Tensor<type, 2>&);

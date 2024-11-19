@@ -177,8 +177,10 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
     heads_number = new_heads_number;
 
     set_weights();
-
-    scaling_factor = type(1) / type(sqrt(hidden_depth));
+    if(hidden_depth!=0)
+        scaling_factor = type(1) / type(sqrt(hidden_depth));
+    else
+        scaling_factor = 0.25;
 
     name = "multihead_attention_layer";
 
@@ -408,8 +410,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                        const Tensor<type, 2>& biases,
                                                        Tensor<type, 2>& sample_matrix) const
 {
-    // @todo Check if we can do this with transposed matrices in contract. 
-
+    // @todo Check if we can do this with transposed matrices in contract.
     const Index batch_size = input.dimension(0);
     const Index variables_number = input.dimension(1);
 
@@ -594,7 +595,7 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
     calculate_transformation(input, query, query_weights, query_biases, sample_matrix);
 
     calculate_transformation(context, key, key_weights, key_biases, sample_matrix);
-    
+
     calculate_transformation(context, value, value_weights, value_biases, sample_matrix);
 
     // compute_attention_scores(query,
@@ -916,9 +917,9 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 }
 
 
-void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
+void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
+    const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
 
     if(!multihead_attention_layer_element)
         throw runtime_error("MultiheadAttention element is nullptr.\n");
@@ -933,7 +934,7 @@ void MultiheadAttentionLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void MultiheadAttentionLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void MultiheadAttentionLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiheadAttention");
 

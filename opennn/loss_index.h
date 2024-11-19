@@ -136,12 +136,12 @@ public:
 
    // Serialization
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const XMLDocument&);
 
-   virtual void to_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(XMLPrinter&) const;
 
-   void regularization_from_XML(const tinyxml2::XMLDocument&);
-   void write_regularization_XML(tinyxml2::XMLPrinter&) const;
+   void regularization_from_XML(const XMLDocument&);
+   void write_regularization_XML(XMLPrinter&) const;
 
    virtual string get_loss_method() const;
    virtual string get_error_type_text() const;

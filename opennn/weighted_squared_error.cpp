@@ -297,7 +297,7 @@ string WeightedSquaredError::get_error_type_text() const
 }
 
 
-void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& printer) const
+void WeightedSquaredError::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("WeightedSquaredError");
 
@@ -308,9 +308,9 @@ void WeightedSquaredError::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
+void WeightedSquaredError::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
 
     if(!root_element)
         throw runtime_error("Weighted squared element is nullptr.\n");

@@ -59,7 +59,7 @@ public:
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
 
-   void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
+   void set_parameters(const Tensor<type, 1>&, const Index&) final;
 
    // Activation functions
 
@@ -133,13 +133,13 @@ public:
 
    string get_activation_function_string_expression() const;
 
-   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
    // Serialization
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
+   void from_XML(const XMLDocument&) final;
 
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 private:
 

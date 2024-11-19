@@ -1,85 +1,94 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I R I S   P L A N T   A P P L I C A T I O N
+//   B L A N K   A P P L I C A T I O N
 //
-//   Artificial Intelligence Techniques SL (Artelnics)
+//   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
-// This is a classical pattern recognition problem.
 
 // System includes
 
+//#include <stdio.h>
+//#include <cstring>
 #include <iostream>
-#include <fstream>
-#include <sstream>
+//#include <fstream>
+//#include <sstream>
 #include <string>
-#include <cstring>
-#include <time.h>
+//#include <time.h>
+//#include <chrono>
+//#include <algorithm>
+//#include <execution>
+#include <vector>
+#include <iostream>
+#include <random>
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <cstdlib>
+
+
+
 
 // OpenNN includes
+
 #include "../opennn/opennn.h"
+#include "data_set.h"
+#include <tensors.cpp>
+#include "pooling_layer.h"
+
+
+
+
 
 using namespace std;
 using namespace opennn;
+using namespace std::chrono;
+using namespace Eigen;
 
 int main()
 {
     try
     {
-        cout << "OpenNN. Translation Example." << endl;
+        cout << "OpenNN. ViT Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        // srand(static_cast<unsigned>(time(nullptr)));
 
-        /*
-        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-        */
+        // // Data set
 
-        // Data set
+        // ImageDataSet image_data_set;
 
-        LanguageDataSet language_data_set;
+        // image_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/bmp/cifar10_bmp1");
 
-        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
+        // image_data_set.read_bmp();
 
-        language_data_set.set_separator(DataSet::Separator::Tab);
+        // vector<string> completion_vocabulary = language_data_set.get_completion_vocabulary();
+        // vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
 
-        language_data_set.read_txt_language_model();
+        // // Neural network
 
-        language_data_set.set_raw_variable_scalers(Scaler::None);
+        // const Index input_length = image_data_set.get_samples_number();
+        // const Index number_labels = image_data_set.get_variables_number(DataSet::VariableUse::Target);
+        // const Index number_channels = image_data_set.get_channels_number();
+        // const Index height = image_data_set.get_image_height();
+        // const Index width = image_data_set.get_image_width();
 
-        Tensor<string, 1> completion_vocabulary = language_data_set.get_completion_vocabulary();
-        Tensor<string, 1> context_vocabulary = language_data_set.get_context_vocabulary();
-
-        // cout<<completion_vocabulary.dimensions()<<endl;
-        // cout<<completion_vocabulary<<endl;
-        // cout<<context_vocabulary.dimensions()<<endl;
-
-        // Neural network
-
-        Index input_length = language_data_set.get_completion_length();
-        Index context_length = language_data_set.get_context_length();
-        Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
-        Index context_dimension = language_data_set.get_context_vocabulary_size();
-
-        Index number_of_layers = 1;
-        Index depth = 64;
-        Index perceptron_depth = 128;
-        Index heads_number = 4;
+        // Index number_of_layers = 1;
+        // Index depth = 64;
+        // Index perceptron_depth = 128;
+        // Index heads_number = 4;
 
 
 
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
-                                 depth, perceptron_depth, heads_number, number_of_layers });
+        // Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+        //                          depth, perceptron_depth, heads_number, number_of_layers });
 
-        transformer.set_model_type_string("TextClassification");
-        transformer.set_dropout_rate(0);
+        // transformer.set_model_type_string("TextClassification");
+        // transformer.set_dropout_rate(0);
 
-        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+        // cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
 
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
+        // transformer.set_input_vocabulary(completion_vocabulary);
+        // transformer.set_context_vocabulary(context_vocabulary);
 
         // // Training strategy
 
@@ -103,23 +112,32 @@ int main()
 
         // TrainingResults training_results = training_strategy.perform_training();
 
-        // // Save results-
+        // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 
-        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
 
-        // Testing analysis
+        // cout << "TESTING ANALYSIS:" << endl;
+        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        transformer.load("/home/artelnics/Escritorio/andres_alonso/ViT/Weights/ENtoES_model.xml");
+        // // // Save results-
 
-        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        // // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
-        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+        // // // Testing analysis
 
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+        // // transformer.load("/home/artelnics/Escritorio/andres_alonso/ViT/Weights/ENtoES_model.xml");
+
+        // // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+
+        // // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+
+        // // cout << "TESTING ANALYSIS:" << endl;
+        // // cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        // // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
         cout << "Bye!" << endl;
+
         return 0;
     }
     catch(const exception& e)
@@ -131,7 +149,7 @@ int main()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

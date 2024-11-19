@@ -288,9 +288,9 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
 }
 
 
-void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
+void NormalizationLayer3D::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* normalization_layer_element = document.FirstChildElement("Normalization3D");
+    const XMLElement* normalization_layer_element = document.FirstChildElement("Normalization3D");
 
     if(!normalization_layer_element)
         throw runtime_error("Normalization3D element is nullptr.\n");
@@ -302,7 +302,7 @@ void NormalizationLayer3D::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void NormalizationLayer3D::to_XML(tinyxml2::XMLPrinter& printer) const
+void NormalizationLayer3D::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Normalization3D");
 

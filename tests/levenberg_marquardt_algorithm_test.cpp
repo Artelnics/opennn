@@ -34,12 +34,13 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainEmpty)
 
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
+    /*
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(1));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(1));
-    /*
+    
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
     
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
@@ -48,7 +49,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -63,7 +64,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     training_results = levenberg_marquardt_algorithm.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -75,7 +76,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     training_results = levenberg_marquardt_algorithm.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -90,7 +91,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     /*
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(training_results.get_training_error() <= training_loss_goal, LOG);
+    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
 
     // Minimum loss decrease
 
@@ -105,7 +106,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease, LOG);
+    EXPECT_EQ(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease);
 
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 */

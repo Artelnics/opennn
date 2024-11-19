@@ -19,10 +19,6 @@ struct LayerForwardPropagation
     {
     }
 
-    virtual ~LayerForwardPropagation()
-    {
-    }
-
     virtual void set(const Index&, Layer*) = 0;
 
     virtual void print() const {}
@@ -31,11 +27,8 @@ struct LayerForwardPropagation
 
     Layer* layer = nullptr;
 
-    //type* outputs_data = nullptr;
-    
     virtual pair<type*, dimensions> get_outputs_pair() const = 0;
 };
-
 
 }
 
