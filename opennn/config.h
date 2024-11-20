@@ -3,22 +3,19 @@
 
 #define NUMERIC_LIMITS_MIN type(0.000001)
 
-//Eigen includes
-
-#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
-
-#define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
-
-#define _CRT_SECURE_NO_WARNINGS 
-
-// For numeric limits
 
 #define NOMINMAX
+#define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
+#define _CRT_SECURE_NO_WARNINGS
+#define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
+
+//#pragma warning(push, 0)
 
 #define EIGEN_USE_THREADS
 
-//#pragma warning(push, 0)
+#include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
 //#define OPENNN_CUDA
 
@@ -42,6 +39,7 @@
 
 namespace opennn
 {
+
     using namespace std;
     using namespace Eigen;
 
