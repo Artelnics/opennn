@@ -9,7 +9,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#include <string>
+#define EIGEN_USE_THREADS
 
 #include "config.h"
 #include "tinyxml2.h"

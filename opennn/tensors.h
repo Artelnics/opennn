@@ -1,9 +1,6 @@
 #ifndef TENSORS_H
 #define TENSORS_H
 
-#include <iostream>
-#include <stdio.h>
-
 #include "config.h"
 
 namespace opennn

@@ -9,9 +9,6 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-#include <string>
-#include <fstream>
-
 #include "config.h"
 #include "data_set.h"
 

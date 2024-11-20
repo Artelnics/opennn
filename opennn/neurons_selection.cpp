@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <sstream>
-#include <iomanip>
+#include "pch.h"
 
 #include "neurons_selection.h"
 

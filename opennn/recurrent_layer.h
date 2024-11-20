@@ -9,8 +9,6 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-#include <string>
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

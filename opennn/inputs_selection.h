@@ -9,10 +9,6 @@
 #ifndef INPUTSSELECTIONALGORITHM_H
 #define INPUTSSELECTIONALGORITHM_H
 
-#include <iostream>
-#include <string>
-#include <limits>
-
 #include "training_strategy.h"
 #include "config.h"
 

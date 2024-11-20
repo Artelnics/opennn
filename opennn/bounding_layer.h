@@ -9,9 +9,6 @@
 #ifndef BOUNDINGLAYER_H
 #define BOUNDINGLAYER_H
 
-#include <iostream>
-#include <string>
-
 #include "layer.h"
 #include "config.h"
 #include "layer_forward_propagation.h"

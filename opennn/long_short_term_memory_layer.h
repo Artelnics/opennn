@@ -9,9 +9,6 @@
 #ifndef LONGSHORTTERMMEMORYLAYER_H
 #define LONGSHORTTERMMEMORYLAYER_H
 
-#include <iostream>
-#include <string>
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

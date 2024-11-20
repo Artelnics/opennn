@@ -9,8 +9,6 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-#include <string>
-
 #include "config.h"
 #include "neural_network.h"
 #include "data_set.h"

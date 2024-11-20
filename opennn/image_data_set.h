@@ -9,9 +9,6 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-#include <string>
-#include <chrono>
-
 #include "config.h"
 #include "data_set.h"
 

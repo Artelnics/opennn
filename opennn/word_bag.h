@@ -1,11 +1,14 @@
 #ifndef WORDBAG_H
 #define WORDBAG_H
 
+<<<<<<< HEAD
 #include <string>
 #include <iostream>
 
 //#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
+=======
+>>>>>>> 070ef7affb323fa5812bb4cec01ae8390a85ad0f
 using namespace std;
 using namespace Eigen;
 

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "time_series_data_set.h"
 #include "statistics.h"
 #include "correlations.h"

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "weighted_squared_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -81,7 +83,7 @@ void WeightedSquaredError::set_weights()
 
     const vector<DataSet::RawVariable>& target_raw_variables 
         = data_set->get_raw_variables(DataSet::VariableUse::Target);
-
+    
     if(target_raw_variables.size() == 0)
     {
         positives_weight = type(1);
@@ -91,7 +93,7 @@ void WeightedSquaredError::set_weights()
          && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
-
+        
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
 

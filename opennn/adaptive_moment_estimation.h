@@ -9,9 +9,6 @@
 #ifndef ADAPTIVEMOMENTESTIMATION_H
 #define ADAPTIVEMOMENTESTIMATION_H
 
-#include <string>
-#include <limits>
-
 #include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"

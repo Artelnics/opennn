@@ -9,9 +9,7 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-#include <iostream>
-#include <limits>
-#include <cmath>
+#define EIGEN_USE_THREADS
 
 #include "config.h"
 #include "loss_index.h"

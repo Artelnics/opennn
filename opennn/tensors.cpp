@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <math.h>
-#include <numeric>
-#include <stdio.h>
+#include "pch.h"
 
 #include "../eigen/Eigen/Dense"
 

@@ -1,8 +1,6 @@
 #ifndef NEURALNETWORKBACKPROPAGATION_H
 #define NEURALNETWORKBACKPROPAGATION_H
 
-#include <string>
-
 #include "neural_network.h"
 
 using namespace std;
