@@ -1,15 +1,14 @@
 #include "pch.h"
 
-#include <iostream>
-
 #include "../opennn/convolutional_layer.h"
-
 
 TEST(ConvolutionalLayerTest, EigenConvolution)
 {
     Tensor<type, 2> input_2;
     Tensor<type, 2> kernel_2;
     Tensor<type, 2> output_2;
+
+    std::cout << "Hello";
 
     Eigen::array<ptrdiff_t, 2> dimensions_2 = { 0, 1 };
 

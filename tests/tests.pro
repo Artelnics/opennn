@@ -47,7 +47,8 @@ SOURCES += test.cpp \
            neural_network_test.cpp \
            neurons_selection_test.cpp \
            normalized_squared_error_test.cpp \
-		   performance_test.cpp \
+           performance_test.cpp \
+           pooling_layer_test.cpp \
            pch.cpp  # Precompiled header source
 
 # Include more test files if needed by uncommenting
