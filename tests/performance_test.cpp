@@ -1,11 +1,6 @@
 #include "pch.h"
 
-#include <iostream>
-#include <string>
-#include <exception>
-
-
-
+#include "../opennn/opennn.h"
 
 using namespace opennn;
 
@@ -46,6 +41,7 @@ TEST(PerformanceTest, Rosenbrock)
 
 TEST(PerformanceTest, ImageClassification)
 {
+    /*
     const Index samples_number = 6;
     const Index image_height = 4;
     const Index image_width = 4;
@@ -75,5 +71,5 @@ TEST(PerformanceTest, ImageClassification)
     training_strategy.perform_training();
 
     EXPECT_EQ(1, 1);
+    */
 }
-

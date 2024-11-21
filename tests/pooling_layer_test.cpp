@@ -2,37 +2,54 @@
 
 #include "../opennn/pooling_layer.h"
 
+struct PoolingLayerConfig {
+    dimensions input_dimensions;
+    dimensions pool_dimensions;
+    dimensions stride_dimensions;
+    dimensions padding_dimensions;
+    PoolingLayer::PoolingMethod pooling_method;
+    string test_name;
+    Tensor<type, 4> input_data;
+    Tensor<type, 4> expected_output;
+};
 
-TEST(PoolingLayerTest, DefaultConstructor)
+
+class PoolingLayerConstructorTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
+
+
+TEST_P(PoolingLayerConstructorTest, Constructor) 
 {
-    PoolingLayer pooling_layer;
+    auto param = GetParam();
+
+    PoolingLayer pooling_layer(param.input_dimensions,
+                               param.pool_dimensions,
+                               param.stride_dimensions,
+                               param.padding_dimensions,
+                               param.pooling_method,
+                               param.test_name);
 
     EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
-//    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
-//    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(pooling_layer.get_input_dimensions(), param.input_dimensions);
+    EXPECT_EQ(pooling_layer.get_pool_height(), param.pool_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_pool_width(), param.pool_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_row_stride(), param.stride_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_column_stride(), param.stride_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_padding_height(), param.padding_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_padding_width(), param.padding_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_pooling_method(), param.pooling_method);
 }
 
 
-TEST(PoolingLayerTest, GeneralConstructor)
-{
-    const dimensions input_dimensions = { 28, 29, 1 };
-    const dimensions pool_dimensions = { 3, 2 };
-
-    PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
-
-    //    EXPECT_EQ(pooling_layer.get_input_height() == 28
-    //    && pooling_layer.get_input_width() == 29
-    //    && pooling_layer.get_channels_number() == 1);
-
-    //EXPECT_EQ(pooling_layer.get_pool_height() == 3
-    //    && pooling_layer.get_pool_width() == 2);
-
-    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
-    //    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
-    //    EXPECT_EQ(pooling_layer.get_output_dimensions(), dimensions{ 0 });
-}
+INSTANTIATE_TEST_CASE_P(PoolingLayerConstructorTests,PoolingLayerConstructorTest,::testing::Values(
+        PoolingLayerConfig{ {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel" },
+        PoolingLayerConfig{ {4, 4, 3}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::MaxPooling, "MaxPoolingNoPadding3Channels" },
+        PoolingLayerConfig{ {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel" },
+        PoolingLayerConfig{ {4, 4, 3}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::AveragePooling, "AveragePoolingNoPadding3Channels" }
+    )
+);
 
 
+/*
 TEST(PoolingLayerTest, ForwardPropagateMaxPooling)
 {
 /*
@@ -101,11 +118,11 @@ TEST(PoolingLayerTest, ForwardPropagateMaxPooling)
 
     EXPECT_EQ(outputs(0, 0, 0, 0) == type(255)
         && outputs(1, 0, 0, 0) == type(254));
-*/
+
 }
 
-/*
 
+/*
 void PoolingLayerTest::test_forward_propagate_max_pooling()
 {
     cout << "test_forward_propagate_max_pooling" << endl;
