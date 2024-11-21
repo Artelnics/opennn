@@ -1,8 +1,6 @@
 #ifndef DESCRIPTIVES_H
 #define DESCRIPTIVES_H
 
-#include <string>
-
 #include "config.h"
 
 using namespace std;

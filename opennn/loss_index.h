@@ -9,7 +9,7 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#include <string>
+#define EIGEN_USE_THREADS
 
 #include "config.h"
 #include "data_set.h"

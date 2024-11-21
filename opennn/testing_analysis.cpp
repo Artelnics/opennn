@@ -6,9 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <fstream>
-#include <cmath>
-#include <numeric>
+#include "pch.h"
 
 #include "testing_analysis.h"
 #include "tensors.h"

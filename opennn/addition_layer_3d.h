@@ -9,9 +9,6 @@
 #ifndef ADDITIONLAYER3D_H
 #define ADDITIONLAYER3D_H
 
-#include <iostream>
-#include <string>
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

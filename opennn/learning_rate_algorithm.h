@@ -9,10 +9,7 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-#include <iostream>
-#include <limits>
-#include <cmath>
-#include <cstdlib>
+#define EIGEN_USE_THREADS
 
 #include "config.h"
 #include "neural_network.h"

@@ -9,9 +9,6 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
-#include <string>
-#include <vector>
-
 #include "config.h"
 #include "word_bag.h"
 

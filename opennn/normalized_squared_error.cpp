@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "normalized_squared_error.h"
 #include "forward_propagation.h"
@@ -41,7 +43,7 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
         set_time_series_normalization_coefficient();
     else
     {
-        //set_normalization_coefficient(); //@todo fix crash
+        set_normalization_coefficient();
     }
 }
 

@@ -6,18 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <codecvt>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <random>
-#include <regex>
-#include <stdexcept>
-#include <stdlib.h>
+#include "pch.h"
 
 #include "data_set.h"
 #include "statistics.h"

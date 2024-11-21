@@ -9,8 +9,6 @@
 #ifndef EMBEDDINGLAYER_H
 #define EMBEDDINGLAYER_H
 
-#include <iostream>
-
 #include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

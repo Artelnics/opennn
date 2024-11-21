@@ -1,12 +1,13 @@
 #ifndef DATASETBATCH_H
 #define DATASETBATCH_H
 
+#define EIGEN_USE_THREADS
+
 #include "data_set.h"
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
-#include "language_data_set.h"
 
 using namespace std;
 using namespace Eigen;

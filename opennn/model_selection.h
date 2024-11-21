@@ -9,8 +9,6 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-#include <string>
-
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "growing_inputs.h"

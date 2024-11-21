@@ -6,11 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "text_data_set.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-
-#include <fstream>
 
 namespace opennn
 {

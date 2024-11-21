@@ -6,13 +6,14 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
+#include <iostream>
+#include <string>
+#include <vector>
+#include <exception>
+
 #ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #endif
-
-#include <iostream>
-#include <string>
-#include <exception>
 
 #include "../../opennn/opennn.h"
 

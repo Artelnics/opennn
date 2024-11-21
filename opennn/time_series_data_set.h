@@ -9,8 +9,6 @@
 #ifndef TIMESERIESDATASET_H
 #define TIMESERIESDATASET_H
 
-#include <string>
-
 #include "config.h"
 #include "data_set.h"
 
