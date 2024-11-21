@@ -11,6 +11,8 @@
 #include "tensors.h"
 #include "optimization_algorithm.h"
 
+#define _CRT_SECURE_NO_WARNINGS
+
 namespace opennn
 {
 
