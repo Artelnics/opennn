@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "stochastic_gradient_descent.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"

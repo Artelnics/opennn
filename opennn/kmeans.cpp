@@ -6,8 +6,7 @@
 // Artificial Intelligence Techniques SL
 // artelnics@artelnics.com
 
-#include <string>
-#include <omp.h>
+#include "pch.h"
 
 #include "tensors.h"
 #include "config.h"

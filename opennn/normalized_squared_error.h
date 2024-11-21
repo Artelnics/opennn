@@ -9,9 +9,6 @@
 #ifndef NORMALIZEDSQUAREDERROR_H
 #define NORMALIZEDSQUAREDERROR_H
 
-#include <cmath>
-#include <string>
-
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"

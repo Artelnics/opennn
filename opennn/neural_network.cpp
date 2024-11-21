@@ -6,11 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <numeric>
+#include "pch.h"
 
 #include "tensors.h"
 #include "images.h"

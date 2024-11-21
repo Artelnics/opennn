@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "cross_entropy_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"

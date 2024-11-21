@@ -9,8 +9,6 @@
 #ifndef TEXTDATASET_H
 #define TEXTDATASET_H
 
-#include <string>
-
 #include "config.h"
 #include "data_set.h"
 

@@ -10,8 +10,7 @@
 #define DATASET_H
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
-#include <string>
+#define EIGEN_USE_THREADS
 
 #include "tinyxml2.h"
 #include "histogram.h"
@@ -19,6 +18,7 @@
 #include "config.h"
 #include "correlation.h"
 #include "scaling.h"
+
 
 using namespace tinyxml2;
 using namespace Eigen;

@@ -9,9 +9,6 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-#include <iostream>
-#include <string>
-
 #include "scaling.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

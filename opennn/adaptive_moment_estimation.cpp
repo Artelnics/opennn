@@ -6,10 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
-#include "forward_propagation.h"
 #include "adaptive_moment_estimation.h"
+#include "forward_propagation.h"
 #include "back_propagation.h"
 
 namespace opennn

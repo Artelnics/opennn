@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include <math.h>
-#include <regex>
-#include <iostream>
-#include <stdlib.h>
-#include <algorithm>
-#include <cctype>
-#include <iomanip>
+#include "pch.h"
 
 #include "strings_utilities.h"
 #include "word_bag.h"

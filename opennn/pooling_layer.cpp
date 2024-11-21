@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include "pch.h"
 
 #include "tensors.h"
 #include "pooling_layer.h"
@@ -200,8 +200,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     set_pooling_method(new_pooling_method);
 
     set_name(new_name);
-
-    layer_type = Layer::Type::Pooling;
 
     name = "pooling_layer";
 }

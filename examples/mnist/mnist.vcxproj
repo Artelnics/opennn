@@ -101,6 +101,7 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);__Cpp11__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;__Cpp11__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
@@ -152,6 +153,7 @@
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
       <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
@@ -196,6 +198,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
@@ -239,6 +242,7 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);NDEBUG;__Cpp11__;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>

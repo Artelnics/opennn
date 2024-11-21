@@ -6,12 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <set>
-#include <map>
-#include <numeric>
-#include <regex>
-#include <codecvt>
-#include <algorithm>
+#include "pch.h"
 
 #include "language_data_set.h"
 #include "strings_utilities.h"

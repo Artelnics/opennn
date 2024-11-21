@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "embedding_layer.h"

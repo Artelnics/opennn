@@ -9,9 +9,6 @@
 #ifndef TRANSFORMER_H
 #define TRANSFORMER_H
 
-#include <string>
-#include <sstream>
-
 #include "neural_network.h"
 #include "forward_propagation.h"
 

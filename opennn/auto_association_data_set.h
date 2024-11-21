@@ -9,8 +9,6 @@
 #ifndef AUTOASSOCIATION_H
 #define AUTOASSOCIATION_H
 
-#include <string>
-
 #include "config.h"
 #include "data_set.h"
 
