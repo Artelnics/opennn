@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "strings_utilities.h"
 #include "perceptron_layer_3d.h"
 #include "tensors.h"
 

@@ -15,7 +15,6 @@
 namespace opennn
 {
 
-
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
                                             const Index& new_inputs_depth) : Layer()
 {
@@ -194,7 +193,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 {
     const Index batch_samples_number = input_pairs[0].second[0];
 
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+//    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);

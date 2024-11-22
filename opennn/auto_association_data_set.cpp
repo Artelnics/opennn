@@ -115,14 +115,8 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     if(sum_samples_number != used_samples_number)
         throw runtime_error("Sum of numbers of training, selection and testing samples is not equal to number of used samples.\n");
 
-    const Index samples_number = get_samples_number();
-
     vector<Index> indices;
-/*
-    initialize_sequential(indices, 0, 1, samples_number-1);
-*/
     iota(indices.begin(), indices.end(), 0);
-
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
