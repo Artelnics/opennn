@@ -278,7 +278,7 @@ string DataSet::RawVariable::get_use_string() const
         return "None";
 
     default:
-        throw runtime_error("Unknow raw variable use");
+        throw runtime_error("Unknown raw variable use");
     }
 }
 

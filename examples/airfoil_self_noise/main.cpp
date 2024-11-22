@@ -28,11 +28,11 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
-        DataSet data_set(1, { 1 }, { 1 });
+        // DataSet data_set(1, { 1 }, { 1 });
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
+        // NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        // TrainingStrategy training_strategy(&neural_network, &data_set);
 
 
 /*
@@ -49,7 +49,7 @@ int main()
 */
 
         // Data set
-/*
+
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
         data_set.split_samples_random(0.99, 0.005, 0.005);
@@ -83,8 +83,8 @@ int main()
 
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
@@ -98,33 +98,33 @@ int main()
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();                
-/*
+
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 //        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
-        // Deploy
+        // // Deploy
 
-        NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        // NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
-        Tensor<type, 2> inputs(1, input_variables_number);
-        inputs.setRandom();
+        // Tensor<type, 2> inputs(1, input_variables_number);
+        // inputs.setRandom();
 
-        inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
+        // inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
 
-        cout << inputs << endl;
+        // cout << inputs << endl;
 
-        const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
+        // const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
-*/
+
         cout << "Good bye!" << endl;
 
 

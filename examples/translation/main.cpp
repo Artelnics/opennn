@@ -15,6 +15,7 @@
 #include <cstring>
 #include <time.h>
 
+
 // OpenNN includes
 #include "../../opennn/opennn.h"
 
@@ -34,13 +35,14 @@ int main()
         _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
         */
 
-        // Data set
+        // // Data set
 
-        LanguageDataSet language_data_set;
+        // LanguageDataSet language_data_set;
 
-        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
-        //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
+        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset.txt");
+        // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
+        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
+        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
 
         // language_data_set.set_separator(DataSet::Separator::Tab);
 
@@ -50,6 +52,9 @@ int main()
 
         // vector<string> completion_vocabulary = language_data_set.get_completion_vocabulary();
         // vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
+
+        // language_data_set.save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt",completion_vocabulary);
+        // language_data_set.save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt",context_vocabulary);
 
         // // Neural network
 
@@ -62,6 +67,8 @@ int main()
         // Index depth = 64;
         // Index perceptron_depth = 128;
         // Index heads_number = 4;
+
+        // language_data_set.save_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/lengths.txt", input_length, context_length);
 
         // Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
         //                          depth, perceptron_depth, heads_number, number_of_layers });
@@ -87,8 +94,8 @@ int main()
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(72000);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2000);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(151200);
         // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         // training_strategy.get_adaptive_moment_estimation()->set_display(true);
@@ -104,25 +111,59 @@ int main()
         // cout << "Testing error: " << transformer_error_accuracy.first << endl;
         // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        // // Save results-
+        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
-        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/Weights/ENtoES_model.xml");
+
+
+
+
 
         // Testing analysis
 
-        Transformer transformer;
+        LanguageDataSet language_data_set;
+
+        vector<string> completion_vocabulary;
+        vector<string> context_vocabulary;
+
+        // language_data_set.set_completion_vocabulary_path("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt");
+        // language_data_set.set_context_vocabulary_path("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt");
+
+        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt",completion_vocabulary);
+        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt",context_vocabulary);
+
+        language_data_set.set_completion_vocabulary(completion_vocabulary);
+        language_data_set.set_context_vocabulary(context_vocabulary);
+
+        Index input_length;
+        Index context_length;
+
+        language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/lengths.txt", input_length, context_length);
+
+        Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
+        Index context_dimension = language_data_set.get_context_vocabulary_size();
+
+        Index number_of_layers = 1;
+        Index depth = 64;
+        Index perceptron_depth = 128;
+        Index heads_number = 4;
+
+        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+                                 depth, perceptron_depth, heads_number, number_of_layers });
 
         transformer.set_model_type_string("TextClassification");
+        transformer.set_dropout_rate(0);
 
-        transformer.load("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
+
+        transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
         const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 
-        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
-
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+        string translation = testing_analysis.test_transformer({"I like dogs."},true);
+        cout<<translation<<endl;
 
         cout << "Bye!" << endl;
 

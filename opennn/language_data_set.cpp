@@ -118,6 +118,16 @@ void LanguageDataSet::set_completion_vocabulary_path(const string& new_completio
     completion_vocabulary_path = new_completion_vocabulary_path;
 }
 
+void LanguageDataSet::set_context_vocabulary(const vector<string> & new_context_vocabulary)
+{
+    context_vocabulary = new_context_vocabulary;
+}
+
+void LanguageDataSet::set_completion_vocabulary(const vector<string> & new_completion_vocabulary)
+{
+    completion_vocabulary = new_completion_vocabulary;
+}
+
 
 void LanguageDataSet::set_data_random_language_model(const Index& batch_samples_number,
                                                      const Index& completion_length,
@@ -760,6 +770,23 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
+void LanguageDataSet::save_vocabulary(const string& path, const vector<string>& vocabulary)
+{
+    ofstream file(path.c_str());
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open file to save vocabulary: " + path + "\n");
+
+    for (const auto& word : vocabulary)
+    {
+        file << word << '\n';
+    }
+
+    file.close();
+}
+
+
+
 void LanguageDataSet::import_vocabulary(const string& path, vector<string>& vocabulary)
 {
     ifstream file(path.c_str());
@@ -795,6 +822,34 @@ void LanguageDataSet::import_vocabulary(const string& path, vector<string>& voca
 
         if(file.peek() == EOF) break;
     }
+}
+
+
+void LanguageDataSet::save_lengths(const string& path, Index input_length, Index context_length)
+{
+    ofstream file(path.c_str());
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open file to export lengths: " + path + "\n");
+
+    file << input_length << '\n';
+    file << context_length << '\n';
+
+    file.close();
+}
+
+
+void LanguageDataSet::import_lengths(const string& path, Index& input_length, Index& context_length)
+{
+    ifstream file(path.c_str());
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open file to import lengths: " + path + "\n");
+
+    file >> input_length;
+    file >> context_length;
+
+    file.close();
 }
 
 
@@ -1958,7 +2013,7 @@ void LanguageDataSet::read_txt_language_model()
     {
         cout << "Calculating vocabularies..." << endl;
 
-        const Index target_vocabulary_size = 8000;
+        const Index target_vocabulary_size = 16000;
         vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);

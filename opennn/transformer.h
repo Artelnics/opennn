@@ -44,7 +44,8 @@ public:
     void set_input_vocabulary(const vector<string>&);
     void set_context_vocabulary(const vector<string>&);
 
-    string calculate_outputs(const string&, const bool& = true);
+    //string calculate_outputs(const string&, const bool& = true);
+    string calculate_outputs(const vector<string>&, const bool& = true);
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 //    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);

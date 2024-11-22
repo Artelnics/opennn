@@ -262,6 +262,8 @@ public:
 
    pair<type, type> test_transformer() const;
 
+   string test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const;
+
    // Serialization
 
    virtual void from_XML(const XMLDocument&);

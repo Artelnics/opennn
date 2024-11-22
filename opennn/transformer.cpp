@@ -331,7 +331,78 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 }
 
 
-string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
+// string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
+// {
+//     //type start_indicator = 1;
+//     //type end_indicator = 2;
+
+//     //if(imported_vocabulary)
+//     //{
+//     type start_indicator = 2;
+//     type end_indicator = 3;
+//     //}
+
+//     // @todo
+//     const vector<vector<string>> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
+
+//     const Index batch_samples_number = 1;
+
+//     Tensor<type, 2> context(batch_samples_number, context_length);
+//     context.setZero();
+//     context(0) = start_indicator;
+
+//     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
+//     //else
+//     tokenize_wordpiece(context_tokens[0], context);
+
+//     Tensor<type, 2> input(batch_samples_number, input_length);
+//     input.setZero();
+//     input(0) = start_indicator;
+
+//     ForwardPropagation forward_propagation(batch_samples_number, this);
+
+//     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
+//     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
+
+//     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
+
+//     const Index layers_number = get_layers_number();
+
+//     const pair<type*, dimensions> outputs_pair
+//         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
+//     TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+
+//     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
+//     Tensor<Index, 0> prediction;
+
+//     for(Index i = 1; i < input_length; i++)
+//     {
+//         //forward_propagate(input_pairs, forward_propagation);
+
+//         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
+
+//         prediction.device(*thread_pool_device) = current_outputs.argmax();
+
+//         input(i) = type(prediction(0));
+
+//         if(prediction(0) == end_indicator)
+//             break;
+//     }
+
+//     ostringstream output_string;
+
+//     //if(!imported_vocabulary)
+//     // detokenize_whitespace(input, output_string);
+//     //else
+//     detokenize_wordpiece(input, output_string);
+
+//     return output_string.str();
+
+// }
+
+
+string Transformer::calculate_outputs(const vector<string>& context_string, const bool& imported_vocabulary)
 {
     //type start_indicator = 1;
     //type end_indicator = 2;
@@ -343,7 +414,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     //}
 
     // @todo
-    const vector<vector<string>> context_tokens/* = preprocess_language_documents(tensor_wrapper(context_string))*/;
+    const vector<vector<string>> context_tokens = preprocess_language_documents(context_string);
 
     const Index batch_samples_number = 1;
 
@@ -354,13 +425,13 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
     //else
     tokenize_wordpiece(context_tokens[0], context);
-    
+
     Tensor<type, 2> input(batch_samples_number, input_length);
     input.setZero();
     input(0) = start_indicator;
 
     ForwardPropagation forward_propagation(batch_samples_number, this);
-    
+
     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
@@ -371,14 +442,15 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    //TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    TensorMap <Tensor<type, 2>> outputs (outputs_pair.first,outputs_pair.second[1],outputs_pair.second[2]);
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
     Tensor<Index, 0> prediction;
     
     for(Index i = 1; i < input_length; i++)
     {
-        //forward_propagate(input_pairs, forward_propagation);
+        forward_propagate(input_pairs, forward_propagation);
 
         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 

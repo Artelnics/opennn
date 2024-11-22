@@ -48,6 +48,9 @@ public:
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
 
+    void set_context_vocabulary(const vector<string>&);
+    void set_completion_vocabulary(const vector<string>&);
+
     void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
 
     void set_default();
@@ -57,7 +60,11 @@ public:
     void from_XML(const XMLDocument&);
     void to_XML(XMLPrinter&) const;
 
+    void save_vocabulary(const string&, const vector<string>&);
     void import_vocabulary(const string&, vector<string>&);
+
+    void save_lengths(const string&, Index, Index);
+    void import_lengths(const string&, Index&, Index&);
 
     vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
                                         const Index& vocabulary_size,
