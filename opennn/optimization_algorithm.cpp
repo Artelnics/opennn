@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "tensors.h"
 #include "optimization_algorithm.h"
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -197,13 +196,28 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    FILE* file = fopen(file_name.c_str(), "w");
+    try
+    {
+        ofstream file(file_name);
 
-    if(!file) return;
+        if (file.is_open())
+        {
+            XMLPrinter printer;
+            to_XML(printer);
 
-    XMLPrinter printer(file);
-    to_XML(printer);
-    fclose(file);
+            file << printer.CStr();
+
+            file.close();
+        }
+        else
+        {
+            throw runtime_error("Cannot open file: " + file_name);
+        }
+    }
+    catch (const exception& e)
+    {
+        cerr << e.what() << endl;
+    }
 }
 
 
@@ -342,7 +356,7 @@ void TrainingResults::save(const string& file_name) const
 {
     Tensor<string, 2> final_results = write_final_results();
 
-    std::ofstream file;
+    ofstream file;
     file.open(file_name);
 
     if(!file) return;

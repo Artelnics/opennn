@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "strings_utilities.h"
 #include "tensors.h"
 #include "recurrent_layer.h"
 
