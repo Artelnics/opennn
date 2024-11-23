@@ -1687,7 +1687,7 @@ void delete_breaks_and_tabs(vector<string>& documents)
 
 void delete_non_printable_chars(vector<string>& documents)
 {
-    for(Index i = 0; i < documents.size(); i++) 
+    for(size_t i = 0; i < documents.size(); i++) 
         delete_non_printable_chars(documents[i]);
 }
 
@@ -1877,7 +1877,7 @@ void delete_emails(vector<vector<string>>& documents)
     {
         const vector<string> document = documents[i];
 
-        for(Index j = 0; j < document.size(); j++)
+        for(size_t j = 0; j < document.size(); j++)
         {
             /*
             vector<string> tokens = get_tokens(document(j));
@@ -2882,7 +2882,7 @@ string stem(const string& word)
 
 void stem(vector<string>& words)
 {
-    for(Index i = 0; i < words.size(); i++)
+    for(size_t i = 0; i < words.size(); i++)
         words[i] = stem(words[i]);
 }
 

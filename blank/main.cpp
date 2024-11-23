@@ -86,7 +86,7 @@ int main()
 
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(type(0.99));
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(10800);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
