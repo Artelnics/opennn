@@ -11,7 +11,6 @@
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
-#include "data_set.h"
 
 namespace opennn
 {
@@ -986,28 +985,34 @@ void erase(string& text, const char& character)
 
 string get_trimmed(const string& text)
 {
-    string output(text);
+//    string output(text);
 
     //prefixing spaces
 
-    output.erase(0, output.find_first_not_of(' '));
-    output.erase(0, output.find_first_not_of('\t'));
-    output.erase(0, output.find_first_not_of('\n'));
-    output.erase(0, output.find_first_not_of('\r'));
-    output.erase(0, output.find_first_not_of('\f'));
-    output.erase(0, output.find_first_not_of('\v'));
+//    output.erase(0, output.find_first_not_of(' '));
+//    output.erase(0, output.find_first_not_of('\t'));
+//    output.erase(0, output.find_first_not_of('\n'));
+//    output.erase(0, output.find_first_not_of('\r'));
+//    output.erase(0, output.find_first_not_of('\f'));
+//    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
-    output.erase(output.find_last_not_of(' ') + 1);
-    output.erase(output.find_last_not_of('\t') + 1);
-    output.erase(output.find_last_not_of('\n') + 1);
-    output.erase(output.find_last_not_of('\r') + 1);
-    output.erase(output.find_last_not_of('\f') + 1);
-    output.erase(output.find_last_not_of('\v') + 1);
-    output.erase(output.find_last_not_of('\b') + 1);
+//    output.erase(output.find_last_not_of(' ') + 1);
+//    output.erase(output.find_last_not_of('\t') + 1);
+//    output.erase(output.find_last_not_of('\n') + 1);
+//    output.erase(output.find_last_not_of('\r') + 1);
+//    output.erase(output.find_last_not_of('\f') + 1);
+//    output.erase(output.find_last_not_of('\v') + 1);
+//    output.erase(output.find_last_not_of('\b') + 1);
 
-    return output;
+ //   return output;
+
+    auto start = find_if_not(text.begin(), text.end(), ::isspace);
+
+    auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
+
+    return (start < end) ? std::string(start, end) : std::string();
 }
 
 
@@ -1682,7 +1687,7 @@ void delete_breaks_and_tabs(vector<string>& documents)
 
 void delete_non_printable_chars(vector<string>& documents)
 {
-    for(size_t i = 0; i < documents.size(); i++)
+    for(Index i = 0; i < documents.size(); i++) 
         delete_non_printable_chars(documents[i]);
 }
 
@@ -1832,11 +1837,11 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
 {
-    const Index documents_number = documents_words.size();
+    const size_t documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
+    for(size_t i = 0; i < documents_number; i++)
     {
         for(size_t j = 0; j < documents_words[i].size(); j++)
         {
@@ -1851,11 +1856,11 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const Index documents_number = documents_words.size();
+    const size_t documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
+    for(size_t i = 0; i < documents_number; i++)
         for(size_t j = 0; j < documents_words[i].size(); j++)
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
@@ -1872,7 +1877,7 @@ void delete_emails(vector<vector<string>>& documents)
     {
         const vector<string> document = documents[i];
 
-        for(size_t j = 0; j < document.size(); j++)
+        for(Index j = 0; j < document.size(); j++)
         {
             /*
             vector<string> tokens = get_tokens(document(j));
@@ -1898,11 +1903,11 @@ void delete_emails(vector<vector<string>>& documents)
 
 void replace_accented_words(vector<vector<string>>& documents)
 {
-    const Index documents_size = documents.size();
+    const size_t documents_size = documents.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_size; i++)
+    for(size_t i = 0; i < documents_size; i++)
         for(size_t j = 0; j < documents[i].size(); j++)
             replace_accented_words(documents[i][j]);
 }
@@ -2877,7 +2882,7 @@ string stem(const string& word)
 
 void stem(vector<string>& words)
 {
-    for(size_t i = 0; i < words.size(); i++)
+    for(Index i = 0; i < words.size(); i++)
         words[i] = stem(words[i]);
 }
 

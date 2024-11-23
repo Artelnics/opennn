@@ -1309,19 +1309,14 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
     vector<Descriptives> descriptives(columns_number);
-
-    //Tensor<type, 1> column(rows_number);
 
     //    #pragma omp parallel for private(column)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        //column = matrix.chip(i,1);
-
         const TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
         descriptives[i] = opennn::vector_descriptives(column);

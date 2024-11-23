@@ -306,8 +306,6 @@ void GeneticAlgorithm::initialize_population_random()
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(individual_variables);
 
-            const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
-
             for(Index j = 0; j < raw_variables_number; j++)
                 if(original_input_raw_variables[j])
                     individual_raw_variables_false(j) = true;
@@ -323,7 +321,6 @@ void GeneticAlgorithm::initialize_population_random()
     }
 
     cout << "Initial random population created" << endl;
-
     cout << "Initial random population: \n" << population << endl;
 }
 
@@ -388,7 +385,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
-
+*/
         raw_variables_active = 1 + rand() % raw_variables_number;
 
         while(std::count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
@@ -407,13 +404,13 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
             }
         }
 
-        if(is_false(individual_raw_variables)) individual_raw_variables(rand()%raw_variables_number) = true;
+        if(is_false(individual_raw_variables))
+            individual_raw_variables(rand()%raw_variables_number) = true;
 
         individual_variables = get_individual_variables(individual_raw_variables);
 
         for(Index j = 0; j < genes_number; j++)
             population(i, j) = individual_variables(j);
-*/
     }
 }
 
@@ -577,12 +574,12 @@ void GeneticAlgorithm::perform_selection()
                 selection(i) = true;
 
     // The next individuals are selected randomly but their probability is set according to their fitness.
-/*
+
     while(std::count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
         weighted_random(selection_probabilities);
     }
-*/
+
 }
 
 
@@ -730,8 +727,6 @@ void GeneticAlgorithm::perform_mutation()
         if(is_false(new_individual_variables))
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(new_individual_variables);
-
-            const vector<DataSet::RawVariable>& raw_variables = training_strategy->get_data_set()->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
                 if(original_input_raw_variables[j])
@@ -1323,7 +1318,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 {
     try
     {
-         std::ofstream file(file_name);
+        ofstream file(file_name);
 
         if (file.is_open())
         {

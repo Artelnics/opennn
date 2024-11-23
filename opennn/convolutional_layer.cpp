@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "strings_utilities.h"
 #include "convolutional_layer.h"
 #include "tensors.h"
 

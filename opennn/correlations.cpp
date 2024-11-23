@@ -365,7 +365,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(is_constant_vector(x) || !is_constant_vector(y))
         return Correlation();
     
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
     const Tensor<double, 1> y_filter = filter_vectors.second.cast<double>();
@@ -601,7 +601,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 {
     Correlation correlation;
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
     const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type, 1> y_filtered = filtered_elements.second;

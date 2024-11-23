@@ -41,9 +41,7 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
 
     const size_t size = height*(channels*width + padding);
 
-    Tensor<unsigned char, 1> raw_image;
-
-    raw_image.resize(size);
+    Tensor<unsigned char, 1> raw_image(size);
 
     const int data_offset = *(int*)(&info[0x0A]);
     fseek(file, (long int)(data_offset - 54), SEEK_CUR);

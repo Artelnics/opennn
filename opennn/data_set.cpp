@@ -187,19 +187,8 @@ void DataSet::RawVariable::to_XML(XMLPrinter& file_stream) const
     {
         if(categories.size() == 0) 
             return;
-
-        // Categories
-
         file_stream.OpenElement("Categories");
-
-        for(size_t i = 0; i < categories.size(); i++)
-        {
-            file_stream.PushText(categories[i].c_str());
-
-            if(i != categories.size()-1)
-                file_stream.PushText(";");
-        }
-
+        file_stream.PushText(string_tensor_to_string(categories).c_str());
         file_stream.CloseElement();
     }
 }
@@ -631,9 +620,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
     const Index samples_number = get_samples_number();
     
     vector<Index> indices(samples_number);
-
-//    initialize_sequential(indices, 0, 1, samples_number-1);
-
     iota(indices.begin(), indices.end(), 0);
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
@@ -794,7 +780,8 @@ vector<string> DataSet::get_variable_names(const VariableUse& variable_use) cons
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        if (raw_variables[i].use != variable_use) continue;
+        if (raw_variables[i].use != variable_use)
+            continue;
 
         if (raw_variables[i].type == RawVariableType::Categorical)
             for (Index j = 0; j < raw_variables[i].get_categories_number(); j++)
@@ -2971,20 +2958,22 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     set_codification(read_xml_string(data_source_element, "Codification"));
 
     const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
-    if (!raw_variables_element) {
+
+    if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
-    }
+
     set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
     const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-    for (size_t i = 0; i < raw_variables.size(); i++) {
+
+    for (size_t i = 0; i < raw_variables.size(); i++)
+    {
         RawVariable& raw_variable = raw_variables[i];
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1)) {
+        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1))
             throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
-        }
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
@@ -2995,28 +2984,28 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
             raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
     }
 
-    // Sample IDs
-    if (has_sample_ids) {
+    if (has_sample_ids)
         sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), " ");
-    }
 
-    // Samples
     const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
-    if (!samples_element) {
+
+    if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
-    }
+
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
 
     // Missing values
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
-    if (!missing_values_element) {
+
+    if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
-    }
+
     set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
-    if (missing_values_number > 0) {
+    if (missing_values_number > 0)
+    {
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
         for (Index i = 0; i < raw_variables_missing_values_number.size(); i++) {
             raw_variables_missing_values_number(i) = std::stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);

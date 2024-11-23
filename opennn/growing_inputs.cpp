@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "tensors.h"
 #include "growing_inputs.h"
 #include "correlations.h"
 
