@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// OpeNN Includes
-
 #include "pch.h"
 
 #include "strings_utilities.h"

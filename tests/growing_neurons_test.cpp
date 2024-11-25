@@ -128,7 +128,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {3}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
     training_strategy.set_display(false);
 
