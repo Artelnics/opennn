@@ -1032,7 +1032,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     Index original_input_index = 0;
 
-    for(Index i = 0; i < original_input_raw_variables.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables.size(); i++)
     {
         if(individual_raw_variables(i) && original_input_raw_variables[i])
         {
