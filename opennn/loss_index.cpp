@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"

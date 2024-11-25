@@ -9,9 +9,6 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include <iostream>
-#include <string>
-
 #include "config.h"
 #include "data_set.h"
 #include "neural_network.h"

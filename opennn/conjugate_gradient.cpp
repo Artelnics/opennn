@@ -6,9 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <cmath>
-#include <ctime>
+#include "pch.h"
 
 #include "conjugate_gradient.h"
 #include "forward_propagation.h"

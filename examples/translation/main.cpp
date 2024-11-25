@@ -39,9 +39,9 @@ int main()
 
         // LanguageDataSet language_data_set;
 
-        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset.txt");
+        // //language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset.txt");
         // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
+        // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/test50000-60000.txt");
         // // language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
 
         // language_data_set.set_separator(DataSet::Separator::Tab);
@@ -94,8 +94,8 @@ int main()
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(2000);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(151200);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
         // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         // training_strategy.get_adaptive_moment_estimation()->set_display(true);
@@ -128,8 +128,8 @@ int main()
         // language_data_set.set_completion_vocabulary_path("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt");
         // language_data_set.set_context_vocabulary_path("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt");
 
-        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt",completion_vocabulary);
-        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt",context_vocabulary);
+        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/completion_vocabulary.txt",completion_vocabulary);
+        language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/context_vocabulary.txt",context_vocabulary);
 
         language_data_set.set_completion_vocabulary(completion_vocabulary);
         language_data_set.set_context_vocabulary(context_vocabulary);
@@ -137,7 +137,7 @@ int main()
         Index input_length;
         Index context_length;
 
-        language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/lengths.txt", input_length, context_length);
+        language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/lengths.txt", input_length, context_length);
 
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         Index context_dimension = language_data_set.get_context_vocabulary_size();
@@ -158,7 +158,7 @@ int main()
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
 
-        transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+        transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/ENtoES_model.xml");
 
         const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 

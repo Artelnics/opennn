@@ -9,8 +9,6 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-#include <string>
-
 #include "tinyxml2.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"

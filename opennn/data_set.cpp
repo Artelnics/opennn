@@ -6,18 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <codecvt>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <random>
-#include <regex>
-#include <stdexcept>
-#include <stdlib.h>
+#include "pch.h"
 
 #include "data_set.h"
 #include "statistics.h"
@@ -3998,7 +3987,8 @@ void DataSet::read_csv()
 
     sample_ids.resize(samples_number);
 
-    const Index variables_number = get_variables_number();
+    // const Index variables_number = get_variables_number();
+    const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
@@ -4057,8 +4047,7 @@ void DataSet::read_csv()
         if(has_sample_ids)
             sample_ids[sample_index] = tokens[0];
 
-        #pragma omp parallel for
-
+        // #pragma omp parallel for
         for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
             const RawVariableType raw_variable_type = raw_variables[raw_variable_index].type;
@@ -4071,6 +4060,8 @@ void DataSet::read_csv()
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
+
+
                 (token.empty() || token == missing_values_label)
                     ? data(sample_index, variable_indices[0]) = NAN
                     : data(sample_index, variable_indices[0]) = stof(token);

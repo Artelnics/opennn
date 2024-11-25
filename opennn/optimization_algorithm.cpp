@@ -6,10 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <iomanip>
+#include "pch.h"
 
 #include "tensors.h"
 #include "optimization_algorithm.h"

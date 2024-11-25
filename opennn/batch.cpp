@@ -1,3 +1,13 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   B A T C H   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "pch.h"
+
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"

@@ -6,11 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <numeric>
+#include "pch.h"
 
 #include "tensors.h"
 #include "images.h"
@@ -454,6 +450,7 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
                                       const dimensions& complexity_dimensions, 
                                       const dimensions& output_dimensions)
 {
+
     const Index complexity_size = complexity_dimensions.size();
 
     add_layer(make_unique<ScalingLayer2D>(input_dimensions));

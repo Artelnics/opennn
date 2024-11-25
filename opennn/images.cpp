@@ -1,7 +1,14 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   I M A G E S   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "pch.h"
+
 #include "images.h"
-#include <stdexcept>
-#include <cassert>
-#include <iostream>
 
 namespace opennn
 {

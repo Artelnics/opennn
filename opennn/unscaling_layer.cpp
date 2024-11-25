@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "unscaling_layer.h"
 #include "strings_utilities.h"
 #include "tensors.h"
@@ -210,6 +212,15 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 {
     descriptives.resize(new_neurons_number);
 
+    //new:
+    for(Index i = 0; i < new_neurons_number; i++){
+        descriptives[i].set_minimum(type(-1.0));
+        descriptives[i].set_maximum(type(1));
+        descriptives[i].set_mean(type(0));
+        descriptives[i].set_standard_deviation(type(1));
+    }
+    //end new
+
     scalers.resize(new_neurons_number);
 
     scalers.setConstant(Scaler::MinimumMaximum);
@@ -381,6 +392,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
 }
 
 

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <numeric>
+#include "pch.h"
 
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
@@ -166,6 +166,15 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     descriptives.resize(new_inputs_number);
 
+    //new:
+    for(Index i = 0; i < new_inputs_number; i++){
+        set_minimum(i,type(-1.0));
+        set_maximum(i,type(1));
+        set_mean(i,type(0));
+        set_standard_deviation(i,type(1));
+    }
+    //end new
+
     scalers.resize(new_inputs_number);
     scalers.setConstant(Scaler::MeanStandardDeviation);
 
@@ -321,7 +330,7 @@ bool ScalingLayer2D::is_empty() const
 void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
-{
+{cout<<"Works properly"<<endl;
     const Index neurons_number = get_output_dimensions()[0];
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
@@ -393,6 +402,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
 }
 
 

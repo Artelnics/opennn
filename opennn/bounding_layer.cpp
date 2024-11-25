@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "bounding_layer.h"
 #include "tensors.h"
 
@@ -177,6 +179,7 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
     {
         outputs.device(*thread_pool_device) = inputs;
     }
+
 }
 
 

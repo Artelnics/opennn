@@ -9,8 +9,7 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#include <string>
-#include <memory>
+#define EIGEN_USE_THREADS
 
 #include "config.h"
 #include "layer.h"
