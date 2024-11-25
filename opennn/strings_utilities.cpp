@@ -11,7 +11,6 @@
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
-#include "data_set.h"
 
 namespace opennn
 {
@@ -194,7 +193,7 @@ vector<string> get_unique_elements(const vector<string>& tokens)
 {
     string result;
 
-    for(Index i = 0; i < tokens.size(); i++)
+    for(size_t i = 0; i < tokens.size(); i++)
         if(!contains_substring(result, " " + tokens[i] + " "))
             result += tokens[i] + " ";
 
@@ -986,28 +985,34 @@ void erase(string& text, const char& character)
 
 string get_trimmed(const string& text)
 {
-    string output(text);
+//    string output(text);
 
     //prefixing spaces
 
-    output.erase(0, output.find_first_not_of(' '));
-    output.erase(0, output.find_first_not_of('\t'));
-    output.erase(0, output.find_first_not_of('\n'));
-    output.erase(0, output.find_first_not_of('\r'));
-    output.erase(0, output.find_first_not_of('\f'));
-    output.erase(0, output.find_first_not_of('\v'));
+//    output.erase(0, output.find_first_not_of(' '));
+//    output.erase(0, output.find_first_not_of('\t'));
+//    output.erase(0, output.find_first_not_of('\n'));
+//    output.erase(0, output.find_first_not_of('\r'));
+//    output.erase(0, output.find_first_not_of('\f'));
+//    output.erase(0, output.find_first_not_of('\v'));
 
     //surfixing spaces
 
-    output.erase(output.find_last_not_of(' ') + 1);
-    output.erase(output.find_last_not_of('\t') + 1);
-    output.erase(output.find_last_not_of('\n') + 1);
-    output.erase(output.find_last_not_of('\r') + 1);
-    output.erase(output.find_last_not_of('\f') + 1);
-    output.erase(output.find_last_not_of('\v') + 1);
-    output.erase(output.find_last_not_of('\b') + 1);
+//    output.erase(output.find_last_not_of(' ') + 1);
+//    output.erase(output.find_last_not_of('\t') + 1);
+//    output.erase(output.find_last_not_of('\n') + 1);
+//    output.erase(output.find_last_not_of('\r') + 1);
+//    output.erase(output.find_last_not_of('\f') + 1);
+//    output.erase(output.find_last_not_of('\v') + 1);
+//    output.erase(output.find_last_not_of('\b') + 1);
 
-    return output;
+ //   return output;
+
+    auto start = find_if_not(text.begin(), text.end(), ::isspace);
+
+    auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
+
+    return (start < end) ? std::string(start, end) : std::string();
 }
 
 
@@ -1023,7 +1028,7 @@ string prepend(const string& pre, const string& text)
 
 bool is_numeric_string_vector(const vector<string>& string_list)
 {
-    for(Index i = 0; i < string_list.size(); i++)
+    for(size_t i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
             return false;
 
@@ -1033,7 +1038,7 @@ bool is_numeric_string_vector(const vector<string>& string_list)
 
 bool has_numbers(const vector<string>& string_list)
 {
-    for(Index i = 0; i < string_list.size(); i++)
+    for(size_t i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
             return true;
 
@@ -1043,7 +1048,7 @@ bool has_numbers(const vector<string>& string_list)
 
 bool has_strings(const vector<string>& string_list)
 {
-    for(Index i = 0; i < string_list.size(); i++)
+    for(size_t i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
             return true;
 
@@ -1053,7 +1058,7 @@ bool has_strings(const vector<string>& string_list)
 
 bool is_not_numeric(const vector<string>& string_list)
 {
-    for(Index i = 0; i < string_list.size(); i++)
+    for(size_t i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
             return false;
 
@@ -1066,7 +1071,7 @@ bool is_mixed(const vector<string>& string_list)
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
 
-    for(Index i = 0; i < string_list.size(); i++)
+    for(size_t i = 0; i < string_list.size(); i++)
         is_numeric_string(string_list[i]) 
             ? count_numeric++ 
             : count_not_numeric++;
@@ -1133,7 +1138,7 @@ bool is_not_alnum(char &c)
 
 bool contains(vector<string>& v, const string& str)
 {
-    for(Index i = 0; i < v.size(); i++)
+    for(size_t i = 0; i < v.size(); i++)
         if(v[i] == str) 
             return true;
 
@@ -1491,7 +1496,7 @@ void to_lower(vector<string>& documents)
 
 void to_lower(vector<vector<string>>& text)
 {
-    for(Index i = 0; i < text.size(); i++)
+    for(size_t i = 0; i < text.size(); i++)
         to_lower(text[i]);
 }
 
@@ -1552,7 +1557,7 @@ void delete_blanks(vector<vector<string>>& documents_tokens)
 
         Index index = 0;
 
-        for(Index j = 0; j < documents_tokens[i].size(); j++)
+        for(size_t j = 0; j < documents_tokens[i].size(); j++)
             if(!documents_tokens[i][j].empty())
                 new_document_tokens[index++] = documents_tokens[i][j];
 
@@ -1584,7 +1589,7 @@ vector<pair<string, int>> count_words(const vector<string>& total_tokens)
 {
     unordered_map<string, int> count;
 
-    for(Index i = 0; i < total_tokens.size(); i++)
+    for(size_t i = 0; i < total_tokens.size(); i++)
         count[total_tokens[i]]++;
 
     vector<pair<string, int>> word_counts(count.begin(), count.end());
@@ -1663,7 +1668,7 @@ void delete_extra_spaces(vector<string>& documents)
 {
     vector<string> new_documents(documents);
 
-    for(Index i = 0; i < documents.size(); i++)
+    for(size_t i = 0; i < documents.size(); i++)
     {
         string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
             [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
@@ -1677,7 +1682,7 @@ void delete_extra_spaces(vector<string>& documents)
 
 void delete_breaks_and_tabs(vector<string>& documents)
 {
-    for(Index i = 0; i < documents.size(); i++)
+    for(size_t i = 0; i < documents.size(); i++)
     {                
         replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\n', ' ');
         replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\t', ' ');
@@ -1756,7 +1761,7 @@ void delete_non_alphanumeric(vector<string>& documents)
 {
     vector<string> new_documents(documents);
 
-    for(Index i = 0; i < documents.size(); i++)
+    for(size_t i = 0; i < documents.size(); i++)
         new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
 
     documents = new_documents;
@@ -1767,7 +1772,7 @@ string to_string(vector<string> token)
 {
     string word;
 
-    for(Index i = 0; i < token.size() - 1; i++)
+    for(size_t i = 0; i < token.size() - 1; i++)
         word += token[i] + " ";
 
     word += token[token.size() - 1];
@@ -1791,7 +1796,7 @@ vector<string> detokenize(const vector<vector<string>>& tokens)
 
 void filter_not_equal_to(vector<string>& document, const vector<string>& delete_words)
 {
-    for(Index i = 0; i < document.size(); i++)
+    for(size_t i = 0; i < document.size(); i++)
     {
         const Index tokens_number = count_tokens(document[i], " ");
         const vector<string> tokens = get_tokens(document[i], " ");
@@ -1817,7 +1822,7 @@ void delete_words(vector<vector<string>>& documents_words, const vector<string>&
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words[i].size(); j++)
+        for(size_t j = 0; j < documents_words[i].size(); j++)
         {
             const string word = documents_words[i][j];
 
@@ -1839,13 +1844,13 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
 {
-    const Index documents_number = documents_words.size();
+    const size_t documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
+    for(size_t i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words[i].size(); j++)
+        for(size_t j = 0; j < documents_words[i].size(); j++)
         {
             const Index length = documents_words[i][j].length();
 
@@ -1858,12 +1863,12 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const Index documents_number = documents_words.size();
+    const size_t documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
-        for(Index j = 0; j < documents_words[i].size(); j++)
+    for(size_t i = 0; i < documents_number; i++)
+        for(size_t j = 0; j < documents_words[i].size(); j++)
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
 }
@@ -1905,12 +1910,12 @@ void delete_emails(vector<vector<string>>& documents)
 
 void replace_accented_words(vector<vector<string>>& documents)
 {
-    const Index documents_size = documents.size();
+    const size_t documents_size = documents.size();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents_size; i++)
-        for(Index j = 0; j < documents[i].size(); j++)
+    for(size_t i = 0; i < documents_size; i++)
+        for(size_t j = 0; j < documents[i].size(); j++)
             replace_accented_words(documents[i][j]);
 }
 
@@ -2749,9 +2754,9 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 
 void print_tokens(const vector<vector<string>>& tokens)
 {
-    for(Index i = 0; i < tokens.size(); i++)
+    for(size_t i = 0; i < tokens.size(); i++)
     {
-        for(Index j = 0; j < tokens[i].size(); j++)
+        for(size_t j = 0; j < tokens[i].size(); j++)
             cout << tokens[i][j] << " - ";
 
         cout << endl;
@@ -2893,8 +2898,8 @@ void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
-    for(Index i = 0; i < words.size(); i++)
-        for(Index j = 0; j < words[i].size(); j++)
+    for(size_t i = 0; i < words.size(); i++)
+        for(size_t j = 0; j < words[i].size(); j++)
             stem(words[i][j]);
 }
 
