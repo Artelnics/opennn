@@ -224,6 +224,15 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     
     calculate_convolutions(preprocessed_inputs, outputs);
 
+    // cout<<outputs.chip(0,0).chip(0,0).chip(0,0)<<endl<<endl;
+
+    for(Index i = 0; i < outputs.size(); i++)
+        if(isnan(outputs(i)))
+        {
+            cerr<<"Error en las convolucionales"<<endl;
+            break;
+        }
+
     if(batch_normalization)
     {
 /*
@@ -238,6 +247,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
         calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
+
+    // cout<<"======conv======"<<endl;
 }
 
 
@@ -434,6 +445,9 @@ string ConvolutionalLayer::get_activation_function_string() const
 
     case ActivationFunction::ExponentialLinear:
         return "ExponentialLinear";
+
+    case ActivationFunction::LeakyRectifiedLinear:
+        return "LeakyRectifiedLinear";
     }
 
     return string();
@@ -686,6 +700,8 @@ void ConvolutionalLayer::set_activation_function(const string& new_activation_fu
         activation_function = ActivationFunction::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = ActivationFunction::ExponentialLinear;
+    else if(new_activation_function_name == "LeakyRectifiedLinear")
+        activation_function = ActivationFunction::LeakyRectifiedLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -826,13 +842,13 @@ void ConvolutionalLayer::print() const
 {
     cout << "Convolutional layer" << endl;
     cout << "Input dimensions: " << endl;
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 
-void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void ConvolutionalLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Convolutional");
 
@@ -852,9 +868,9 @@ void ConvolutionalLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void ConvolutionalLayer::from_XML(const tinyxml2::XMLDocument& document)
+void ConvolutionalLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
+    const XMLElement* convolutional_layer_element = document.FirstChildElement("Convolutional");
 
     if (!convolutional_layer_element) 
         throw runtime_error("Convolutional layer element is nullptr.\n");

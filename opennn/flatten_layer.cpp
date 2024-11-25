@@ -83,6 +83,8 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
+    // cout<<"=========Flatten==========="<<endl;
+
     memcpy(outputs_data,
            input_pairs[0].first,
            batch_samples_number*neurons_number*sizeof(type));
@@ -114,7 +116,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void FlattenLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Flatten");
 
@@ -126,9 +128,9 @@ void FlattenLayer::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void FlattenLayer::from_XML(const tinyxml2::XMLDocument& document)
+void FlattenLayer::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* flatten_layer_element = document.FirstChildElement("Flatten");
+    const XMLElement* flatten_layer_element = document.FirstChildElement("Flatten");
 
     if (!flatten_layer_element) 
         throw runtime_error("FlattenLayer element is nullptr.\n");
@@ -146,10 +148,10 @@ void FlattenLayer::print() const
     cout << "Flatten layer" << endl;
 
     cout << "Input dimensions: " << endl;
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
 
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 

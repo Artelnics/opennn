@@ -80,8 +80,8 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    Tensor<Index, 1> original_input_raw_variables_indices;
-    Tensor<Index, 1> original_target_raw_variables_indices;
+    vector<Index> original_input_raw_variables_indices;
+    vector<Index> original_target_raw_variables_indices;
 
     Index trials_number = 1;
 
@@ -125,7 +125,7 @@ struct InputsSelectionResults
             << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl
             << "Inputs: " << endl;
 
-       for(Index i = 0; i < optimal_input_raw_variables_names.size(); i++) 
+       for(size_t i = 0; i < optimal_input_raw_variables_names.size(); i++)
            cout << "   " << optimal_input_raw_variables_names[i] << endl;
 
        cout << "Optimum training error: " << optimum_training_error << endl

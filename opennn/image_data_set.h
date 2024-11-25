@@ -66,8 +66,8 @@ public:
 
     void read_bmp();
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void to_XML(tinyxml2::XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
 
 private:
 
@@ -85,7 +85,7 @@ private:
 
     // Object detection
 
-    Tensor<string, 1> labels_tokens;
+    vector<string> labels_tokens;
 
     Index width_no_padding = 0;
 

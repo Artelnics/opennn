@@ -157,8 +157,6 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
             {
                 for(Index k = 0; k < grid_size; k++)
                 {
-                    box_detections(i,j,k,0) += k;
-                    box_detections(i,j,k,1) += j;
                     box_detections(i,j,k,2) *= anchors[box](0);
                     box_detections(i,j,k,3) *= anchors[box](1);
                 }
@@ -176,9 +174,9 @@ void DetectionLayer::print() const
 {
     cout << "Detection layer" << endl;
     cout << "Input dimensions: " << endl;
-    print_dimensions(input_dimensions);
+    print_vector(input_dimensions);
     cout << "Output dimensions: " << endl;
-    print_dimensions(get_output_dimensions());
+    print_vector(get_output_dimensions());
 }
 
 void DetectionLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)

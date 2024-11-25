@@ -17,43 +17,24 @@ namespace opennn
 
 TextDataSet::TextDataSet() : DataSet()
 {
-    stop_words.resize(242);
-
-    stop_words.setValues(
-    { "i", "me", "my", "myself", "we", "us", "our", "ours", "ourselves", "you", "u", "your", "yours", "yourself", "yourselves", "he",
-     "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
-     "what", "which", "who", "whom", "this", "that", "these", "those", "im", "am", "m", "is", "are", "was", "were", "be", "been", "being",
-     "have", "has", "s", "ve", "re", "ll", "t", "had", "having", "do", "does", "did", "doing", "would", "d", "shall", "should", "could",
-     "ought", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'd", "you'd", "he'd",
-     "she'd", "we'd", "they'd", "i'll", "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't", "weren't", "hasn't",
-     "haven't", "hadn't", "doesn't", "don't", "didn't", "won't", "wouldn't", "shan't", "shouldn't", "can't", "cannot", "couldn't", "mustn't",
-     "let's", "that's", "who's", "what's", "here's", "there's", "when's", "where's", "why's", "how's", "daren't", "needn't", "oughtn't",
-     "mightn't", "shes", "its", "were", "theyre", "ive", "youve", "weve", "theyve", "id", "youd", "hed", "shed", "wed", "theyd",
-     "ill", "youll", "hell", "shell", "well", "theyll", "isnt", "arent", "wasnt", "werent", "hasnt", "havent", "hadnt",
-     "doesnt", "dont", "didnt", "wont", "wouldnt", "shant", "shouldnt", "cant", "cannot", "couldnt", "mustnt", "lets",
-     "thats", "whos", "whats", "heres", "theres", "whens", "wheres", "whys", "hows", "darent", "neednt", "oughtnt",
-     "mightnt", "a", "an", "the", "and", "n", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
-     "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on",
-     "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
-     "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" });
 }
 
 
 const Index& TextDataSet::get_short_words_length() const
 {
-    return short_words_length;
+    return short_word_length;
 }
 
 
 const Index& TextDataSet::get_long_words_length() const
 {
-    return long_words_length;
+    return long_word_length;
 }
 
 
 const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 {
-    return words_frequencies;
+    return word_frequencies;
 }
 
 
@@ -65,23 +46,23 @@ Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
 
 void TextDataSet::set_short_words_length(const Index& new_short_words_length)
 {
-    short_words_length = new_short_words_length;
+    short_word_length = new_short_words_length;
 }
 
 
 void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 {
-    long_words_length = new_long_words_length;
+    long_word_length = new_long_words_length;
 }
 
 
 //void TextDataSet::set_words_frequencies(const Tensor<Index,1>& new_words_frequencies)
 //{
-//    words_frequencies = new_words_frequencies;
+//    word_frequencies = new_words_frequencies;
 //}
 
 
-void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void TextDataSet::to_XML(XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
@@ -140,13 +121,13 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     // Short words length
 
     file_stream.OpenElement("ShortWordsLength");
-    file_stream.PushText(to_string(short_words_length).c_str());
+    file_stream.PushText(to_string(short_word_length).c_str());
     file_stream.CloseElement();
 
     // Long words length
 
     file_stream.OpenElement("LongWordsLength");
-    file_stream.PushText(to_string(long_words_length).c_str());
+    file_stream.PushText(to_string(long_word_length).c_str());
     file_stream.CloseElement();
 
     // Stop words list
@@ -328,13 +309,13 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("WordsFrequencies");
 
-        for(Index i = 0; i < words_frequencies.size(); i++)
+        for(Index i = 0; i < word_frequencies.size(); i++)
         {
             buffer.str("");
-            buffer << words_frequencies(i);
+            buffer << word_frequencies(i);
 
             file_stream.PushText(buffer.str().c_str());
-            if(i != words_frequencies.size()-1) file_stream.PushText(" ");
+            if(i != word_frequencies.size()-1) file_stream.PushText(" ");
 
         }
 
@@ -392,27 +373,27 @@ void TextDataSet::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
+void TextDataSet::from_XML(const XMLDocument& data_set_document)
 {
     ostringstream buffer;
 
     // Data set element
 
-    const tinyxml2::XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
-    const tinyxml2::XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
 
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
     // Data file name
 
-    const tinyxml2::XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
+    const XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
 
     if(!data_source_path_element)
         throw runtime_error("Path element is nullptr.\n");
@@ -426,7 +407,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Separator
 
-    const tinyxml2::XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
+    const XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
 
     if(separator_element)
     {
@@ -448,7 +429,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Text separator
 
-    const tinyxml2::XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
+    const XMLElement* text_separator_element = data_source_element->FirstChildElement("Separator");
 
     if(text_separator_element)
     {
@@ -469,7 +450,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has raw_variables names
 
-    const tinyxml2::XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
+    const XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
 
     if(raw_variables_names_element)
     {
@@ -487,7 +468,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Samples id
 
-    const tinyxml2::XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
+    const XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
 
     if(rows_label_element)
     {
@@ -505,7 +486,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Missing values label
 
-    const tinyxml2::XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
+    const XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
 
     if(missing_values_label_element)
     {
@@ -527,7 +508,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // short words length
 
-    const tinyxml2::XMLElement* short_words_length_element = data_source_element->FirstChildElement("ShortWordsLength");
+    const XMLElement* short_words_length_element = data_source_element->FirstChildElement("ShortWordsLength");
 
     if(short_words_length_element)
     {
@@ -541,7 +522,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Long words length
 
-    const tinyxml2::XMLElement* long_words_length_element = data_source_element->FirstChildElement("LongWordsLength");
+    const XMLElement* long_words_length_element = data_source_element->FirstChildElement("LongWordsLength");
 
     if(long_words_length_element)
     {
@@ -555,7 +536,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 /*
     // Stop words list
 
-    const tinyxml2::XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWords");
+    const XMLElement* stop_words_list_element = data_source_element->FirstChildElement("StopWords");
 
     if(stop_words_list_element)
     {
@@ -570,7 +551,7 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Codification
 
-    const tinyxml2::XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
+    const XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
 
     if(codification_element)
     {
@@ -584,12 +565,12 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-    const tinyxml2::XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
     if(!raw_variables_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "RawVariables element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -597,12 +578,12 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables number
 
-    const tinyxml2::XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
     if(!raw_variables_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "RawVariablesNumber element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -619,17 +600,17 @@ void TextDataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Raw variables
 
-const tinyxml2::XMLElement* start_element = raw_variables_number_element;
+const XMLElement* start_element = raw_variables_number_element;
 
     for(Index i = 0; i < new_raw_variables_number; i++)
     {
-        const tinyxml2::XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
+        const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void DataSet:from_XML(const XMLDocument&) method.\n"
                    << "raw_variable item number (" << i+1 << ") does not match (" << raw_variable_element->Attribute("Item") << ").\n";
 
             throw runtime_error(buffer.str());
@@ -637,12 +618,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         // Name
 
-        const tinyxml2::XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
+        const XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
 
         if(!name_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void raw_variable::from_XML(const XMLDocument&) method.\n"
                    << "Name element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -657,12 +638,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         // Scaler
 
-        const tinyxml2::XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
+        const XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
 
         if(!scaler_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void DataSet::from_XML(const XMLDocument&) method.\n"
                    << "Scaler element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -677,12 +658,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         // raw_variable use
 
-        const tinyxml2::XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
+        const XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
 
         if(!use_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void DataSet::from_XML(const XMLDocument&) method.\n"
                    << "raw_variable use element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -697,12 +678,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         // Type
 
-        const tinyxml2::XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
+        const XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
 
         if(!type_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void raw_variable::from_XML(const XMLDocument&) method.\n"
                    << "Type element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -718,12 +699,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
         {
             // Categories
 
-            const tinyxml2::XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
+            const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
             if(!categories_element)
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void raw_variable::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void raw_variable::from_XML(const XMLDocument&) method.\n"
                        << "Categories element is nullptr.\n";
 
                 throw runtime_error(buffer.str());
@@ -744,12 +725,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
     {
         // Samples id begin tag
 
-        const tinyxml2::XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
+        const XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
 
         if(!has_ids_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void from_XML(const XMLDocument&) method.\n"
                    << "Rows labels element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -774,12 +755,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Samples
 
-    const tinyxml2::XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
     if(!samples_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Samples element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -787,12 +768,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Samples number
 
-    const tinyxml2::XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
+    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
 
     if(!samples_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Samples number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -809,12 +790,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Samples uses
 
-    const tinyxml2::XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
 
     if(!samples_uses_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Samples uses element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -827,12 +808,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Missing values
 
-    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+    const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Missing values element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -840,12 +821,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Missing values method
 
-    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
 
     if(!missing_values_method_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Missing values method element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -858,12 +839,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Missing values number
 
-    const tinyxml2::XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
+    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
 
     if(!missing_values_number_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Missing values number element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -878,12 +859,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
     {
         // Raw variables Missing values number
 
-        const tinyxml2::XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
+        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
 
         if(!raw_variables_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void from_XML(const XMLDocument&) method.\n"
                    << "RawVariablesMissingValuesNumber element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -891,7 +872,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         if(raw_variables_missing_values_number_element->GetText())
         {
-            Tensor<string, 1> new_raw_variables_missing_values_number
+            vector<string> new_raw_variables_missing_values_number
                 = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
@@ -904,12 +885,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         // Rows missing values number
 
-        const tinyxml2::XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
+        const XMLElement* rows_missing_values_number_element = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
 
         if(!rows_missing_values_number_element)
         {
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "void from_XML(const XMLDocument&) method.\n"
                    << "Rows missing values number element is nullptr.\n";
 
             throw runtime_error(buffer.str());
@@ -923,12 +904,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Preview data
 
-    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+    const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Preview data element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -936,12 +917,12 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Preview size
 
-    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+    const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
     {
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "void from_XML(const XMLDocument&) method.\n"
                << "Preview size element is nullptr.\n";
 
         throw runtime_error(buffer.str());
@@ -965,13 +946,13 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
     {
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            const XMLElement* row_element = start_element->NextSiblingElement("Row");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void from_XML(const XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
                 throw runtime_error(buffer.str());
@@ -979,7 +960,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
             if(row_element->GetText())
             {
-                data_file_preview(i) = get_tokens(row_element->GetText(), ",");
+                data_file_preview[i] = get_tokens(row_element->GetText(), ",");
             }
         }
     }
@@ -987,13 +968,13 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
     {
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Row");
+            const XMLElement* row_element = start_element->NextSiblingElement("Row");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void from_XML(const XMLDocument&) method.\n"
                        << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
                 throw runtime_error(buffer.str());
@@ -1007,13 +988,13 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
         for(Index i = 0; i < new_preview_size; i++)
         {
-            const tinyxml2::XMLElement* row_element = start_element->NextSiblingElement("Target");
+            const XMLElement* row_element = start_element->NextSiblingElement("Target");
             start_element = row_element;
 
             if(row_element->Attribute("Item") != to_string(i+1))
             {
                 buffer << "OpenNN Exception: DataSet class.\n"
-                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "void from_XML(const XMLDocument&) method.\n"
                        << "Target item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
 
                 throw runtime_error(buffer.str());
@@ -1028,7 +1009,7 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
     // Display
 
-    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));
@@ -1038,16 +1019,15 @@ const tinyxml2::XMLElement* start_element = raw_variables_number_element;
 
 Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 {
-
     const Index raw_variables_number = get_raw_variables_number();
-    const vector<string> raw_variables_names = get_raw_variable_names();
+    const vector<string> raw_variable_names = get_raw_variable_names();
 
-    const Tensor<string, 1> tokens = get_tokens(sentence, " ");
+    const vector<string> tokens = get_tokens(sentence, " ");
 
     Tensor<type, 1> vector_x(raw_variables_number - 1);
     vector_x.setZero();
 
-    const Tensor<Tensor<string,1>,1> words = preprocess(tokens);
+    const vector<vector<string>> words = preprocess(tokens);
 /*
     const WordBag word_bag = calculate_word_bag(words);
 
@@ -1055,10 +1035,10 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
     for(Index i = 0; i < words_number; i++)
     {
-        if(contains(raw_variables_names, word_bag.words(i)))
+        if(contains(raw_variable_names, word_bag.words[i]))
         {
-            auto it = find(raw_variables_names.data(), raw_variables_names.data() + raw_variables_names.size(), word_bag.words(i));
-            const Index index = it - raw_variables_names.data();
+            auto it = find(raw_variable_names.data(), raw_variable_names.data() + raw_variable_names.size(), word_bag.words[i]);
+            const Index index = it - raw_variable_names.data();
 
             vector_x(index) = type(word_bag.frequencies(i));
         }
@@ -1069,44 +1049,44 @@ Tensor<type, 1> TextDataSet::sentence_to_data(const string& sentence) const
 
 /*
 
-Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
+vector<vector<string>> stem(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
-    Tensor<Tensor<string,1>,1> new_tokenized_documents(documents_number);
+    vector<vector<string>> new_tokenized_documents(documents_number);
 
     // Set vowels and suffixes
 
-    Tensor<string,1> vowels(6);
+    vector<string> vowels(6);
     vowels.setValues({"a","e","i","o","u","y"});
 
-    Tensor<string,1> double_consonants(9);
+    vector<string> double_consonants(9);
     double_consonants.setValues({"bb", "dd", "ff", "gg", "mm", "nn", "pp", "rr", "tt"});
 
-    Tensor<string,1> li_ending(10);
+    vector<string> li_ending(10);
     li_ending.setValues({"c", "d", "e", "g", "h", "k", "m", "n", "r", "t"});
 
     const Index step0_suffixes_size = 3;
 
-    Tensor<string,1> step0_suffixes(step0_suffixes_size);
+    vector<string> step0_suffixes(step0_suffixes_size);
 
     step0_suffixes.setValues({"'s'", "'s", "'"});
 
     const Index step1a_suffixes_size = 6;
 
-    Tensor<string,1> step1a_suffixes(step1a_suffixes_size);
+    vector<string> step1a_suffixes(step1a_suffixes_size);
 
     step1a_suffixes.setValues({"sses", "ied", "ies", "us", "ss", "s"});
 
     const Index step1b_suffixes_size = 6;
 
-    Tensor<string,1> step1b_suffixes(step1b_suffixes_size);
+    vector<string> step1b_suffixes(step1b_suffixes_size);
 
     step1b_suffixes.setValues({"eedly", "ingly", "edly", "eed", "ing", "ed"});
 
     const Index step2_suffixes_size = 25;
 
-    Tensor<string,1> step2_suffixes(step2_suffixes_size);
+    vector<string> step2_suffixes(step2_suffixes_size);
 
     step2_suffixes.setValues({"ization",
                               "ational",
@@ -1135,13 +1115,13 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 
     const Index step3_suffixes_size = 9;
 
-    Tensor<string,1> step3_suffixes(step3_suffixes_size);
+    vector<string> step3_suffixes(step3_suffixes_size);
 
     step3_suffixes.setValues({"ational", "tional", "alize", "icate", "iciti", "ative", "ical", "ness", "ful"});
 
     const Index step4_suffixes_size = 18;
 
-    Tensor<string,1> step4_suffixes(step4_suffixes_size);
+    vector<string> step4_suffixes(step4_suffixes_size);
 
     step4_suffixes.setValues({"ement", "ance", "ence", "able", "ible", "ment", "ant", "ent", "ism", "ate", "iti", "ous",
                               "ive", "ize", "ion", "al", "er", "ic"});
@@ -1192,7 +1172,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
 #pragma omp parallel for
     for(Index i = 0; i < documents_number; i++)
     {
-        Tensor<string,1> current_document = tokens(i);
+        vector<string> current_document = tokens[i];
 
         replace_substring(current_document, "’", "'");
         replace_substring(current_document, "‘", "'");
@@ -1233,7 +1213,7 @@ Tensor<Tensor<string,1>,1> stem(const Tensor<Tensor<string,1>,1>& tokens)
                 }
             }
 
-            Tensor<string,1> r1_r2(2);
+            vector<string> r1_r2(2);
 
             r1_r2 = get_r1_r2(current_word, vowels);
 
@@ -1780,8 +1760,8 @@ void TextDataSet::read_txt()
 
     file.seekg (0, ios::beg);
 
-    Tensor<string, 1> documents(documents_number);
-    Tensor<string, 1> targets(documents_number);
+    vector<string> documents(documents_number);
+    vector<string> targets(documents_number);
 
     Index index = 0;
 
@@ -1796,12 +1776,12 @@ void TextDataSet::read_txt()
         if(tokens_number != 2)
             throw runtime_error("More than one separator in line: " + line + "\n");
 
-        const Tensor<string, 1> line_tokens = get_tokens(line, separator_string);
+        const vector<string> line_tokens = get_tokens(line, separator_string);
 
-        documents(index) = line_tokens(0);
-        targets(index) = line_tokens(1);
+        documents[index] = line_tokens[0];
+        targets[index] = line_tokens[1];
 
-        if(count_tokens(targets(index), "2") != 1)
+        if(count_tokens(targets[index], "2") != 1)
             throw runtime_error("More than one target in line: " + line + "\n");
 
         index++;
@@ -1819,15 +1799,15 @@ void TextDataSet::read_txt()
     delete_extra_spaces(documents);
     delete_non_alphanumeric(documents);
 
-    cout << documents << endl;
+    //cout << documents << endl;
 
-    Tensor<Tensor<string,1>,1> documents_words = get_tokens(documents, " ");
+    vector<vector<string>> documents_words = get_tokens(documents, " ");
 
     cout << "Processing documents..." << endl;
 
     delete_words(documents_words, stop_words);
 
-    delete_short_long_words(documents_words, short_words_length, long_words_length);
+    delete_short_long_words(documents_words, short_word_length, long_word_length);
 
     replace_accented_words(documents_words);
 
@@ -1843,7 +1823,7 @@ void TextDataSet::read_txt()
 
     cout << "Calculating wordbag..." << endl;
 
-    const Tensor<string, 1> tokens = tokens_list(documents_words);
+    const vector<string> tokens = tokens_list(documents_words);
 
 //    cout << tokens << endl;
 
@@ -1853,7 +1833,7 @@ void TextDataSet::read_txt()
 
 //    set_words_frequencies(word_bag.frequencies);
 
-    const Tensor<string, 1> raw_variables_names = word_bag.words;
+    const vector<string> raw_variable_names = word_bag.words;
     const Index raw_variables_number = word_bag.size();
 
     Tensor<type, 1> row(raw_variables_number);
@@ -1870,7 +1850,7 @@ void TextDataSet::read_txt()
     new_file.open(new_data_source_path);
 
     for(Index i  = 0; i < raw_variables_number; i++)
-        new_file << raw_variables_names(i) << ";";
+        new_file << raw_variable_names[i] << ";";
 
     new_file << "target" << "\n";
 
@@ -1891,31 +1871,29 @@ void TextDataSet::read_txt()
 
 //    row.setZero();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
     {
         row.setZero();
 
-        const Tensor<string, 1> document_tokens = documents_words(i);
+        const vector<string> document_tokens = documents_words[i];
 
         const Index tokens_number = document_tokens.size();
 
         for(Index j = 0; j < tokens_number; j++)
         {
-            const string token = documents_words(i)(j);
+            const string word = documents_words[i][j];
 
             for(Index k = 0; k < raw_variables_number; k++)
-            {
-                if(token == raw_variables_names(k))
+                if(word == raw_variable_names[k])
                     row(k)++;
-            }
         }
 
         for(Index k = 0; k < raw_variables_number; k++)
             new_file << row(k) << ";";
 
-        new_file << targets(i) << "\n";
+        new_file << targets[i] << "\n";
     }
 
     new_file.close();

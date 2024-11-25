@@ -92,7 +92,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
      // Back propagation
 
-     const Tensor<type, 2>& errors = back_propagation.errors;       
+     const Tensor<type, 2>& errors = back_propagation.errors;
 
      const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
@@ -170,7 +170,7 @@ string MeanSquaredError::get_error_type_text() const
 }
 
 
-void MeanSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("MeanSquaredError");
 

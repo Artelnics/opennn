@@ -164,7 +164,7 @@ void OptimizationAlgorithm::check() const
 }
 
 
-void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
+void OptimizationAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("OptimizationAlgorithm");
 
@@ -174,9 +174,9 @@ void OptimizationAlgorithm::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
+void OptimizationAlgorithm::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("OptimizationAlgorithm");
+    const XMLElement* root_element = document.FirstChildElement("OptimizationAlgorithm");
 
     if(!root_element)
         throw runtime_error("Optimization algorithm element is nullptr.\n");
@@ -202,7 +202,7 @@ void OptimizationAlgorithm::save(const string& file_name) const
 
     if(!file) return;
 
-    tinyxml2::XMLPrinter printer(file);
+    XMLPrinter printer(file);
     to_XML(printer);
     fclose(file);
 }
@@ -212,7 +212,7 @@ void OptimizationAlgorithm::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
         throw runtime_error("Cannot load XML file " + file_name + ".\n");

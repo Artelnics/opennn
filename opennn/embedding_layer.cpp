@@ -13,14 +13,6 @@
 namespace opennn
 {
 
-// EmbeddingLayer::EmbeddingLayer() : Layer()
-// {
-//     set();
-
-//     layer_type = Type::Embedding;
-// }
-
-
 EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
                                const Index& new_inputs_number,
                                const Index& new_depth,
@@ -320,11 +312,11 @@ void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 }
 
 
-void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
+void EmbeddingLayer::from_XML(const XMLDocument& document)
 {
     // Embedding layer
 
-    const tinyxml2::XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
+    const XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
 
     if(!embedding_layer_element)
         throw runtime_error("Embedding element is nullptr.\n");
@@ -338,7 +330,7 @@ void EmbeddingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void EmbeddingLayer::to_XML(tinyxml2::XMLPrinter& printer) const
+void EmbeddingLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Embedding");
 

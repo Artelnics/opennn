@@ -119,7 +119,10 @@ public:
 
    void set();
 
-   void set(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
+   void set(const NeuralNetwork::ModelType&, 
+            const dimensions& = {}, 
+            const dimensions& = {},
+            const dimensions& = {});
 
    void set_approximation(const dimensions&, const dimensions&, const dimensions&);
    void set_classification(const dimensions&, const dimensions&, const dimensions&);
@@ -134,7 +137,7 @@ public:
    void set_layer_input_indices(const vector<vector<Index>>&);
    void set_layer_inputs_indices(const Index&, const vector<Index>&);
 
-   void set_layer_inputs_indices(const string&, const Tensor<string, 1>&);
+   void set_layer_inputs_indices(const string&, const vector<string>&);
    void set_layer_inputs_indices(const string&, const initializer_list<string>&);
    void set_layer_inputs_indices(const string&, const string&);
 
@@ -211,12 +214,12 @@ public:
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
-   void from_XML(const tinyxml2::XMLDocument&);
-   void inputs_from_XML(const tinyxml2::XMLDocument&);
-   void layers_from_XML(const tinyxml2::XMLDocument&);
-   void outputs_from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const XMLDocument&);
+   void inputs_from_XML(const XMLDocument&);
+   void layers_from_XML(const XMLDocument&);
+   void outputs_from_XML(const XMLDocument&);
 
-   void to_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(XMLPrinter&) const;
 
    void print() const;
    void save(const string&) const;
@@ -225,8 +228,8 @@ public:
    void load(const string&);
    void load_parameters_binary(const string&);
 
-   Tensor<string, 1> get_layer_names() const;
-   Tensor<string, 1> get_layer_types_string() const;
+   vector<string> get_layer_names() const;
+   vector<string> get_layer_types_string() const;
 
    void save_outputs(Tensor<type, 2>&, const string&);
 
@@ -237,6 +240,8 @@ public:
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           const Tensor<type, 1>&, 
                           ForwardPropagation&) const;
+
+   string get_expression() const;
 
    void save_expression_c(const string&) const;
    void save_expression_python(const string&) const;

@@ -68,10 +68,13 @@ int main()
 
         YoloNetwork yolo({416, 416, 3}, train_dataset.get_anchors());
 
+        // cout<<train_dataset.get_anchors()[1]<<endl;
+        // cout<<train_dataset.get_label(1)<<endl;
+
         // yolo.print();
         // yolo.calculate_outputs(train_dataset.get_images());
 
-        cout<<yolo.calculate_outputs(train_dataset.get_images())<<endl;
+        // cout<<yolo.calculate_outputs(train_dataset.get_images())<<endl;
 
 
 
@@ -81,17 +84,17 @@ int main()
 
 
 
-        // TrainingStrategy training_strategy(&yolo, &train_dataset);
+        TrainingStrategy training_strategy(&yolo, &train_dataset);
 
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::YOLO_ERROR);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3);
-        // training_strategy.set_display_period(1);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::YOLO_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3);
+        training_strategy.set_display_period(1);
 
 
-        // training_strategy.perform_training();
+        training_strategy.perform_training();
 
 
 
@@ -533,7 +536,7 @@ void save_tensor_as_BMP(const Tensor<type, 3> &tensor, const string& filename)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) Artificial Intelligence Techniques SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -22,60 +22,9 @@
 namespace opennn
 {
 
-//Index count_tokens(string& text, const char& separator)
-//{
-//    trim(text);
-
-//    Index tokens_count = 0;
-
-    // Skip delimiters at beginning.
-
-//    string::size_type last_position = text.find_first_not_of(separator, 0);
-
-    // Find first "non-delimiter".
-
-//    string::size_type position = text.find_first_of(separator, last_position);
-
-//    while(string::npos != position || string::npos != last_position)
-//    {
-        // Found a token, add it to the vector
-
-//        tokens_count++;
-
-        // Skip delimiters.  Note the "not_of"
-
-//        last_position = text.find_first_not_of(separator, position);
-
-        // Find next "non-delimiter"
-
-//        position = text.find_first_of(separator, last_position);
-//    }
-
-//    return tokens_count;
-//}
-
-
-// Index count_tokens(const string& text, const char& separator)
-// {
-//     Index tokens_number = count(text.begin(), text.end(), separator);
-
-//     if(text[0] == separator)
-//     {
-//         tokens_number--;
-//     }
-
-//     if(text[text.size() - 1] == separator)
-//     {
-//         tokens_number--;
-//     }
-
-//     return tokens_number + 1;
-// }
-
-
-void fill_tokens(const string& text, const string& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& text, const string& separator, vector<string>& tokens)
 {
-    tokens.setConstant("");
+    fill(tokens.begin(), tokens.end(), "");
 
     // Skip delimiters at beginning.
 
@@ -124,6 +73,7 @@ void fill_tokens(const string& text, const string& separator, Tensor<string, 1>&
 
 Index count_tokens(const string& text, const string& separator)
 {
+/*
     Index tokens_number = 0;
 
     string::size_type position = 0;
@@ -142,14 +92,16 @@ Index count_tokens(const string& text, const string& separator)
         tokens_number--;
 
     return tokens_number + 1;
-}
+    */
+    return 0;
+ }
 
 
-Tensor<string, 1> get_tokens(const string& text, const string& separator)
+vector<string> get_tokens(const string& text, const string& separator)
 {
     const Index tokens_number = count_tokens(text, separator);
 
-    Tensor<string,1> tokens(tokens_number);
+    vector<string> tokens(tokens_number);
 
     // Skip delimiters at beginning.
 
@@ -194,9 +146,9 @@ Tensor<string, 1> get_tokens(const string& text, const string& separator)
 
 Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(text, separator);
+    const vector<string> tokens = get_tokens(text, separator);
 
-    const Index tokens_size = tokens.dimension(0);
+    const Index tokens_size = tokens.size();
 
     Tensor<type, 1> type_vector(tokens_size);
 
@@ -218,9 +170,9 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 
 Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 {
-    const Tensor<string, 1> tokens = get_tokens(text, separator);
+    const vector<string> tokens = get_tokens(text, separator);
 
-    const Index tokens_size = tokens.dimension(0);
+    const Index tokens_size = tokens.size();
 
     Tensor<Index, 1> index_vector(tokens_size);
 
@@ -244,28 +196,28 @@ Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 }
 
 
-Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
+vector<string> get_unique_elements(const vector<string>& tokens)
 {
     string result;
 
     for(Index i = 0; i < tokens.size(); i++)
-        if(!contains_substring(result, " " + tokens(i) + " "))
-            result += tokens(i) + " ";
+        if(!contains_substring(result, " " + tokens[i] + " "))
+            result += tokens[i] + " ";
 
     return get_tokens(result, " ");
 }
 
 
-Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
+Tensor<Index, 1> count_unique(const vector<string>& tokens)
 {
-    const Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+    const vector<string> unique_elements = get_unique_elements(tokens);
 
     const Index unique_size = unique_elements.size();
 
     Tensor<Index, 1> unique_count(unique_size);
 
     for(Index i = 0; i < unique_size; i++)
-        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
+        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements[i]));
 
     return unique_count;
 }
@@ -300,7 +252,7 @@ bool is_numeric_string(const string& text)
 }
 
 
-// bool is_constant_string(const Tensor<string, 1>& string_list)
+// bool is_constant_string(const vector<string>& string_list)
 // {
 //     const string str0 = string_list[0];
 
@@ -403,7 +355,7 @@ bool starts_with(const string& word, const string& starting)
 //}
 
 
-// bool ends_with(const string& word, const Tensor<string,1>& endings)
+// bool ends_with(const string& word, const vector<string>& endings)
 // {
 //     const Index endings_size = endings.size();
 
@@ -419,325 +371,380 @@ bool starts_with(const string& word, const string& starting)
 // }
 
 
+// time_t date_to_timestamp(const string& date, const Index& gmt)
+// {
+//     struct tm time_structure = {};
+
+//     smatch month;
+
+//     const regex months("([Jj]an(?:uary)?)|([Ff]eb(?:ruary)?)|([Mm]ar(?:ch)?)|([Aa]pr(?:il)?)|([Mm]ay)|([Jj]un(?:e)?)|([Jj]ul(?:y)?)"
+//                        "|([Aa]ug(?:gust)?)|([Ss]ep(?:tember)?)|([Oo]ct(?:ober)?)|([Nn]ov(?:ember)?)|([Dd]ec(?:ember)?)");
+
+//     smatch matchs;
+
+//     const string format_1 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+//     const string format_2 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+//     const string format_3 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+//     const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+//     const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
+//     const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
+//     const string format_7 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+//     const string format_8 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+//     const string format_9 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+//     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
+//     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
+//     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+//     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+//     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
+//     const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
+//     const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
+//     const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
+
+//     const regex regular_expression(format_1 + "|"
+//                                    + format_2 + "|"
+//                                    + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
+//                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
+//                                    + "|" + format_16 + "|" + format_17);
+
+//     regex_search(date, matchs, regular_expression);
+
+//     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
+//     {
+//         if(stoi(matchs[1].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[1].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[2].str())-1;
+//             time_structure.tm_mday = stoi(matchs[3].str());
+//             time_structure.tm_hour = stoi(matchs[4].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[5].str());
+//             time_structure.tm_sec = stoi(matchs[6].str());
+//         }
+//     }
+//     else if(matchs[7] != "") // yyyy/mm/dd hh:mm
+//     {
+//         if(stoi(matchs[7].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[7].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[8].str())-1;
+//             time_structure.tm_mday = stoi(matchs[9].str());
+//             time_structure.tm_hour = stoi(matchs[10].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[11].str());
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[12] != "") // yyyy/mm/dd
+//     {
+//         if(stoi(matchs[12].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[12].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[13].str())-1;
+//             time_structure.tm_mday = stoi(matchs[14].str());
+//             time_structure.tm_hour = 0;
+//             time_structure.tm_min = 0;
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[15] != "") // dd/mm/yyyy hh:mm:ss
+//     {
+//         if(stoi(matchs[17].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[17].str()) - 1900;
+//             time_structure.tm_mon = stoi(matchs[16].str()) - 1;
+//             time_structure.tm_mday = stoi(matchs[15].str());
+//             time_structure.tm_hour = stoi(matchs[18].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[19].str());
+//             time_structure.tm_sec = stoi(matchs[20].str());
+//         }
+//     }
+//     else if(matchs[21] != "") // dd/mm/yyyy hh:mm
+//     {
+//         if(stoi(matchs[23].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[23].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[22].str())-1;
+//             time_structure.tm_mday = stoi(matchs[21].str());
+//             time_structure.tm_hour = stoi(matchs[24].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[25].str());
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[26] != "") // dd/mm/yyyy
+//     {
+//         if(stoi(matchs[28].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[28].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[27].str())-1;
+//             time_structure.tm_mday = stoi(matchs[26].str());
+//             time_structure.tm_hour = 0;
+//             time_structure.tm_min = 0;
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
+//     {
+//         if(stoi(matchs[29].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             regex_search(date, month, months);
+
+//             Index month_number = 0;
+
+//             if(!month.empty())
+//                 for(Index i = 1; i < 13; i++)
+//                     if(month[size_t(i)] != "")
+//                         month_number = i;
+
+//             time_structure.tm_year = stoi(matchs[29].str())-1900;
+//             time_structure.tm_mon = int(month_number) - 1;
+//             time_structure.tm_mday = stoi(matchs[31].str());
+//             time_structure.tm_hour = stoi(matchs[32].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[33].str());
+//             time_structure.tm_sec = stoi(matchs[34].str());
+//         }
+//     }
+//     else if(matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
+//     {
+//         if(stoi(matchs[35].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             regex_search(date, month, months);
+
+//             Index month_number = 0;
+
+//             if(!month.empty())
+//                 for(Index i = 1 ; i < 13  ; i++)
+//                     if(month[size_t(i)] != "")
+//                         month_number = i;
+
+//             time_structure.tm_year = stoi(matchs[35].str()) - 1900;
+//             time_structure.tm_mon = int(month_number) - 1;
+//             time_structure.tm_mday = stoi(matchs[37].str());
+//             time_structure.tm_hour = stoi(matchs[38].str()) - int(gmt);
+//             time_structure.tm_min = stoi(matchs[39].str());
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[40] != "") // yyyy/mmm|mmmm/dd
+//     {
+//         if(stoi(matchs[40].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             regex_search(date, month, months);
+
+//             Index month_number = 0;
+
+//             if(!month.empty())
+//                 for(Index i =1 ; i < 13  ; i++)
+//                     if(month[size_t(i)] != "")
+//                         month_number = i;
+
+//             time_structure.tm_year = stoi(matchs[40].str())-1900;
+//             time_structure.tm_mon = int(month_number)-1;
+//             time_structure.tm_mday = stoi(matchs[42].str())- int(gmt);
+//             time_structure.tm_hour = 0;
+//             time_structure.tm_min = 0;
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[43] != "") // mmm dd, yyyy
+//     {
+//         if(stoi(matchs[45].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             regex_search(date,month,months);
+
+//             Index month_number = 0;
+
+//             if(!month.empty())
+//                 for(Index i =1 ; i<13  ; i++)
+//                     if(month[size_t(i)] != "")
+//                         month_number = i;
+
+//             time_structure.tm_year = stoi(matchs[45].str())-1900;
+//             time_structure.tm_mon = int(month_number)-1;
+//             time_structure.tm_mday = stoi(matchs[44].str());
+//             time_structure.tm_hour = 0;
+//             time_structure.tm_min = 0;
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[46] != "") // yyyy/ mm
+//     {
+//         if(stoi(matchs[46].str()) < 1970)
+//         {
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+//         }
+//         else
+//         {
+//             time_structure.tm_year = stoi(matchs[46].str())-1900;
+//             time_structure.tm_mon = stoi(matchs[47].str())-1;
+//             time_structure.tm_mday = 1;
+//             time_structure.tm_hour = 0;
+//             time_structure.tm_min = 0;
+//             time_structure.tm_sec = 0;
+//         }
+//     }
+//     else if(matchs[48] != "") // hh:mm:ss
+//     {
+//         time_structure.tm_year = 70;
+//         time_structure.tm_mon = 0;
+//         time_structure.tm_mday = 1;
+//         time_structure.tm_hour = stoi(matchs[48].str());
+//         time_structure.tm_min = stoi(matchs[49].str());
+//         time_structure.tm_sec = stoi(matchs[50].str());
+//     }
+//     else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
+//     {
+//         time_structure.tm_year = stoi(matchs[53].str())-1900;
+//         time_structure.tm_mon = stoi(matchs[51].str());
+//         time_structure.tm_mday = stoi(matchs[52].str());
+//         time_structure.tm_min = stoi(matchs[55].str());
+//         time_structure.tm_sec = stoi(matchs[56].str());
+
+//         time_structure.tm_hour = (matchs[57].str() == "PM")
+//             ? stoi(matchs[54].str()) + 12
+//             : stoi(matchs[54].str());
+//     }
+//     else if(matchs[58] != "") // yyyy
+//     {
+//         time_structure.tm_year = stoi(matchs[57].str())-1900;
+//         time_structure.tm_mon = 0;
+//         time_structure.tm_mday = 1;
+//         time_structure.tm_hour = 0;
+//         time_structure.tm_min = 0;
+//         time_structure.tm_sec = 0;
+
+//         return mktime(&time_structure);
+//     }
+//     else if(matchs[59] != "") // yyyy/mm/dd hh:mm:ss.ssssss
+//     {
+//         if(stoi(matchs[60].str()) < 1970)
+//             throw runtime_error("Cannot convert dates below 1970.\n");
+        
+//         time_structure.tm_year = stoi(matchs[60].str())-1900;
+//         time_structure.tm_mon = stoi(matchs[59].str())-1;
+//         time_structure.tm_mday = stoi(matchs[58].str());
+//         time_structure.tm_hour = stoi(matchs[61].str()) - int(gmt);
+//         time_structure.tm_min = stoi(matchs[62].str());
+//         time_structure.tm_sec = stof(matchs[63].str());
+//     }
+//     else if(matchs[70] != "") // %d/%m/%y %H:%M
+//     {
+//         time_structure.tm_year = stoi(matchs[72].str()) + 100;
+//         time_structure.tm_mon = stoi(matchs[71].str())-1;
+//         time_structure.tm_mday = stoi(matchs[70].str());
+//         time_structure.tm_hour = stoi(matchs[73].str());
+//         time_structure.tm_min = stoi(matchs[74].str());
+//         time_structure.tm_sec = 0;
+//     }
+//     else if(is_numeric_string(date))
+//     {
+//     }
+//     else
+//     {
+//         throw runtime_error("Date format (" + date + ") is not implemented.\n");
+//     }
+
+//     if(is_numeric_string(date))
+//     {
+//         time_t time_t_date = stoi(date);
+//         return time_t_date;
+//     }
+//     else
+//     {
+//         return mktime(&time_structure);
+//     }
+// }
+
+
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
     struct tm time_structure = {};
-
-    smatch month;
-
-    const regex months("([Jj]an(?:uary)?)|([Ff]eb(?:ruary)?)|([Mm]ar(?:ch)?)|([Aa]pr(?:il)?)|([Mm]ay)|([Jj]un(?:e)?)|([Jj]ul(?:y)?)"
-                       "|([Aa]ug(?:gust)?)|([Ss]ep(?:tember)?)|([Oo]ct(?:ober)?)|([Nn]ov(?:ember)?)|([Dd]ec(?:ember)?)");
-
-    smatch matchs;
-
-    const string format_1 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_2 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_3 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
-    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
-    const string format_7 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_8 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_9 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
-    const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
-    const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-    const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
-    const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-    const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-    const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
-
-    const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
-                                   + "|" + format_16 + "|" + format_17);
-
-    regex_search(date, matchs, regular_expression);
-
-    if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
+    regex date_patterns[] =
     {
-        if(stoi(matchs[1].str()) < 1970)
+        // yyyy-mm-dd hh:mm:ss.sss
+        regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}):(\d{2})\.(\d+))"),
+
+        // yyyy/mm/dd hh:mm:ss
+        regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}):(\d{2}))"),
+
+        // yyyy/mm/dd hh:mm
+        regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}) (\d{2}):(\d{2}))"),
+
+        // yyyy/mm/dd
+        regex(R"((\d{4})[-/.](\d{2})[-/.](\d{2}))"),
+
+        // dd/mm/yyyy hh:mm:ss
+        regex(R"((\d{2})[-/.](\d{2})[-/.](\d{4}) (\d{2}):(\d{2}):(\d{2}))"),
+
+        // dd/mm/yyyy
+        regex(R"((\d{2})[-/.](\d{2})[-/.](\d{4}))"),
+
+        // yyyy/mm
+        regex(R"((\d{4})[-/.](\d{2}))"),
+
+        // hh:mm:ss
+        regex(R"((\d{2}):(\d{2}):(\d{2}))")
+    };
+
+    for (const auto& pattern : date_patterns)
+    {
+        smatch matches;
+
+        if(regex_match(date, matches, pattern))
         {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[1].str())-1900;
-            time_structure.tm_mon = stoi(matchs[2].str())-1;
-            time_structure.tm_mday = stoi(matchs[3].str());
-            time_structure.tm_hour = stoi(matchs[4].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[5].str());
-            time_structure.tm_sec = stoi(matchs[6].str());
+            if (matches.size() > 1)
+            {
+                if (matches[1].matched) time_structure.tm_year = stoi(matches[1].str()) - 1900;
+                if (matches[2].matched) time_structure.tm_mon = stoi(matches[2].str()) - 1;
+                if (matches[3].matched) time_structure.tm_mday = stoi(matches[3].str());
+                if (matches[4].matched) time_structure.tm_hour = stoi(matches[4].str()) - gmt;
+                if (matches[5].matched) time_structure.tm_min = stoi(matches[5].str());
+                if (matches[6].matched) time_structure.tm_sec = stoi(matches[6].str());
+
+                return mktime(&time_structure);
+            }
         }
     }
-    else if(matchs[7] != "") // yyyy/mm/dd hh:mm
-    {
-        if(stoi(matchs[7].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[7].str())-1900;
-            time_structure.tm_mon = stoi(matchs[8].str())-1;
-            time_structure.tm_mday = stoi(matchs[9].str());
-            time_structure.tm_hour = stoi(matchs[10].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[11].str());
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[12] != "") // yyyy/mm/dd
-    {
-        if(stoi(matchs[12].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[12].str())-1900;
-            time_structure.tm_mon = stoi(matchs[13].str())-1;
-            time_structure.tm_mday = stoi(matchs[14].str());
-            time_structure.tm_hour = 0;
-            time_structure.tm_min = 0;
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[15] != "") // dd/mm/yyyy hh:mm:ss
-    {
-        if(stoi(matchs[17].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[17].str()) - 1900;
-            time_structure.tm_mon = stoi(matchs[16].str()) - 1;
-            time_structure.tm_mday = stoi(matchs[15].str());
-            time_structure.tm_hour = stoi(matchs[18].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[19].str());
-            time_structure.tm_sec = stoi(matchs[20].str());
-        }
-    }
-    else if(matchs[21] != "") // dd/mm/yyyy hh:mm
-    {
-        if(stoi(matchs[23].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[23].str())-1900;
-            time_structure.tm_mon = stoi(matchs[22].str())-1;
-            time_structure.tm_mday = stoi(matchs[21].str());
-            time_structure.tm_hour = stoi(matchs[24].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[25].str());
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[26] != "") // dd/mm/yyyy
-    {
-        if(stoi(matchs[28].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[28].str())-1900;
-            time_structure.tm_mon = stoi(matchs[27].str())-1;
-            time_structure.tm_mday = stoi(matchs[26].str());
-            time_structure.tm_hour = 0;
-            time_structure.tm_min = 0;
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
-    {
-        if(stoi(matchs[29].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            regex_search(date, month, months);
 
-            Index month_number = 0;
-
-            if(!month.empty())
-                for(Index i = 1; i < 13; i++)
-                    if(month[size_t(i)] != "") 
-                        month_number = i;
-
-            time_structure.tm_year = stoi(matchs[29].str())-1900;
-            time_structure.tm_mon = int(month_number) - 1;
-            time_structure.tm_mday = stoi(matchs[31].str());
-            time_structure.tm_hour = stoi(matchs[32].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[33].str());
-            time_structure.tm_sec = stoi(matchs[34].str());
-        }
-    }
-    else if(matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
-    {
-        if(stoi(matchs[35].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            regex_search(date, month, months);
-
-            Index month_number = 0;
-
-            if(!month.empty())
-                for(Index i = 1 ; i < 13  ; i++)
-                    if(month[size_t(i)] != "") 
-                        month_number = i;
-
-            time_structure.tm_year = stoi(matchs[35].str()) - 1900;
-            time_structure.tm_mon = int(month_number) - 1;
-            time_structure.tm_mday = stoi(matchs[37].str());
-            time_structure.tm_hour = stoi(matchs[38].str()) - int(gmt);
-            time_structure.tm_min = stoi(matchs[39].str());
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[40] != "") // yyyy/mmm|mmmm/dd
-    {
-        if(stoi(matchs[40].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            regex_search(date, month, months);
-
-            Index month_number = 0;
-
-            if(!month.empty())
-                for(Index i =1 ; i < 13  ; i++)
-                    if(month[size_t(i)] != "") 
-                        month_number = i;
-
-            time_structure.tm_year = stoi(matchs[40].str())-1900;
-            time_structure.tm_mon = int(month_number)-1;
-            time_structure.tm_mday = stoi(matchs[42].str())- int(gmt);
-            time_structure.tm_hour = 0;
-            time_structure.tm_min = 0;
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[43] != "") // mmm dd, yyyy
-    {
-        if(stoi(matchs[45].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            regex_search(date,month,months);
-
-            Index month_number = 0;
-
-            if(!month.empty())
-                for(Index i =1 ; i<13  ; i++)
-                    if(month[size_t(i)] != "") 
-                        month_number = i;
-
-            time_structure.tm_year = stoi(matchs[45].str())-1900;
-            time_structure.tm_mon = int(month_number)-1;
-            time_structure.tm_mday = stoi(matchs[44].str());
-            time_structure.tm_hour = 0;
-            time_structure.tm_min = 0;
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[46] != "") // yyyy/ mm
-    {
-        if(stoi(matchs[46].str()) < 1970)
-        {
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        }
-        else
-        {
-            time_structure.tm_year = stoi(matchs[46].str())-1900;
-            time_structure.tm_mon = stoi(matchs[47].str())-1;
-            time_structure.tm_mday = 1;
-            time_structure.tm_hour = 0;
-            time_structure.tm_min = 0;
-            time_structure.tm_sec = 0;
-        }
-    }
-    else if(matchs[48] != "") // hh:mm:ss
-    {
-        time_structure.tm_year = 70;
-        time_structure.tm_mon = 0;
-        time_structure.tm_mday = 1;
-        time_structure.tm_hour = stoi(matchs[48].str());
-        time_structure.tm_min = stoi(matchs[49].str());
-        time_structure.tm_sec = stoi(matchs[50].str());
-    }
-    else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
-    {
-        time_structure.tm_year = stoi(matchs[53].str())-1900;
-        time_structure.tm_mon = stoi(matchs[51].str());
-        time_structure.tm_mday = stoi(matchs[52].str());
-        time_structure.tm_min = stoi(matchs[55].str());
-        time_structure.tm_sec = stoi(matchs[56].str());
-
-        time_structure.tm_hour = (matchs[57].str() == "PM")
-            ? stoi(matchs[54].str()) + 12
-            : stoi(matchs[54].str());
-    }
-    else if(matchs[58] != "") // yyyy
-    {
-        time_structure.tm_year = stoi(matchs[57].str())-1900;
-        time_structure.tm_mon = 0;
-        time_structure.tm_mday = 1;
-        time_structure.tm_hour = 0;
-        time_structure.tm_min = 0;
-        time_structure.tm_sec = 0;
-
-        return mktime(&time_structure);
-    }
-    else if(matchs[59] != "") // yyyy/mm/dd hh:mm:ss.ssssss
-    {
-        if(stoi(matchs[60].str()) < 1970)
-            throw runtime_error("Cannot convert dates below 1970.\n");
-        
-        time_structure.tm_year = stoi(matchs[60].str())-1900;
-        time_structure.tm_mon = stoi(matchs[59].str())-1;
-        time_structure.tm_mday = stoi(matchs[58].str());
-        time_structure.tm_hour = stoi(matchs[61].str()) - int(gmt);
-        time_structure.tm_min = stoi(matchs[62].str());
-        time_structure.tm_sec = stof(matchs[63].str());
-    }
-    else if(matchs[70] != "") // %d/%m/%y %H:%M
-    {
-        time_structure.tm_year = stoi(matchs[72].str()) + 100;
-        time_structure.tm_mon = stoi(matchs[71].str())-1;
-        time_structure.tm_mday = stoi(matchs[70].str());
-        time_structure.tm_hour = stoi(matchs[73].str());
-        time_structure.tm_min = stoi(matchs[74].str());
-        time_structure.tm_sec = 0;
-    }
-    else if(is_numeric_string(date))
-    {
-    }
-    else
-    {
-        throw runtime_error("Date format (" + date + ") is not implemented.\n");
-    }
-
-    if(is_numeric_string(date))
-    {
-        time_t time_t_date = stoi(date);
-        return time_t_date;
-    }
-    else
-    {
-        return mktime(&time_structure);
-    }
+    throw runtime_error("Date format (" + date + ") is not implemented.");
 }
-
 
 bool contains_substring(const string& text, const string& sub_string)
 {
@@ -1020,7 +1027,7 @@ string prepend(const string& pre, const string& text)
 }
 
 
-bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
+bool is_numeric_string_vector(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
@@ -1030,7 +1037,7 @@ bool is_numeric_string_vector(const Tensor<string, 1>& string_list)
 }
 
 
-bool has_numbers(const Tensor<string, 1>& string_list)
+bool has_numbers(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
@@ -1040,7 +1047,7 @@ bool has_numbers(const Tensor<string, 1>& string_list)
 }
 
 
-bool has_strings(const Tensor<string, 1>& string_list)
+bool has_strings(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(!is_numeric_string(string_list[i])) 
@@ -1050,7 +1057,7 @@ bool has_strings(const Tensor<string, 1>& string_list)
 }
 
 
-bool is_not_numeric(const Tensor<string, 1>& string_list)
+bool is_not_numeric(const vector<string>& string_list)
 {
     for(Index i = 0; i < string_list.size(); i++)
         if(is_numeric_string(string_list[i])) 
@@ -1060,7 +1067,7 @@ bool is_not_numeric(const Tensor<string, 1>& string_list)
 }
 
 
-bool is_mixed(const Tensor<string, 1>& string_list)
+bool is_mixed(const vector<string>& string_list)
 {
     unsigned count_numeric = 0;
     unsigned count_not_numeric = 0;
@@ -1087,17 +1094,17 @@ void delete_non_printable_chars(string& text)
 }
 
 
-void replace_substring(Tensor<string, 1>& vector, const string& find_what, const string& replace_with)
+void replace_substring(vector<string>& data, const string& find_what, const string& replace_with)
 {
-    const Index size = vector.dimension(0);
+    const Index size = data.size();
 
     for(Index i = 0; i < size; i++)
     {
         size_t position = 0;
 
-        while((position = vector(i).find(find_what, position)) != string::npos)
+        while((position = data[i].find(find_what, position)) != string::npos)
         {
-            vector(i).replace(position, find_what.length(), replace_with);
+            data[i].replace(position, find_what.length(), replace_with);
 
             position += replace_with.length();
         }
@@ -1130,21 +1137,21 @@ bool is_not_alnum(char &c)
 // }
 
 
-bool find_string_in_tensor(Tensor<string, 1>& t, const string& val)
+bool contains(vector<string>& v, const string& str)
 {
-    for(Index i = 0; i < t.dimension(0); i++)
-        if(t(i) == val) 
+    for(Index i = 0; i < v.size(); i++)
+        if(v[i] == str) 
             return true;
 
     return false;
 }
 
 
-string get_word_from_token(string& token)
+string get_first_word(string& line)
 {
     string word;
 
-    for(char& c : token)
+    for(char& c : line)
         if(c != ' ' && c != '=')
             word += c;
         else
@@ -1192,7 +1199,7 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 
 // @todo clean this method Clang-tidy gives warnings.
 
-Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
+vector<string> sort_string_tensor(vector<string>& tensor)
 {
     auto compare_string_length = [](const string& a, const string& b)
     {
@@ -1204,40 +1211,40 @@ Tensor<string,1> sort_string_tensor(Tensor<string, 1>& tensor)
     sort(tensor_as_vector.begin(), tensor_as_vector.end(), compare_string_length);
 
     for(int i = 0; i < tensor.size(); i++)
-        tensor(i) = tensor_as_vector[i];
+        tensor[i] = tensor_as_vector[i];
 
     return tensor;
 }
 
 
-Tensor<string,1> concatenate_string_tensors(const Tensor<string, 1>& tensor_1, const Tensor<string, 1>& tensor_2)
+vector<string> concatenate_string_tensors(const vector<string>& tensor_1, const vector<string>& tensor_2)
 {
-    Tensor<string, 1> tensor = tensor_2;
+    vector<string> tensor = tensor_2;
 
-    for(int i = 0; i < tensor_1.dimension(0); i++)
-        push_back_string(tensor, tensor_1(i));
+    for(int i = 0; i < tensor_1.size(); i++)
+        tensor.push_back(tensor_1[i]);
 
     return tensor;
 }
 
 
-void replace_substring_in_string (Tensor<string, 1>& tokens, string& espression, const string& keyword)
+void replace_substring_in_string (vector<string>& tokens, string& expression, const string& keyword)
 {
     string::size_type previous_pos = 0;
 
-    for(int i = 0; i < tokens.dimension(0); i++)
+    for(int i = 0; i < tokens.size(); i++)
     {
-        const string found_token = tokens(i);
+        const string found_token = tokens[i];
         const string to_replace(found_token);
         const string newword = keyword + " " + found_token;
 
         string::size_type position = 0;
 
-        while((position = espression.find(to_replace, position)) != string::npos)
+        while((position = expression.find(to_replace, position)) != string::npos)
         {
             if(position > previous_pos)
             {
-                espression.replace(position, to_replace.length(), newword);
+                expression.replace(position, to_replace.length(), newword);
                 position += newword.length();
                 previous_pos = position;
                 break;
@@ -1437,36 +1444,36 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 //}
 
 
-Index count_tokens(const Tensor<Tensor<string, 1>, 1>& tokens)
+Index count_tokens(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
     Index count = 0;
 
     for(Index i = 0; i < documents_number; i++)
-        count += tokens(i).size();
+        count += tokens[i].size();
 
     return count;
 }
 
 
-Tensor<string, 1> tokens_list(const Tensor<Tensor<string, 1>, 1>& documents_tokens)
+vector<string> tokens_list(const vector<vector<string>>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
     const Index total_tokens_number = count_tokens(documents_tokens);
 
-    Tensor<string, 1> total_tokens(total_tokens_number);
+    vector<string> total_tokens(total_tokens_number);
 
     Index position = 0;
 
     for(Index i = 0; i < documents_number; i++)
     {
-        copy(documents_tokens(i).data(),
-             documents_tokens(i).data() + documents_tokens(i).size(),
+        copy(documents_tokens[i].data(),
+             documents_tokens[i].data() + documents_tokens[i].size(),
              total_tokens.data() + position);
 
-        position += documents_tokens(i).size();
+        position += documents_tokens[i].size();
     }
 
     return total_tokens;
@@ -1479,46 +1486,43 @@ void to_lower(string& text)
 }
 
 
-void to_lower(Tensor<string, 1>& documents)
+void to_lower(vector<string>& documents)
 {
     const Index documents_number = documents.size();
 
     for(Index i = 0; i < documents_number; i++)
-        to_lower(documents(i));
+        to_lower(documents[i]);
 }
 
 
-void to_lower(Tensor<Tensor<string, 1>, 1>& text)
+void to_lower(vector<vector<string>>& text)
 {
     for(Index i = 0; i < text.size(); i++)
-        to_lower(text(i));
+        to_lower(text[i]);
 }
 
 
-Tensor<Tensor<string, 1>, 1> get_tokens(const Tensor<string, 1>& documents, const string& separator)
+vector<vector<string>> get_tokens(const vector<string>& documents, const string& separator)
 {
     const Index documents_number = documents.size();
 
-    Tensor<Tensor<string, 1>, 1> tokens(documents_number);
-
-
+    vector<vector<string>> tokens(documents_number);
     //#pragma omp parallel for
 
     for(Index i = 0; i < documents_number-1; i++)
-    tokens(i) = get_tokens(documents(i), separator);
-
+        tokens[i] = get_tokens(documents[i], separator);
 
     return tokens;
 }
 
 
-void delete_blanks(Tensor<string, 1>& words)
+void delete_blanks(vector<string>& words)
 {
     const Index words_number = words.size();
 
     const Index empty_number = count_empty(words);
 
-    Tensor<string, 1> vector_copy(words);
+    vector<string> vector_copy(words);
 
     words.resize(words_number - empty_number);
 
@@ -1526,15 +1530,15 @@ void delete_blanks(Tensor<string, 1>& words)
 
     for(Index i = 0; i < words_number; i++)
     {
-        trim(vector_copy(i));
+        trim(vector_copy[i]);
 
-        if(!vector_copy(i).empty())
-            words(index++) = vector_copy(i);
+        if(!vector_copy[i].empty())
+            words[index++] = vector_copy[i];
     }
 }
 
 
-void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
+void delete_blanks(vector<vector<string>>& documents_tokens)
 {
     const Index documents_number = documents_tokens.size();
 
@@ -1542,25 +1546,24 @@ void delete_blanks(Tensor<Tensor<string, 1>, 1>& documents_tokens)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        const Index new_size = count_not_empty(documents_tokens(i));
+        const Index new_size = count_not_empty(documents_tokens[i]);
 
-        Tensor<string, 1> new_document_tokens(new_size);
+        vector<string> new_document_tokens(new_size);
 
         Index index = 0;
 
-        for(Index j = 0; j < documents_tokens(i).size(); j++)
-            if(!documents_tokens(i)(j).empty())
-                new_document_tokens(index++) = documents_tokens(i)(j);
+        for(Index j = 0; j < documents_tokens[i].size(); j++)
+            if(!documents_tokens[i][j].empty())
+                new_document_tokens[index++] = documents_tokens[i][j];
 
-        documents_tokens(i) = new_document_tokens;
+        documents_tokens[i] = new_document_tokens;
     }
 }
 
 
-Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 1>& documents)
+vector<vector<string>> preprocess_language_documents(const vector<string>& documents)
 {
-
-    Tensor<string, 1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -1572,18 +1575,16 @@ Tensor<Tensor<string, 1>, 1> preprocess_language_documents(const Tensor<string, 
 
     delete_non_alphanumeric(documents_copy);
 
-    return get_tokens(documents_copy," ");
-
-    //return Tensor<Tensor<string, 1>, 1>();
+    return get_tokens(documents_copy, " ");
 }
 
 
-vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
+vector<pair<string, int>> count_words(const vector<string>& total_tokens)
 {
     unordered_map<string, int> count;
 
     for(Index i = 0; i < total_tokens.size(); i++)
-        count[total_tokens(i)]++;
+        count[total_tokens[i]]++;
 
     vector<pair<string, int>> word_counts(count.begin(), count.end());
 
@@ -1599,7 +1600,7 @@ vector<pair<string, int>> count_words(const Tensor<string, 1>& total_tokens)
 }
 
 
-void delete_punctuation(Tensor<string, 1>& documents) 
+void delete_punctuation(vector<string>& documents)
 {
     replace_substring(documents, "�", " ");
     replace_substring(documents, "\"", " ");
@@ -1657,9 +1658,9 @@ void delete_punctuation(Tensor<string, 1>& documents)
 }
 
 
-void delete_extra_spaces(Tensor<string, 1>& documents) 
+void delete_extra_spaces(vector<string>& documents)
 {
-    Tensor<string, 1> new_documents(documents);
+    vector<string> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
     {
@@ -1673,26 +1674,26 @@ void delete_extra_spaces(Tensor<string, 1>& documents)
 }
 
 
-void delete_breaks_and_tabs(Tensor<string, 1>& documents) 
+void delete_breaks_and_tabs(vector<string>& documents)
 {
     for(Index i = 0; i < documents.size(); i++)
     {                
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\n', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\t', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\f', ' ');
-        replace(documents(i).begin(), documents(i).end() + documents(i).size(), '\r', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\n', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\t', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\f', ' ');
+        replace(documents[i].begin(), documents[i].end() + documents[i].size(), '\r', ' ');
     }
 }
 
 
-void delete_non_printable_chars(Tensor<string, 1>& documents) 
+void delete_non_printable_chars(vector<string>& documents)
 {
     for(Index i = 0; i < documents.size(); i++) 
-        delete_non_printable_chars(documents(i));
+        delete_non_printable_chars(documents[i]);
 }
 
 
-void split_punctuation(Tensor<string, 1>& documents) 
+void split_punctuation(vector<string>& documents)
 {
     replace_substring(documents, "�", " � ");
     replace_substring(documents, "\"", " \" ");
@@ -1750,9 +1751,9 @@ void split_punctuation(Tensor<string, 1>& documents)
 }
 
 
-void delete_non_alphanumeric(Tensor<string, 1>& documents)
+void delete_non_alphanumeric(vector<string>& documents)
 {
-    Tensor<string, 1> new_documents(documents);
+    vector<string> new_documents(documents);
 
     for(Index i = 0; i < documents.size(); i++)
         new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
@@ -1761,51 +1762,51 @@ void delete_non_alphanumeric(Tensor<string, 1>& documents)
 }
 
 
-string to_string(Tensor<string, 1> token)
+string to_string(vector<string> token)
 {
     string word;
 
     for(Index i = 0; i < token.size() - 1; i++)
-        word += token(i) + " ";
+        word += token[i] + " ";
 
-    word += token(token.size() - 1);
+    word += token[token.size() - 1];
 
     return word;
 }
 
 
-Tensor<string, 1> detokenize(const Tensor<Tensor<string, 1>, 1>& tokens)
+vector<string> detokenize(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
-    Tensor<string, 1> new_documents(documents_number);
+    vector<string> new_documents(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        new_documents[i] = to_string(tokens(i));
+        new_documents[i] = to_string(tokens[i]);
 
     return new_documents;
 }
 
 
-void filter_not_equal_to(Tensor<string, 1>& document, const Tensor<string, 1>& delete_words) 
+void filter_not_equal_to(vector<string>& document, const vector<string>& delete_words)
 {
     for(Index i = 0; i < document.size(); i++)
     {
-        const Index tokens_number = count_tokens(document(i), " ");
-        const Tensor<string, 1> tokens = get_tokens(document(i), " ");
+        const Index tokens_number = count_tokens(document[i], " ");
+        const vector<string> tokens = get_tokens(document[i], " ");
 
         string result;
 
         for(Index j = 0; j < tokens_number; j++)
-            if(!contains(delete_words, tokens(j)))
-                result += tokens(j) + " ";
+            if(!contains(delete_words, tokens[j]))
+                result += tokens[j] + " ";
 
-        document(i) = result;
+        document[i] = result;
     }
 }
 
 
-void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<string, 1>& deletion_words)
+void delete_words(vector<vector<string>>& documents_words, const vector<string>& deletion_words)
 {
     const Index documents_number = documents_words.size();
 
@@ -1815,15 +1816,15 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<st
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words(i).size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
-            const string word = documents_words(i)(j);
+            const string word = documents_words[i][j];
 
             for(Index k = 0; k < deletion_words_number; k++)
             {
-                if(word == deletion_words(k))
+                if(word == deletion_words[k])
                 {
-                    documents_words(i)(j).clear();
+                    documents_words[i][j].clear();
 
                     continue;
                 }
@@ -1833,7 +1834,7 @@ void delete_words(Tensor<Tensor<string, 1>, 1>& documents_words, const Tensor<st
 }
 
 
-void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
+void delete_short_long_words(vector<vector<string>>& documents_words,
                         const Index& minimum_length,
                         const Index& maximum_length)
 {
@@ -1843,31 +1844,31 @@ void delete_short_long_words(Tensor<Tensor<string,1>,1>& documents_words,
 
     for(Index i = 0; i < documents_number; i++)
     {
-        for(Index j = 0; j < documents_words(i).size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
-            const Index length = documents_words(i)(j).length();
+            const Index length = documents_words[i][j].length();
 
             if(length <= minimum_length || length >= maximum_length)
-                documents_words(i)(j).clear();
+                documents_words[i][j].clear();
         }
     }
 }
 
 
-void delete_numbers(Tensor<Tensor<string,1>,1>& documents_words)
+void delete_numbers(vector<vector<string>>& documents_words)
 {
     const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
     for(Index i = 0; i < documents_number; i++)
-        for(Index j = 0; j < documents_words(i).size(); j++)
-            if(is_numeric_string(documents_words(i)(j)))
-                documents_words(i)(j).clear();
+        for(Index j = 0; j < documents_words[i].size(); j++)
+            if(is_numeric_string(documents_words[i][j]))
+                documents_words[i][j].clear();
 }
 
 
-void delete_emails(Tensor<Tensor<string,1>,1>& documents)
+void delete_emails(vector<vector<string>>& documents)
 {
     const Index documents_number = documents.size();
 
@@ -1875,12 +1876,12 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        const Tensor<string, 1> document = documents(i);
+        const vector<string> document = documents[i];
 
         for(Index j = 0; j < document.size(); j++)
         {
             /*
-            Tensor<string, 1> tokens = get_tokens(document(j));
+            vector<string> tokens = get_tokens(document(j));
 
             string result;
 
@@ -1896,20 +1897,20 @@ void delete_emails(Tensor<Tensor<string,1>,1>& documents)
 */
         }
 
-        documents(i) = document;
+        documents[i] = document;
     }
 }
 
 
-void replace_accented_words(Tensor<Tensor<string,1>, 1>& documents)
+void replace_accented_words(vector<vector<string>>& documents)
 {
     const Index documents_size = documents.size();
 
     #pragma omp parallel for
 
     for(Index i = 0; i < documents_size; i++)
-        for(Index j = 0; j < documents(i).size(); j++)
-            replace_accented_words(documents(i)(j));
+        for(Index j = 0; j < documents[i].size(); j++)
+            replace_accented_words(documents[i][j]);
 }
 
 
@@ -1950,7 +1951,7 @@ void replace_accented_words(string& word)
 }
 
 
-Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
+vector<string> get_r1_r2(const string& word, const vector<string>& vowels)
 {
     const Index word_length = word.length();
 
@@ -1978,14 +1979,11 @@ Tensor<string,1> get_r1_r2(const string& word, const Tensor<string,1>& vowels)
         }
     }
 
-    Tensor<string,1> r1_r2(2);
-    r1_r2.setValues({ r1, r2 });
-
-    return r1_r2;
+    return vector<string>({ r1, r2 });
 }
 
 
-string get_rv(const string& word, const Tensor<string,1>& vowels)
+string get_rv(const string& word, const vector<string>& vowels)
 {
     string rv;
 
@@ -2025,7 +2023,7 @@ string get_rv(const string& word, const Tensor<string,1>& vowels)
 }
 
 
-WordBag calculate_word_bag(const Tensor<string,1>& words)
+WordBag calculate_word_bag(const vector<string>& words)
 {
     WordBag word_bag;
 
@@ -2045,12 +2043,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 }
 
 
-//WordBag calculate_word_bag_minimum_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+//WordBag calculate_word_bag_minimum_frequency(const vector<vector<string>>& tokens,
 //                                             const Index& minimum_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2068,12 +2066,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_percentage(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_minimum_percentage(const vector<vector<string>>& tokens,
 //                                               const double& minimum_percentage)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2091,12 +2089,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_minimum_ratio(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_minimum_ratio(const vector<vector<string>>& tokens,
 //                                          const double& minimum_ratio)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     Tensor<string,1> words = word_bag.words;
+//     vector<string> words = word_bag.words;
 //     Tensor<Index,1> frequencies = word_bag.frequencies;
 //     Tensor<double,1> percentages = word_bag.percentages;
 
@@ -2118,12 +2116,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_total_frequency(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_total_frequency(const vector<vector<string>>& tokens,
 //                                            const Index& total_frequency)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     const Tensor<string,1> words = word_bag.words;
+//     const vector<string> words = word_bag.words;
 //     const Tensor<Index, 1> frequencies = word_bag.frequencies;
 
 //     Tensor<Index, 1> cumulative_frequencies = frequencies.cumsum(0);
@@ -2143,12 +2141,12 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// WordBag calculate_word_bag_maximum_size(const Tensor<Tensor<string,1>,1>& tokens,
+// WordBag calculate_word_bag_maximum_size(const vector<vector<string>>& tokens,
 //                                         const Index& maximum_size)
 // {
 //     WordBag word_bag = calculate_word_bag(tokens);
 
-//     const Tensor<string, 1> words = word_bag.words;
+//     const vector<string> words = word_bag.words;
 //     const Tensor<Index ,1> frequencies = word_bag.frequencies;
 
 //     word_bag.words = get_first(words, maximum_size);
@@ -2158,11 +2156,11 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-// Index calculate_weight(const Tensor<string, 1>& document_words, const WordBag& word_bag)
+// Index calculate_weight(const vector<string>& document_words, const WordBag& word_bag)
 // {
 //     Index weight = 0;
 
-//     const Tensor<string, 1> bag_words = word_bag.words;
+//     const vector<string> bag_words = word_bag.words;
 
 //     const Tensor<Index, 1> bag_frequencies = word_bag.frequencies;
 
@@ -2181,10 +2179,10 @@ WordBag calculate_word_bag(const Tensor<string,1>& words)
 // }
 
 
-Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
+vector<vector<string>> preprocess(const vector<string>& documents)
 {
 /*
-    Tensor<string,1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -2196,11 +2194,11 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
+    vector<vector<string>> tokens = get_tokens(documents_copy);
 
     delete_stop_words(tokens);
 
-    delete_short_long_words(tokens, short_words_length, long_words_length);
+    delete_short_long_words(tokens, short_word_length, long_word_length);
 
     replace_accented_words(tokens);
 
@@ -2214,14 +2212,14 @@ Tensor<Tensor<string,1>,1> preprocess(const Tensor<string,1>& documents)
 
     return tokens;
 */
-    return Tensor<Tensor<string,1>,1>();
+    return vector<vector<string>>();
 }
 
 
-Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& documents)
+vector<vector<string>> preprocess_language_model(const vector<string>& documents)
 {
 /*
-    Tensor<string,1> documents_copy(documents);
+    vector<string> documents_copy(documents);
 
     to_lower(documents_copy);
 
@@ -2233,7 +2231,7 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     delete_non_alphanumeric(documents_copy);
 
-    Tensor<Tensor<string,1>,1> tokens = get_tokens(documents_copy);
+    vector<vector<string>> tokens = get_tokens(documents_copy);
 
     delete_emails(tokens);
 
@@ -2241,38 +2239,38 @@ Tensor<Tensor<string,1>,1> preprocess_language_model(const Tensor<string,1>& doc
 
     return tokens;
 */
-    return Tensor<Tensor<string,1>, 1>();
+    return vector<vector<string>>();
 }
 
 
-Tensor<Index, 1> get_words_number(const Tensor<Tensor<string,1>,1>& tokens)
+Tensor<Index, 1> get_words_number(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
 
     Tensor<Index, 1> words_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        words_number(i) = tokens(i).size();
+        words_number(i) = tokens[i].size();
 
     return words_number;
 }
 
 
-Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
+Tensor<Index, 1> get_sentences_number(const vector<string>& documents)
 {
     const Index documents_number = documents.size();
 
     Tensor<Index, 1> sentences_number(documents_number);
 
     for(Index i = 0; i < documents_number; i++)
-        sentences_number(i) = count_tokens(documents(i), ".");
+        sentences_number(i) = count_tokens(documents[i], ".");
 
     return sentences_number;
 }
 
 
-// Tensor<double, 1> get_words_presence_percentage(const Tensor<Tensor<string, 1>, 1>& tokens,
-//                                                 const Tensor<string, 1>& words_name)
+// Tensor<double, 1> get_words_presence_percentage(const vector<vector<string>>& tokens,
+//                                                 const vector<string>& words_name)
 // {
 //     Tensor<double, 1> word_presence_percentage(words_name.size());
 
@@ -2282,7 +2280,7 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
 //         for(Index j = 0; j < tokens.size(); j++)
 //         {
-//             if(contains(tokens(j),words_name(i)))
+//             if(contains(tokens[j],words_name(i)))
 //             {
 //                 sum = sum + 1;
 //             }
@@ -2296,14 +2294,14 @@ Tensor<Index, 1> get_sentences_number(const Tensor<string, 1>& documents)
 
 
 /*
-Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<string, 1>, 1>& tokens,
+Tensor<string, 2> calculate_combinated_words_frequency(const vector<vector<string>>& tokens,
                                                        const Index& minimum_frequency,
                                                        const Index& combinations_length)
 {
-    const Tensor<string, 1> words = tokens_list(tokens);
+    const vector<string> words = tokens_list(tokens);
 
     const WordBag top_word_bag = calculate_word_bag_minimum_frequency(tokens, minimum_frequency);
-    const Tensor<string, 1> words_name = top_word_bag.words;
+    const vector<string> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
         throw runtime_error("Words number must be greater than 1.\n");
@@ -2324,7 +2322,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         }
     }
 
-    Tensor<string, 1> combinated_words(combinated_words_size);
+    vector<string> combinated_words(combinated_words_size);
 
     Index index = 0;
 
@@ -2347,7 +2345,7 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
         }
     }
 
-//    const Tensor<string, 1> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words )));
+//    const vector<string> combinated_words_frequency = to_string_tensor( ( count_unique( combinated_words )));
 
 //    Tensor<string, 2> combinated_words_frequency_matrix(combinated_words_frequency.size(),2);
 
@@ -2363,19 +2361,19 @@ Tensor<string, 2> calculate_combinated_words_frequency(const Tensor<Tensor<strin
 */
 
 /*
-Tensor<string, 2> top_words_correlations(const Tensor<Tensor<string, 1>, 1>& tokens,
+Tensor<string, 2> top_words_correlations(const vector<vector<string>>& tokens,
                                          const double& minimum_percentage,
                                          const Tensor<Index, 1>& targets)
 {
     const WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
-    const Tensor<string, 1> words_name = top_word_bag.words;
+    const vector<string> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
     {
         cout << "There are no words with such high percentage of appearance" << endl;
     }
 
-    Tensor<string, 1> new_documents(tokens.size());
+    vector<string> new_documents(tokens.size());
 
     for(size_t i = 0; i < tokens.size(); i++)
     {
@@ -2443,7 +2441,7 @@ string generate_word(TextGenerationAlphabet& text_generation_alphabet, const str
 
     //    Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-    //    Tensor<string, 1> punctuation_signs(6); // @todo change for multiple letters predicted
+    //    vector<string> punctuation_signs(6); // @todo change for multiple letters predicted
 
     //    punctuation_signs.setValues({" ",",",".","\n",":",";"});
 
@@ -2534,7 +2532,7 @@ Tensor<type, 2> TextGenerationAlphabet::get_data_tensor()
 }
 
 
-Tensor<string, 1> TextGenerationAlphabet::get_alphabet()
+vector<string> TextGenerationAlphabet::get_alphabet()
 {
     return alphabet;
 }
@@ -2568,7 +2566,7 @@ void TextGenerationAlphabet::set_data_tensor(const Tensor<type, 2>& new_data_ten
 }
 
 
-void TextGenerationAlphabet::set_alphabet(const Tensor<string, 1>& new_alphabet)
+void TextGenerationAlphabet::set_alphabet(const vector<string>& new_alphabet)
 {
     alphabet = new_alphabet;
 }
@@ -2748,12 +2746,12 @@ Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
 }
 */
 
-void print_tokens(const Tensor<Tensor<string,1>,1>& tokens)
+void print_tokens(const vector<vector<string>>& tokens)
 {
     for(Index i = 0; i < tokens.size(); i++)
     {
-        for(Index j = 0; j < tokens(i).size(); j++)
-            cout << tokens(i)(j) << " - ";
+        for(Index j = 0; j < tokens[i].size(); j++)
+            cout << tokens[i][j] << " - ";
 
         cout << endl;
     }
@@ -2883,26 +2881,20 @@ string stem(const string& word)
 }
 
 
-void stem(Tensor<string, 1>& words)
+void stem(vector<string>& words)
 {
     for(Index i = 0; i < words.size(); i++)
-    {
-        words(i) = stem(words(i));
-    }
+        words[i] = stem(words[i]);
 }
 
 
-void stem(Tensor<Tensor<string, 1>, 1>& words)
+void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
     for(Index i = 0; i < words.size(); i++)
-    {
-        for(Index j = 0; j < words(i).size(); j++)
-        {
-            stem(words(i)(j));
-        }
-    }
+        for(Index j = 0; j < words[i].size(); j++)
+            stem(words[i][j]);
 }
 
 }

@@ -41,14 +41,14 @@ public:
              const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
 
     void set_dropout_rate(const type&);
-    void set_input_vocabulary(const Tensor<string, 1>&);
-    void set_context_vocabulary(const Tensor<string, 1>&);
+    void set_input_vocabulary(const vector<string>&);
+    void set_context_vocabulary(const vector<string>&);
 
     string calculate_outputs(const string&, const bool& = true);
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-//    void tokenize_whitespace(const Tensor<string, 1>&, Tensor<type, 2>&);
-    void tokenize_wordpiece(const Tensor<string, 1>&, Tensor<type, 2>&);
+//    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
+    void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
 
 //    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
@@ -77,8 +77,8 @@ private:
 
     type dropout_rate = 0;
 
-    Tensor<string, 1> input_vocabulary;
-    Tensor<string, 1> context_vocabulary;
+    vector<string> input_vocabulary;
+    vector<string> context_vocabulary;
 
 };
 

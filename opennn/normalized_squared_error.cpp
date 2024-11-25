@@ -17,7 +17,6 @@ namespace opennn
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
-    set_default();
 }
 
 
@@ -41,14 +40,15 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
-        set_normalization_coefficient();
+    {
+        //set_normalization_coefficient(); //@todo fix crash
+    }
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean();
-
+    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean(); 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
@@ -87,7 +87,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
     type normalization_coefficient = type(0);
 
-    // @todo add pragma 
+    #pragma omp parallel for reduction(+:normalization_coefficient)
 
     for(Index i = 0; i < target_samples_number; i++)
         for(Index j = 0; j < target_variables_number; j++)
@@ -324,7 +324,7 @@ string NormalizedSquaredError::get_error_type_text() const
 }
 
 
-void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void NormalizedSquaredError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("NormalizedSquaredError");
 
@@ -332,9 +332,9 @@ void NormalizedSquaredError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document) const
+void NormalizedSquaredError::from_XML(const XMLDocument& document) const
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 
     if(!root_element)
         throw runtime_error("Normalized squared element is nullptr.\n");

@@ -36,8 +36,8 @@ public:
 
    Tensor<Scaler, 1> get_unscaling_method() const;
 
-   Tensor<string, 1> write_unscaling_methods() const;
-   Tensor<string, 1> write_unscaling_method_text() const;
+   vector<string> write_unscaling_methods() const;
+   vector<string> write_unscaling_method_text() const;
 
    void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const vector<Descriptives>&, const Tensor<Scaler, 1>&);
@@ -53,7 +53,7 @@ public:
 
    void set_scalers(const Tensor<Scaler,1>&);
    void set_scalers(const string&);
-   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
 
    void set_scaler(const Index&, const string&);
@@ -64,14 +64,14 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) final;
 
-   Tensor<string, 1> write_scalers_text() const;
+   vector<string> write_scalers_text() const;
 
    void print() const;
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) final;
+   void to_XML(XMLPrinter&) const final;
 
-   string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
 private:
 

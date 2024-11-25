@@ -37,8 +37,8 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
 //    EXPECT_EQ(output_2.dimension(0), dimensions{ 2,1 });
 
-//    assert_true( == 2, LOG);
-//    assert_true(output_2.dimension(1) == 2, LOG);
+//    EXPECT_EQ( == 2);
+//    EXPECT_EQ(output_2.dimension(1) == 2);
 
     // Convolution 3D, 3 channels
 
@@ -50,9 +50,9 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
     output_3 = input_3.convolve(kernel_3, dimensions_3);
 
-//    assert_true(output_3.dimension(0) == 4, LOG);
-//    assert_true(output_3.dimension(1) == 4, LOG);
-//    assert_true(output_3.dimension(2) == 1, LOG);
+//    EXPECT_EQ(output_3.dimension(0) == 4);
+//    EXPECT_EQ(output_3.dimension(1) == 4);
+//    EXPECT_EQ(output_3.dimension(2) == 1);
 
     // Convolution 2D, 3 channels, multiple images, 1 kernel
 
@@ -67,12 +67,12 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
     output_4 = input_4.convolve(kernel_4, dimensions_4);
 
-//    assert_true(output_3.dimension(0) == 10, LOG);
-//    assert_true(output_3.dimension(1) == 1, LOG);
-//    assert_true(output_3.dimension(2) == 4, LOG);
-//    assert_true(output_3.dimension(3) == 4, LOG);
+//    EXPECT_EQ(output_3.dimension(0) == 10);
+//    EXPECT_EQ(output_3.dimension(1) == 1);
+//    EXPECT_EQ(output_3.dimension(2) == 4);
+//    EXPECT_EQ(output_3.dimension(3) == 4);
 
-    // assert_true(abs(output_3(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
+    // EXPECT_EQ(abs(output_3(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
     //                 && abs(output_3(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN)
     //                 && abs(output_3(0, 0, 0, 2) - type(1)) < type(NUMERIC_LIMITS_MIN)
     //                 && abs(output_3(0, 0, 0, 3) - type(1)) < type(NUMERIC_LIMITS_MIN)
@@ -119,7 +119,7 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
     //             abs(output_3(2, 0, 3, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
     //             abs(output_3(2, 0, 3, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
     //             abs(output_3(2, 0, 3, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN), LOG);
+    //             abs(output_3(2, 0, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN));
 
     // Convolution 3D, 2 channels
 
@@ -137,10 +137,10 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
     output = input.convolve(kernel, dimensions);
 
-//    assert_true(fabs(output(0, 0, 0) - 320) < type(NUMERIC_LIMITS_MIN), LOG);
-//    assert_true(fabs(output(1, 0, 0) - 356) < type(NUMERIC_LIMITS_MIN), LOG);
-//    assert_true(fabs(output(0, 1, 0) - 428) < type(NUMERIC_LIMITS_MIN), LOG);
-//    assert_true(fabs(output(1, 1, 0) - 464) < type(NUMERIC_LIMITS_MIN), LOG);
+//    EXPECT_EQ(fabs(output(0, 0, 0) - 320) < type(NUMERIC_LIMITS_MIN));
+//    EXPECT_EQ(fabs(output(1, 0, 0) - 356) < type(NUMERIC_LIMITS_MIN));
+//    EXPECT_EQ(fabs(output(0, 1, 0) - 428) < type(NUMERIC_LIMITS_MIN));
+//    EXPECT_EQ(fabs(output(1, 1, 0) - 464) < type(NUMERIC_LIMITS_MIN));
 }
 
 
@@ -234,8 +234,8 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     convolutional_layer.calculate_convolutions(inputs, convolutions);
 
-    assert_true(convolutions(0, 0, 0, 0) == type(9871+1) 
-             && convolutions(1, 0, 0, 0) == type(13855+1), LOG);
+    EXPECT_EQ(convolutions(0, 0, 0, 0) == type(9871+1) 
+             && convolutions(1, 0, 0, 0) == type(13855+1));
 
 }
 
@@ -296,7 +296,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = type(0.046000f);
     result(1,1,1,1) = type(0.045910f);
 
-    assert_true(abs(activation_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
+    EXPECT_EQ(abs(activation_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,0,1) - result(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,1,0) - result(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,1,1) - result(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
@@ -311,7 +311,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 abs(activation_derivatives(1,1,0,0) - result(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activation_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+                abs(activation_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -336,7 +336,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = type(1);
     result(1,1,1,1) = type(1);
 
-    assert_true((activation_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
+    EXPECT_EQ((activation_derivatives(0, 0, 0, 0) - result(0, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activation_derivatives(0, 1, 0, 0) - result(0, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activation_derivatives(1, 0, 0, 0) - result(1, 0, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activation_derivatives(1, 1, 0, 0) - result(1, 1, 0, 0)) <= type(NUMERIC_LIMITS_MIN) &&
@@ -351,7 +351,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 (activation_derivatives(0, 0, 1, 1) - result(0, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activation_derivatives(0, 1, 1, 1) - result(0, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
                 (activation_derivatives(1, 0, 1, 1) - result(1, 0, 1, 1)) <= type(NUMERIC_LIMITS_MIN) &&
-                (activation_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN), LOG);
+                (activation_derivatives(1, 1, 1, 1) - result(1, 1, 1, 1)) <= type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -376,7 +376,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
     result(1,1,1,0) = type(0.902120f);
     result(1,1,1,1) = type(0.902208f);
 
-    assert_true(abs(activation_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
+    EXPECT_EQ(abs(activation_derivatives(0,0,0,0) - result(0,0,0,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,0,1) - result(0,0,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,1,0) - result(0,0,1,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(0,0,1,1) - result(0,0,1,1)) < type(NUMERIC_LIMITS_MIN) &&
@@ -391,7 +391,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
                 abs(activation_derivatives(1,1,0,0) - result(1,1,0,0)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(1,1,0,1) - result(1,1,0,1)) < type(NUMERIC_LIMITS_MIN) &&
                 abs(activation_derivatives(1,1,1,0) - result(1,1,1,0)) < type(NUMERIC_LIMITS_MIN) &&
-                abs(activation_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN), LOG);
+                abs(activation_derivatives(1,1,1,1) - result(1,1,1,1)) < type(NUMERIC_LIMITS_MIN));
 }
 
 
@@ -424,12 +424,12 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     convolutional_layer.insert_padding(inputs, padded);
 
-    assert_true(padded.dimension(0) == 6 &&
+    EXPECT_EQ(padded.dimension(0) == 6 &&
                 padded.dimension(1) == 6,LOG);
 
-    assert_true((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
+    EXPECT_EQ((padded(0, 0, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
                 (padded(0, 1, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN) &&
-                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+                (padded(0, 2, 0, 0) - type(0)) < type(NUMERIC_LIMITS_MIN));
 
 }
 
@@ -519,18 +519,18 @@ void ConvolutionalLayerTest::test_forward_propagate()
 
     convolutional_layer.forward_propagate(input_pairs, &forward_propagation, is_training);
  
-    assert_true(forward_propagation.outputs.dimension(0) == input_images
+    EXPECT_EQ(forward_propagation.outputs.dimension(0) == input_images
                 && forward_propagation.outputs.dimension(1) == convolutional_layer.get_output_dimensions()[0] 
                 && forward_propagation.outputs.dimension(2) == convolutional_layer.get_output_dimensions()[1]
-                && forward_propagation.outputs.dimension(3) == convolutional_layer.get_output_dimensions()[2], LOG);
+                && forward_propagation.outputs.dimension(3) == convolutional_layer.get_output_dimensions()[2]);
 
-    assert_true(forward_propagation.activation_derivatives.dimension(0) == input_images
+    EXPECT_EQ(forward_propagation.activation_derivatives.dimension(0) == input_images
                 && forward_propagation.activation_derivatives.dimension(1) == convolutional_layer.get_input_dimensions()[0]
                 && forward_propagation.activation_derivatives.dimension(2) == convolutional_layer.get_input_dimensions()[1]
-                && forward_propagation.activation_derivatives.dimension(3) == convolutional_layer.get_input_dimensions()[2], LOG);
+                && forward_propagation.activation_derivatives.dimension(3) == convolutional_layer.get_input_dimensions()[2]);
 
-    assert_true(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
-                && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1), LOG);
+    EXPECT_EQ(forward_propagation.outputs(0, 0, 0, 0) == type(4590 + 1)
+                && forward_propagation.outputs(1, 0, 0, 0) == type(1530 + 1));
 
 }
 

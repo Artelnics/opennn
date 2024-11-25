@@ -88,7 +88,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 128},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 3"));
@@ -97,7 +97,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 64},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 4"));
@@ -122,7 +122,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 256},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 6"));
@@ -131,7 +131,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 128},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 7"));
@@ -166,16 +166,16 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 10"));
 
-    // layers[14]->set_parameters_constant(1);
+    // // // layers[14]->set_parameters_constant(1);
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 11"));
@@ -184,7 +184,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 12"));
@@ -193,7 +193,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 13"));
@@ -207,18 +207,18 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 5"));
 
-    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-    //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
-    //                                              convolution_stride_dimensions,
-    //                                              convolution_type,
-    //                                              "Convolutional layer 14"));
+    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                 (dimensions){3, 3, get_output_dimensions()[2], 1024},
+                                                 activation_function,
+                                                 convolution_stride_dimensions,
+                                                 convolution_type,
+                                                 "Convolutional layer 14"));
 
-    // // // layers[19]->set_parameters_constant(1);
+    // // layers[19]->set_parameters_constant(1);
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 512},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 15"));
@@ -227,7 +227,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 16"));
@@ -236,7 +236,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 512},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 17"));
@@ -245,7 +245,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-    //                                              ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                              activation_function,
     //                                              convolution_stride_dimensions,
     //                                              convolution_type,
     //                                              "Convolutional layer 18"));
@@ -254,7 +254,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
-    //                                           ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                           activation_function,
     //                                           convolution_stride_dimensions,
     //                                           convolution_type,
     //                                           "Convolutional layer 19"));
@@ -263,19 +263,19 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
-    //                                           ConvolutionalLayer::ActivationFunction::LeakyRectifiedLinear,
+    //                                           activation_function,
     //                                           convolution_stride_dimensions,
     //                                           convolution_type,
     //                                           "Convolutional layer 20"));
 
     // // // layers[25]->set_parameters_constant(1)
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                              activation_function,
-                                              convolution_stride_dimensions,
-                                              convolution_type,
-                                              "Convolutional layer 21"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           activation_function,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 21"));
 
     // // // layers[26]->set_parameters_constant(1)
 
@@ -288,9 +288,9 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // layers[27]->set_parameters_constant(1);
 
-    // add_layer(make_unique<DetectionLayer>(get_output_dimensions(),
-    //                                       anchors,
-    //                                       "Detection layer"));
+    add_layer(make_unique<DetectionLayer>(get_output_dimensions(),
+                                          anchors,
+                                          "Detection layer"));
 
 }
 

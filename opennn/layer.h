@@ -17,6 +17,8 @@
 #include "layer_back_propagation.h"
 #include "layer_back_propagation_lm.h"
 
+using namespace tinyxml2;
+
 namespace opennn
 {
 
@@ -120,13 +122,13 @@ public:
 
     // Serialization
 
-    virtual void from_XML(const tinyxml2::XMLDocument&) {}
+    virtual void from_XML(const XMLDocument&) {}
 
-    virtual void to_XML(tinyxml2::XMLPrinter&) const {}
+    virtual void to_XML(XMLPrinter&) const {}
 
     // Expression
 
-    virtual string get_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const 
+    virtual string get_expression(const vector<string>&, const vector<string>&) const 
     {
         return string();
     }

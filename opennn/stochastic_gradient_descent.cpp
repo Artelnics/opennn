@@ -232,10 +232,10 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    vector<Descriptives> input_variables_descriptives;
-    vector<Descriptives> target_variables_descriptives;
+    vector<Descriptives> input_variable_descriptives;
+    vector<Descriptives> target_variable_descriptives;
     if(!is_instance_of<LanguageDataSet>(data_set))
-        input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
@@ -259,16 +259,16 @@ TrainingResults StochasticGradientDescent::perform_training()
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
-        scaling_layer_2d->set_descriptives(input_variables_descriptives);
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variables_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        target_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variables_descriptives, target_variables_scalers);
+        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
@@ -475,10 +475,10 @@ TrainingResults StochasticGradientDescent::perform_training()
     }
 
     if(!is_instance_of<LanguageDataSet>(data_set))
-        data_set->unscale_variables(DataSet::VariableUse::Input, input_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
 
     if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variables_descriptives);
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
     
@@ -521,7 +521,7 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 }
 
 
-void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
+void StochasticGradientDescent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("StochasticGradientDescent");
 
@@ -536,9 +536,9 @@ void StochasticGradientDescent::to_XML(tinyxml2::XMLPrinter& printer) const
 }
 
 
-void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
+void StochasticGradientDescent::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
+    const XMLElement* root_element = document.FirstChildElement("StochasticGradientDescent");
 
     if(!root_element)
         throw runtime_error("Stochastic gradient descent element is nullptr.\n");

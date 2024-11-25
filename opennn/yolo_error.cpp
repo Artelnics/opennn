@@ -29,7 +29,7 @@ void YoloError::calculate_error(const Batch& batch,
     const vector<Tensor<type, 1>> anchors = yolo_dataset->get_anchors();
     // Batch
 
-    cout<<"=========error========="<<endl;
+    // cout<<"=========error========="<<endl;
 
 
     const Index batch_samples_number = batch.get_batch_samples_number();
@@ -38,17 +38,22 @@ void YoloError::calculate_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
 
+    // cout<<targets<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+
+    // throw runtime_error("I wanted to see the targets");
+
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
-    cout<<outputs<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+    // cout<<outputs<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
     // Back propagation
 
     // const Index batch_samples_number = outputs.dimension(0);
+    const type epsilon = 1e-06;
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
     const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
@@ -73,22 +78,37 @@ void YoloError::calculate_error(const Batch& batch,
                                            + pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs(i, j, k, l * box_data_size + 3) * anchors[l](1)), 2);
 
 
+                        Tensor<type, 1> ground_truth_box(4);
+                        Tensor<type, 1> predicted_box(4);
 
-                        confidence_loss_object += pow(1 - outputs(i, j, k, l * box_data_size + 4), 2);
+                        for(Index data = 0; data < 4; data++)
+                        {
+                            ground_truth_box(data) = targets(i, j, k, l * box_data_size + data);
+                            predicted_box(data) = outputs(i, j, k, l * box_data_size + data);
+                        }
+
+                        type confidence = calculate_intersection_over_union(ground_truth_box, predicted_box);
+
+                        // cout<<"ground_truth_box: "<<ground_truth_box<<endl;
+                        // cout<<"predicted_box: "<<predicted_box<<endl;
+
+                        // cout<<"IOU between prediction and ground truth: "<<confidence<<endl<<endl;
+
+                        confidence_loss_object += pow(outputs(i, j, k, l * box_data_size + 4) - confidence, 2);
 
                         for(Index c = 0; c < classes_number; c++){
-                            cout<<outputs(i,j, k, l * box_data_size + (5 + c))<<endl;
-                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(outputs(i,j, k, l * box_data_size + (5 + c)));}
+                            // cout<<outputs(i,j, k, l * box_data_size + (5 + c))<<endl;
+                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs(i,j, k, l * box_data_size + (5 + c)));}
                     }
                     else
                     {
                         confidence_loss_noobject += pow(outputs(i, j, k, l * box_data_size + 4), 2);
                     }
                 }
-                cout<<"coordinate loss: "<<coordinate_loss<<endl;
-                cout<<"confidence_loss_object: "<<confidence_loss_object<<endl;
-                cout<<"class_loss: "<<class_loss<<endl;
-                cout<<"confidence_loss_noobject: "<<confidence_loss_noobject<<endl;
+                // cout<<"coordinate loss: "<<coordinate_loss<<endl;
+                // cout<<"confidence_loss_object: "<<confidence_loss_object<<endl;
+                // cout<<"class_loss: "<<class_loss<<endl;
+                // cout<<"confidence_loss_noobject: "<<confidence_loss_noobject<<endl;
 
 
 
@@ -101,24 +121,24 @@ void YoloError::calculate_error(const Batch& batch,
 
     Tensor<type, 0> total_loss;
 
-    cout<<coordinate_loss<<endl<<endl;
-    cout<<-class_loss<<endl<<endl;
-    cout<<confidence_loss<<endl<<endl;
+    // cout<<"coordinate loss: "<<coordinate_loss<<endl<<endl;
+    // cout<<"class_loss: "<<-class_loss<<endl<<endl;
+    // cout<<"confidence_loss: "<<confidence_loss<<endl<<endl;
 
     total_loss() = (coordinate_loss - class_loss + confidence_loss) / batch_samples_number;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    cout<<"=========error========="<<endl;
+    // cout<<"=========error========="<<endl;
 
     error = total_loss;
 
-    cout<<back_propagation.error<<endl;
+    // cout<<back_propagation.error<<endl;
 
 
-    cout<<"=========error========="<<endl;
+    // cout<<"=========error========="<<endl;
 
-    cout<<error<<endl;
+    // cout<<error<<endl;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 
@@ -195,13 +215,21 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
+    cout<<targets_pair.second.size()<<endl;
+
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
+
+    cout<<"========delta4=========="<<endl;
+
 
     // Back propagation
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(output_deltas_pair);
+    // output_deltas.setZero();
+
+    // cout<<output_deltas<<endl;
 
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
@@ -209,6 +237,11 @@ void YoloError::calculate_output_delta(const Batch& batch,
     const Index box_data_size = 5 + classes_number;
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
+    const type epsilon = 1e-06;
+
+    cout<<"========delta4=========="<<endl;
+
+    // cout<<batch_samples_number<<endl;
 
     for(Index i = 0; i < batch_samples_number; i++)
     {
@@ -222,36 +255,58 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
                     if(targets(i, j, k, base_index + 4) == 1)
                     {
-                        // Coordinate deltas (delta of mean_squared_error)
-                        output_deltas(i, j, k, base_index + 0) = lambda_coord * 2 * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0));
-                        output_deltas(i, j, k, base_index + 1) = lambda_coord * 2 * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1));
 
-                        // Width and height deltas (similar to delta of mean_squared_error)
-                        output_deltas(i, j, k, base_index + 2) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 2) * anchors[l](0) ) - sqrt(targets(i, j, k, base_index + 2)))
-                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 2) * anchors[l](0) )) * anchors[l](0) ;
+                        // Center deltas
+                        output_deltas(i, j, k, base_index + 0) = (lambda_coord * 2 * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0)))
+                                                                 * outputs(i,j,k, base_index + 0) * (1 - outputs(i,j,k, base_index + 0));                                // chain rule
 
-                        output_deltas(i, j, k, base_index + 3) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 3) * anchors[l](1) ) - sqrt(targets(i, j, k, base_index + 3)))
-                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 3) * anchors[l](1) )) * anchors[l](1) ;
+                        output_deltas(i, j, k, base_index + 1) = (lambda_coord * 2 * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1)))
+                                                                  * outputs(i,j,k, base_index + 1) * (1 - outputs(i,j,k, base_index + 1));                               // chain rule
 
-                        // Confidence deltas (there is object) (delta of mean_squared_error)
-                        output_deltas(i, j, k, base_index + 4) = 2 * (1 - outputs(i, j, k, base_index + 4));
+                        // Width and height deltas
+                        output_deltas(i, j, k, base_index + 2) = (lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 2)/* * anchors[l](0) */) - sqrt(targets(i, j, k, base_index + 2)))
+                                                                  * (0.5 / (epsilon + sqrt(outputs(i, j, k, base_index + 2))/* * anchors[l](0) */)))                                    // chain rule
+                                                                  * outputs(i, j, k, base_index + 2)/* * anchors[l](0)*/;                                                   // chain rule
 
-                        // Classes deltas (delta for the cross entropy)
+                        output_deltas(i, j, k, base_index + 3) = (lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 3)/* * anchors[l](1) */) - sqrt(targets(i, j, k, base_index + 3)))
+                                                                  * (0.5 / (epsilon + sqrt(outputs(i, j, k, base_index + 3))/* * anchors[l](1) */)))                                    // chain rule
+                                                                  * outputs(i, j, k, base_index + 3) /* * anchors[l](1)*/;                                                   // chain rule
+
+                        // Confidence deltas (there is an object)
+                        Tensor<type, 1> ground_truth_box(4);
+                        Tensor<type, 1> predicted_box(4);
+
+                        for(Index data = 0; data < 4; data++)
+                        {
+                            ground_truth_box(data) = targets(i, j, k, base_index + data);
+                            predicted_box(data) = outputs(i, j, k, base_index + data);
+                        }
+
+                        // cout<<ground_truth_box<<endl;
+                        // cout<<predicted_box<<endl;
+
+                        type confidence = calculate_intersection_over_union(ground_truth_box, predicted_box);
+
+                        output_deltas(i, j, k, base_index + 4) = (2 * (outputs(i, j, k, base_index + 4) - confidence))
+                                                                 * outputs(i, j, k, base_index + 4) * (1 - outputs(i, j, k, base_index + 4));                           // chain rule
+
+                        // Classes deltas
                         for(Index c = 0; c < classes_number; c++)
                         {
-                            output_deltas(i, j, k, base_index + c) = - targets(i, j, k, base_index + 5 + c) / outputs(i, j, k, base_index + 5 + c);
+                            output_deltas(i, j, k, base_index + c) = outputs(i, j, k, base_index + 5 + c) - targets(i, j, k, base_index + 5 + c)/* / (epsilon + outputs(i, j, k, base_index + 5 + c))*/;
                         }
                     }
                     else
                     {
-                        // Confidence deltas (there is no object) (delta of mean_squared_error)
-                        output_deltas(i, j, k, base_index + 4) = lambda_noobject * 2 * (outputs(i, j, k, base_index + 4));
+                        // Confidence deltas (there is no object)
+                        output_deltas(i, j, k, base_index + 4) = lambda_noobject * 2 * (outputs(i, j, k, base_index + 4))
+                                                                 * outputs(i, j, k, base_index + 4) * (1 - outputs(i, j, k, base_index + 4));                           // chain rule
                     }
                 }
             }
         }
     }
-    // output_deltas = - output_deltas;
+    // cout<<output_deltas<<endl;
 }
 
 string YoloError::get_loss_method() const
@@ -270,7 +325,7 @@ void YoloError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("YOLOv2Error");
+    file_stream.OpenElement("YOLOError");
 
     file_stream.CloseElement();
 }
@@ -278,10 +333,10 @@ void YoloError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void YoloError::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("YOLOv2Error");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("YOLOError");
 
     if(!root_element)
-        throw runtime_error("YOLOv2 error element is nullptr.\n");
+        throw runtime_error("YOLO error element is nullptr.\n");
 
     // Regularization
 

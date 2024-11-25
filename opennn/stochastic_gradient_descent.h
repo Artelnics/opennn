@@ -70,9 +70,9 @@ public:
 
    Tensor<string, 2> to_string_matrix() const final;
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
+   void from_XML(const XMLDocument&) final;
 
-   void to_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 private:
 
@@ -104,7 +104,7 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    explicit StochasticGradientDescentData(StochasticGradientDescent*);
+    explicit StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
 
     void set(StochasticGradientDescent* = nullptr);
 

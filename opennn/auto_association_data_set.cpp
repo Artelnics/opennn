@@ -118,9 +118,12 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     const Index samples_number = get_samples_number();
 
-    Tensor<Index, 1> indices;
-
+    vector<Index> indices;
+/*
     initialize_sequential(indices, 0, 1, samples_number-1);
+*/
+    iota(indices.begin(), indices.end(), 0);
+
 
     std::shuffle(indices.data(), indices.data() + indices.size(), urng);
 
@@ -133,7 +136,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_training != training_samples_number)
     {
-        index = indices(i++);
+        index = indices[i++];
 
         if(sample_uses[index] != SampleUse::None)
         {
@@ -148,7 +151,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 
     while(count_testing != testing_samples_number)
     {
-        index = indices(i++);
+        index = indices[i++];
 
         if(sample_uses[index] != SampleUse::None)
         {

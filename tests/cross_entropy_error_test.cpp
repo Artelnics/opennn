@@ -70,12 +70,12 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -114,12 +114,12 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
 
     }
 
@@ -193,12 +193,12 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         // Assert
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0]);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
        
     }
 
@@ -268,12 +268,12 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         // Assert
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0]);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
     }
 
@@ -348,12 +348,12 @@ void CrossEntropyErrorTest::test_back_propagate()
 
         // Assert
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0], LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == image_data_set.get_target_dimensions()[0]);
 
-        assert_true(back_propagation.error() >= 0, LOG);
+        EXPECT_EQ(back_propagation.error() >= 0);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
     }
 }
 

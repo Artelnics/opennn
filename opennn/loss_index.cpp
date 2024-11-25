@@ -388,7 +388,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 ForwardPropagation& forward_propagation,
                                                 BackPropagation& back_propagation) const
 {
-    cout<<"=========delta========="<<endl;
+    cout<<"========delta========="<<endl;
 
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
@@ -418,6 +418,9 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
 
     calculate_output_delta(batch, forward_propagation, back_propagation);
+
+    cout<<"========delta=========="<<endl;
+
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_pairs[i],
@@ -449,7 +452,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 }
 
 
-void LossIndex::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void LossIndex::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("LossIndex");
 
@@ -457,9 +460,9 @@ void LossIndex::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
+void LossIndex::regularization_from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Regularization");
+    const XMLElement* root_element = document.FirstChildElement("Regularization");
 
     if(!root_element)
         throw runtime_error("Regularization tag not found.\n");
@@ -468,7 +471,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 
     set_regularization_method(new_regularization_method);
 
-    const tinyxml2::XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
+    const XMLElement* element = root_element->FirstChildElement("RegularizationWeight");
 
     if(element)
     {
@@ -486,7 +489,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
+void LossIndex::write_regularization_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("Regularization");
     
@@ -520,17 +523,17 @@ void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) cons
 }
 
 
-void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
+void LossIndex::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
+    const XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
 
     if(!root_element)
         throw runtime_error("Mean squared element is nullptr.\n");
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    XMLDocument regularization_document;
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
     regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
     regularization_from_XML(regularization_document);
 }
@@ -717,6 +720,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
+       // cout<<"Error forward: "<<error_forward<<endl;
+
        parameters_forward(i) -= h;
 
        parameters_backward(i) -= h;
@@ -728,6 +733,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_backward = back_propagation.error();
+
+       // cout<<"Error backward: "<<error_backward<<endl;
 
        parameters_backward(i) += h;
 

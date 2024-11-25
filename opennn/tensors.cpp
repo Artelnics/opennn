@@ -789,18 +789,18 @@ void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 }
 
 
-Tensor<string, 1> sort_by_rank(const Tensor<string,1>&tokens, const Tensor<Index,1>&rank)
+vector<string> sort_by_rank(const vector<string>& tokens, const Tensor<Index,1>& rank)
 {
     const Index tokens_size = tokens.size();
 
     if(tokens_size != rank.size())
         throw runtime_error("Tokens and rank size must be the same.\n");
 
-    Tensor<string,1> sorted_tokens(tokens_size);
+    vector<string> sorted_tokens(tokens_size);
 
     #pragma omp parallel for
     for(Index i = 0; i < tokens_size; i++)
-        sorted_tokens(i) = tokens(rank(i));
+        sorted_tokens[i] = tokens[rank(i)];
 
     return sorted_tokens;
 }
@@ -817,7 +817,7 @@ Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1
 
     #pragma omp parallel for
     for(Index i = 0; i < tokens_size; i++)
-        sorted_tokens(i) = tokens(rank(i));
+        sorted_tokens[i] = tokens(rank(i));
 
     return sorted_tokens;
 }
@@ -882,44 +882,44 @@ Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>& vector, const dou
 }
 
 
-Index count_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+Index count_greater_than(const vector<Index>& data, const Index& bound)
 {
     Index count = 0;
 
     #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < vector.size(); i++)
-        if(vector(i) > bound)
+    for(Index i = 0; i < data.size(); i++)
+        if(data[i] > bound)
             count++;
 
     return count;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Index,1>& vector, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<Index>& data, const Index& bound)
 {
-    const Index indices_size = count_greater_than(vector, bound);
+    const Index indices_size = count_greater_than(data, bound);
 
-    Tensor<Index, 1> indices(indices_size);
+    vector<Index> indices(indices_size);
 
     Index index = 0;
 
-    for(Index i  = type(0); i < vector.size(); i++)
-         if(vector(i) > bound)
-             indices(index++) = vector(i);
+    for(Index i  = type(0); i < data.size(); i++)
+         if(data[i] > bound)
+             indices[index++] = data[i];
 
     return indices;
 }
 
 
-Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vectors, const Index& bound)
+vector<Index> get_elements_greater_than(const vector<vector<Index>>& vectors, const Index& bound)
 {
     const Index vectors_number = vectors.size();
 
-    Tensor<Index, 1> indices(0);
+    vector<Index> indices(0);
 
     for(Index i = 0; i < vectors_number; i++)
     {
-        const Tensor<Index, 1> indices_vector = get_elements_greater_than(vectors(i), bound);
+        const vector<Index> indices_vector = get_elements_greater_than(vectors[i], bound);
 
         indices = join_vector_vector(indices, indices_vector);
     }
@@ -928,21 +928,21 @@ Tensor<Index, 1> get_elements_greater_than(const Tensor<Tensor<Index, 1>,1>& vec
 }
 
 
-void delete_indices(Tensor<string,1>& vector, const Tensor<Index,1>& indices)
+void delete_indices(vector<string>& data, const Tensor<Index,1>& indices)
 {
-    const Index original_size = vector.size();
+    const Index original_size = data.size();
 
-    const Index new_size = vector.size() - indices.size();
+    const Index new_size = data.size() - indices.size();
 
-    Tensor<string,1> vector_copy(vector);
+    vector<string> data_copy(data);
 
-    vector.resize(new_size);
+    data.resize(new_size);
 
     Index index = 0;
 
     for(Index i = 0; i < original_size; i++)
         if(!contains(indices, i))
-            vector(index++) = vector_copy(i);
+            data[index++] = data_copy[i];
 }
 
 
@@ -982,9 +982,9 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
 }
 
 
-//Tensor<string, 1> get_first(const Tensor<string,1>& vector, const Index& index)
+//vector<string> get_first(const vector<string>& vector, const Index& index)
 //{
-//    Tensor<string, 1> new_vector(index);
+//    vector<string> new_vector(index);
 
 //    copy(vector.data(), vector.data() + index, new_vector.data());
 
@@ -1362,7 +1362,7 @@ Index count_NAN(const Tensor<type, 2>& x)
 }
 
 
-Index count_empty(const Tensor<string, 1>& strings)
+Index count_empty(const vector<string>& strings)
 {
     const Index strings_number = strings.size();
 
@@ -1372,7 +1372,7 @@ Index count_empty(const Tensor<string, 1>& strings)
 
     for( Index i = 0; i < strings_number; i++)
     {
-        string element = strings(i);
+        string element = strings[i];
 
         trim(element);
                 
@@ -1384,7 +1384,7 @@ Index count_empty(const Tensor<string, 1>& strings)
 }
 
 
-Index count_not_empty(const Tensor<string, 1>& strings)
+Index count_not_empty(const vector<string>& strings)
 {
     const Index strings_number = strings.size();
 
@@ -1394,7 +1394,7 @@ Index count_not_empty(const Tensor<string, 1>& strings)
 
     for( Index i = 0; i < strings_number; i++)
     {
-        string element = strings(i);
+        string element = strings[i];
 
         trim(element);
 
@@ -1405,11 +1405,11 @@ Index count_not_empty(const Tensor<string, 1>& strings)
 }
 
 
-Tensor<Index, 1> join_vector_vector(const Tensor<Index, 1>& x, const Tensor<Index, 1>& y)
+vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
     const Index size = x.size() + y.size();
 
-    Tensor<Index, 1> data(size);
+    vector<Index> data(size);
 
     memcpy(data.data(), x.data(), x.size() * sizeof(Index));
 
@@ -1502,20 +1502,20 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<ty
 }
 
 
-Tensor<string, 1> assemble_text_vector_vector(const Tensor<string, 1>& x, const Tensor<string, 1>& y)
+vector<string> assemble_text_vector_vector(const vector<string>& x, const vector<string>& y)
 {
     const Index x_size = x.size();
     const Index y_size = y.size();
 
-    Tensor<string,1> data(x_size + y_size);
+    vector<string> data(x_size + y_size);
 
     #pragma omp parallel for
     for(Index i = 0; i < x_size; i++)
-        data(i) = x(i);
+        data[i] = x[i];
 
     #pragma omp parallel for
     for(Index i = 0; i < y_size; i++)
-        data(i + x_size) = y(i);
+        data[i + x_size] = y[i];
 
     return data;
 }
@@ -1647,17 +1647,17 @@ string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
 }
 
 
-string string_tensor_to_string(const Tensor<string,1>& x, const string& separator)
+string string_tensor_to_string(const vector<string>& x, const string& separator)
 {
     const Index size = x.size();
 
     if(x.size() == 0)
        throw runtime_error("Input vector must have dimension greater than 0.\n");
 
-    string line = x(0);
+    string line = x[0];
 
     for(Index i = 1; i < size; i++)
-        line = line + separator + x(i);
+        line = line + separator + x[i];
 
     return line;
 }
@@ -1714,83 +1714,25 @@ bool contains(const Tensor<Index,1>& vector, const Index& value)
 }
 
 
-bool contains(const Tensor<string,1>& vector, const string& value)
+bool contains(const vector<string>& data, const string& value)
 {
-    Tensor<string, 1> copy(vector);
+    vector<string> copy = data;
 
     const string* it = find(copy.data(), copy.data()+copy.size(), value);
 
     return it != (copy.data()+copy.size());
 }
 
-
-void push_back_index(Tensor<Index, 1>& old_vector, const Index& new_element)
+vector<string> to_string_tensor(const Tensor<type, 1>& x)
 {
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<Index, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_element;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_string(Tensor<string, 1>& old_vector, const string& new_string)
-{
-    const Index old_size = old_vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<string, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = old_vector(i);
-
-    new_vector(new_size-1) = new_string;
-
-    old_vector = new_vector;
-}
-
-
-void push_back_type(Tensor<type, 1>& vector, const type& new_value)
-{
-    const Index old_size = vector.size();
-
-    const Index new_size = old_size+1;
-
-    Tensor<type, 1> new_vector(new_size);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < old_size; i++) 
-        new_vector(i) = vector(i);
-
-    new_vector(new_size-1) = new_value;
-
-    vector = new_vector;
-}
-
-
-Tensor<string, 1> to_string_tensor(const Tensor<type, 1>& x)
-{
-    Tensor<string, 1> vector(x.size());
+    vector<string> data(x.size());
 
     #pragma omp parallel for
 
     for(Index i = 0; i < x.size(); i++)
-        vector(i) = to_string(x(i));
+        data[i] = to_string(x(i));
 
-    return vector;
+    return data;
 }
 
 
@@ -1838,15 +1780,6 @@ TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index
 }
 
 
-void print_dimensions(const dimensions& new_dimensions)
-{
-    for(size_t i = 0; i < new_dimensions.size(); i++)
-        cout << new_dimensions[i] << " ";
-
-    cout << endl;
-}
-
-
 TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair)
 {
     if(x_pair.second.size() != 1)
@@ -1882,6 +1815,8 @@ TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
 {
+    if(x_pair.second.size() != 4)
+        throw runtime_error("Dimensions must be 4");
     return TensorMap<Tensor<type, 4>>(x_pair.first,
                                       x_pair.second[0],
                                       x_pair.second[1],

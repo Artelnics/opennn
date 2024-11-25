@@ -79,7 +79,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
-    cout<<targets<<endl<<endl<<outputs<<endl;
+    // cout<<targets<<endl<<endl<<outputs<<endl;
 
     // Back propagation
 
@@ -180,7 +180,7 @@ string CrossEntropyError::get_error_type_text() const
 }
 
 
-void CrossEntropyError::to_XML(tinyxml2::XMLPrinter& file_stream) const
+void CrossEntropyError::to_XML(XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("CrossEntropyError");
 
@@ -188,18 +188,18 @@ void CrossEntropyError::to_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
+void CrossEntropyError::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
+    const XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
 
     if(!root_element)
         throw runtime_error("Cross entropy error element is nullptr.\n");
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
+    XMLDocument regularization_document;
 
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+    const XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
     regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
 
     regularization_from_XML(regularization_document);

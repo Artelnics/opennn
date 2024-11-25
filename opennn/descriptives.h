@@ -15,10 +15,6 @@ struct Descriptives {
 
   explicit Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
-  explicit Descriptives(const Tensor<type, 1>&);
-
-  // Set
-
   Tensor<type, 1> to_tensor() const;
 
   void set(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));

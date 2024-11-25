@@ -13,18 +13,6 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices,
                  const vector<Index>& context_indices)
 {
-    // if(data_set->get_model_type() == DataSet::ModelType::ObjectDetection)
-    // {
-    //     YOLODataset* yolo_dataset = static_cast<YOLODataset*>(data_set);
-
-    //     cout<<"========dataset=========="<<endl;
-
-
-    //     yolo_input = yolo_dataset->get_images();
-    //     yolo_target = yolo_dataset->get_targets();
-    // }
-    // else
-    // {
         const Tensor<type, 2>& data = data_set->get_data();
 
         ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
@@ -134,125 +122,97 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     batch_size = new_batch_size;
     data_set = new_data_set;
 
-    DataSet::ModelType model_type = data_set->get_model_type();
+    const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+    const Index target_variables_number = data_set->get_variables_number(DataSet::VariableUse::Target);
 
-    switch(model_type)
+    const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
+    const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
+
+
+    if(data_set_input_dimensions.size() == 1)
     {
-
-    case DataSet::ModelType::ObjectDetection:
+        input_dimensions = {{batch_size, input_variables_number}};
+        input_tensor.resize(batch_size*input_variables_number);
+    }
+    else if(data_set_input_dimensions.size() == 2)
     {
+        const Index rows_number = data_set_input_dimensions[0];
+        const Index columns_number = data_set_input_dimensions[1];
 
-        YOLODataset* yolo_dataset = static_cast<YOLODataset*>(data_set);
-
-        const dimensions& data_set_input_dimensions = yolo_dataset->get_input_dimensions();
-        const dimensions& data_set_target_dimensions = yolo_dataset->get_target_dimensions();
-
+        input_dimensions = {{batch_size, rows_number, columns_number}};
+        input_tensor.resize(batch_size*rows_number* columns_number);
+    }
+    else if(data_set_input_dimensions.size() == 3)
+    {
         const Index rows_number = data_set_input_dimensions[0];
         const Index columns_number = data_set_input_dimensions[1];
         const Index channels = data_set_input_dimensions[2];
 
         input_dimensions = {{batch_size, rows_number, columns_number, channels}};
         input_tensor.resize(batch_size*channels*rows_number*columns_number);
-
-
-        targets_dimensions = {{batch_size, data_set_target_dimensions[0], data_set_target_dimensions[1], data_set_target_dimensions[2]}};
     }
-        break;
 
-    default:
+    if(data_set_target_dimensions.size() == 1)
     {
-        const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = data_set->get_variables_number(DataSet::VariableUse::Target);
+        targets_dimensions = {{batch_size, target_variables_number}};
 
-        const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
-        const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
+        target_tensor.resize(batch_size*target_variables_number);
+    }
+    else if(data_set_target_dimensions.size() == 2)
+    {
+        const Index rows_number = data_set_target_dimensions[0];
+        const Index columns_number = data_set_target_dimensions[1];
 
-        if(data_set_input_dimensions.size() == 1)
+        targets_dimensions = {{batch_size, rows_number, columns_number}};
+        target_tensor.resize(batch_size*rows_number*columns_number);
+    }
+    else if(data_set_target_dimensions.size() == 3)
+    {
+        const Index rows_number = data_set_target_dimensions[0];
+        const Index columns_number = data_set_target_dimensions[1];
+        const Index channels = data_set_target_dimensions[2];
+
+        targets_dimensions = {{batch_size, rows_number, columns_number, channels}};
+
+        target_tensor.resize(batch_size*channels*rows_number*columns_number);
+    }
+    // LanguageDataSet
+
+    if(is_instance_of<LanguageDataSet>(data_set))
+    {
+        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+        const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
+
+        const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
+
+        if(data_set_context_dimensions.size() == 1)
         {
-            input_dimensions = {{batch_size, input_variables_number}};
-            input_tensor.resize(batch_size*input_variables_number);
+            context_dimensions = {{batch_size, context_variables_number}};
+
+            context_tensor.resize(batch_size*context_variables_number);
         }
-        else if(data_set_input_dimensions.size() == 2)
+        else if(data_set_context_dimensions.size() == 2)
         {
-            const Index rows_number = data_set_input_dimensions[0];
-            const Index columns_number = data_set_input_dimensions[1];
+            const Index rows_number = context_dimensions[0];
+            const Index columns_number = context_dimensions[1];
 
-            input_dimensions = {{batch_size, rows_number, columns_number}};
-            input_tensor.resize(batch_size*rows_number* columns_number);
+            context_dimensions = {{batch_size, rows_number, columns_number}};
+
+            context_tensor.resize(batch_size*rows_number*columns_number);
         }
-        else if(data_set_input_dimensions.size() == 3)
+        else if(data_set_context_dimensions.size() == 3)
         {
-            const Index rows_number = data_set_input_dimensions[0];
-            const Index columns_number = data_set_input_dimensions[1];
-            const Index channels = data_set_input_dimensions[2];
+            const Index channels = context_dimensions[0];
+            const Index rows_number = context_dimensions[1];
+            const Index columns_number = context_dimensions[2];
 
-            input_dimensions = {{batch_size, rows_number, columns_number, channels}};
-            input_tensor.resize(batch_size*channels*rows_number*columns_number);
-        }
+            context_dimensions = {{batch_size, channels, rows_number, columns_number}};
 
-        if(data_set_target_dimensions.size() == 1)
-        {
-            targets_dimensions = {{batch_size, target_variables_number}};
-
-            target_tensor.resize(batch_size*target_variables_number);
-        }
-        else if(data_set_target_dimensions.size() == 2)
-        {
-            const Index rows_number = data_set_target_dimensions[0];
-            const Index columns_number = data_set_target_dimensions[1];
-
-            targets_dimensions = {{batch_size, rows_number, columns_number}};
-            target_tensor.resize(batch_size*rows_number*columns_number);
-        }
-        else if(data_set_target_dimensions.size() == 3)
-        {
-            const Index rows_number = data_set_target_dimensions[0];
-            const Index columns_number = data_set_target_dimensions[1];
-            const Index channels = data_set_target_dimensions[2];
-
-            targets_dimensions = {{batch_size, rows_number, columns_number, channels}};
-
-            target_tensor.resize(batch_size*channels*rows_number*columns_number);
-        }
-        // LanguageDataSet
-
-        if(is_instance_of<LanguageDataSet>(data_set))
-        {
-            LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-
-            const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
-
-            const Tensor<Index, 1> data_set_context_dimensions = language_data_set->get_context_variables_dimensions();
-
-            if(data_set_context_dimensions.size() == 1)
-            {
-                context_dimensions = {{batch_size, context_variables_number}};
-
-                context_tensor.resize(batch_size*context_variables_number);
-            }
-            else if(data_set_context_dimensions.size() == 2)
-            {
-                const Index rows_number = context_dimensions[0];
-                const Index columns_number = context_dimensions[1];
-
-                context_dimensions = {{batch_size, rows_number, columns_number}};
-
-                context_tensor.resize(batch_size*rows_number*columns_number);
-            }
-            else if(data_set_context_dimensions.size() == 3)
-            {
-                const Index channels = context_dimensions[0];
-                const Index rows_number = context_dimensions[1];
-                const Index columns_number = context_dimensions[2];
-
-                context_dimensions = {{batch_size, channels, rows_number, columns_number}};
-
-                context_tensor.resize(batch_size*channels*rows_number*columns_number);
-            }
+            context_tensor.resize(batch_size*channels*rows_number*columns_number);
         }
     }
-        break;
-    }
+
 }
 
 

@@ -24,48 +24,6 @@ Descriptives::Descriptives(const type& new_minimum,
 }
 
 
-Descriptives::Descriptives(const Tensor<type, 1>&x)
-{
-    const Index size = x.size();
-
-    Tensor<type, 0> minimum = x.minimum();
-    Tensor<type, 0> maximum = x.maximum();
-
-    long double sum = 0.0;
-    long double squared_sum = 0;
-    Index count = 0;
-
-    for(Index i = 0; i < size; i++)
-    {
-        if (isnan(x(i))) continue;
-        
-        sum += x(i);
-        squared_sum += double(x(i)) *double(x(i));
-        count++;        
-    }
-
-    const type mean = type(sum/count);
-
-    type standard_deviation;
-
-    if(count <= 1)
-    {
-        standard_deviation = type(0);
-    }
-    else
-    {
-        const type numerator = type(squared_sum - sum*sum/count);
-        const type denominator = type(size - 1);
-
-        standard_deviation = numerator / denominator;
-    }
-
-    standard_deviation = sqrt(standard_deviation);
-
-    set(minimum(0), maximum(0), mean, standard_deviation);
-}
-
-
 Tensor<type, 1> Descriptives::to_tensor() const
 {
     Tensor<type, 1> descriptives_tensor(4);
@@ -116,30 +74,6 @@ Tensor<type, 1> Descriptives::to_vector() const
 
     return statistics_vector;
 }
-
-
-// bool Descriptives::has_minimum_minus_one_maximum_one()
-// {
-//     if(abs(minimum + type(1)) < type(NUMERIC_LIMITS_MIN) && abs(maximum - type(1)) < type(NUMERIC_LIMITS_MIN))
-//     {
-//         return true;
-//     }
-
-//     return false;
-// }
-
-
-// bool Descriptives::has_mean_zero_standard_deviation_one()
-// {
-//     if(abs(mean) < type(NUMERIC_LIMITS_MIN) && abs(standard_deviation - type(1)) < type(NUMERIC_LIMITS_MIN))
-//     {
-//         return true;
-//     }
-//     else
-//     {
-//         return false;
-//     }
-// }
 
 
 void Descriptives::print(const string& title) const
@@ -571,34 +505,34 @@ Index maximum(const Tensor<Index, 1>& vector)
 
 
 Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
-                                 const Tensor<Index, 1>& row_indices,
-                                 const Tensor<Index, 1>& column_indices)
+                                const vector<Index>& row_indices,
+                                const vector<Index>& column_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_column_indices;
+    vector<Index> used_column_indices;
 
-    if(column_indices.dimension(0) == 0)
+    if(column_indices.size() == 0)
     {
         used_column_indices.resize(columns_number);
 
         for(Index i = 0; i < columns_number; i++)
-            used_column_indices(i) = i;
+            used_column_indices[i] = i;
     }
     else
     {
         used_column_indices = column_indices;
     }
 
-    Tensor<Index, 1> used_row_indices;
+    vector<Index> used_row_indices;
 
-    if(row_indices.dimension(0) == 0)
+    if(row_indices.size() == 0)
     {
         used_row_indices.resize(rows_number);
 
         for(Index i = 0; i < rows_number; i++)
-            used_row_indices(i) = i;
+            used_row_indices[i] = i;
     }
     else
     {
@@ -617,11 +551,11 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
 
     for(Index j = 0; j < column_indices_size; j++)
     {
-        column_index = used_column_indices(j);
+        column_index = used_column_indices[j];
 
         for(Index i = 0; i < row_indices_size; i++)
         {
-            row_index = used_row_indices(i);
+            row_index = used_row_indices[i];
 
             column(i) = matrix(row_index,column_index);
         }
@@ -831,7 +765,9 @@ type kurtosis(const Tensor<type, 1>& vector)
     {
         if (isnan(vector(i))) continue;
         
-        sum += (vector(i) - mean_value)* (vector(i) - mean_value)* (vector(i) - mean_value)*(vector(i) - mean_value);
+        const long double deviation = vector(i) - mean_value;
+
+        sum += deviation * deviation * deviation * deviation;
 
         count++;        
     }
@@ -1323,6 +1259,52 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
 }
 
 
+Descriptives vector_descriptives(const Tensor<type, 1>& x)
+{
+    Descriptives my_descriptives;
+
+    const Index size = x.size();
+
+    Tensor<type, 0> minimum = x.minimum();
+    Tensor<type, 0> maximum = x.maximum();
+
+    long double sum = 0.0;
+    long double squared_sum = 0;
+    Index count = 0;
+
+    for (Index i = 0; i < size; i++)
+    {
+        if (isnan(x(i))) continue;
+
+        sum += x(i);
+        squared_sum += double(x(i)) * double(x(i));
+        count++;
+    }
+
+    const type mean = type(sum / count);
+
+    type standard_deviation;
+
+    if (count <= 1)
+    {
+        standard_deviation = type(0);
+    }
+    else
+    {
+        const type numerator = type(squared_sum - sum * sum / count);
+        const type denominator = type(size - 1);
+
+        standard_deviation = numerator / denominator;
+    }
+
+    standard_deviation = sqrt(standard_deviation);
+
+    my_descriptives.set(minimum(0), maximum(0), mean, standard_deviation);
+
+    return my_descriptives;
+}
+
+
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
@@ -1330,15 +1312,17 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 
     vector<Descriptives> descriptives(columns_number);
 
-    Tensor<type, 1> column(rows_number);
+    //Tensor<type, 1> column(rows_number);
 
     //    #pragma omp parallel for private(column)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        column = matrix.chip(i,1);
+        //column = matrix.chip(i,1);
 
-        descriptives[i] = opennn::descriptives(column);
+        const TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+        descriptives[i] = opennn::vector_descriptives(column);
     }
 
     return descriptives;
@@ -1491,14 +1475,14 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
 }
 
 
-Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& column_indices)
+Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix, const vector<Index>& column_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Index, 1> used_column_indices;
+    vector<Index> used_column_indices;
 
-    if(column_indices.dimension(0) == 0 && column_indices.dimension(1) == 0)
+    if(column_indices.size() == 0)
         used_column_indices.resize(columns_number);
     else
         used_column_indices = column_indices;
@@ -1512,7 +1496,7 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix, const Tensor<Inde
 
     for(Index i = 0; i < column_indices_size; i++)
     {
-        column_index = used_column_indices(i);
+        column_index = used_column_indices[i];
 
         column = matrix.chip(column_index,1);
 
@@ -1529,14 +1513,6 @@ type range(const Tensor<type, 1>& vector)
     const type max = maximum(vector);
 
     return abs(max - min);
-}
-
-
-Descriptives descriptives(const Tensor<type, 1>& vector)
-{
-    Descriptives descriptives(vector);
-
-    return descriptives;
 }
 
 
@@ -1679,7 +1655,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix)
         {
             if(!isnan(column(i)))
             {
-                push_back_type(sorted_column, column(i));
+                push_back(sorted_column, column(i));
                 rows_number++;
             }
         }
@@ -1714,9 +1690,9 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
     {
         if(!isnan(column(i)))
         {
-            push_back_type(sorted_column, column(i));
+            push_back(sorted_column, column(i));
 
-            //push_back_type(sorted_column, column(i));
+            //push_back(sorted_column, column(i));
             rows_number++;
         }
     }
@@ -1755,7 +1731,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& co
 
         for(Index i = 0; i < column.size(); i++)
             if(!isnan(column(i)))
-                push_back_type(sorted_column,column(i));
+                push_back(sorted_column,column(i));
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());
 
@@ -1792,7 +1768,7 @@ Tensor<type, 1> median(const Tensor<type, 2>& matrix,
             const Index row_index = row_indices[k];
 
             if(!isnan(matrix(row_index, column_index)))
-                push_back_type(sorted_column, matrix(row_index, column_index));
+                push_back(sorted_column, matrix(row_index, column_index));
         }
 
         sort(sorted_column.data(), sorted_column.data() + sorted_column.size(), less<type>());

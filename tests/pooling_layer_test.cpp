@@ -20,12 +20,12 @@ TEST(PoolingLayerTest, GeneralConstructor)
 
     PoolingLayer pooling_layer(input_dimensions, pool_dimensions);
 
-    //    assert_true(pooling_layer.get_input_height() == 28
+    //    EXPECT_EQ(pooling_layer.get_input_height() == 28
     //    && pooling_layer.get_input_width() == 29
-    //    && pooling_layer.get_channels_number() == 1, LOG);
+    //    && pooling_layer.get_channels_number() == 1);
 
-    //assert_true(pooling_layer.get_pool_height() == 3
-    //    && pooling_layer.get_pool_width() == 2, LOG);
+    //EXPECT_EQ(pooling_layer.get_pool_height() == 3
+    //    && pooling_layer.get_pool_width() == 2);
 
     EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
     //    EXPECT_EQ(pooling_layer.get_input_dimensions(), dimensions{ 0 });
@@ -93,14 +93,14 @@ TEST(PoolingLayerTest, ForwardPropagateMaxPooling)
 
     outputs_pair = pooling_layer_forward_propagation.get_outputs_pair();
 
-    assert_true(outputs_pair.second.size() == input_dimensions.size() + 1, LOG);
+    EXPECT_EQ(outputs_pair.second.size() == input_dimensions.size() + 1);
 
     type* outputs_data = outputs_pair.first;
 
     TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
-    assert_true(outputs(0, 0, 0, 0) == type(255)
-        && outputs(1, 0, 0, 0) == type(254), LOG);
+    EXPECT_EQ(outputs(0, 0, 0, 0) == type(255)
+        && outputs(1, 0, 0, 0) == type(254));
 */
 }
 
@@ -151,7 +151,7 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
 
     outputs_pair_2 = pooling_layer_forward_propagation_2.get_outputs_pair();
 
-    assert_true(outputs_pair_2.second.size() == input_dimensions.size() + 1, LOG);
+    EXPECT_EQ(outputs_pair_2.second.size() == input_dimensions.size() + 1);
 
     type* outputs_data_2 = outputs_pair_2.first;
 
@@ -161,7 +161,7 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
         outputs_pair_2.second[2],
         outputs_pair_2.second[3]);
     //Image 1:
-    assert_true(outputs_2(0, 0, 0, 0) == type(255)
+    EXPECT_EQ(outputs_2(0, 0, 0, 0) == type(255)
         && outputs_2(0, 0, 0, 1) == type(255)
         && outputs_2(0, 0, 0, 2) == type(255)
         && outputs_2(0, 0, 1, 0) == type(255)
@@ -179,7 +179,7 @@ void PoolingLayerTest::test_forward_propagate_max_pooling()
         && outputs_2(1, 0, 1, 2) == type(255)
         && outputs_2(1, 0, 2, 0) == type(255)
         && outputs_2(1, 0, 2, 1) == type(255)
-        && round(outputs_2(1, 0, 2, 2)) == type(255), LOG);
+        && round(outputs_2(1, 0, 2, 2)) == type(255));
 }
 
 
@@ -258,14 +258,14 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     outputs_pair = pooling_layer_forward_propagation.get_outputs_pair();
 
-    assert_true(outputs_pair.second.size() == input_dimensions.size() + 1, LOG);
+    EXPECT_EQ(outputs_pair.second.size() == input_dimensions.size() + 1);
 
     type* outputs_data = outputs_pair.first;
 
     TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
-    assert_true(round(outputs(0, 0, 0, 0)) == type(14)
-                && round(outputs(1, 0, 0, 0)) == type(19), LOG);
+    EXPECT_EQ(round(outputs(0, 0, 0, 0)) == type(14)
+                && round(outputs(1, 0, 0, 0)) == type(19));
 
     //cout << "outputs:" << endl << "Image 1 (0,0,0): " << round(outputs(0, 0, 0, 0)) << endl << "Image 2 (0,0,0): " << round(outputs(1, 0, 0, 0)) << endl;
 
@@ -324,7 +324,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
 
     outputs_pair_2 = pooling_layer_forward_propagation_2.get_outputs_pair();
 
-    assert_true(outputs_pair_2.second.size() == input_dimensions.size() + 1, LOG);
+    EXPECT_EQ(outputs_pair_2.second.size() == input_dimensions.size() + 1);
 
     type* outputs_data_2 = outputs_pair_2.first;
 
@@ -334,7 +334,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
                                          outputs_pair_2.second[2],
                                          outputs_pair_2.second[3]);
                 //Image 1:
-    assert_true(outputs_2(0, 0, 0, 0) == type(255)
+    EXPECT_EQ(outputs_2(0, 0, 0, 0) == type(255)
                 && outputs_2(0, 0, 0, 1) == type(255)
                 && outputs_2(0, 0, 0, 2) == type(255)
                 && outputs_2(0, 0, 1, 0) == type(127.5)
@@ -352,7 +352,7 @@ void PoolingLayerTest::test_forward_propagate_average_pooling()
                 && outputs_2(1, 0, 1, 2) == type(127.5)
                 && outputs_2(1, 0, 2, 0) == type(255)
                 && outputs_2(1, 0, 2, 1) == type(255)
-                && round(outputs_2(1, 0, 2, 2)) == type(255), LOG);
+                && round(outputs_2(1, 0, 2, 2)) == type(255));
 }
 
 }

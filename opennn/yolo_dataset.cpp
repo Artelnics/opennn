@@ -109,7 +109,7 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
     input_dimensions = {{416, 416, 3}};
 
-    set(images.size(), input_dimensions, target_dimensions);
+    set(images.size(), {{416, 416, 3}}, {{grid_size, grid_size, (Index) (anchor_number * (5 + classes.size()))}});
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -497,8 +497,8 @@ Tensor<type, 2> extract_boxes_width_height_data(const vector<Tensor<type, 2> >&l
     {
         for(Index j = 0; j < labels[i].dimension(0); j++)
         {
-            dimension(0) = labels[i](j, 3) * image_size;
-            dimension(1) = labels[i](j, 4) * image_size;
+            dimension(0) = labels[i](j, 3)/* * image_size*/;
+            dimension(1) = labels[i](j, 4)/* * image_size*/;
             box_dimensions.push_back(dimension);
         }
     }
@@ -520,6 +520,9 @@ Tensor<type, 2> extract_boxes_width_height_data(const vector<Tensor<type, 2> >&l
 
 type calculate_intersection_over_union(const Tensor<type, 1>& box_1, const Tensor<type, 1>& box_2)
 {
+    if(box_1.dimension(0) < 4 || box_2.dimension(0) < 4)
+        throw runtime_error("Boxes must have 4 coordinates");
+
     type x_left = max(box_1(0) - box_1(2) / 2, box_2(0) - box_2(2) / 2);
     type y_top = max(box_1(1) - box_1(3) / 2, box_2(1) - box_2(3) / 2);
     type x_right = min(box_1(0) + box_1(2) / 2, box_2(0) + box_2(2) / 2);
