@@ -47,7 +47,7 @@ public:
     void set_distances_box_plot(BoxPlot&);
     void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
     void set_variable_distance_names(const vector<string>&);
-    void set_distances_descriptives(Descriptives&);
+    void set_distances_descriptives(const Descriptives&);
 
     void box_plot_from_XML(const XMLDocument&);
     void distances_descriptives_from_XML(const XMLDocument&);

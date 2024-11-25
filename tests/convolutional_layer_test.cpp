@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/convolutional_layer.h"
 
 TEST(ConvolutionalLayerTest, EigenConvolution)
 {

@@ -55,8 +55,8 @@ public:
 
     string get_activation_function_string() const;
 
-    dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
     pair<Index, Index> get_padding() const;
 
@@ -106,19 +106,19 @@ public:
     void set_convolution_type(const ConvolutionType&);
     void set_convolution_type(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0);
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
     void set_row_stride(const Index&);
 
     void set_column_stride(const Index&);
 
-    void set_input_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&) override;
 
     // Initialization
 
-    void set_parameters_constant(const type&);
+    void set_parameters_constant(const type&) override;
 
-    void set_parameters_random();
+    void set_parameters_random() override;
 
     // Forward propagation
 
@@ -152,7 +152,7 @@ public:
    void from_XML(const XMLDocument&) final;
    void to_XML(XMLPrinter&) const final;
 
-   void print() const;
+   void print() const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"

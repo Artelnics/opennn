@@ -18,7 +18,6 @@ using namespace fs;
 namespace opennn
 {
 
-
 ImageDataSet::ImageDataSet(const Index& new_samples_number,
                            const dimensions& new_input_dimensions,
                            const dimensions& new_target_dimensions)

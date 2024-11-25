@@ -8,7 +8,6 @@
 
 #include "pch.h"
 
-#include "strings_utilities.h"
 #include "long_short_term_memory_layer.h"
 #include "tensors.h"
 

@@ -201,8 +201,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
 
     set_name(new_name);
 
-    layer_type = Layer::Type::Pooling;
-
     name = "pooling_layer";
 }
 

@@ -1394,12 +1394,12 @@ void LanguageDataSet::read_csv_1()
         throw runtime_error(buffer.str());
     }
 
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
 
 #ifdef _WIN32
 
-    if(std::regex_search(data_path, accent_regex))
+    if(regex_search(data_path, accent_regex))
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         std::wstring file_name_wide = conv.from_bytes(data_path);
@@ -1643,7 +1643,7 @@ void LanguageDataSet::read_csv_1()
 void LanguageDataSet::read_csv_2_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file;
 
 #ifdef _WIN32
 
@@ -1993,7 +1993,7 @@ void LanguageDataSet::read_txt_language_model()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    std::ofstream file;
+    ofstream file;
     file.open(transformed_data_path);
 
     // @todo maybe context does NOT need start and end tokens

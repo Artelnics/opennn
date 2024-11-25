@@ -900,7 +900,7 @@ void DataSetTest::test_scrub_missing_values()
 
     Tensor<DataSet::SampleUse, 1> sample_uses;
 
-    std::ofstream file;
+    ofstream file;
 
     data_set.set_data_source_path(data_path);
 
