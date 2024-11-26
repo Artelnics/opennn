@@ -1841,9 +1841,13 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     #pragma omp parallel for
 
+<<<<<<< HEAD
     for(Index i = 0; i < Index(documents_number); i++)
+=======
+    for(Index i = 0; i < documents_number; i++)
+>>>>>>> acde2b25554c3cb1fe0ef447c58dfba1588857fa
     {
-        for(size_t j = 0; j < documents_words[i].size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
             const Index length = documents_words[i][j].length();
 
@@ -1856,12 +1860,17 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const size_t documents_number = documents_words.size();
+    const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
+<<<<<<< HEAD
     for(Index i = 0; i < Index(documents_number); i++)
         for(size_t j = 0; j < documents_words[i].size(); j++)
+=======
+    for(Index i = 0; i < documents_number; i++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
+>>>>>>> acde2b25554c3cb1fe0ef447c58dfba1588857fa
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
 }
@@ -1907,8 +1916,13 @@ void replace_accented_words(vector<vector<string>>& documents)
 
     #pragma omp parallel for
 
+<<<<<<< HEAD
     for(Index i = 0; i < Index(documents_size); i++)
         for(size_t j = 0; j < documents[i].size(); j++)
+=======
+    for(Index i = 0; i < documents_size; i++)
+        for(Index j = 0; j < documents[i].size(); j++)
+>>>>>>> acde2b25554c3cb1fe0ef447c58dfba1588857fa
             replace_accented_words(documents[i][j]);
 }
 
@@ -2891,8 +2905,13 @@ void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
+<<<<<<< HEAD
     for(Index i = 0; i < Index(words.size()); i++)
         for(size_t j = 0; j < words[i].size(); j++)
+=======
+    for(Index i = 0; i < words.size(); i++)
+        for(Index j = 0; j < words[i].size(); j++)
+>>>>>>> acde2b25554c3cb1fe0ef447c58dfba1588857fa
             stem(words[i][j]);
 }
 

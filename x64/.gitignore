@@ -4,8 +4,6 @@
 .Python
 [Bb]in
 [Ii]nclude
-!googletest/include/
-
 [Ll]ib
 [Ss]cripts
 pyvenv.cfg
@@ -272,6 +270,3 @@ tests/data/*.xml
 
 # Created by .ignore support plugin (hsz.mobi)
 /opennn/loss_index_forward_propagation.h
-
-#SonarCloud
-.scannerwork
