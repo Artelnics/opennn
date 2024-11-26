@@ -364,6 +364,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             }
         }
     }
+    cout << "biases derivatives: " << biases_derivatives << endl;
+    cout << "kernel_synaptic_weights_derivatives " << kernel_synaptic_weights_derivatives << endl;
 }
 
 
