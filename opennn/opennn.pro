@@ -55,6 +55,7 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    pch.h \
     codification.h \
     cross_entropy_error_3d.h \
     embedding_layer.h \
@@ -136,6 +137,7 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    pch.cpp \
     cross_entropy_error_3d.cpp \
     embedding_layer.cpp \
     multihead_attention_layer.cpp \

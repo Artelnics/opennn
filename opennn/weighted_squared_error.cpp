@@ -42,19 +42,21 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-    if(has_data_set() && !data_set->get_samples_number() == 0)
-    {
-        set_weights();
 
-        set_normalization_coefficient();
-    }
-    else
-    {
-        negatives_weight = type(-1.0);
-        positives_weight = type(-1.0);
+    negatives_weight = type(-1.0);
+    positives_weight = type(-1.0);
 
-        normalization_coefficient = type(-1.0);
-    }
+    normalization_coefficient = type(-1.0);
+
+    if(!has_data_set())
+        return;
+
+    if(data_set->get_samples_number() == 0)
+        return;
+
+    set_weights();
+
+    set_normalization_coefficient();
 }
 
 

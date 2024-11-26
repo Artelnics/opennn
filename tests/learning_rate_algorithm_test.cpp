@@ -24,23 +24,22 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
-{
-    /*
+{    
     DataSet data_set(1, {1}, {1});
     data_set.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-
+/*
     Batch batch(1, &data_set);
-
-//    ForwardPropagation forward_propagation(1, &neural_network);
+/*
+    ForwardPropagation forward_propagation(1, &neural_network);
 
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
 //    BackPropagation back_propagation(1, &mean_squared_error);
 
     //LearningRateAlgorithm::Triplet triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
-
+/*
     Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
     LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);

@@ -1,17 +1,6 @@
 #include "pch.h"
 
 /*
-#include "probabilistic_layer_3d_test.h"
-
-#include "../opennn/tensors.h"
-
-namespace opennn
-{
-
-ProbabilisticLayer3DTest::ProbabilisticLayer3DTest() : UnitTesting()
-{
-}
-
 
 void ProbabilisticLayer3DTest::test_constructor()
 {

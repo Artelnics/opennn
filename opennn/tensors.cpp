@@ -432,10 +432,7 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
-
-        TensorMap<Tensor<type, 1>> column((type*) matrix.data() + i * matrix.dimension(0),
-                                          matrix.dimension(0));
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
         column.device(*thread_pool_device) = column + vector(i);
     }

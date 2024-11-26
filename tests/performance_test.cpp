@@ -7,15 +7,15 @@ using namespace opennn;
 TEST(PerformanceTest, Rosenbrock)
 {
 
-/*
-    const Index samples_number = 1000000;
-    const Index inputs_number = 1000;
+
+    const Index samples_number = 100;
+    const Index inputs_number = 10;
     const Index outputs_number = 1;
-    const Index hidden_neurons_number = 1000;
+    const Index hidden_neurons_number = 10;
 
-    DataSet data_set;
+    DataSet data_set(samples_number, { inputs_number }, {outputs_number});
 
-    data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+    data_set.set_data_rosenbrock();
 
     data_set.set(DataSet::SampleUse::Training);
 
@@ -23,7 +23,7 @@ TEST(PerformanceTest, Rosenbrock)
         { inputs_number }, { hidden_neurons_number }, { outputs_number });
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
-
+    /*
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
@@ -33,7 +33,7 @@ TEST(PerformanceTest, Rosenbrock)
     training_strategy.set_display_period(1);
     training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
     training_strategy.set_maximum_time(86400);
-
+/*
     training_strategy.perform_training();
 */
 }

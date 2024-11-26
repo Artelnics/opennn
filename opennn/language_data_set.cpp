@@ -1906,13 +1906,14 @@ void LanguageDataSet::read_csv_language_model()
 //     cout<<"Works properly"<<endl;
 // }
 
+
 void LanguageDataSet::read_txt_language_model()
 {
     cout << "Reading .txt file..." << endl;
 
     load_documents(data_path);
 
-    Index entry_number = documents[0].size();
+    size_t entry_number = documents[0].size();
 
     for(size_t i = 1; i < documents.size(); i++)
         entry_number += documents[i].size();
@@ -1953,7 +1954,7 @@ void LanguageDataSet::read_txt_language_model()
         cout << "Calculating vocabularies..." << endl;
 
         const Index target_vocabulary_size = 8000;
-        vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
+        const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
         completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
@@ -1972,15 +1973,15 @@ void LanguageDataSet::read_txt_language_model()
     Index max_context_tokens = context_tokens[0].size();
 
     for(Index i = 0; i < entry_number; i++)
-        if(Index(context_tokens[i].size()) > max_context_tokens)
+        if(context_tokens[i].size() > max_context_tokens)
             max_context_tokens = context_tokens[i].size();
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
 
     Index max_completion_tokens = completion_tokens[0].size();
 
-    for(Index i = 0; i < entry_number; i++)
-        if(Index(completion_tokens[i].size()) > max_completion_tokens)
+    for(size_t i = 0; i < entry_number; i++)
+        if(completion_tokens[i].size() > max_completion_tokens)
             max_completion_tokens = completion_tokens[i].size();
 
     max_completion_length = max_completion_tokens > LIMIT + 1 ? LIMIT + 1 : max_completion_tokens;
@@ -2192,7 +2193,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
         
         for(Index j = 0; j < max_context_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < max_context_length + 1)
+            if(j < line_tokens.size() && token_counter < max_context_length + 1)
             {
                 word = line_tokens[j];
 
@@ -2276,7 +2277,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         for(Index j = 0; j < max_completion_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < max_completion_length + 1)
+            if(j < line_tokens.size() && token_counter < max_completion_length + 1)
             {
                 word = line_tokens[j];
                 
@@ -2328,7 +2329,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if(token_counter > max_completion_length + 1)    break;
+                if(token_counter > max_completion_length + 1)
+                    break;
 
                 if(j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
                 {
