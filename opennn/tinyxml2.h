@@ -40,11 +40,11 @@
 #   include <cstring>
 #endif
 #include <stdint.h>
-#include <string>
 
 #include "pch.h"
 
 #include "config.h"
+
 
 using namespace opennn;
 

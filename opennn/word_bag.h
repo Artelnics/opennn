@@ -1,8 +1,7 @@
 #ifndef WORDBAG_H
 #define WORDBAG_H
 
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {

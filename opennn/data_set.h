@@ -9,16 +9,12 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define EIGEN_USE_THREADS
-
 #include "pch.h"
-
 
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-#include "config.h"
+
 #include "correlation.h"
 #include "scaling.h"
 
@@ -446,8 +442,8 @@ public:
 
     void set_data_random();
     void set_data_rosenbrock();
-    void generate_sum_data(const Index&, const Index&);
-    void generate_classification_data(const Index&, const Index&, const Index&);
+    void set_data_sum();
+    void set_data_classification();
 
     // Serialization
 

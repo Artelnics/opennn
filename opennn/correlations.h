@@ -12,7 +12,7 @@
 #include "pch.h"
 
 #include "correlation.h"
-#include "config.h"
+
 
 namespace opennn
 {

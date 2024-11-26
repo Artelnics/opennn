@@ -11,7 +11,7 @@
 
 #include "training_strategy.h"
 #include "inputs_selection.h"
-#include "config.h"
+
 
 namespace opennn
 {
@@ -74,8 +74,6 @@ public:
     void calculate_inputs_activation_probabilities();
     
     void initialize_population_correlations();
-
-    type generate_random_between_0_and_1();
 
     void evaluate_population();
 

@@ -7,7 +7,7 @@
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 #define _CRT_SECURE_NO_WARNINGS
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
-
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include <iostream>
 #include <string>
@@ -33,10 +33,7 @@
 #include <sstream>
 #include <iomanip>
 
-using namespace std;
-
 #include <omp.h>
-
 
 #define EIGEN_USE_THREADS
 
@@ -56,6 +53,7 @@ using namespace std;
 
 #endif
 
+using namespace std;
 using namespace Eigen;
 
 using type = float;

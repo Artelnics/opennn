@@ -2,7 +2,7 @@
 #define TENSORS_H
 
 #include "pch.h"
-#include "config.h"
+
 
 namespace opennn
 {

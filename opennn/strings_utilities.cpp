@@ -1843,7 +1843,7 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     for(Index i = 0; i < Index(documents_number); i++)
     {
-        for(Index j = 0; j < documents_words[i].size(); j++)
+        for(size_t j = 0; j < documents_words[i].size(); j++)
         {
             const Index length = documents_words[i][j].length();
 

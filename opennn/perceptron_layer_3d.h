@@ -9,7 +9,7 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-#include "config.h"
+
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"

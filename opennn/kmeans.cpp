@@ -9,7 +9,7 @@
 #include "pch.h"
 
 #include "tensors.h"
-#include "config.h"
+
 #include "kmeans.h"
 
 namespace opennn

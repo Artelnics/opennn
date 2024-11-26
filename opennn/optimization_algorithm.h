@@ -9,9 +9,6 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
 #include "loss_index.h"
 
 namespace opennn
@@ -144,11 +141,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults()
-    {
-    }
-
-    explicit TrainingResults(const Index& epochs_number);
+    explicit TrainingResults(const Index& epochs_number = 0);
 
     string write_stopping_condition() const;
 
@@ -160,20 +153,7 @@ struct TrainingResults
 
     void save(const string&) const;
 
-    void print(const string& message = string())
-    {
-        const Index epochs_number = training_error_history.size();
-
-        cout << message << endl
-             << "Training results" << endl
-             << "Epochs number: " << epochs_number-1 << endl
-             << "Training error: " << training_error_history(epochs_number-1) << endl;
-
-        if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
-            cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
-
-        cout << "Stopping condition: " << write_stopping_condition() << endl;
-    }
+    void print(const string& message = string());
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 

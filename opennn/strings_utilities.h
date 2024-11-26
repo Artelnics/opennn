@@ -9,10 +9,7 @@
 #ifndef STRINGS_H
 #define STRINGS_H
 
-#include "config.h"
 #include "word_bag.h"
-
-using namespace std;
 
 namespace opennn
 {
@@ -273,8 +270,6 @@ namespace opennn
 class TextGenerationAlphabet
 {
 public:
-
-    // DEFAULT CONSTRUCTOR
 
     explicit TextGenerationAlphabet();
 

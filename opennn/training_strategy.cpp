@@ -337,9 +337,17 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 
 void TrainingStrategy::set_threads_number(const int& new_threads_number)
 {
-    set_loss_index_threads_number(new_threads_number);
+    mean_squared_error.set_threads_number(new_threads_number);
+    normalized_squared_error.set_threads_number(new_threads_number);
+    Minkowski_error.set_threads_number(new_threads_number);
+    weighted_squared_error.set_threads_number(new_threads_number);
+    cross_entropy_error.set_threads_number(new_threads_number);
 
-    set_optimization_algorithm_threads_number(new_threads_number);
+    conjugate_gradient.set_threads_number(new_threads_number);
+    quasi_Newton_method.set_threads_number(new_threads_number);
+    Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
+    stochastic_gradient_descent.set_threads_number(new_threads_number);
+    adaptive_moment_estimation.set_threads_number(new_threads_number);
 }
 
 
@@ -370,26 +378,6 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
     cross_entropy_error_3d.set_neural_network(new_neural_network);
     weighted_squared_error.set_neural_network(new_neural_network);
     Minkowski_error.set_neural_network(new_neural_network);
-}
-
-
-void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_number)
-{
-    mean_squared_error.set_threads_number(new_threads_number);
-    normalized_squared_error.set_threads_number(new_threads_number);
-    Minkowski_error.set_threads_number(new_threads_number);
-    weighted_squared_error.set_threads_number(new_threads_number);
-    cross_entropy_error.set_threads_number(new_threads_number);
-}
-
-
-void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_threads_number)
-{
-    conjugate_gradient.set_threads_number(new_threads_number);
-    quasi_Newton_method.set_threads_number(new_threads_number);
-    Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
-    stochastic_gradient_descent.set_threads_number(new_threads_number);
-    adaptive_moment_estimation.set_threads_number(new_threads_number);
 }
 
 

@@ -22,7 +22,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
     : neural_network(new_neural_network),
       data_set(new_data_set)
 {
-    set_default();
 }
 
 
@@ -44,23 +43,10 @@ const bool& TestingAnalysis::get_display() const
 }
 
 
-void TestingAnalysis::set_default()
-{
-/*
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-*/
-}
-
-
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -2272,8 +2258,6 @@ void TestingAnalysis::save(const string& file_name) const
 
 void TestingAnalysis::load(const string& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))

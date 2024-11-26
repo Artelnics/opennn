@@ -14,7 +14,7 @@
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-#include "config.h"
+
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -34,12 +34,6 @@
 
 namespace opennn
 {
-
-NeuralNetwork::NeuralNetwork() : layers(0)
-{
-    set();
-}
-
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
                              const dimensions& input_dimensions,
@@ -380,18 +374,6 @@ const bool& NeuralNetwork::get_display() const
 }
 
 
-void NeuralNetwork::set()
-{
-    input_names.resize(0);
-
-    output_names.resize(0);
-
-    layers.resize(0);
-
-    set_default();
-}
-
-
 void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& input_dimensions, 
                         const dimensions& complexity_dimensions,
@@ -591,8 +573,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
 
 void NeuralNetwork::set(const string& file_name)
 {
-    layers.resize(0);
-
     load(file_name);
 }
 
@@ -658,11 +638,6 @@ void NeuralNetwork::set_default()
     display = true;
 
     layer_input_indices = vector<vector<Index>>();
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = new ThreadPool(threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 }
 
 
@@ -1099,25 +1074,21 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
 string NeuralNetwork::get_expression() const
 {
-    /*
-    const Index layers_number = neural_network.get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& layers = neural_network.get_layers();
-    const vector<string> layer_names = neural_network.get_layer_names();
+    const vector<unique_ptr<Layer>>& layers = get_layers();
+    const vector<string> layer_names = get_layer_names();
 
-    vector<string> input_names = neural_network.get_input_names();
-    vector<string> output_names = neural_network.get_output_names();
+    vector<string> input_names = get_input_names();
+    vector<string> output_names = get_output_names();
 
     const Index inputs_number = input_names.size();
 
-    string aux_name;
-
     for (int i = 0; i < inputs_number; i++)
-    if (!input_names[i].empty())
-    input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
-    else
-    input_names[i] = "input_" + to_string(i);
-
+        input_names[i].empty()
+            ? input_names[i] = "input_" + to_string(i)
+            : input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
+/*
     Index layer_neurons_number;
 
     vector<string> scaled_input_names(inputs_number);

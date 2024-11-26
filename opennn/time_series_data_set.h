@@ -9,7 +9,6 @@
 #ifndef TIMESERIESDATASET_H
 #define TIMESERIESDATASET_H
 
-#include "config.h"
 #include "data_set.h"
 
 namespace opennn

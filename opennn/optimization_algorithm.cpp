@@ -81,8 +81,8 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -306,9 +306,7 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
     training_error_history.resize(new_size);
 
     for(Index i = 0; i < new_size; i++)
-    {
         training_error_history(i) = old_training_error_history(i);
-    }
 }
 
 
@@ -317,7 +315,6 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
     if(selection_error_history.size() == 0)
     {
         selection_error_history.resize(new_size);
-
         return;
     }
 
@@ -325,10 +322,11 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 
     selection_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
-    {
+    const Index minimum_size = min(new_size, old_selection_error_history.size());
+
+    for (Index i = 0; i < minimum_size; ++i)
         selection_error_history(i) = old_selection_error_history(i);
-    }
+
 }
 
 
@@ -352,10 +350,9 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
 void TrainingResults::save(const string& file_name) const
 {
-    Tensor<string, 2> final_results = write_final_results();
+    const Tensor<string, 2> final_results = write_final_results();
 
-    ofstream file;
-    file.open(file_name);
+    ofstream file(file_name);
 
     if(!file) return;
 
@@ -363,6 +360,22 @@ void TrainingResults::save(const string& file_name) const
         file << final_results(i,0) << "; " << final_results(i,1) << "\n";
 
     file.close();
+}
+
+
+void TrainingResults::print(const string &message)
+{
+    const Index epochs_number = training_error_history.size();
+
+    cout << message << endl
+         << "Training results" << endl
+         << "Epochs number: " << epochs_number-1 << endl
+         << "Training error: " << training_error_history(epochs_number-1) << endl;
+
+    if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
+        cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
+
+    cout << "Stopping condition: " << write_stopping_condition() << endl;
 }
 
 
@@ -391,20 +404,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
         return final_results;
     }
 
-    // Epochs number
-
     final_results(0,1) = to_string(training_error_history.size()-1);
-
-    // Elapsed time
-
     final_results(1,1) = elapsed_time;
-
-    // Stopping criteria
-
     final_results(2,1) = write_stopping_condition();
-
-    // Final training error
-
     final_results(3,1) = to_string(training_error_history(size-1));
 
     // Final selection error

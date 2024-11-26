@@ -9,10 +9,6 @@
 #ifndef PROBABILISTICLAYER_H
 #define PROBABILISTICLAYER_H
 
-#include <iostream>
-#include <string>
-
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"

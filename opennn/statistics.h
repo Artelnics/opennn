@@ -9,7 +9,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "config.h"
+
 #include "descriptives.h"
 #include "box_plot.h"
 #include "histogram.h"

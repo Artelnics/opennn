@@ -9,9 +9,6 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 //#include "perceptron_layer_3d.h"
@@ -48,18 +45,18 @@ class NeuralNetwork
 
 public:
 
-   enum class ModelType{AutoAssociation,
+   enum class ModelType{Default,
+                        AutoAssociation,
                         Approximation,
                         Classification,
                         Forecasting,
                         ImageClassification,
                         TextClassification};
 
-   // Constructors
-
-   explicit NeuralNetwork();
-
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
+                          const dimensions& = {},
+                          const dimensions& = {},
+                          const dimensions& = {});
 
    explicit NeuralNetwork(const string&);
 
@@ -115,9 +112,7 @@ public:
 
    // Set
 
-   void set();
-
-   void set(const NeuralNetwork::ModelType&, 
+   void set(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
             const dimensions& = {}, 
             const dimensions& = {},
             const dimensions& = {});
@@ -261,9 +256,6 @@ protected:
    vector<unique_ptr<Layer>> layers;
 
    vector<vector<Index>> layer_input_indices;
-
-   ThreadPool* thread_pool;
-   ThreadPoolDevice* thread_pool_device;
 
    bool display = true;
 

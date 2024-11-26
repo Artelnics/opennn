@@ -14,8 +14,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
-using namespace std;
-
 namespace opennn
 {
 
@@ -2000,8 +1998,8 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -3510,15 +3508,12 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-void DataSet::generate_classification_data(const Index& samples_number, const Index& variables_number, const Index& classes_number)
+void DataSet::set_data_classification()
 {
-/*
-    set(samples_number, variables_number + classes_number);
-
     set_random(data);
 
     data.setConstant(0.0);
-
+/*
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
@@ -3534,13 +3529,10 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
 }
 
 
-void DataSet::generate_sum_data(const Index& samples_number, const Index& variables_number)
+void DataSet::set_data_sum()
 {
-/*
-    set(samples_number,variables_number);
-
     set_random(data);
-
+/*
     for(Index i = 0; i < samples_number; i++)
     {
         data(i,variables_number-1) = type(0);
