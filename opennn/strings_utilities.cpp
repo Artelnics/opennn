@@ -1841,9 +1841,9 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents_number; i++)
     {
-        for(size_t j = 0; j < documents_words[i].size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
             const Index length = documents_words[i][j].length();
 
@@ -1856,12 +1856,12 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const size_t documents_number = documents_words.size();
+    const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
-        for(size_t j = 0; j < documents_words[i].size(); j++)
+    for(Index i = 0; i < documents_number; i++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
 }
@@ -1907,8 +1907,8 @@ void replace_accented_words(vector<vector<string>>& documents)
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_size; i++)
-        for(size_t j = 0; j < documents[i].size(); j++)
+    for(Index i = 0; i < documents_size; i++)
+        for(Index j = 0; j < documents[i].size(); j++)
             replace_accented_words(documents[i][j]);
 }
 
@@ -2891,8 +2891,8 @@ void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
-    for(size_t i = 0; i < words.size(); i++)
-        for(size_t j = 0; j < words[i].size(); j++)
+    for(Index i = 0; i < words.size(); i++)
+        for(Index j = 0; j < words[i].size(); j++)
             stem(words[i][j]);
 }
 

@@ -270,6 +270,3 @@ tests/data/*.xml
 
 # Created by .ignore support plugin (hsz.mobi)
 /opennn/loss_index_forward_propagation.h
-
-#SonarCloud
-.scannerwork
