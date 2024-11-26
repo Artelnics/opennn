@@ -10,6 +10,7 @@
 
 #include "tensors.h"
 #include "probabilistic_layer_3d.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {

@@ -8,36 +8,10 @@
 
 // System includes
 
-//#include <stdio.h>
-//#include <cstring>
-#include <iostream>
-//#include <fstream>
-//#include <sstream>
-#include <string>
-//#include <time.h>
-//#include <chrono>
-//#include <algorithm>
-//#include <execution>
-#include <vector>
-#include <iostream>
-#include <random>
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-
-
-
 
 // OpenNN includes
 
 #include "../opennn/opennn.h"
-#include "data_set.h"
-#include <tensors.cpp>
-#include "pooling_layer.h"
-
-
-
 
 
 using namespace std;

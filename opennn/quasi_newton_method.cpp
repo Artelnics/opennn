@@ -491,11 +491,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-        
+
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
-        
+
         // Loss index
 
         loss_index->back_propagate(training_batch, 

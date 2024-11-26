@@ -293,8 +293,8 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
                            outputs);
 
     // @todo
-    //if(is_training && dropout_rate > type(0))
-        //dropout(outputs);
+    // if(is_training && dropout_rate > type(0))
+    //     dropout(outputs);
 
     if(is_training)
     {

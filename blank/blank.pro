@@ -71,4 +71,3 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 # OpenMP library
 
 include(../opennmp.pri)
-

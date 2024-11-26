@@ -84,6 +84,11 @@ void LearningRateAlgorithm::set_default()
     thread_pool = new ThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(thread_pool, n);
 */
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
     // TRAINING OPERATORS
 
     learning_rate_method = LearningRateMethod::BrentMethod;
@@ -154,6 +159,7 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
                                                    forward_propagation,
                                                    back_propagation,
                                                    optimization_data);
+
     try
     {
         triplet.check();
@@ -274,7 +280,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
-        
+
         neural_network->forward_propagate(batch.get_input_pairs(),
             optimization_data.potential_parameters, forward_propagation);
 
@@ -294,7 +300,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
-        
+
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           optimization_data.potential_parameters,
                                           forward_propagation);
@@ -314,7 +320,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             optimization_data.potential_parameters.device(*thread_pool_device)
                     = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
-            
+
             neural_network->forward_propagate(batch.get_input_pairs(),
                                               optimization_data.potential_parameters,
                                               forward_propagation);
