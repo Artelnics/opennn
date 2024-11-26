@@ -33,8 +33,6 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
-
 /*
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
@@ -46,10 +44,9 @@ int main()
 //        neural_network.print();
 
         neural_network.calculate_outputs(inputs);
-*/
 
         // Data set
-/*
+
         DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
         data_set.split_samples_random(0.99, 0.005, 0.005);
@@ -81,9 +78,8 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);

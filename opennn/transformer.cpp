@@ -423,7 +423,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
-    unordered_map<std::string, type> context_vocabulary_map;
+    unordered_map<string, type> context_vocabulary_map;
 
     for(Index i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);

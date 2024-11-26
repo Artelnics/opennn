@@ -1687,7 +1687,7 @@ void delete_breaks_and_tabs(vector<string>& documents)
 
 void delete_non_printable_chars(vector<string>& documents)
 {
-    for(Index i = 0; i < documents.size(); i++) 
+    for(size_t i = 0; i < documents.size(); i++)
         delete_non_printable_chars(documents[i]);
 }
 
@@ -1841,9 +1841,9 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < Index(documents_number); i++)
     {
-        for(size_t j = 0; j < documents_words[i].size(); j++)
+        for(Index j = 0; j < documents_words[i].size(); j++)
         {
             const Index length = documents_words[i][j].length();
 
@@ -1856,11 +1856,11 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const size_t documents_number = documents_words.size();
+    const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < Index(documents_number); i++)
         for(size_t j = 0; j < documents_words[i].size(); j++)
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
@@ -1877,7 +1877,7 @@ void delete_emails(vector<vector<string>>& documents)
     {
         const vector<string> document = documents[i];
 
-        for(Index j = 0; j < document.size(); j++)
+        for(size_t j = 0; j < document.size(); j++)
         {
             /*
             vector<string> tokens = get_tokens(document(j));
@@ -1907,7 +1907,7 @@ void replace_accented_words(vector<vector<string>>& documents)
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_size; i++)
+    for(Index i = 0; i < Index(documents_size); i++)
         for(size_t j = 0; j < documents[i].size(); j++)
             replace_accented_words(documents[i][j]);
 }
@@ -2882,7 +2882,7 @@ string stem(const string& word)
 
 void stem(vector<string>& words)
 {
-    for(Index i = 0; i < words.size(); i++)
+    for(size_t i = 0; i < words.size(); i++)
         words[i] = stem(words[i]);
 }
 
@@ -2891,7 +2891,7 @@ void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
-    for(size_t i = 0; i < words.size(); i++)
+    for(Index i = 0; i < Index(words.size()); i++)
         for(size_t j = 0; j < words[i].size(); j++)
             stem(words[i][j]);
 }

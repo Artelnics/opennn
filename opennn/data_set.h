@@ -13,6 +13,9 @@
 
 #include <string>
 
+#include "pch.h"
+
+
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
@@ -198,7 +201,7 @@ public:
     const dimensions& get_input_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
-    Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
+    vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
     vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
 
@@ -312,7 +315,7 @@ public:
 
     void set_raw_variable_scalers(const Scaler&);
 
-    void set_raw_variable_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variable_scalers(const vector<Scaler>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();

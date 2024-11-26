@@ -102,8 +102,6 @@ public:
     void set_optimization_algorithm_threads_number(const int&);
 
     void set_loss_index(LossIndex*);
-    void set_loss_index_data_set(DataSet*);
-    void set_loss_index_neural_network(NeuralNetwork*);
 
     void set_loss_method(const LossMethod&);
     void set_optimization_method(const OptimizationMethod&);

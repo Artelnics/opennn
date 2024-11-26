@@ -170,8 +170,16 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-    const Index new_genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
+    if(!training_strategy)
+        throw runtime_error("Training strategy is null");
 
+    const DataSet* data_set = training_strategy->get_data_set();
+
+    if (!data_set)
+        throw runtime_error("Data set is null");
+
+    const Index new_genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+/*
     population.resize(new_individuals_number, new_genes_number);
 
     parameters.resize(new_individuals_number);
@@ -186,7 +194,9 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
     selection.resize(new_individuals_number);
 
-    if(elitism_size > new_individuals_number) elitism_size = new_individuals_number;
+    if(elitism_size > new_individuals_number) 
+        elitism_size = new_individuals_number;
+*/
 }
 
 
@@ -267,7 +277,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     original_input_raw_variables.resize(raw_variables_number, false);
 
-    for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
 
     // Initialization a random population
@@ -914,7 +924,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
     const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
@@ -1032,7 +1042,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     Index original_input_index = 0;
 
-    for(Index i = 0; i < original_input_raw_variables.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables.size(); i++)
     {
         if(individual_raw_variables(i) && original_input_raw_variables[i])
         {

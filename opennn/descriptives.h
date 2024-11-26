@@ -1,6 +1,7 @@
 #ifndef DESCRIPTIVES_H
 #define DESCRIPTIVES_H
 
+#include "pch.h"
 #include "config.h"
 
 using namespace std;

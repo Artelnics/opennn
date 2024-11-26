@@ -1034,7 +1034,7 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
 
     ostringstream buffer;
 
-    buffer << inputs_outputs_buffer(2)[0]
+    buffer << inputs_outputs_buffer[2][0]
            << "-->\n" << endl
            << "<!DOCTYPE HTML>" << endl
            << "<html lang=\"en\">\n" << endl
@@ -1940,6 +1940,7 @@ vector<string> fix_get_expression_outputs(const string& str,
     {
         if(token.size() > 1 && token.back() == '{')
             break;
+
         if(token.size() > 1 && token.back() != ';')
             token += ';';
  
@@ -1984,7 +1985,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + " = "
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 //Php
@@ -1995,7 +1995,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + "$"
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 //Python
@@ -2003,7 +2002,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                     out_string = old_variable
                      + " = "
                      + new_variable;
-                    out.push_back(out_string);
                 break;
 
                 //C
@@ -2013,12 +2011,14 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + " = "
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 default:
                 break;
             }
+
+            out.push_back(out_string);
+
         }
     }
 
@@ -2051,7 +2051,6 @@ vector<string> fix_output_names(vector<string>& output_names)
             output_names[i] = "output_" + to_string(i);
         else
             input_names[i] = replace_reserved_keywords(input_names[i]);
-
 }
 
 }

@@ -403,7 +403,7 @@ string ProbabilisticLayer::write_softmax_expression(const vector<string>& input_
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
         buffer << output_names[j] << " = softmax(" << input_names[j] << ");\n";
 
     return buffer.str();
