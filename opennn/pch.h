@@ -25,4 +25,19 @@
 #include <sstream>
 #include <iomanip>
 
+using namespace std;
+
+#define EIGEN_USE_THREADS
+
+#include "../eigen/Eigen/Core"
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
+
+using namespace Eigen;
+
+using type = float;
+
+using dimensions = vector<Index>;
+
+
 #endif // PCH_H

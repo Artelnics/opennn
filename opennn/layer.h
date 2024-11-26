@@ -11,6 +11,8 @@
 
 #define EIGEN_USE_THREADS
 
+#include "pch.h"
+
 #include "config.h"
 #include "tinyxml2.h"
 #include "layer_forward_propagation.h"

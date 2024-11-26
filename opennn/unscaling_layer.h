@@ -32,13 +32,13 @@ public:
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   Tensor<Scaler, 1> get_unscaling_method() const;
+   vector<Scaler> get_unscaling_method() const;
 
    vector<string> write_unscaling_methods() const;
    vector<string> write_unscaling_method_text() const;
 
    void set(const Index& = 0, const string& = "unscaling_layer");
-   void set(const vector<Descriptives>&, const Tensor<Scaler, 1>&);
+   void set(const vector<Descriptives>&, const vector<Scaler>&);
 
    void set_input_dimensions(const dimensions&) final;
    void set_output_dimensions(const dimensions&) final;
@@ -49,7 +49,7 @@ public:
 
    void set_min_max_range(const type min, const type max);
 
-   void set_scalers(const Tensor<Scaler,1>&);
+   void set_scalers(const vector<Scaler>&);
    void set_scalers(const string&);
    void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
@@ -75,7 +75,7 @@ private:
 
    vector<Descriptives> descriptives;
 
-   Tensor<Scaler, 1> scalers;
+   vector<Scaler> scalers;
 
    type min_range;
    type max_range;

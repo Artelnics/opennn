@@ -23,9 +23,9 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     NeuralNetwork neural_network;
 
     CrossEntropyError3D cross_entropy_error_3d(&neural_network, &data_set);
-
-    // Data set
 /*
+    // Data set
+
     data_set.set(DataSet::SampleUse::Training);
 
     Batch batch(1, &data_set);
@@ -34,7 +34,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     // Neural network
 
     neural_network.set();
-
+/*
     EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
     neural_network.add_layer(embedding_layer);
 

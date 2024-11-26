@@ -13,30 +13,19 @@ TEST(ModelSelectionTest, DefaultConstructor)
 
 TEST(ModelSelectionTest, GeneralConstructor)
 {
-    EXPECT_EQ(1, 1);
+    TrainingStrategy training_strategy;
+
+    ModelSelection model_selection(&training_strategy);
+
+    EXPECT_EQ(model_selection.has_training_strategy(), true);
 }
 
 /*
 namespace opennn
 {
 
-void ModelSelectionTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    ModelSelection model_selection_1(&training_strategy);
-    EXPECT_EQ(model_selection_1.has_training_strategy());
-
-    ModelSelection model_selection_2;
-
-    EXPECT_EQ(!model_selection_2.has_training_strategy());
-}
-
-
 void ModelSelectionTest::test_perform_neurons_selection()
 {
-    cout << "test_perform_neurons_selection\n";
-
     data_set.generate_sum_data(20,2);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1}, {2}, {1});

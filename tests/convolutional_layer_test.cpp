@@ -10,7 +10,7 @@ TEST(ConvolutionalLayerTest, EigenConvolution)
 
     std::cout << "Hello";
 
-    Eigen::array<ptrdiff_t, 2> dimensions_2 = { 0, 1 };
+    const Eigen::array<ptrdiff_t, 2> dimensions_2 = { 0, 1 };
 
     Tensor<type, 3> input_3;
     Tensor<type, 3> kernel_3;
