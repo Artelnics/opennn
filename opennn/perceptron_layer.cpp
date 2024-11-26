@@ -479,8 +479,8 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 string PerceptronLayer::get_expression(const vector<string>& input_names,
                                        const vector<string>& output_names) const
 {
-    const Index inputs_number = input_names.size();
-    const Index outputs_number = output_names.size();
+    const size_t inputs_number = input_names.size();
+    const size_t outputs_number = output_names.size();
 
     ostringstream buffer;
 
