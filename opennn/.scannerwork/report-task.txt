@@ -1,6 +1,0 @@
-projectKey=Artelnics_opennn_e8ee5aee-47cf-4bc7-ab1b-00e576043165
-serverUrl=http://localhost:9000
-serverVersion=10.7.0.96327
-dashboardUrl=http://localhost:9000/dashboard?id=Artelnics_opennn_e8ee5aee-47cf-4bc7-ab1b-00e576043165
-ceTaskId=23bab482-ff02-4307-b7c4-3de4b853485f
-ceTaskUrl=http://localhost:9000/api/ce/task?id=23bab482-ff02-4307-b7c4-3de4b853485f
