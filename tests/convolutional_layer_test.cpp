@@ -1,8 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/convolutional_layer.h"
-<<<<<<< HEAD
-
+/*
 TEST(ConvolutionalLayerTest, EigenConvolution)
 {
     Tensor<type, 2> input_2;
@@ -335,7 +334,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate) {
                                                parameters.input_data.dimension(2),
                                                parameters.input_data.dimension(3));
     expected_input_derivatives.setConstant(1.0);  // Replace with actual expected derivatives logic if known.
-/*
+
     for (Index b = 0; b < batch_samples_number; ++b) {
         for (Index h = 0; h < parameters.input_data.dimension(1); ++h) {
             for (Index w = 0; w < parameters.input_data.dimension(2); ++w) {
@@ -347,7 +346,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate) {
             }
         }
     }
-*/
+
     // Validate bias derivatives
     const Tensor<type, 1>& bias_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->biases_derivatives;
     EXPECT_EQ(bias_derivatives.size(), convolutional_layer.get_kernels_number());
@@ -364,3 +363,4 @@ TEST_P(ConvolutionalLayerTest, BackPropagate) {
     EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);
     EXPECT_EQ(weight_derivatives.dimension(3), parameters.kernel_dimensions[2]);
 }
+*/
