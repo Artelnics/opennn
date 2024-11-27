@@ -136,7 +136,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results(maximum_epochs_number + 1);
-
+    
     check();
 
     // Start training
@@ -311,6 +311,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 
+<<<<<<< HEAD
+=======
+            //system("pause");
+>>>>>>> bd324ff1c769bd137ec42b2cf9b70c49aeba5e2b
 
             training_error += training_back_propagation.error();
 

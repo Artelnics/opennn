@@ -16,9 +16,7 @@ namespace opennn
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-
     set(new_neural_network, new_data_set);
-
 }
 
 
@@ -271,15 +269,18 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     neural_network = new_neural_network;
     data_set = new_data_set;
 
+<<<<<<< HEAD
     set_default();
 
+=======
+>>>>>>> bd324ff1c769bd137ec42b2cf9b70c49aeba5e2b
     mean_squared_error.set(new_neural_network, new_data_set);
     normalized_squared_error.set(new_neural_network, new_data_set);
     cross_entropy_error.set(new_neural_network, new_data_set);
     cross_entropy_error_3d.set(new_neural_network, new_data_set);
     weighted_squared_error.set(new_neural_network, new_data_set);
     Minkowski_error.set(new_neural_network, new_data_set);
-
+    
     LossIndex* new_loss_index = get_loss_index();
 
     conjugate_gradient.set_loss_index(new_loss_index);

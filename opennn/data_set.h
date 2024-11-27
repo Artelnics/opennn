@@ -32,8 +32,8 @@ public:
     enum class Codification { UTF8, SHIFT_JIS };
 
     explicit DataSet(const Index& = 0, 
-                     const dimensions& = {}, 
-                     const dimensions& = {});
+                     const dimensions& = {0}, 
+                     const dimensions& = {0});
 
     explicit DataSet(const string&,
                      const string&,

@@ -30,37 +30,35 @@ int main()
         const Index channels = 1;
         const Index targets = 2;
 
-        ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
+        //ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
-        image_data_set.set_image_data_random();
+        //image_data_set.set_image_data_random();
 
-        image_data_set.set(DataSet::SampleUse::Training);
+        //image_data_set.set(DataSet::SampleUse::Training);
 
-        //ImageDataSet image_data_set;
+        ImageDataSet image_data_set;
 
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
-        //image_data_set.set_data_source_path("C:/binary_mnist");
+        image_data_set.set_data_source_path("C:/binary_mnist");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
         //image_data_set.set_input_dimensions({24,24,1});
 
-        //image_data_set.read_bmp();
-
-        //image_data_set.print();
+        image_data_set.read_bmp();
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
-            { 1 },
+            { 8 },
             image_data_set.get_target_dimensions());
 
         neural_network.print();
-        
+
         // Training strategy
- 
+
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);

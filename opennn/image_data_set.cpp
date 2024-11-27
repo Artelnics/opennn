@@ -22,8 +22,6 @@ ImageDataSet::ImageDataSet(const Index& new_samples_number,
                            const dimensions& new_input_dimensions,
                            const dimensions& new_target_dimensions)
 {
-
-
     if (new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions is not 3");
 
