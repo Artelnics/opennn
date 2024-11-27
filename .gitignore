@@ -4,6 +4,8 @@
 .Python
 [Bb]in
 [Ii]nclude
+!googletest/include/
+
 [Ll]ib
 [Ss]cripts
 pyvenv.cfg

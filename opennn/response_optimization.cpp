@@ -278,7 +278,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& n
     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
     const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-/*
+
     #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
     {
@@ -295,7 +295,6 @@ void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& n
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
     }
-*/
 }
 
 

@@ -11,10 +11,6 @@
 #include <vector>
 #include <exception>
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
@@ -60,9 +56,9 @@ int main()
             image_data_set.get_target_dimensions());
 
         neural_network.print();
-        
+
         // Training strategy
- 
+
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);

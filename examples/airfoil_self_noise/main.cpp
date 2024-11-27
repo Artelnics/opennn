@@ -94,13 +94,13 @@ int main()
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();                
-/*
+
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");

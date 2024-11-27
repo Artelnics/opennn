@@ -3,41 +3,44 @@
 #include "../opennn/transformer.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/language_data_set.h"
+#include "../opennn/stochastic_gradient_descent.h"
+#include "../opennn/mean_squared_error.h"
 
-
-/*
-void StochasticGradientDescentTest::test_constructor()
+TEST(StochasticGradientDescentTest, DefaultConstructor)
 {
-    cout << "test_constructor\n";
+    StochasticGradientDescent adaptive_moment_estimation;
 
-    StochasticGradientDescent stochastic_gradient_descent_1;
-    EXPECT_EQ(!stochastic_gradient_descent_1.has_loss_index());
-
-    // Loss index constructor
-
-    StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
-    EXPECT_EQ(stochastic_gradient_descent_2.has_loss_index());
+    EXPECT_TRUE(!adaptive_moment_estimation.has_loss_index());
 }
 
 
-void StochasticGradientDescentTest::test_perform_training()
-{   
-    cout << "test_perform_training\n";
+TEST(StochasticGradientDescentTest, GeneralConstructor)
+{
+    MeanSquaredError mean_squared_error;
+    StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
+
+    EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
+}
+
+
+TEST(StochasticGradientDescentTest, Train)
+{
+    MeanSquaredError mean_squared_error;
+    StochasticGradientDescent adaptive_moment_estimation(&mean_squared_error);
 
     type old_error = numeric_limits<float>::max();
 
     type error;
 
-    // Test
-
+/*
     samples_number = 1;
     inputs_number = 1;
     outputs_number = 1;
 
-    data_set.set(1,1,1);
+    data_set.set(1, 1, 1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(type(1));
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -48,10 +51,10 @@ void StochasticGradientDescentTest::test_perform_training()
 
     // Test
 
-    data_set.set(1,1,1);
+    data_set.set(1, 1, 1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(-1);
 
     stochastic_gradient_descent.set_maximum_epochs_number(1);
@@ -88,13 +91,12 @@ void StochasticGradientDescentTest::test_perform_training()
     training_results = stochastic_gradient_descent.perform_training();
 
     EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
+*/
 }
 
 
-void StochasticGradientDescentTest::test_transformer_training()
+TEST(StochasticGradientDescentTest, TrainTransformer)
 {
-    cout << "\ntest_transformer_training\n";
-
     type old_error = numeric_limits<float>::max();
 
     type error;
@@ -112,12 +114,10 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     Transformer transformer;
 
-    CrossEntropyError3D cross_entropy_error_3d;
-
-    cross_entropy_error_3d.set(&transformer, &data_set);
-
+    CrossEntropyError3D cross_entropy_error_3d(&transformer, &data_set);
+/*
     stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
-    
+
     samples_number = 1;
 
     inputs_number = 2;
@@ -163,7 +163,7 @@ void StochasticGradientDescentTest::test_transformer_training()
 
     stochastic_gradient_descent.set_maximum_epochs_number(10000);
     transformer.set_parameters_constant(-1);
-    
+
     stochastic_gradient_descent.set_display(true);
     stochastic_gradient_descent.set_display_period(1000);
 
@@ -171,9 +171,10 @@ void StochasticGradientDescentTest::test_transformer_training()
     error = training_results.get_training_error();
 
     EXPECT_EQ(error <= old_error);
+*/
 }
 
-
+/*
 void StochasticGradientDescentTest::test_to_XML()
 {
     cout << "test_to_XML\n";

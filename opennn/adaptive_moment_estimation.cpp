@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
@@ -143,7 +142,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results(maximum_epochs_number + 1);
-
+    
     check();
 
     // Start training
@@ -176,8 +175,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
     const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 

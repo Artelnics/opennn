@@ -352,13 +352,14 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     {
         //forward_propagate(input_pairs, forward_propagation);
 
-        current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
+        current_outputs/*.device(*thread_pool_device)*/ = outputs.chip(i - 1, 0);
 
-        prediction.device(*thread_pool_device) = current_outputs.argmax();
+        prediction/*.device(*thread_pool_device)*/ = current_outputs.argmax();
 
         input(i) = type(prediction(0));
 
-        if(prediction(0) == end_indicator) break;
+        if(prediction(0) == end_indicator)
+            break;
     }
     
     ostringstream output_string;
@@ -425,7 +426,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 {
     unordered_map<string, type> context_vocabulary_map;
 
-    for(Index i = 0; i < context_vocabulary.size(); i++)
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
     Index token_counter = 1;
@@ -525,14 +526,14 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
 
     for(Index i = 2; i < input_length; i++)
     {
-        if(predictions(i) == 3)   break;
+        if(predictions(i) == 3)
+            break;
 
         current_prediction = input_vocabulary[Index(predictions(i))];
 
-        if(current_prediction.substr(0, 2) == "##")
-            output_string << current_prediction.substr(2);
-        else
-            output_string << " " << current_prediction;
+        current_prediction.substr(0, 2) == "##"
+           ? output_string << current_prediction.substr(2)
+           : output_string << " " << current_prediction;
     }
 }
 

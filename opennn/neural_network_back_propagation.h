@@ -3,9 +3,6 @@
 
 #include "neural_network.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
 

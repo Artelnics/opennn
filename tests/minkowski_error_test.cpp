@@ -29,7 +29,7 @@ TEST(MinkowskiErrorTest, GeneralConstructor)
 
 TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 {
-/*
+
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(0));
     data_set.set(DataSet::SampleUse::Training);
@@ -39,9 +39,9 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
  
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
-    
-//    ForwardPropagation forward_propagation(1, &neural_network);
 
+    ForwardPropagation forward_propagation(1, &neural_network);
+/*
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
@@ -60,13 +60,8 @@ TEST(MinkowskiErrorTest, BackPropagateApproximationZero)
 }
 
 /*
-namespace opennn
-{
-
 void MinkowskiErrorTest::test_back_propagate()
 {
-    cout << "test_back_propagate\n";
-
     // Test approximation trivial
     {
         samples_number = 1;

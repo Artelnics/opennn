@@ -9,7 +9,7 @@
 #ifndef SCALING_H
 #define SCALING_H
 
-#include "config.h"
+
 #include "descriptives.h"
 
 namespace opennn

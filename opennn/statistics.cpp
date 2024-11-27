@@ -2040,18 +2040,6 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     return percentiles;
 }
 
-
-Index count_nan(const Tensor<type, 1>& vector)
-{
-    Index nan_number = 0;
-
-    for(Index i = 0; i < vector.dimension(0); i++)
-        if(isnan(vector(i))) 
-            nan_number++;
-
-    return nan_number;
-}
-
 }
 
 

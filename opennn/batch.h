@@ -1,16 +1,10 @@
-#ifndef DATASETBATCH_H
-#define DATASETBATCH_H
-
-#define EIGEN_USE_THREADS
+#ifndef BATCH_H
+#define BATCH_H
 
 #include "data_set.h"
-#include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
-
-using namespace std;
-using namespace Eigen;
 
 namespace opennn
 {

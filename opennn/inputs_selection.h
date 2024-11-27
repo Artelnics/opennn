@@ -10,7 +10,7 @@
 #define INPUTSSELECTIONALGORITHM_H
 
 #include "training_strategy.h"
-#include "config.h"
+
 
 namespace opennn
 {

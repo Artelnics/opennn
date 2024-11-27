@@ -1,7 +1,7 @@
 #ifndef TENSORS_H
 #define TENSORS_H
 
-#include "config.h"
+#include "pch.h"
 
 namespace opennn
 {
@@ -26,11 +26,6 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
-void initialize_sequential(Tensor<type, 1>&);
-void initialize_sequential(Tensor<Index, 1>&);
-
-void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&);
-
 void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
@@ -52,7 +47,8 @@ void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
 void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
-void sum_diagonal(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
+
+//void sum_diagonal(TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 

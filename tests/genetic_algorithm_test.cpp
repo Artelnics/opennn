@@ -23,14 +23,15 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 
 TEST(GeneticAlgorithmTest, InitializePopulation)
 {
-/*
+
     DataSet data_set(1, { 1 }, { 1 });
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
-*/
-//    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//    GeneticAlgorithm genetic_algorithm(&training_strategy);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    GeneticAlgorithm genetic_algorithm(&training_strategy);
+
 //    genetic_algorithm.set_individuals_number(10);
 //    genetic_algorithm.initialize_population();
 

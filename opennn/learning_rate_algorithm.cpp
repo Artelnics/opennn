@@ -76,19 +76,7 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_default()
 {
-/*
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-*/
-    // TRAINING OPERATORS
-
     learning_rate_method = LearningRateMethod::BrentMethod;
-
-    // TRAINING PARAMETERS
 
     learning_rate_tolerance = numeric_limits<type>::epsilon();
     loss_tolerance = numeric_limits<type>::epsilon();
@@ -103,8 +91,8 @@ void LearningRateAlgorithm::set_loss_index(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = std::move(make_unique<ThreadPool>(new_threads_number));
-//    thread_pool_device = std::move(make_unique<ThreadPoolDevice>(thread_pool, new_threads_number));
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 

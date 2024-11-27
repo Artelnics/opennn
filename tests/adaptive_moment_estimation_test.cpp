@@ -28,21 +28,21 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-/*
+
     DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(1));
     
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
-
+/*
     TrainingStrategy training_strategy(&neural_network, &data_set);
-    
-//    training_strategy
+  
+    AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-    adaptive_moment_estimation.set_maximum_epochs_number(1);
-    adaptive_moment_estimation.set_display(false);
+    adaptive_moment_estimation->set_maximum_epochs_number(1);
+    adaptive_moment_estimation->set_display(false);
 
-    training_results = adaptive_moment_estimation.perform_training();
+    TrainingResults training_results = adaptive_moment_estimation->perform_training();
 
     EXPECT_EQ(training_results.get_epochs_number() <= 1);
 */
@@ -62,9 +62,9 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     const Index perceptron_depth = 6;
     const Index heads_number = 4;
     const Index layers_number = 1;
-/*
-    LanguageDataSet language_data_set;
 
+    LanguageDataSet language_data_set;
+/*
     language_data_set.set_data_random_language_model(batch_samples_number,
         input_length,
         context_length,

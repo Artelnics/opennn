@@ -1970,15 +1970,15 @@ void LanguageDataSet::read_txt_language_model()
 
     const Index LIMIT = 126;
 
-    Index max_context_tokens = context_tokens[0].size();
+    size_t max_context_tokens = context_tokens[0].size();
 
-    for(Index i = 0; i < entry_number; i++)
+    for(size_t i = 0; i < entry_number; i++)
         if(context_tokens[i].size() > max_context_tokens)
             max_context_tokens = context_tokens[i].size();
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
 
-    Index max_completion_tokens = completion_tokens[0].size();
+    size_t max_completion_tokens = completion_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
         if(completion_tokens[i].size() > max_completion_tokens)

@@ -9,9 +9,7 @@
 #ifndef KMEANS_H
 #define KMEANS_H
 
-#include "config.h"
-
-using namespace std;
+#include "pch.h"
 
 namespace opennn
 {

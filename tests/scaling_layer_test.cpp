@@ -29,16 +29,6 @@ TEST(ScalingLayerTest, GeneralConstructor)
 
 
 /*
-namespace opennn
-{
-
-ScalingLayer2DTest::ScalingLayer2DTest() : UnitTesting()
-{
-    scaling_layer.set_display(false);
-
-}
-
-
 void ScalingLayer2DTest::test_constructor()
 {
     cout << "test_constructor\n";

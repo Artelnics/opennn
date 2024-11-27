@@ -228,9 +228,11 @@ void PerceptronLayer::set_parameters_random()
 void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
+
     combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
 
     sum_columns(thread_pool_device.get(), biases, combinations);
+
 }
 
 
@@ -282,6 +284,7 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool& is_training)
 {
+
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
@@ -308,6 +311,7 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
         calculate_activations(outputs, empty);
     }
+
 }
 
 
@@ -475,18 +479,21 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 string PerceptronLayer::get_expression(const vector<string>& input_names,
                                        const vector<string>& output_names) const
 {
+    const Index inputs_number = input_names.size();
+    const Index outputs_number = output_names.size();
+
     ostringstream buffer;
 
-    for(size_t j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < outputs_number; j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j, 1);
 
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
-        for(size_t i = 0; i < input_names.size() - 1; i++)
+        for(size_t i = 0; i < inputs_number - 1; i++)
             buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
 
-        buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";
+        buffer << " (" << input_names[inputs_number - 1] << "*" << synaptic_weights_column[inputs_number - 1] << "));\n";
     }
 
     return buffer.str();

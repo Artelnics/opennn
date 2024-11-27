@@ -9,9 +9,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
+#include "pch.h"
 #include "tinyxml2.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
