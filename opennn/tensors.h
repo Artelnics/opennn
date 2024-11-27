@@ -78,7 +78,7 @@ bool is_constant_matrix(const Tensor<type, 2>&);
 
 bool is_false(const Tensor<bool, 1>&);
 
-bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
+//bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
 
 bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
 bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);

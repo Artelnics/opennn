@@ -2301,15 +2301,11 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_positive_sampl
 
     const Index samples_number = used_sample_indices.size();
 
-    // Count used positive samples
-
     Index positive_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
         if(abs(data(used_sample_indices[i], target_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             positive_samples_number++;
-
-    // Get used positive samples indices
 
     vector<Index> positive_used_sample_indices(positive_samples_number);
     Index positive_sample_index = 0;
@@ -2469,7 +2465,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
     {
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
-        const Tensor<type, 2> input_raw_variable_data 
+        const Tensor<type, 2> input_raw_variable_data
             = get_raw_variable_data(input_raw_variable_index, used_sample_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
@@ -2478,7 +2474,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
 
             const Tensor<type, 2> target_raw_variable_data 
                 = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
-            
+
             correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
@@ -3961,7 +3957,8 @@ void DataSet::read_csv()
         tokens = get_tokens(line, separator_string);
 
         if(tokens.size() != columns_number)
-            throw runtime_error("Tokens number is not equal to columns number.");
+            throw runtime_error("Sample " + to_string(samples_number+1) + ": "
+                                "Tokens number is not equal to columns number.");
 
         process_tokens(tokens);
 
