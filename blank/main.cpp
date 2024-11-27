@@ -33,98 +33,25 @@ int main()
         cout << "Blank\n";
 
         srand(static_cast<unsigned>(time(nullptr)));
-
-
-// Train neural network
-
-        DataSet data_set("/home/alvaromartin/Downloads/LowAlloySteels.csv", ',', true);
-/*
-        data_set.scrub_missing_values();
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
-
-        Tensor<DataSet::Column, 1> columns = data_set.get_columns();
-
-        Tensor<Index, 1> input_column_indices(columns.size() - 48);
-        Tensor<Index, 1> target_column_indices(48);
-
-        for(Index i = 0; i < columns.size(); i++)
-        {
-            if (i < 47){ target_column_indices(i) = i;}
-            else { input_column_indices(i - 48) = i;}
-        }
-
-        data_set.set_input_target_columns(input_column_indices, target_column_indices);
-
-        columns = data_set.get_columns();
-
-        for(Index i = 0; i < columns.size(); i++)
-        {
-            columns(i).print();
-        }
-
-        cout << "==================================================================" << endl;
-        cout << "==================================================================" << endl;
-        std::cout << "input_variables_number: " << input_variables_number << std::endl;
-        std::cout << "target_variables_number: " << target_variables_number << std::endl;
-        cout << "Data set preview " << endl;
-        data_set.print_data_preview();
-        cout << "Data set dimensions: " << data_set.get_data().dimensions() << endl;
-        cout << "==================================================================" << endl;
-
-        // if (data_set.get_samples_number() <= 1)
-        // {
-        //     std::string error_message = "Not enough samples of model " + std::string(scope_ids[i]) +  " to train. ";
-
-        //     std::cerr << error_message << std::endl;
-
-        //     PQfinish(conn);
-        //     return grpc::Status(grpc::StatusCode::INTERNAL, error_message);
-        // }        
-
-        // Neural network
         
-        // Index hidden_layers_number = 3;
+        Eigen::Tensor<int, 1> tensor1(5);
+        Eigen::Tensor<int, 1> tensor2(5);
+
+        // Inicializando los tensores con algunos valores
+        tensor1.setValues({1, 2, 3, 4, 5});
+        tensor2.setValues({1, 2, 3, 4, 5});
+
+        Tensor<bool, 0> is_equal_tensor = (tensor1 == tensor2).all();
+
+        if(is_equal_tensor(0))
+        {
+            cout << "Tensors are equal" << endl;
+        }
+        else
+        {
+            cout << "Tensors are different" << endl;
+        }
         
-        // const Index total_layers_number = hidden_layers_number + 2;
-
-        // Tensor<Index, 1> architecture(total_layers_number); // hidden_layers_number + input_layer + output_layer
-        // architecture(0) = input_variables_number;
-        // architecture(total_layers_number - 1) = target_variables_number;
-
-        // Index user_layer_count = 0;
-
-        // for (Index i = 1; i < total_layers_number - 1; i++)
-        // {
-        //     architecture(i) = neurons_per_layer[user_layer_count];
-        //     user_layer_count++;
-        //     if(user_layer_count == hidden_layers_number) break;
-        // }
-
-        // NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, architecture);
-
-        // cout << "==================================================================" << endl;
-        // neural_network.print();
-        // cout << "==================================================================" << endl;
-
-        // Training Strategy
-
-        // TrainingStrategy training_strategy(&neural_network, &data_set);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-
-        // training_strategy.get_adaptive_moment_estimation_pointer()->set_batch_samples_number(20);
-
-        // cout << "==================================================================" << endl;
-        // training_strategy.perform_training();
-        // cout << "==================================================================" << endl;
-
-        // string model_file_name = "ñiñi_model.xml";
-
-        // neural_network.save(model_file_name);
-*/
-
         cout << "Bye!" << endl;
 
         return 0;
