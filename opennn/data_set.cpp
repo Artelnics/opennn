@@ -2123,7 +2123,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        const RawVariable raw_variable = raw_variables[i];
+        const RawVariable& raw_variable = raw_variables[i];
 
         if (raw_variable.use == VariableUse::None)
         {
@@ -2201,7 +2201,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
         default:
 
             throw runtime_error("Unknown raw variable type.");
-
         }
     }
 
@@ -4532,47 +4531,9 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
 
         for (Index j = 0; j < batch_size; ++j)
             batches[i][j] = sample_indices[count++];
-
     }
 
     return batches;
-}
-
-
-void DataSet::shuffle()
-{
-    random_device rng;
-    mt19937 urng(rng());
-
-    const Index data_rows = data.dimension(0);
-    const Index data_columns = data.dimension(1);
-
-    Tensor<Index, 1> indices(data_rows);
-
-    for(Index i = 0; i < data_rows; i++)
-        indices(i) = i;
-
-    std::shuffle(&indices(0), &indices(data_rows-1), urng);
-
-    Tensor<type, 2> new_data(data_rows, data_columns);
-    vector<string> new_rows_labels(data_rows);
-
-    Index index = 0;
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < data_rows; i++)
-    {
-        index = indices(i);
-
-        new_rows_labels[i] = sample_ids[index];
-
-        for(Index j = 0; j < data_columns; j++)
-            new_data(i, j) = data(index, j);
-    }
-
-    data = new_data;
-    sample_ids = new_rows_labels;
 }
 
 
