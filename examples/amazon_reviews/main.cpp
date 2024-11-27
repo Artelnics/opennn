@@ -25,78 +25,156 @@ int main()
 
         srand(unsigned(time(nullptr)));
 
-        // DataSet
+        // // DataSet
 
-        TextDataSet text_data_set;
-        
-        text_data_set.set_data_source_path("../data/amazon_cells_reduced.txt");
-        text_data_set.set_separator(DataSet::Separator::Tab);
+        // TextDataSet text_data_set;
 
-        text_data_set.read_txt();
-        
-        text_data_set.split_samples_random();
+        // text_data_set.set_data_source_path("../data/amazon_cells_reduced.txt");
+        // text_data_set.set_separator(DataSet::Separator::Tab);
 
-        const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
-        const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Input);
+        // text_data_set.read_txt();
 
-        const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
+        // text_data_set.split_samples_random();
 
-        // Neural Network
+        // const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
+        // const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Input);
 
-        const Index hidden_neurons_number = 6;
+        // const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
+        // const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-            { words_number }, { hidden_neurons_number }, { target_variables_number });
+        // cout<<words_number<<endl;
+        // cout<<target_variables_number<<endl;
 
-        neural_network.print();
+        // // Neural Network
 
-        // Training Strategy
+        // const Index hidden_neurons_number = 6;
 
-        TrainingStrategy training_strategy(&neural_network, &text_data_set);
+        // NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
+        //                              { words_number }, { hidden_neurons_number }, { target_variables_number });
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // neural_network.print();
 
-        training_strategy.perform_training();
+        // // Training Strategy
 
-        // Testing Analysis
-        TestingAnalysis testing_analysis(&neural_network, &text_data_set);
+        // TrainingStrategy training_strategy(&neural_network, &text_data_set);
 
-        testing_analysis.print_binary_classification_tests();
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        // Model deployment
+        // training_strategy.perform_training();
 
-        string review_1 = "Highly recommend for any one who has a bluetooth phone.";
-        Tensor<type, 1> processed_review_1 = text_data_set.sentence_to_data(review_1);
+        // // Testing Analysis
+        // TestingAnalysis testing_analysis(&neural_network, &text_data_set);
 
-        string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
-        Tensor<type, 1> processed_review_2 = text_data_set.sentence_to_data(review_2);
+        // testing_analysis.print_binary_classification_tests();
 
-        Tensor<type,2> input_data(2, words_number);
-        Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
+        // // Model deployment
 
-        Tensor<type, 2> output_data;
+        // string review_1 = "Highly recommend for any one who has a bluetooth phone.";
+        // Tensor<type, 1> processed_review_1 = text_data_set.sentence_to_data(review_1);
 
-        for(Index i = 0; i < words_number; i++)
-        {
-          input_data(0,i) = processed_review_1(i);
-          input_data(1,i) = processed_review_2(i);
-        }
+        // string review_2 = "You have to hold the phone at a particular angle for the other party to hear you clearly.";
+        // Tensor<type, 1> processed_review_2 = text_data_set.sentence_to_data(review_2);
 
-        output_data = neural_network.calculate_outputs(input_data);
+        // Tensor<type,2> input_data(2, words_number);
+        // Tensor<Index, 1> input_dimensions = get_dimensions(input_data);
 
-        cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
-        cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
+        // Tensor<type, 2> output_data;
 
-        // Save results
+        // for(Index i = 0; i < words_number; i++)
+        // {
+        //     input_data(0,i) = processed_review_1(i);
+        //     input_data(1,i) = processed_review_2(i);
+        // }
 
-        neural_network.save_expression_c("../data/amazon_reviews.txt");
-        neural_network.save_expression_python("../data/amazon_reviews.py");
-        
-        cout << "Good bye!" << endl;
+        // output_data = neural_network.calculate_outputs(input_data);
 
-        return 0;
+        // cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
+        // cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
+
+        // // Save results
+
+        // neural_network.save_expression_c("../data/amazon_reviews.txt");
+        // neural_network.save_expression_python("../data/amazon_reviews.py");
+
+        // cout << "Good bye!" << endl;
+
+
+
+
+
+
+
+
+        // // Data set
+
+        // LanguageDataSet LanguageDataSet;
+
+        // text_data_set.set_data_source_path("../data/amazon_cells_reduced.txt");
+        // text_data_set.set_separator(DataSet::Separator::Tab);
+
+        // text_data_set.read_txt();
+
+        // text_data_set.split_samples_random();
+
+        // const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
+        // const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Input);
+
+        // const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
+        // const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
+
+        // cout<<words_number<<endl;
+        // cout<<target_variables_number<<endl;
+
+        // // Neural Network
+
+        // const Index hidden_neurons_number = 6;
+
+        // NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassificationTransformer,
+        //                              { words_number }, { hidden_neurons_number }, { target_variables_number });
+
+        // neural_network.print();
+
+        // // Training Strategy
+
+        // TrainingStrategy training_strategy(&neural_network, &text_data_set);
+
+        // // // Training strategy
+
+        // // TrainingStrategy training_strategy(&transformer, &language_data_set);
+
+        // // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+
+        // // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        // // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        // // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
+
+        // // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
+        // // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
+        // // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
+        // // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+
+        // // training_strategy.get_adaptive_moment_estimation()->set_display(true);
+        // // training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+
+        // // TrainingResults training_results = training_strategy.perform_training();
+
+        // // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+
+        // // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+
+        // // cout << "TESTING ANALYSIS:" << endl;
+        // // cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        // // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+
+        // // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+
+
+        // cout << "Good bye!" << endl;
+
+        // return 0;
     }
     catch(exception& e)
     {

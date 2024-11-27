@@ -35,18 +35,16 @@ int main()
         // TrainingStrategy training_strategy(&neural_network, &data_set);
 
 
-/*
-        NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
-        neural_network.set_parameters_constant(10);
+        // NeuralNetwork neural_network;
+        // neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
+        // neural_network.set_parameters_constant(10);
 
-        Tensor<type, 2> inputs(2,2);
-        inputs.setConstant(0);
+        // Tensor<type, 2> inputs(2,2);
+        // inputs.setConstant(0);
 
 //        neural_network.print();
 
-        neural_network.calculate_outputs(inputs);
-*/
+        // neural_network.calculate_outputs(inputs);
 
         // Data set
 

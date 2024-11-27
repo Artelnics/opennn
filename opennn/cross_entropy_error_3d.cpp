@@ -37,18 +37,18 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
     
     // Forward propagation
-    
+
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
-    
+
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
-        
+
     probabilistic_layer_3d_back_propagation->targets = targets;
     
     Tensor<type, 2>& errors = back_propagation.errors;
@@ -82,13 +82,13 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
     matches.device(*thread_pool_device) = predictions == targets;
-    
+
     matches.device(*thread_pool_device) = matches && mask;
 
     Tensor<type, 0>& accuracy = back_propagation.accuracy;
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
-    
+
     if(isnan(error())) throw runtime_error("Error is NAN");
 }
 

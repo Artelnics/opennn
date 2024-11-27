@@ -24,11 +24,14 @@ public:
 
     // Constructors
 
-    explicit Transformer();
-
-    explicit Transformer(const Tensor<Index, 1>&);
+    explicit Transformer(const Tensor<Index, 1>& = Tensor<Index, 1>());
 
     explicit Transformer(const initializer_list<Index>&);
+
+    // Index get_input_length() const
+    // {
+    //     return 0;
+    // }
 
     void set(const Tensor<Index, 1>&);
 

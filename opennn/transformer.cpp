@@ -22,12 +22,6 @@
 namespace opennn
 {
 
-Transformer::Transformer() : NeuralNetwork()
-{
-    NeuralNetwork::set();
-}
-
-
 Transformer::Transformer(const Tensor<Index, 1>& architecture)
 {
     set(architecture);
@@ -61,6 +55,17 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
         perceptron_depth,
         heads_number,
         layers_number);
+
+/*
+    set(architecture(0),
+        architecture(1),
+        architecture(2),
+        architecture(3),
+        architecture(4),
+        architecture(5),
+        architecture(6),
+        architecture(7));
+*/
 }
 
 
@@ -427,6 +432,7 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     tokenize_wordpiece(context_tokens[0], context);
 
     Tensor<type, 2> input(batch_samples_number, input_length);
+
     input.setZero();
     input(0) = start_indicator;
 
@@ -442,12 +448,12 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    //TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+    // TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
     TensorMap <Tensor<type, 2>> outputs (outputs_pair.first,outputs_pair.second[1],outputs_pair.second[2]);
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
     Tensor<Index, 0> prediction;
-    
+
     for(Index i = 1; i < input_length; i++)
     {
         forward_propagate(input_pairs, forward_propagation);
@@ -461,15 +467,27 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
         if(prediction(0) == end_indicator)
             break;
     }
-    
+
     ostringstream output_string;
 
     //if(!imported_vocabulary)    
     // detokenize_whitespace(input, output_string);
     //else
-    detokenize_wordpiece(input, output_string);
 
-    return output_string.str();
+    // detokenize_wordpiece(input, output_string); //coment for amazon reviews example
+
+    // new for amazon reviews example
+
+    if(input(0,1) == 2)
+        return "good";
+    else if(input(0,1) == 3)
+        return "bad";
+    else
+        return "unknown";
+
+    // end new
+
+    // return output_string.str(); //coment for amazon reviews example
     
 }
 
@@ -524,7 +542,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
-    unordered_map<std::string, type> context_vocabulary_map;
+    unordered_map<string, type> context_vocabulary_map;
 
     for(Index i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);

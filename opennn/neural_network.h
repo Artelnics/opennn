@@ -53,7 +53,8 @@ public:
                         Classification,
                         Forecasting,
                         ImageClassification,
-                        TextClassification};
+                        TextClassification,
+                        TextClassificationTransformer};
 
    // Constructors
 
@@ -128,6 +129,7 @@ public:
    void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
+   void set_text_classification_transformer(const dimensions&, const dimensions&, const dimensions&);
 
    void set(const string&);
 

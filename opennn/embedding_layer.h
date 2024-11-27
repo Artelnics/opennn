@@ -92,11 +92,7 @@ private:
 
     // MEMBERS
 
-    //Index input_dimensions;
-
     Index inputs_number;
-
-    //Index depth;
 
     Tensor<type, 2> embedding_weights;
 

@@ -284,6 +284,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
