@@ -1022,7 +1022,16 @@ vector<DataSet::RawVariable> DataSet::get_raw_variables(const VariableUse& varia
 
 Index DataSet::get_variables_number() const
 {
-    return data.dimension(1);
+    const Index raw_variables_number = get_raw_variables_number();
+
+    Index count = 0;
+
+    for (Index i = 0; i < raw_variables_number; i++)
+        count += (raw_variables[i].type == RawVariableType::Categorical)
+                     ? raw_variables[i].get_categories_number()
+                     : 1;
+
+    return count;
 }
 
 
@@ -1753,6 +1762,7 @@ void DataSet::set(const string& data_path,
     input_dimensions = {input_variables_number};
 
     target_dimensions = {target_variables_number};
+
 }
 
 
@@ -3851,7 +3861,7 @@ void DataSet::process_tokens(vector<string>& tokens)
         }
         else if(is_numeric_string(token))
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::Numeric)
                 raw_variable.type = RawVariableType::Numeric;
 
             if(raw_variable.type == RawVariableType::Categorical)
@@ -3859,12 +3869,12 @@ void DataSet::process_tokens(vector<string>& tokens)
         }
         else if(is_date_time_string(token))
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::DateTime)
                 raw_variable.type = RawVariableType::DateTime;
         }
         else // is string
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::Categorical)
                 raw_variable.type = RawVariableType::Categorical;
 
             if(!contains(raw_variable.categories, token))
@@ -3876,7 +3886,6 @@ void DataSet::process_tokens(vector<string>& tokens)
 
 void DataSet::read_csv()
 {
-
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
@@ -4005,6 +4014,7 @@ void DataSet::read_csv()
         prepare_line(line);
 
         if(line.empty()) continue;
+
         check_separators(line);
 
         tokens = get_tokens(line, separator_string);
@@ -4093,6 +4103,7 @@ void DataSet::read_csv()
         }
 
         sample_index++;
+
     }
 
     file.close();
@@ -4100,6 +4111,7 @@ void DataSet::read_csv()
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
+
 }
 
 
@@ -4273,7 +4285,7 @@ void DataSet::check_separators(const string& line) const
     const string separator_string = get_separator_string();
 
     if(line.find(separator_string) == string::npos)
-        throw runtime_error("Error: Separarot '" + separator_string + "' not found in line " + line + ".\n");
+        throw runtime_error("Error: Separator '" + separator_string + "' not found in line " + line + ".\n");
 
     if(separator == Separator::Space)
     {

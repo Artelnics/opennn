@@ -66,7 +66,6 @@ void fill_tokens(const string& text, const string& separator, vector<string>& to
 
 Index count_tokens(const string& text, const string& separator)
 {
-/*
     Index tokens_number = 0;
 
     string::size_type position = 0;
@@ -85,8 +84,6 @@ Index count_tokens(const string& text, const string& separator)
         tokens_number--;
 
     return tokens_number + 1;
-    */
-    return 0;
  }
 
 

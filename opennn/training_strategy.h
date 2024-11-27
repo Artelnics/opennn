@@ -52,8 +52,6 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    // Get
-
     DataSet* get_data_set();
 
     NeuralNetwork* get_neural_network() const;

@@ -42,6 +42,7 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
+
 #ifdef OPENNN_CUDA
 
 #include "../../opennn_cuda/CudaOpennn/kernel.cuh"
@@ -54,8 +55,11 @@
 
 #endif
 
+//#include "tinyxml2.h"
+
 using namespace std;
 using namespace Eigen;
+//using namespace tinyxml2;
 
 using type = float;
 

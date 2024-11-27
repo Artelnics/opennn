@@ -40,8 +40,6 @@ public:
 
    // Set
 
-   void set_loss_index(LossIndex*) final;
-
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
    void set_default() final;

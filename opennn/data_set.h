@@ -20,7 +20,6 @@
 
 
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {

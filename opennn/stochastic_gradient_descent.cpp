@@ -59,12 +59,6 @@ const type& StochasticGradientDescent::get_maximum_time() const
 }
 
 
-void StochasticGradientDescent::set_loss_index(LossIndex* new_loss_index)
-{
-    loss_index = new_loss_index;
-}
-
-
 void StochasticGradientDescent::set_default()
 {
     // TRAINING OPERATORS

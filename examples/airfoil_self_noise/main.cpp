@@ -16,10 +16,6 @@
 #include "../../opennn/testing_analysis.h"
 #include "../../opennn/forward_propagation.h"
 
-
-using namespace opennn;
-using namespace Eigen;
-
 int main()
 {
     try
