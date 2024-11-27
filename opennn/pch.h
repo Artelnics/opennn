@@ -9,12 +9,13 @@
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
+#include <algorithm>
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <algorithm>
 #include <numeric>
 #include <exception>
 #include <memory>

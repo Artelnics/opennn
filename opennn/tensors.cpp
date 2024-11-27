@@ -35,39 +35,6 @@ bool calculate_random_bool()
 }
 
 
-void initialize_sequential(Tensor<type, 1>& vector)
-{
-    #pragma omp parallel for
-    for(Index i = 0; i < vector.size(); i++) 
-        vector(i) = type(i);
-}
-
-
-void initialize_sequential(Tensor<Index, 1>& vector)
-{
-    #pragma omp parallel for
-    for(Index i = 0; i < vector.size(); i++) 
-        vector(i) = i;
-}
-
-
-void initialize_sequential(Tensor<Index, 1>& new_tensor,
-                           const Index& start,
-                           const Index& step,
-                           const Index& end)
-{
-    const Index new_size = (end-start)/step+1;
-
-    new_tensor.resize(new_size);
-    new_tensor(0) = start;
-
-    for(Index i = 1; i < new_size-1; i++)
-        new_tensor(i) = new_tensor(i-1) + step;
-
-    new_tensor(new_size-1) = end;
-}
-
-
 void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
 {
     const Index rows_number = matrix.dimension(0);
@@ -549,18 +516,14 @@ bool is_zero(const Tensor<type, 1>& tensor, const type& limit)
 
 bool is_false(const Tensor<bool, 1>& tensor)
 {
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-        if(tensor(i)) 
-            return false;
-
-    return true;
+    return all_of(tensor.data(), tensor.data() + tensor.size(), [](bool value) { return !value; });
 }
 
 
 Index count_true(const Tensor<bool, 1>& tensor)
 {
+    return std::count(tensor.data(), tensor.data() + tensor.size(), true);
+
     Index count = 0;
 
     #pragma omp parallel for reduction(+: count)
@@ -1223,15 +1186,15 @@ void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
 }
 
 
-void sum_diagonal(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& values)
-{
-    const Index rows_number = matrix.dimension(0);
+//void sum_diagonal(TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& values)
+//{
+//    const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
-    for(Index i = 0; i < rows_number; i++)
-        matrix(i, i) += values(i);
-}
+//    for(Index i = 0; i < rows_number; i++)
+//        matrix(i, i) += values(i);
+//}
 
 
 void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
@@ -1327,29 +1290,13 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 
 Index count_NAN(const Tensor<type, 1>& x)
 {
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+:count)
-
-    for(Index i = 0; i < x.size(); i++)
-        if(isnan(x(i))) 
-            count++;
-
-    return count;
+    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value);});
 }
 
 
 Index count_NAN(const Tensor<type, 2>& x)
 {
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < x.size(); i++)
-        if(isnan(x(i))) 
-            count++;
-
-    return count;
+    return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value);});
 }
 
 
@@ -1675,7 +1622,7 @@ Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index
 }
 
 
-bool contains(const Tensor<size_t,1>& vector, const size_t& value)
+bool contains(const Tensor<size_t, 1>& vector, const size_t& value)
 {
     Tensor<size_t, 1> copy(vector);
 
@@ -1691,7 +1638,7 @@ bool contains(const Tensor<type, 1>& vector, const type& value)
 
     const type* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return it != (copy.data()+copy.size());
+    return it != copy.data() + copy.size();
 }
 
 
@@ -1701,7 +1648,7 @@ bool contains(const Tensor<Index,1>& vector, const Index& value)
 
     const Index* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return it != (copy.data()+copy.size());
+    return it != copy.data() + copy.size();
 }
 
 
@@ -1711,8 +1658,9 @@ bool contains(const vector<string>& data, const string& value)
 
     const string* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return it != (copy.data()+copy.size());
+    return it != copy.data() + copy.size();
 }
+
 
 vector<string> to_string_tensor(const Tensor<type, 1>& x)
 {

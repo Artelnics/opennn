@@ -75,7 +75,7 @@ namespace opennn
     void replace(string&, const string&, const string&);
     void replace_substring(vector<string>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
-    void replac_substring_within_quotes(string&, const string&, const string&);
+    void replace_substring_within_quotes(string&, const string&, const string&);
     void replace_substring_in_string (vector<string>&, string&, const string&);
 
     void display_progress_bar(const int&, const int&);
@@ -104,8 +104,6 @@ namespace opennn
 //    string one_hot_decode(const Tensor<type, 1>&);
 
 //    string multiple_one_hot_decode(const Tensor<type, 2>&);
-
-    //Tensor<type, 2> str_to_input(const string&);
 
     // Preprocess
 
@@ -176,7 +174,7 @@ namespace opennn
 
     vector<string> detokenize(const vector<vector<string>>&);
 
-    Index count(const vector<vector<string>>&);
+    //Index count(const vector<vector<string>>&);
 
     Index calculate_weight(const vector<string>&, const WordBag&);
 
@@ -312,8 +310,6 @@ public:
     string one_hot_decode(const Tensor<type, 1>&) const;
 
     string multiple_one_hot_decode(const Tensor<type, 2>&) const;
-
-    Tensor<type, 2> str_to_input(const string &) const;
 
 private:
 
