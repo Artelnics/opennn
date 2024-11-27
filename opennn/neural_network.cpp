@@ -60,8 +60,8 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     layers.push_back(std::move(layer));
 
-    layer_input_indices.push_back(input_indices.empty() 
-        ? std::vector<Index>(1, old_layers_number - 1) 
+    layer_input_indices.push_back(input_indices.empty()
+        ? vector<Index>(1, old_layers_number - 1)
         : input_indices);
 }
 
@@ -125,6 +125,8 @@ string NeuralNetwork::get_model_type_string() const
 {
     switch (model_type)
     {
+        case ModelType::Default:
+            return "Default";
         case ModelType::AutoAssociation:
             return "AutoAssociation";
         case ModelType::Approximation:
@@ -418,6 +420,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
+    default:
+        break;
     }
     const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 
@@ -1158,7 +1162,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagate({input_pair}, forward_propagation);
 
-    forward_propagation.print();
+    //forward_propagation.print();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -1757,8 +1761,6 @@ void NeuralNetwork::save_parameters(const string& file_name) const
     const Tensor<type, 1> parameters = get_parameters();
 
     file << parameters << endl;
-
-    // Close file
 
     file.close();
 }

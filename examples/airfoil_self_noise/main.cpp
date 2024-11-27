@@ -26,14 +26,12 @@ int main()
 
         // Data set
 
-        DataSet data_set("C:/parabola.csv", ",", true);
+        DataSet data_set("C:/line.csv", ",", true);
 
-        const Tensor<Correlation, 2> correlations = data_set.calculate_input_target_raw_variable_spearman_correlations();
-
-         correlations(0,0).print();
+        data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
 
 //        data_set.print_input_target_raw_variables_correlations();
-/*
+
 //        data_set.split_samples_random(0.99, 0.005, 0.005);
 
 //        data_set.scale_data();
@@ -52,7 +50,9 @@ int main()
         const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {input_variables_number}, {neurons_number}, {target_variables_number});
+                                     {input_variables_number}, {}, {target_variables_number});
+
+        //neural_network.print();
 
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
@@ -63,7 +63,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_display(false);
+//        training_strategy.set_display(false);
 
         //training_strategy.print();
 
@@ -84,12 +84,13 @@ int main()
 
         training_strategy.perform_training();
 
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();                
-
+/*
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
@@ -112,15 +113,15 @@ int main()
 
 
         Tensor<type, 2> inputs(1, 1);
-        inputs(0,0) = 5;
+        inputs(0,0) = 0.1;
 
-        //cout << inputs << endl;
+        cout << inputs << endl;
 
         const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-        //cout << outputs << endl;
+        cout << outputs << endl;
 
-        //neural_network.print();
+        neural_network.print();
 */
         cout << "Good bye!" << endl;
 

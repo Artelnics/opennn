@@ -247,7 +247,7 @@ protected:
 
    string name = "neural_network";
 
-   NeuralNetwork::ModelType model_type;
+   NeuralNetwork::ModelType model_type = NeuralNetwork::ModelType::Default;
 
    vector<string> input_names;
 
