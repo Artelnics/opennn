@@ -6,31 +6,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "growing_neurons.h"
 
 namespace opennn
 {
 
-/// Default constructor.
-
-GrowingNeurons::GrowingNeurons()
-    : NeuronsSelection()
+GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
+    : NeuronsSelection(new_training_strategy)
 {
     set_default();
 }
 
-
-/// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a gradient descent object.
-
-GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy_pointer)
-    : NeuronsSelection(new_training_strategy_pointer)
-{
-    set_default();
-}
-
-
-/// Returns the number of the hidden perceptrons pointed in each iteration of the growing neurons algorithm.
 
 const Index& GrowingNeurons::get_step() const
 {
@@ -38,15 +26,11 @@ const Index& GrowingNeurons::get_step() const
 }
 
 
-/// Returns the maximum number of selection failures in the model neurons selection algorithm.
-
 const Index& GrowingNeurons::get_maximum_selection_failures() const
 {
     return maximum_selection_failures;
 }
 
-
-/// Sets the members of the model selection object to their default values:
 
 void GrowingNeurons::set_default()
 {
@@ -64,85 +48,29 @@ void GrowingNeurons::set_default()
 }
 
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the growing algorithm
-/// in the model neurons selection process.
-/// @param new_step number of hidden perceptrons pointed.
-
 void GrowingNeurons::set_neurons_increment(const Index& new_neurons_increment)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_neurons_increment <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void set_neurons_increment(const Index&) method.\n"
-               << "New_step(" << new_neurons_increment << ") must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     neurons_increment = new_neurons_increment;
 }
 
 
-/// Sets the maximum selection failures for the growing neurons selection algorithm.
-/// @param new_maximum_selection_failures Maximum number of selection failures in the growing neurons selection algorithm.
-
 void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_selection_failures <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void set_maximum_selection_failures(const Index&) method.\n"
-               << "Maximum selection failures must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
-/// Perform neurons selection with the growing neurons method.
-
 NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 {
-    #ifdef OPENNN_DEBUG
-
-    if(!training_strategy_pointer)
-    {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: growing_neurons class.\n"
-                << "TrainingStrategy* training_strategy_pointer const method.\n"
-                << "training_strategy_pointer is nullptr.\n";
-
-         throw invalid_argument(buffer.str());
-    }
-
-    #endif
-
     NeuronsSelectionResults neurons_selection_results(maximum_epochs_number);
 
     if(display) cout << "Performing growing neurons selection..." << endl;
 
     // Neural network    
 
-    NeuralNetwork* neural_network = training_strategy_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network = training_strategy->get_neural_network();
 
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network->get_trainable_layers_pointers();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     Index neurons_number;
 
@@ -163,7 +91,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     TrainingResults training_results;
 
-    training_strategy_pointer->set_display(false);
+    training_strategy->set_display(false);
 
     time(&beginning_time);
 
@@ -177,9 +105,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
-        trainable_layers_pointers(trainable_layers_number-2)->set_neurons_number(neurons_number);
-
-        trainable_layers_pointers(trainable_layers_number-1)->set_inputs_number(neurons_number);
+        neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
+        neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
 
         neurons_selection_results.neurons_number_history(epoch) = neurons_number;
 
@@ -192,14 +119,12 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             neural_network->set_parameters_random();
 
-            training_results = training_strategy_pointer->perform_training();
+            training_results = training_strategy->perform_training();
 
             if(display)
-            {
-                cout << "Trial: " << trial+1 << endl;
-                cout << "Training error: " << training_results.get_training_error() << endl;
-                cout << "Selection error: " << training_results.get_selection_error() << endl;
-            }
+                cout << "Trial: " << trial+1 << endl
+                     << "Training error: " << training_results.get_training_error() << endl
+                     << "Selection error: " << training_results.get_selection_error() << endl;
 
             if(training_results.get_selection_error() < minimum_selection_error)
             {
@@ -214,28 +139,25 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             {
                 neurons_selection_results.optimal_neurons_number = neurons_number;
                 neurons_selection_results.optimal_parameters = neural_network->get_parameters();
-
                 neurons_selection_results.optimum_training_error = minimum_training_error;
                 neurons_selection_results.optimum_selection_error = minimum_selection_error;                                
             }
         }
 
         if(display)
-        {
-            cout << "Neurons number: " << neurons_number << endl;
-            cout << "Training error: " << training_results.get_training_error() << endl;
-            cout << "Selection error: " << training_results.get_selection_error() << endl;
+            cout << "Neurons number: " << neurons_number << endl
+                 << "Training error: " << training_results.get_training_error() << endl
+                 << "Selection error: " << training_results.get_selection_error() << endl
+                 << "Elapsed time: " << write_time(elapsed_time) << endl;
 
-            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
-        }
-
-        if(neurons_selection_results.optimum_selection_error > previous_selection_error) selection_failures++;
+        if(neurons_selection_results.optimum_selection_error > previous_selection_error) 
+            selection_failures++;
 
         previous_selection_error = neurons_selection_results.optimum_selection_error;
 
         time(&current_time);
 
-        elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time, beginning_time));
 
         // Stopping criteria
 
@@ -261,7 +183,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl <<  "Maximum epochs number reached: " << epoch << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumEpochs;
         }
@@ -296,8 +218,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     // Save neural network
 
-    trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_selection_results.optimal_neurons_number);
-    trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_selection_results.optimal_neurons_number);
+    neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
+    neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
 
     neural_network->set_parameters(neurons_selection_results.optimal_parameters);
 
@@ -307,378 +229,101 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 }
 
 
-/// This method writes a matrix of strings the most representative atributes.
-
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
-    ostringstream buffer;
+    vector<string> labels(8);
+    vector<string> values(8);
 
-    Tensor<string, 1> labels(8);
-    Tensor<string, 1> values(8);
+    labels[0] = "Minimum neurons";
+    values[0] = to_string(minimum_neurons);
 
-    // Minimum neurons number
+    labels[1] = "Maximum neurons";
+    values[1] = to_string(maximum_neurons);
 
-    labels(0) = "Minimum neurons";
+    labels[2] = "NeuronsIncrement";
+    values[2] = to_string(neurons_increment);
 
-    buffer.str("");
-    buffer << minimum_neurons;
+    labels[3] = "Trials number";
+    values[3] = to_string(trials_number);
 
-    values(0) = buffer.str();
+    labels[4] = "Selection loss goal";
+    values[4] = to_string(selection_error_goal);
 
-    // Maximum order
+    labels[5] = "Maximum selection failures";
+    values[5] = to_string(maximum_selection_failures);
 
-    labels(1) = "Maximum neurons";
+    labels[6] = "Maximum iterations number";
+    values[6] = to_string(maximum_epochs_number);
 
-    buffer.str("");
-    buffer << maximum_neurons;
-
-    values(1) = buffer.str();
-
-    // Step
-
-    labels(2) = "Step";
-
-    buffer.str("");
-    buffer << neurons_increment;
-
-    values(2) = buffer.str();
-
-    // Trials number
-
-    labels(3) = "Trials number";
-
-    buffer.str("");
-    buffer << trials_number;
-
-    values(3) = buffer.str();
-
-    // Selection loss goal
-
-    labels(4) = "Selection loss goal";
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    values(4) = buffer.str();
-
-    // Maximum selection failures
-
-    labels(5) = "Maximum selection failures";
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    values(5) = buffer.str();
-
-    // Maximum iterations number
-
-    labels(6) = "Maximum iterations number";
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-
-    values(6) = buffer.str();
-
-    // Maximum time
-
-    labels(7) = "Maximum time";
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    values(7) = buffer.str();
+    labels[7] = "Maximum time";
+    values[7] = to_string(maximum_time);
 
     const Index rows_number = labels.size();
-    const Index columns_number = 2;
+    const Index raw_variables_number = 2;
 
-    Tensor<string, 2> string_matrix(rows_number, columns_number);
-
+    Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
+/*
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-
+*/
     return string_matrix;
 }
 
 
-/// Serializes the growing neurons object into an XML document of the TinyXML library without
-/// keep the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
-void GrowingNeurons::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void GrowingNeurons::to_XML(XMLPrinter& printer) const
 {
-    ostringstream buffer;
+    printer.OpenElement("GrowingNeurons");
 
-    file_stream.OpenElement("GrowingNeurons");
+    add_xml_element(printer, "MinimumNeurons", to_string(minimum_neurons));
+    add_xml_element(printer, "MaximumNeurons", to_string(maximum_neurons));
+    add_xml_element(printer, "NeuronsIncrement", to_string(neurons_increment));
+    add_xml_element(printer, "TrialsNumber", to_string(trials_number));
+    add_xml_element(printer, "SelectionErrorGoal", to_string(selection_error_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
-    // Minimum order
-
-    file_stream.OpenElement("MinimumNeurons");
-
-    buffer.str("");
-    buffer << minimum_neurons;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Maximum order
-
-    file_stream.OpenElement("MaximumNeurons");
-
-    buffer.str("");
-    buffer << maximum_neurons;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Step
-
-    file_stream.OpenElement("Step");
-
-    buffer.str("");
-    buffer << neurons_increment;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Trials number
-
-    file_stream.OpenElement("TrialsNumber");
-
-    buffer.str("");
-    buffer << trials_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Selection error goal
-
-    file_stream.OpenElement("SelectionErrorGoal");
-
-    buffer.str("");
-    buffer << selection_error_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Maximum selection failures
-
-    file_stream.OpenElement("MaximumSelectionFailures");
-
-    buffer.str("");
-    buffer << maximum_selection_failures;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Maximum time
-
-    file_stream.OpenElement("MaximumTime");
-
-    buffer.str("");
-    buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
-/// Deserializes a TinyXML document into this growing neurons object.
-/// @param document TinyXML document containing the member data.
-
-void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
+void GrowingNeurons::from_XML(const XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
+    const XMLElement* root_element = document.FirstChildElement("GrowingNeurons");
 
     if(!root_element)
-    {
-        ostringstream buffer;
+        throw runtime_error("GrowingNeurons element is nullptr.\n");
 
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GrowingNeurons element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    // Minimum neurons
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumNeurons");
-
-        if(element)
-        {
-            const Index new_minimum_neurons = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                minimum_neurons = new_minimum_neurons;
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Maximum neurons
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumNeurons");
-
-        if(element)
-        {
-            const Index new_maximum_neurons = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                maximum_neurons = new_maximum_neurons;
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Step
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Step");
-
-        if(element)
-        {
-            const Index new_step = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                set_neurons_increment(new_step);
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Trials number
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrialsNumber");
-
-        if(element)
-        {
-            const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                set_trials_number(new_trials_number);
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Selection error goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
-
-        if(element)
-        {
-            const type new_selection_error_goal = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_selection_error_goal(new_selection_error_goal);
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Maximum selection failures
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
-
-        if(element)
-        {
-            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
-
-            try
-            {
-                set_maximum_selection_failures(new_maximum_selection_failures);
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Maximum time
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumTime");
-
-        if(element)
-        {
-            const type new_maximum_time = type(atoi(element->GetText()));
-
-            try
-            {
-                set_maximum_time(new_maximum_time);
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    minimum_neurons = read_xml_index(root_element, "MinimumNeurons");
+    maximum_neurons = read_xml_index(root_element, "MaximumNeurons");
+    set_neurons_increment(read_xml_index(root_element, "NeuronsIncrement"));
+    set_trials_number(read_xml_index(root_element, "TrialsNumber"));
+    set_selection_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));
+    set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
+    set_maximum_time(read_xml_type(root_element, "MaximumTime"));
 }
 
-
-/// Saves to an XML-type file the members of the growing neurons object.
-/// @param file_name Name of growing neurons XML-type file.
 
 void GrowingNeurons::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
-        fclose(file);
-    }
+    if (!file.is_open())
+        return;
+
+    XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
 }
 
-
-/// Loads a growing neurons object from an XML-type file.
-/// @param file_name Name of growing neurons XML-type file.
 
 void GrowingNeurons::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GrowingNeurons class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
@@ -686,7 +331,7 @@ void GrowingNeurons::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

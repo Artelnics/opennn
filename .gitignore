@@ -4,6 +4,8 @@
 .Python
 [Bb]in
 [Ii]nclude
+!googletest/include/
+
 [Ll]ib
 [Ss]cripts
 pyvenv.cfg
@@ -16,6 +18,7 @@ pip-selfcheck.json
 .LSOverride
 
 .vs/
+.vscode/
 
 #Blank
 /blank/main.cpp
@@ -245,4 +248,30 @@ build-wrapper-dump.json
 #Tests tools
 tests/data/*.xml
 
+#VS build
+*.log
+*.tlog
+*.lastbuildstate
+*.props
+*.recipe
+\release
+*.bak
+*.TMP
+
+#QT Build
+.qtc_clangd/
+*.settings
+*.advidb2
+\e000
+*.advixeproj
+*.qmake.stash
+
+
+#Python tests
+\.ipynb_checkpoints
+
 # Created by .ignore support plugin (hsz.mobi)
+/opennn/loss_index_forward_propagation.h
+
+#SonarCloud
+.scannerwork

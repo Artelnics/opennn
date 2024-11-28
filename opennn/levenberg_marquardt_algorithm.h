@@ -9,25 +9,8 @@
 #ifndef LEVENBERGMARQUARDTALGORITHM_H
 #define LEVENBERGMARQUARDTALGORITHM_H
 
-// System includes
 
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <math.h>
-#include <time.h>
-
-// OpenNN includes
-
-#include "config.h"
-#include "tensor_utilities.h"
 #include "optimization_algorithm.h"
-
-// Eigen includes
 
 #include "../eigen/Eigen/Dense"
 
@@ -36,28 +19,13 @@ namespace opennn
 
 struct LevenbergMarquardtAlgorithmData;
 
-/// Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
-
-/// This concrete class represents the Levenberg-Marquardt (LM) optimization algorithm[1], use to minimize loss function.
-///
-/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network."
-/// \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
-
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 {
 
 public:
 
-   // Constructors
-
-   explicit LevenbergMarquardtAlgorithm();
-
-   explicit LevenbergMarquardtAlgorithm(LossIndex*);
-
-   // Get methods
-
-   // Stopping criteria
+   explicit LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
@@ -67,8 +35,6 @@ public:
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 
-   // Utilities
-
    const type& get_damping_parameter() const;
 
    const type& get_damping_parameter_factor() const;
@@ -76,9 +42,9 @@ public:
    const type& get_minimum_damping_parameter() const;
    const type& get_maximum_damping_parameter() const;
 
-   // Set methods
+   // Set
 
-   void set_default() override;
+   void set_default() final;
 
    void set_damping_parameter(const type&);
 
@@ -97,113 +63,65 @@ public:
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
 
-   // Training methods
+   // Training
 
    void check() const final;
 
    TrainingResults perform_training() final;
 
    void update_parameters(
-           const DataSetBatch&,
-           NeuralNetworkForwardPropagation&,
-           LossIndexBackPropagationLM&,
+           const Batch&,
+           ForwardPropagation&,
+           BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
 
    string write_optimization_algorithm_type() const final;
 
-   // Serialization methods
+   // Serialization
 
    Tensor<string, 2> to_string_matrix() const final;
    
-   void from_XML(const tinyxml2::XMLDocument&) final;
+   void from_XML(const XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
    
 private:
 
-   // MEMBERS
+   type damping_parameter = type(0);
 
-   /// Initial Levenberg-Marquardt parameter.
+   type minimum_damping_parameter = type(0);
 
-   type damping_parameter;
+   type maximum_damping_parameter = type(0);
 
-   /// Minimum Levenberg-Marquardt parameter.
-
-   type minimum_damping_parameter;
-
-   /// Maximum Levenberg-Marquardt parameter.
-
-   type maximum_damping_parameter;
-
-   /// Damping parameter increase/decrease factor.
-
-   type damping_parameter_factor;
+   type damping_parameter_factor = type(0);
 
    // Stopping criteria 
 
-   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
+   type minimum_loss_decrease = type(0);
 
-   type minimum_loss_decrease;
+   type training_loss_goal = type(0);
 
-   /// Goal value for the loss. It is a stopping criterion.
+   Index maximum_selection_failures = 0;
 
-   type training_loss_goal;
+   Index maximum_epochs_number = 0;
 
-   /// Maximum number of epochs at which the selection error increases.
-   /// This is an early stopping method for improving selection.
-
-   Index maximum_selection_failures;
-
-   /// Maximum number of epoch to perform_training. It is a stopping criterion.
-
-   Index maximum_epochs_number;
-
-   /// Maximum training time. It is a stopping criterion.
-
-   type maximum_time;
+   type maximum_time = type(0);
 };
 
 
 struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 {
-    /// Default constructor.
 
-    explicit LevenbergMarquardtAlgorithmData()
+    explicit LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr)
     {
+        set(new_Levenberg_Marquardt_method);
     }
 
-    explicit LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
-    {
-        set(new_Levenberg_Marquardt_method_pointer);
-    }
-
-    virtual ~LevenbergMarquardtAlgorithmData() {}
-
-    void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
-    {
-        Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method_pointer;
-
-        const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
-
-        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-        const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-        // Neural network data
-
-        old_parameters.resize(parameters_number);
-
-        parameters_difference.resize(parameters_number);
-
-        potential_parameters.resize(parameters_number);
-        parameters_increment.resize(parameters_number);
-    }
+    void set(LevenbergMarquardtAlgorithm* = nullptr);
 
     LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
 
     // Neural network data
-
-//    Tensor<type, 1> potential_parameters;
 
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> parameters_difference;
@@ -226,7 +144,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -9,61 +9,25 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-#include <cstdlib>
-
-// OpenNN includes
-
-#include "config.h"
 #include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
+#include "statistics.h"
 
 namespace opennn
 {
-
-/// A learning rate that is adjusted according to an algorithm during training to minimize training time.
-
-///
-/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
-///
-/// It implements the golden section method and the Brent's method.
 
 class LearningRateAlgorithm
 {
 
 public:
 
-   // Enumerations
-
-   /// Available training operators for obtaining the perform_training rate.
-
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
-   // Constructors
-
-   explicit LearningRateAlgorithm();
-
-   explicit LearningRateAlgorithm(LossIndex*);
-
-   // Destructor
-
-   virtual ~LearningRateAlgorithm();
-
-   /// Defines a set of three points (A, U, B) for bracketing a directional minimum.
+   explicit LearningRateAlgorithm(LossIndex* = nullptr);
 
    struct Triplet
    {
-       /// Default constructor.
-
        Triplet()
        {
            A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
@@ -71,29 +35,14 @@ public:
            B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
        }
 
-       /// Destructor.
-
-       virtual ~Triplet()
-       {
-       }
-
-       /// Equal to operator.
-       /// It compares this triplet with another triplet.
-       /// It returns true if both triplets have the same points A, U and B, and false otherwise.
-       /// @ param other_triplet Triplet to be compared with.
-
        inline bool operator == (const Triplet& other_triplet) const
        {
           if(A == other_triplet.A
           && U == other_triplet.U
           && B == other_triplet.B)
-          {
              return true;
-          }
           else
-          {
              return false;
-          }
        }
 
        inline type get_length() const
@@ -102,7 +51,7 @@ public:
        }
 
 
-       inline pair<type,type> minimum() const
+       inline pair<type, type> minimum() const
        {
            Tensor<type, 1> losses(3);
 
@@ -115,7 +64,6 @@ public:
            else return B;
        }
 
-       /// Writes a string with the values of A, U and B.
 
        inline string struct_to_string() const
        {
@@ -128,79 +76,41 @@ public:
            return buffer.str();
        }
 
-       /// Prints the triplet points to the standard output.
 
        inline void print() const
        {
-           cout << struct_to_string();
-           cout << "Lenght: " << get_length() << endl;
+           cout << struct_to_string()
+                << "Lenght: " << get_length() << endl;
        }
 
-       /// Checks that the points A, U and B define a minimum.
-       /// That is, a < u < b, fa > fu and fu < fb.
-       /// If some of that conditions is not satisfied, an exception is thrown.
 
        inline void check() const
        {
            ostringstream buffer;
 
            if(U.first < A.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is less than A:\n"
-                     << struct_to_string();
-
-              throw invalid_argument(buffer.str());
-           }
+              throw runtime_error("U is less than A:\n" + struct_to_string());
 
            if(U.first > B.first)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "U is greater than B:\n"
-                     << struct_to_string();
-
-              throw invalid_argument(buffer.str());
-           }
+              throw runtime_error("U is greater than B:\n" + struct_to_string());
 
            if(U.second >= A.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fA:\n"
-                     << struct_to_string();
-
-              throw invalid_argument(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fA:\n" + struct_to_string());
 
            if(U.second >= B.second)
-           {
-              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                     << "void check() const method.\n"
-                     << "fU is equal or greater than fB:\n"
-                     << struct_to_string();
-
-              throw invalid_argument(buffer.str());
-           }
+              throw runtime_error("fU is equal or greater than fB:\n" + struct_to_string());
        }
-
-       /// Left point of the triplet.
 
        pair<type, type> A;
 
-       /// Interior point of the triplet.
-
        pair<type, type> U;
-
-       /// Right point of the triplet.
 
        pair<type, type> B;
    };
 
-   // Get methods
+   // Get
 
-   LossIndex* get_loss_index_pointer() const;
+   LossIndex* get_loss_index() const;
 
    bool has_loss_index() const;
 
@@ -217,12 +127,11 @@ public:
    
    const bool& get_display() const;
   
-   // Set methods
+   // Set
 
-   void set();
-   void set(LossIndex*);
+   void set(LossIndex* = nullptr);
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
 
    // Training operators
@@ -238,44 +147,38 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default();
+   void set_default();
 
-   // Learning rate methods
+   // Learning rate
 
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
-                                        LossIndexBackPropagation&,
+   Triplet calculate_bracketing_triplet(const Batch&,
+                                        ForwardPropagation&,
+                                        BackPropagation&,
                                         OptimizationAlgorithmData&) const;
 
-   pair<type, type> calculate_directional_point(const DataSetBatch&,
-                                                NeuralNetworkForwardPropagation&,
-                                                LossIndexBackPropagation&,
+   pair<type, type> calculate_directional_point(const Batch&,
+                                                ForwardPropagation&,
+                                                BackPropagation&,
                                                 OptimizationAlgorithmData&) const;
 
-   // Serialization methods
+   // Serialization
       
-   void from_XML(const tinyxml2::XMLDocument&);   
+   void from_XML(const XMLDocument&);   
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void to_XML(XMLPrinter&) const;
 
-protected:
+private:
 
    // FIELDS
 
-   /// Pointer to an external loss index object.
-
-   LossIndex* loss_index_pointer = nullptr;
+   LossIndex* loss_index = nullptr;
 
    // TRAINING OPERATORS
 
-   /// Variable containing the actual method used to obtain a suitable perform_training rate. 
-
    LearningRateMethod learning_rate_method;
-
-   /// Maximum interval length for the learning rate.
 
    type learning_rate_tolerance;
 
@@ -283,14 +186,12 @@ protected:
 
    // UTILITIES
 
-   /// Display messages to screen.
-
    bool display = true;
 
-   const type golden_ratio = static_cast<type>(1.618);
+   const type golden_ratio = type(1.618);
 
-   ThreadPool* thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device = nullptr;
+   unique_ptr<ThreadPool> thread_pool;
+   unique_ptr<ThreadPoolDevice> thread_pool_device;
 };
 
 }
@@ -299,7 +200,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

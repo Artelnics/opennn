@@ -6,76 +6,36 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
 
 namespace opennn
 {
 
-/// Default constructor.
-/// It creates a training strategy object not associated with any loss index object.
-/// It also constructs the main optimization algorithm object.
-
-TrainingStrategy::TrainingStrategy()
+TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    LossIndex* loss_index_pointer = get_loss_index_pointer();
-
-    set_loss_index_pointer(loss_index_pointer);
-
-    set_default();
-
+    set(new_neural_network, new_data_set);
 }
 
 
-/// Pointer constuctor.
-/// It creates a training strategy object not associated with any loss index object.
-/// It also loads the members of this object from NeuralNetwork and DataSet class.
-
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : neural_network_pointer(new_neural_network_pointer),
-      data_set_pointer(new_data_set_pointer)
+DataSet* TrainingStrategy::get_data_set()
 {
-
-    set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-
-    set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-
-    set_loss_index_neural_network_pointer(neural_network_pointer);
-
-    set_loss_index_data_set_pointer(data_set_pointer);
-
-    set_default();
+    return data_set;
 }
 
 
-/// Returns a pointer to the DataSet class.
-
-DataSet* TrainingStrategy::get_data_set_pointer()
+NeuralNetwork* TrainingStrategy::get_neural_network() const
 {
-    return data_set_pointer;
+    return neural_network;
 }
 
 
-/// Returns a pointer to the NeuralNetwork class.
-
-NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
-{
-    return neural_network_pointer;
-}
-
-
-/// Returns a pointer to the LossIndex class.
-
-LossIndex* TrainingStrategy::get_loss_index_pointer()
+LossIndex* TrainingStrategy::get_loss_index()
 {
     switch(loss_method)
     {
-        case LossMethod::SUM_SQUARED_ERROR: return &sum_squared_error;
-
         case LossMethod::MEAN_SQUARED_ERROR: return &mean_squared_error;
 
         case LossMethod::NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
@@ -86,162 +46,104 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 
         case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
 
+        case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
+
         default: return nullptr;
     }
 }
 
 
-/// Returns a pointer to the OptimizationAlgorithm class.
-
-OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
+OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
     switch(optimization_method)
     {
-    case OptimizationMethod::GRADIENT_DESCENT: return &gradient_descent;
+    case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
 
-        case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
+    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
 
-        case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
+    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
 
-        case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
+    case OptimizationMethod::QUASI_NEWTON_METHOD: return &quasi_Newton_method;
 
-        case OptimizationMethod::QUASI_NEWTON_METHOD: return &quasi_Newton_method;
+    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
 
-        case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
-
-        default: return nullptr;
+    default: return nullptr;
     }
 }
 
 
 bool TrainingStrategy::has_neural_network() const
 {
-    if(neural_network_pointer == nullptr) return false;
-
-    return true;
+    return neural_network;
 }
 
 
 bool TrainingStrategy::has_data_set() const
 {
-    if(data_set_pointer == nullptr) return false;
-
-    return true;
+    return data_set;
 }
 
 
-/// Returns a pointer to the gradient descent main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-GradientDescent* TrainingStrategy::get_gradient_descent_pointer()
-{
-    return &gradient_descent;
-}
-
-
-/// Returns a pointer to the conjugate gradient main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer()
+ConjugateGradient* TrainingStrategy::get_conjugate_gradient()
 {
     return &conjugate_gradient;
 }
 
 
-/// Returns a pointer to the Newton method main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method_pointer()
+QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method()
 {
     return &quasi_Newton_method;
 }
 
 
-/// Returns a pointer to the Levenberg-Marquardt main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm_pointer()
+LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm()
 {
     return &Levenberg_Marquardt_algorithm;
 }
 
 
-/// Returns a pointer to the stochastic gradient descent main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent_pointer()
+StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent()
 {
     return &stochastic_gradient_descent;
 }
 
 
-/// Returns a pointer to the adaptive moment estimation main algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation_pointer()
+AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation()
 {
     return &adaptive_moment_estimation;
 }
 
 
-/// Returns a pointer to the sum squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-SumSquaredError* TrainingStrategy::get_sum_squared_error_pointer()
-{
-    return &sum_squared_error;
-}
-
-
-/// Returns a pointer to the mean squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-MeanSquaredError* TrainingStrategy::get_mean_squared_error_pointer()
+MeanSquaredError* TrainingStrategy::get_mean_squared_error()
 {
     return &mean_squared_error;
 }
 
 
-/// Returns a pointer to the normalized squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error_pointer()
+NormalizedSquaredError* TrainingStrategy::get_normalized_squared_error()
 {
 
     return &normalized_squared_error;
 }
 
 
-
-/// Returns a pointer to the Minkowski error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-MinkowskiError* TrainingStrategy::get_Minkowski_error_pointer()
+MinkowskiError* TrainingStrategy::get_Minkowski_error()
 {
-
     return &Minkowski_error;
 }
 
 
-/// Returns a pointer to the cross-entropy error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-CrossEntropyError* TrainingStrategy::get_cross_entropy_error_pointer()
+CrossEntropyError* TrainingStrategy::get_cross_entropy_error()
 {
     return &cross_entropy_error;
 }
 
 
-/// Returns a pointer to the weighted squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
+WeightedSquaredError* TrainingStrategy::get_weighted_squared_error()
 {
     return &weighted_squared_error;
 }
 
-
-/// Returns the type of the main loss algorithm composing this training strategy object.
 
 const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 {
@@ -249,23 +151,16 @@ const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 }
 
 
-/// Returns the type of the main optimization algorithm composing this training strategy object.
-
 const TrainingStrategy::OptimizationMethod& TrainingStrategy::get_optimization_method() const
 {
     return optimization_method;
 }
 
 
-/// Returns a string with the type of the main loss algorithm composing this training strategy object.
-
 string TrainingStrategy::write_loss_method() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "SUM_SQUARED_ERROR";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "MEAN_SQUARED_ERROR";
 
@@ -287,99 +182,61 @@ string TrainingStrategy::write_loss_method() const
 }
 
 
-/// Returns a string with the type of the main optimization algorithm composing this training strategy object.
-/// If that object does not exists, an exception is thrown.
-
 string TrainingStrategy::write_optimization_method() const
 {
-    if(optimization_method == OptimizationMethod::GRADIENT_DESCENT)
-    {
-        return "GRADIENT_DESCENT";
-    }
-    else if(optimization_method == OptimizationMethod::CONJUGATE_GRADIENT)
-    {
+    switch (optimization_method)
+    { 
+    case OptimizationMethod::CONJUGATE_GRADIENT:
         return "CONJUGATE_GRADIENT";
-    }
-    else if(optimization_method == OptimizationMethod::QUASI_NEWTON_METHOD)
-    {
+    
+    case OptimizationMethod::QUASI_NEWTON_METHOD:
         return "QUASI_NEWTON_METHOD";
-    }
-    else if(optimization_method == OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM)
-    {
+    
+    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
         return "LEVENBERG_MARQUARDT_ALGORITHM";
-    }
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-    {
+    
+    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
         return "STOCHASTIC_GRADIENT_DESCENT";
-    }
-    else if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-    {
+    
+    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
         return "ADAPTIVE_MOMENT_ESTIMATION";
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method() const method.\n"
-               << "Unknown main type.\n";
-
-        throw invalid_argument(buffer.str());
+    
+    default:
+    
+        throw runtime_error("Unknown optimization method.\n");
     }
 }
 
-
-/// Returns a string with the main type in text format.
-/// If that object does not exists, an exception is thrown.
 
 string TrainingStrategy::write_optimization_method_text() const
 {
-    if(optimization_method == OptimizationMethod::GRADIENT_DESCENT)
+    switch (optimization_method)
     {
-        return "gradient descent";
-    }
-    else if(optimization_method == OptimizationMethod::CONJUGATE_GRADIENT)
-    {
+    case OptimizationMethod::CONJUGATE_GRADIENT:
         return "conjugate gradient";
-    }
-    else if(optimization_method == OptimizationMethod::QUASI_NEWTON_METHOD)
-    {
+
+    case OptimizationMethod::QUASI_NEWTON_METHOD:
         return "quasi-Newton method";
-    }
-    else if(optimization_method == OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM)
-    {
+
+    case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
         return "Levenberg-Marquardt algorithm";
-    }
-    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-    {
+
+    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
         return "stochastic gradient descent";
-    }
-    else if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-    {
+
+    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
         return "adaptive moment estimation";
-    }
-    else
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "string write_optimization_method_text() const method.\n"
-               << "Unknown main type.\n";
-
-        throw invalid_argument(buffer.str());
+    default:
+        throw runtime_error("Unknown main type.\n");
     }
 }
 
-
-/// Returns a string with the main loss method type in text format.
 
 string TrainingStrategy::write_loss_method_text() const
 {
     switch(loss_method)
     {
-    case LossMethod::SUM_SQUARED_ERROR:
-        return "Sum squared error";
-
     case LossMethod::MEAN_SQUARED_ERROR:
         return "Mean squared error";
 
@@ -401,92 +258,60 @@ string TrainingStrategy::write_loss_method_text() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen, or false if messages from
-/// this class can't be displayed on the screen.
-
 const bool& TrainingStrategy::get_display() const
 {
     return display;
 }
 
 
-/// Sets the loss index pointer to nullptr.
-/// It also destructs the loss index and the optimization algorithm.
-/// Finally, it sets the rest of the members to their default values.
-
-void TrainingStrategy::set()
+void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+    neural_network = new_neural_network;
+    data_set = new_data_set;
+
+    mean_squared_error.set(new_neural_network, new_data_set);
+    normalized_squared_error.set(new_neural_network, new_data_set);
+    cross_entropy_error.set(new_neural_network, new_data_set);
+    cross_entropy_error_3d.set(new_neural_network, new_data_set);
+    weighted_squared_error.set(new_neural_network, new_data_set);
+    Minkowski_error.set(new_neural_network, new_data_set);
+    
+    LossIndex* new_loss_index = get_loss_index();
+
+    conjugate_gradient.set_loss_index(new_loss_index);
+    stochastic_gradient_descent.set_loss_index(new_loss_index);
+    adaptive_moment_estimation.set_loss_index(new_loss_index);
+    quasi_Newton_method.set_loss_index(new_loss_index);
+    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 
     set_default();
 }
 
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-{
-    set_neural_network_pointer(new_neural_network_pointer);
-
-    set_data_set_pointer(new_data_set_pointer);
-}
-
-
-/// Sets the loss index method.
-/// If that object does not exists, an exception is thrown.
-/// @param new_loss_method String with the name of the new method.
-
 void TrainingStrategy::set_loss_method(const string& new_loss_method)
 {
-    if(new_loss_method == "SUM_SQUARED_ERROR")
-    {
-        set_loss_method(LossMethod::SUM_SQUARED_ERROR);
-    }
-    else if(new_loss_method == "MEAN_SQUARED_ERROR")
-    {
+    if(new_loss_method == "MEAN_SQUARED_ERROR")
         set_loss_method(LossMethod::MEAN_SQUARED_ERROR);
-    }
     else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
-    {
         set_loss_method(LossMethod::NORMALIZED_SQUARED_ERROR);
-    }
     else if(new_loss_method == "MINKOWSKI_ERROR")
-    {
         set_loss_method(LossMethod::MINKOWSKI_ERROR);
-    }
     else if(new_loss_method == "WEIGHTED_SQUARED_ERROR")
-    {
         set_loss_method(LossMethod::WEIGHTED_SQUARED_ERROR);
-    }
     else if(new_loss_method == "CROSS_ENTROPY_ERROR")
-    {
         set_loss_method(LossMethod::CROSS_ENTROPY_ERROR);
-    }
     else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_loss_method(const string&) method.\n"
-               << "Unknown loss method: " << new_loss_method << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw runtime_error("Unknown loss method: " + new_loss_method + ".\n");
 }
 
-
-/// Sets the loss index method.
-/// If that object does not exists, an exception is thrown.
-/// @param new_loss_method New method type.
 
 void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 {
     loss_method = new_loss_method;
 
-    set_loss_index_pointer(get_loss_index_pointer());
+    set_loss_index(get_loss_index());
 }
 
-
-/// Sets a new type of main optimization algorithm.
-/// @param new_optimization_method Type of main optimization algorithm.
 
 void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_optimization_method)
 {
@@ -494,86 +319,31 @@ void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_opt
 }
 
 
-/// Sets a new main optimization algorithm from a string containing the type.
-/// @param new_optimization_method String with the type of main optimization algorithm.
-
 void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
 {
-    if(new_optimization_method == "GRADIENT_DESCENT")
-    {
-        set_optimization_method(OptimizationMethod::GRADIENT_DESCENT);
-    }
-    else if(new_optimization_method == "CONJUGATE_GRADIENT")
-    {
+    if(new_optimization_method == "CONJUGATE_GRADIENT")
         set_optimization_method(OptimizationMethod::CONJUGATE_GRADIENT);
-    }
     else if(new_optimization_method == "QUASI_NEWTON_METHOD")
-    {
         set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
-    }
     else if(new_optimization_method == "LEVENBERG_MARQUARDT_ALGORITHM")
-    {
         set_optimization_method(OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-    }
     else if(new_optimization_method == "STOCHASTIC_GRADIENT_DESCENT")
-    {
         set_optimization_method(OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-    }
     else if(new_optimization_method == "ADAPTIVE_MOMENT_ESTIMATION")
-    {
         set_optimization_method(OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-    }
     else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void set_optimization_method(const string&) method.\n"
-               << "Unknown main type: " << new_optimization_method << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw runtime_error("Unknown main type: " + new_optimization_method + ".\n");
 }
 
 
 void TrainingStrategy::set_threads_number(const int& new_threads_number)
 {
-    set_loss_index_threads_number(new_threads_number);
-
-    set_optimization_algorithm_threads_number(new_threads_number);
-}
-
-
-void TrainingStrategy::set_data_set_pointer(DataSet* new_data_set_pointer)
-{
-    data_set_pointer = new_data_set_pointer;
-
-    set_loss_index_data_set_pointer(data_set_pointer);
-}
-
-
-void TrainingStrategy::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
-{
-    neural_network_pointer = new_neural_network_pointer;
-
-    set_loss_index_neural_network_pointer(neural_network_pointer);
-}
-
-
-void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_number)
-{
-    sum_squared_error.set_threads_number(new_threads_number);
     mean_squared_error.set_threads_number(new_threads_number);
     normalized_squared_error.set_threads_number(new_threads_number);
     Minkowski_error.set_threads_number(new_threads_number);
     weighted_squared_error.set_threads_number(new_threads_number);
     cross_entropy_error.set_threads_number(new_threads_number);
-}
 
-
-void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_threads_number)
-{
-    gradient_descent.set_threads_number(new_threads_number);
     conjugate_gradient.set_threads_number(new_threads_number);
     quasi_Newton_method.set_threads_number(new_threads_number);
     Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
@@ -582,46 +352,45 @@ void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_
 }
 
 
-/// Sets a pointer to a loss index object to be associated with the training strategy.
-/// @param new_loss_index_pointer Pointer to a loss index object.
-
-void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void TrainingStrategy::set_data_set(DataSet* new_data_set)
 {
-    gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
-    stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
-    quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
-    Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+    data_set = new_data_set;
+
+    mean_squared_error.set_data_set(new_data_set);
+
+    normalized_squared_error.set_data_set(new_data_set);
+
+    cross_entropy_error.set_data_set(new_data_set);
+    cross_entropy_error_3d.set_data_set(new_data_set);
+
+    weighted_squared_error.set_data_set(new_data_set);
+
+    Minkowski_error.set_data_set(new_data_set);
 }
 
 
-void TrainingStrategy::set_loss_index_data_set_pointer(DataSet* new_data_set_pointer)
+void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 {
-    sum_squared_error.set_data_set_pointer(new_data_set_pointer);
-    mean_squared_error.set_data_set_pointer(new_data_set_pointer);
-    normalized_squared_error.set_data_set_pointer(new_data_set_pointer);
-    cross_entropy_error.set_data_set_pointer(new_data_set_pointer);
-    weighted_squared_error.set_data_set_pointer(new_data_set_pointer);
-    Minkowski_error.set_data_set_pointer(new_data_set_pointer);
+    neural_network = new_neural_network;
+
+    mean_squared_error.set_neural_network(new_neural_network);
+    normalized_squared_error.set_neural_network(new_neural_network);
+    cross_entropy_error.set_neural_network(new_neural_network);
+    cross_entropy_error_3d.set_neural_network(new_neural_network);
+    weighted_squared_error.set_neural_network(new_neural_network);
+    Minkowski_error.set_neural_network(new_neural_network);
 }
 
 
-void TrainingStrategy::set_loss_index_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
-    sum_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    mean_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    normalized_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    cross_entropy_error.set_neural_network_pointer(new_neural_network_pointer);
-    weighted_squared_error.set_neural_network_pointer(new_neural_network_pointer);
-    Minkowski_error.set_neural_network_pointer(new_neural_network_pointer);
+    conjugate_gradient.set_loss_index(new_loss_index);
+    stochastic_gradient_descent.set_loss_index(new_loss_index);
+    adaptive_moment_estimation.set_loss_index(new_loss_index);
+    quasi_Newton_method.set_loss_index(new_loss_index);
+    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void TrainingStrategy::set_display(const bool& new_display)
 {
@@ -629,7 +398,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Loss index
 
-    sum_squared_error.set_display(display);
     mean_squared_error.set_display(display);
     normalized_squared_error.set_display(display);
     cross_entropy_error.set_display(display);
@@ -638,7 +406,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Optimization algorithm
 
-    gradient_descent.set_display(display);
     conjugate_gradient.set_display(display);
     stochastic_gradient_descent.set_display(display);
     adaptive_moment_estimation.set_display(display);
@@ -649,7 +416,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
 void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
-    gradient_descent.set_loss_goal(new_loss_goal);
     conjugate_gradient.set_loss_goal(new_loss_goal);
     quasi_Newton_method.set_loss_goal(new_loss_goal);
     Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
@@ -658,7 +424,6 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 
 void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    gradient_descent.set_maximum_selection_failures(maximum_selection_failures);
     conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
     quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
     Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
@@ -667,7 +432,6 @@ void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_sele
 
 void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
 {
-    gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
     stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
@@ -678,13 +442,12 @@ void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_numb
 
 void TrainingStrategy::set_display_period(const int & display_period)
 {
-    get_optimization_algorithm_pointer()->set_display_period(display_period);
+    get_optimization_algorithm()->set_display_period(display_period);
 }
 
 
 void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
-    gradient_descent.set_maximum_time(maximum_time);
     conjugate_gradient.set_maximum_time(maximum_time);
     stochastic_gradient_descent.set_maximum_time(maximum_time);
     adaptive_moment_estimation.set_maximum_time(maximum_time);
@@ -693,524 +456,313 @@ void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 }
 
 
-/// Sets the members of the training strategy object to their default values:
-/// <ul>
-/// <li> Display: true.
-/// </ul>
-
-void TrainingStrategy::set_default() const
+void TrainingStrategy::set_default()
 {
+    loss_method = LossMethod::MEAN_SQUARED_ERROR;
+
+    optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 }
 
 
-/// This is the most important method of this class.
-/// It optimizes the loss index of a neural network.
-/// This method also returns a structure with the results from training.
-
 TrainingResults TrainingStrategy::perform_training()
-{
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
-    {
+{    
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
-    }
 
-    if(neural_network_pointer->has_convolutional_layer())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "TrainingResults perform_training() const method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
-
-        throw invalid_argument(buffer.str());
-    }
+    set_display(display);
 
     switch(optimization_method)
-    {
-        case OptimizationMethod::GRADIENT_DESCENT:
-        {
-            gradient_descent.set_display(display);
-
-            return gradient_descent.perform_training();
-        }
-
+    {  
         case OptimizationMethod::CONJUGATE_GRADIENT:
-        {
-            conjugate_gradient.set_display(display);
-
             return conjugate_gradient.perform_training();
-        }
 
         case OptimizationMethod::QUASI_NEWTON_METHOD:
-        {
-            quasi_Newton_method.set_display(display);
-
             return quasi_Newton_method.perform_training();
-        }
-
+        
         case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-        {
-            Levenberg_Marquardt_algorithm.set_display(display);
-
             return Levenberg_Marquardt_algorithm.perform_training();
-        }
-
+        
         case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-        {
-            stochastic_gradient_descent.set_display(display);
-
-            return stochastic_gradient_descent.perform_training();
-        }
+            return stochastic_gradient_descent.perform_training();        
 
         case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
-        {
-            adaptive_moment_estimation.set_display(display);
-
             return adaptive_moment_estimation.perform_training();
-        }
-
+        
         default:
             return TrainingResults(0);
     }
 }
 
 
-/// Check the time steps and the batch size in forecasting problems.
-/// The batch size must be multiple of the time step.
-/// If they are not multiples, then the batch size is changed to a multiple (the first multiple that is lower than the batch size).
-
 void TrainingStrategy::fix_forecasting()
 {
-    Index timesteps = 0;
+    Index time_steps = 0;
 
-    if(neural_network_pointer->has_recurrent_layer())
-    {
-        timesteps = neural_network_pointer->get_recurrent_layer_pointer()->get_timesteps();
-    }
-    else if(neural_network_pointer->has_long_short_term_memory_layer())
-    {
-        timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
-    }
+    if(neural_network->has(Layer::Type::Recurrent))
+        time_steps = neural_network->get_recurrent_layer()->get_timesteps();
+    else if(neural_network->has(Layer::Type::LongShortTermMemory))
+        time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
     else
-    {
         return;
-    }
 
     Index batch_samples_number = 0;
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-    {
         batch_samples_number = adaptive_moment_estimation.get_batch_samples_number();
-    }
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-    {
         batch_samples_number = stochastic_gradient_descent.get_batch_samples_number();
-    }
     else
-    {
         return;
-    }
 
-    if(batch_samples_number%timesteps == 0)
-    {
+    if(batch_samples_number%time_steps == 0)
         return;
-    }
-    else
-    {
-        const Index constant = timesteps > batch_samples_number ? 1 : static_cast<Index>(batch_samples_number/timesteps);
 
-        if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        {
-            adaptive_moment_estimation.set_batch_samples_number(constant*timesteps);
-        }
-        else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        {
-            stochastic_gradient_descent.set_batch_samples_number(constant*timesteps);
-        }
-    }
+    const Index constant = time_steps > batch_samples_number
+        ? 1
+        : Index(batch_samples_number/time_steps);
+
+    if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
+        adaptive_moment_estimation.set_batch_samples_number(constant*time_steps);
+    else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
+        stochastic_gradient_descent.set_batch_samples_number(constant*time_steps);
+
 }
 
-
-/// Prints to the screen the string representation of the training strategy object.
 
 void TrainingStrategy::print() const
 {
-    cout << "Training strategy object" << endl;
-    cout << "Loss index: " << write_loss_method() << endl;
-    cout << "Optimization algorithm: " << write_optimization_method() << endl;
+    cout << "Training strategy object" << endl
+         << "Loss index: " << write_loss_method() << endl
+         << "Optimization algorithm: " << write_optimization_method() << endl;
 }
 
 
-/// Serializes the training strategy object into an XML document of the TinyXML library without keeping the DOM tree in memory.
-/// See the OpenNN manual for more information about the format of this document.
-
-void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void TrainingStrategy::to_XML(XMLPrinter& printer) const
 {
-    file_stream.OpenElement("TrainingStrategy");
+    printer.OpenElement("TrainingStrategy");
 
-    // Loss index
+    printer.OpenElement("LossIndex");
 
-    file_stream.OpenElement("LossIndex");
+    add_xml_element(printer, "LossMethod", write_loss_method());
+
+    mean_squared_error.to_XML(printer);
+    normalized_squared_error.to_XML(printer);
+    Minkowski_error.to_XML(printer);
+    cross_entropy_error.to_XML(printer);
+    weighted_squared_error.to_XML(printer);
+
+    switch (loss_method) {
+    case LossMethod::MEAN_SQUARED_ERROR:
+        mean_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::NORMALIZED_SQUARED_ERROR:
+        normalized_squared_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::MINKOWSKI_ERROR:
+        Minkowski_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::CROSS_ENTROPY_ERROR:
+        cross_entropy_error.write_regularization_XML(printer);
+        break;
+    case LossMethod::WEIGHTED_SQUARED_ERROR:
+        weighted_squared_error.write_regularization_XML(printer);
+        break;
+    default:
+        break;
+    }
+
+    printer.CloseElement();  
+
+    printer.OpenElement("OptimizationAlgorithm");
+
+    add_xml_element(printer, "OptimizationMethod", write_optimization_method());
+
+    conjugate_gradient.to_XML(printer);
+    stochastic_gradient_descent.to_XML(printer);
+    adaptive_moment_estimation.to_XML(printer);
+    quasi_Newton_method.to_XML(printer);
+    Levenberg_Marquardt_algorithm.to_XML(printer);
+
+    printer.CloseElement();  
+
+    add_xml_element(printer, "Display", to_string(get_display())); 
+
+    printer.CloseElement();
+}
+
+
+void TrainingStrategy::from_XML(const XMLDocument& document)
+{
+    const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
+    if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
+
+    const XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
+    if (!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
 
     // Loss method
 
-    file_stream.OpenElement("LossMethod");
-    file_stream.PushText(write_loss_method().c_str());
-    file_stream.CloseElement();
+    set_loss_method(read_xml_string(loss_index_element, "LossMethod"));
 
-    mean_squared_error.write_XML(file_stream);
-    normalized_squared_error.write_XML(file_stream);
-    Minkowski_error.write_XML(file_stream);
-    cross_entropy_error.write_XML(file_stream);
-    weighted_squared_error.write_XML(file_stream);
+    // Minkowski error
 
-    switch(loss_method)
+    const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
+
+    if (minkowski_error_element)
     {
-    case LossMethod::MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
-    case LossMethod::CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
-    case LossMethod::WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
-    case LossMethod::SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
-    default: break;
+        XMLDocument minkowski_document;
+        XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
+
+        for (const XMLNode* node = minkowski_error_element->FirstChild(); node; node = node->NextSibling())
+            minkowski_error_element_copy->InsertEndChild(node->DeepClone(&minkowski_document));
+
+        minkowski_document.InsertEndChild(minkowski_error_element_copy);
+        Minkowski_error.from_XML(minkowski_document);
     }
 
-    file_stream.CloseElement();
+    // Cross entropy error
 
-    // Optimization algorithm
+    const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
+    if (cross_entropy_element) {
+        XMLDocument cross_entropy_document;
+        XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
 
-    file_stream.OpenElement("OptimizationAlgorithm");
+        for (const XMLNode* node = cross_entropy_element->FirstChild(); node; node = node->NextSibling())
+            cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));
 
-    file_stream.OpenElement("OptimizationMethod");
-    file_stream.PushText(write_optimization_method().c_str());
-    file_stream.CloseElement();
-
-    gradient_descent.write_XML(file_stream);
-    conjugate_gradient.write_XML(file_stream);
-    stochastic_gradient_descent.write_XML(file_stream);
-    adaptive_moment_estimation.write_XML(file_stream);
-    quasi_Newton_method.write_XML(file_stream);
-    Levenberg_Marquardt_algorithm.write_XML(file_stream);
-
-    file_stream.CloseElement();
-
-    // Close TrainingStrategy
-
-    file_stream.CloseElement();
-}
-
-
-/// Loads the members of this training strategy object from an XML document.
-/// @param document XML document of the TinyXML library.
-
-void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
-{
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
-
-    if(!root_element)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Training strategy element is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
+        cross_entropy_document.InsertEndChild(cross_entropy_error_element_copy);
+        cross_entropy_error.from_XML(cross_entropy_document);
     }
 
-    // Loss index
+    // Weighted squared error
 
-    const tinyxml2::XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
+    const XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
+    if (weighted_squared_error_element) {
+        XMLDocument weighted_squared_error_document;
+        XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
 
-    if(loss_index_element)
-    {
-        const tinyxml2::XMLElement* loss_method_element = loss_index_element->FirstChildElement("LossMethod");
+        for (const XMLNode* node = weighted_squared_error_element->FirstChild(); node; node = node->NextSibling())
+            weighted_squared_error_element_copy->InsertEndChild(node->DeepClone(&weighted_squared_error_document));
 
-        set_loss_method(loss_method_element->GetText());
+        weighted_squared_error_document.InsertEndChild(weighted_squared_error_element_copy);
+        weighted_squared_error.from_XML(weighted_squared_error_document);
+    }
 
-        // Minkowski error
+    // Regularization
 
-        const tinyxml2::XMLElement* Minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
-
-        if(Minkowski_error_element)
-        {
-            tinyxml2::XMLDocument new_document;
-
-            tinyxml2::XMLElement* Minkowski_error_element_copy = new_document.NewElement("MinkowskiError");
-
-            for(const tinyxml2::XMLNode* nodeFor=Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                Minkowski_error_element_copy->InsertEndChild(copy );
-            }
-
-            new_document.InsertEndChild(Minkowski_error_element_copy);
-
-            Minkowski_error.from_XML(new_document);
-        }
-        else
-        {
-            Minkowski_error.set_Minkowski_parameter(type(1.5));
-        }
-
-        // Cross entropy error
-
-        const tinyxml2::XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
-
-        if(cross_entropy_element)
-        {
-            tinyxml2::XMLDocument new_document;
-
-            tinyxml2::XMLElement* cross_entropy_error_element_copy = new_document.NewElement("CrossEntropyError");
-
-            for(const tinyxml2::XMLNode* nodeFor=loss_index_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                cross_entropy_error_element_copy->InsertEndChild(copy );
-            }
-
-            new_document.InsertEndChild(cross_entropy_error_element_copy);
-
-            cross_entropy_error.from_XML(new_document);
-        }
-
-        // Weighted squared error
-
-        const tinyxml2::XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
-
-        if(weighted_squared_error_element)
-        {
-            tinyxml2::XMLDocument new_document;
-
-            tinyxml2::XMLElement* weighted_squared_error_element_copy = new_document.NewElement("WeightedSquaredError");
-
-            for(const tinyxml2::XMLNode* nodeFor=weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                weighted_squared_error_element_copy->InsertEndChild(copy );
-            }
-
-            new_document.InsertEndChild(weighted_squared_error_element_copy);
-
-            weighted_squared_error.from_XML(new_document);
-        }
-        else
-        {
-            weighted_squared_error.set_positives_weight(type(1));
-            weighted_squared_error.set_negatives_weight(type(1));
-        }
-
-        // Regularization
-
-        const tinyxml2::XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
-
-        if(regularization_element)
-        {
-            tinyxml2::XMLDocument regularization_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = regularization_element->DeepClone(&regularization_document);
-
-            regularization_document.InsertFirstChild(element_clone);
-
-            get_loss_index_pointer()->regularization_from_XML(regularization_document);
-        }
+    const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
+    if (regularization_element) {
+        XMLDocument regularization_document;
+        regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
+        get_loss_index()->regularization_from_XML(regularization_document);
     }
 
     // Optimization algorithm
 
-    const tinyxml2::XMLElement* optimization_algorithm_element = root_element->FirstChildElement("OptimizationAlgorithm");
+    const XMLElement* optimization_algorithm_element = root_element->FirstChildElement("OptimizationAlgorithm");
+    if (!optimization_algorithm_element) throw runtime_error("OptimizationAlgorithm element is nullptr.\n");
 
-    if(optimization_algorithm_element)
-    {
-        const tinyxml2::XMLElement* optimization_method_element = optimization_algorithm_element->FirstChildElement("OptimizationMethod");
+    // Optimization method
 
-        set_optimization_method(optimization_method_element->GetText());
+    set_optimization_method(read_xml_string(optimization_algorithm_element, "OptimizationMethod"));
 
-        // Gradient descent
+    // Conjugate gradient
 
-        const tinyxml2::XMLElement* gradient_descent_element = optimization_algorithm_element->FirstChildElement("GradientDescent");
+    const XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
+    if (conjugate_gradient_element) {
+        XMLDocument conjugate_gradient_document;
+        XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
 
-        if(gradient_descent_element)
-        {
-            tinyxml2::XMLDocument gradient_descent_document;
+        for (const XMLNode* node = conjugate_gradient_element->FirstChild(); node; node = node->NextSibling())
+            conjugate_gradient_element_copy->InsertEndChild(node->DeepClone(&conjugate_gradient_document));
 
-            tinyxml2::XMLElement* gradient_descent_element_copy = gradient_descent_document.NewElement("GradientDescent");
+        conjugate_gradient_document.InsertEndChild(conjugate_gradient_element_copy);
+        conjugate_gradient.from_XML(conjugate_gradient_document);
+    }
 
-            for(const tinyxml2::XMLNode* nodeFor=gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&gradient_descent_document );
-                gradient_descent_element_copy->InsertEndChild(copy );
-            }
+    // Stochastic gradient descent
 
-            gradient_descent_document.InsertEndChild(gradient_descent_element_copy);
+    const XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
+    if (stochastic_gradient_descent_element) {
+        XMLDocument stochastic_gradient_document;
+        XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
 
-            gradient_descent.from_XML(gradient_descent_document);
-        }
+        for (const XMLNode* node = stochastic_gradient_descent_element->FirstChild(); node; node = node->NextSibling())
+            stochastic_gradient_element_copy->InsertEndChild(node->DeepClone(&stochastic_gradient_document));
 
-        // Conjugate gradient
+        stochastic_gradient_document.InsertEndChild(stochastic_gradient_element_copy);
+        stochastic_gradient_descent.from_XML(stochastic_gradient_document);
+    }
 
-        const tinyxml2::XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
+    // Adaptive moment estimation
 
-        if(conjugate_gradient_element)
-        {
-            tinyxml2::XMLDocument conjugate_gradient_document;
+    const XMLElement* adaptive_moment_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
+    if (adaptive_moment_element) {
+        XMLDocument adaptive_moment_document;
+        XMLElement* adaptive_moment_element_copy = adaptive_moment_document.NewElement("AdaptiveMomentEstimation");
 
-            tinyxml2::XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
+        for (const XMLNode* node = adaptive_moment_element->FirstChild(); node; node = node->NextSibling())
+            adaptive_moment_element_copy->InsertEndChild(node->DeepClone(&adaptive_moment_document));
 
-            for(const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&conjugate_gradient_document );
-                conjugate_gradient_element_copy->InsertEndChild(copy );
-            }
+        adaptive_moment_document.InsertEndChild(adaptive_moment_element_copy);
+        adaptive_moment_estimation.from_XML(adaptive_moment_document);
+    }
 
-            conjugate_gradient_document.InsertEndChild(conjugate_gradient_element_copy);
+    // Quasi-Newton method
 
-            conjugate_gradient.from_XML(conjugate_gradient_document);
-        }
+    const XMLElement* quasi_newton_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
+    if (quasi_newton_element) {
+        XMLDocument quasi_newton_document;
+        XMLElement* quasi_newton_element_copy = quasi_newton_document.NewElement("QuasiNewtonMethod");
 
-        // Stochastic gradient
+        for (const XMLNode* node = quasi_newton_element->FirstChild(); node; node = node->NextSibling())
+            quasi_newton_element_copy->InsertEndChild(node->DeepClone(&quasi_newton_document));
 
-        const tinyxml2::XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
+        quasi_newton_document.InsertEndChild(quasi_newton_element_copy);
+        quasi_Newton_method.from_XML(quasi_newton_document);
+    }
 
-        if(stochastic_gradient_descent_element)
-        {
-            tinyxml2::XMLDocument stochastic_gradient_descent_document;
+    // Levenberg-Marquardt
 
-            tinyxml2::XMLElement* stochastic_gradient_descent_element_copy = stochastic_gradient_descent_document.NewElement("StochasticGradientDescent");
+    const XMLElement* levenberg_marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
+    if (levenberg_marquardt_element) {
+        XMLDocument levenberg_document;
+        XMLElement* levenberg_element_copy = levenberg_document.NewElement("LevenbergMarquardt");
 
-            for(const tinyxml2::XMLNode* nodeFor=stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&stochastic_gradient_descent_document );
-                stochastic_gradient_descent_element_copy->InsertEndChild(copy );
-            }
+        for (const XMLNode* node = levenberg_marquardt_element->FirstChild(); node; node = node->NextSibling())
+            levenberg_element_copy->InsertEndChild(node->DeepClone(&levenberg_document));
 
-            stochastic_gradient_descent_document.InsertEndChild(stochastic_gradient_descent_element_copy);
-
-            stochastic_gradient_descent.from_XML(stochastic_gradient_descent_document);
-        }
-
-        // Adaptive moment estimation
-
-        const tinyxml2::XMLElement* adaptive_moment_estimation_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
-
-        if(adaptive_moment_estimation_element)
-        {
-            tinyxml2::XMLDocument adaptive_moment_estimation_document;
-
-            tinyxml2::XMLElement* adaptive_moment_estimation_element_copy = adaptive_moment_estimation_document.NewElement("AdaptiveMomentEstimation");
-
-            for(const tinyxml2::XMLNode* nodeFor=adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&adaptive_moment_estimation_document );
-                adaptive_moment_estimation_element_copy->InsertEndChild(copy );
-            }
-
-            adaptive_moment_estimation_document.InsertEndChild(adaptive_moment_estimation_element_copy);
-
-            adaptive_moment_estimation.from_XML(adaptive_moment_estimation_document);
-        }
-
-        // Quasi-Newton method
-
-        const tinyxml2::XMLElement* quasi_Newton_method_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
-
-        if(quasi_Newton_method_element)
-        {
-            tinyxml2::XMLDocument quasi_Newton_document;
-
-            tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
-
-            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
-                quasi_newton_method_element_copy->InsertEndChild(copy );
-            }
-
-            quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
-
-            quasi_Newton_method.from_XML(quasi_Newton_document);
-        }
-
-        // Levenberg Marquardt
-
-        const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
-
-        if(Levenberg_Marquardt_element)
-        {
-            tinyxml2::XMLDocument Levenberg_Marquardt_document;
-
-            tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
-
-            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&Levenberg_Marquardt_document );
-                levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
-            }
-
-            Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
-
-            Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
-        }
+        levenberg_document.InsertEndChild(levenberg_element_copy);
+        Levenberg_Marquardt_algorithm.from_XML(levenberg_document);
     }
 
     // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
 
-        if(element)
-        {
-            const string new_display = element->GetText();
-
-            try
-            {
-                set_display(new_display != "0");
-            }
-            catch(const invalid_argument& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
+    set_display(read_xml_bool(root_element, "Display"));
 }
 
-
-/// Saves to an XML-type file the members of the optimization algorithm object.
-/// @param file_name Name of optimization algorithm XML-type file.
 
 void TrainingStrategy::save(const string& file_name) const
 {
-    FILE * file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(file)
-    {
-        tinyxml2::XMLPrinter printer(file);
-        write_XML(printer);
-        fclose(file);
-    }
+    if (!file.is_open())
+        return;
+
+    XMLPrinter printer;
+    to_XML(printer);
+    file << printer.CStr();
 }
 
-
-/// Loads a gradient descent object from an XML-type file.
-/// Please mind about the file format, wich is specified in the User's Guide.
-/// @param file_name Name of optimization algorithm XML-type file.
 
 void TrainingStrategy::load(const string& file_name)
 {
     set_default();
 
-    tinyxml2::XMLDocument document;
+    XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw runtime_error("Cannot load XML file " + file_name + ".\n");
 
     from_XML(document);
 }
@@ -1218,7 +770,7 @@ void TrainingStrategy::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

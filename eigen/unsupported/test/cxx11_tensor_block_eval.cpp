@@ -35,8 +35,7 @@ struct TensorBlockParams {
 };
 
 template <int Layout, int NumDims>
-static TensorBlockParams<NumDims> RandomBlock(DSizes<Index, NumDims> dims,
-                                              Index min, Index max) {
+static TensorBlockParams<NumDims> RandomBlock(DSizes<Index, NumDims> dims, Index min, Index max) {
   // Choose random offsets and sizes along all tensor dimensions.
   DSizes<Index, NumDims> offsets(RandomDims<NumDims>(min, max));
   DSizes<Index, NumDims> sizes(RandomDims<NumDims>(min, max));
@@ -59,13 +58,11 @@ static TensorBlockParams<NumDims> RandomBlock(DSizes<Index, NumDims> dims,
 // Generate block with block sizes skewed towards inner dimensions. This type of
 // block is required for evaluating broadcast expressions.
 template <int Layout, int NumDims>
-static TensorBlockParams<NumDims> SkewedInnerBlock(
-    DSizes<Index, NumDims> dims) {
+static TensorBlockParams<NumDims> SkewedInnerBlock(DSizes<Index, NumDims> dims) {
   using BlockMapper = internal::TensorBlockMapper<NumDims, Layout, Index>;
-  BlockMapper block_mapper(dims,
-                           {internal::TensorBlockShapeType::kSkewedInnerDims,
-                            internal::random<size_t>(1, dims.TotalSize()),
-                            {0, 0, 0}});
+  BlockMapper block_mapper(
+      dims,
+      {internal::TensorBlockShapeType::kSkewedInnerDims, internal::random<size_t>(1, dims.TotalSize()), {0, 0, 0}});
 
   Index total_blocks = block_mapper.blockCount();
   Index block_index = internal::random<Index>(0, total_blocks - 1);
@@ -119,8 +116,7 @@ inline Eigen::IndexList<Eigen::type2index<1>, Index> OneByM(Index m) {
 // Verify that block expression evaluation produces the same result as a
 // TensorSliceOp (reading a tensor block is same to taking a tensor slice).
 
-template <typename T, int NumDims, int Layout, typename Expression,
-          typename GenBlockParams>
+template <typename T, int NumDims, int Layout, typename Expression, typename GenBlockParams>
 static void VerifyBlockEvaluator(Expression expr, GenBlockParams gen_block) {
   using Device = DefaultDevice;
   auto d = Device();
@@ -154,8 +150,7 @@ static void VerifyBlockEvaluator(Expression expr, GenBlockParams gen_block) {
   Tensor<T, NumDims, Layout> dst(dst_dims);
   dst.setZero();
   if (internal::random<bool>()) {
-    block_params.desc.template AddDestinationBuffer<Layout>(
-        dst.data(), internal::strides<Layout>(dst.dimensions()));
+    block_params.desc.template AddDestinationBuffer<Layout>(dst.data(), internal::strides<Layout>(dst.dimensions()));
   }
 
   const bool root_of_expr = internal::random<bool>();
@@ -178,8 +173,7 @@ static void VerifyBlockEvaluator(Expression expr, GenBlockParams gen_block) {
     // We explicitly disable vectorization and tiling, to run a simple coefficient
     // wise assignment loop, because it's very simple and should be correct.
     using BlockAssign = TensorAssignOp<decltype(block), const decltype(b_expr)>;
-    using BlockExecutor = TensorExecutor<const BlockAssign, Device, false,
-                                         internal::TiledEvaluation::Off>;
+    using BlockExecutor = TensorExecutor<const BlockAssign, Device, false, internal::TiledEvaluation::Off>;
     BlockExecutor::run(BlockAssign(block, b_expr), d);
   }
 
@@ -192,8 +186,7 @@ static void VerifyBlockEvaluator(Expression expr, GenBlockParams gen_block) {
 
   // Explicitly use coefficient assignment to evaluate slice expression.
   using SliceAssign = TensorAssignOp<decltype(slice), const decltype(s_expr)>;
-  using SliceExecutor = TensorExecutor<const SliceAssign, Device, false,
-                                       internal::TiledEvaluation::Off>;
+  using SliceExecutor = TensorExecutor<const SliceAssign, Device, false, internal::TiledEvaluation::Off>;
   SliceExecutor::run(SliceAssign(slice, s_expr), d);
 
   // Tensor block and tensor slice must be the same.
@@ -211,8 +204,7 @@ static void test_eval_tensor_block() {
   input.setRandom();
 
   // Identity tensor expression transformation.
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input, [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input, [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -221,8 +213,7 @@ static void test_eval_tensor_unary_expr_block() {
   Tensor<T, NumDims, Layout> input(dims);
   input.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.abs(), [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.abs(), [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -232,8 +223,7 @@ static void test_eval_tensor_binary_expr_block() {
   lhs.setRandom();
   rhs.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      lhs * rhs, [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(lhs * rhs, [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -243,9 +233,8 @@ static void test_eval_tensor_binary_with_unary_expr_block() {
   lhs.setRandom();
   rhs.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      (lhs.square() + rhs.square()).sqrt(),
-      [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>((lhs.abs() + rhs.abs()).sqrt(),
+                                           [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -259,23 +248,19 @@ static void test_eval_tensor_broadcast() {
   DSizes<Index, NumDims> bcasted_dims;
   for (int i = 0; i < NumDims; ++i) bcasted_dims[i] = dims[i] * bcast[i];
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.broadcast(bcast),
-      [&bcasted_dims]() { return SkewedInnerBlock<Layout>(bcasted_dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.broadcast(bcast),
+                                           [&bcasted_dims]() { return SkewedInnerBlock<Layout>(bcasted_dims); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.broadcast(bcast),
-      [&bcasted_dims]() { return RandomBlock<Layout>(bcasted_dims, 5, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.broadcast(bcast),
+                                           [&bcasted_dims]() { return RandomBlock<Layout>(bcasted_dims, 5, 10); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.broadcast(bcast),
-      [&bcasted_dims]() { return FixedSizeBlock(bcasted_dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.broadcast(bcast),
+                                           [&bcasted_dims]() { return FixedSizeBlock(bcasted_dims); });
 
   // Check that desc.destination() memory is not shared between two broadcast
   // materializations.
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.broadcast(bcast) * input.abs().broadcast(bcast),
-      [&bcasted_dims]() { return SkewedInnerBlock<Layout>(bcasted_dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.broadcast(bcast) * input.abs().broadcast(bcast),
+                                           [&bcasted_dims]() { return SkewedInnerBlock<Layout>(bcasted_dims); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -288,13 +273,11 @@ static void test_eval_tensor_reshape() {
   Tensor<T, NumDims, Layout> input(dims);
   input.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.reshape(shuffled),
-      [&shuffled]() { return RandomBlock<Layout>(shuffled, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.reshape(shuffled),
+                                           [&shuffled]() { return RandomBlock<Layout>(shuffled, 1, 10); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.reshape(shuffled),
-      [&shuffled]() { return SkewedInnerBlock<Layout>(shuffled); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.reshape(shuffled),
+                                           [&shuffled]() { return SkewedInnerBlock<Layout>(shuffled); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -303,9 +286,8 @@ static void test_eval_tensor_cast() {
   Tensor<T, NumDims, Layout> input(dims);
   input.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.template cast<int>().template cast<T>(),
-      [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.template cast<int>().template cast<T>(),
+                                           [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -318,9 +300,8 @@ static void test_eval_tensor_select() {
   rhs.setRandom();
   cond.setRandom();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(cond.select(lhs, rhs), [&dims]() {
-    return RandomBlock<Layout>(dims, 1, 20);
-  });
+  VerifyBlockEvaluator<T, NumDims, Layout>(cond.select(lhs, rhs),
+                                           [&dims]() { return RandomBlock<Layout>(dims, 1, 20); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -350,17 +331,14 @@ static void test_eval_tensor_padding() {
     padded_dims[i] = dims[i] + pad_before[i] + pad_after[i];
   }
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.pad(paddings),
-      [&padded_dims]() { return FixedSizeBlock(padded_dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.pad(paddings),
+                                           [&padded_dims]() { return FixedSizeBlock(padded_dims); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.pad(paddings),
-      [&padded_dims]() { return RandomBlock<Layout>(padded_dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.pad(paddings),
+                                           [&padded_dims]() { return RandomBlock<Layout>(padded_dims, 1, 10); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.pad(paddings),
-      [&padded_dims]() { return SkewedInnerBlock<Layout>(padded_dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.pad(paddings),
+                                           [&padded_dims]() { return SkewedInnerBlock<Layout>(padded_dims); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -381,26 +359,21 @@ static void test_eval_tensor_chipping() {
   }
 
   // Block buffer forwarding.
-  VerifyBlockEvaluator<T, NumDims - 1, Layout>(
-      input.chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
+  VerifyBlockEvaluator<T, NumDims - 1, Layout>(input.chip(chip_offset, chip_dim),
+                                               [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
 
-  VerifyBlockEvaluator<T, NumDims - 1, Layout>(
-      input.chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims - 1, Layout>(input.chip(chip_offset, chip_dim),
+                                               [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
 
   // Block expression assignment.
-  VerifyBlockEvaluator<T, NumDims - 1, Layout>(
-      input.abs().chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
+  VerifyBlockEvaluator<T, NumDims - 1, Layout>(input.abs().chip(chip_offset, chip_dim),
+                                               [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
 
-  VerifyBlockEvaluator<T, NumDims - 1, Layout>(
-      input.abs().chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims - 1, Layout>(input.abs().chip(chip_offset, chip_dim),
+                                               [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
 }
 
-
-template<typename T, int NumDims>
+template <typename T, int NumDims>
 struct SimpleTensorGenerator {
   T operator()(const array<Index, NumDims>& coords) const {
     T result = static_cast<T>(0);
@@ -412,7 +385,7 @@ struct SimpleTensorGenerator {
 };
 
 // Boolean specialization to avoid -Wint-in-bool-context warnings on GCC.
-template<int NumDims>
+template <int NumDims>
 struct SimpleTensorGenerator<bool, NumDims> {
   bool operator()(const array<Index, NumDims>& coords) const {
     bool result = false;
@@ -423,7 +396,6 @@ struct SimpleTensorGenerator<bool, NumDims> {
   }
 };
 
-
 template <typename T, int NumDims, int Layout>
 static void test_eval_tensor_generator() {
   DSizes<Index, NumDims> dims = RandomDims<NumDims>(10, 20);
@@ -432,12 +404,10 @@ static void test_eval_tensor_generator() {
 
   auto generator = SimpleTensorGenerator<T, NumDims>();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.generate(generator), [&dims]() { return FixedSizeBlock(dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.generate(generator), [&dims]() { return FixedSizeBlock(dims); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.generate(generator),
-      [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.generate(generator),
+                                           [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -450,12 +420,10 @@ static void test_eval_tensor_reverse() {
   Eigen::DSizes<bool, NumDims> reverse;
   for (int i = 0; i < NumDims; ++i) reverse[i] = internal::random<bool>();
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.reverse(reverse), [&dims]() { return FixedSizeBlock(dims); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.reverse(reverse), [&dims]() { return FixedSizeBlock(dims); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(input.reverse(reverse), [&dims]() {
-    return RandomBlock<Layout>(dims, 1, 10);
-  });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.reverse(reverse),
+                                           [&dims]() { return RandomBlock<Layout>(dims, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -474,13 +442,11 @@ static void test_eval_tensor_slice() {
     slice_size[i] = numext::mini(slice_size[i], dims[i] - slice_start[i]);
   }
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.slice(slice_start, slice_size),
-      [&slice_size]() { return FixedSizeBlock(slice_size); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.slice(slice_start, slice_size),
+                                           [&slice_size]() { return FixedSizeBlock(slice_size); });
 
-  VerifyBlockEvaluator<T, NumDims, Layout>(
-      input.slice(slice_start, slice_size),
-      [&slice_size]() { return RandomBlock<Layout>(slice_size, 1, 10); });
+  VerifyBlockEvaluator<T, NumDims, Layout>(input.slice(slice_start, slice_size),
+                                           [&slice_size]() { return RandomBlock<Layout>(slice_size, 1, 10); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -496,14 +462,11 @@ static void test_eval_tensor_shuffle() {
     DSizes<Index, NumDims> shuffled_dims;
     for (int i = 0; i < NumDims; ++i) shuffled_dims[i] = dims[shuffle[i]];
 
-    VerifyBlockEvaluator<T, NumDims, Layout>(
-        input.shuffle(shuffle),
-        [&shuffled_dims]() { return FixedSizeBlock(shuffled_dims); });
+    VerifyBlockEvaluator<T, NumDims, Layout>(input.shuffle(shuffle),
+                                             [&shuffled_dims]() { return FixedSizeBlock(shuffled_dims); });
 
-    VerifyBlockEvaluator<T, NumDims, Layout>(
-        input.shuffle(shuffle), [&shuffled_dims]() {
-          return RandomBlock<Layout>(shuffled_dims, 1, 5);
-        });
+    VerifyBlockEvaluator<T, NumDims, Layout>(input.shuffle(shuffle),
+                                             [&shuffled_dims]() { return RandomBlock<Layout>(shuffled_dims, 1, 5); });
 
     break;
 
@@ -528,8 +491,7 @@ static void test_eval_tensor_reshape_with_bcast() {
   DSizes<Index, 2> dims(dim, dim);
 
   VerifyBlockEvaluator<T, 2, Layout>(
-      lhs.reshape(reshapeLhs).broadcast(bcastLhs) *
-          rhs.reshape(reshapeRhs).broadcast(bcastRhs),
+      lhs.reshape(reshapeLhs).broadcast(bcastLhs) * rhs.reshape(reshapeRhs).broadcast(bcastRhs),
       [dims]() { return SkewedInnerBlock<Layout, 2>(dims); });
 }
 
@@ -547,13 +509,11 @@ static void test_eval_tensor_forced_eval() {
 
   DSizes<Index, 2> dims(dim, dim);
 
-  VerifyBlockEvaluator<T, 2, Layout>(
-      (lhs.broadcast(bcastLhs) * rhs.broadcast(bcastRhs)).eval().reshape(dims),
-      [dims]() { return SkewedInnerBlock<Layout, 2>(dims); });
+  VerifyBlockEvaluator<T, 2, Layout>((lhs.broadcast(bcastLhs) * rhs.broadcast(bcastRhs)).eval().reshape(dims),
+                                     [dims]() { return SkewedInnerBlock<Layout, 2>(dims); });
 
-  VerifyBlockEvaluator<T, 2, Layout>(
-      (lhs.broadcast(bcastLhs) * rhs.broadcast(bcastRhs)).eval().reshape(dims),
-      [dims]() { return RandomBlock<Layout, 2>(dims, 1, 50); });
+  VerifyBlockEvaluator<T, 2, Layout>((lhs.broadcast(bcastLhs) * rhs.broadcast(bcastRhs)).eval().reshape(dims),
+                                     [dims]() { return RandomBlock<Layout, 2>(dims, 1, 50); });
 }
 
 template <typename T, int Layout>
@@ -570,17 +530,14 @@ static void test_eval_tensor_chipping_of_bcast() {
   Eigen::array<Index, 3> bcast = {{dim0, 1, 1}};
   DSizes<Index, 2> chipped_dims(dim0, dim2);
 
-  VerifyBlockEvaluator<T, 2, Layout>(
-      input.broadcast(bcast).chip(0, 1),
-      [chipped_dims]() { return FixedSizeBlock(chipped_dims); });
+  VerifyBlockEvaluator<T, 2, Layout>(input.broadcast(bcast).chip(0, 1),
+                                     [chipped_dims]() { return FixedSizeBlock(chipped_dims); });
 
-  VerifyBlockEvaluator<T, 2, Layout>(
-      input.broadcast(bcast).chip(0, 1),
-      [chipped_dims]() { return SkewedInnerBlock<Layout, 2>(chipped_dims); });
+  VerifyBlockEvaluator<T, 2, Layout>(input.broadcast(bcast).chip(0, 1),
+                                     [chipped_dims]() { return SkewedInnerBlock<Layout, 2>(chipped_dims); });
 
-  VerifyBlockEvaluator<T, 2, Layout>(
-      input.broadcast(bcast).chip(0, 1),
-      [chipped_dims]() { return RandomBlock<Layout, 2>(chipped_dims, 1, 5); });
+  VerifyBlockEvaluator<T, 2, Layout>(input.broadcast(bcast).chip(0, 1),
+                                     [chipped_dims]() { return RandomBlock<Layout, 2>(chipped_dims, 1, 5); });
 }
 
 // -------------------------------------------------------------------------- //
@@ -588,10 +545,8 @@ static void test_eval_tensor_chipping_of_bcast() {
 // as an assignment to TensorSliceOp (writing a block is is identical to
 // assigning one tensor to a slice of another tensor).
 
-template <typename T, int NumDims, int Layout, int NumExprDims = NumDims,
-          typename Expression, typename GenBlockParams>
-static void VerifyBlockAssignment(Tensor<T, NumDims, Layout>& tensor,
-                                  Expression expr, GenBlockParams gen_block) {
+template <typename T, int NumDims, int Layout, int NumExprDims = NumDims, typename Expression, typename GenBlockParams>
+static void VerifyBlockAssignment(Tensor<T, NumDims, Layout>& tensor, Expression expr, GenBlockParams gen_block) {
   using Device = DefaultDevice;
   auto d = Device();
 
@@ -609,8 +564,8 @@ static void VerifyBlockAssignment(Tensor<T, NumDims, Layout>& tensor,
   // (1) Assignment from a block.
 
   // Construct a materialize block from a random generated block tensor.
-  internal::TensorMaterializedBlock<T, NumExprDims, Layout> blk(
-      internal::TensorBlockKind::kView, block.data(), block.dimensions());
+  internal::TensorMaterializedBlock<T, NumExprDims, Layout> blk(internal::TensorBlockKind::kView, block.data(),
+                                                                block.dimensions());
 
   // Reset all underlying tensor values to zero.
   tensor.setZero();
@@ -632,8 +587,7 @@ static void VerifyBlockAssignment(Tensor<T, NumDims, Layout>& tensor,
 
   // Explicitly use coefficient assignment to evaluate slice expression.
   using SliceAssign = TensorAssignOp<decltype(s_expr), const decltype(block)>;
-  using SliceExecutor = TensorExecutor<const SliceAssign, Device, false,
-                                       internal::TiledEvaluation::Off>;
+  using SliceExecutor = TensorExecutor<const SliceAssign, Device, false, internal::TiledEvaluation::Off>;
   SliceExecutor::run(SliceAssign(s_expr, block), d);
 
   // Make a copy of the result after assignment.
@@ -653,10 +607,8 @@ static void test_assign_to_tensor() {
 
   TensorMap<Tensor<T, NumDims, Layout>> map(tensor.data(), dims);
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map, [&dims]() { return RandomBlock<Layout>(dims, 10, 20); });
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map, [&dims]() { return FixedSizeBlock(dims); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map, [&dims]() { return RandomBlock<Layout>(dims, 10, 20); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map, [&dims]() { return FixedSizeBlock(dims); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -669,17 +621,14 @@ static void test_assign_to_tensor_reshape() {
   DSizes<Index, NumDims> shuffled = dims;
   std::shuffle(&shuffled[0], &shuffled[NumDims - 1], std::mt19937(g_seed));
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.reshape(shuffled),
-      [&shuffled]() { return RandomBlock<Layout>(shuffled, 1, 10); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.reshape(shuffled),
+                                            [&shuffled]() { return RandomBlock<Layout>(shuffled, 1, 10); });
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.reshape(shuffled),
-      [&shuffled]() { return SkewedInnerBlock<Layout>(shuffled); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.reshape(shuffled),
+                                            [&shuffled]() { return SkewedInnerBlock<Layout>(shuffled); });
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.reshape(shuffled),
-      [&shuffled]() { return FixedSizeBlock(shuffled); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.reshape(shuffled),
+                                            [&shuffled]() { return FixedSizeBlock(shuffled); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -701,16 +650,13 @@ static void test_assign_to_tensor_chipping() {
   TensorMap<Tensor<T, NumDims, Layout>> map(tensor.data(), dims);
 
   VerifyBlockAssignment<T, NumDims, Layout, NumDims - 1>(
-      tensor, map.chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
+      tensor, map.chip(chip_offset, chip_dim), [&chipped_dims]() { return RandomBlock<Layout>(chipped_dims, 1, 10); });
 
   VerifyBlockAssignment<T, NumDims, Layout, NumDims - 1>(
-      tensor, map.chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return SkewedInnerBlock<Layout>(chipped_dims); });
+      tensor, map.chip(chip_offset, chip_dim), [&chipped_dims]() { return SkewedInnerBlock<Layout>(chipped_dims); });
 
-  VerifyBlockAssignment<T, NumDims, Layout, NumDims - 1>(
-      tensor, map.chip(chip_offset, chip_dim),
-      [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
+  VerifyBlockAssignment<T, NumDims, Layout, NumDims - 1>(tensor, map.chip(chip_offset, chip_dim),
+                                                         [&chipped_dims]() { return FixedSizeBlock(chipped_dims); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -730,17 +676,14 @@ static void test_assign_to_tensor_slice() {
 
   TensorMap<Tensor<T, NumDims, Layout>> map(tensor.data(), dims);
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.slice(slice_start, slice_size),
-      [&slice_size]() { return RandomBlock<Layout>(slice_size, 1, 10); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.slice(slice_start, slice_size),
+                                            [&slice_size]() { return RandomBlock<Layout>(slice_size, 1, 10); });
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.slice(slice_start, slice_size),
-      [&slice_size]() { return SkewedInnerBlock<Layout>(slice_size); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.slice(slice_start, slice_size),
+                                            [&slice_size]() { return SkewedInnerBlock<Layout>(slice_size); });
 
-  VerifyBlockAssignment<T, NumDims, Layout>(
-      tensor, map.slice(slice_start, slice_size),
-      [&slice_size]() { return FixedSizeBlock(slice_size); });
+  VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.slice(slice_start, slice_size),
+                                            [&slice_size]() { return FixedSizeBlock(slice_size); });
 }
 
 template <typename T, int NumDims, int Layout>
@@ -757,24 +700,20 @@ static void test_assign_to_tensor_shuffle() {
     DSizes<Index, NumDims> shuffled_dims;
     for (int i = 0; i < NumDims; ++i) shuffled_dims[i] = dims[shuffle[i]];
 
-    VerifyBlockAssignment<T, NumDims, Layout>(
-        tensor, map.shuffle(shuffle),
-        [&shuffled_dims]() { return FixedSizeBlock(shuffled_dims); });
+    VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.shuffle(shuffle),
+                                              [&shuffled_dims]() { return FixedSizeBlock(shuffled_dims); });
 
-    VerifyBlockAssignment<T, NumDims, Layout>(
-        tensor, map.shuffle(shuffle), [&shuffled_dims]() {
-          return RandomBlock<Layout>(shuffled_dims, 1, 5);
-        });
+    VerifyBlockAssignment<T, NumDims, Layout>(tensor, map.shuffle(shuffle),
+                                              [&shuffled_dims]() { return RandomBlock<Layout>(shuffled_dims, 1, 5); });
 
   } while (std::next_permutation(&shuffle[0], &shuffle[0] + NumDims));
 }
 
 // -------------------------------------------------------------------------- //
 
-#define CALL_SUBTEST_PART(PART) \
-  CALL_SUBTEST_##PART
+#define CALL_SUBTEST_PART(PART) CALL_SUBTEST_##PART
 
-#define CALL_SUBTESTS_DIMS_LAYOUTS_TYPES(PART, NAME)           \
+#define CALL_SUBTESTS_DIMS_LAYOUTS_TYPES(PART, NAME)     \
   CALL_SUBTEST_PART(PART)((NAME<float, 1, RowMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 2, RowMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 3, RowMajor>())); \
@@ -785,28 +724,28 @@ static void test_assign_to_tensor_shuffle() {
   CALL_SUBTEST_PART(PART)((NAME<float, 4, ColMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 4, ColMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 5, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 1, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 2, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 3, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 4, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 5, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 1, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 2, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 4, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 4, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<int, 5, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 1, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 2, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 3, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 4, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 5, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 1, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 2, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 4, ColMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<bool, 4, ColMajor>())); \
+  CALL_SUBTEST_PART(PART)((NAME<int, 1, RowMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 2, RowMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 3, RowMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 4, RowMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 5, RowMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 1, ColMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 2, ColMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 4, ColMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 4, ColMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<int, 5, ColMajor>()));   \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 1, RowMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 2, RowMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 3, RowMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 4, RowMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 5, RowMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 1, ColMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 2, ColMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 4, ColMajor>()));  \
+  CALL_SUBTEST_PART(PART)((NAME<bool, 4, ColMajor>()));  \
   CALL_SUBTEST_PART(PART)((NAME<bool, 5, ColMajor>()))
 
-#define CALL_SUBTESTS_DIMS_LAYOUTS(PART, NAME)     \
+#define CALL_SUBTESTS_DIMS_LAYOUTS(PART, NAME)           \
   CALL_SUBTEST_PART(PART)((NAME<float, 1, RowMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 2, RowMajor>())); \
   CALL_SUBTEST_PART(PART)((NAME<float, 3, RowMajor>())); \
@@ -820,8 +759,8 @@ static void test_assign_to_tensor_shuffle() {
 
 #define CALL_SUBTESTS_LAYOUTS_TYPES(PART, NAME)       \
   CALL_SUBTEST_PART(PART)((NAME<float, RowMajor>())); \
-  CALL_SUBTEST_PART(PART)((NAME<float, ColMajor>()));  \
-  CALL_SUBTEST_PART(PART)((NAME<bool, RowMajor>())); \
+  CALL_SUBTEST_PART(PART)((NAME<float, ColMajor>())); \
+  CALL_SUBTEST_PART(PART)((NAME<bool, RowMajor>()));  \
   CALL_SUBTEST_PART(PART)((NAME<bool, ColMajor>()))
 
 EIGEN_DECLARE_TEST(cxx11_tensor_block_eval) {

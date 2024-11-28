@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?><DEFECTS><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Roberto Lopez\Documents\opennn\eigen\Eigen\src\Core\arch\SSE\</FILEPATH>
+      <FILENAME>Complex.h</FILENAME>
+      <LINE>20</LINE>
+      <COLUMN>2</COLUMN>
+    </SFA>
+    <DEFECTCODE>26495</DEFECTCODE>
+    <DESCRIPTION>La variable "Eigen::internal::Packet2cf::v" no está inicializada. Siempre debe inicializarse una variable miembro (type.6).</DESCRIPTION>
+    <FUNCTION>Eigen::internal::Packet2cf::{ctor}</FUNCTION>
+    <DECORATED>??0Packet2cf@internal@Eigen@@QEAA@XZ</DECORATED>
+    <FUNCLINE>20</FUNCLINE>
+    <ADDITIONALINFO>
+      <targetSymbol>Eigen::internal::Packet2cf::v</targetSymbol>
+    </ADDITIONALINFO>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Roberto Lopez\Documents\opennn\eigen\Eigen\src\Core\arch\SSE\</FILEPATH>
+      <FILENAME>Complex.h</FILENAME>
+      <LINE>183</LINE>
+      <COLUMN>2</COLUMN>
+    </SFA>
+    <DEFECTCODE>26495</DEFECTCODE>
+    <DESCRIPTION>La variable "Eigen::internal::Packet1cd::v" no está inicializada. Siempre debe inicializarse una variable miembro (type.6).</DESCRIPTION>
+    <FUNCTION>Eigen::internal::Packet1cd::{ctor}</FUNCTION>
+    <DECORATED>??0Packet1cd@internal@Eigen@@QEAA@XZ</DECORATED>
+    <FUNCLINE>183</FUNCLINE>
+    <ADDITIONALINFO>
+      <targetSymbol>Eigen::internal::Packet1cd::v</targetSymbol>
+    </ADDITIONALINFO>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Roberto Lopez\Documents\opennn\eigen\unsupported\Eigen\src\SpecialFunctions\</FILEPATH>
+      <FILENAME>SpecialFunctionsImpl.h</FILENAME>
+      <LINE>1808</LINE>
+      <COLUMN>16</COLUMN>
+    </SFA>
+    <DEFECTCODE>26498</DEFECTCODE>
+    <DESCRIPTION>La función "Eigen::GenericNumTraits&lt;float&gt;::quiet_NaN" es constexpr. Marque la variable "nan" como constexpr si desea realizarse una evaluación en tiempo de compilación (con.5).</DESCRIPTION>
+    <FUNCTION>Eigen::internal::betainc_impl&lt;float&gt;::run</FUNCTION>
+    <DECORATED>?run@?$betainc_impl@M@internal@Eigen@@SAMMMM@Z</DECORATED>
+    <FUNCLINE>1807</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Roberto Lopez\Documents\opennn\eigen\unsupported\Eigen\src\SpecialFunctions\</FILEPATH>
+      <FILENAME>SpecialFunctionsImpl.h</FILENAME>
+      <LINE>1877</LINE>
+      <COLUMN>17</COLUMN>
+    </SFA>
+    <DEFECTCODE>26498</DEFECTCODE>
+    <DESCRIPTION>La función "Eigen::GenericNumTraits&lt;double&gt;::quiet_NaN" es constexpr. Marque la variable "nan" como constexpr si desea realizarse una evaluación en tiempo de compilación (con.5).</DESCRIPTION>
+    <FUNCTION>Eigen::internal::betainc_impl&lt;double&gt;::run</FUNCTION>
+    <DECORATED>?run@?$betainc_impl@N@internal@Eigen@@SANNNN@Z</DECORATED>
+    <FUNCLINE>1876</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT><DEFECT>
+    <SFA>
+      <FILEPATH>C:\Users\Roberto Lopez\Documents\opennn\eigen\Eigen\src\Core\</FILEPATH>
+      <FILENAME>GenericPacketMath.h</FILENAME>
+      <LINE>163</LINE>
+      <COLUMN>2</COLUMN>
+    </SFA>
+    <DEFECTCODE>26495</DEFECTCODE>
+    <DESCRIPTION>La variable "Eigen::internal::eigen_packet_wrapper&lt;__m128i,0&gt;::m_val" no está inicializada. Siempre debe inicializarse una variable miembro (type.6).</DESCRIPTION>
+    <FUNCTION>Eigen::internal::eigen_packet_wrapper&lt;__m128i,0&gt;::{ctor}</FUNCTION>
+    <DECORATED>??0?$eigen_packet_wrapper@T__m128i@@$0A@@internal@Eigen@@QEAA@XZ</DECORATED>
+    <FUNCLINE>163</FUNCLINE>
+    <ADDITIONALINFO>
+      <targetSymbol>Eigen::internal::eigen_packet_wrapper&lt;__m128i,0&gt;::m_val</targetSymbol>
+    </ADDITIONALINFO>
+    <PATH></PATH>
+  </DEFECT></DEFECTS>

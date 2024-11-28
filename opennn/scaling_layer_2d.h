@@ -1,0 +1,131 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S C A L I N G   L A Y E R   2 D   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#ifndef SCALINGLAYER2D_H
+#define SCALINGLAYER2D_H
+
+#include "scaling.h"
+#include "layer.h"
+#include "layer_forward_propagation.h"
+
+namespace opennn
+{
+
+class ScalingLayer2D : public Layer
+{
+
+public:
+
+   explicit ScalingLayer2D(const dimensions& = {0});
+
+   dimensions get_input_dimensions() const;
+   dimensions get_output_dimensions() const;
+
+   vector<Descriptives> get_descriptives() const;
+   Descriptives get_descriptives(const Index&) const;
+
+   Tensor<type, 1> get_minimums() const;
+   Tensor<type, 1> get_maximums() const;
+   Tensor<type, 1> get_means() const;
+   Tensor<type, 1> get_standard_deviations() const;
+
+   vector<Scaler> get_scaling_methods() const;
+
+   vector<string> write_scalers() const;
+   vector<string> write_scalers_text() const;
+
+   void set(const dimensions& = {0});
+
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
+
+   void set_descriptives(const vector<Descriptives>&);
+   void set_item_descriptives(const Index&, const Descriptives&);
+
+   void set_minimum(const Index&, const type&);
+   void set_maximum(const Index&, const type&);
+   void set_mean(const Index&, const type&);
+   void set_standard_deviation(const Index&, const type&);
+
+   void set_min_max_range(const type& min, const type& max);
+
+   void set_scalers(const vector<Scaler>&);
+   void set_scalers(const vector<string>&);
+
+   void set_scaler(const Index&, const Scaler&);
+   void set_scaler(const Index&, const string&);
+   void set_scalers(const Scaler&);
+   void set_scalers(const string&);
+
+   bool is_empty() const;
+
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
+
+   string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
+
+   string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
+
+   string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+
+   string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+
+   string get_expression(const vector<string>&, const vector<string>&) const final;
+
+   void print() const;
+
+   void from_XML(const XMLDocument&) final;
+   void to_XML(XMLPrinter&) const final;
+
+private:
+
+   vector<Descriptives> descriptives;
+
+   vector<Scaler> scalers;
+
+   type min_range;
+   type max_range;
+};
+
+
+struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
+{
+    explicit ScalingLayer2DForwardPropagation(const Index& = 0, Layer* = nullptr);
+       
+    pair<type*, dimensions> get_outputs_pair() const final;
+
+    void set(const Index& = 0, Layer* = nullptr) final;
+
+    void print() const;
+
+    Tensor<type, 2> outputs;
+};
+
+}
+
+#endif
+
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

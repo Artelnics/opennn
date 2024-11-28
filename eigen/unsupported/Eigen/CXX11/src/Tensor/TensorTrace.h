@@ -11,95 +11,91 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_TRACE_H
 #define EIGEN_CXX11_TENSOR_TENSOR_TRACE_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 
 /** \class TensorTrace
-  * \ingroup CXX11_Tensor_Module
-  *
-  * \brief Tensor Trace class.
-  *
-  *
-  */
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor Trace class.
+ *
+ *
+ */
 
 namespace internal {
-template<typename Dims, typename XprType>
-struct traits<TensorTraceOp<Dims, XprType> > : public traits<XprType>
-{
+template <typename Dims, typename XprType>
+struct traits<TensorTraceOp<Dims, XprType> > : public traits<XprType> {
   typedef typename XprType::Scalar Scalar;
   typedef traits<XprType> XprTraits;
   typedef typename XprTraits::StorageKind StorageKind;
   typedef typename XprTraits::Index Index;
   typedef typename XprType::Nested Nested;
-  typedef typename remove_reference<Nested>::type _Nested;
-  static const int NumDimensions = XprTraits::NumDimensions - array_size<Dims>::value;
-  static const int Layout = XprTraits::Layout;
+  typedef std::remove_reference_t<Nested> Nested_;
+  static constexpr int NumDimensions = XprTraits::NumDimensions - array_size<Dims>::value;
+  static constexpr int Layout = XprTraits::Layout;
 };
 
-template<typename Dims, typename XprType>
-struct eval<TensorTraceOp<Dims, XprType>, Eigen::Dense>
-{
+template <typename Dims, typename XprType>
+struct eval<TensorTraceOp<Dims, XprType>, Eigen::Dense> {
   typedef const TensorTraceOp<Dims, XprType>& type;
 };
 
-template<typename Dims, typename XprType>
-struct nested<TensorTraceOp<Dims, XprType>, 1, typename eval<TensorTraceOp<Dims, XprType> >::type>
-{
+template <typename Dims, typename XprType>
+struct nested<TensorTraceOp<Dims, XprType>, 1, typename eval<TensorTraceOp<Dims, XprType> >::type> {
   typedef TensorTraceOp<Dims, XprType> type;
 };
 
-} // end namespace internal
+}  // end namespace internal
 
+template <typename Dims, typename XprType>
+class TensorTraceOp : public TensorBase<TensorTraceOp<Dims, XprType> > {
+ public:
+  typedef typename Eigen::internal::traits<TensorTraceOp>::Scalar Scalar;
+  typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
+  typedef typename XprType::CoeffReturnType CoeffReturnType;
+  typedef typename Eigen::internal::nested<TensorTraceOp>::type Nested;
+  typedef typename Eigen::internal::traits<TensorTraceOp>::StorageKind StorageKind;
+  typedef typename Eigen::internal::traits<TensorTraceOp>::Index Index;
 
-template<typename Dims, typename XprType>
-class TensorTraceOp : public TensorBase<TensorTraceOp<Dims, XprType> >
-{
-  public:
-    typedef typename Eigen::internal::traits<TensorTraceOp>::Scalar Scalar;
-    typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-    typedef typename XprType::CoeffReturnType CoeffReturnType;
-    typedef typename Eigen::internal::nested<TensorTraceOp>::type Nested;
-    typedef typename Eigen::internal::traits<TensorTraceOp>::StorageKind StorageKind;
-    typedef typename Eigen::internal::traits<TensorTraceOp>::Index Index;
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorTraceOp(const XprType& expr, const Dims& dims)
+      : m_xpr(expr), m_dims(dims) {}
 
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorTraceOp(const XprType& expr, const Dims& dims)
-      : m_xpr(expr), m_dims(dims) {
-    }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dims& dims() const { return m_dims; }
 
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-    const Dims& dims() const { return m_dims; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const internal::remove_all_t<typename XprType::Nested>& expression() const {
+    return m_xpr;
+  }
 
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
-    const typename internal::remove_all<typename XprType::Nested>::type& expression() const { return m_xpr; }
-
-  protected:
-    typename XprType::Nested m_xpr;
-    const Dims m_dims;
+ protected:
+  typename XprType::Nested m_xpr;
+  const Dims m_dims;
 };
 
-
 // Eval as rvalue
-template<typename Dims, typename ArgType, typename Device>
-struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
-{
+template <typename Dims, typename ArgType, typename Device>
+struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device> {
   typedef TensorTraceOp<Dims, ArgType> XprType;
-  static const int NumInputDims = internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
-  static const int NumReducedDims = internal::array_size<Dims>::value;
-  static const int NumOutputDims = NumInputDims - NumReducedDims;
+  static constexpr int NumInputDims =
+      internal::array_size<typename TensorEvaluator<ArgType, Device>::Dimensions>::value;
+  static constexpr int NumReducedDims = internal::array_size<Dims>::value;
+  static constexpr int NumOutputDims = NumInputDims - NumReducedDims;
   typedef typename XprType::Index Index;
   typedef DSizes<Index, NumOutputDims> Dimensions;
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
-  static const int PacketSize = internal::unpacket_traits<PacketReturnType>::size;
+  static constexpr int PacketSize = internal::unpacket_traits<PacketReturnType>::size;
   typedef StorageMemory<CoeffReturnType, Device> Storage;
   typedef typename Storage::Type EvaluatorPointerType;
 
+  static constexpr int Layout = TensorEvaluator<ArgType, Device>::Layout;
   enum {
     IsAligned = false,
     PacketAccess = TensorEvaluator<ArgType, Device>::PacketAccess,
     BlockAccess = false,
     PreferBlockAccess = TensorEvaluator<ArgType, Device>::PreferBlockAccess,
-    Layout = TensorEvaluator<ArgType, Device>::Layout,
     CoordAccess = false,
     RawAccess = false
   };
@@ -109,11 +105,10 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
   //===--------------------------------------------------------------------===//
 
   EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
-    : m_impl(op.expression(), device), m_traceDim(1), m_device(device)
-  {
-
+      : m_impl(op.expression(), device), m_traceDim(1), m_device(device) {
     EIGEN_STATIC_ASSERT((NumOutputDims >= 0), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    EIGEN_STATIC_ASSERT((NumReducedDims >= 2) || ((NumReducedDims == 0) && (NumInputDims == 0)), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    EIGEN_STATIC_ASSERT((NumReducedDims >= 2) || ((NumReducedDims == 0) && (NumInputDims == 0)),
+                        YOU_MADE_A_PROGRAMMING_MISTAKE);
 
     for (int i = 0; i < NumInputDims; ++i) {
       m_reduced[i] = false;
@@ -134,6 +129,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
       }
     }
 
+    EIGEN_ONLY_USED_FOR_DEBUG(num_distinct_reduce_dims);
     eigen_assert(num_distinct_reduce_dims == NumReducedDims);
 
     // Compute the dimensions of the result.
@@ -149,8 +145,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
           eigen_assert(m_reducedDims[0] == m_reducedDims[reduced_index]);
         }
         ++reduced_index;
-      }
-      else {
+      } else {
         m_dimensions[output_index] = input_dims[i];
         ++output_index;
       }
@@ -167,8 +162,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
         for (int i = 1; i < NumOutputDims; ++i) {
           m_outputStrides[i] = m_outputStrides[i - 1] * m_dimensions[i - 1];
         }
-      }
-      else {
+      } else {
         m_outputStrides.back() = 1;
         for (int i = NumOutputDims - 2; i >= 0; --i) {
           m_outputStrides[i] = m_outputStrides[i + 1] * m_dimensions[i + 1];
@@ -184,8 +178,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
         for (int i = 1; i < NumInputDims; ++i) {
           input_strides[i] = input_strides[i - 1] * input_dims[i - 1];
         }
-      }
-      else {
+      } else {
         input_strides.back() = 1;
         for (int i = NumInputDims - 2; i >= 0; --i) {
           input_strides[i] = input_strides[i + 1] * input_dims[i + 1];
@@ -195,11 +188,10 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
       output_index = 0;
       reduced_index = 0;
       for (int i = 0; i < NumInputDims; ++i) {
-        if(m_reduced[i]) {
+        if (m_reduced[i]) {
           m_reducedStrides[reduced_index] = input_strides[i];
           ++reduced_index;
-        }
-        else {
+        } else {
           m_preservedStrides[output_index] = input_strides[i];
           ++output_index;
         }
@@ -207,21 +199,16 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const {
-    return m_dimensions;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
   EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(EvaluatorPointerType /*data*/) {
     m_impl.evalSubExprsIfNeeded(NULL);
     return true;
   }
 
-  EIGEN_STRONG_INLINE void cleanup() {
-    m_impl.cleanup();
-  }
+  EIGEN_STRONG_INLINE void cleanup() { m_impl.cleanup(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const
-  {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
     // Initialize the result
     CoeffReturnType result = internal::cast<int, CoeffReturnType>(0);
     Index index_stride = 0;
@@ -231,36 +218,26 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
 
     // If trace is requested along all dimensions, starting index would be 0
     Index cur_index = 0;
-    if (NumOutputDims != 0)
-      cur_index = firstInput(index);
+    if (NumOutputDims != 0) cur_index = firstInput(index);
     for (Index i = 0; i < m_traceDim; ++i) {
-        result += m_impl.coeff(cur_index);
-        cur_index += index_stride;
+      result += m_impl.coeff(cur_index);
+      cur_index += index_stride;
     }
 
     return result;
   }
 
-  template<int LoadMode>
+  template <int LoadMode>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packet(Index index) const {
-
-    EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE);
     eigen_assert(index + PacketSize - 1 < dimensions().TotalSize());
 
-    EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
+    EIGEN_ALIGN_MAX std::remove_const_t<CoeffReturnType> values[PacketSize];
     for (int i = 0; i < PacketSize; ++i) {
-        values[i] = coeff(index + i);
+      values[i] = coeff(index + i);
     }
     PacketReturnType result = internal::ploadt<PacketReturnType, LoadMode>(values);
     return result;
   }
-
-#ifdef EIGEN_USE_SYCL
-  // binding placeholder accessors to a command group handler for SYCL
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void bind(cl::sycl::handler &cgh) const {
-    m_impl.bind(cgh);
-  }
-#endif
 
  protected:
   // Given the output index, finds the first index in the input tensor used to compute the trace
@@ -273,8 +250,7 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
         index -= idx * m_outputStrides[i];
       }
       startInput += index * m_preservedStrides[0];
-    }
-    else {
+    } else {
       for (int i = 0; i < NumOutputDims - 1; ++i) {
         const Index idx = index / m_outputStrides[i];
         startInput += idx * m_preservedStrides[i];
@@ -297,7 +273,6 @@ struct TensorEvaluator<const TensorTraceOp<Dims, ArgType>, Device>
   array<Index, NumOutputDims> m_preservedStrides;
 };
 
+}  // End namespace Eigen
 
-} // End namespace Eigen
-
-#endif // EIGEN_CXX11_TENSOR_TENSOR_TRACE_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_TRACE_H

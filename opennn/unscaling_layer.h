@@ -9,182 +9,90 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-// System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
-#include "config.h"
 #include "layer.h"
-#include "statistics.h"
-#include "opennn_strings.h"
-
+#include "layer_forward_propagation.h"
+#include "scaling.h"
 
 namespace opennn
 {
 
-/// This class represents a layer of unscaling neurons.
-
-///
-/// Unscaling layers are included in the definition of a neural network.
-/// They are used to unnormalize variables so they are in the original range after computer processing.
-
-class   UnscalingLayer : public Layer
+class UnscalingLayer : public Layer
 {
 
 public:
 
-   // Constructors
+   explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
+   
+   dimensions get_input_dimensions() const;
+   dimensions get_output_dimensions() const final;
 
-   explicit UnscalingLayer();
-
-   explicit UnscalingLayer(const Index&);
-
-   explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
-
-   // Get methods  
-
-   Index get_inputs_number() const override;
-   Index get_neurons_number() const final;
-
-   Tensor<Descriptives, 1> get_descriptives() const; 
+   vector<Descriptives> get_descriptives() const; 
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   Tensor<Scaler, 1> get_unscaling_method() const;
+   vector<Scaler> get_unscaling_method() const;
 
-   Tensor<string, 1> write_unscaling_methods() const;
-   Tensor<string, 1> write_unscaling_method_text() const;
+   vector<string> write_unscaling_methods() const;
+   vector<string> write_unscaling_method_text() const;
 
-   const bool& get_display() const;
+   void set(const Index& = 0, const string& = "unscaling_layer");
+   void set(const vector<Descriptives>&, const vector<Scaler>&);
 
-   // Set methods
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
-   void set();
-   void set(const Index&);
-   void set(const Tensor<Descriptives, 1>&);
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
-   void set(const tinyxml2::XMLDocument&);
-   void set(const UnscalingLayer&);
-
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
-
-   virtual void set_default();
-
-   // Output variables descriptives
-
-   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives(const vector<Descriptives>&);
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
-
    void set_min_max_range(const type min, const type max);
 
-   // Outputs unscaling method
-
-   void set_scalers(const Tensor<Scaler,1>&);
+   void set_scalers(const vector<Scaler>&);
    void set_scalers(const string&);
-   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
 
-   // Display messages
-
-   void set_display(const bool&);
-
-   // Check methods
+   void set_scaler(const Index&, const string&);
 
    bool is_empty() const;
 
-   void check_range(const Tensor<type, 1>&) const;
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
 
-   // Forward propagation methods
+   vector<string> write_scalers_text() const;
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void print() const;
 
-   // Serialization methods
+   void from_XML(const XMLDocument&) final;
+   void to_XML(XMLPrinter&) const final;
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
-   // Expression methods
+private:
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   vector<Descriptives> descriptives;
 
-
-protected:
-
-   // MEMBERS
-
-   /// Descriptives of output variables.
-
-   Tensor<Descriptives, 1> descriptives;
-
-   /// Unscaling method for the output variables.
-
-   Tensor<Scaler, 1> scalers;
-
-   /// min and max range for unscaling
+   vector<Scaler> scalers;
 
    type min_range;
    type max_range;
-
-   /// Display warning messages to screen. 
-
-   bool display = true;
 };
+
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    explicit UnscalingLayerForwardPropagation(const Index& = 0, Layer* = 0);
+    
+    pair<type*, dimensions> get_outputs_pair() const final;
 
-    explicit UnscalingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    // Constructor
+    void print() const;
 
-    explicit UnscalingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        const Index neurons_number = static_cast<UnscalingLayer*>(layer_pointer)->get_neurons_number();
-
-        batch_samples_number = new_batch_samples_number;
-
-        // Allocate memory for outputs_data
-
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
-    }
-
-
-    void print() const
-    {
-        cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
-    }
+    Tensor<type, 2> outputs;
 };
 
 }
@@ -193,7 +101,7 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

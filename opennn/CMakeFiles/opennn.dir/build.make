@@ -83,34 +83,6 @@ opennn/CMakeFiles/opennn.dir/adaptive_moment_estimation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/opennn.dir/adaptive_moment_estimation.cpp.s"
 	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/alvaromartin/Documents/opennn/opennn/adaptive_moment_estimation.cpp -o CMakeFiles/opennn.dir/adaptive_moment_estimation.cpp.s
 
-opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o: opennn/CMakeFiles/opennn.dir/flags.make
-opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o: opennn/addition_layer.cpp
-opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o: opennn/CMakeFiles/opennn.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/alvaromartin/Documents/opennn/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT opennn/CMakeFiles/opennn.dir/addition_layer.cpp.o -MF CMakeFiles/opennn.dir/addition_layer.cpp.o.d -o CMakeFiles/opennn.dir/addition_layer.cpp.o -c /home/alvaromartin/Documents/opennn/opennn/addition_layer.cpp
-
-opennn/CMakeFiles/opennn.dir/addition_layer.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/opennn.dir/addition_layer.cpp.i"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/alvaromartin/Documents/opennn/opennn/addition_layer.cpp > CMakeFiles/opennn.dir/addition_layer.cpp.i
-
-opennn/CMakeFiles/opennn.dir/addition_layer.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/opennn.dir/addition_layer.cpp.s"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/alvaromartin/Documents/opennn/opennn/addition_layer.cpp -o CMakeFiles/opennn.dir/addition_layer.cpp.s
-
-opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o: opennn/CMakeFiles/opennn.dir/flags.make
-opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o: opennn/bounding_box_regressor_layer.cpp
-opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o: opennn/CMakeFiles/opennn.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/alvaromartin/Documents/opennn/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o -MF CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o.d -o CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.o -c /home/alvaromartin/Documents/opennn/opennn/bounding_box_regressor_layer.cpp
-
-opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.i"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/alvaromartin/Documents/opennn/opennn/bounding_box_regressor_layer.cpp > CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.i
-
-opennn/CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.s"
-	cd /home/alvaromartin/Documents/opennn/opennn && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/alvaromartin/Documents/opennn/opennn/bounding_box_regressor_layer.cpp -o CMakeFiles/opennn.dir/bounding_box_regressor_layer.cpp.s
-
 opennn/CMakeFiles/opennn.dir/bounding_layer.cpp.o: opennn/CMakeFiles/opennn.dir/flags.make
 opennn/CMakeFiles/opennn.dir/bounding_layer.cpp.o: opennn/bounding_layer.cpp
 opennn/CMakeFiles/opennn.dir/bounding_layer.cpp.o: opennn/CMakeFiles/opennn.dir/compiler_depend.ts

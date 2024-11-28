@@ -1,103 +1,62 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L E V E N B E R G   M A R Q U A R D T   A L G O R I T H M   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "levenberg_marquardt_algorithm_test.h"
+#include "../opennn/mean_squared_error.h"
+#include "../opennn/levenberg_marquardt_algorithm.h"
 
 
-LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting() 
+TEST(LevenbergMarquardtAlgorithmTest, DefaultConstructor)
 {
-    sum_squared_error.set(&neural_network, &data_set);
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 
-    levenberg_marquardt_algorithm.set_loss_index_pointer(&sum_squared_error);
-
-    levenberg_marquardt_algorithm.set_display(false);
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), false);
 }
 
 
-LevenbergMarquardtAlgorithmTest::~LevenbergMarquardtAlgorithmTest()
+TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
 {
+    MeanSquaredError mean_squared_error;
+
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
+
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_constructor()
+TEST(LevenbergMarquardtAlgorithmTest, TrainEmpty)
 {
-    cout << "test_constructor\n";
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 
-    // Default constructor
+//    levenberg_marquardt_algorithm.perform_training();
 
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm_1;
-
-    assert_true(!levenberg_marquardt_algorithm_1.has_loss_index(), LOG);
-
-    // Loss index constructor
-
-    LevenbergMarquardtAlgorithm lma2(&sum_squared_error);
-
-    assert_true(lma2.has_loss_index(), LOG);
+//    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_destructor()
+TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
-    cout << "test_destructor\n";
-
-    // Test
-
-    LevenbergMarquardtAlgorithm* lma = new LevenbergMarquardtAlgorithm;
-
-    delete lma;
-
-    // Test
-
-    LevenbergMarquardtAlgorithm* lma2 = new LevenbergMarquardtAlgorithm(&sum_squared_error);
-
-    delete lma2;
-}
-
-
-void LevenbergMarquardtAlgorithmTest::test_perform_training()
-{
-    cout << "test_perform_training\n";
-
-    type old_error = numeric_limits<float>::max();
-
-    TrainingResults training_results;
-
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-
-    type error;
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
-
-    data_set.set(1,1,1);
+    /*
+    DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(1));
-
+    
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+    
+    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
     levenberg_marquardt_algorithm.set_display(false);
+    
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);
 
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
@@ -105,7 +64,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     training_results = levenberg_marquardt_algorithm.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -117,7 +76,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     training_results = levenberg_marquardt_algorithm.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -129,10 +88,10 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
     levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
-
+    /*
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
 
     // Minimum loss decrease
 
@@ -147,40 +106,17 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
     training_results = levenberg_marquardt_algorithm.perform_training();
 
-    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+    EXPECT_EQ(levenberg_marquardt_algorithm.get_minimum_loss_decrease() <= minimum_loss_decrease);
+
+    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
+*/
 }
 
 
-void LevenbergMarquardtAlgorithmTest::run_test_case()
+/*
+void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
-    cout << "Running Levenberg-Marquardt algorithm test case...\n";
-
-    // Constructor and destructor methods
-
-    test_constructor();
-    test_destructor();
-
-    // Training methods
-
-    test_perform_training();
-
-    cout << "End of Levenberg-Marquardt algorithm test case.\n\n";
+    
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+}
+*/

@@ -9,466 +9,183 @@
 #ifndef PERCEPTRONLAYER_H
 #define PERCEPTRONLAYER_H
 
-// System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
-#include "config.h"
 #include "layer.h"
-#include "probabilistic_layer.h"
-
-#ifdef OPENNN_MKL
-    #include "../mkl/mkl.h"
-#endif
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
 
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-struct LayerBackPropagationLM;
-
-struct PerceptronLayerForwardPropagation;
-struct PerceptronLayerBackPropagation;
-struct PerceptronLayerBackPropagationLM;
-
-struct ProbabilisticLayerForwardPropagation;
-struct ProbabilisticLayerBackPropagation;
-struct ProbabilisticLayerBackPropagationLM;
-
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_perceptron_layer_cuda.h"
+    struct PerceptronLayerForwardPropagationCuda;
+    struct PerceptronLayerBackPropagationCuda;
 #endif
-
-
-/// This class represents a layer of perceptrons.
-
-/// PerceptronLayer is a single-layer network with a hard-limit transfer function.
-/// This network is often trained with the perceptron learning rule.
-///
-/// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
 class PerceptronLayer : public Layer
 {
 
 public:
 
-    /// Enumeration of the available activation functions for the perceptron neuron model.
+    enum class ActivationFunction {
+        Logistic,
+        HyperbolicTangent,
+        Linear,
+        RectifiedLinear,
+        ExponentialLinear,
+        ScaledExponentialLinear,
+        SoftPlus,
+        SoftSign,
+        HardSigmoid
+    };
 
-    enum class ActivationFunction{Threshold,
-                                  SymmetricThreshold,
-                                  Logistic,
-                                  HyperbolicTangent,
-                                  Linear,
-                                  RectifiedLinear,
-                                  ExponentialLinear,
-                                  ScaledExponentialLinear,
-                                  SoftPlus,
-                                  SoftSign,
-                                  HardSigmoid};
+    PerceptronLayer(const dimensions& = {0},
+                    const dimensions& = {0},
+                    const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                    const string& = "perceptron_layer");
 
-   // Constructors
+    dimensions get_input_dimensions() const final;
+    dimensions get_output_dimensions() const final;
 
-   explicit PerceptronLayer();
+    Tensor<type, 1> get_parameters() const final;
 
-   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    Index get_parameters_number() const final;
+    type get_dropout_rate() const;
 
-   // Get methods
+    const PerceptronLayer::ActivationFunction& get_activation_function() const;
 
-   bool is_empty() const;
+    string get_activation_function_string() const;
 
-   Index get_inputs_number() const override;
-   Index get_neurons_number() const final;
+    void set(const dimensions& = {0},
+             const dimensions& = {0},
+             const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+             const string& = "perceptron_layer");
 
-   Tensor<Index, 1> get_inputs_dimensions() const final;
-   Tensor<Index, 1> get_outputs_dimensions() const final;
+    void set_input_dimensions(const dimensions&) final;
+    void set_output_dimensions(const dimensions&) final;
 
-   // Parameters
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters_constant(const type&) final;
+    void set_parameters_random() final;
 
-   const Tensor<type, 2>& get_biases() const;
-   const Tensor<type, 2>& get_synaptic_weights() const;
+    void set_activation_function(const ActivationFunction&);
+    void set_activation_function(const string&);
+    void set_dropout_rate(const type&);
 
-   Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
-   Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
+    void calculate_combinations(const Tensor<type, 2>&,
+                                Tensor<type, 2>&) const;
 
-   Index get_biases_number() const;
-   Index get_synaptic_weights_number() const;
-   Index get_parameters_number() const final;
-   type get_dropout_rate() const;
-   Tensor<type, 1> get_parameters() const final;
+    void dropout(Tensor<type, 2>&) const;
 
-   Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
+    void calculate_activations(Tensor<type, 2>&,
+                               Tensor<type, 2>&) const;
 
-   // Activation functions
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) final;
 
-   const PerceptronLayer::ActivationFunction& get_activation_function() const;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-   string write_activation_function() const;
+    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                           const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           unique_ptr<LayerBackPropagationLM>&) const final;
 
-   // Display messages
+    void insert_gradient(unique_ptr<LayerBackPropagation>&,
+                         const Index&,
+                         Tensor<type, 1>&) const final;
 
-   const bool& get_display() const;
+    void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
+                                           const Index&,
+                                           Tensor<type, 2>&) const final;
 
-   // Set methods
+    string get_expression(const vector<string>&, const vector<string>&) const final;
 
-   void set();
-   void set(const Index&, const Index&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent);
+    string get_activation_function_string_expression() const;
 
-   void set_default();
-   void set_name(const string&);
+    void print() const;
 
-   // Architecture
+    void from_XML(const XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
+    #endif
 
-   // Parameters
+private:
 
-   void set_biases(const Tensor<type, 2>&);
-   void set_synaptic_weights(const Tensor<type, 2>&);
+    Tensor<type, 1> biases;
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0) final;
+    Tensor<type, 2> synaptic_weights;
 
-   // Activation functions
+    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
-   void set_activation_function(const ActivationFunction&);
-   void set_activation_function(const string&);
-   void set_dropout_rate(const type&);
+    type dropout_rate = type(0);
 
-   // Display messages
-
-   void set_display(const bool&);
-
-   // Parameters initialization methods
-   void set_biases_constant(const type&);
-   void set_synaptic_weights_constant(const type&);
-   
-   void set_parameters_constant(const type&) final;
-
-   void set_parameters_random() final;
-
-   // Perceptron layer combinations
-
-   void calculate_combinations(const DynamicTensor<type>&,
-                               const Tensor<type, 2>&,
-                               const Tensor<type, 2>&,
-                               LayerForwardPropagation*) const;
-
-   // Perceptron layer activations
-
-   void calculate_activations(LayerForwardPropagation*) const;
-
-   void calculate_activations_derivatives(LayerForwardPropagation*) const;
-
-   // Perceptron layer outputs
-
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
-                          LayerForwardPropagation*,
-                          const bool&) final;
-
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
-                          Tensor<type, 1>&,
-                          LayerForwardPropagation*) final;
-
-   // Delta methods
-
-   void calculate_hidden_delta(LayerForwardPropagation*,
-                               LayerBackPropagation*,
-                               LayerBackPropagation*) const final;
-
-   void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                               PerceptronLayerBackPropagation*,
-                               PerceptronLayerBackPropagation*) const;
-
-   void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                               ProbabilisticLayerBackPropagation*,
-                               PerceptronLayerBackPropagation*) const;
-
-
-   // Delta LM
-
-   void calculate_hidden_delta_lm(LayerForwardPropagation*,
-                                  LayerBackPropagationLM*,
-                                  LayerBackPropagationLM*) const final;
-
-   void calculate_hidden_delta_lm(PerceptronLayerForwardPropagation*,
-                                             PerceptronLayerBackPropagationLM*,
-                                             PerceptronLayerBackPropagationLM*) const;
-
-   void calculate_hidden_delta_lm(ProbabilisticLayerForwardPropagation*,
-                                                ProbabilisticLayerBackPropagationLM*,
-                                                PerceptronLayerBackPropagationLM*) const;
-
-   // Squared errors methods
-
-   void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-                                             LayerForwardPropagation*,
-                                             LayerBackPropagationLM*) final;
-
-   void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
-                                          const Index&,
-                                          Tensor<type, 2>&) const final;
-
-   // Gradient methods
-
-   void calculate_error_gradient(type*,
-                                 LayerForwardPropagation*,
-                                 LayerBackPropagation*) const final;
-
-   void insert_gradient(LayerBackPropagation*,
-                        const Index&,
-                        Tensor<type, 1>&) const final;
-
-   // Expression methods   
-
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
-
-   string write_activation_function_expression() const;
-
-   // Serialization methods
-
-   void from_XML(const tinyxml2::XMLDocument&) final;
-   void write_XML(tinyxml2::XMLPrinter&) const final;
-
-protected:
-
-   // MEMBERS
-
-
-   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's transfer function to generate the neuron's output.
-
-   Tensor<type, 2> biases;
-
-   /// This matrix contains conection strengths from a layer's inputs to its neurons.
-
-   Tensor<type, 2> synaptic_weights;
-
-   /// Activation function variable.
-
-   ActivationFunction activation_function;
-
-   type dropout_rate = type(0);
-
-   /// Display messages to screen. 
-
-   bool display = true;
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/perceptron_layer_cuda.h"
-#else
+    const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };
-#endif
 
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    // Default constructor
+    explicit PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-     explicit PerceptronLayerForwardPropagation() : LayerForwardPropagation()
-     {
-     }
+    pair<type*, dimensions> get_outputs_pair() const final;
 
-     virtual ~PerceptronLayerForwardPropagation()
-     {
-     }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
+    void print() const;
 
-     explicit PerceptronLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-         : LayerForwardPropagation()
-     {
-         set(new_batch_samples_number, new_layer_pointer);
-     }
+    Tensor<type, 2> outputs;
 
-    Eigen::array<ptrdiff_t, 2> get_inputs_dimensions_array() const
-    {
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        return Eigen::array<ptrdiff_t, 2>({batch_samples_number, inputs_number});
-    }
+    Tensor<type, 2> activation_derivatives;
+};
 
 
-    Eigen::array<ptrdiff_t, 2> get_outputs_dimensions_array() const
-    {
-        const Index neurons_number = layer_pointer->get_neurons_number();
+struct PerceptronLayerBackPropagation : LayerBackPropagation
+{
+    explicit PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-        return Eigen::array<ptrdiff_t, 2>({batch_samples_number, neurons_number});
-    }
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-     void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-     {
-         layer_pointer = new_layer_pointer;
+    void print() const;
 
-         batch_samples_number = new_batch_samples_number;
+    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> input_derivatives;
 
-         const Index neurons_number = layer_pointer->get_neurons_number();
-
-         // Outputs
-
-         Tensor<Index, 1> output_dimensions(2);
-         output_dimensions.setValues({batch_samples_number, neurons_number});
-
-         outputs.resize(1);
-         outputs(0).set_dimensions(output_dimensions);
-
-         // Rest of quantities
-
-         activations_derivatives.resize(batch_samples_number, neurons_number);
-     }
-
-     void print() const
-     {
-         cout << "Activations derivatives:" << endl;
-         cout << activations_derivatives.dimensions() << endl;
-
-         cout << "Outputs dimensions:" << endl;
-         cout << outputs[0].get_dimensions() << endl;
-
-         cout << "Outputs:" << endl;
-         cout << outputs(0).to_tensor_map<2>() << endl;
-
-         cout << "Activations derivatives:" << endl;
-         cout << activations_derivatives << endl;
-     }
-
-     Tensor<type, 2> activations_derivatives;
+    Tensor<type, 1> biases_derivatives;
+    Tensor<type, 2> synaptic_weights_derivatives;
 };
 
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    // Default constructor
+    explicit PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
-    explicit PerceptronLayerBackPropagationLM() : LayerBackPropagationLM()
-    {
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
+    void print() const;
 
-    explicit PerceptronLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagationLM()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    virtual ~PerceptronLayerBackPropagationLM()
-    {
-
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
-
-        deltas.resize(batch_samples_number, neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
-    }
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        cout << deltas << endl;
-
-        cout << "Squared errors Jacobian: " << endl;
-        cout << squared_errors_Jacobian << endl;
-
-    }
+    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
 };
 
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_back_propagation_cuda.h"
+#endif
 
-struct PerceptronLayerBackPropagation : LayerBackPropagation
-{
-    // Default constructor
-
-    explicit PerceptronLayerBackPropagation() : LayerBackPropagation()
-    {
-
-    }
-
-    virtual ~PerceptronLayerBackPropagation()
-    {
-    }
-
-
-    explicit PerceptronLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-        const Index inputs_number = layer_pointer->get_inputs_number();
-
-        deltas_dimensions.resize(2);
-        deltas_dimensions.setValues({batch_samples_number, neurons_number});
-
-        deltas_data = (type*)malloc( static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
-
-        biases_derivatives.resize(neurons_number);
-
-        synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-        deltas_times_activations_derivatives.resize(batch_samples_number, neurons_number);
-    }
-
-    Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-    {
-        Tensor< TensorMap< Tensor<type, 1> >*, 1> layer_gradient(2);
-
-        const Index inputs_number = layer_pointer->get_inputs_number();
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        layer_gradient(0) = new TensorMap<Tensor<type, 1>>(biases_derivatives.data(), neurons_number);
-        layer_gradient(1) = new TensorMap<Tensor<type, 1>>(synaptic_weights_derivatives.data(), inputs_number*neurons_number);
-
-        return layer_gradient;
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;
-
-        cout << "Biases derivatives:" << endl;
-        cout << biases_derivatives << endl;
-
-        cout << "Synaptic weights derivatives:" << endl;
-        cout << synaptic_weights_derivatives << endl;
-    }
-
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
-
-    Tensor<type, 2> deltas_times_activations_derivatives;
-
-};
 
 }
 
@@ -476,7 +193,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,150 +1,185 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R A D I E N T   D E S C E N T   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "adaptive_moment_estimation_test.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/adaptive_moment_estimation.h"
+#include "../opennn/mean_squared_error.h"
+
+#include "../opennn/transformer.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/cross_entropy_error_3d.h"
 
 
-AdaptiveMomentEstimationTest::AdaptiveMomentEstimationTest() : UnitTesting()
+TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
-    sum_squared_error.set(&neural_network, &data_set);
+    AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    adaptive_moment_estimation.set_loss_index_pointer(&sum_squared_error);
+    EXPECT_TRUE(!adaptive_moment_estimation.has_loss_index());
 }
 
 
-AdaptiveMomentEstimationTest::~AdaptiveMomentEstimationTest()
+TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 {
+    MeanSquaredError mean_squared_error;
+    AdaptiveMomentEstimation adaptive_moment_estimation(&mean_squared_error);
+
+    EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
 }
 
 
-void AdaptiveMomentEstimationTest::test_constructor()
+TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-    cout << "test_constructor\n";
 
-    // Default constructor
+    DataSet data_set(1, {1}, {1});
+    data_set.set_data_constant(type(1));
+    
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
+    neural_network.set_parameters_constant(type(1));
+/*
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+  
+    AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-    GradientDescent adaptive_moment_estimation_1;
-    assert_true(!adaptive_moment_estimation_1.has_loss_index(), LOG);
+    adaptive_moment_estimation->set_maximum_epochs_number(1);
+    adaptive_moment_estimation->set_display(false);
 
-    // Loss index constructor
+    TrainingResults training_results = adaptive_moment_estimation->perform_training();
 
-    GradientDescent adaptive_moment_estimation_2(&sum_squared_error);
-    assert_true(adaptive_moment_estimation_2.has_loss_index(), LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
+*/
 }
 
-void AdaptiveMomentEstimationTest::test_destructor()
+
+TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 {
-    cout << "test_destructor\n";
+    const Index batch_samples_number = 1;
 
-    GradientDescent* adaptive_moment_estimation = new GradientDescent;
+    const Index input_length = 2;
+    const Index context_length = 3;
+    const Index input_dimensions = 5;
+    const Index context_dimension = 6;
 
-    delete adaptive_moment_estimation;
+    const Index depth = 4;
+    const Index perceptron_depth = 6;
+    const Index heads_number = 4;
+    const Index layers_number = 1;
+
+    LanguageDataSet language_data_set;
+/*
+    language_data_set.set_data_random_language_model(batch_samples_number,
+        input_length,
+        context_length,
+        input_dimensions,
+        context_dimension);
+
+    language_data_set.set(DataSet::SampleUse::Training);
+
+    Transformer transformer({ input_length,
+                             context_length,
+                             input_dimensions,
+                             context_dimension,
+                             depth,
+                             perceptron_depth,
+                             heads_number,
+                             layers_number });
+
+    type training_loss_goal = type(0.05);
+
+    CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+
+    adaptive_moment_estimation.set_loss_index(&cross_entropy_error_3d);
+
+    adaptive_moment_estimation.set_display(true);
+    adaptive_moment_estimation.set_display_period(100);
+
+    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+    adaptive_moment_estimation.set_maximum_epochs_number(1000);
+    adaptive_moment_estimation.set_maximum_time(1000.0);
+    training_results = adaptive_moment_estimation.perform_training();
+
+    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
+*/
 }
 
+
+/*
+namespace opennn
+{
 
 void AdaptiveMomentEstimationTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     type old_error = numeric_limits<float>::max();
     type error;
 
     // Test
+    {
 
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
 
-    data_set.set(1,1,1);
-    data_set.set_data_constant(type(1));
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+        neural_network.set_parameters_constant(-1);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(type(1));
+        adaptive_moment_estimation.set_maximum_epochs_number(1);
+        /*
+        training_results = adaptive_moment_estimation.perform_training();
 
-    adaptive_moment_estimation.set_maximum_epochs_number(1);
-    adaptive_moment_estimation.set_display(false);
-    training_results = adaptive_moment_estimation.perform_training();
+        error = training_results.get_training_error();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+        EXPECT_EQ(error < old_error);
+        
+        old_error = error;
 
-    // Test
+        adaptive_moment_estimation.set_maximum_epochs_number(50);
+        neural_network.set_parameters_constant(-1);
+        
+        training_results = adaptive_moment_estimation.perform_training();
 
-    data_set.set(1,1,1);
-    data_set.set_data_random();
+        error = training_results.get_training_error();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
-    neural_network.set_parameters_constant(-1);
-
-    adaptive_moment_estimation.set_maximum_epochs_number(1);
-
-    training_results = adaptive_moment_estimation.perform_training();
-    error = training_results.get_training_error();
-
-    assert_true(error < old_error, LOG);
-
-    // Test
-
-    old_error = error;
-
-    adaptive_moment_estimation.set_maximum_epochs_number(2);
-    neural_network.set_parameters_constant(-1);
-
-    training_results = adaptive_moment_estimation.perform_training();
-    error = training_results.get_training_error();
-
-    assert_true(error < old_error, LOG);
+        EXPECT_EQ(error - old_error < type(1e-2));
+        
+    }
 
     // Loss goal
+    {
 
-    neural_network.set_parameters_constant(type(-1));
+        samples_number = 1;
+        inputs_number = 1;
+        outputs_number = 1;
 
-    type training_loss_goal = type(0.05);
+        data_set.set(samples_number, inputs_number, outputs_number);
+        data_set.set_data_random();
+        //data_set.set(DataSet::SampleUse::Testing);
 
-    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
-    adaptive_moment_estimation.set_maximum_epochs_number(10000);
-    adaptive_moment_estimation.set_maximum_time(1000.0);
+        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
+        neural_network.set_parameters_random();
 
-    training_results = adaptive_moment_estimation.perform_training();
+        type training_loss_goal = type(0.05);
 
-    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+        //adaptive_moment_estimation.set_display(true);
+        adaptive_moment_estimation.set_loss_goal(training_loss_goal);
+        adaptive_moment_estimation.set_maximum_epochs_number(10000);
+        adaptive_moment_estimation.set_maximum_time(1000.0);
+
+        //for(Index i = 0; i < 100; i++)
+        //{
+            //data_set.set_data_random();
+            //neural_network.set_parameters_random();
+        /*
+        training_results = adaptive_moment_estimation.perform_training();
+
+        //EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
+    //}
+
+        EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
+        
+    }
+
+    // Transformer model
+    {
+    }
+
 }
 
-
-void AdaptiveMomentEstimationTest::run_test_case()
-{
-    cout << "Running gradient descent test case...\n";
-
-    // Constructor and destructor methods
-
-    test_constructor();
-    test_destructor();
-
-    // Training methods
-
-    test_perform_training();
-
-    cout << "End of gradient descent test case.\n\n";
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

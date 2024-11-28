@@ -9,21 +9,6 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-#include <iomanip>
-
-// OpenNN includes
-
-#include "config.h"
-#include "tensor_utilities.h"
 #include "loss_index.h"
 
 namespace opennn
@@ -31,36 +16,27 @@ namespace opennn
 
 struct TrainingResults;
 
-/// This abstract class represents the concept of optimization algorithm for a neural network in the OpenNN library.
-/// Any derived class must implement the perform_training() method.
-
 class OptimizationAlgorithm
 {
 
 public:
 
-   explicit OptimizationAlgorithm();
+   explicit OptimizationAlgorithm(LossIndex* = nullptr);
 
-   explicit OptimizationAlgorithm(LossIndex*);
+    enum class StoppingCondition{None,
+                                 MinimumLossDecrease,
+                                 LossGoal,
+                                 MaximumSelectionErrorIncreases,
+                                 MaximumEpochsNumber,
+                                 MaximumTime};
 
-   virtual ~OptimizationAlgorithm();
+   LossIndex* get_loss_index() const;
 
-    /// Enumeration of all possible conditions of stop for the algorithms.
-
-    enum class StoppingCondition{MinimumLossDecrease, LossGoal,
-                           MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
-
-   // Get methods
-
-   LossIndex* get_loss_index_pointer() const;
-
-   /// Hardware use.
    string get_hardware_use() const;
+
    void set_hardware_use(const string&);
 
    bool has_loss_index() const;
-
-   // Utilities
 
    const bool& get_display() const;
 
@@ -70,19 +46,15 @@ public:
 
    const string& get_neural_network_file_name() const;
 
-   /// Writes the time from seconds in format HH:mm:ss.
-
    string write_time(const type&) const;
 
-   // Set methods
-
-   void set();
+   void set(LossIndex* = nullptr);
 
    virtual void set_default();
 
    virtual void set_threads_number(const int&);
 
-   virtual void set_loss_index_pointer(LossIndex*);
+   virtual void set_loss_index(LossIndex*);
 
    virtual void set_display(const bool&);
 
@@ -91,69 +63,45 @@ public:
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
 
-   // Calculate distances for AANN histogram
+//   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
-   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
-
-   // Training methods
+   // Training
 
    virtual void check() const;
-
-   /// Trains a neural network which has a loss index associated. 
 
    virtual TrainingResults perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
-   // Serialization methods
-
    virtual void print() const;
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   virtual void to_XML(XMLPrinter&) const;
 
    void save(const string&) const;
    void load(const string&);
 
 protected:
 
-   ThreadPool* thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device;
+   unique_ptr<ThreadPool> thread_pool;
+   unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-   /// Pointer to a loss index for a neural network object.
-
-   LossIndex* loss_index_pointer = nullptr;
-
-   /// Number of training epochs in the neural network.
+   LossIndex* loss_index = nullptr;
 
    Index epochs_number = 10000;
 
-   // UTILITIES
-
-   /// Create an histogram for distances in autoassociative NN
-
    BoxPlot auto_association_box_plot;
-
-   ///Hardware use
 
    string hardware_use = "Multi-core";
 
-   /// Number of iterations between the training showing progress.
-
    Index display_period = 10;
-
-   /// Number of iterations between the training saving progress.
 
    Index save_period = numeric_limits<Index>::max();
 
-   /// Path where the neural network is saved.
-
    string neural_network_file_name = "neural_network.xml";
-
-   /// Display messages to screen.
 
    bool display = true;
 
@@ -162,7 +110,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/optimization_algorithm_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
 #endif
 
 };
@@ -174,20 +122,14 @@ struct OptimizationAlgorithmData
     {
     }
 
-    virtual ~OptimizationAlgorithmData()
-    {
-    }
-
     void print() const
     {
-        cout << "Potential parameters:" << endl;
-        cout << potential_parameters << endl;
-
-        cout << "Training direction:" << endl;
-        cout << training_direction << endl;
-
-        cout << "Initial learning rate:" << endl;
-        cout << initial_learning_rate << endl;
+        cout << "Potential parameters:" << endl
+             << potential_parameters << endl
+             << "Training direction:" << endl
+             << training_direction << endl
+             << "Initial learning rate:" << endl
+             << initial_learning_rate << endl;
     }
 
     Tensor<type, 1> potential_parameters;
@@ -197,122 +139,41 @@ struct OptimizationAlgorithmData
 };
 
 
-/// This structure contains the optimization algorithm results.
-
 struct TrainingResults
 {
-    /// Default constructor.
-
-    explicit TrainingResults()
-    {
-    }
-
-    explicit TrainingResults(const Index& epochs_number)
-    {
-        training_error_history.resize(1+epochs_number);
-        training_error_history.setConstant(type(-1.0));
-
-        selection_error_history.resize(1+epochs_number);
-        selection_error_history.setConstant(type(-1.0));
-    }
-
-    /// Destructor.
-
-    virtual ~TrainingResults() {}
+    explicit TrainingResults(const Index& epochs_number = 0);
 
     string write_stopping_condition() const;
 
-    type get_training_error()
-    {
-        const Index size = training_error_history.size();
+    type get_training_error();
 
-        return training_error_history(size-1);
-    }
+    type get_selection_error() const;
 
-    type get_selection_error()
-    {
-        const Index size = selection_error_history.size();
-
-        return selection_error_history(size-1);
-    }
-
-    type get_loss()
-    {
-        return loss;
-    }
-
-    type get_loss_decrease()
-    {
-        return loss_decrease;
-    }
-
-    Index get_selection_failures()
-    {
-        return selection_failures;
-    }
-
-    Index get_epochs_number()
-    {
-        return training_error_history.size() - 1;
-    }
-
-
-    /// Returns a string representation of the results structure.
+    Index get_epochs_number() const;
 
     void save(const string&) const;
 
-    void print(const string& message = string())
-    {
-        cout << message << endl;
+    void print(const string& message = string());
 
-        const Index epochs_number = training_error_history.size();
-
-        cout << "Training results" << endl;
-        cout << "Epochs number: " << epochs_number-1 << endl;
-
-        cout << "Training error: " << training_error_history(epochs_number-1) << endl;
-
-        if(abs(training_error_history(epochs_number-1) + type(1))  < type(NUMERIC_LIMITS_MIN))
-            cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
-
-        cout << "Stopping condition: " << write_stopping_condition() << endl;
-    }
-
-    /// Stopping condition of the algorithm.
-
-    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
-
-    /// Writes final results of the training.
+    OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 
     Tensor<string, 2> write_final_results(const Index& = 3) const;
 
-    /// Resizes the training error history keeping the values.
-
     void resize_training_error_history(const Index&);
-
-    /// Resizes the selection error history keeping the values.
 
     void resize_selection_error_history(const Index&);
 
-    // Training history
-
-    /// History of the loss function over the training iterations.
-
     Tensor<type, 1> training_error_history;
-
-    /// History of the selection error over the training iterations.
 
     Tensor<type, 1> selection_error_history;
 
-    /// Elapsed time of the training process.
-
     string elapsed_time;
 
-    type loss;
+    type loss = NAN;
 
-    Index selection_failures;
+    Index selection_failures = 0;
 
-    type loss_decrease;
+    type loss_decrease = type(0);
 };
 
 }
@@ -321,7 +182,7 @@ struct TrainingResults
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -9,8 +9,6 @@
 
 #include "main.h"
 
-#include <Eigen/src/Core/arch/Default/Half.h>
-
 #define VERIFY_HALF_BITS_EQUAL(h, bits) \
   VERIFY_IS_EQUAL((numext::bit_cast<numext::uint16_t>(h)), (static_cast<numext::uint16_t>(bits)))
 
@@ -21,23 +19,14 @@ struct half;
 
 using Eigen::half;
 
-void test_conversion()
-{
+void test_conversion() {
   using Eigen::half_impl::__half_raw;
 
   // Round-trip bit-cast with uint16.
-  VERIFY_IS_EQUAL(
-    numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(1.0f))),
-    half(1.0f));
-  VERIFY_IS_EQUAL(
-    numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(0.5f))),
-    half(0.5f));
-  VERIFY_IS_EQUAL(
-    numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(-0.33333f))),
-    half(-0.33333f));
-   VERIFY_IS_EQUAL(
-    numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(0.0f))),
-    half(0.0f));
+  VERIFY_IS_EQUAL(numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(1.0f))), half(1.0f));
+  VERIFY_IS_EQUAL(numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(0.5f))), half(0.5f));
+  VERIFY_IS_EQUAL(numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(-0.33333f))), half(-0.33333f));
+  VERIFY_IS_EQUAL(numext::bit_cast<half>(numext::bit_cast<numext::uint16_t>(half(0.0f))), half(0.0f));
 
   // Conversion from float.
   VERIFY_HALF_BITS_EQUAL(half(1.0f), 0x3c00);
@@ -120,47 +109,56 @@ void test_conversion()
   VERIFY(static_cast<bool>(half(-5.96046e-08f)));
 }
 
-void test_numtraits()
-{
-  std::cout << "epsilon       = " << NumTraits<half>::epsilon() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(NumTraits<half>::epsilon()) << ")" << std::endl;
-  std::cout << "highest       = " << NumTraits<half>::highest() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(NumTraits<half>::highest()) << ")" << std::endl;
-  std::cout << "lowest        = " << NumTraits<half>::lowest() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(NumTraits<half>::lowest()) << ")" << std::endl;
-  std::cout << "min           = " << (std::numeric_limits<half>::min)() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(half((std::numeric_limits<half>::min)())) << ")" << std::endl;
-  std::cout << "denorm min    = " << (std::numeric_limits<half>::denorm_min)() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(half((std::numeric_limits<half>::denorm_min)())) << ")" << std::endl;
-  std::cout << "infinity      = " << NumTraits<half>::infinity() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(NumTraits<half>::infinity()) << ")" << std::endl;
-  std::cout << "quiet nan     = " << NumTraits<half>::quiet_NaN() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(NumTraits<half>::quiet_NaN()) << ")" << std::endl;
-  std::cout << "signaling nan = " << std::numeric_limits<half>::signaling_NaN() << "  (0x" << std::hex << numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::signaling_NaN()) << ")" << std::endl;
+void test_numtraits() {
+  std::cout << "epsilon       = " << NumTraits<half>::epsilon() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(NumTraits<half>::epsilon()) << ")" << std::endl;
+  std::cout << "highest       = " << NumTraits<half>::highest() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(NumTraits<half>::highest()) << ")" << std::endl;
+  std::cout << "lowest        = " << NumTraits<half>::lowest() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(NumTraits<half>::lowest()) << ")" << std::endl;
+  std::cout << "min           = " << (std::numeric_limits<half>::min)() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(half((std::numeric_limits<half>::min)())) << ")" << std::endl;
+  std::cout << "denorm min    = " << (std::numeric_limits<half>::denorm_min)() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(half((std::numeric_limits<half>::denorm_min)())) << ")" << std::endl;
+  std::cout << "infinity      = " << NumTraits<half>::infinity() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(NumTraits<half>::infinity()) << ")" << std::endl;
+  std::cout << "quiet nan     = " << NumTraits<half>::quiet_NaN() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(NumTraits<half>::quiet_NaN()) << ")" << std::endl;
+  std::cout << "signaling nan = " << std::numeric_limits<half>::signaling_NaN() << "  (0x" << std::hex
+            << numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::signaling_NaN()) << ")" << std::endl;
 
   VERIFY(NumTraits<half>::IsSigned);
 
-  VERIFY_IS_EQUAL(
-    numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::infinity()),
-    numext::bit_cast<numext::uint16_t>(half(std::numeric_limits<float>::infinity())) );
+  VERIFY_IS_EQUAL(numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::infinity()),
+                  numext::bit_cast<numext::uint16_t>(half(std::numeric_limits<float>::infinity())));
   // There is no guarantee that casting a 32-bit NaN to 16-bit has a precise
   // bit pattern.  We test that it is in fact a NaN, then test the signaling
   // bit (msb of significand is 1 for quiet, 0 for signaling).
   const numext::uint16_t HALF_QUIET_BIT = 0x0200;
-  VERIFY(
-    (numext::isnan)(std::numeric_limits<half>::quiet_NaN())
-    && (numext::isnan)(half(std::numeric_limits<float>::quiet_NaN()))
-    && ((numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::quiet_NaN()) & HALF_QUIET_BIT) > 0)
-    && ((numext::bit_cast<numext::uint16_t>(half(std::numeric_limits<float>::quiet_NaN())) & HALF_QUIET_BIT) > 0) );
+  VERIFY((numext::isnan)(std::numeric_limits<half>::quiet_NaN()) &&
+         (numext::isnan)(half(std::numeric_limits<float>::quiet_NaN())) &&
+         ((numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::quiet_NaN()) & HALF_QUIET_BIT) > 0) &&
+         ((numext::bit_cast<numext::uint16_t>(half(std::numeric_limits<float>::quiet_NaN())) & HALF_QUIET_BIT) > 0));
   // After a cast to half, a signaling NaN may become non-signaling
   // (e.g. in the case of casting float to native __fp16). Thus, we check that
   // both are NaN, and that only the `numeric_limits` version is signaling.
-  VERIFY(
-    (numext::isnan)(std::numeric_limits<half>::signaling_NaN())
-    && (numext::isnan)(half(std::numeric_limits<float>::signaling_NaN()))
-    && ((numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::signaling_NaN()) & HALF_QUIET_BIT) == 0) );
+  VERIFY((numext::isnan)(std::numeric_limits<half>::signaling_NaN()) &&
+         (numext::isnan)(half(std::numeric_limits<float>::signaling_NaN())) &&
+         ((numext::bit_cast<numext::uint16_t>(std::numeric_limits<half>::signaling_NaN()) & HALF_QUIET_BIT) == 0));
 
-  VERIFY( (std::numeric_limits<half>::min)() > half(0.f) );
-  VERIFY( (std::numeric_limits<half>::denorm_min)() > half(0.f) );
-  VERIFY( (std::numeric_limits<half>::min)()/half(2) > half(0.f) );
-  VERIFY_IS_EQUAL( (std::numeric_limits<half>::denorm_min)()/half(2), half(0.f) );
+  VERIFY((std::numeric_limits<half>::min)() > half(0.f));
+  VERIFY((std::numeric_limits<half>::denorm_min)() > half(0.f));
+  VERIFY((std::numeric_limits<half>::min)() / half(2) > half(0.f));
+  VERIFY_IS_EQUAL((std::numeric_limits<half>::denorm_min)() / half(2), half(0.f));
+
+  // Test to see that we are able to link against the symbols for digits and
+  // digits10.
+  volatile const int& digits10 = std::numeric_limits<half>::digits10;
+  volatile const int& digits = std::numeric_limits<half>::digits;
+  VERIFY((digits10) != (digits));
 }
 
-void test_arithmetic()
-{
+void test_arithmetic() {
   VERIFY_IS_EQUAL(float(half(2) + half(2)), 4);
   VERIFY_IS_EQUAL(float(half(2) + half(-2)), 0);
   VERIFY_IS_APPROX(float(half(0.33333f) + half(0.66667f)), 1.0f);
@@ -168,7 +166,7 @@ void test_arithmetic()
   VERIFY_IS_APPROX(float(half(1.0f) / half(3.0f)), 0.33333f);
   VERIFY_IS_EQUAL(float(-half(4096.0f)), -4096.0f);
   VERIFY_IS_EQUAL(float(-half(-4096.0f)), 4096.0f);
-  
+
   half x(3);
   half y = ++x;
   VERIFY_IS_EQUAL(x, half(4));
@@ -184,8 +182,7 @@ void test_arithmetic()
   VERIFY_IS_EQUAL(y, half(4));
 }
 
-void test_comparison()
-{
+void test_comparison() {
   VERIFY(half(1.0f) > half(0.5f));
   VERIFY(half(0.5f) < half(1.0f));
   VERIFY(!(half(1.0f) < half(0.5f)));
@@ -222,8 +219,9 @@ void test_comparison()
 #endif
 }
 
-void test_basic_functions()
-{
+void test_basic_functions() {
+  constexpr float PI = static_cast<float>(EIGEN_PI);
+
   VERIFY_IS_EQUAL(float(numext::abs(half(3.5f))), 3.5f);
   VERIFY_IS_EQUAL(float(abs(half(3.5f))), 3.5f);
   VERIFY_IS_EQUAL(float(numext::abs(half(-3.5f))), 3.5f);
@@ -251,8 +249,8 @@ void test_basic_functions()
 
   VERIFY_IS_EQUAL(float(numext::exp(half(0.0f))), 1.0f);
   VERIFY_IS_EQUAL(float(exp(half(0.0f))), 1.0f);
-  VERIFY_IS_APPROX(float(numext::exp(half(EIGEN_PI))), 20.f + float(EIGEN_PI));
-  VERIFY_IS_APPROX(float(exp(half(EIGEN_PI))), 20.f + float(EIGEN_PI));
+  VERIFY_IS_APPROX(float(numext::exp(half(PI))), 20.f + PI);
+  VERIFY_IS_APPROX(float(exp(half(PI))), 20.f + PI);
 
   VERIFY_IS_EQUAL(float(numext::expm1(half(0.0f))), 0.0f);
   VERIFY_IS_EQUAL(float(expm1(half(0.0f))), 0.0f);
@@ -268,76 +266,73 @@ void test_basic_functions()
   VERIFY_IS_EQUAL(float(log1p(half(0.0f))), 0.0f);
   VERIFY_IS_APPROX(float(numext::log1p(half(10.0f))), 2.3978953f);
   VERIFY_IS_APPROX(float(log1p(half(10.0f))), 2.3978953f);
-  
+
   VERIFY_IS_APPROX(numext::fmod(half(5.3f), half(2.0f)), half(1.3f));
   VERIFY_IS_APPROX(fmod(half(5.3f), half(2.0f)), half(1.3f));
   VERIFY_IS_APPROX(numext::fmod(half(-18.5f), half(-4.2f)), half(-1.7f));
   VERIFY_IS_APPROX(fmod(half(-18.5f), half(-4.2f)), half(-1.7f));
 }
 
-void test_trigonometric_functions()
-{
+void test_trigonometric_functions() {
+  constexpr float PI = static_cast<float>(EIGEN_PI);
   VERIFY_IS_APPROX(numext::cos(half(0.0f)), half(cosf(0.0f)));
   VERIFY_IS_APPROX(cos(half(0.0f)), half(cosf(0.0f)));
-  VERIFY_IS_APPROX(numext::cos(half(EIGEN_PI)), half(cosf(EIGEN_PI)));
-  // VERIFY_IS_APPROX(numext::cos(half(EIGEN_PI/2)), half(cosf(EIGEN_PI/2)));
-  // VERIFY_IS_APPROX(numext::cos(half(3*EIGEN_PI/2)), half(cosf(3*EIGEN_PI/2)));
+  VERIFY_IS_APPROX(numext::cos(half(PI)), half(cosf(PI)));
+  // VERIFY_IS_APPROX(numext::cos(half(PI/2)), half(cosf(PI/2)));
+  // VERIFY_IS_APPROX(numext::cos(half(3*PI/2)), half(cosf(3*PI/2)));
   VERIFY_IS_APPROX(numext::cos(half(3.5f)), half(cosf(3.5f)));
 
   VERIFY_IS_APPROX(numext::sin(half(0.0f)), half(sinf(0.0f)));
   VERIFY_IS_APPROX(sin(half(0.0f)), half(sinf(0.0f)));
-  //  VERIFY_IS_APPROX(numext::sin(half(EIGEN_PI)), half(sinf(EIGEN_PI)));
-  VERIFY_IS_APPROX(numext::sin(half(EIGEN_PI/2)), half(sinf(EIGEN_PI/2)));
-  VERIFY_IS_APPROX(numext::sin(half(3*EIGEN_PI/2)), half(sinf(3*EIGEN_PI/2)));
+  //  VERIFY_IS_APPROX(numext::sin(half(PI)), half(sinf(PI)));
+  VERIFY_IS_APPROX(numext::sin(half(PI / 2)), half(sinf(PI / 2)));
+  VERIFY_IS_APPROX(numext::sin(half(3 * PI / 2)), half(sinf(3 * PI / 2)));
   VERIFY_IS_APPROX(numext::sin(half(3.5f)), half(sinf(3.5f)));
 
   VERIFY_IS_APPROX(numext::tan(half(0.0f)), half(tanf(0.0f)));
   VERIFY_IS_APPROX(tan(half(0.0f)), half(tanf(0.0f)));
-  //  VERIFY_IS_APPROX(numext::tan(half(EIGEN_PI)), half(tanf(EIGEN_PI)));
-  //  VERIFY_IS_APPROX(numext::tan(half(EIGEN_PI/2)), half(tanf(EIGEN_PI/2)));
-  //VERIFY_IS_APPROX(numext::tan(half(3*EIGEN_PI/2)), half(tanf(3*EIGEN_PI/2)));
+  //  VERIFY_IS_APPROX(numext::tan(half(PI)), half(tanf(PI)));
+  //  VERIFY_IS_APPROX(numext::tan(half(PI/2)), half(tanf(PI/2)));
+  // VERIFY_IS_APPROX(numext::tan(half(3*PI/2)), half(tanf(3*PI/2)));
   VERIFY_IS_APPROX(numext::tan(half(3.5f)), half(tanf(3.5f)));
 }
 
-void test_array()
-{
-  typedef Array<half,1,Dynamic> ArrayXh;
-  Index size = internal::random<Index>(1,10);
-  Index i = internal::random<Index>(0,size-1);
+void test_array() {
+  typedef Array<half, 1, Dynamic> ArrayXh;
+  Index size = internal::random<Index>(1, 10);
+  Index i = internal::random<Index>(0, size - 1);
   ArrayXh a1 = ArrayXh::Random(size), a2 = ArrayXh::Random(size);
-  VERIFY_IS_APPROX( a1+a1, half(2)*a1 );
-  VERIFY( (a1.abs() >= half(0)).all() );
-  VERIFY_IS_APPROX( (a1*a1).sqrt(), a1.abs() );
+  VERIFY_IS_APPROX(a1 + a1, half(2) * a1);
+  VERIFY((a1.abs() >= half(0)).all());
+  VERIFY_IS_APPROX((a1 * a1).sqrt(), a1.abs());
 
-  VERIFY( ((a1.min)(a2) <= (a1.max)(a2)).all() );
+  VERIFY(((a1.min)(a2) <= (a1.max)(a2)).all());
   a1(i) = half(-10.);
-  VERIFY_IS_EQUAL( a1.minCoeff(), half(-10.) );
+  VERIFY_IS_EQUAL(a1.minCoeff(), half(-10.));
   a1(i) = half(10.);
-  VERIFY_IS_EQUAL( a1.maxCoeff(), half(10.) );
+  VERIFY_IS_EQUAL(a1.maxCoeff(), half(10.));
 
   std::stringstream ss;
   ss << a1;
 }
 
-void test_product()
-{
-  typedef Matrix<half,Dynamic,Dynamic> MatrixXh;
-  Index rows  = internal::random<Index>(1,EIGEN_TEST_MAX_SIZE);
-  Index cols  = internal::random<Index>(1,EIGEN_TEST_MAX_SIZE);
-  Index depth = internal::random<Index>(1,EIGEN_TEST_MAX_SIZE);
-  MatrixXh Ah = MatrixXh::Random(rows,depth);
-  MatrixXh Bh = MatrixXh::Random(depth,cols);
-  MatrixXh Ch = MatrixXh::Random(rows,cols);
+void test_product() {
+  typedef Matrix<half, Dynamic, Dynamic> MatrixXh;
+  Index rows = internal::random<Index>(1, EIGEN_TEST_MAX_SIZE);
+  Index cols = internal::random<Index>(1, EIGEN_TEST_MAX_SIZE);
+  Index depth = internal::random<Index>(1, EIGEN_TEST_MAX_SIZE);
+  MatrixXh Ah = MatrixXh::Random(rows, depth);
+  MatrixXh Bh = MatrixXh::Random(depth, cols);
+  MatrixXh Ch = MatrixXh::Random(rows, cols);
   MatrixXf Af = Ah.cast<float>();
   MatrixXf Bf = Bh.cast<float>();
   MatrixXf Cf = Ch.cast<float>();
-  VERIFY_IS_APPROX(Ch.noalias()+=Ah*Bh, (Cf.noalias()+=Af*Bf).cast<half>());
+  VERIFY_IS_APPROX(Ch.noalias() += Ah * Bh, (Cf.noalias() += Af * Bf).cast<half>());
 }
 
-EIGEN_DECLARE_TEST(half_float)
-{
+EIGEN_DECLARE_TEST(half_float) {
   CALL_SUBTEST(test_numtraits());
-  for(int i = 0; i < g_repeat; i++) {
+  for (int i = 0; i < g_repeat; i++) {
     CALL_SUBTEST(test_conversion());
     CALL_SUBTEST(test_arithmetic());
     CALL_SUBTEST(test_comparison());

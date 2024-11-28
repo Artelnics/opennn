@@ -8,6 +8,9 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_BLOCK_H
 #define EIGEN_CXX11_TENSOR_TENSOR_BLOCK_H
 
+// IWYU pragma: private
+#include "./InternalHeaderCheck.h"
+
 namespace Eigen {
 namespace internal {
 
@@ -23,8 +26,7 @@ class TensorBlockIO;
 // TODO(ezhulenev): We compute strides 1000 times in different evaluators, use
 // this function instead everywhere.
 template <int Layout, typename IndexType, int NumDims>
-EIGEN_ALWAYS_INLINE DSizes<IndexType, NumDims> strides(
-    const DSizes<IndexType, NumDims>& dimensions) {
+EIGEN_ALWAYS_INLINE DSizes<IndexType, NumDims> strides(const DSizes<IndexType, NumDims>& dimensions) {
   DSizes<IndexType, NumDims> strides;
   if (NumDims == 0) return strides;
 
@@ -46,14 +48,12 @@ EIGEN_ALWAYS_INLINE DSizes<IndexType, NumDims> strides(
 }
 
 template <int Layout, typename IndexType, size_t NumDims>
-EIGEN_ALWAYS_INLINE DSizes<IndexType, NumDims> strides(
-    const Eigen::array<IndexType, NumDims>& dimensions) {
+EIGEN_ALWAYS_INLINE DSizes<IndexType, NumDims> strides(const Eigen::array<IndexType, NumDims>& dimensions) {
   return strides<Layout>(DSizes<IndexType, NumDims>(dimensions));
 }
 
 template <int Layout, std::ptrdiff_t... Indices>
-EIGEN_STRONG_INLINE DSizes<std::ptrdiff_t, sizeof...(Indices)> strides(
-    const Sizes<Indices...>& sizes) {
+EIGEN_STRONG_INLINE DSizes<std::ptrdiff_t, sizeof...(Indices)> strides(const Sizes<Indices...>& sizes) {
   return strides<Layout>(DSizes<std::ptrdiff_t, sizeof...(Indices)>(sizes));
 }
 
@@ -81,24 +81,20 @@ struct TensorBlockResourceRequirements {
   // For HIPCC, we need to explicitly declare as a "device fun", the constructor
   // which is implicitly invoked in the "merge" / "any" routines. else HIPCC
   // errors out complaining about the lack of a matching constructor
-  EIGEN_DEVICE_FUNC
-  TensorBlockResourceRequirements(TensorBlockShapeType shape_type_, size_t size_,
-				  TensorOpCost cost_)
-    : shape_type(shape_type_), size(size_), cost_per_coeff(cost_)
-  {}
+  EIGEN_DEVICE_FUNC TensorBlockResourceRequirements(TensorBlockShapeType shape_type_, size_t size_, TensorOpCost cost_)
+      : shape_type(shape_type_), size(size_), cost_per_coeff(cost_) {}
 #endif
 
   template <typename Scalar>
-  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements withShapeAndSize(
-      TensorBlockShapeType shape_type, size_t size_in_bytes,
-      TensorOpCost cost) {
+  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements withShapeAndSize(TensorBlockShapeType shape_type,
+                                                                            size_t size_in_bytes, TensorOpCost cost) {
     const size_t size = numext::maxi(size_t(1), size_in_bytes / sizeof(Scalar));
     return {shape_type, size, cost};
   }
 
   template <typename Scalar>
-  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements withShapeAndSize(
-      TensorBlockShapeType shape_type, size_t size_in_bytes) {
+  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements withShapeAndSize(TensorBlockShapeType shape_type,
+                                                                            size_t size_in_bytes) {
     // This default cost per coefficient is valid for most materialized tensor
     // block evaluation implementations, because they typically just read
     // coefficients from the underlying tensor storage, and write to the tensor
@@ -120,30 +116,23 @@ struct TensorBlockResourceRequirements {
   }
 
   template <typename Scalar>
-  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements skewed(
-      size_t size_in_bytes) {
-    return withShapeAndSize<Scalar>(TensorBlockShapeType::kSkewedInnerDims,
-                                    size_in_bytes);
+  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements skewed(size_t size_in_bytes) {
+    return withShapeAndSize<Scalar>(TensorBlockShapeType::kSkewedInnerDims, size_in_bytes);
   }
 
   template <typename Scalar>
-  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements uniform(
-      size_t size_in_bytes) {
-    return withShapeAndSize<Scalar>(TensorBlockShapeType::kUniformAllDims,
-                                    size_in_bytes);
+  EIGEN_DEVICE_FUNC static TensorBlockResourceRequirements uniform(size_t size_in_bytes) {
+    return withShapeAndSize<Scalar>(TensorBlockShapeType::kUniformAllDims, size_in_bytes);
   }
 
-  EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE TensorBlockResourceRequirements
-  merge(const TensorBlockResourceRequirements& lhs,
-        const TensorBlockResourceRequirements& rhs) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE TensorBlockResourceRequirements
+  merge(const TensorBlockResourceRequirements& lhs, const TensorBlockResourceRequirements& rhs) {
     return {merge(lhs.shape_type, rhs.shape_type),           // shape_type
             merge(lhs.size, rhs.size),                       // size
             merge(lhs.cost_per_coeff, rhs.cost_per_coeff)};  // cost_per_coeff
   }
 
-  EIGEN_DEVICE_FUNC TensorBlockResourceRequirements& addCostPerCoeff(
-      TensorOpCost cost) {
+  EIGEN_DEVICE_FUNC TensorBlockResourceRequirements& addCostPerCoeff(TensorOpCost cost) {
     cost_per_coeff += cost;
     return *this;
   }
@@ -151,31 +140,25 @@ struct TensorBlockResourceRequirements {
   // This is a resource requirement that should be returned from expressions
   // that do not have any block evaluation preference (e.g. default tensor
   // expression with raw buffer access).
-  EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE TensorBlockResourceRequirements any() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE TensorBlockResourceRequirements any() {
     return {TensorBlockShapeType::kUniformAllDims, 1, {0, 0, 0}};
   }
 
  private:
   using Requirements = TensorBlockResourceRequirements;
 
-  EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE size_t merge(size_t lhs_size, size_t rhs_size) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE size_t merge(size_t lhs_size, size_t rhs_size) {
     return numext::maxi(lhs_size, rhs_size);
   }
 
-  EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE TensorBlockShapeType
-  merge(TensorBlockShapeType lhs, TensorBlockShapeType rhs) {
-    return (lhs == TensorBlockShapeType::kSkewedInnerDims ||
-            rhs == TensorBlockShapeType::kSkewedInnerDims)
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE TensorBlockShapeType merge(TensorBlockShapeType lhs,
+                                                                          TensorBlockShapeType rhs) {
+    return (lhs == TensorBlockShapeType::kSkewedInnerDims || rhs == TensorBlockShapeType::kSkewedInnerDims)
                ? TensorBlockShapeType::kSkewedInnerDims
                : TensorBlockShapeType::kUniformAllDims;
   }
 
-  EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE TensorOpCost merge(TensorOpCost lhs_cost,
-                                                TensorOpCost rhs_cost) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE TensorOpCost merge(TensorOpCost lhs_cost, TensorOpCost rhs_cost) {
     return lhs_cost + rhs_cost;
   }
 };
@@ -242,27 +225,21 @@ class TensorBlockDescriptor {
     const DestinationBufferKind& kind() const { return m_kind; }
 
    private:
-    friend class TensorBlockDescriptor;
+    friend class TensorBlockDescriptor<NumDims, IndexType>;
 
     DestinationBuffer() : m_data(NULL), m_data_type_size(0), m_kind(kEmpty) {}
 
     template <typename Scalar>
-    DestinationBuffer(Scalar* data, const Dimensions& strides,
-                      DestinationBufferKind kind)
-        : m_data(static_cast<void*>(data)),
-          m_data_type_size(sizeof(Scalar)),
-          m_strides(strides),
-          m_kind(kind) {}
+    DestinationBuffer(Scalar* data, const Dimensions& strides, DestinationBufferKind kind)
+        : m_data(static_cast<void*>(data)), m_data_type_size(sizeof(Scalar)), m_strides(strides), m_kind(kind) {}
 
     template <int Layout, typename Scalar>
-    static DestinationBuffer make(const TensorBlockDescriptor& desc,
-                                  Scalar* data, const Dimensions& strides) {
+    static DestinationBuffer make(const TensorBlockDescriptor& desc, Scalar* data, const Dimensions& strides) {
       return DestinationBuffer(data, strides, kind<Layout>(desc, strides));
     }
 
     template <int Layout>
-    static DestinationBufferKind kind(const TensorBlockDescriptor& desc,
-                                      const Dimensions& strides) {
+    static DestinationBufferKind kind(const TensorBlockDescriptor& desc, const Dimensions& strides) {
       const Dimensions& desc_dims = desc.dimensions();
       const Dimensions& desc_strides = internal::strides<Layout>(desc_dims);
       for (int i = 0; i < NumDims; ++i) {
@@ -284,16 +261,11 @@ class TensorBlockDescriptor {
     DestinationBufferKind m_kind;
   };
 
-  TensorBlockDescriptor(const IndexType offset, const Dimensions& dimensions,
-                        const DestinationBuffer& destination)
-      : m_offset(offset),
-        m_dimensions(dimensions),
-        m_destination(destination) {}
+  TensorBlockDescriptor(const IndexType offset, const Dimensions& dimensions, const DestinationBuffer& destination)
+      : m_offset(offset), m_dimensions(dimensions), m_destination(destination) {}
 
   TensorBlockDescriptor(const IndexType offset, const Dimensions& dimensions)
-      : m_offset(offset),
-        m_dimensions(dimensions),
-        m_destination(DestinationBuffer()) {}
+      : m_offset(offset), m_dimensions(dimensions), m_destination(DestinationBuffer()) {}
 
   IndexType offset() const { return m_offset; }
   const Dimensions& dimensions() const { return m_dimensions; }
@@ -305,14 +277,11 @@ class TensorBlockDescriptor {
   template <int Layout, typename Scalar>
   void AddDestinationBuffer(Scalar* dst_base, const Dimensions& dst_strides) {
     eigen_assert(dst_base != NULL);
-    m_destination =
-        DestinationBuffer::template make<Layout>(*this, dst_base, dst_strides);
+    m_destination = DestinationBuffer::template make<Layout>(*this, dst_base, dst_strides);
   }
 
   template <int Layout, typename Scalar, typename DstStridesIndexType>
-  void AddDestinationBuffer(
-      Scalar* dst_base,
-      const DSizes<DstStridesIndexType, NumDims>& dst_strides) {
+  void AddDestinationBuffer(Scalar* dst_base, const DSizes<DstStridesIndexType, NumDims>& dst_strides) {
     // DSizes constructor will do index type promotion if it's safe.
     AddDestinationBuffer<Layout>(dst_base, Dimensions(dst_strides));
   }
@@ -323,9 +292,7 @@ class TensorBlockDescriptor {
     return *this;
   }
 
-  bool HasDestinationBuffer() const {
-    return m_destination.kind() != DestinationBuffer::kEmpty;
-  }
+  bool HasDestinationBuffer() const { return m_destination.kind() != DestinationBuffer::kEmpty; }
 
   // Returns a copy of `*this` with updated offset.
   TensorBlockDescriptor WithOffset(IndexType offset) const {
@@ -351,28 +318,21 @@ class TensorBlockMapper {
   typedef DSizes<IndexType, NumDims> Dimensions;
 
   TensorBlockMapper() = default;
-  TensorBlockMapper(const DSizes<IndexType, NumDims>& dimensions,
-                    const TensorBlockResourceRequirements& requirements)
+  TensorBlockMapper(const DSizes<IndexType, NumDims>& dimensions, const TensorBlockResourceRequirements& requirements)
       : m_tensor_dimensions(dimensions), m_requirements(requirements) {
     // Compute block dimensions and the total number of blocks.
     InitializeBlockDimensions();
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType blockCount() const {
-    return m_total_block_count;
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType blockCount() const { return m_total_block_count; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType blockTotalSize() const {
-    return m_block_dimensions.TotalSize();
-  }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType blockTotalSize() const { return m_block_dimensions.TotalSize(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const DSizes<IndexType, NumDims>&
-  blockDimensions() const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const DSizes<IndexType, NumDims>& blockDimensions() const {
     return m_block_dimensions;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE BlockDescriptor
-  blockDescriptor(IndexType block_index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE BlockDescriptor blockDescriptor(IndexType block_index) const {
     static const bool isColMajor = Layout == static_cast<int>(ColMajor);
 
     IndexType offset = 0;
@@ -388,8 +348,7 @@ class TensorBlockMapper {
       block_index -= idx * m_block_strides[dim];
 
       const IndexType coord = idx * m_block_dimensions[dim];
-      dimensions[dim] = numext::mini(m_tensor_dimensions[dim] - coord,
-                                     m_block_dimensions[dim]);
+      dimensions[dim] = numext::mini(m_tensor_dimensions[dim] - coord, m_block_dimensions[dim]);
       offset += coord * m_tensor_strides[dim];
     }
 
@@ -400,8 +359,7 @@ class TensorBlockMapper {
   void InitializeBlockDimensions() {
     // Requested block shape and size.
     const TensorBlockShapeType shape_type = m_requirements.shape_type;
-    IndexType target_block_size =
-        numext::maxi<IndexType>(1, static_cast<IndexType>(m_requirements.size));
+    IndexType target_block_size = numext::maxi<IndexType>(1, static_cast<IndexType>(m_requirements.size));
 
     IndexType tensor_size = m_tensor_dimensions.TotalSize();
 
@@ -438,11 +396,9 @@ class TensorBlockMapper {
 
       for (int i = 0; i < NumDims; ++i) {
         const int dim = isColMajor ? i : NumDims - i - 1;
-        m_block_dimensions[dim] =
-            numext::mini(coeff_to_allocate, m_tensor_dimensions[dim]);
-        coeff_to_allocate = divup(
-            coeff_to_allocate,
-            numext::maxi(static_cast<IndexType>(1), m_block_dimensions[dim]));
+        m_block_dimensions[dim] = numext::mini(coeff_to_allocate, m_tensor_dimensions[dim]);
+        coeff_to_allocate =
+            numext::div_ceil(coeff_to_allocate, numext::maxi(static_cast<IndexType>(1), m_block_dimensions[dim]));
       }
       eigen_assert(coeff_to_allocate == 1);
 
@@ -450,16 +406,14 @@ class TensorBlockMapper {
       // Tensor will not fit within 'target_block_size' budget: calculate tensor
       // block dimension sizes based on "square" dimension size target.
       const IndexType dim_size_target = convert_index<IndexType>(
-          std::pow(static_cast<float>(target_block_size),
-                   1.0f / static_cast<float>(m_block_dimensions.rank())));
+          std::pow(static_cast<float>(target_block_size), 1.0f / static_cast<float>(m_block_dimensions.rank())));
 
       for (int i = 0; i < NumDims; ++i) {
         // TODO(andydavis) Adjust the inner most 'block_dim_size' to make it
         // a multiple of the packet size. Note that reducing
         // 'block_dim_size' in this manner can increase the number of
         // blocks, and so will amplify any per-block overhead.
-        m_block_dimensions[i] =
-            numext::mini(dim_size_target, m_tensor_dimensions[i]);
+        m_block_dimensions[i] = numext::mini(dim_size_target, m_tensor_dimensions[i]);
       }
 
       // Add any un-allocated coefficients to inner dimension(s).
@@ -468,16 +422,13 @@ class TensorBlockMapper {
         const int dim = isColMajor ? i : NumDims - i - 1;
 
         if (m_block_dimensions[dim] < m_tensor_dimensions[dim]) {
-          const IndexType total_size_other_dims =
-              total_size / m_block_dimensions[dim];
-          const IndexType alloc_avail =
-              divup<IndexType>(target_block_size, total_size_other_dims);
+          const IndexType total_size_other_dims = total_size / m_block_dimensions[dim];
+          const IndexType alloc_avail = numext::div_ceil<IndexType>(target_block_size, total_size_other_dims);
           if (alloc_avail == m_block_dimensions[dim]) {
             // Insufficient excess coefficients to allocate.
             break;
           }
-          m_block_dimensions[dim] =
-              numext::mini(m_tensor_dimensions[dim], alloc_avail);
+          m_block_dimensions[dim] = numext::mini(m_tensor_dimensions[dim], alloc_avail);
           total_size = total_size_other_dims * m_block_dimensions[dim];
         }
       }
@@ -487,13 +438,12 @@ class TensorBlockMapper {
     }
 
     eigen_assert(m_block_dimensions.TotalSize() >=
-                 numext::mini<IndexType>(target_block_size,
-                                         m_tensor_dimensions.TotalSize()));
+                 numext::mini<IndexType>(target_block_size, m_tensor_dimensions.TotalSize()));
 
     // Calculate block counts by dimension and total block count.
     DSizes<IndexType, NumDims> block_count;
     for (int i = 0; i < NumDims; ++i) {
-      block_count[i] = divup(m_tensor_dimensions[i], m_block_dimensions[i]);
+      block_count[i] = numext::div_ceil(m_tensor_dimensions[i], m_block_dimensions[i]);
     }
     m_total_block_count = array_prod(block_count);
 
@@ -524,8 +474,7 @@ class TensorBlockMapper {
 template <typename Device>
 class TensorBlockScratchAllocator {
  public:
-  explicit TensorBlockScratchAllocator(const Device& device)
-      : m_device(device), m_allocation_index(0) {}
+  explicit TensorBlockScratchAllocator(const Device& device) : m_device(device), m_allocation_index(0) {}
 
   ~TensorBlockScratchAllocator() {
     for (size_t i = 0; i < m_allocations.size(); ++i) {
@@ -651,20 +600,15 @@ struct XprScalar<void> {
 // be invalid, and should never be used in block assignment or any other tensor
 // expression.
 
-template <typename Scalar, int NumDims, int Layout,
-          typename IndexType = Eigen::Index>
+template <typename Scalar, int NumDims, int Layout, typename IndexType = Eigen::Index>
 class TensorMaterializedBlock {
  public:
   typedef DSizes<IndexType, NumDims> Dimensions;
   typedef TensorMap<const Tensor<Scalar, NumDims, Layout> > XprType;
 
-  TensorMaterializedBlock(TensorBlockKind kind, const Scalar* data,
-                          const Dimensions& dimensions, bool valid_expr = true)
-      : m_kind(kind),
-        m_data(data),
-        m_dimensions(dimensions),
-        m_expr(m_data, m_dimensions),
-        m_valid_expr(valid_expr) {
+  TensorMaterializedBlock(TensorBlockKind kind, const Scalar* data, const Dimensions& dimensions,
+                          bool valid_expr = true)
+      : m_kind(kind), m_data(data), m_dimensions(dimensions), m_expr(m_data, m_dimensions), m_valid_expr(valid_expr) {
     eigen_assert(m_kind == internal::TensorBlockKind::kView ||
                  m_kind == internal::TensorBlockKind::kMaterializedInScratch ||
                  m_kind == internal::TensorBlockKind::kMaterializedInOutput);
@@ -698,18 +642,15 @@ class TensorMaterializedBlock {
     const Dimensions& strides() const { return m_strides; }
 
     TensorMaterializedBlock AsTensorMaterializedBlock() const {
-      return TensorMaterializedBlock(
-          m_materialized_in_output
-              ? internal::TensorBlockKind::kMaterializedInOutput
-              : internal::TensorBlockKind::kMaterializedInScratch,
-          m_data, m_dimensions, !m_strided_storage);
+      return TensorMaterializedBlock(m_materialized_in_output ? internal::TensorBlockKind::kMaterializedInOutput
+                                                              : internal::TensorBlockKind::kMaterializedInScratch,
+                                     m_data, m_dimensions, !m_strided_storage);
     }
 
    private:
-    friend class TensorMaterializedBlock;
+    friend class TensorMaterializedBlock<Scalar, NumDims, Layout, IndexType>;
 
-    Storage(Scalar* data, const Dimensions& dimensions,
-            const Dimensions& strides, bool materialized_in_output,
+    Storage(Scalar* data, const Dimensions& dimensions, const Dimensions& strides, bool materialized_in_output,
             bool strided_storage)
         : m_data(data),
           m_dimensions(dimensions),
@@ -727,22 +668,19 @@ class TensorMaterializedBlock {
   // Creates a storage for materialized block either from the block descriptor
   // destination buffer, or allocates a new buffer with scratch allocator.
   template <typename TensorBlockScratch>
-  EIGEN_STRONG_INLINE static Storage prepareStorage(
-      TensorBlockDesc& desc, TensorBlockScratch& scratch,
-      bool allow_strided_storage = false) {
+  EIGEN_STRONG_INLINE static Storage prepareStorage(TensorBlockDesc& desc, TensorBlockScratch& scratch,
+                                                    bool allow_strided_storage = false) {
     // Try to reuse destination as an output block buffer.
     typedef typename TensorBlockDesc::DestinationBuffer DestinationBuffer;
 
     if (desc.destination().kind() == DestinationBuffer::kContiguous) {
       Scalar* buffer = desc.destination().template data<Scalar>();
       desc.DropDestinationBuffer();
-      return Storage(buffer, desc.dimensions(),
-                     internal::strides<Layout>(desc.dimensions()),
+      return Storage(buffer, desc.dimensions(), internal::strides<Layout>(desc.dimensions()),
                      /*materialized_in_output=*/true,
                      /*strided_storage=*/false);
 
-    } else if (desc.destination().kind() == DestinationBuffer::kStrided &&
-               allow_strided_storage) {
+    } else if (desc.destination().kind() == DestinationBuffer::kStrided && allow_strided_storage) {
       Scalar* buffer = desc.destination().template data<Scalar>();
       desc.DropDestinationBuffer();
       return Storage(buffer, desc.dimensions(), desc.destination().strides(),
@@ -750,8 +688,7 @@ class TensorMaterializedBlock {
 
     } else {
       void* mem = scratch.allocate(desc.size() * sizeof(Scalar));
-      return Storage(static_cast<Scalar*>(mem), desc.dimensions(),
-                     internal::strides<Layout>(desc.dimensions()),
+      return Storage(static_cast<Scalar*>(mem), desc.dimensions(), internal::strides<Layout>(desc.dimensions()),
                      /*materialized_in_output=*/false,
                      /*strided_storage=*/false);
     }
@@ -759,9 +696,8 @@ class TensorMaterializedBlock {
 
   // Creates a materialized block for the given descriptor from a memory buffer.
   template <typename DataDimensions, typename TensorBlockScratch>
-  EIGEN_STRONG_INLINE static TensorMaterializedBlock materialize(
-      const Scalar* data, const DataDimensions& data_dims,
-      TensorBlockDesc& desc, TensorBlockScratch& scratch) {
+  EIGEN_STRONG_INLINE static TensorMaterializedBlock materialize(const Scalar* data, const DataDimensions& data_dims,
+                                                                 TensorBlockDesc& desc, TensorBlockScratch& scratch) {
     eigen_assert(array_size<DataDimensions>::value == desc.dimensions().size());
 
     // If a tensor block dimensions covers a contiguous block of the underlying
@@ -797,22 +733,18 @@ class TensorMaterializedBlock {
 
     if (can_use_direct_access) {
       const Scalar* block_start = data + desc.offset();
-      return TensorMaterializedBlock(internal::TensorBlockKind::kView,
-                                     block_start, desc.dimensions());
+      return TensorMaterializedBlock(internal::TensorBlockKind::kView, block_start, desc.dimensions());
 
     } else {
       // Reuse destination buffer or allocate new buffer with scratch allocator.
       const Storage storage = prepareStorage(desc, scratch);
 
-      typedef internal::TensorBlockIO<Scalar, IndexType, NumDims, Layout>
-          TensorBlockIO;
+      typedef internal::TensorBlockIO<Scalar, IndexType, NumDims, Layout> TensorBlockIO;
       typedef typename TensorBlockIO::Dst TensorBlockIODst;
       typedef typename TensorBlockIO::Src TensorBlockIOSrc;
 
-      TensorBlockIOSrc src(internal::strides<Layout>(Dimensions(data_dims)),
-                           data, desc.offset());
-      TensorBlockIODst dst(storage.dimensions(), storage.strides(),
-                           storage.data());
+      TensorBlockIOSrc src(internal::strides<Layout>(Dimensions(data_dims)), data, desc.offset());
+      TensorBlockIODst dst(storage.dimensions(), storage.strides(), storage.data());
 
       TensorBlockIO::Copy(dst, src);
       return storage.AsTensorMaterializedBlock();
@@ -833,14 +765,12 @@ class TensorMaterializedBlock {
 
 template <typename UnaryOp, typename ArgTensorBlock>
 class TensorCwiseUnaryBlock {
-  static const bool NoArgBlockAccess =
-      internal::is_void<typename ArgTensorBlock::XprType>::value;
+  static constexpr bool NoArgBlockAccess = internal::is_void<typename ArgTensorBlock::XprType>::value;
 
  public:
-  typedef typename conditional<
-      NoArgBlockAccess, void,
-      TensorCwiseUnaryOp<UnaryOp, const typename ArgTensorBlock::XprType> >::
-      type XprType;
+  typedef std::conditional_t<NoArgBlockAccess, void,
+                             TensorCwiseUnaryOp<UnaryOp, const typename ArgTensorBlock::XprType> >
+      XprType;
 
   typedef typename XprScalar<XprType>::type Scalar;
 
@@ -864,31 +794,23 @@ class TensorCwiseUnaryBlock {
 
 template <typename BinaryOp, typename LhsTensorBlock, typename RhsTensorBlock>
 class TensorCwiseBinaryBlock {
-  static const bool NoArgBlockAccess =
-      internal::is_void<typename LhsTensorBlock::XprType>::value ||
-      internal::is_void<typename RhsTensorBlock::XprType>::value;
+  static constexpr bool NoArgBlockAccess = internal::is_void<typename LhsTensorBlock::XprType>::value ||
+                                           internal::is_void<typename RhsTensorBlock::XprType>::value;
 
  public:
-  typedef typename conditional<
+  typedef std::conditional_t<
       NoArgBlockAccess, void,
-      TensorCwiseBinaryOp<BinaryOp, const typename LhsTensorBlock::XprType,
-                          const typename RhsTensorBlock::XprType> >::type
+      TensorCwiseBinaryOp<BinaryOp, const typename LhsTensorBlock::XprType, const typename RhsTensorBlock::XprType> >
       XprType;
 
   typedef typename XprScalar<XprType>::type Scalar;
 
-  TensorCwiseBinaryBlock(const LhsTensorBlock& left_block,
-                         const RhsTensorBlock& right_block,
-                         const BinaryOp& functor)
-      : m_left_block(left_block),
-        m_right_block(right_block),
-        m_functor(functor) {}
+  TensorCwiseBinaryBlock(const LhsTensorBlock& left_block, const RhsTensorBlock& right_block, const BinaryOp& functor)
+      : m_left_block(left_block), m_right_block(right_block), m_functor(functor) {}
 
   TensorBlockKind kind() const { return internal::TensorBlockKind::kExpr; }
 
-  XprType expr() const {
-    return XprType(m_left_block.expr(), m_right_block.expr(), m_functor);
-  }
+  XprType expr() const { return XprType(m_left_block.expr(), m_right_block.expr(), m_functor); }
 
   const Scalar* data() const { return NULL; }
 
@@ -911,17 +833,14 @@ class TensorCwiseBinaryBlock {
 template <typename BlockFactory, typename ArgTensorBlock>
 class TensorUnaryExprBlock {
   typedef typename ArgTensorBlock::XprType ArgXprType;
-  static const bool NoArgBlockAccess = internal::is_void<ArgXprType>::value;
+  static constexpr bool NoArgBlockAccess = internal::is_void<ArgXprType>::value;
 
  public:
-  typedef typename conditional<
-      NoArgBlockAccess, void,
-      typename BlockFactory::template XprType<ArgXprType>::type>::type XprType;
+  typedef std::conditional_t<NoArgBlockAccess, void, typename BlockFactory::template XprType<ArgXprType>::type> XprType;
 
   typedef typename XprScalar<XprType>::type Scalar;
 
-  TensorUnaryExprBlock(const ArgTensorBlock& arg_block,
-                       const BlockFactory& factory)
+  TensorUnaryExprBlock(const ArgTensorBlock& arg_block, const BlockFactory& factory)
       : m_arg_block(arg_block), m_factory(factory) {}
 
   TensorBlockKind kind() const { return internal::TensorBlockKind::kExpr; }
@@ -938,39 +857,29 @@ class TensorUnaryExprBlock {
 // TensorTernaryExprBlock is a lazy tensor expression block that can construct
 // an arbitrary tensor expression from three blocks of the underlying type.
 
-template <typename BlockFactory, typename Arg1TensorBlock,
-          typename Arg2TensorBlock, typename Arg3TensorBlock>
+template <typename BlockFactory, typename Arg1TensorBlock, typename Arg2TensorBlock, typename Arg3TensorBlock>
 class TensorTernaryExprBlock {
   typedef typename Arg1TensorBlock::XprType Arg1XprType;
   typedef typename Arg2TensorBlock::XprType Arg2XprType;
   typedef typename Arg3TensorBlock::XprType Arg3XprType;
 
-  static const bool NoArgBlockAccess = internal::is_void<Arg1XprType>::value ||
-                                       internal::is_void<Arg2XprType>::value ||
-                                       internal::is_void<Arg3XprType>::value;
+  static constexpr bool NoArgBlockAccess = internal::is_void<Arg1XprType>::value ||
+                                           internal::is_void<Arg2XprType>::value ||
+                                           internal::is_void<Arg3XprType>::value;
 
  public:
-  typedef typename conditional<
-      NoArgBlockAccess, void,
-      typename BlockFactory::template XprType<Arg1XprType, Arg2XprType,
-                                              Arg3XprType>::type>::type XprType;
+  typedef std::conditional_t<NoArgBlockAccess, void,
+                             typename BlockFactory::template XprType<Arg1XprType, Arg2XprType, Arg3XprType>::type>
+      XprType;
 
   typedef typename XprScalar<XprType>::type Scalar;
 
-  TensorTernaryExprBlock(const Arg1TensorBlock& arg1_block,
-                         const Arg2TensorBlock& arg2_block,
-                         const Arg3TensorBlock& arg3_block,
-                         const BlockFactory& factory)
-      : m_arg1_block(arg1_block),
-        m_arg2_block(arg2_block),
-        m_arg3_block(arg3_block),
-        m_factory(factory) {}
+  TensorTernaryExprBlock(const Arg1TensorBlock& arg1_block, const Arg2TensorBlock& arg2_block,
+                         const Arg3TensorBlock& arg3_block, const BlockFactory& factory)
+      : m_arg1_block(arg1_block), m_arg2_block(arg2_block), m_arg3_block(arg3_block), m_factory(factory) {}
 
   TensorBlockKind kind() const { return internal::TensorBlockKind::kExpr; }
-  XprType expr() const {
-    return m_factory.expr(m_arg1_block.expr(), m_arg2_block.expr(),
-                          m_arg3_block.expr());
-  }
+  XprType expr() const { return m_factory.expr(m_arg1_block.expr(), m_arg2_block.expr(), m_arg3_block.expr()); }
   const Scalar* data() const { return NULL; }
   void cleanup() {
     m_arg1_block.cleanup();
@@ -992,9 +901,12 @@ class TensorTernaryExprBlock {
 template <typename Scalar, typename IndexType>
 class StridedLinearBufferCopy {
   typedef typename packet_traits<Scalar>::type Packet;
+  typedef typename unpacket_traits<Packet>::half HalfPacket;
   enum {
     Vectorizable = packet_traits<Scalar>::Vectorizable,
-    PacketSize = packet_traits<Scalar>::size
+    PacketSize = packet_traits<Scalar>::size,
+    HalfPacketSize = unpacket_traits<HalfPacket>::size,
+    HasHalfPacket = static_cast<int>(HalfPacketSize) < static_cast<int>(PacketSize)
   };
 
  public:
@@ -1017,8 +929,7 @@ class StridedLinearBufferCopy {
   };
 
   struct Src {
-    Src(IndexType o, IndexType s, const Scalar* d)
-        : offset(o), stride(s), data(d) {}
+    Src(IndexType o, IndexType s, const Scalar* d) : offset(o), stride(s), data(d) {}
 
     IndexType offset;
     IndexType stride;
@@ -1026,20 +937,16 @@ class StridedLinearBufferCopy {
   };
 
   template <typename StridedLinearBufferCopy::Kind kind>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Dst& dst,
-                                                        const Src& src,
-                                                        const size_t count) {
-    Run<kind>(count, dst.offset, dst.stride, dst.data, src.offset, src.stride,
-              src.data);
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Dst& dst, const Src& src, const size_t count) {
+    Run<kind>(count, dst.offset, dst.stride, dst.data, src.offset, src.stride, src.data);
   }
 
  private:
   template <typename StridedLinearBufferCopy::Kind kind>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(
-      const IndexType count, const IndexType dst_offset,
-      const IndexType dst_stride, Scalar* EIGEN_RESTRICT dst_data,
-      const IndexType src_offset, const IndexType src_stride,
-      const Scalar* EIGEN_RESTRICT src_data) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const IndexType count, const IndexType dst_offset,
+                                                        const IndexType dst_stride, Scalar* EIGEN_RESTRICT dst_data,
+                                                        const IndexType src_offset, const IndexType src_stride,
+                                                        const Scalar* EIGEN_RESTRICT src_data) {
     const Scalar* src = &src_data[src_offset];
     Scalar* dst = &dst_data[dst_offset];
 
@@ -1050,23 +957,31 @@ class StridedLinearBufferCopy {
       return;
     }
 
-    const IndexType vectorized_size = count - PacketSize;
+    const IndexType vectorized_size = PacketSize * (count / PacketSize);
     IndexType i = 0;
 
     if (kind == StridedLinearBufferCopy::Kind::Linear) {
       // ******************************************************************** //
       // Linear copy from `src` to `dst`.
-      const IndexType unrolled_size = count - 4 * PacketSize;
+      const IndexType unrolled_size = (4 * PacketSize) * (count / (4 * PacketSize));
       eigen_assert(src_stride == 1 && dst_stride == 1);
-      for (; i <= unrolled_size; i += 4 * PacketSize) {
+      for (; i < unrolled_size; i += 4 * PacketSize) {
         for (int j = 0; j < 4; ++j) {
           Packet p = ploadu<Packet>(src + i + j * PacketSize);
           pstoreu<Scalar, Packet>(dst + i + j * PacketSize, p);
         }
       }
-      for (; i <= vectorized_size; i += PacketSize) {
+      for (; i < vectorized_size; i += PacketSize) {
         Packet p = ploadu<Packet>(src + i);
         pstoreu<Scalar, Packet>(dst + i, p);
+      }
+      if (HasHalfPacket) {
+        const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
+        if (i < vectorized_half_size) {
+          HalfPacket p = ploadu<HalfPacket>(src + i);
+          pstoreu<Scalar, HalfPacket>(dst + i, p);
+          i += HalfPacketSize;
+        }
       }
       for (; i < count; ++i) {
         dst[i] = src[i];
@@ -1075,9 +990,17 @@ class StridedLinearBufferCopy {
     } else if (kind == StridedLinearBufferCopy::Kind::Scatter) {
       // Scatter from `src` to `dst`.
       eigen_assert(src_stride == 1 && dst_stride != 1);
-      for (; i <= vectorized_size; i += PacketSize) {
+      for (; i < vectorized_size; i += PacketSize) {
         Packet p = ploadu<Packet>(src + i);
         pscatter<Scalar, Packet>(dst + i * dst_stride, p, dst_stride);
+      }
+      if (HasHalfPacket) {
+        const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
+        if (i < vectorized_half_size) {
+          HalfPacket p = ploadu<HalfPacket>(src + i);
+          pscatter<Scalar, HalfPacket>(dst + i * dst_stride, p, dst_stride);
+          i += HalfPacketSize;
+        }
       }
       for (; i < count; ++i) {
         dst[i * dst_stride] = src[i];
@@ -1086,37 +1009,64 @@ class StridedLinearBufferCopy {
     } else if (kind == StridedLinearBufferCopy::Kind::FillLinear) {
       // Fill `dst` with value at `*src`.
       eigen_assert(src_stride == 0 && dst_stride == 1);
-      const IndexType unrolled_size = count - 4 * PacketSize;
-      Packet p = pload1<Packet>(src);
-      for (; i <= unrolled_size; i += 4 * PacketSize) {
+
+      const IndexType unrolled_size = (4 * PacketSize) * (count / (4 * PacketSize));
+      Scalar s = *src;
+      Packet p = pset1<Packet>(s);
+      for (; i < unrolled_size; i += 4 * PacketSize) {
         for (int j = 0; j < 4; ++j) {
           pstoreu<Scalar, Packet>(dst + i + j * PacketSize, p);
         }
       }
-      for (; i <= vectorized_size; i += PacketSize) {
+      for (; i < vectorized_size; i += PacketSize) {
         pstoreu<Scalar, Packet>(dst + i, p);
       }
+      if (HasHalfPacket) {
+        const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
+        if (i < vectorized_half_size) {
+          HalfPacket hp = pset1<HalfPacket>(s);
+          pstoreu<Scalar, HalfPacket>(dst + i, hp);
+          i += HalfPacketSize;
+        }
+      }
       for (; i < count; ++i) {
-        dst[i] = *src;
+        dst[i] = s;
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::FillScatter) {
       // Scatter `*src` into `dst`.
       eigen_assert(src_stride == 0 && dst_stride != 1);
-      Packet p = pload1<Packet>(src);
-      for (; i <= vectorized_size; i += PacketSize) {
+      Scalar s = *src;
+      Packet p = pset1<Packet>(s);
+      for (; i < vectorized_size; i += PacketSize) {
         pscatter<Scalar, Packet>(dst + i * dst_stride, p, dst_stride);
       }
+      if (HasHalfPacket) {
+        const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
+        if (i < vectorized_half_size) {
+          HalfPacket hp = pset1<HalfPacket>(s);
+          pscatter<Scalar, HalfPacket>(dst + i * dst_stride, hp, dst_stride);
+          i += HalfPacketSize;
+        }
+      }
       for (; i < count; ++i) {
-        dst[i * dst_stride] = *src;
+        dst[i * dst_stride] = s;
       }
       // ******************************************************************** //
     } else if (kind == StridedLinearBufferCopy::Kind::Gather) {
       // Gather from `src` into `dst`.
       eigen_assert(dst_stride == 1);
-      for (; i <= vectorized_size; i += PacketSize) {
+      for (; i < vectorized_size; i += PacketSize) {
         Packet p = pgather<Scalar, Packet>(src + i * src_stride, src_stride);
         pstoreu<Scalar, Packet>(dst + i, p);
+      }
+      if (HasHalfPacket) {
+        const IndexType vectorized_half_size = HalfPacketSize * (count / HalfPacketSize);
+        if (i < vectorized_half_size) {
+          HalfPacket p = pgather<Scalar, HalfPacket>(src + i * src_stride, src_stride);
+          pstoreu<Scalar, HalfPacket>(dst + i, p);
+          i += HalfPacketSize;
+        }
       }
       for (; i < count; ++i) {
         dst[i] = src[i * src_stride];
@@ -1141,7 +1091,7 @@ class StridedLinearBufferCopy {
 
 template <typename Scalar, typename IndexType, int NumDims, int Layout>
 class TensorBlockIO {
-  static const bool IsColMajor = (Layout == ColMajor);
+  static constexpr bool IsColMajor = (Layout == ColMajor);
 
   typedef StridedLinearBufferCopy<Scalar, IndexType> LinCopy;
 
@@ -1150,8 +1100,7 @@ class TensorBlockIO {
   typedef DSizes<int, NumDims> DimensionsMap;
 
   struct Dst {
-    Dst(const Dimensions& dst_dims, const Dimensions& dst_strides, Scalar* dst,
-        IndexType dst_offset = 0)
+    Dst(const Dimensions& dst_dims, const Dimensions& dst_strides, Scalar* dst, IndexType dst_offset = 0)
         : dims(dst_dims), strides(dst_strides), data(dst), offset(dst_offset) {}
 
     Dimensions dims;
@@ -1161,8 +1110,7 @@ class TensorBlockIO {
   };
 
   struct Src {
-    Src(const Dimensions& src_strides, const Scalar* src,
-        IndexType src_offset = 0)
+    Src(const Dimensions& src_strides, const Scalar* src, IndexType src_offset = 0)
         : strides(src_strides), data(src), offset(src_offset) {}
 
     Dimensions strides;
@@ -1175,8 +1123,8 @@ class TensorBlockIO {
   //   src_dimension_index = dst_to_src_dim_map[dst_dimension_index]
   //
   // Returns the number of copied elements.
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType Copy(
-      const Dst& dst, const Src& src, const DimensionsMap& dst_to_src_dim_map) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE IndexType Copy(const Dst& dst, const Src& src,
+                                                              const DimensionsMap& dst_to_src_dim_map) {
     // Copy single scalar value from `src` to `dst`.
     if (NumDims == 0) {
       *(dst.data + dst.offset) = *(src.data + src.offset);
@@ -1223,13 +1171,10 @@ class TensorBlockIO {
     }
 
     // Outermost dimension in the dst with `stride == 1` (contiguous in memory).
-    const int dst_stride1_dim = IsColMajor
-                                    ? num_size_one_inner_dims
-                                    : NumDims - num_size_one_inner_dims - 1;
+    const int dst_stride1_dim = IsColMajor ? num_size_one_inner_dims : NumDims - num_size_one_inner_dims - 1;
 
     // Dimension in the src that corresponds to the dst innermost dimension.
-    const int src_dim_for_dst_stride1_dim =
-        NumDims == 0 ? 1 : dim_map[dst_stride1_dim];
+    const int src_dim_for_dst_stride1_dim = NumDims == 0 ? 1 : dim_map[dst_stride1_dim];
 
     // Size of the innermost dimension (length of contiguous blocks of memory).
     IndexType dst_inner_dim_size = NumDims == 0 ? 1 : dst.dims[dst_stride1_dim];
@@ -1251,8 +1196,7 @@ class TensorBlockIO {
     // Setup strides to read data from `src` and write to `dst`.
     IndexType input_offset = src.offset;
     IndexType output_offset = dst.offset;
-    IndexType input_stride =
-        NumDims == 0 ? 1 : src.strides[src_dim_for_dst_stride1_dim];
+    IndexType input_stride = NumDims == 0 ? 1 : src.strides[src_dim_for_dst_stride1_dim];
     IndexType output_stride = NumDims == 0 ? 1 : dst.strides[dst_stride1_dim];
 
     const int at_least_1_dim = NumDims <= 1 ? 1 : NumDims - 1;
@@ -1277,26 +1221,23 @@ class TensorBlockIO {
     // Iterate copying data from src to dst.
     const IndexType block_total_size = NumDims == 0 ? 1 : dst.dims.TotalSize();
 
-#define COPY_INNER_DIM(KIND)                                           \
-  IndexType num_copied = 0;                                            \
-  for (num_copied = 0; num_copied < block_total_size;                  \
-       num_copied += dst_inner_dim_size) {                             \
-    LinCopy::template Run<KIND>(                                       \
-        typename LinCopy::Dst(output_offset, output_stride, dst.data), \
-        typename LinCopy::Src(input_offset, input_stride, src.data),   \
-        dst_inner_dim_size);                                           \
-                                                                       \
-    for (int j = 0; j < idx; ++j) {                                    \
-      if (++it[j].count < it[j].size) {                                \
-        input_offset += it[j].input_stride;                            \
-        output_offset += it[j].output_stride;                          \
-        break;                                                         \
-      }                                                                \
-      it[j].count = 0;                                                 \
-      input_offset -= it[j].input_span;                                \
-      output_offset -= it[j].output_span;                              \
-    }                                                                  \
-  }                                                                    \
+#define COPY_INNER_DIM(KIND)                                                                                      \
+  IndexType num_copied = 0;                                                                                       \
+  for (num_copied = 0; num_copied < block_total_size; num_copied += dst_inner_dim_size) {                         \
+    LinCopy::template Run<KIND>(typename LinCopy::Dst(output_offset, output_stride, dst.data),                    \
+                                typename LinCopy::Src(input_offset, input_stride, src.data), dst_inner_dim_size); \
+                                                                                                                  \
+    for (int j = 0; j < idx; ++j) {                                                                               \
+      if (++it[j].count < it[j].size) {                                                                           \
+        input_offset += it[j].input_stride;                                                                       \
+        output_offset += it[j].output_stride;                                                                     \
+        break;                                                                                                    \
+      }                                                                                                           \
+      it[j].count = 0;                                                                                            \
+      input_offset -= it[j].input_span;                                                                           \
+      output_offset -= it[j].output_span;                                                                         \
+    }                                                                                                             \
+  }                                                                                                               \
   return num_copied;
 
     if (input_stride == 1 && output_stride == 1) {
@@ -1318,8 +1259,7 @@ class TensorBlockIO {
 
   // Copy from `src` to `dst` with an identity src->dst dimension map. Returns
   // the number of copied elements.
-  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexType Copy(const Dst& dst,
-                                                              const Src& src) {
+  static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexType Copy(const Dst& dst, const Src& src) {
     DimensionsMap dst_to_src_map;
     for (int i = 0; i < NumDims; ++i) dst_to_src_map[i] = i;
     return Copy(dst, src, dst_to_src_map);
@@ -1327,13 +1267,7 @@ class TensorBlockIO {
 
  private:
   struct BlockIteratorState {
-    BlockIteratorState()
-        : size(0),
-          count(0),
-          input_stride(0),
-          output_stride(0),
-          input_span(0),
-          output_span(0) {}
+    BlockIteratorState() : size(0), count(0), input_stride(0), output_stride(0), input_span(0), output_span(0) {}
 
     IndexType size;
     IndexType count;
@@ -1376,25 +1310,18 @@ class TensorBlockIO {
 // where `src` is a tensor expression. Explore if it is possible to rewrite IO
 // to use expressions instead of pointers, and after that TensorBlockAssignment
 // will become an alias to IO.
-template <typename Scalar, int NumDims, typename TensorBlockExpr,
-          typename IndexType = Eigen::Index>
+template <typename Scalar, int NumDims, typename TensorBlockExpr, typename IndexType = Eigen::Index>
 class TensorBlockAssignment {
   // We will use coeff/packet path to evaluate block expressions.
-  typedef TensorEvaluator<const TensorBlockExpr, DefaultDevice>
-      TensorBlockEvaluator;
+  typedef TensorEvaluator<const TensorBlockExpr, DefaultDevice> TensorBlockEvaluator;
 
   typedef DSizes<IndexType, NumDims> Dimensions;
 
-  enum {
-    Vectorizable = packet_traits<Scalar>::Vectorizable,
-    PacketSize = packet_traits<Scalar>::size
-  };
+  enum { Vectorizable = packet_traits<Scalar>::Vectorizable, PacketSize = packet_traits<Scalar>::size };
 
   template <bool Vectorizable, typename Evaluator>
   struct InnerDimAssign {
-    EIGEN_ALWAYS_INLINE static void Run(Scalar* target, IndexType count,
-                                        const Evaluator& eval,
-                                        IndexType eval_offset) {
+    EIGEN_ALWAYS_INLINE static void Run(Scalar* target, IndexType count, const Evaluator& eval, IndexType eval_offset) {
       for (IndexType i = 0; i < count; ++i) {
         target[i] = eval.coeff(eval_offset + i);
       }
@@ -1403,16 +1330,14 @@ class TensorBlockAssignment {
 
   template <typename Evaluator>
   struct InnerDimAssign<true, Evaluator> {
-    EIGEN_ALWAYS_INLINE static void Run(Scalar* target, IndexType count,
-                                        const Evaluator& eval,
-                                        IndexType eval_offset) {
+    EIGEN_ALWAYS_INLINE static void Run(Scalar* target, IndexType count, const Evaluator& eval, IndexType eval_offset) {
       typedef typename packet_traits<Scalar>::type Packet;
 
-      const IndexType unrolled_size = count - 4 * PacketSize;
-      const IndexType vectorized_size = count - PacketSize;
+      const IndexType unrolled_size = (4 * PacketSize) * (count / (4 * PacketSize));
+      const IndexType vectorized_size = PacketSize * (count / PacketSize);
       IndexType i = 0;
 
-      for (; i <= unrolled_size; i += 4 * PacketSize) {
+      for (; i < unrolled_size; i += 4 * PacketSize) {
         for (int j = 0; j < 4; ++j) {
           const IndexType idx = eval_offset + i + j * PacketSize;
           Packet p = eval.template packet<Unaligned>(idx);
@@ -1420,7 +1345,7 @@ class TensorBlockAssignment {
         }
       }
 
-      for (; i <= vectorized_size; i += PacketSize) {
+      for (; i < vectorized_size; i += PacketSize) {
         Packet p = eval.template packet<Unaligned>(eval_offset + i);
         pstoreu<Scalar>(target + i, p);
       }
@@ -1433,12 +1358,9 @@ class TensorBlockAssignment {
 
  public:
   struct Target {
-    Target(const Dimensions& target_dims, const Dimensions& target_strides,
-           Scalar* target_data, IndexType target_offset = 0)
-        : dims(target_dims),
-          strides(target_strides),
-          data(target_data),
-          offset(target_offset) {}
+    Target(const Dimensions& target_dims, const Dimensions& target_strides, Scalar* target_data,
+           IndexType target_offset = 0)
+        : dims(target_dims), strides(target_strides), data(target_data), offset(target_offset) {}
 
     Dimensions dims;
     Dimensions strides;
@@ -1446,24 +1368,20 @@ class TensorBlockAssignment {
     IndexType offset;
   };
 
-  static Target target(const Dimensions& target_dims,
-                       const Dimensions& target_strides, Scalar* target_data,
+  static Target target(const Dimensions& target_dims, const Dimensions& target_strides, Scalar* target_data,
                        IndexType target_offset = 0) {
     return Target(target_dims, target_strides, target_data, target_offset);
   }
 
   template <typename TargetDimsIndexType, typename TargetStridesIndexType>
-  static Target target(
-      const DSizes<TargetDimsIndexType, NumDims>& target_dims,
-      const DSizes<TargetStridesIndexType, NumDims>& target_strides,
-      Scalar* target_data, IndexType target_offset = 0) {
+  static Target target(const DSizes<TargetDimsIndexType, NumDims>& target_dims,
+                       const DSizes<TargetStridesIndexType, NumDims>& target_strides, Scalar* target_data,
+                       IndexType target_offset = 0) {
     // DSizes constructor will do index type promotion if it's safe.
-    return Target(Dimensions(target_dims), Dimensions(target_strides),
-                  target_data, target_offset);
+    return Target(Dimensions(target_dims), Dimensions(target_strides), target_data, target_offset);
   }
 
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(
-      const Target& target, const TensorBlockExpr& expr) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Target& target, const TensorBlockExpr& expr) {
     // Prepare evaluator for block expression.
     DefaultDevice default_device;
     TensorBlockEvaluator eval(expr, default_device);
@@ -1519,10 +1437,8 @@ class TensorBlockAssignment {
     // Iterate copying data from `eval` to `target`.
     for (IndexType i = 0; i < output_size; i += output_inner_dim_size) {
       // Assign to `target` at current offset.
-      InnerDimAssign<Vectorizable && TensorBlockEvaluator::PacketAccess,
-                     TensorBlockEvaluator>::Run(target.data + output_offset,
-                                                output_inner_dim_size, eval,
-                                                input_offset);
+      InnerDimAssign<Vectorizable && TensorBlockEvaluator::PacketAccess, TensorBlockEvaluator>::Run(
+          target.data + output_offset, output_inner_dim_size, eval, input_offset);
 
       // Move input offset forward by the number of assigned coefficients.
       input_offset += output_inner_dim_size;
@@ -1541,8 +1457,7 @@ class TensorBlockAssignment {
 
  private:
   struct BlockIteratorState {
-    BlockIteratorState()
-        : count(0), size(0), output_stride(0), output_span(0) {}
+    BlockIteratorState() : count(0), size(0), output_stride(0), output_span(0) {}
 
     IndexType count;
     IndexType size;

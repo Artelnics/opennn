@@ -9,18 +9,6 @@
 #ifndef MODELSELECTION_H
 #define MODELSELECTION_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <cmath>
-#include <ctime>
-
-// OpenNN includes
-
-#include "config.h"
 #include "training_strategy.h"
 #include "growing_neurons.h"
 #include "growing_inputs.h"
@@ -29,48 +17,35 @@
 namespace opennn
 {
 
-/// This class represents the concept of model selection[1] algorithm in OpenNN.
-
-///
-/// It is used for finding a network architecture with maximum generalization capabilities.
-///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
-
 class ModelSelection
 {
 
-public:  
+public: 
 
     // Constructors
 
-    explicit ModelSelection();
-
-    explicit ModelSelection(TrainingStrategy*);
-
-    /// Enumeration of all the available neurons selection algorithms.
+    explicit ModelSelection(TrainingStrategy* = nullptr);
 
     enum class NeuronsSelectionMethod{GROWING_NEURONS};
 
-    /// Enumeration of all the available inputs selection algorithms.
-
     enum class InputsSelectionMethod{GROWING_INPUTS, GENETIC_ALGORITHM};
 
-    // Get methods
+    // Get
 
-    TrainingStrategy* get_training_strategy_pointer() const;
+    TrainingStrategy* get_training_strategy() const;
     bool has_training_strategy() const;
 
     const NeuronsSelectionMethod& get_neurons_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
 
-    GrowingNeurons* get_growing_neurons_pointer();
+    GrowingNeurons* get_growing_neurons();
 
-    GrowingInputs* get_growing_inputs_pointer();
-    GeneticAlgorithm* get_genetic_algorithm_pointer();
+    GrowingInputs* get_growing_inputs();
+    GeneticAlgorithm* get_genetic_algorithm();
 
-    // Set methods
+    // Set
 
-    void set(TrainingStrategy*);
+    void set(TrainingStrategy* = nullptr);
 
     void set_default();
 
@@ -82,7 +57,7 @@ public:
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
 
-    // Model selection methods
+    // Model selection
 
     void check() const;
 
@@ -90,11 +65,11 @@ public:
 
     InputsSelectionResults perform_inputs_selection();
 
-    // Serialization methods
+    // Serialization
     
-    void from_XML(const tinyxml2::XMLDocument&);
+    void from_XML(const XMLDocument&);
 
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(XMLPrinter&) const;
 
     string write_neurons_selection_method() const;
     string write_inputs_selection_method() const;
@@ -105,31 +80,17 @@ public:
 
 private: 
 
-    /// Pointer to a training strategy object.
-
-    TrainingStrategy* training_strategy_pointer = nullptr;
-
-    /// Growing neurons object to be used for neurons selection.
+    TrainingStrategy* training_strategy = nullptr;
 
     GrowingNeurons growing_neurons;
 
-    /// Growing inputs object to be used for inputs selection.
-
     GrowingInputs growing_inputs;
-
-    /// Genetic algorithm object to be used for inputs selection.
 
     GeneticAlgorithm genetic_algorithm;
 
-    /// Type of neurons selection algorithm.
-
     NeuronsSelectionMethod neurons_selection_method;
 
-    /// Type of inputs selection algorithm.
-
     InputsSelectionMethod inputs_selection_method;
-
-    /// Display messages to screen.
 
     bool display = true;
 };

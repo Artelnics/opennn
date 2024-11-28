@@ -8,7 +8,4 @@
 
 using namespace Eigen;
 
-int main()
-{
-  Matrix<int, ROWS, 1> {1, 2, 3};
-}
+int main() { Matrix<int, ROWS, 1>{1, 2, 3}; }

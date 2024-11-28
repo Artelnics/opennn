@@ -9,62 +9,34 @@
 #ifndef NORMALIZEDSQUAREDERROR_H
 #define NORMALIZEDSQUAREDERROR_H
 
-// System includes
 
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
-#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 
 namespace opennn
 {
 
-/// This class represents the normalized squared error term. 
-
-///
-/// This error term is used in data modeling problems.
-/// If it has a value of unity then the neural network is predicting the data "in the mean",
-/// A value of zero means perfect prediction of data.
-
 class NormalizedSquaredError : public LossIndex
 {
 
 public:
 
-    // Constructors
-
-   explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
-
-   explicit NormalizedSquaredError();   
-
-   // Get methods
+   explicit NormalizedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     type get_normalization_coefficient() const;
     type get_selection_normalization_coefficient() const;
 
-   // Set methods
-
-    void set_normalization_coefficient() override;
-    void set_normalization_coefficient(const type&);
+    void set_normalization_coefficient();
+//    void set_normalization_coefficient(const type&);
 
     void set_time_series_normalization_coefficient();
 
     void set_selection_normalization_coefficient();
-    void set_selection_normalization_coefficient(const type&);
+//    void set_selection_normalization_coefficient(const type&);
 
-    virtual void set_default();
+    void set_default();
 
-    void set_data_set_pointer(DataSet* new_data_set_pointer) final;
-
-   // Normalization coefficients 
+    void set_data_set(DataSet* new_data_set) final;
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
@@ -72,49 +44,45 @@ public:
 
    // Back propagation
      
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+   void calculate_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+   void calculate_output_delta(const Batch&,
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
     // Back propagation LM
 
-   void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+   void calculate_error_lm(const Batch&,
+                           const ForwardPropagation&,
+                           BackPropagationLM&) const final;
 
-   void calculate_output_delta_lm(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagationLM&) const final;
+   void calculate_output_delta_lm(const Batch&,
+                               ForwardPropagation&,
+                               BackPropagationLM&) const final;
 
-   void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+   void calculate_error_gradient_lm(const Batch&,
+                              BackPropagationLM&) const final;
 
-   void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const final;
+   void calculate_error_hessian_lm(const Batch&,
+                                        BackPropagationLM&) const final;
 
-   // Serialization methods
-
-   string get_error_type() const final;
+   string get_loss_method() const final;
    string get_error_type_text() const final;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&) const;
+   virtual void from_XML(const XMLDocument&) const;
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
-private:
-
-   /// Coefficient of normalization for the calculation of the training error.
+//protected:
 
    type normalization_coefficient = type(NAN);
 
    type selection_normalization_coefficient = type(NAN);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/normalized_squared_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"
 #endif
 
 };
@@ -125,7 +93,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

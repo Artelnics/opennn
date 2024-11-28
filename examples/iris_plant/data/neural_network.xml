@@ -1,51 +1,56 @@
 <NeuralNetwork>
    <Inputs>
       <InputsNumber>4</InputsNumber>
-      <Input Index="1">sepal_lenght</Input>
-      <Input Index="2">sepal_width</Input>
-      <Input Index="3">petal_lenght</Input>
-      <Input Index="4">petal_width</Input>
+      <Input Index="1"></Input>
+      <Input Index="2"></Input>
+      <Input Index="3"></Input>
+      <Input Index="4"></Input>
    </Inputs>
    <Layers>
-      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
-      <ScalingLayer>
+      <LayersTypes>Scaling2D Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer2D>
          <ScalingNeuronsNumber>4</ScalingNeuronsNumber>
          <ScalingNeuron Index="1">
-            <Descriptives>4.3\7.9\5.84333\0.828066</Descriptives>
+            <Descriptives>-1 1 0 1 </Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="2">
-            <Descriptives>2\4.4\3.05733\0.435866</Descriptives>
+            <Descriptives>-1 1 0 1 </Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="3">
-            <Descriptives>1\6.9\3.758\1.7653</Descriptives>
+            <Descriptives>-1 1 0 1 </Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
          <ScalingNeuron Index="4">
-            <Descriptives>0.1\2.5\1.19933\0.762238</Descriptives>
+            <Descriptives>-1 1 0 1 </Descriptives>
             <Scaler>MeanStandardDeviation</Scaler>
          </ScalingNeuron>
-      </ScalingLayer>
+      </ScalingLayer2D>
       <PerceptronLayer>
          <LayerName>perceptron_layer_1</LayerName>
          <InputsNumber>4</InputsNumber>
-         <NeuronsNumber>3</NeuronsNumber>
+         <NeuronsNumber>5</NeuronsNumber>
          <ActivationFunction>HyperbolicTangent</ActivationFunction>
-         <Parameters>0.0294449 -0.153129 0.148748 0.387044 0.283474 -0.300182 0.133461 0.37122 0.145957 -0.0762085 0.0320756 0.175429 0.100419 0.0908042 -0.0502741</Parameters>
+         <Parameters>-0.0831055 0.0491333 0.0400208 0.0169434 0.000213623 -0.0800842 0.0173889 0.0598511 -0.0859619 -0.0519226 -0.0677857 -0.00717163 0.0565552 -0.0253113 0.0543457 -0.0728516 0.031543 0.0756226 -0.00542603 0.0152832 -0.000421144 0.0026001 0.0110596 0.00137939 0.0785767 </Parameters>
       </PerceptronLayer>
       <ProbabilisticLayer>
-         <InputsNumber>3</InputsNumber>
+         <InputsNumber>5</InputsNumber>
          <NeuronsNumber>3</NeuronsNumber>
          <ActivationFunction>Softmax</ActivationFunction>
-         <Parameters>0.0948961 0.0304029 -0.119937 0.175408 -0.197369 0.181568 0.124013 0.329514 0.15323 -0.0464519 0.240458 -0.197357</Parameters>
-         <DecisionThreshold>0.5</DecisionThreshold>
+         <Parameters>-0.0973328 -0.0151306 -0.0607239 -0.0571167 0.0220886 -0.0572021 -0.0795593 0.0239502 -0.0631592 0.0297485 0.0507446 0.00527344 0.0390259 0.0960815 -0.000897214 -0.0729858 0.0506042 0.0623962 </Parameters>
+         <DecisionThreshold>0.500000</DecisionThreshold>
       </ProbabilisticLayer>
+      <LayersInputsIndices>
+         <LayerInputsIndices LayerIndex="1">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="3">1</LayerInputsIndices>
+      </LayersInputsIndices>
    </Layers>
    <Outputs>
       <OutputsNumber>3</OutputsNumber>
-      <Output Index="1">iris_setosa</Output>
-      <Output Index="2">iris_versicolor</Output>
-      <Output Index="3">iris_virginica</Output>
+      <Output Index="1"></Output>
+      <Output Index="2"></Output>
+      <Output Index="3"></Output>
    </Outputs>
 </NeuralNetwork>

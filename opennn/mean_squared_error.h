@@ -9,77 +9,52 @@
 #ifndef MEANSQUAREDERROR_H
 #define MEANSQUAREDERROR_H
 
-// System includes
-
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <math.h>
-
-// OpenNN includes
-
-#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 
 namespace opennn
 {
 
-/// This class represents the mean squared error term.
-
-///
-/// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
-/// This functional is used in data modeling problems, such as function regression, 
-/// classification and time series prediction.
-
 class MeanSquaredError : public LossIndex
 {
 
 public:
-
-   // DEFAULT CONSTRUCTOR
-
-   explicit MeanSquaredError();
    
-   explicit MeanSquaredError(NeuralNetwork*, DataSet*);
+   explicit MeanSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   // Back propagation
+   void calculate_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const override;
-
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+   void calculate_output_delta(const Batch&,
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    // Back propagation LM
 
-   void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+   void calculate_error_lm(const Batch&,
+                           const ForwardPropagation&,
+                           BackPropagationLM&) const final;
 
-   void calculate_output_delta_lm(const DataSetBatch&,
-                                  NeuralNetworkForwardPropagation&,
-                                  LossIndexBackPropagationLM&) const final;
+   void calculate_output_delta_lm(const Batch&,
+                                  ForwardPropagation&,
+                                  BackPropagationLM&) const final;
 
-   void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+   void calculate_error_gradient_lm(const Batch&,
+                              BackPropagationLM&) const final;
 
-   void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const final;
+   void calculate_error_hessian_lm(const Batch&,
+                                        BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
-   void write_XML(tinyxml2::XMLPrinter &) const final;
+   void to_XML(XMLPrinter &) const final;
 
-   string get_error_type() const final;
+   string get_loss_method() const final;
    string get_error_type_text() const final;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/mean_squared_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
 #endif
 
 };
@@ -90,7 +65,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

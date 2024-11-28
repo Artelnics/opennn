@@ -14,11 +14,11 @@
 // Note that we are using EIGEN_USE_HIP here instead of EIGEN_HIPCC...this is by design
 // There is code in the Tensorflow codebase that will define EIGEN_USE_GPU,  but
 // for some reason gets sent to the gcc/host compiler instead of the gpu/nvcc/hipcc compiler
-// When compiling such files, gcc will end up trying to pick up the CUDA headers by 
+// When compiling such files, gcc will end up trying to pick up the CUDA headers by
 // default (see the code within "unsupported/Eigen/CXX11/Tensor" that is guarded by EIGEN_USE_GPU)
 // This will obviously not work when trying to compile tensorflow on a system with no CUDA
 // To work around this issue for HIP systems (and leave the default behaviour intact), the
-// HIP tensorflow build defines EIGEN_USE_HIP when compiling all source files, and 
+// HIP tensorflow build defines EIGEN_USE_HIP when compiling all source files, and
 // "unsupported/Eigen/CXX11/Tensor" has been updated to use HIP header when EIGEN_USE_HIP is
 // defined. In continuation of that requirement, the guard here needs to be EIGEN_USE_HIP as well
 
@@ -41,6 +41,7 @@
 #define gpuMalloc hipMalloc
 #define gpuFree hipFree
 #define gpuMemsetAsync hipMemsetAsync
+#define gpuMemset2DAsync hipMemset2DAsync
 #define gpuMemcpyAsync hipMemcpyAsync
 #define gpuMemcpyDeviceToDevice hipMemcpyDeviceToDevice
 #define gpuMemcpyDeviceToHost hipMemcpyDeviceToHost
@@ -71,6 +72,7 @@
 #define gpuMalloc cudaMalloc
 #define gpuFree cudaFree
 #define gpuMemsetAsync cudaMemsetAsync
+#define gpuMemset2DAsync cudaMemset2DAsync
 #define gpuMemcpyAsync cudaMemcpyAsync
 #define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuMemcpyDeviceToHost cudaMemcpyDeviceToHost
@@ -91,9 +93,9 @@
 // HIPCC do not support the use of assert on the GPU side.
 #define gpu_assert(COND)
 #else
-#define gpu_assert(COND) assert(COND)
+#define gpu_assert(COND) eigen_assert(COND)
 #endif
 
-#endif // gpu_assert
+#endif  // gpu_assert
 
 #endif  // EIGEN_CXX11_TENSOR_GPU_HIP_CUDA_DEFINES_H

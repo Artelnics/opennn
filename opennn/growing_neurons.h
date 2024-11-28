@@ -9,81 +9,47 @@
 #ifndef GROWINGNEURONS_H
 #define GROWINGNEURONS_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-
-// OpenNN includes
-
 #include "training_strategy.h"
 #include "neurons_selection.h"
-#include "config.h"
 
 namespace opennn
 {
 
 struct GrowingNeuronsResults;
 
-/// This concrete class represents an growing neurons algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
-
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
-
 class GrowingNeurons : public NeuronsSelection
 {
 
 public:
 
-    // Constructors
-
-    explicit GrowingNeurons();
-
-    explicit GrowingNeurons(TrainingStrategy*);
-
-    // Get methods
+    explicit GrowingNeurons(TrainingStrategy* = nullptr);
 
     const Index& get_step() const;
 
     const Index& get_maximum_selection_failures() const;
 
-    // Set methods
-
-    virtual void set_default();
+    void set_default();
 
     void set_neurons_increment(const Index&);
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
-
     NeuronsSelectionResults perform_neurons_selection() final;
-
-    // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
     
-    void from_XML(const tinyxml2::XMLDocument&);
+    void from_XML(const XMLDocument&);
 
-    void write_XML(tinyxml2::XMLPrinter&) const;    
+    void to_XML(XMLPrinter&) const;    
 
     void save(const string&) const;
     void load(const string&);
 
 private:
 
-   /// Number of neurons added at each iteration.
+   Index neurons_increment = 0;
 
-   Index neurons_increment;
-
-   /// Maximum number of epochs at which the selection error increases.
-
-   Index maximum_selection_failures;
+   Index maximum_selection_failures = 0;
 
 };
 
@@ -92,7 +58,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,26 +1,26 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E S T I N G   A N A L Y S I S   T E S T   C L A S S                 
+//   T E N S O R S   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensor_utilities_test.h"
+#include <iostream>
 
-TensorUtilitiesTest::TensorUtilitiesTest() : UnitTesting()
+#include "../opennn/tensors.h"
+
+namespace opennn
+{
+
+TensorsTest::TensorsTest() : UnitTesting()
 {
 }
 
 
-TensorUtilitiesTest::~TensorUtilitiesTest()
+void TensorsTest::test_fill_tensor_data()
 {
-}
-
-
-void TensorUtilitiesTest::test_fill_submatrix()
-{
-    cout << "test_fill_submatrix\n";
+    cout << "test_fill_tensor_data\n";
 
     Tensor<type, 2> submatrix;
 
@@ -40,13 +40,13 @@ void TensorUtilitiesTest::test_fill_submatrix()
 
     submatrix.resize(1, 1);
 
-    fill_submatrix(matrix, rows_indices, columns_indices, submatrix.data());
+    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
     assert_true(is_equal(submatrix, type(3.1416)), LOG);
 }
 
 
-void TensorUtilitiesTest::test_calculate_rank()
+void TensorsTest::test_calculate_rank()
 {
     cout << "test_calculate_rank\n";
 
@@ -56,27 +56,28 @@ void TensorUtilitiesTest::test_calculate_rank()
     // Test
 
     vector.resize(3);
-    vector.setValues({ type(4),type(2),type(3)});
+    vector.setValues({type(4),type(2),type(3)});
 
     rank_greater = calculate_rank_greater(vector);
     rank_less = calculate_rank_less(vector);
 }
 
 
-void TensorUtilitiesTest::run_test_case()
+void TensorsTest::run_test_case()
 {
-    cout << "Running tensor utilities test case...\n";
+    cout << "Running tensors test case...\n";
 
-    test_fill_submatrix();
+    test_fill_tensor_data();
 
     test_calculate_rank();
 
-    cout << "End of tensor utilities test case.\n\n";
+    cout << "End of tensors test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

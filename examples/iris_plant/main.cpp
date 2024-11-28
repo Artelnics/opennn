@@ -6,18 +6,9 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a classical pattern recognition problem.
-
-// System includes
-
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <cstring>
 #include <time.h>
-
-// OpenNN includes
 
 #include "../../opennn/opennn.h"
 
@@ -29,29 +20,36 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        srand(unsigned(time(nullptr)));
 
         // Data set
 
-        DataSet data_set("../data/iris_plant_original.csv", ';', true);
+        DataSet data_set("../data/iris_plant_original.csv", ";", true);
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+
+        data_set.save("../data/data_set.xml");
+        data_set.load("../data/data_set.xml");
 
         // Neural network
 
-        const Index hidden_neurons_number = 3;
+        const Index hidden_neurons_number = 5;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, hidden_neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                     {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.load("../data/neural_network.xml");
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.perform_training();
-/*
+        //training_strategy.perform_training();
+
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -59,32 +57,26 @@ int main()
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         Tensor<type, 2> inputs(3, neural_network.get_inputs_number());
-        Tensor<type, 2> outputs(3, neural_network.get_outputs_number());
-
-        Tensor<Index, 1> inputs_dimensions = get_dimensions(inputs);
-        Tensor<Index, 1> outputs_dimensions = get_dimensions(outputs);
 
         inputs.setValues({{type(5.1),type(3.5),type(1.4),type(0.2)},
                           {type(6.4),type(3.2),type(4.5),type(1.5)},
                           {type(6.3),type(2.7),type(4.9),type(1.8)}});
 
-
-        outputs = neural_network.calculate_outputs(inputs.data(), inputs_dimensions);
+        const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
         cout << "\nInputs:\n" << inputs << endl;
-
         cout << "\nOutputs:\n" << outputs << endl;
-
         cout << "\nConfusion matrix:\n" << confusion << endl;
 
         // Save results
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_c("../data/neural_network.c");
-        neural_network.save_expression_python("../data/neural_network.py");
-*/
+
+        neural_network.save_expression_c("data/neural_network.c");
+        neural_network.save_expression_python("data/neural_network.py");
 
         cout << "Bye!" << endl;
+
         return 0;
     }
     catch(const exception& e)
@@ -96,7 +88,7 @@ int main()
 }  
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

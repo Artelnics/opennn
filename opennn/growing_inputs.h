@@ -9,42 +9,18 @@
 #ifndef GROWINGINPUTS_H
 #define GROWINGINPUTS_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-
-// OpenNN includes
-
 #include "training_strategy.h"
 #include "inputs_selection.h"
-#include "config.h"
 
 namespace opennn
 {
-
-/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
-
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
-/// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class GrowingInputs : public InputsSelection
 {
 
 public:
 
-    // Constructors
-
-    explicit GrowingInputs();
-
-    explicit GrowingInputs(TrainingStrategy*);
-
-    // Get methods
+    explicit GrowingInputs(TrainingStrategy* = nullptr);
 
     const Index& get_maximum_inputs_number() const;
 
@@ -52,9 +28,7 @@ public:
 
     const Index& get_maximum_selection_failures() const;
 
-    // Set methods
-
-    virtual void set_default() override;
+    virtual void set_default() final;
 
     void set_maximum_inputs_number(const Index&);
 
@@ -62,32 +36,22 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
-
     InputsSelectionResults perform_inputs_selection() final;
-
-    // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
 
-    void from_XML(const tinyxml2::XMLDocument&);
+    void from_XML(const XMLDocument&);
 
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void to_XML(XMLPrinter&) const;
     
     void save(const string&) const;
     void load(const string&);
 
 private:
 
-    /// Maximum number of inputs in the neural network.
-
-    Index maximum_inputs_number;
-
-    /// Minimum number of inputs in the neural network.
+    Index maximum_inputs_number = 1;
 
     Index minimum_inputs_number = 1;
-
-    /// Maximum number of epochs at which the selection error increases.
 
     Index maximum_selection_failures = 100;
 };
@@ -97,7 +61,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

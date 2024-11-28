@@ -6,68 +6,30 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "neurons_selection.h"
 
 namespace opennn
 {
 
-/// Default constructor.
-
-NeuronsSelection::NeuronsSelection()
+NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy)
 {
-    set_default();
+    set(new_training_strategy);
 }
 
 
-/// Training strategy constructor.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
-
-NeuronsSelection::NeuronsSelection(TrainingStrategy* new_training_strategy_pointer)
-    : training_strategy_pointer(new_training_strategy_pointer)
+TrainingStrategy* NeuronsSelection::get_training_strategy() const
 {
-    set_default();
+    return training_strategy;
 }
 
-
-/// Returns a pointer to the training strategy object.
-
-TrainingStrategy* NeuronsSelection::get_training_strategy_pointer() const
-{
-#ifdef OPENNN_DEBUG
-
-    if(!training_strategy_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "DataSet* get_training_strategy_pointer() const method.\n"
-               << "Training strategy pointer is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
-    return training_strategy_pointer;
-}
-
-
-/// Returns true if this neurons selection algorithm has a training strategy associated, and false otherwise.
 
 bool NeuronsSelection::has_training_strategy() const
 {
-    if(training_strategy_pointer != nullptr)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return training_strategy;
 }
 
-
-/// Returns the maximum of the hidden perceptrons number used in the neurons selection.
 
 const Index& NeuronsSelection::get_maximum_neurons() const
 {
@@ -75,15 +37,11 @@ const Index& NeuronsSelection::get_maximum_neurons() const
 }
 
 
-/// Returns the minimum of the hidden perceptrons number used in the neurons selection.
-
 const Index& NeuronsSelection::get_minimum_neurons() const
 {
     return minimum_neurons;
 }
 
-
-/// Returns the number of trials for each network architecture.
 
 const Index& NeuronsSelection::get_trials_number() const
 {
@@ -91,16 +49,11 @@ const Index& NeuronsSelection::get_trials_number() const
 }
 
 
-/// Returns true if messages from this class can be displayed on the screen,
-/// or false if messages from this class can't be displayed on the screen.
-
 const bool& NeuronsSelection::get_display() const
 {
     return display;
 }
 
-
-/// Returns the goal for the selection error in the neurons selection algorithm.
 
 const type& NeuronsSelection::get_selection_error_goal() const
 {
@@ -108,15 +61,11 @@ const type& NeuronsSelection::get_selection_error_goal() const
 }
 
 
-/// Returns the maximum number of epochs in the neurons selection algorithm.
-
 const Index& NeuronsSelection::get_maximum_epochs_number() const
 {
     return maximum_epochs_number;
 }
 
-
-/// Returns the maximum time in the neurons selection algorithm.
 
 const type& NeuronsSelection::get_maximum_time() const
 {
@@ -124,34 +73,32 @@ const type& NeuronsSelection::get_maximum_time() const
 }
 
 
-/// Sets a new training strategy pointer.
-/// @param new_training_strategy_pointer Pointer to a training strategy object.
-
-void NeuronsSelection::set_training_strategy_pointer(TrainingStrategy* new_training_strategy_pointer)
+void NeuronsSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy_pointer = new_training_strategy_pointer;
+    training_strategy = new_training_strategy;
+
+    set_default();
 }
 
 
-/// Sets the members of the neurons selection object to their default values.
+void NeuronsSelection::set_training_strategy(TrainingStrategy* new_training_strategy)
+{
+    training_strategy = new_training_strategy;
+}
+
 
 void NeuronsSelection::set_default()
 {
-    Index inputs_number;
-    Index outputs_number;
+    if(!training_strategy)
+        return;
 
-    if(training_strategy_pointer == nullptr
-            || !training_strategy_pointer->has_neural_network())
-    {
-        inputs_number = 0;
-        outputs_number = 0;
-    }
-    else
-    {
-        inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        outputs_number = training_strategy_pointer->get_neural_network_pointer()->get_outputs_number();
-    }
-    // MEMBERS
+    NeuralNetwork* neural_network = training_strategy->get_neural_network();
+
+    if(!neural_network)
+        return;
+
+    const Index inputs_number = neural_network->get_inputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
     minimum_neurons = 1;
 
@@ -171,102 +118,23 @@ void NeuronsSelection::set_default()
 }
 
 
-/// Sets the number of the maximum hidden perceptrons for the neurons selection algorithm.
-/// @param new_maximum_neurons Maximum number of hidden perceptrons.
-
 void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_neurons <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons_number(const Index&) method.\n"
-               << "maximum_neurons(" << new_maximum_neurons << ") must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(new_maximum_neurons < minimum_neurons)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_neurons_number(const Index&) method.\n"
-               << "maximum_neurons(" << new_maximum_neurons << ") must be equal or greater than minimum_neurons(" << minimum_neurons << ").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     maximum_neurons = new_maximum_neurons;
 }
 
 
-/// Sets the number of the minimum hidden perceptrons for the neurons selection algorithm.
-/// @param new_minimum_neurons Minimum number of hidden perceptrons.
-
 void NeuronsSelection::set_minimum_neurons(const Index& new_minimum_neurons)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_neurons <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_neurons(const Index&) method.\n"
-               << "minimum_neurons(" << new_minimum_neurons << ") must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(new_minimum_neurons >= maximum_neurons)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_neurons(const Index&) method.\n"
-               << "minimum_neurons(" << new_minimum_neurons << ") must be less than maximum_neurons(" << maximum_neurons << ").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     minimum_neurons = new_minimum_neurons;
 }
 
 
-/// Sets the number of times that each different neural network is to be trained.
-/// @param new_trials_number Number of assays for each set of parameters.
-
 void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_trials_number <= 0)
-    {
-        ostringstream buffer;
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_trials_number(const Index&) method.\n"
-               << "Number of assays must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     trials_number = new_trials_number;
 }
 
-
-/// Sets a new display value.
-/// If it is set to true messages from this class are displayed on the screen;
-/// if it is set to false messages from this class are not displayed on the screen.
-/// @param new_display Display value.
 
 void NeuronsSelection::set_display(const bool& new_display)
 {
@@ -274,80 +142,23 @@ void NeuronsSelection::set_display(const bool& new_display)
 }
 
 
-/// Sets the selection error goal for the neurons selection algorithm.
-/// @param new_selection_error_goal Goal of the selection error.
-
 void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_selection_error_goal < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_selection_error_goal(const type&) method.\n"
-               << "Selection loss goal must be greater or equal than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     selection_error_goal = new_selection_error_goal;
 }
 
 
-/// Sets the maximum epochs number for the neurons selection algorithm.
-/// @param new_maximum_epochs_number Maximum number of epochs.
-
 void NeuronsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_epochs_number <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_epochs_number(const Index&) method.\n"
-               << "Maximum epochs number must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     maximum_epochs_number = new_maximum_epochs_number;
 }
 
 
-/// Sets the maximum time for the neurons selection algorithm.
-/// @param new_maximum_time Maximum time for the algorithm.
-
 void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef OPENNN_DEBUG
-
-    if(new_maximum_time < 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_time(const type&) method.\n"
-               << "Maximum time must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-#endif
-
     maximum_time = new_maximum_time;
 }
 
-
-/// Return a string with the stopping condition of the training depending on the training method.
-/// @param results Results of the perform_training method.
 
 string NeuronsSelection::write_stopping_condition(const TrainingResults& results) const
 {
@@ -355,15 +166,11 @@ string NeuronsSelection::write_stopping_condition(const TrainingResults& results
 }
 
 
-/// Delete the history of the selection error values.
-
 void NeuronsSelection::delete_selection_history()
 {
     selection_error_history.resize(0);
 }
 
-
-/// Delete the history of the loss values.
 
 void NeuronsSelection::delete_training_error_history()
 {
@@ -371,144 +178,111 @@ void NeuronsSelection::delete_training_error_history()
 }
 
 
-/// Checks that the different pointers needed for performing the neurons selection are not nullptr.
-
 void NeuronsSelection::check() const
 {
     // Optimization algorithm
 
     ostringstream buffer;
 
-    if(!training_strategy_pointer)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to training strategy is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
+    if(!training_strategy)
+        throw runtime_error("Pointer to training strategy is nullptr.\n");
 
     // Loss index
 
-    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    const LossIndex* loss_index = training_strategy->get_loss_index();
 
-    if(!loss_index_pointer)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to loss index is nullptr.\n";
-
-        throw invalid_argument(buffer.str());
-    }
+    if(!loss_index)
+        throw runtime_error("Pointer to loss index is nullptr.\n");
 
     // Neural network
 
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(!neural_network_pointer)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to neural network is nullptr.\n";
+    if(!neural_network)
+        throw runtime_error("Pointer to neural network is nullptr.\n");
 
-        throw invalid_argument(buffer.str());
-    }
+    if(neural_network->is_empty())
+        throw runtime_error("Multilayer Perceptron is empty.\n");
 
-    if(neural_network_pointer->is_empty())
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Multilayer Perceptron is empty.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(neural_network_pointer->get_layers_number() == 1)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Number of layers in neural network must be greater than 1.\n";
-
-        throw invalid_argument(buffer.str());
-    }
+    if(neural_network->get_layers_number() == 1)
+        throw runtime_error("Number of layers in neural network must be greater than 1.\n");
 
     // Data set
 
-    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+    const DataSet* data_set = loss_index->get_data_set();
 
-    if(!data_set_pointer)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Pointer to data set is nullptr.\n";
+    if(!data_set)
+        throw runtime_error("Pointer to data set is nullptr.\n");
 
-        throw invalid_argument(buffer.str());
-    }
-
-    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
     if(selection_samples_number == 0)
-    {
-        buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void check() const method.\n"
-               << "Number of selection samples is zero.\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw runtime_error("Number of selection samples is zero.\n");
 }
 
 
-/// Writes the time from seconds in format HH:mm:ss.
-
 string NeuronsSelection::write_time(const type& time) const
 {
-#ifdef OPENNN_DEBUG
-
-    if(time > static_cast<type>(3600e5))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be lower than 10e5 seconds.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    if(time < static_cast<type>(0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_time(const type& time) const method.\n"
-               << "Time must be greater than 0.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-#endif
-
-    const int hours = static_cast<int>(time) / 3600;
-    int seconds = static_cast<int>(time) % 3600;
+    const int hours = int(time) / 3600;
+    int seconds = int(time) % 3600;
     const int minutes = seconds / 60;
     seconds = seconds % 60;
 
     ostringstream elapsed_time;
 
-    elapsed_time << setfill('0') << setw(2) << hours << ":"
-                 << setfill('0') << setw(2) << minutes << ":"
-                 << setfill('0') << setw(2) << seconds << endl;
-
+    elapsed_time << setfill('0')  << setw(2) 
+                 << hours << ":"
+                 << minutes << ":"
+                 << seconds << endl;
+    
     return elapsed_time.str();
 }
 
 
-/// Return a string with the stopping condition of the Results
+NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
+{
+    neurons_number_history.resize(maximum_epochs_number);
+    neurons_number_history.setConstant(0);
+
+    training_error_history.resize(maximum_epochs_number);
+    training_error_history.setConstant(type(-1));
+
+    selection_error_history.resize(maximum_epochs_number);
+    selection_error_history.setConstant(type(-1));
+
+    optimum_training_error = numeric_limits<type>::max();
+    optimum_selection_error = numeric_limits<type>::max();
+}
+
+
+void NeuronsSelectionResults::resize_history(const Index& new_size)
+{
+    const Index old_size = neurons_number_history.size();
+
+    const Tensor<Index, 1> old_neurons_number_history(neurons_number_history);
+    const Tensor<type, 1> old_training_error_history(training_error_history);
+    const Tensor<type, 1> old_selection_error_history(selection_error_history);
+
+    neurons_number_history.resize(new_size);
+    training_error_history.resize(new_size);
+    selection_error_history.resize(new_size);
+
+    const Index copy_size = min(old_size, new_size);
+
+    for(Index i = 0; i < copy_size; i++)
+    {
+        neurons_number_history(i) = old_neurons_number_history(i);
+        training_error_history(i) = old_training_error_history(i);
+        selection_error_history(i) = old_selection_error_history(i);
+    }
+}
+
 
 string NeuronsSelectionResults::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
-    case NeuronsSelection::StoppingCondition::MaximumTime:
+        case NeuronsSelection::StoppingCondition::MaximumTime:
             return "MaximumTime";
 
         case NeuronsSelection::StoppingCondition::SelectionErrorGoal:
@@ -531,7 +305,7 @@ string NeuronsSelectionResults::write_stopping_condition() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -9,50 +9,24 @@
 #ifndef WEIGHTEDSQUAREDERROR_H
 #define WEIGHTEDSQUAREDERROR_H
 
-// System includes
 
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <math.h>
-
-// OpenNN includes
-
-#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 
 namespace opennn
 {
 
-/// This class represents the weighted squared error term.
-
-///
-/// The weighted squared error measures the difference between the outputs from a neural network and the targets in a data set.
-/// This functional is used in data modeling problems, such as function regression, 
-/// classification and time series prediction.
-
 class WeightedSquaredError : public LossIndex
 {
 
 public:
 
-   // Constructors
-
-   explicit WeightedSquaredError();
-
-   explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
-
-   // Get methods
+   explicit WeightedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    type get_positives_weight() const;
    type get_negatives_weight() const;
 
    type get_normalizaton_coefficient() const;
-
-   // Set methods
 
    void set_default();
 
@@ -63,64 +37,56 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient() override;
+   void set_normalization_coefficient() final;
 
-   void set_data_set_pointer(DataSet*) final;
+   void set_data_set(DataSet*) final;
 
-   type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
-
-   string get_error_type() const final;
+   string get_loss_method() const final;
 
    string get_error_type_text() const final;
 
    // Back propagation
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+   void calculate_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+   void calculate_output_delta(const Batch&,
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
    // Back propagation LM
 
-   void calculate_squared_errors_lm(const DataSetBatch&,
-                                    const NeuralNetworkForwardPropagation&,
-                                    LossIndexBackPropagationLM&) const final;
+   void calculate_squared_errors_lm(const Batch&,
+                                    const ForwardPropagation&,
+                                    BackPropagationLM&) const final;
 
-   void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+   void calculate_error_lm(const Batch&,
+                           const ForwardPropagation&,
+                           BackPropagationLM&) const final;
 
-   void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+   void calculate_error_gradient_lm(const Batch&,
+                                    BackPropagationLM&) const final;
 
-   void calculate_error_hessian_lm(const DataSetBatch&,
-                                           LossIndexBackPropagationLM&) const final;
+   void calculate_error_hessian_lm(const Batch&,
+                                   BackPropagationLM&) const final;
 
-   // Serialization methods
+   // Serialization
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 private:
 
-   /// Weight for the positives for the calculation of the error.
-
    type positives_weight = type(NAN);
 
-   /// Weight for the negatives for the calculation of the error.
-
    type negatives_weight = type(NAN);
-
-   /// Coefficient of normalization
 
    type normalization_coefficient;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/weighted_squared_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/weighted_squared_error_cuda.h"
 #endif
 
 };
@@ -131,7 +97,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

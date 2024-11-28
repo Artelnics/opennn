@@ -14,8 +14,8 @@ In particular, it supports \b slicing that consists in taking a set of rows, col
 All the aforementioned operations are handled through the generic DenseBase::operator()(const RowIndices&, const ColIndices&) method.
 Each argument can be:
   - An integer indexing a single row or column, including symbolic indices.
-  - The symbol Eigen::all representing the whole set of respective rows or columns in increasing order.
-  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::lastN functions.
+  - The symbol Eigen::placeholders::all representing the whole set of respective rows or columns in increasing order.
+  - An ArithmeticSequence as constructed by the Eigen::seq, Eigen::seqN, or Eigen::placeholders::lastN functions.
   - Any 1D vector/array of integers including %Eigen's vector/array, expressions, std::vector, std::array, as well as plain C arrays: `int[N]`.
 
 More generally, it can accepts any object exposing the following two member functions:
@@ -72,12 +72,12 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
 </tr>
 <tr>
   <td>%Block starting at \c i,j having \c m rows, and \c n columns</td>
-  <td>\code A(seqN(i,m), seqN(i,n) \endcode</td>
+  <td>\code A(seqN(i,m), seqN(j,n)) \endcode</td>
   <td>\code A.block(i,j,m,n) \endcode</td>
 </tr>
 <tr>
   <td>%Block starting at \c i0,j0 and ending at \c i1,j1</td>
-  <td>\code A(seq(i0,i1), seq(j0,j1) \endcode</td>
+  <td>\code A(seq(i0,i1), seq(j0,j1)) \endcode</td>
   <td>\code A.block(i0,j0,i1-i0+1,j1-j0+1) \endcode</td>
 </tr>
 <tr>
@@ -86,18 +86,18 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
   <td></td>
 </tr>
 <tr>
-  <td>First \c n odd rows A</td>
+  <td>First \c n odd rows of A</td>
   <td>\code A(seqN(1,n,2), all) \endcode</td>
   <td></td>
 </tr>
 <tr>
-  <td>The last past one column</td>
+  <td>The second-last column</td>
   <td>\code A(all, last-1) \endcode</td>
   <td>\code A.col(A.cols()-2) \endcode</td>
 </tr>
 <tr>
   <td>The middle row</td>
-  <td>\code A(last/2,all) \endcode</td>
+  <td>\code A(last/2, all) \endcode</td>
   <td>\code A.row((A.rows()-1)/2) \endcode</td>
 </tr>
 <tr>
@@ -112,9 +112,10 @@ Here are some examples for a 2D array/matrix \c A and a 1D array/vector \c v.
 </tr>
 </table>
 
-As seen in the last exemple, referencing the <i> last n </i> elements (or rows/columns) is a bit cumbersome to write.
+As seen in the last example, referencing the <i> last n </i> elements (or rows/columns) is a bit cumbersome to write.
 This becomes even more tricky and error prone with a non-default increment.
-Here comes \link Eigen::lastN(SizeType) Eigen::lastN(size) \endlink, and \link Eigen::lastN(SizeType,IncrType) Eigen::lastN(size,incr) \endlink:
+Here comes \link Eigen::placeholders::lastN(SizeType) Eigen::placeholders::lastN(size) \endlink, and
+\link Eigen::placeholders::lastN(SizeType,IncrType) Eigen::placeholders::lastN(size,incr) \endlink:
 
 <table class="manual">
 <tr>
@@ -129,12 +130,12 @@ Here comes \link Eigen::lastN(SizeType) Eigen::lastN(size) \endlink, and \link E
 </tr>
 <tr>
   <td>Bottom-right corner of A of size \c m times \c n</td>
-  <td>\code v(lastN(m), lastN(n)) \endcode</td>
+  <td>\code A(lastN(m), lastN(n)) \endcode</td>
   <td>\code A.bottomRightCorner(m,n) \endcode</td>
 </tr>
 <tr>
   <td>Bottom-right corner of A of size \c m times \c n</td>
-  <td>\code v(lastN(m), lastN(n)) \endcode</td>
+  <td>\code A(lastN(m), lastN(n)) \endcode</td>
   <td>\code A.bottomRightCorner(m,n) \endcode</td>
 </tr>
 <tr>
@@ -157,7 +158,7 @@ It is equivalent to:
 \endcode
 
 We can revisit the <i>even columns of A</i> example as follows:
-\code A(all, seq(0,last,fix<2>))
+\code A(all, seq(fix<0>,last,fix<2>))
 \endcode
 
 
@@ -221,7 +222,7 @@ i = ind[i];
 \endcode
 
 This means you can easily build your own fancy sequence generator and pass it to `operator()`.
-Here is an exemple enlarging a given matrix while padding the additional first rows and columns through repetition:
+Here is an example enlarging a given matrix while padding the additional first rows and columns through repetition:
 
 <table class="example">
 <tr><th>Example:</th><th>Output:</th></tr>

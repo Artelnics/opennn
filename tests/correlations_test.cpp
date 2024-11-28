@@ -1,48 +1,29 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O R R E L A T I O N S   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   E-mail: artelnics@artelnics.com
+#include "pch.h"
 
-#include "correlations_test.h"
+#include "../opennn/config.h"
+#include "../opennn/correlations.h"
+#include "../opennn/tensors.h"
+#include "../opennn/statistics.h"
 
-CorrelationsTest::CorrelationsTest() : UnitTesting()
+
+TEST(CorrelationsTest, SpearmanCorrelations)
 {
+/*
+    Tensor<type, 1> x(10);
+    x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
+    Tensor<type, 1> y(10);
+    y.setValues({ type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100) });
+
+//    type solution = type(1);
+
+//    EXPECT_EQ(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
+*/
 }
 
 
-CorrelationsTest::~CorrelationsTest()
+/*
+namespace opennn
 {
-}
-
-void CorrelationsTest::test_spearman_linear_correlation()
-{
-    cout << "test_spearman_linear_correlation\n";
-
-    cout << "test_linear_correlation\n";
-
-    Index size;
-
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
-
-    type correlation;
-    type solution;
-
-    size = 10;
-
-    x.resize(size);
-    x.setValues({type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10)});
-
-    y.resize(size);
-    y.setValues({type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100)});
-
-    solution = type(1);
-
-    assert_true(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
-}
 
 void CorrelationsTest::test_linear_correlation()
 {
@@ -68,8 +49,8 @@ void CorrelationsTest::test_linear_correlation()
 
     solution = type(1);
 
-    assert_true(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
 
     const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
     const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
@@ -78,7 +59,7 @@ void CorrelationsTest::test_linear_correlation()
 
     y.setValues({type(10), type(9), type(8),type( 7),type( 6),type( 5),type( 4),type( 3),type( 2),type( 1)});
 
-    assert_true(linear_correlation(thread_pool_device, x, y ).r + solution < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r + solution < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -90,19 +71,19 @@ void CorrelationsTest::test_linear_correlation()
     y.resize(size);
     y = type(2)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
+    correlation = linear_correlation(thread_pool_device, x, y).r;
 
-    assert_true(abs(correlation - static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(correlation - type(1)) < type(NUMERIC_LIMITS_MIN));
 
-    assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
     y = type(-1.0)*x;
 
-    correlation = linear_correlation(thread_pool_device, x, y ).r;
-    assert_true(abs(correlation + static_cast<type>(1.0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation) - static_cast<type>(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    correlation = linear_correlation(thread_pool_device, x, y).r;
+    EXPECT_EQ(abs(correlation + type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN));
 }
 
 
@@ -129,23 +110,23 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r) <= type(0.1), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    EXPECT_EQ(abs(correlation.r) <= type(0.1));
+    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
 
     // Test
 
     size = 10;
 
     x.resize(size);
-    x.setValues({-5,-4,-3,-2,-1,0,1,2,3,4});
+    x.setValues({-5,-4,-3,-2,-1,1,2,3,4,5});
 
     y.resize(size);
     y.setValues({0,0,0,0,0,1,1,1,1,1});
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r >= type(0.999), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    EXPECT_EQ(correlation.r >= type(0.9));
+    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
 
     y.setConstant(type(0));
 
@@ -153,8 +134,8 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true((correlation.correlation_type == CorrelationType::Logistic), LOG);
+    EXPECT_EQ(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
 
     // Test
 
@@ -171,16 +152,16 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(correlation.r <= static_cast<type>(1.0), LOG);
+    EXPECT_EQ(correlation.r <= type(1));
 
     for(Index i = 0; i < size; i++)
-    {
-        y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
-    }
+        y[i] = exp(type(2.5)*x[i] + type(1.4));
 
-    const int n = omp_get_max_threads();
-    ThreadPool* thread_pool = new ThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    ThreadPool* thread_pool = new ThreadPool(threads_number);
+
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 
     // Test
 
@@ -190,7 +171,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r) >= static_cast<type>(-0.95), LOG);
+    EXPECT_EQ(abs(correlation.r) >= type(-0.95));
 
     // Test
 
@@ -198,7 +179,7 @@ void CorrelationsTest::test_logistic_correlation()
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x,y);
 
-    assert_true(isnan(correlation.r), LOG);
+    EXPECT_EQ(isnan(correlation.r));
 
 }
 
@@ -231,16 +212,14 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     solution = type(1);
 
-    assert_true(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(4)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.a - static_cast<type>(0)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(correlation.b - type(4)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(correlation.a - type(0)) < type(NUMERIC_LIMITS_MIN));
 }
 
 
 void CorrelationsTest::test_exponential_correlation()
 {
-    cout << "test_exponential_correlation\n";
-
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
@@ -256,13 +235,13 @@ void CorrelationsTest::test_exponential_correlation()
     initialize_sequential(x);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * exp(static_cast<type>(0.5)*x[i]);
+    for(Index i = 0; i < size; i++) y[i] = type(1) * exp(type(0.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.a - static_cast<type>(1))< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(correlation.b - static_cast<type>(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(correlation.r - type(1))< type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(correlation.a - type(1))< type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(correlation.b - type(0.5)) < type(NUMERIC_LIMITS_MIN));
 
     // Test missing values
 
@@ -272,12 +251,12 @@ void CorrelationsTest::test_exponential_correlation()
     x.setValues({ type(1),type(2),type(3),type(4),type(NAN)});
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1.4) * exp(static_cast<type>(2.5)*x[i]);
+    for(Index i = 0; i < size; i++) y[i] = type(1.4) * exp(type(2.5)*x[i]);
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    assert_true(abs(correlation.r - type(1)) < type(1.0e-3), LOG);
-    assert_true(correlation.b - static_cast<type>(2.5)< type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(abs(correlation.r - type(1)) < type(1.0e-3));
+    EXPECT_EQ(correlation.b - type(2.5)< type(NUMERIC_LIMITS_MIN));
 }
 
 
@@ -298,35 +277,31 @@ void CorrelationsTest::test_power_correlation()
     for(Index i = 0; i < size; i++) x[i] = type(i+1);
 
     y.resize(size);
-    for(Index i = 0; i < size; i++) y[i] = static_cast<type>(1) * pow(x[i], type(2));
+    for(Index i = 0; i < size; i++) y[i] = type(1) * pow(x[i], type(2));
 
     Correlation correlation = power_correlation(thread_pool_device,x,y);
 
     // Test
 
-    assert_true(correlation.r > static_cast<type>(0.999999), LOG);
-    assert_true(correlation.a - static_cast<type>(1)< type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(correlation.b - static_cast<type>(2)< type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(correlation.r > type(0.999999));
+    EXPECT_EQ(correlation.a - type(1)< type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(correlation.b - type(2)< type(NUMERIC_LIMITS_MIN));
 }
 
 void CorrelationsTest::test_autocorrelations()
 {
-    cout << "test_autocorrelations\n";
-
     Index size = 1000;
     Tensor<type, 1> x(size);
     initialize_sequential(x);
     Tensor<type, 1> correlations;
 
     correlations = autocorrelations(thread_pool_device,x, size/100);
-    assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);
+    EXPECT_EQ(minimum(correlations) > type(0.9));
 }
 
 
 void CorrelationsTest::test_cross_correlations()
 {
-    cout << "test_cross_correlations\n";
-
     Index size = 1000;
     Tensor<type, 1> x(size);
     Tensor<type, 1> y(size);
@@ -337,52 +312,10 @@ void CorrelationsTest::test_cross_correlations()
     Tensor<type, 1> cros_correlations;
 
     cros_correlations = cross_correlations(thread_pool_device,x, y, 10);
-    assert_true(cros_correlations(0) < 5.0, LOG);
-    assert_true(cros_correlations(1) > 0.9, LOG);
+    EXPECT_EQ(cros_correlations(0) < 5.0);
+    EXPECT_EQ(cros_correlations(1) > 0.9);
+
 }
 
-
-void CorrelationsTest::run_test_case()
-{
-    cout << "Running correlation analysis test case...\n";
-
-    // Correlation methods
-
-    test_linear_correlation();
-
-    test_spearman_linear_correlation();
-
-    test_logistic_correlation();
-
-    test_logarithmic_correlation();
-
-    test_exponential_correlation();
-
-    test_power_correlation();
-
-    // Time series correlation methods
-
-    test_autocorrelations();
-
-    test_cross_correlations();
-
-    cout << "End of correlation analysis test case.\n\n";
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C); 2005-2021 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

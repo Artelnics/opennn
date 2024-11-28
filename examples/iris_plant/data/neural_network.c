@@ -1,4 +1,4 @@
-/**
+/*
 Artificial Intelligence Techniques SL	
 artelnics@artelnics.com	
 
@@ -23,7 +23,7 @@ int main(){
 
 
 Inputs Names:
-/**
+/*
 Artificial Intelligence Techniques SL	
 artelnics@artelnics.com	
 
@@ -71,29 +71,31 @@ vector<float> calculate_outputs(const vector<float>& inputs)
 	const float petal_lenght = inputs[2];
 	const float petal_width = inputs[3];
 
-double double double 	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
+	double scaled_sepal_lenght = (sepal_lenght-5.843333244)/0.8280661106;
 	double scaled_sepal_width = (sepal_width-3.057333231)/0.4358662963;
 	double scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247;
 	double scaled_petal_width = (petal_width-1.19933331)/0.762237668;
 
-	double perceptron_layer_1_output_0 = tanh( 0.100419 + (scaled_sepal_lenght*0.0294449) + (scaled_sepal_width*-0.153129) + (scaled_petal_lenght*0.148748) + (scaled_petal_width*0.387044) );
-	double perceptron_layer_1_output_1 = tanh( 0.0908042 + (scaled_sepal_lenght*0.283474) + (scaled_sepal_width*-0.300182) + (scaled_petal_lenght*0.133461) + (scaled_petal_width*0.37122) );
-	double perceptron_layer_1_output_2 = tanh( -0.0502741 + (scaled_sepal_lenght*0.145957) + (scaled_sepal_width*-0.0762085) + (scaled_petal_lenght*0.0320756) + (scaled_petal_width*0.175429) );
+	double perceptron_layer_1_output_0 = tanh( -5.60777 + (scaled_sepal_lenght*-0.685954) + (scaled_sepal_width*-0.598833) + (scaled_petal_lenght*6.30155) + (scaled_petal_width*2.63061) );
+	double perceptron_layer_1_output_1 = tanh( 0.976856 + (scaled_sepal_lenght*0.555019) + (scaled_sepal_width*-0.567254) + (scaled_petal_lenght*1.06559) + (scaled_petal_width*1.11434) );
+	double perceptron_layer_1_output_2 = tanh( -4.83908 + (scaled_sepal_lenght*-0.476799) + (scaled_sepal_width*-0.587606) + (scaled_petal_lenght*5.13233) + (scaled_petal_width*2.50134) );
+	double perceptron_layer_1_output_3 = tanh( 1.19863 + (scaled_sepal_lenght*1.02613) + (scaled_sepal_width*-0.362308) + (scaled_petal_lenght*0.995916) + (scaled_petal_width*1.17586) );
+	double perceptron_layer_1_output_4 = tanh( 1.22938 + (scaled_sepal_lenght*0.176014) + (scaled_sepal_width*-0.339203) + (scaled_petal_lenght*1.3905) + (scaled_petal_width*1.44477) );
 
-	double probabilistic_layer_combinations_0 = -0.0464519 +0.0948961*perceptron_layer_1_output_0 +0.0304029*perceptron_layer_1_output_1 -0.119937*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_1 = 0.240458 +0.175408*perceptron_layer_1_output_0 -0.197369*perceptron_layer_1_output_1 +0.181568*perceptron_layer_1_output_2 ;
-	double probabilistic_layer_combinations_2 = -0.197357 +0.124013*perceptron_layer_1_output_0 +0.329514*perceptron_layer_1_output_1 +0.15323*perceptron_layer_1_output_2 ;
+	double probabilistic_layer_combinations_0 = 3.28519 -1.49936*perceptron_layer_1_output_0 -0.708341*perceptron_layer_1_output_1 -0.00310124*perceptron_layer_1_output_2 -2.21698*perceptron_layer_1_output_3 -0.780115*perceptron_layer_1_output_4 ;
+	double probabilistic_layer_combinations_1 = -1.26361 -5.48409*perceptron_layer_1_output_0 +1.91626*perceptron_layer_1_output_1 -3.5194*perceptron_layer_1_output_2 +3.13697*perceptron_layer_1_output_3 +2.88783*perceptron_layer_1_output_4 ;
+	double probabilistic_layer_combinations_2 = 1.60921 +5.78282*perceptron_layer_1_output_0 +1.64901*perceptron_layer_1_output_1 +4.23274*perceptron_layer_1_output_2 +1.3884*perceptron_layer_1_output_3 +1.25327*perceptron_layer_1_output_4 ;
 
 	double sum = exp(probabilistic_layer_combinations_0) + exp(probabilistic_layer_combinations_1) + exp(probabilistic_layer_combinations_2);
 
-	iris_setosa = exp(probabilistic_layer_combinations_0)/sum;
-	iris_versicolor = exp(probabilistic_layer_combinations_1)/sum;
-	iris_virginica = exp(probabilistic_layer_combinations_2)/sum;
+	double iri_s_setosa = exp(probabilistic_layer_combinations_0)/sum;
+	double iri_s_versicolo_r = exp(probabilistic_layer_combinations_1)/sum;
+	double iri_s_virgin_ica = exp(probabilistic_layer_combinations_2)/sum;
 
 	vector<float> out(3);
-	out[0] = iris_setosa;
-	out[1] = iris_versicolor;
-	out[2] = iris_virginica;
+	out[0] = iri_s_setosa;
+	out[1] = iri_s_versicolo_r;
+	out[2] = iri_s_virgin_ica;
 
 	return out;
 }

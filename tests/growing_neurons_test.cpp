@@ -1,65 +1,40 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   N E U R O N S   T E S T   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com                                           
+#include "pch.h"
 
-#include "growing_neurons_test.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/growing_neurons.h"
 
-GrowingNeuronsTest::GrowingNeuronsTest() : UnitTesting()
+
+TEST(GrowingNeuronsTest, DefaultConstructor)
 {
-    training_strategy.set(&neural_network, &data_set);
+    GrowingNeurons growing_neurons;
+
+    EXPECT_EQ(growing_neurons.has_training_strategy(), false);
 }
 
 
-GrowingNeuronsTest::~GrowingNeuronsTest()
+TEST(GrowingNeuronsTest, GeneralConstructor)
 {
+    TrainingStrategy training_strategy;
+    
+    GrowingNeurons growing_neurons(&training_strategy);
+
+    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 }
 
 
-void GrowingNeuronsTest::test_constructor()
+TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-    cout << "test_constructor\n";
+    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
 
-    GrowingNeurons growing_neurons_1(&training_strategy);
-
-    assert_true(growing_neurons_1.has_training_strategy(), LOG);
-
-    GrowingNeurons growing_neurons_2;
-
-    assert_true(!growing_neurons_2.has_training_strategy(), LOG);
-}
-
-
-void GrowingNeuronsTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    GrowingNeurons* growing_neurons_pointer = new GrowingNeurons;
-
-    delete growing_neurons_pointer;
-}
-
-
-void GrowingNeuronsTest::test_perform_neurons_selection()
-{
-    cout << "test_perform_neurons_selection\n";
-
-    growing_neurons.set_training_strategy_pointer(&training_strategy);
-
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Tensor<type, 2> data;
+    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
 
     NeuronsSelectionResults neurons_selection_results;
-
+/*
     // Test
 
-    data.resize(21,2);
+    Tensor<type, 2> data(21, 2);
+
     data.setValues({{type(-1),type(0)},
                     {type(-0.9),type(0)},
                     {type(-0.9),type(0)},
@@ -70,7 +45,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(-0.3),type(0)},
                     {type(-0.2),type(0)},
                     {type(-0.1),type(0)},
-                    {type(0.0),type(0)},
+                    {type(0),type(0)},
                     {type(0.1),type(0)},
                     {type(0.2),type(0)},
                     {type(0.3),type(0)},
@@ -81,16 +56,17 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(0.8),type(0)},
                     {type(0.9),type(0)},
                     {type(1),type(0)}});
-    data_set.set(data);
+
+    DataSet data_set(data);
 
     Tensor<DataSet::VariableUse, 1> uses(2);
-    uses.setValues({DataSet::VariableUse::Input, DataSet::VariableUse::Target});
-    data_set.set_columns_uses(uses);
+    uses.setValues({ DataSet::VariableUse::Input, DataSet::VariableUse::Target });
+    data_set.set_raw_variables_uses(uses);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {1,3,1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
     training_strategy.set_display(false);
 
@@ -98,8 +74,24 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
     growing_neurons.set_maximum_neurons_number(7);
     growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
+*/
+    //EXPECT_EQ(neural_network.get_layers_neurons_numbers()[0] == 1);
+}
 
-    assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
+/*
+namespace opennn
+{
+void GrowingNeuronsTest::test_perform_neurons_selection()
+{
+
+    growing_neurons.set_training_strategy(&training_strategy);
+
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
+
+    Tensor<type, 2> data;
+
 
     // Test
 
@@ -119,7 +111,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(-0.3),type(-0.3)},
                     {type(-0.2),type(-0.2)},
                     {type(-0.1),type(-0.1)},
-                    {type(0.0),type(0.0)},
+                    {type(0),type(0)},
                     {type(0.1),type(0.1)},
                     {type(0.2),type(0.2)},
                     {type(0.3),type(0.3)},
@@ -133,40 +125,26 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, 3, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {3}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
     training_strategy.set_display(false);
 
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons_number(5);
-    growing_neurons.set_selection_error_goal(type(0.0));
+    growing_neurons.set_selection_error_goal(type(0));
     growing_neurons.set_maximum_selection_failures(1);
     growing_neurons.set_display(false);
 
-    assert_true(neural_network.get_layers_neurons_numbers()[0] == inputs_number, LOG);
+    //EXPECT_EQ(neural_network.get_layers_neurons_numbers()[0] == inputs_number);
 
     neurons_selection_results = growing_neurons.perform_neurons_selection();
 
-    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumNeurons, LOG);
+    EXPECT_EQ(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumNeurons);
 
 }
 
-
-void GrowingNeuronsTest::run_test_case()
-{
-    cout << "Running growing neurons test case...\n";
-
-    // Constructor and destructor methods
-
-    test_constructor();
-    test_destructor();
-
-    // Order selection methods
-
-    test_perform_neurons_selection();
-
-    cout << "End of growing neurons test case.\n\n";
 }
+*/

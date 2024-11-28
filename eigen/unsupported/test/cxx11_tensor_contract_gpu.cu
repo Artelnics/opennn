@@ -22,23 +22,18 @@
 using Eigen::Tensor;
 typedef Tensor<float, 1>::DimensionPair DimPair;
 
-template<int DataLayout>
-void test_gpu_contraction(int m_size, int k_size, int n_size)
-{
-  std::cout << "Testing for (" << m_size << "," << k_size << "," << n_size << ")" << std::endl;
-  // with these dimensions, the output has 300 * 140 elements, which is
-  // more than 30 * 1024, which is the number of threads in blocks on
-  // a 15 SM GK110 GPU
+template <int DataLayout>
+void test_gpu_contraction(int m_size, int k_size, int n_size) {
   Tensor<float, 2, DataLayout> t_left(m_size, k_size);
   Tensor<float, 2, DataLayout> t_right(k_size, n_size);
   Tensor<float, 2, DataLayout> t_result(m_size, n_size);
   Tensor<float, 2, DataLayout> t_result_gpu(m_size, n_size);
-  Eigen::array<DimPair, 1> dims(DimPair(1, 0));
+  Eigen::array<DimPair, 1> dims{DimPair(1, 0)};
 
   t_left.setRandom();
   t_right.setRandom();
 
-  std::size_t t_left_bytes = t_left.size()  * sizeof(float);
+  std::size_t t_left_bytes = t_left.size() * sizeof(float);
   std::size_t t_right_bytes = t_right.size() * sizeof(float);
   std::size_t t_result_bytes = t_result.size() * sizeof(float);
 
@@ -56,13 +51,9 @@ void test_gpu_contraction(int m_size, int k_size, int n_size)
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> >
-      gpu_t_left(d_t_left, Eigen::array<int, 2>(m_size, k_size));
-  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> >
-      gpu_t_right(d_t_right, Eigen::array<int, 2>(k_size, n_size));
-  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> >
-      gpu_t_result(d_t_result, Eigen::array<int, 2>(m_size, n_size));
-
+  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_t_left(d_t_left, Eigen::array<int, 2>{m_size, k_size});
+  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_t_right(d_t_right, Eigen::array<int, 2>{k_size, n_size});
+  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_t_result(d_t_result, Eigen::array<int, 2>{m_size, n_size});
 
   gpu_t_result.device(gpu_device) = gpu_t_left.contract(gpu_t_right, dims);
   t_result = t_left.contract(t_right, dims);
@@ -75,8 +66,7 @@ void test_gpu_contraction(int m_size, int k_size, int n_size)
     if (Eigen::internal::isApprox(t_result(i), t_result_gpu(i), 1e-4f)) {
       continue;
     }
-    std::cout << "mismatch detected at index " << i << ": " << t_result(i)
-              << " vs " <<  t_result_gpu(i) << std::endl;
+    std::cout << "mismatch detected at index " << i << ": " << t_result(i) << " vs " << t_result_gpu(i) << std::endl;
     assert(false);
   }
 
@@ -85,10 +75,8 @@ void test_gpu_contraction(int m_size, int k_size, int n_size)
   gpuFree((void*)d_t_result);
 }
 
-
-template<int DataLayout>
-void test_scalar(int m_size, int k_size, int n_size)
-{
+template <int DataLayout>
+void test_scalar(int m_size, int k_size, int n_size) {
   std::cout << "Testing for (" << m_size << "," << k_size << "," << n_size << ")" << std::endl;
   // with these dimensions, the output has 300 * 140 elements, which is
   // more than 30 * 1024, which is the number of threads in blocks on
@@ -97,12 +85,12 @@ void test_scalar(int m_size, int k_size, int n_size)
   Tensor<float, 2, DataLayout> t_right(k_size, n_size);
   Tensor<float, 0, DataLayout> t_result;
   Tensor<float, 0, DataLayout> t_result_gpu;
-  Eigen::array<DimPair, 2> dims(DimPair(0, 0), DimPair(1, 1));
+  Eigen::array<DimPair, 2> dims{DimPair(0, 0), DimPair(1, 1)};
 
   t_left.setRandom();
   t_right.setRandom();
 
-  std::size_t t_left_bytes = t_left.size()  * sizeof(float);
+  std::size_t t_left_bytes = t_left.size() * sizeof(float);
   std::size_t t_right_bytes = t_right.size() * sizeof(float);
   std::size_t t_result_bytes = sizeof(float);
 
@@ -120,21 +108,16 @@ void test_scalar(int m_size, int k_size, int n_size)
   Eigen::GpuStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> >
-      gpu_t_left(d_t_left, m_size, k_size);
-  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> >
-      gpu_t_right(d_t_right, k_size, n_size);
-  Eigen::TensorMap<Eigen::Tensor<float, 0, DataLayout> >
-      gpu_t_result(d_t_result);
+  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_t_left(d_t_left, m_size, k_size);
+  Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_t_right(d_t_right, k_size, n_size);
+  Eigen::TensorMap<Eigen::Tensor<float, 0, DataLayout> > gpu_t_result(d_t_result);
 
   gpu_t_result.device(gpu_device) = gpu_t_left.contract(gpu_t_right, dims);
   t_result = t_left.contract(t_right, dims);
 
   gpuMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, gpuMemcpyDeviceToHost);
-  if (fabs(t_result() - t_result_gpu()) > 1e-4f &&
-      !Eigen::internal::isApprox(t_result(), t_result_gpu(), 1e-4f)) {
-    std::cout << "mismatch detected: " << t_result()
-              << " vs " <<  t_result_gpu() << std::endl;
+  if (fabs(t_result() - t_result_gpu()) > 1e-4f && !Eigen::internal::isApprox(t_result(), t_result_gpu(), 1e-4f)) {
+    std::cout << "mismatch detected: " << t_result() << " vs " << t_result_gpu() << std::endl;
     assert(false);
   }
 
@@ -143,8 +126,7 @@ void test_scalar(int m_size, int k_size, int n_size)
   gpuFree((void*)d_t_result);
 }
 
-
-template<int DataLayout>
+template <int DataLayout>
 void test_gpu_contraction_m() {
   for (int k = 32; k < 256; k++) {
     test_gpu_contraction<ColMajor>(k, 128, 128);
@@ -152,7 +134,7 @@ void test_gpu_contraction_m() {
   }
 }
 
-template<int DataLayout>
+template <int DataLayout>
 void test_gpu_contraction_k() {
   for (int k = 32; k < 256; k++) {
     test_gpu_contraction<ColMajor>(128, k, 128);
@@ -160,7 +142,7 @@ void test_gpu_contraction_k() {
   }
 }
 
-template<int DataLayout>
+template <int DataLayout>
 void test_gpu_contraction_n() {
   for (int k = 32; k < 256; k++) {
     test_gpu_contraction<ColMajor>(128, 128, k);
@@ -168,33 +150,45 @@ void test_gpu_contraction_n() {
   }
 }
 
-
-template<int DataLayout>
+template <int DataLayout>
 void test_gpu_contraction_sizes() {
-  int m_sizes[] = { 31,  39,   63,   64,   65,
-                   127, 129,  255,  257 , 511,
-                   512, 513, 1023, 1024, 1025};
+  int m_sizes[3][5] = {{31, 39, 63, 64, 65}, {127, 129, 255, 257, 511}, {512, 513, 1023, 1024, 1025}};
 
-  int n_sizes[] = { 31,  39,   63,   64,   65,
-                   127, 129,  255,  257,  511,
-                   512, 513, 1023, 1024, 1025};
+  int n_sizes[3][5] = {{31, 39, 63, 64, 65}, {127, 129, 255, 257, 511}, {512, 513, 1023, 1024, 1025}};
 
-  int k_sizes[] = {  31,   39,  63,  64,   65,
-                     95,   96, 127, 129,  255,
-                    257,  511, 512, 513, 1023,
-                   1024, 1025};
+  int k_sizes[3][6] = {{31, 39, 63, 64, 65, 95}, {96, 127, 129, 255, 257, 511}, {512, 513, 725, 1023, 1024, 1025}};
 
-  for (int i = 0; i < 15; i++) {
-    for (int j = 0; j < 15; j++) {
-      for (int k = 0; k < 17; k++) {
-        test_gpu_contraction<DataLayout>(m_sizes[i], n_sizes[j], k_sizes[k]);
+  // Some selection of specific cases.
+  //  - m changes rows each iteration
+  //  - n changes rows each 3 iterations
+  //  - k changes rows each 9 iterations
+  //  - within a row, advance once column each iteration
+  const int m_cols = 5;
+  const int n_cols = 5;
+  const int k_cols = 6;
+  int m_offset = 0;
+  int n_offset = 1;
+  int k_offset = 2;
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int l = 0; l < 3; ++l) {
+        int m = m_sizes[l][m_offset];
+        int n = n_sizes[j][n_offset];
+        int k = k_sizes[i][k_offset];
+        test_gpu_contraction<DataLayout>(m, n, k);
+        n_offset = (n_offset + 1) % n_cols;
+        k_offset = (k_offset + 1) % k_cols;
+      }
+      m_offset = (m_offset + 1) % m_cols;
+      if (j < 2) {
+        n_offset = (n_offset + n_cols - 3) % n_cols;  // Rewind 3.
       }
     }
+    k_offset = (k_offset + 2 * k_cols - 9) % k_cols;  // Rewind 9.
   }
 }
 
-EIGEN_DECLARE_TEST(cxx11_tensor_contract_gpu)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_contract_gpu) {
   CALL_SUBTEST_1(test_gpu_contraction<ColMajor>(128, 128, 128));
   CALL_SUBTEST_1(test_gpu_contraction<RowMajor>(128, 128, 128));
 
@@ -211,8 +205,8 @@ EIGEN_DECLARE_TEST(cxx11_tensor_contract_gpu)
   CALL_SUBTEST_7(test_gpu_contraction_n<RowMajor>());
 
 #if !defined(EIGEN_USE_HIP)
-// disable these subtests for HIP
+  // disable these subtests for HIP
   CALL_SUBTEST_8(test_gpu_contraction_sizes<ColMajor>());
   CALL_SUBTEST_9(test_gpu_contraction_sizes<RowMajor>());
-#endif	
+#endif
 }

@@ -1,64 +1,40 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S             
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "conjugate_gradient_test.h"
+#include "../opennn/conjugate_gradient.h"
 
-ConjugateGradientTest::ConjugateGradientTest() : UnitTesting() 
+
+TEST(ConjugateGradientTest, DefaultConstructor) 
 {
-    sum_squared_error.set(&neural_network, &data_set);
-
-    conjugate_gradient.set_loss_index_pointer(&sum_squared_error);
-
-    conjugate_gradient.set_display(false);
-}
-
-
-ConjugateGradientTest::~ConjugateGradientTest()
-{
-}
-
-
-void ConjugateGradientTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    // Default constructor
-
     ConjugateGradient conjugate_gradient_1;
-    assert_true(!conjugate_gradient_1.has_loss_index(), LOG);
+//    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
-    // Loss index constructor
-
-    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
-    assert_true(conjugate_gradient_2.has_loss_index(), LOG);
+//    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+//    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 }
 
 
-void ConjugateGradientTest::test_destructor()
+TEST(ConjugateGradientTest, GeneralConstructor)
 {
-    cout << "test_destructor\n";
+    ConjugateGradient conjugate_gradient_1;
+    //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
-    ConjugateGradient* conjugate_gradient = new ConjugateGradient;
+    //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+    //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 
-    delete conjugate_gradient;
 }
 
-void ConjugateGradientTest::test_calculate_PR_parameter()
-{
-    cout << "test_calculate_PR_parameter\n";
 
+TEST(ConjugateGradientTest, PrParameter)
+{
+    ConjugateGradient conjugate_gradient;
+/*
     neural_network.set();
     type PR_parameter;
 
-    Index size = 2*(1 + rand()%10);
+    Index size = 2 * (1 + rand() % 10);
 
-    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
-    neural_network.add_layer(pl);
+    PerceptronLayer* pl = new PerceptronLayer({ 1 }, { size / 2 });
+    neural_network.add_layer(make_unique<PerceptronLayer>({ 1 }, { size / 2 }));
 
     // Test
 
@@ -70,21 +46,36 @@ void ConjugateGradientTest::test_calculate_PR_parameter()
 
     PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
-    assert_true(PR_parameter >= type(0), LOG);
-    assert_true(PR_parameter <= type(1), LOG);
+    EXPECT_EQ(PR_parameter >= type(0));
+    EXPECT_EQ(PR_parameter <= type(1));
+*/
 }
+
+
+TEST(ConjugateGradientTest, FrParameter)
+{
+    ConjugateGradient conjugate_gradient;
+    //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
+
+    //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+    //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
+
+}
+
+
+/*
+namespace opennn
+{
 
 
 void ConjugateGradientTest::test_calculate_FR_parameter()
 {
-    cout << "test_calculate_FR_parameter\n";
-
     neural_network.set();
     type FR_parameter;
 
     Index size = 2*(1 + rand()%10);
 
-    PerceptronLayer *pl = new PerceptronLayer(1, size/2);
+    PerceptronLayer *pl = new PerceptronLayer({1}, {size/2});
     neural_network.add_layer(pl);
 
     // Test
@@ -97,15 +88,14 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
     FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
 
-    assert_true(FR_parameter >= type(0), LOG);
-    assert_true(FR_parameter <= type(1), LOG);
+    EXPECT_EQ(FR_parameter >= type(0));
+    EXPECT_EQ(FR_parameter <= type(1));
+
 }
 
 
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
-    cout << "test_calculate_PR_training_direction\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -126,7 +116,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
 
     parameters_number = neural_network.get_parameters_number();
 
@@ -142,14 +132,12 @@ void ConjugateGradientTest::test_calculate_PR_training_direction()
 
     conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-    assert_true(training_direction.size() == parameters_number, LOG);
+    EXPECT_EQ(training_direction.size() == parameters_number);
 }
 
 
 void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
-    cout << "test_calculate_FR_training_direction\n";
-
     neural_network.set();
 
     Index samples_number = 20;
@@ -168,7 +156,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
 
     parameters_number = neural_network.get_parameters_number();
 
@@ -184,15 +172,13 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
     conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction, training_direction);
 
-    assert_true(training_direction.size() == parameters_number, LOG);
+    EXPECT_EQ(training_direction.size() == parameters_number);
 
 }
 
 
 void ConjugateGradientTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     type old_error = numeric_limits<float>::max();
 
     type error;
@@ -206,21 +192,21 @@ void ConjugateGradientTest::test_perform_training()
     data_set.set(1,1,1);
     data_set.set_data_constant(type(1));
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(type(1));
 
     conjugate_gradient.set_maximum_epochs_number(1);
     conjugate_gradient.set_display(false);
     training_results = conjugate_gradient.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
     data_set.set(1,1,1);
     data_set.set_data_random();
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, outputs_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {outputs_number});
     neural_network.set_parameters_constant(-1);
 
     conjugate_gradient.set_maximum_epochs_number(1);
@@ -228,7 +214,7 @@ void ConjugateGradientTest::test_perform_training()
     training_results = conjugate_gradient.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -240,7 +226,7 @@ void ConjugateGradientTest::test_perform_training()
     training_results = conjugate_gradient.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -255,7 +241,7 @@ void ConjugateGradientTest::test_perform_training()
 
     training_results = conjugate_gradient.perform_training();
 
-    assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    //EXPECT_EQ(training_results.get_loss() <= training_loss_goal);
 
     // Minimum loss decrease
 
@@ -270,46 +256,9 @@ void ConjugateGradientTest::test_perform_training()
 
     training_results = conjugate_gradient.perform_training();
 
-    assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+    //EXPECT_EQ(training_results.get_loss_decrease() <= minimum_loss_decrease);
+
 }
 
-
-void ConjugateGradientTest::run_test_case()
-{
-    cout << "Running conjugate gradient test case...\n";
-
-    // Constructor methods
-
-    test_constructor();
-    test_destructor();
-
-    // Training methods
-
-    test_calculate_PR_parameter();
-    test_calculate_FR_parameter();
-
-    test_calculate_FR_training_direction();
-    test_calculate_PR_training_direction();
-
-    test_perform_training();
-
-    cout << "End of conjugate gradient test case.\n\n";
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

@@ -9,20 +9,10 @@
 #ifndef FLATTENLAYER_H
 #define FLATTENLAYER_H
 
-// System includes
-
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
 #include "layer.h"
-#include "perceptron_layer.h"
-#include "config.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+
 
 namespace opennn
 {
@@ -30,179 +20,93 @@ namespace opennn
 struct FlattenLayerForwardPropagation;
 struct FlattenLayerBackPropagation;
 
-/// This class represents a flatten layer.
-
-/// Flatten layers are included in the definition of a neural network.
-/// They are used to resize the input data to make it usable for the
-/// perceptron layer.
+#ifdef OPENNN_CUDA
+struct FlattenLayerForwardPropagationCuda;
+struct FlattenLayerBackPropagationCuda;
+#endif
 
 class FlattenLayer : public Layer
 {
 
 public:
 
-    // Constructors
+    explicit FlattenLayer(const dimensions& = {0,0,0});
 
-    explicit FlattenLayer();
-
-    explicit FlattenLayer(const Tensor<Index, 1>&);
-
-    // Get methods
-
-    Tensor<Index, 1> get_inputs_dimensions() const;
-    Index get_outputs_number() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
+    dimensions get_input_dimensions() const;
+    dimensions get_output_dimensions() const final;
 
     Index get_inputs_number() const;
-    Index get_inputs_channels_number() const;
-    Index get_inputs_rows_number() const;
-    Index get_inputs_columns_number() const;
-    Index get_neurons_number() const;
+    Index get_outputs_number() const;
 
-    Tensor<type, 1> get_parameters() const final;
-    Index get_parameters_number() const;
+    Index get_input_height() const;
+    Index get_input_width() const;
+    Index get_input_channels() const;
 
-    Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters() final;
+    void set(const dimensions & = {0,0,0});
 
-    // Set methods
+    // Forward propagation
 
-    void set();
-    void set(const Index&);
-    void set(const Tensor<Index, 1>&);
-    void set(const tinyxml2::XMLDocument&);
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) final;
 
-    void set_default();
-    void set_name(const string&);
+    // Back-propagation
 
-    void set_parameters(const Tensor<type, 1>&, const Index&) final;
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-    // Display messages
+    // Serialization
 
-    void set_display(const bool&);
+    void from_XML(const XMLDocument&) final;
 
-    // Check methods
+    void to_XML(XMLPrinter&) const final;
 
-    bool is_empty() const;
+    void print() const;
 
-    // Outputs
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
+    #endif
 
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+private:
 
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
-
-    void calculate_hidden_delta(PerceptronLayerForwardPropagation*,
-                                PerceptronLayerBackPropagation*,
-                                FlattenLayerBackPropagation*) const;
-
-    void calculate_hidden_delta(ProbabilisticLayerForwardPropagation*,
-                                ProbabilisticLayerBackPropagation*,
-                                FlattenLayerBackPropagation*) const;
-
-    // Serialization methods
-
-    void from_XML(const tinyxml2::XMLDocument&) final;
-
-    void write_XML(tinyxml2::XMLPrinter&) const final;
-
-protected:
-
-    Tensor<Index, 1> inputs_dimensions;
-
-    /// Display warning messages to screen.
-
-    bool display = true;
+    dimensions input_dimensions;
 };
 
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
-   // Default constructor
+   explicit FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+      
+   pair<type*, dimensions> get_outputs_pair() const final;
 
-   explicit FlattenLayerForwardPropagation() : LayerForwardPropagation()
-   {
-   }
+   void set(const Index& = 0, Layer* = nullptr) final;
 
-   // Constructor
+   void print() const;
 
-   explicit FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-       : LayerForwardPropagation()
-   {
-       set(new_batch_samples_number, new_layer_pointer);
-   }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-
-        batch_samples_number = new_batch_samples_number;
-
-        layer_pointer = new_layer_pointer;
-
-        const Index neurons_number = layer_pointer->get_neurons_number();
-
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
-    }
-
-
-   void print() const
-   {
-       cout << "Outputs:" << endl;
-
-       //cout << outputs << endl;
-   }
+   Tensor<type, 2> outputs;
 };
-
 
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
+    explicit FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    // Default constructor
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    explicit FlattenLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    virtual ~FlattenLayerBackPropagation()
-    {
-    }
+    void print() const;
 
-
-    explicit FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        batch_samples_number = new_batch_samples_number;
-
-        const Index neurons_number = new_layer_pointer->get_neurons_number();
-
-        deltas_dimensions.resize(2);
-
-        deltas_dimensions.setValues({batch_samples_number, neurons_number});
-
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas: " << endl;
-
-//        cout << deltas << endl;
-    }
+    Tensor<type, 4> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/flatten_layer_back_propagation_cuda.h"
+#endif
 
 
 }
@@ -211,7 +115,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

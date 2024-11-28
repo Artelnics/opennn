@@ -115,7 +115,6 @@ BM_FuncWithInputDimsGPU(contractionRowMajorBT, 64, N, N);
 BM_FuncWithInputDimsGPU(contractionRowMajorBT, N, 64, N);
 BM_FuncWithInputDimsGPU(contractionRowMajorBT, N, N, 64);
 
-
 BM_FuncWithInputDimsGPU(contractionRowMajorABT, N, N, N);
 BM_FuncWithInputDimsGPU(contractionRowMajorABT, 64, N, N);
 BM_FuncWithInputDimsGPU(contractionRowMajorABT, N, 64, N);

@@ -9,76 +9,56 @@
 #ifndef CROSSENTROPYERROR_H
 #define CROSSENTROPYERROR_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <math.h>
-
-// OpenNN includes
-
 #include "loss_index.h"
 #include "data_set.h"
-#include "config.h"
 
 namespace opennn
 {
-
-/// This class represents the cross-entropy error term, used for predicting probabilities.
-
-///
-/// This functional is used in classification problems.
 
 class CrossEntropyError : public LossIndex
 {
 
 public:
 
-   // Constructors
+   explicit CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   explicit CrossEntropyError();
+   void calculate_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const final;
 
-   explicit CrossEntropyError(NeuralNetwork*, DataSet*);
+   void calculate_binary_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const;
 
-   // Error methods
+   void calculate_multiple_error(const Batch&,
+                        const ForwardPropagation&,
+                        BackPropagation&) const;
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const final;
+   // Gradient
 
-   void calculate_binary_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+   void calculate_output_delta(const Batch&,
+                               ForwardPropagation&,
+                               BackPropagation&) const final;
 
-   void calculate_multiple_error(const DataSetBatch& batch,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const;
+   void calculate_binary_output_delta(const Batch&,
+                                      ForwardPropagation&,
+                                      BackPropagation&) const;
 
-   // Gradient methods
+   void calculate_multiple_output_delta(const Batch&,
+                                        ForwardPropagation&,
+                                        BackPropagation&) const;
 
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
-
-   void calculate_binary_output_delta(const DataSetBatch&,
-                                      NeuralNetworkForwardPropagation&,
-                                      LossIndexBackPropagation&) const;
-
-   void calculate_multiple_output_delta(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
-                                        LossIndexBackPropagation&) const;
-
-   string get_error_type() const final;
+   string get_loss_method() const final;
    string get_error_type_text() const final;
 
-   // Serialization methods
+   // Serialization
       
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const final;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/cross_entropy_error_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
 #endif
 
 };
@@ -89,7 +69,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

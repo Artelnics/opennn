@@ -9,7 +9,8 @@ if(UNIX)
 endif()
 
 if(WIN32)
-	set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+	set(PROJECT_LINK_LIBS ../opennn/Release/opennn)
+	#set(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 endif()
 
 add_executable(blank main.cpp)

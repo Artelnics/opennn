@@ -9,58 +9,28 @@
 #ifndef BOUNDINGLAYER_H
 #define BOUNDINGLAYER_H
 
-// System includes
-
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-// OpenNN includes
-
 #include "layer.h"
 
-#include "config.h"
+#include "layer_forward_propagation.h"
 
 namespace opennn
 {
-
-/// This class represents a layer of bounding neurons. 
-
-/// A bounding layer ensures that the output variables never fall below or above given values.
 
 class BoundingLayer : public Layer
 {
 
 public:
 
-   // Constructors
-
-   explicit BoundingLayer();
-
-   explicit BoundingLayer(const Index&);
-
-   // Enumerations
-
-   /// Enumeration of the available methods for bounding the output variables.
+   explicit BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
 
    enum class BoundingMethod{NoBounding, Bounding};
 
-   // Check methods
-
-   bool is_empty() const;
-
-   // Get methods
-
-
-   Index get_inputs_number() const final;
-   Index get_neurons_number() const final;
+   dimensions get_input_dimensions() const final;
+   dimensions get_output_dimensions() const final;
 
    const BoundingMethod& get_bounding_method() const;
 
-   string write_bounding_method() const;
+   string get_bounding_method_string() const;
 
    const Tensor<type, 1>& get_lower_bounds() const;
    type get_lower_bound(const Index&) const;
@@ -70,13 +40,10 @@ public:
 
    // Variables bounds
 
-   void set();
-   void set(const Index&);
-   void set(const tinyxml2::XMLDocument&);
-   void set(const BoundingLayer&);
+   void set(const dimensions & = { 0 }, const string & = "bounding_layer");
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_input_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) final;
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -87,86 +54,45 @@ public:
    void set_upper_bounds(const Tensor<type, 1>&);
    void set_upper_bound(const Index&, const type&);
 
-   void set_display(const bool&);
-
-   void set_default();
-
    // Lower and upper bounds
 
-   void forward_propagate(const Tensor<DynamicTensor<type>, 1>&, LayerForwardPropagation*, const bool&) final;
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
 
-   // Expression methods
+   // Expression
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string get_expression(const vector<string>&, const vector<string>&) const final;
 
-   // Serialization methods
+   // Serialization
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
+   void print() const;
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) final;
+
+   void to_XML(XMLPrinter&) const final;
 
 private:
 
-   // MEMBERS
-
-   /// Method used to bound the values.
-
    BoundingMethod bounding_method = BoundingMethod::Bounding;
-
-   /// Lower bounds of output variables
 
    Tensor<type, 1> lower_bounds;
 
-   /// Upper bounds of output variables
-
    Tensor<type, 1> upper_bounds;
-
-   /// Display messages to screen. 
-
-   bool display = true;
 };
 
 
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
-    // Constructor
+    explicit BoundingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+        
+    pair<type*, dimensions> get_outputs_pair() const final;
 
-    explicit BoundingLayerForwardPropagation() : LayerForwardPropagation()
-    {
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    // Constructor
+    void print() const;
 
-    explicit BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-
-        const Index neurons_number = static_cast<BoundingLayer*>(layer_pointer)->get_neurons_number();
-
-        batch_samples_number = new_batch_samples_number;
-
-        // Allocate memory for outputs_data
-
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(2);
-        output_dimensions.setValues({batch_samples_number, neurons_number});
-        outputs(0).set_dimensions(output_dimensions);
-    }
-
-
-    void print() const
-    {
-        cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
-    }
+    Tensor<type, 2> outputs;
 };
 
 }
@@ -175,7 +101,7 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

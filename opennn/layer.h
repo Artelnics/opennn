@@ -9,118 +9,70 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-// System includes
+#include "pch.h"
+#include "tinyxml2.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
+#include "layer_back_propagation_lm.h"
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <ctype.h>
-#include <iostream>
-#include <vector>
+using namespace tinyxml2;
 
-// OpenNN includes
-
-#include "config.h"
-#include "tensor_utilities.h"
-#include "dynamic_tensor.h"
-#include "statistics.h"
-#include "scaling.h"
-//#include "data_set.h"
-
-#include <tuple>
-
-
-namespace opennn {
-
-class Layer;
-
-struct LayerForwardPropagation;
-struct LayerBackPropagation;
-struct LayerBackPropagationLM;
+namespace opennn
+{
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/struct_layer_cuda.h"
+struct LayerForwardPropagationCuda;
+struct LayerBackPropagationCuda;
 #endif
-
-
-/// This abstract class represents the concept of layer of neurons in OpenNN.
-
-/// A layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
 
 class Layer
 {
 
 public:
 
-    // Enumerations
-
-    /// This enumeration represents the possible types of layers.
-
-    enum class Type{Scaling,
+    enum class Type{None,
+                    Scaling2D,
+                    Scaling4D,
+                    Addition3D,
+                    Normalization3D,
                     Convolutional,
                     Perceptron,
+                    Perceptron3D,
                     Pooling,
                     Probabilistic,
+                    Probabilistic3D,
                     LongShortTermMemory,
                     Recurrent,
                     Unscaling,
                     Bounding,
                     Flatten,
-                    RegionProposal,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
 
-    // Constructor
+    explicit Layer();
 
-    explicit Layer()   
-    {
-        const int n = omp_get_max_threads();
+    string get_name() const;
 
-        thread_pool = new ThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-    }
+    const bool& get_display() const;
 
-    // Destructor
+    string layer_type_to_string(const Layer::Type&);
+    Type string_to_layer_type(const string&);
 
-    virtual ~Layer();
+    Type get_type() const;
 
-    string get_name() const
-    {
-        return layer_name;
-    }
+    string get_type_string() const;
 
-    string get_output_shape() const
-    {
-        Tensor<Index, 1> output_dimensions = get_outputs_dimensions();
+    virtual void set_input_dimensions(const dimensions&);
+    virtual void set_output_dimensions(const dimensions&);
 
-        stringstream output_shape_string;
+    void set_name(const string&);
 
-        output_shape_string << "(";
+    void set_display(const bool&);
 
-        for(Index i = 0; i < output_dimensions.size(); i++)
-        {
-            output_shape_string << output_dimensions[i];
-            if(i != output_dimensions.size() - 1)
-            {
-                output_shape_string << ", ";
-            }
-        }
-        output_shape_string << ")";
-
-        return output_shape_string.str();
-    }
-
-    virtual Tensor<Index,  1> get_inputs_dimensions() const {return Tensor<Index,1>();}
-    virtual Tensor<Index,  1> get_outputs_dimensions() const {return Tensor<Index,1>();}
-
-    // Parameters initialization methods
+    // Parameters initialization
 
     virtual void set_parameters_constant(const type&);
-
     virtual void set_parameters_random();
 
     // Architecture
@@ -128,219 +80,218 @@ public:
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
 
-    virtual Tensor< TensorMap< Tensor<type, 1>>*, 1> get_layer_parameters();
+    virtual dimensions get_input_dimensions() const;
+    virtual dimensions get_output_dimensions() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
     void set_threads_number(const int&);
 
-    virtual void insert_gradient(LayerBackPropagation*, const Index&, Tensor<type, 1>&) const {}
+    // Forward propagation
 
-    // Outputs
+    virtual void forward_propagate(const vector<pair<type*, dimensions>>&,
+                                   unique_ptr<LayerForwardPropagation>&,
+                                   const bool&) = 0;
 
-    virtual void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
-                                   LayerForwardPropagation*, const bool&) = 0;
+    // Back propagation
 
-    virtual void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
-                                   Tensor<type, 1>&, LayerForwardPropagation*);
+    virtual void back_propagate(const vector<pair<type*, dimensions>>&,
+                                const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagation>&,
+                                unique_ptr<LayerBackPropagation>&) const {}
 
-    // Deltas
+    virtual void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                                   const vector<pair<type*, dimensions>>&,
+                                   unique_ptr<LayerForwardPropagation>&,
+                                   unique_ptr<LayerBackPropagationLM>&) const {}
 
-    virtual void calculate_hidden_delta(LayerForwardPropagation*,
-                                        LayerBackPropagation*,
-                                        LayerBackPropagation*) const {}
-
-    virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
-                                           LayerBackPropagationLM*,
-                                           LayerBackPropagationLM*) const {}
-
-    // Jacobian
-
-    virtual void calculate_inputs_outputs_derivatives(LayerForwardPropagation*) const {}
-
-
-    // Error gradient
-
-    virtual void calculate_error_gradient(type*,
-                                          LayerForwardPropagation*,
-                                          LayerBackPropagation*) const {}
-
-    // Squared errors
+    virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
+                                 const Index&,
+                                 Tensor<type, 1>&) const {}
 
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
-                                                      LayerForwardPropagation*,
-                                                      LayerBackPropagationLM*) {}
+                                                      unique_ptr<LayerForwardPropagation>&,
+                                                      unique_ptr<LayerBackPropagationLM>&) {}
 
-    virtual void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+    virtual void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
 
-    // Get neurons number
+    // Serialization
 
-    virtual Index get_inputs_number() const;
-    virtual Index get_neurons_number() const;
+    virtual void from_XML(const XMLDocument&) {}
 
-    virtual void set_inputs_number(const Index&);
-    virtual void set_neurons_number(const Index&);
+    virtual void to_XML(XMLPrinter&) const {}
 
-    // Layer type
+    // Expression
 
-    Type get_type() const;
+    virtual string get_expression(const vector<string>&, const vector<string>&) const 
+    {
+        return string();
+    }
 
-    string get_type_string() const;
-
-    // Serialization methods
-
-    virtual void from_XML(const tinyxml2::XMLDocument&) {}
-
-    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
-
-    // Expression methods
-
-    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const {return string();}
+    virtual void print() const {}
 
 protected:
 
-    ThreadPool* thread_pool = nullptr;
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-    /// Layer name.
+    string name = "layer";
 
-    string layer_name = "layer";
+    Type layer_type = Type::None;
 
-    /// Layer type.
+    bool display = true;
 
-    Type layer_type;
+    template <int rank>
+    void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const
+    {
+        y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
 
-    /// Activation functions
+        if (dy_dx.size() == 0) return;
 
-    void binary(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void competitive(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void hard_sigmoid(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void hyperbolic_tangent(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void logistic(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void leaky_rectified_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void scaled_exponential_linear(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void softmax(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void soft_plus(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void soft_sign(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void symmetric_threshold(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void threshold(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+        dy_dx.setConstant(type(0));
+    }
 
-    void exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void hard_sigmoid_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void hyperbolic_tangent_derivatives(type*, const Tensor<Index, 1>&,type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void logistic_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void leaky_rectified_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void scaled_exponential_linear_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void softmax_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void soft_plus_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void soft_sign_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void symmetric_threshold_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
-    void threshold_derivatives(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) const;
+
+    template <int rank>
+    void linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.setConstant(type(1));
+    }
+
+
+    template <int rank>
+    void exponential_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        const type alpha = type(1);
+
+        y.device(*thread_pool_device) = (y > type(0)).select(y, alpha * (y.exp() - type(1)));
+
+        if (dy_dx.size() == 0) return;
+        
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), y + alpha);
+    }
+
+
+    template <int rank>
+    void hard_sigmoid(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = ((y*type(0.2) + type(0.5)).cwiseMin(type(2.5)).cwiseMax(type(-2.5))).eval();
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device)
+            = (y > type(0) && y < type(1)).select(dy_dx.constant(type(0.2)), dy_dx.constant(type(0)));
+    }
+
+
+    template <int rank>
+    void hyperbolic_tangent(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = y.tanh();
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (type(1) - y.square()).eval();
+    }
+
+
+    template <int rank>
+    void logistic(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = (type(1) + (-y).exp()).inverse();
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (y * (type(1) - y)).eval();
+    }
+
+
+    template <int rank>
+    void rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = y.cwiseMax(type(0));
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(0)));
+    }
+
+
+    template <int rank>
+    void leaky_rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type slope) const
+    {
+        y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(type(1)), dy_dx.constant(type(slope)));
+    }
+
+
+    template <int rank>
+    void scaled_exponential_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        const type lambda = type(1.0507);
+
+        const type alpha = type(1.6733);
+
+        y.device(*thread_pool_device) = (y > type(0)).select(lambda * y, lambda * alpha * (y.exp() - type(1)));
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (y > type(0)).select(dy_dx.constant(lambda), y + alpha * lambda);
+    }
+
+
+    template <int rank>
+    void soft_plus(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = (type(1) + y.exp()).log();
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = type(1) - (-y).exp();
+    }
+
+
+    template <int rank>
+    void soft_sign(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    {
+        y.device(*thread_pool_device) = (y / (1 + y.abs())).eval();
+
+        if (dy_dx.size() == 0) return;
+
+        dy_dx.device(*thread_pool_device) = (type(1) + (y / type(1) - y).abs()).pow(-2);
+    }
+
+
+    void competitive(Tensor<type, 2>&) const;
+
+    void softmax(Tensor<type, 2>&) const;
+    void softmax(Tensor<type, 3>&) const;
+    void softmax(Tensor<type, 4>&) const;
+
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/layer_cuda.h"
-#else
-};
+    #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 
-struct LayerForwardPropagation
-{
-    /// Default constructor.
-
-    explicit LayerForwardPropagation()
-    {
-    }
-
-    virtual ~LayerForwardPropagation()
-    {
-        /*
-        for(Index i = 0; i < outputs.size(); i++)
-        {
-            free(outputs(i).get_data());
-        }
-        */
-    }
-
-    virtual void set(const Index&, Layer*) = 0;
-
-    virtual void print() const {}
-
-    Index batch_samples_number;
-
-    Layer* layer_pointer = nullptr;
-
-    Tensor<DynamicTensor<type>, 1> outputs;
 };
 
 
-struct LayerBackPropagation
-{
-    /// Default constructor.
-
-    explicit LayerBackPropagation() {}
-
-    virtual ~LayerBackPropagation()
-    {
-        free(deltas_data);
-    }
-
-    virtual void set(const Index&, Layer*) {}
-
-    virtual void print() const {}   
-
-    virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient()
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: Layer class.\n"
-               << "virtual Tensor< TensorMap< Tensor<type, 1> >*, 1> get_layer_gradient() method.\n"
-               << "This method is not implemented in the layer type (" << layer_pointer->get_type_string() << ").\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    Index batch_samples_number;
-
-    Layer* layer_pointer = nullptr;       
-
-    type* deltas_data = nullptr;
-
-    Tensor<Index, 1> deltas_dimensions;
-
-    Tensor<type, 1> gradient;
-
-};
-
-
-struct LayerBackPropagationLM
-{
-    /// Default constructor.
-
-    explicit LayerBackPropagationLM() {}
-
-    virtual ~LayerBackPropagationLM() {}
-
-    virtual void set(const Index&, Layer*) {}
-
-    virtual void print() const {}
-
-    Index batch_samples_number;
-
-    Layer* layer_pointer = nullptr;
-
-    Tensor<type, 2> deltas;
-};
+#ifdef OPENNN_CUDA
+#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
+#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
+#endif
 
 }
 

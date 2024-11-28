@@ -8,7 +8,7 @@ Example:
 
 	model = NeuralNetwork()	
 	sample = [input_1, input_2, input_3, input_4, ...]	
-	outputs = model.calculate_output(sample)
+	outputs = model.calculate_outputs(sample)
 
 
 Inputs Names: 	
@@ -50,27 +50,29 @@ class NeuralNetwork:
 		scaled_petal_lenght = (petal_lenght-3.757999897)/1.765298247
 		scaled_petal_width = (petal_width-1.19933331)/0.762237668
 		
-		perceptron_layer_1_output_0 = np.tanh( 0.100419 + (scaled_sepal_lenght*0.0294449) + (scaled_sepal_width*-0.153129) + (scaled_petal_lenght*0.148748) + (scaled_petal_width*0.387044) )
-		perceptron_layer_1_output_1 = np.tanh( 0.0908042 + (scaled_sepal_lenght*0.283474) + (scaled_sepal_width*-0.300182) + (scaled_petal_lenght*0.133461) + (scaled_petal_width*0.37122) )
-		perceptron_layer_1_output_2 = np.tanh( -0.0502741 + (scaled_sepal_lenght*0.145957) + (scaled_sepal_width*-0.0762085) + (scaled_petal_lenght*0.0320756) + (scaled_petal_width*0.175429) )
+		perceptron_layer_1_output_0 = np.tanh( -5.60777 + (scaled_sepal_lenght*-0.685954) + (scaled_sepal_width*-0.598833) + (scaled_petal_lenght*6.30155) + (scaled_petal_width*2.63061) )
+		perceptron_layer_1_output_1 = np.tanh( 0.976856 + (scaled_sepal_lenght*0.555019) + (scaled_sepal_width*-0.567254) + (scaled_petal_lenght*1.06559) + (scaled_petal_width*1.11434) )
+		perceptron_layer_1_output_2 = np.tanh( -4.83908 + (scaled_sepal_lenght*-0.476799) + (scaled_sepal_width*-0.587606) + (scaled_petal_lenght*5.13233) + (scaled_petal_width*2.50134) )
+		perceptron_layer_1_output_3 = np.tanh( 1.19863 + (scaled_sepal_lenght*1.02613) + (scaled_sepal_width*-0.362308) + (scaled_petal_lenght*0.995916) + (scaled_petal_width*1.17586) )
+		perceptron_layer_1_output_4 = np.tanh( 1.22938 + (scaled_sepal_lenght*0.176014) + (scaled_sepal_width*-0.339203) + (scaled_petal_lenght*1.3905) + (scaled_petal_width*1.44477) )
 		
-		probabilistic_layer_combinations_0 = -0.0464519 +0.0948961*perceptron_layer_1_output_0 +0.0304029*perceptron_layer_1_output_1 -0.119937*perceptron_layer_1_output_2 
-		probabilistic_layer_combinations_1 = 0.240458 +0.175408*perceptron_layer_1_output_0 -0.197369*perceptron_layer_1_output_1 +0.181568*perceptron_layer_1_output_2 
-		probabilistic_layer_combinations_2 = -0.197357 +0.124013*perceptron_layer_1_output_0 +0.329514*perceptron_layer_1_output_1 +0.15323*perceptron_layer_1_output_2 
+		probabilistic_layer_combinations_0 = 3.28519 -1.49936*perceptron_layer_1_output_0 -0.708341*perceptron_layer_1_output_1 -0.00310124*perceptron_layer_1_output_2 -2.21698*perceptron_layer_1_output_3 -0.780115*perceptron_layer_1_output_4 
+		probabilistic_layer_combinations_1 = -1.26361 -5.48409*perceptron_layer_1_output_0 +1.91626*perceptron_layer_1_output_1 -3.5194*perceptron_layer_1_output_2 +3.13697*perceptron_layer_1_output_3 +2.88783*perceptron_layer_1_output_4 
+		probabilistic_layer_combinations_2 = 1.60921 +5.78282*perceptron_layer_1_output_0 +1.64901*perceptron_layer_1_output_1 +4.23274*perceptron_layer_1_output_2 +1.3884*perceptron_layer_1_output_3 +1.25327*perceptron_layer_1_output_4 
 			
 		sum = np.exp(probabilistic_layer_combinations_0) + np.exp(probabilistic_layer_combinations_1) + np.exp(probabilistic_layer_combinations_2)
 		
-		iris_setosa = np.exp(probabilistic_layer_combinations_0)/sum
-		iris_versicolor = np.exp(probabilistic_layer_combinations_1)/sum
-		iris_virginica = np.exp(probabilistic_layer_combinations_2)/sum
+		iri_s_setosa = np.exp(probabilistic_layer_combinations_0)/sum
+		iri_s_versicolo_r = np.exp(probabilistic_layer_combinations_1)/sum
+		iri_s_virgin_ica = np.exp(probabilistic_layer_combinations_2)/sum
 		
 		out = [None]*3
 
-		out[0] = iris_setosa
-		out[1] = iris_versicolor
-		out[2] = iris_virginica
+		out[0] = iri_s_setosa
+		out[1] = iri_s_versicolo_r
+		out[2] = iri_s_virgin_ica
 
-		return out
+		return out, sample_autoassociation_distance, sample_autoassociation_variables_distance
 
 
 	def calculate_batch_output(self, input_batch):
@@ -85,3 +87,25 @@ class NeuralNetwork:
 			output_batch[i] = output
 
 		return output_batch
+
+def main():
+
+	inputs = []
+
+	sepal_lenght = #- ENTER YOUR VALUE HERE -#
+	inputs.append(sepal_lenght)
+
+	sepal_width = #- ENTER YOUR VALUE HERE -#
+	inputs.append(sepal_width)
+
+	petal_lenght = #- ENTER YOUR VALUE HERE -#
+	inputs.append(petal_lenght)
+
+	petal_width = #- ENTER YOUR VALUE HERE -#
+	inputs.append(petal_width)
+
+	nn = NeuralNetwork()
+	outputs = nn.calculate_outputs(inputs)
+	print(outputs)
+
+main()

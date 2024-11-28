@@ -1,6 +1,7 @@
 
 project(EigenBlas CXX)
 
+if(EIGEN_BUILD_BLAS)
 include(CheckLanguage)
 check_language(Fortran)
 if(CMAKE_Fortran_COMPILER)
@@ -17,7 +18,7 @@ set(EigenBlas_SRCS  single.cpp double.cpp complex_single.cpp complex_double.cpp 
                     f2c/lsame.c   f2c/dspmv.c   f2c/ssbmv.c f2c/chbmv.c
                     f2c/sspmv.c   f2c/zhbmv.c   f2c/chpmv.c f2c/dsbmv.c
                     f2c/zhpmv.c   f2c/dtbmv.c   f2c/stbmv.c f2c/ctbmv.c
-                    f2c/ztbmv.c   f2c/d_cnjg.c  f2c/r_cnjg.c
+                    f2c/ztbmv.c
    )
 
 if (EIGEN_Fortran_COMPILER_WORKS)
@@ -50,7 +51,7 @@ endforeach()
 
 if(EIGEN_Fortran_COMPILER_WORKS)
 
-if(BUILD_TESTING)
+if(EIGEN_BUILD_TESTING)
   if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
     add_subdirectory(testing) # can't do EXCLUDE_FROM_ALL here, breaks CTest
   else()
@@ -59,4 +60,4 @@ if(BUILD_TESTING)
 endif()
 
 endif()
-
+endif()

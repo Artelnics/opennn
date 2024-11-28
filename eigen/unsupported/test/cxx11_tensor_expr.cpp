@@ -13,20 +13,25 @@
 
 #include <Eigen/CXX11/Tensor>
 
-using Eigen::Tensor;
 using Eigen::RowMajor;
+using Eigen::Tensor;
 
-static void test_1d()
-{
+static void test_1d() {
   Tensor<float, 1> vec1(6);
   Tensor<float, 1, RowMajor> vec2(6);
 
-  vec1(0) = 4.0;  vec2(0) = 0.0;
-  vec1(1) = 8.0;  vec2(1) = 1.0;
-  vec1(2) = 15.0; vec2(2) = 2.0;
-  vec1(3) = 16.0; vec2(3) = 3.0;
-  vec1(4) = 23.0; vec2(4) = 4.0;
-  vec1(5) = 42.0; vec2(5) = 5.0;
+  vec1(0) = 4.0;
+  vec2(0) = 0.0;
+  vec1(1) = 8.0;
+  vec2(1) = 1.0;
+  vec1(2) = 15.0;
+  vec2(2) = 2.0;
+  vec1(3) = 16.0;
+  vec2(3) = 3.0;
+  vec1(4) = 23.0;
+  vec2(4) = 4.0;
+  vec1(5) = 42.0;
+  vec2(5) = 5.0;
 
   float data3[6];
   TensorMap<Tensor<float, 1>> vec3(data3, 6);
@@ -68,112 +73,109 @@ static void test_1d()
   VERIFY_IS_APPROX(vec3(5), 42.0f + 5.0f);
 }
 
-static void test_2d()
-{
+static void test_2d() {
   float data1[6];
   TensorMap<Tensor<float, 2>> mat1(data1, 2, 3);
   float data2[6];
   TensorMap<Tensor<float, 2, RowMajor>> mat2(data2, 2, 3);
 
-  mat1(0,0) = 0.0;
-  mat1(0,1) = 1.0;
-  mat1(0,2) = 2.0;
-  mat1(1,0) = 3.0;
-  mat1(1,1) = 4.0;
-  mat1(1,2) = 5.0;
+  mat1(0, 0) = 0.0;
+  mat1(0, 1) = 1.0;
+  mat1(0, 2) = 2.0;
+  mat1(1, 0) = 3.0;
+  mat1(1, 1) = 4.0;
+  mat1(1, 2) = 5.0;
 
-  mat2(0,0) = -0.0;
-  mat2(0,1) = -1.0;
-  mat2(0,2) = -2.0;
-  mat2(1,0) = -3.0;
-  mat2(1,1) = -4.0;
-  mat2(1,2) = -5.0;
+  mat2(0, 0) = -0.0;
+  mat2(0, 1) = -1.0;
+  mat2(0, 2) = -2.0;
+  mat2(1, 0) = -3.0;
+  mat2(1, 1) = -4.0;
+  mat2(1, 2) = -5.0;
 
-  Tensor<float, 2> mat3(2,3);
-  Tensor<float, 2, RowMajor> mat4(2,3);
+  Tensor<float, 2> mat3(2, 3);
+  Tensor<float, 2, RowMajor> mat4(2, 3);
   mat3 = mat1.abs();
   mat4 = mat2.abs();
 
-  VERIFY_IS_APPROX(mat3(0,0), 0.0f);
-  VERIFY_IS_APPROX(mat3(0,1), 1.0f);
-  VERIFY_IS_APPROX(mat3(0,2), 2.0f);
-  VERIFY_IS_APPROX(mat3(1,0), 3.0f);
-  VERIFY_IS_APPROX(mat3(1,1), 4.0f);
-  VERIFY_IS_APPROX(mat3(1,2), 5.0f);
+  VERIFY_IS_APPROX(mat3(0, 0), 0.0f);
+  VERIFY_IS_APPROX(mat3(0, 1), 1.0f);
+  VERIFY_IS_APPROX(mat3(0, 2), 2.0f);
+  VERIFY_IS_APPROX(mat3(1, 0), 3.0f);
+  VERIFY_IS_APPROX(mat3(1, 1), 4.0f);
+  VERIFY_IS_APPROX(mat3(1, 2), 5.0f);
 
-  VERIFY_IS_APPROX(mat4(0,0), 0.0f);
-  VERIFY_IS_APPROX(mat4(0,1), 1.0f);
-  VERIFY_IS_APPROX(mat4(0,2), 2.0f);
-  VERIFY_IS_APPROX(mat4(1,0), 3.0f);
-  VERIFY_IS_APPROX(mat4(1,1), 4.0f);
-  VERIFY_IS_APPROX(mat4(1,2), 5.0f);
+  VERIFY_IS_APPROX(mat4(0, 0), 0.0f);
+  VERIFY_IS_APPROX(mat4(0, 1), 1.0f);
+  VERIFY_IS_APPROX(mat4(0, 2), 2.0f);
+  VERIFY_IS_APPROX(mat4(1, 0), 3.0f);
+  VERIFY_IS_APPROX(mat4(1, 1), 4.0f);
+  VERIFY_IS_APPROX(mat4(1, 2), 5.0f);
 }
 
-static void test_3d()
-{
-  Tensor<float, 3> mat1(2,3,7);
-  Tensor<float, 3, RowMajor> mat2(2,3,7);
+static void test_3d() {
+  Tensor<float, 3> mat1(2, 3, 7);
+  Tensor<float, 3, RowMajor> mat2(2, 3, 7);
 
   float val = 1.0f;
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        mat1(i,j,k) = val;
-        mat2(i,j,k) = val;
+        mat1(i, j, k) = val;
+        mat2(i, j, k) = val;
         val += 1.0f;
       }
     }
   }
 
-  Tensor<float, 3> mat3(2,3,7);
+  Tensor<float, 3> mat3(2, 3, 7);
   mat3 = mat1 + mat1;
-  Tensor<float, 3, RowMajor> mat4(2,3,7);
+  Tensor<float, 3, RowMajor> mat4(2, 3, 7);
   mat4 = mat2 * 3.14f;
-  Tensor<float, 3> mat5(2,3,7);
-  mat5 = mat1.inverse().log();
-  Tensor<float, 3, RowMajor> mat6(2,3,7);
+  Tensor<float, 3> mat5(2, 3, 7);
+  mat5 = (mat1 + mat1.constant(1)).inverse().log();
+  Tensor<float, 3, RowMajor> mat6(2, 3, 7);
   mat6 = mat2.pow(0.5f) * 3.14f;
-  Tensor<float, 3> mat7(2,3,7);
+  Tensor<float, 3> mat7(2, 3, 7);
   mat7 = mat1.cwiseMax(mat5 * 2.0f).exp();
-  Tensor<float, 3, RowMajor> mat8(2,3,7);
+  Tensor<float, 3, RowMajor> mat8(2, 3, 7);
   mat8 = (-mat2).exp() * 3.14f;
-  Tensor<float, 3, RowMajor> mat9(2,3,7);
+  Tensor<float, 3, RowMajor> mat9(2, 3, 7);
   mat9 = mat2 + 3.14f;
-  Tensor<float, 3, RowMajor> mat10(2,3,7);
+  Tensor<float, 3, RowMajor> mat10(2, 3, 7);
   mat10 = mat2 - 3.14f;
-  Tensor<float, 3, RowMajor> mat11(2,3,7);
+  Tensor<float, 3, RowMajor> mat11(2, 3, 7);
   mat11 = mat2 / 3.14f;
 
   val = 1.0f;
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(mat3(i,j,k), val + val);
-        VERIFY_IS_APPROX(mat4(i,j,k), val * 3.14f);
-        VERIFY_IS_APPROX(mat5(i,j,k), logf(1.0f/val));
-        VERIFY_IS_APPROX(mat6(i,j,k), sqrtf(val) * 3.14f);
-        VERIFY_IS_APPROX(mat7(i,j,k), expf((std::max)(val, mat5(i,j,k) * 2.0f)));
-        VERIFY_IS_APPROX(mat8(i,j,k), expf(-val) * 3.14f);
-        VERIFY_IS_APPROX(mat9(i,j,k), val + 3.14f);
-        VERIFY_IS_APPROX(mat10(i,j,k), val - 3.14f);
-        VERIFY_IS_APPROX(mat11(i,j,k), val / 3.14f);
+        VERIFY_IS_APPROX(mat3(i, j, k), val + val);
+        VERIFY_IS_APPROX(mat4(i, j, k), val * 3.14f);
+        VERIFY_IS_APPROX(mat5(i, j, k), logf(1.0f / (val + 1)));
+        VERIFY_IS_APPROX(mat6(i, j, k), sqrtf(val) * 3.14f);
+        VERIFY_IS_APPROX(mat7(i, j, k), expf((std::max)(val, mat5(i, j, k) * 2.0f)));
+        VERIFY_IS_APPROX(mat8(i, j, k), expf(-val) * 3.14f);
+        VERIFY_IS_APPROX(mat9(i, j, k), val + 3.14f);
+        VERIFY_IS_APPROX(mat10(i, j, k), val - 3.14f);
+        VERIFY_IS_APPROX(mat11(i, j, k), val / 3.14f);
         val += 1.0f;
       }
     }
   }
 }
 
-static void test_constants()
-{
-  Tensor<float, 3> mat1(2,3,7);
-  Tensor<float, 3> mat2(2,3,7);
-  Tensor<float, 3> mat3(2,3,7);
+static void test_constants() {
+  Tensor<float, 3> mat1(2, 3, 7);
+  Tensor<float, 3> mat2(2, 3, 7);
+  Tensor<float, 3> mat3(2, 3, 7);
 
   float val = 1.0f;
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        mat1(i,j,k) = val;
+        mat1(i, j, k) = val;
         val += 1.0f;
       }
     }
@@ -185,29 +187,28 @@ static void test_constants()
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(mat2(i,j,k), 3.14f);
-        VERIFY_IS_APPROX(mat3(i,j,k), expf((std::max)(val, 7.3f)));
+        VERIFY_IS_APPROX(mat2(i, j, k), 3.14f);
+        VERIFY_IS_APPROX(mat3(i, j, k), expf((std::max)(val, 7.3f)));
         val += 1.0f;
       }
     }
   }
 }
 
-static void test_boolean()
-{
+static void test_boolean() {
   const int kSize = 31;
   Tensor<int, 1> vec(kSize);
   std::iota(vec.data(), vec.data() + kSize, 0);
 
   // Test ||.
-  Tensor<bool, 1> bool1 = vec < vec.constant(1) || vec > vec.constant(4);
+  Tensor<bool, 1> bool1 = (vec < vec.constant(1) || vec > vec.constant(4)).cast<bool>();
   for (int i = 0; i < kSize; ++i) {
     bool expected = i < 1 || i > 4;
     VERIFY_IS_EQUAL(bool1[i], expected);
   }
 
   // Test &&, including cast of operand vec.
-  Tensor<bool, 1> bool2 = vec.cast<bool>() && vec < vec.constant(4);
+  Tensor<bool, 1> bool2 = vec.cast<bool>() && (vec < vec.constant(4)).cast<bool>();
   for (int i = 0; i < kSize; ++i) {
     bool expected = bool(i) && i < 4;
     VERIFY_IS_EQUAL(bool2[i], expected);
@@ -218,20 +219,19 @@ static void test_boolean()
   // CoeffReturnType is set to match Op return type of bool for Unary and Binary
   // Ops.
   Tensor<bool, 1> bool3 = vec.cast<bool>() && bool2;
-  bool3 = vec < vec.constant(4) && bool2;
+  bool3 = (vec < vec.constant(4)).cast<bool>() && bool2;
 }
 
-static void test_functors()
-{
-  Tensor<float, 3> mat1(2,3,7);
-  Tensor<float, 3> mat2(2,3,7);
-  Tensor<float, 3> mat3(2,3,7);
+static void test_functors() {
+  Tensor<float, 3> mat1(2, 3, 7);
+  Tensor<float, 3> mat2(2, 3, 7);
+  Tensor<float, 3> mat3(2, 3, 7);
 
   float val = 1.0f;
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        mat1(i,j,k) = val;
+        mat1(i, j, k) = val;
         val += 1.0f;
       }
     }
@@ -243,19 +243,18 @@ static void test_functors()
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(mat2(i,j,k), asinf(1.0f / mat1(i,j,k)));
-        VERIFY_IS_APPROX(mat3(i,j,k), tanhf(mat1(i,j,k)));
+        VERIFY_IS_APPROX(mat2(i, j, k), asinf(1.0f / mat1(i, j, k)));
+        VERIFY_IS_APPROX(mat3(i, j, k), tanhf(mat1(i, j, k)));
         val += 1.0f;
       }
     }
   }
 }
 
-static void test_type_casting()
-{
-  Tensor<bool, 3> mat1(2,3,7);
-  Tensor<float, 3> mat2(2,3,7);
-  Tensor<double, 3> mat3(2,3,7);
+static void test_type_casting() {
+  Tensor<bool, 3> mat1(2, 3, 7);
+  Tensor<float, 3> mat2(2, 3, 7);
+  Tensor<double, 3> mat3(2, 3, 7);
   mat1.setRandom();
   mat2.setRandom();
 
@@ -263,7 +262,7 @@ static void test_type_casting()
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(mat3(i,j,k), mat1(i,j,k) ? 1.0 : 0.0);
+        VERIFY_IS_APPROX(mat3(i, j, k), mat1(i, j, k) ? 1.0 : 0.0);
       }
     }
   }
@@ -272,28 +271,42 @@ static void test_type_casting()
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(mat3(i,j,k), static_cast<double>(mat2(i,j,k)));
+        VERIFY_IS_APPROX(mat3(i, j, k), static_cast<double>(mat2(i, j, k)));
       }
     }
   }
 }
 
-static void test_select()
-{
-  Tensor<float, 3> selector(2,3,7);
-  Tensor<float, 3> mat1(2,3,7);
-  Tensor<float, 3> mat2(2,3,7);
-  Tensor<float, 3> result(2,3,7);
+static void test_select() {
+  using TypedGTOp = internal::scalar_cmp_op<float, float, internal::cmp_GT, true>;
+
+  Tensor<float, 3> selector(2, 3, 7);
+  Tensor<float, 3> mat1(2, 3, 7);
+  Tensor<float, 3> mat2(2, 3, 7);
+  Tensor<float, 3> result(2, 3, 7);
 
   selector.setRandom();
   mat1.setRandom();
   mat2.setRandom();
+
+  // test select with a boolean condition
   result = (selector > selector.constant(0.5f)).select(mat1, mat2);
 
   for (int i = 0; i < 2; ++i) {
     for (int j = 0; j < 3; ++j) {
       for (int k = 0; k < 7; ++k) {
-        VERIFY_IS_APPROX(result(i,j,k), (selector(i,j,k) > 0.5f) ? mat1(i,j,k) : mat2(i,j,k));
+        VERIFY_IS_APPROX(result(i, j, k), (selector(i, j, k) > 0.5f) ? mat1(i, j, k) : mat2(i, j, k));
+      }
+    }
+  }
+
+  // test select with a typed condition
+  result = selector.binaryExpr(selector.constant(0.5f), TypedGTOp()).select(mat1, mat2);
+
+  for (int i = 0; i < 2; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      for (int k = 0; k < 7; ++k) {
+        VERIFY_IS_APPROX(result(i, j, k), (selector(i, j, k) > 0.5f) ? mat1(i, j, k) : mat2(i, j, k));
       }
     }
   }
@@ -305,13 +318,13 @@ void test_minmax_nan_propagation_templ() {
     const Scalar kNaN = std::numeric_limits<Scalar>::quiet_NaN();
     const Scalar kInf = std::numeric_limits<Scalar>::infinity();
     const Scalar kZero(0);
-    Tensor<Scalar, 1> vec_all_nan(size);
+    Tensor<Scalar, 1> vec_full_nan(size);
     Tensor<Scalar, 1> vec_one_nan(size);
     Tensor<Scalar, 1> vec_zero(size);
-    vec_all_nan.setConstant(kNaN);
+    vec_full_nan.setConstant(kNaN);
     vec_zero.setZero();
     vec_one_nan.setZero();
-    vec_one_nan(size/2) = kNaN;
+    vec_one_nan(size / 2) = kNaN;
 
     auto verify_all_nan = [&](const Tensor<Scalar, 1>& v) {
       for (int i = 0; i < size; ++i) {
@@ -330,12 +343,12 @@ void test_minmax_nan_propagation_templ() {
     // max(nan, 0) = nan
     // max(0, nan) = nan
     // max(0, 0) = 0
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNaN>(kNaN));
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNaN>(vec_all_nan));
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNaN>(kZero));
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNaN>(vec_zero));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNaN>(kNaN));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNaN>(vec_full_nan));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNaN>(kZero));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNaN>(vec_zero));
     verify_all_nan(vec_zero.template cwiseMax<PropagateNaN>(kNaN));
-    verify_all_nan(vec_zero.template cwiseMax<PropagateNaN>(vec_all_nan));
+    verify_all_nan(vec_zero.template cwiseMax<PropagateNaN>(vec_full_nan));
     verify_all_zero(vec_zero.template cwiseMax<PropagateNaN>(kZero));
     verify_all_zero(vec_zero.template cwiseMax<PropagateNaN>(vec_zero));
 
@@ -344,12 +357,12 @@ void test_minmax_nan_propagation_templ() {
     // max(nan, 0) = 0
     // max(0, nan) = 0
     // max(0, 0) = 0
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNumbers>(kNaN));
-    verify_all_nan(vec_all_nan.template cwiseMax<PropagateNumbers>(vec_all_nan));
-    verify_all_zero(vec_all_nan.template cwiseMax<PropagateNumbers>(kZero));
-    verify_all_zero(vec_all_nan.template cwiseMax<PropagateNumbers>(vec_zero));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNumbers>(kNaN));
+    verify_all_nan(vec_full_nan.template cwiseMax<PropagateNumbers>(vec_full_nan));
+    verify_all_zero(vec_full_nan.template cwiseMax<PropagateNumbers>(kZero));
+    verify_all_zero(vec_full_nan.template cwiseMax<PropagateNumbers>(vec_zero));
     verify_all_zero(vec_zero.template cwiseMax<PropagateNumbers>(kNaN));
-    verify_all_zero(vec_zero.template cwiseMax<PropagateNumbers>(vec_all_nan));
+    verify_all_zero(vec_zero.template cwiseMax<PropagateNumbers>(vec_full_nan));
     verify_all_zero(vec_zero.template cwiseMax<PropagateNumbers>(kZero));
     verify_all_zero(vec_zero.template cwiseMax<PropagateNumbers>(vec_zero));
 
@@ -358,12 +371,12 @@ void test_minmax_nan_propagation_templ() {
     // min(nan, 0) = nan
     // min(0, nan) = nan
     // min(0, 0) = 0
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNaN>(kNaN));
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNaN>(vec_all_nan));
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNaN>(kZero));
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNaN>(vec_zero));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNaN>(kNaN));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNaN>(vec_full_nan));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNaN>(kZero));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNaN>(vec_zero));
     verify_all_nan(vec_zero.template cwiseMin<PropagateNaN>(kNaN));
-    verify_all_nan(vec_zero.template cwiseMin<PropagateNaN>(vec_all_nan));
+    verify_all_nan(vec_zero.template cwiseMin<PropagateNaN>(vec_full_nan));
     verify_all_zero(vec_zero.template cwiseMin<PropagateNaN>(kZero));
     verify_all_zero(vec_zero.template cwiseMin<PropagateNaN>(vec_zero));
 
@@ -372,12 +385,12 @@ void test_minmax_nan_propagation_templ() {
     // min(nan, 0) = 0
     // min(0, nan) = 0
     // min(0, 0) = 0
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNumbers>(kNaN));
-    verify_all_nan(vec_all_nan.template cwiseMin<PropagateNumbers>(vec_all_nan));
-    verify_all_zero(vec_all_nan.template cwiseMin<PropagateNumbers>(kZero));
-    verify_all_zero(vec_all_nan.template cwiseMin<PropagateNumbers>(vec_zero));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNumbers>(kNaN));
+    verify_all_nan(vec_full_nan.template cwiseMin<PropagateNumbers>(vec_full_nan));
+    verify_all_zero(vec_full_nan.template cwiseMin<PropagateNumbers>(kZero));
+    verify_all_zero(vec_full_nan.template cwiseMin<PropagateNumbers>(vec_zero));
     verify_all_zero(vec_zero.template cwiseMin<PropagateNumbers>(kNaN));
-    verify_all_zero(vec_zero.template cwiseMin<PropagateNumbers>(vec_all_nan));
+    verify_all_zero(vec_zero.template cwiseMin<PropagateNumbers>(vec_full_nan));
     verify_all_zero(vec_zero.template cwiseMin<PropagateNumbers>(kZero));
     verify_all_zero(vec_zero.template cwiseMin<PropagateNumbers>(vec_zero));
 
@@ -397,13 +410,13 @@ void test_minmax_nan_propagation_templ() {
     VERIFY_IS_EQUAL(val(), kZero);
 
     // Test NaN propagation for tensor of all NaNs.
-    val = vec_all_nan.template minimum<PropagateNaN>();
+    val = vec_full_nan.template minimum<PropagateNaN>();
     VERIFY((numext::isnan)(val()));
-    val = vec_all_nan.template minimum<PropagateNumbers>();
+    val = vec_full_nan.template minimum<PropagateNumbers>();
     VERIFY_IS_EQUAL(val(), kInf);
-    val = vec_all_nan.template maximum<PropagateNaN>();
+    val = vec_full_nan.template maximum<PropagateNaN>();
     VERIFY((numext::isnan)(val()));
-    val = vec_all_nan.template maximum<PropagateNumbers>();
+    val = vec_full_nan.template maximum<PropagateNumbers>();
     VERIFY_IS_EQUAL(val(), -kInf);
 
     // Test NaN propagation for tensor with a single NaN.
@@ -418,8 +431,7 @@ void test_minmax_nan_propagation_templ() {
   }
 }
 
-static void test_clip()
-{
+static void test_clip() {
   Tensor<float, 1> vec(6);
   vec(0) = 4.0;
   vec(1) = 8.0;
@@ -438,14 +450,12 @@ static void test_clip()
   }
 }
 
-static void test_minmax_nan_propagation()
-{
+static void test_minmax_nan_propagation() {
   test_minmax_nan_propagation_templ<float>();
   test_minmax_nan_propagation_templ<double>();
 }
 
-EIGEN_DECLARE_TEST(cxx11_tensor_expr)
-{
+EIGEN_DECLARE_TEST(cxx11_tensor_expr) {
   CALL_SUBTEST(test_1d());
   CALL_SUBTEST(test_2d());
   CALL_SUBTEST(test_3d());

@@ -6,16 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "training_strategy_test.h"
+namespace opennn
+{
 
 TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
     training_strategy.set(&neural_network, &data_set);
-}
-
-
-TrainingStrategyTest::~TrainingStrategyTest()
-{
 }
 
 
@@ -27,18 +23,8 @@ void TrainingStrategyTest::test_constructor()
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network_pointer() != nullptr, LOG);
-    assert_true(training_strategy.get_data_set_pointer() != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
-
-    delete training_strategy_pointer;
+    assert_true(training_strategy.get_neural_network(), LOG);
+    assert_true(training_strategy.get_data_set(), LOG);
 }
 
 
@@ -62,26 +48,27 @@ void TrainingStrategyTest::test_perform_training()
     neurons_number = 4;
 
     data.resize(samples_number, inputs_number+targets_number);
-    data.setValues({
-                       {type(0),type(1), type(2)},
-                       {type(0),type(1), type(2)},
-                       {type(0),type(1), type(2)},
-                       {type(0),type(1), type(2)},
-                       {type(0),type(1), type(2)}});
+
+    data.setValues({{type(0),type(1), type(2)},
+                    {type(0),type(1), type(2)},
+                    {type(0),type(1), type(2)},
+                    {type(0),type(1), type(2)},
+                    {type(0),type(1), type(2)}});
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data(data);
-    data_set.set_training();
+    data_set.set(DataSet::SampleUse::Training);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_random();
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
     training_strategy.set_maximum_epochs_number(10);
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L1);
+    training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L1);
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
+
 }
 
 
@@ -89,20 +76,21 @@ void TrainingStrategyTest::test_to_XML()
 {
     cout << "test_to_XML\n";
 
-    FILE *pFile;
-
     string file_name = "../data/training_strategy.xml";
 
-    pFile = fopen(file_name.c_str(), "w");
+    ofstream file(file_name);
 
-    if(pFile)
+    if (!file.is_open())
     {
-        tinyxml2::XMLPrinter document(pFile);
-
-        training_strategy.write_XML(document);
-
-        fclose(pFile);
+        cerr << "Error: Could not open file " << file_name << "\n";
+        return;
     }
+
+    tinyxml2::XMLPrinter document;
+
+    training_strategy.to_XML(document);
+
+    file << document.CStr();
 }
 
 
@@ -119,15 +107,7 @@ void TrainingStrategyTest::test_from_XML()
     string file_name = "../data/training_strategy.xml";
 
     if(document.LoadFile(file_name.c_str()))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void load(const string&) method.\n"
-               << "Cannot load XML file " << file_name << ".\n";
-
-        throw invalid_argument(buffer.str());
-    }
+        throw invalid_argument("Cannot load XML file " + file_name + ".\n");
 
     training_strategy.from_XML(document);
 }
@@ -162,28 +142,27 @@ void TrainingStrategyTest::run_test_case()
 {
     cout << "Running training strategy test case...\n";
 
-    // Constructor and destructor methods
-
     test_constructor();
-    test_destructor();
 
-    // Training methods
+    // Training
 
     test_perform_training();
 
-    // Serialization methods
+    // Serialization
 
     test_to_XML();
     test_from_XML();
+
     test_save();
     test_load();
 
     cout << "End of training strategy test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

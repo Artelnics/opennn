@@ -6,14 +6,8 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a pattern recognition problem.
-
-// System includes
-
 #include <iostream>
 #include <time.h>
-
-// OpenNN includes
 
 #include "../../opennn/opennn.h"
 
@@ -25,47 +19,69 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Application." << endl;
 
-                srand(static_cast<unsigned>(time(nullptr)));
+        srand(unsigned(time(nullptr)));
 
-                // Data set
+        // Data set
 
-                DataSet data_set("../data/breast_cancer.csv", ';', true);
+        DataSet data_set("../data/breast_cancer.csv", ";", true);
 
-                const Index input_variables_number = data_set.get_input_variables_number();
-                const Index target_variables_number = data_set.get_target_variables_number();
+        data_set.save("../data/data_set.xml");
+        data_set.load("../data/data_set.xml");
 
-                // Neural network
+        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-                const Index neurons_number = 6;
+        // Neural network
 
-                NeuralNetwork neural_network(NeuralNetwork::ProjectType::Classification, {input_variables_number, neurons_number, target_variables_number});
+        const Index neurons_number = 6;
 
-                neural_network.print();
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+            { input_variables_number }, { neurons_number }, { target_variables_number });
 
-                // Training strategy
+        neural_network.print();
 
-                TrainingStrategy training_strategy(&neural_network, &data_set);
+        // Training strategy
 
-                training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-                training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-                training_strategy.perform_training();
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
 
-                // Testing analysis
 
-                TestingAnalysis testing_analysis(&neural_network, &data_set);
+        // OKR
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
-                testing_analysis.print_binary_classification_tests();
+        // cross entropy
 
-                // Save results
+        // OKR
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-                neural_network.save("../data/neural_network.xml");
-                neural_network.save_expression_python("../data/breast_cancer.py");
+        training_strategy.perform_training();
 
-                cout << "End breast cancer application" << endl;
+        // Testing analysis
 
-                return 0;
-       
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+        testing_analysis.print_binary_classification_tests();
+
+        // Save results
+
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression_python("../data/breast_cancer.py");
+
+        cout << "End breast cancer application" << endl;
+
+        // OKR
+        cout << " \n write_loss_method \n" << training_strategy.write_loss_method_text();
+        cout << " \n write_opt_method \n" << training_strategy.write_optimization_method_text();
+
+        return 0;
     }
     catch(const exception& e)
     {
@@ -77,7 +93,7 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

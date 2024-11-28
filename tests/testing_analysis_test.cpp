@@ -6,17 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "testing_analysis_test.h"
+namespace opennn
+{
 
 TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
-    testing_analysis.set_neural_network_pointer(&neural_network);
-    testing_analysis.set_data_set_pointer(&data_set);
-}
-
-
-TestingAnalysisTest::~TestingAnalysisTest()
-{
+    testing_analysis.set_neural_network(&neural_network);
+    testing_analysis.set_data_set(&data_set);
 }
 
 
@@ -28,18 +24,9 @@ void TestingAnalysisTest::test_constructor()
 
     TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-    assert_true(testing_analysis.get_neural_network_pointer() != nullptr, LOG);
+    assert_true(testing_analysis.get_neural_network(), LOG);
 
-    assert_true(testing_analysis.get_data_set_pointer() != nullptr, LOG);
-}
-
-
-void TestingAnalysisTest::test_destructor()
-{
-    cout << "test_destructor\n";
-
-    TestingAnalysis* testing_analysis = new TestingAnalysis;
-    delete testing_analysis;
+    assert_true(testing_analysis.get_data_set(), LOG);
 }
 
 
@@ -57,9 +44,9 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_error_data();
@@ -85,9 +72,9 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_error_data();
@@ -112,9 +99,9 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_absolute_errors_descriptives();
@@ -141,9 +128,9 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data = testing_analysis.calculate_percentage_errors_descriptives();
@@ -167,9 +154,9 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data_statistics = testing_analysis.calculate_error_data_descriptives();
@@ -201,9 +188,9 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
@@ -227,9 +214,9 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
@@ -256,9 +243,9 @@ void TestingAnalysisTest::test_linear_regression()
 
     data_set.set(samples_number, inputs_number, targets_number);
     data_set.set_data_constant(type(0));
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     linear_correlation = testing_analysis.linear_correlation();
@@ -295,11 +282,11 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     data_set.set_data_constant(type(0));
 
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
     // Neural Network
 
-    neural_network.set(NeuralNetwork::ProjectType::Approximation, {inputs_number, neurons_number, targets_number});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
@@ -307,7 +294,7 @@ void TestingAnalysisTest::test_perform_linear_regression()
     Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
     assert_true(goodness_of_fit_analysis.size() == 1 , LOG);
-    assert_true(goodness_of_fit_analysis[0].determination - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
 }
 
@@ -357,8 +344,6 @@ void TestingAnalysisTest::test_calculate_confusion()
     assert_true(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2), LOG);
 
     assert_true(confusion(3,3) == 4, LOG);
-
-
 }
 
 
@@ -372,11 +357,11 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
     data_set.set_data_constant(type(0));
 
-    data_set.set_testing();
+    data_set.set(DataSet::SampleUse::Testing);
 
     // Neural Network
 
-    neural_network.set(NeuralNetwork::ProjectType::Classification, {1, 1, 1});
+    neural_network.set(NeuralNetwork::ModelType::Classification, {1}, {1}, {1});
     neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
@@ -400,38 +385,6 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    assert_true(binary[12] == 0 , LOG);
    assert_true(binary[13] == -1 , LOG);
    assert_true(binary[14] == -1 , LOG);
-
-}
-
-
-void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
-{
-    cout << "test_calculate_Wilcoxon_parameter\n";
-
-    type wilcoxon_parameter;
-
-    // Test
-
-    type x = type(1.5);
-    type y = type(2.5);
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
-
-    assert_true(abs(wilcoxon_parameter) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(y ,x);
-
-    assert_true(abs(wilcoxon_parameter - type(1)) < type(NUMERIC_LIMITS_MIN), LOG);
-
-    // Test
-
-    x = y;
-
-    wilcoxon_parameter = testing_analysis.calculate_Wilcoxon_parameter(x, y);
-
-    assert_true(abs(wilcoxon_parameter - type(0.5)) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -448,15 +401,15 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
-    targets(1,0) = type(0.0);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
     targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = type(0.0);
-    outputs(1,0) = type(0.0);
+    outputs(0,0) = type(0);
+    outputs(1,0) = type(0);
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
@@ -470,27 +423,27 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(1, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(2, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(2, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(2, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(3, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
+    targets(0,0) = type(0);
     targets(1,0) = type(1);
     targets(2,0) = type(1);
-    targets(3,0) = type(0.0);
+    targets(3,0) = type(0);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.12);
-    outputs(1,0) = static_cast<type>(0.78);
-    outputs(2,0) = static_cast<type>(0.84);
-    outputs(3,0) = static_cast<type>(0.99);
+    outputs(0,0) = type(0.12);
+    outputs(1,0) = type(0.78);
+    outputs(2,0) = type(0.84);
+    outputs(3,0) = type(0.99);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -503,10 +456,10 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     assert_true(roc_curve(1, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(2, 0) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(2, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(3, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(roc_curve(3, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -564,17 +517,17 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
-    targets(1,0) = type(0.0);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
     targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.78);
-    outputs(1,0) = static_cast<type>(0.84);
-    outputs(2,0) = static_cast<type>(0.12);
-    outputs(3,0) = static_cast<type>(0.99);
+    outputs(0,0) = type(0.78);
+    outputs(1,0) = type(0.84);
+    outputs(2,0) = type(0.12);
+    outputs(3,0) = type(0.99);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -586,8 +539,8 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
-    targets(1,0) = type(0.0);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
     targets(3,0) = type(1);
 
@@ -595,8 +548,8 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     outputs(0,0) = type(1);
     outputs(1,0) = type(1);
-    outputs(2,0) = type(0.0);
-    outputs(3,0) = type(0.0);
+    outputs(2,0) = type(0);
+    outputs(3,0) = type(0);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -618,15 +571,15 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
-    targets(1,0) = type(0.0);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
     targets(3,0) = type(1);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = type(0.0);
-    outputs(1,0) = type(0.0);
+    outputs(0,0) = type(0);
+    outputs(1,0) = type(0);
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
@@ -634,14 +587,14 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    assert_true(optimal_threshold - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 
     // Test
 
     targets.resize(4,1);
 
-    targets(0,0) = type(0.0);
-    targets(1,0) = type(0.0);
+    targets(0,0) = type(0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
     targets(3,0) = type(1);
 
@@ -649,8 +602,8 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     outputs(0,0) = type(1);
     outputs(1,0) = type(1);
-    outputs(2,0) = type(0.0);
-    outputs(3,0) = type(0.0);
+    outputs(2,0) = type(0);
+    outputs(3,0) = type(0);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -662,19 +615,19 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     targets.resize(5,1);
 
-    targets(0,0) = type(0.0);
+    targets(0,0) = type(0);
     targets(1,0) = type(1);
-    targets(2,0) = type(0.0);
+    targets(2,0) = type(0);
     targets(3,0) = type(1);
-    targets(4,0) = type(0.0);
+    targets(4,0) = type(0);
 
     outputs.resize(5,1);
 
-    outputs(0,0) = static_cast<type>(0.33);
-    outputs(1,0) = static_cast<type>(0.14);
-    outputs(2,0) = static_cast<type>(0.12);
-    outputs(3,0) = static_cast<type>(0.62);
-    outputs(4,0) = static_cast<type>(0.85);
+    outputs(0,0) = type(0.33);
+    outputs(1,0) = type(0.14);
+    outputs(2,0) = type(0.12);
+    outputs(3,0) = type(0.62);
+    outputs(4,0) = type(0.85);
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
@@ -693,25 +646,25 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     targets.resize(4,1);
 
     targets(0,0) = type(1);
-    targets(1,0) = type(0.0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
-    targets(3,0) = type(0.0);
+    targets(3,0) = type(0);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.67);
-    outputs(1,0) = static_cast<type>(0.98);
-    outputs(2,0) = static_cast<type>(0.78);
-    outputs(3,0) = static_cast<type>(0.45);
+    outputs(0,0) = type(0.67);
+    outputs(1,0) = type(0.98);
+    outputs(2,0) = type(0.78);
+    outputs(3,0) = type(0.45);
 
     Tensor<type, 2> cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
     assert_true(cumulative_gain.dimension(1) == 2, LOG);
     assert_true(cumulative_gain.dimension(0) == 21, LOG);
-    assert_true(cumulative_gain(0, 0) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(0, 1) - type(0.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(20, 0) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(20, 1) - type(1.0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(cumulative_gain(0, 0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(cumulative_gain(0, 1) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(cumulative_gain(20, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(cumulative_gain(20, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -728,16 +681,16 @@ void TestingAnalysisTest::test_calculate_lift_chart()
     targets.resize(4,1);
 
     targets(0,0) = type(1);
-    targets(1,0) = type(0.0);
+    targets(1,0) = type(0);
     targets(2,0) = type(1);
-    targets(3,0) = type(0.0);
+    targets(3,0) = type(0);
 
     outputs.resize(4,1);
 
-    outputs(0,0) = static_cast<type>(0.67);
-    outputs(1,0) = static_cast<type>(0.87);
-    outputs(2,0) = static_cast<type>(0.99);
-    outputs(3,0) = static_cast<type>(0.88);
+    outputs(0,0) = type(0.67);
+    outputs(1,0) = type(0.87);
+    outputs(2,0) = type(0.99);
+    outputs(3,0) = type(0.88);
 
     cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
@@ -759,28 +712,28 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
     targets.resize(10, 1);
 
     targets(0, 0) = type(1);
-    targets(1, 0) = type(0.0);
+    targets(1, 0) = type(0);
     targets(2, 0) = type(1);
     targets(3, 0) = type(1);
     targets(4, 0) = type(1);
     targets(5, 0) = type(1);
     targets(6, 0) = type(1);
-    targets(7, 0) = type(0.0);
+    targets(7, 0) = type(0);
     targets(8, 0) = type(1);
-    targets(9, 0) = type(0.0);
+    targets(9, 0) = type(0);
 
     outputs.resize(10, 1);
 
-    outputs(0, 0) = static_cast<type>(0.09);
-    outputs(1, 0) = static_cast<type>(0.19);
-    outputs(2, 0) = static_cast<type>(0.29);
-    outputs(3, 0) = static_cast<type>(0.39);
-    outputs(4, 0) = static_cast<type>(0.49);
-    outputs(5, 0) = static_cast<type>(0.59);
-    outputs(6, 0) = static_cast<type>(0.58);
-    outputs(7, 0) = static_cast<type>(0.79);
-    outputs(8, 0) = static_cast<type>(0.89);
-    outputs(9, 0) = static_cast<type>(0.99);
+    outputs(0, 0) = type(0.09);
+    outputs(1, 0) = type(0.19);
+    outputs(2, 0) = type(0.29);
+    outputs(3, 0) = type(0.39);
+    outputs(4, 0) = type(0.49);
+    outputs(5, 0) = type(0.59);
+    outputs(6, 0) = type(0.58);
+    outputs(7, 0) = type(0.79);
+    outputs(8, 0) = type(0.89);
+    outputs(9, 0) = type(0.99);
 
     calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
 
@@ -799,17 +752,17 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
+    targets(0, 0) = type(0);
     targets(1, 0) = type(1);
-    targets(2, 0) = type(0.0);
+    targets(2, 0) = type(0);
     targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
+    outputs(0, 0) = type(0);
     outputs(1, 0) = type(1);
     outputs(2, 0) = type(1);
-    outputs(3, 0) = type(0.0);
+    outputs(3, 0) = type(0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
@@ -825,10 +778,10 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
-    targets(1, 0) = type(0.0);
-    targets(2, 0) = type(0.0);
-    targets(3, 0) = type(0.0);
+    targets(0, 0) = type(0);
+    targets(1, 0) = type(0);
+    targets(2, 0) = type(0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
@@ -879,17 +832,17 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
+    targets(0, 0) = type(0);
     targets(1, 0) = type(1);
-    targets(2, 0) = type(0.0);
+    targets(2, 0) = type(0);
     targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
+    outputs(0, 0) = type(0);
     outputs(1, 0) = type(1);
     outputs(2, 0) = type(1);
-    outputs(3, 0) = type(0.0);
+    outputs(3, 0) = type(0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
@@ -904,10 +857,10 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
-    targets(1, 0) = type(0.0);
-    targets(2, 0) = type(0.0);
-    targets(3, 0) = type(0.0);
+    targets(0, 0) = type(0);
+    targets(1, 0) = type(0);
+    targets(2, 0) = type(0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
@@ -936,7 +889,7 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
     outputs.resize(4, 1);
 
     outputs(0, 0) = type(1);
-    outputs(1, 0) = type(0.0);
+    outputs(1, 0) = type(0);
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
@@ -960,17 +913,17 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
+    targets(0, 0) = type(0);
     targets(1, 0) = type(1);
-    targets(2, 0) = type(0.0);
+    targets(2, 0) = type(0);
     targets(3, 0) = type(1);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
+    outputs(0, 0) = type(0);
     outputs(1, 0) = type(1);
     outputs(2, 0) = type(1);
-    outputs(3, 0) = type(0.0);
+    outputs(3, 0) = type(0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
@@ -987,15 +940,15 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     targets(0, 0) = type(1);
     targets(1, 0) = type(1);
-    targets(2, 0) = type(0.0);
-    targets(3, 0) = type(0.0);
+    targets(2, 0) = type(0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
     outputs(0, 0) = type(1);
     outputs(1, 0) = type(1);
-    outputs(2, 0) = type(0.0);
-    outputs(3, 0) = type(0.0);
+    outputs(2, 0) = type(0);
+    outputs(3, 0) = type(0);
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1016,10 +969,10 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
-    outputs(1, 0) = type(0.0);
-    outputs(2, 0) = type(0.0);
-    outputs(3, 0) = type(0.0);
+    outputs(0, 0) = type(0);
+    outputs(1, 0) = type(0);
+    outputs(2, 0) = type(0);
+    outputs(3, 0) = type(0);
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
@@ -1041,17 +994,17 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
-    targets(1, 0) = type(0.0);
-    targets(2, 0) = type(0.0);
-    targets(3, 0) = type(0.0);
+    targets(0, 0) = type(0);
+    targets(1, 0) = type(0);
+    targets(2, 0) = type(0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
-    outputs(1, 0) = type(0.0);
-    outputs(2, 0) = type(0.0);
-    outputs(3, 0) = type(0.0);
+    outputs(0, 0) = type(0);
+    outputs(1, 0) = type(0);
+    outputs(2, 0) = type(0);
+    outputs(3, 0) = type(0);
 
     Tensor<Index, 1> testing_indices(4);
     testing_indices.setValues({0, 1, 2, 3});
@@ -1070,13 +1023,13 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
     targets.resize(4, 1);
 
     targets(0, 0) = type(1);
-    targets(1, 0) = type(0.0);
+    targets(1, 0) = type(0);
     targets(2, 0) = type(1);
-    targets(3, 0) = type(0.0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
+    outputs(0, 0) = type(0);
     outputs(1, 0) = type(1);
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
@@ -1091,14 +1044,14 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     targets.resize(4, 1);
 
-    targets(0, 0) = type(0.0);
-    targets(1, 0) = type(0.0);
+    targets(0, 0) = type(0);
+    targets(1, 0) = type(0);
     targets(2, 0) = type(1);
-    targets(3, 0) = type(0.0);
+    targets(3, 0) = type(0);
 
     outputs.resize(4, 1);
 
-    outputs(0, 0) = type(0.0);
+    outputs(0, 0) = type(0);
     outputs(1, 0) = type(1);
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
@@ -1160,6 +1113,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
     assert_true(multiple_classification_rates(2,0)(0) == 8, LOG);
     assert_true(multiple_classification_rates(2,1)(0) == 5, LOG);
     assert_true(multiple_classification_rates(2,2)(0) == 2, LOG);
+
 }
 
 
@@ -1167,12 +1121,9 @@ void TestingAnalysisTest::run_test_case()
 {
     cout << "Running testing analysis test case...\n";
 
-    // Constructor and destructor methods
-
     test_constructor();
-    test_destructor();
 
-    // Error data methods
+    // Error data
 
     test_calculate_error_data();
     test_calculate_percentage_error_data();
@@ -1182,28 +1133,27 @@ void TestingAnalysisTest::run_test_case()
     test_calculate_error_data_histograms();
     test_calculate_maximal_errors();
 
-    // Linear regression analysis methodsta
+    // Linear regression analysista
 
     test_linear_regression();
     test_save();
     test_perform_linear_regression();
 
-    // Binary classification test methods
+    // Binary classification test
 
     test_calculate_binary_classification_test();
 
-    // Confusion matrix methods
+    // Confusion matrix
 
     test_calculate_confusion();
 
-    // ROC curve methods
+    // ROC curve
 
-    test_calculate_Wilcoxon_parameter();
     test_calculate_roc_curve();
     test_calculate_area_under_curve();
     test_calculate_optimal_threshold();
 
-    // Lift chart methods
+    // Lift chart
 
     test_calculate_cumulative_gain();
     test_calculate_lift_chart();
@@ -1219,7 +1169,6 @@ void TestingAnalysisTest::run_test_case()
     test_calculate_false_negative_samples();
     test_calculate_true_negative_samples();
 
-
     // Multiple classification rates
 
     test_calculate_multiple_classification_rates();
@@ -1227,9 +1176,10 @@ void TestingAnalysisTest::run_test_case()
     cout << "End of testing analysis test case.\n\n";
 }
 
+}
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

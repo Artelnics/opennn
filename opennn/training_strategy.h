@@ -9,79 +9,42 @@
 #ifndef TRAININGSTRATEGY_H
 #define TRAININGSTRATEGY_H
 
-// System includes
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <cmath>
-#include <ctime>
-
-// OpenNN includes
-
-#include "config.h"
 #include "loss_index.h"
-#include "sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
+#include "cross_entropy_error_3d.h"
 #include "weighted_squared_error.h"
-
 #include "optimization_algorithm.h"
-
-#include "gradient_descent.h"
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 
-
 namespace opennn
 {
-
-/// This class represents the concept of training strategy for a neural network in OpenNN.
-
-///
-/// A training strategy is composed of two objects:
-/// <ul>
-/// <li> Loss index.
-/// <li> Optimization algorithm.
-/// </ul> 
 
 class TrainingStrategy
 {
 
 public:
 
-    // Constructors
-
-    explicit TrainingStrategy();
-
-    explicit TrainingStrategy(NeuralNetwork*, DataSet*);
-
-    // Enumerations
-
-    /// Enumeration of the available error terms in OpenNN.
+    explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     enum class LossMethod
     {
-        SUM_SQUARED_ERROR,
         MEAN_SQUARED_ERROR,
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
         WEIGHTED_SQUARED_ERROR,
-        CROSS_ENTROPY_ERROR
+        CROSS_ENTROPY_ERROR,
+        CROSS_ENTROPY_ERROR_3D
     };
-
-    /// Enumeration of all the available types of optimization algorithms.
 
     enum class OptimizationMethod
     {
-        GRADIENT_DESCENT,
         CONJUGATE_GRADIENT,
         QUASI_NEWTON_METHOD,
         LEVENBERG_MARQUARDT_ALGORITHM,
@@ -89,31 +52,29 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    // Get methods
+    // Get
 
-    DataSet* get_data_set_pointer();
+    DataSet* get_data_set();
 
-    NeuralNetwork* get_neural_network_pointer() const;
+    NeuralNetwork* get_neural_network() const;
 
-    LossIndex* get_loss_index_pointer();
-    OptimizationAlgorithm* get_optimization_algorithm_pointer();
+    LossIndex* get_loss_index();
+    OptimizationAlgorithm* get_optimization_algorithm();
 
     bool has_neural_network() const;
     bool has_data_set() const;
 
-    SumSquaredError* get_sum_squared_error_pointer();
-    MeanSquaredError* get_mean_squared_error_pointer();
-    NormalizedSquaredError* get_normalized_squared_error_pointer();
-    MinkowskiError* get_Minkowski_error_pointer();
-    CrossEntropyError* get_cross_entropy_error_pointer();
-    WeightedSquaredError* get_weighted_squared_error_pointer();
+    MeanSquaredError* get_mean_squared_error();
+    NormalizedSquaredError* get_normalized_squared_error();
+    MinkowskiError* get_Minkowski_error();
+    CrossEntropyError* get_cross_entropy_error();
+    WeightedSquaredError* get_weighted_squared_error();
 
-    GradientDescent* get_gradient_descent_pointer();
-    ConjugateGradient* get_conjugate_gradient_pointer();
-    QuasiNewtonMethod* get_quasi_Newton_method_pointer();
-    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer();
-    StochasticGradientDescent* get_stochastic_gradient_descent_pointer();
-    AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer();
+    ConjugateGradient* get_conjugate_gradient();
+    QuasiNewtonMethod* get_quasi_Newton_method();
+    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm();
+    StochasticGradientDescent* get_stochastic_gradient_descent();
+    AdaptiveMomentEstimation* get_adaptive_moment_estimation();
 
     const LossMethod& get_loss_method() const;
     const OptimizationMethod& get_optimization_method() const;
@@ -126,23 +87,17 @@ public:
 
     const bool& get_display() const;
 
-    // Set methods
+    // Set
 
-    void set();
-    void set(NeuralNetwork*, DataSet*);
-    void set_default() const;
+    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    void set_default();
 
     void set_threads_number(const int&);
 
-    void set_data_set_pointer(DataSet*);
-    void set_neural_network_pointer(NeuralNetwork*);
+    void set_data_set(DataSet*);
+    void set_neural_network(NeuralNetwork*);
 
-    void set_loss_index_threads_number(const int&);
-    void set_optimization_algorithm_threads_number(const int&);
-
-    void set_loss_index_pointer(LossIndex*);
-    void set_loss_index_data_set_pointer(DataSet*);
-    void set_loss_index_neural_network_pointer(NeuralNetwork*);
+    void set_loss_index(LossIndex*);
 
     void set_loss_method(const LossMethod&);
     void set_optimization_method(const OptimizationMethod&);
@@ -159,97 +114,64 @@ public:
 
     void set_maximum_time(const type&);
 
-    // Training methods
+    // Training
 
     TrainingResults perform_training();
 
-    // Check methods
+    // Check
 
     void fix_forecasting();
 
-    // Serialization methods
+    // Serialization
 
     void print() const;
 
-    void from_XML(const tinyxml2::XMLDocument&);
-
-    void write_XML(tinyxml2::XMLPrinter&) const;
+    void from_XML(const XMLDocument&);
+    void to_XML(XMLPrinter&) const;
 
     void save(const string&) const;
     void load(const string&);
 
 private:
 
-    DataSet* data_set_pointer = nullptr;
+    DataSet* data_set = nullptr;
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
     // Loss index
 
-    /// Pointer to the sum squared error object wich can be used as the error term.
-
-    SumSquaredError sum_squared_error;
-
-    /// Pointer to the mean squared error object wich can be used as the error term.
-
     MeanSquaredError mean_squared_error;
-
-    /// Pointer to the normalized squared error object wich can be used as the error term.
 
     NormalizedSquaredError normalized_squared_error;
 
-    /// Pointer to the Mikowski error object wich can be used as the error term.
-
     MinkowskiError Minkowski_error;
-
-    /// Pointer to the cross-entropy error object wich can be used as the error term.
 
     CrossEntropyError cross_entropy_error;
 
-    /// Pointer to the weighted squared error object wich can be used as the error term.
+    CrossEntropyError3D cross_entropy_error_3d;
 
     WeightedSquaredError weighted_squared_error;
-
-    /// Type of loss method.
 
     LossMethod loss_method;
 
     // Optimization algorithm
 
-    /// Gradient descent object to be used as a main optimization algorithm.
-
-    GradientDescent gradient_descent;
-
-    /// Conjugate gradient object to be used as a main optimization algorithm.
-
     ConjugateGradient conjugate_gradient;
-
-    /// Quasi-Newton method object to be used as a main optimization algorithm.
 
     QuasiNewtonMethod quasi_Newton_method;
 
-    /// Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
-
     LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
-
-    /// Stochastic gradient descent algorithm object to be used as a main optimization algorithm.
 
     StochasticGradientDescent stochastic_gradient_descent;
 
-    /// Adaptive moment estimation algorithm object to be used as a main optimization algorithm.
-
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    /// Type of main optimization algorithm.
-
     OptimizationMethod optimization_method;
-
-    /// Display messages to screen.
 
     bool display = true;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/training_strategy_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/training_strategy_cuda.h"
 #endif
 
 };
@@ -260,7 +182,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2023 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -275,4 +197,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

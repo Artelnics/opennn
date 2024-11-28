@@ -14,6 +14,8 @@
 // 3. This notice may not be removed or altered from any source
 // distribution.
 
+#include "pch.h"
+
 
 #pragma warning(push, 0)
 #include "tinyxml2.h"
@@ -353,7 +355,7 @@ const char* StrPair::GetStr()
                     else
                     {
                         bool entityFound = false;
-                        for(int i = 0; i < NUM_ENTITIES;++i )
+                        for(int i = 0; i < NUM_ENTITIES;i++)
                         {
                             const Entity& entity = entities[i];
                             if(strncmp(p + 1, entity.pattern, entity.length ) == 0
@@ -421,7 +423,7 @@ const char* XMLUtil::ReadBOM(const char* p, bool* bom )
     *bom = false;
     const unsigned char* pu = reinterpret_cast<const unsigned char*>(p);
     // Check for BOM:
-    if(   *(pu+0) == TIXML_UTF_LEAD_0
+    if(  *(pu+0) == TIXML_UTF_LEAD_0
             && *(pu+1) == TIXML_UTF_LEAD_1
             && *(pu+2) == TIXML_UTF_LEAD_2 )
     {
@@ -1169,8 +1171,8 @@ char* XMLNode::ParseDeep(char* p, StrPair* parentEndTag, int* curLineNumPtr )
                 return p;
             }
 
-            // Handle an end tag returned to this level.
-            // And handle a bunch of annoying errors.
+            // cublas_handle an end tag returned to this level.
+            // And cublas_handle a bunch of annoying errors.
             bool mismatch = false;
             if(endTag.Empty())
             {
@@ -2219,7 +2221,7 @@ void XMLDocument::MarkInUse(XMLNode* node)
     TIXMLASSERT(node);
     TIXMLASSERT(node->_parent == 0);
 
-    for(int i = 0; i < _unlinked.Size();++i)
+    for(int i = 0; i < _unlinked.Size();i++)
     {
         if(node == _unlinked[i])
         {
@@ -2418,7 +2420,7 @@ XMLError XMLDocument::LoadFile(FILE* fp )
 
     if(!LongFitsIntoSizeTMinusOne<>::Fits(filelength ))
     {
-        // Cannot handle files which won't fit in buffer together with null terminator
+        // Cannot cublas_handle files which won't fit in buffer together with null terminator
         SetError(XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
@@ -2599,12 +2601,12 @@ XMLPrinter::XMLPrinter(FILE* file, bool compact, int depth ) :
     _compactMode(compact ),
     _buffer()
 {
-    for(int i = 0; i <ENTITY_RANGE;++i )
+    for(int i = 0; i <ENTITY_RANGE;i++)
     {
         _entityFlag[i] = false;
         _restrictedEntityFlag[i] = false;
     }
-    for(int i = 0; i <NUM_ENTITIES;++i )
+    for(int i = 0; i <NUM_ENTITIES;i++)
     {
         const char entityValue = entities[i].value;
         const unsigned char flagint = (unsigned char)entityValue;
@@ -2650,7 +2652,7 @@ void XMLPrinter::Write(const char* data, int size )
     }
     else
     {
-        char* p = _buffer.PushArr(static_cast<int>(size)) - 1;   // back up over the null terminator.
+        char* p = _buffer.PushArr(int(size)) - 1;   // back up over the null terminator.
         memcpy(p, data, size );
         p[size] = 0;
     }
@@ -2674,7 +2676,7 @@ void XMLPrinter::Putc(char ch )
 
 void XMLPrinter::PrintSpace(int depth )
 {
-    for(int i = 0; i <depth;++i )
+    for(int i = 0; i <depth;i++)
     {
         Write("   ");
     }
@@ -2708,7 +2710,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                         p += toPrint;
                     }
                     bool entityPatternPrinted = false;
-                    for(int i = 0; i <NUM_ENTITIES;++i )
+                    for(int i = 0; i <NUM_ENTITIES;i++)
                     {
                         if(entities[i].value == *q )
                         {
@@ -3047,6 +3049,76 @@ bool XMLPrinter::Visit(const XMLUnknown& unknown )
 {
     PushUnknown(unknown.Value());
     return true;
+}
+
+void add_xml_element(XMLPrinter& printer, const std::string& name, const std::string& value)
+{
+    printer.OpenElement(name.c_str());
+    printer.PushText(value.c_str());
+    printer.CloseElement();
+}
+
+type read_xml_type(const XMLElement* root, const std::string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return type(stod(text));
+}
+
+
+Index read_xml_index(const XMLElement* root, const string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return Index(stoi(text));
+}
+
+
+bool read_xml_bool(const XMLElement* root, const std::string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr " + element_name);
+
+    return bool(stoi(text));
+}
+
+
+string read_xml_string(const XMLElement* root, const std::string& element_name)
+{
+    const XMLElement* element = root->FirstChildElement(element_name.c_str());
+
+    if(!element)
+        throw runtime_error("Element is nullptr " + element_name);
+
+    const char* text = element->GetText();
+
+    if(!text)
+        throw runtime_error("Text is nullptr: " + element_name);
+
+    return string(text);
 }
 
 }   // namespace tinyxml2

@@ -1,401 +1,230 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P O O L I N G   L A Y E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "pooling_layer_test.h"
+#include "../opennn/pooling_layer.h"
+#include "../opennn/tensors.h"
 
+Tensor<type, 4> generate_input_tensor_pooling(const Tensor<type, 2>& data,
+                                              const vector<Index>& rows_indices,
+                                              const vector<Index>& columns_indices,
+                                              const dimensions& input_dimensions)
+{ 
+    Tensor<type, 4> input_tensor(rows_indices.size(),
+                                 input_dimensions[0],
+                                 input_dimensions[1],
+                                 input_dimensions[2]);
 
-PoolingLayerTest::PoolingLayerTest() : UnitTesting()
-{
+    type* tensor_data = input_tensor.data();
+
+    fill_tensor_data(data, rows_indices, columns_indices, tensor_data);
+    
+    return input_tensor;
 }
 
 
-PoolingLayerTest::~PoolingLayerTest()
+struct PoolingLayerConfig {
+    dimensions input_dimensions;
+    dimensions pool_dimensions;
+    dimensions stride_dimensions;
+    dimensions padding_dimensions;
+    PoolingLayer::PoolingMethod pooling_method;
+    string test_name;
+    Tensor<type, 4> input_data;
+    Tensor<type, 4> expected_output;
+};
+
+
+class PoolingLayerTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
+
+
+INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
+    PoolingLayerConfig{
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
+        ([] {
+        Tensor<type, 2> data(4, 16);
+        data.setValues({
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+            {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+            {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4},
+            {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
+        });
+
+        const vector<Index> rows_indices = {0, 1, 2, 3};
+        const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+        return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
+    })(),
+    ([] {
+        Tensor<type, 4> expected_output(4, 2, 2, 1);
+        expected_output.setValues({
+                                  {{{6}, {14}},
+                                   {{8}, {16}}},
+
+                                  {{{16}, {8}},
+                                   {{14}, {6}}},
+
+                                  {{{2}, {4}},
+                                   {{2}, {4}}},
+
+                                  {{{1}, {3}},
+                                   {{1}, {3}}}
+                                  });
+        return expected_output;
+    })()
+    },
+    PoolingLayerConfig{
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
+        ([] {
+        Tensor<type, 2> data(4, 16);
+        data.setValues({
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+            {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+            {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4},
+            {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
+        });
+
+        const vector<Index> rows_indices = {0, 1, 2, 3};
+        const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+        return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
+    })(),
+    ([] {
+        Tensor<type, 4> expected_output(4, 2, 2, 1);
+        expected_output.setValues({
+                                    {{{3.5}, {11.5}},
+                                    {{5.5}, {13.5}}},
+
+                                    {{{13.5}, {5.5}},
+                                    {{11.5}, {3.5}}},
+
+                                    {{{1.5}, {3.5}},
+                                    {{1.5}, {3.5}}},
+
+                                    {{{0.5}, {2.5}},
+                                    {{0.5}, {2.5}}}
+                                    });
+        return expected_output;
+    })()
+    }
+    // More configurations here
+    )
+);
+
+
+TEST_P(PoolingLayerTest, Constructor)
 {
+    PoolingLayerConfig parameters = GetParam();
+
+    PoolingLayer pooling_layer(parameters.input_dimensions,
+                               parameters.pool_dimensions,
+                               parameters.stride_dimensions,
+                               parameters.padding_dimensions,
+                               parameters.pooling_method,
+                               parameters.test_name);
+
+    EXPECT_EQ(pooling_layer.get_type(), Layer::Type::Pooling);
+    EXPECT_EQ(pooling_layer.get_input_dimensions(), parameters.input_dimensions);
+    EXPECT_EQ(pooling_layer.get_pool_height(), parameters.pool_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_pool_width(), parameters.pool_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_row_stride(), parameters.stride_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_column_stride(), parameters.stride_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_padding_height(), parameters.padding_dimensions[0]);
+    EXPECT_EQ(pooling_layer.get_padding_width(), parameters.padding_dimensions[1]);
+    EXPECT_EQ(pooling_layer.get_pooling_method(), parameters.pooling_method);
 }
 
 
-void PoolingLayerTest::test_constructor()
+TEST_P(PoolingLayerTest, ForwardPropagate) 
 {
-    cout << "test_constructor\n";
+    PoolingLayerConfig parameters = GetParam();
 
-}
+    PoolingLayer pooling_layer(
+        parameters.input_dimensions,
+        parameters.pool_dimensions,
+        parameters.stride_dimensions,
+        parameters.padding_dimensions,
+        parameters.pooling_method,
+        parameters.test_name
+    );
+    
+    const Index batch_samples_number = parameters.input_data.dimension(0);
 
-void PoolingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
+    unique_ptr<LayerForwardPropagation> forward_propagation =
+        make_unique<PoolingLayerForwardPropagation>(batch_samples_number, &pooling_layer);
 
-}
+    pair<type*, dimensions> input_pair( parameters.input_data.data(),
+        { batch_samples_number,
+          parameters.input_dimensions[0],
+          parameters.input_dimensions[1],
+          parameters.input_dimensions[2] } );
 
-void PoolingLayerTest::test_calculate_average_pooling_outputs()
-{
-    cout << "test_calculate_average_pooling_outputs\n";
+    pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
 
-//
+    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-//    Tensor<type, 2> inputs;
-//    Tensor<type, 2> outputs;
+    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
+    EXPECT_EQ(output_pair.second[2], parameters.expected_output.dimension(2));
+    EXPECT_EQ(output_pair.second[3], parameters.expected_output.dimension(3));
 
-    // Test
+    TensorMap<Tensor<type, 4>> output_tensor(output_pair.first,
+                                             batch_samples_number,
+                                             parameters.expected_output.dimension(1),
+                                             parameters.expected_output.dimension(2),
+                                             parameters.expected_output.dimension(3));
 
-//    inputs.resize(({6,6,6,6}));
-
-//    pooling_layer.set_pool_size(1,1);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 6 &&
-//                outputs.dimension(1) == 6 &&
-//                outputs.dimension(2) == 6 &&
-//                outputs.dimension(3) == 6, LOG);
-
-    // Test
-
-//    inputs.resize(({10,3,20,20}));
-
-//    pooling_layer.set_pool_size(2,2);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 10 &&
-//                outputs.dimension(1) == 3 &&
-//                outputs.dimension(2) == 19 &&
-//                outputs.dimension(3) == 19, LOG);
-
-    // Test
-
-//    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = type(1);
-//    inputs(0,0,0,1) = 2.0;
-//    inputs(0,0,0,2) = 3.0;
-//    inputs(0,0,0,3) = 4.0;
-//    inputs(0,0,1,0) = 16.0;
-//    inputs(0,0,1,1) = 9.0;
-//    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = type(1);
-//    inputs(0,0,2,0) = type(1);
-//    inputs(0,0,2,1) = 8.0;
-//    inputs(0,0,2,2) = 27.0;
-//    inputs(0,0,2,3) = 64.0;
-//    inputs(0,0,3,0) = 256.0;
-//    inputs(0,0,3,1) = 81.0;
-//    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = type(1);
-
-//    pooling_layer.set_pool_size(2, 2);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 1 &&
-//                outputs.dimension(1) == 1 &&
-//                outputs.dimension(2) == 3 &&
-//                outputs.dimension(3) == 3 &&
-//                outputs(0,0,0,0) == 7.0 &&
-//                outputs(0,0,0,1) == 4.5 &&
-//                outputs(0,0,0,2) == 3.0 &&
-//                outputs(0,0,1,0) == 8.5 &&
-//                outputs(0,0,1,1) == 12.0 &&
-//                outputs(0,0,1,2) == 24.0 &&
-//                outputs(0,0,2,0) == 86.5 &&
-//                outputs(0,0,2,1) == 33.0 &&
-//                outputs(0,0,2,2) == 27.0, LOG);
-
-    // Test
-
-//    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = type(1);
-//    inputs(0,0,0,1) = 2.0;
-//    inputs(0,0,0,2) = 3.0;
-//    inputs(0,0,0,3) = 4.0;
-//    inputs(0,0,1,0) = 16.0;
-//    inputs(0,0,1,1) = 9.0;
-//    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = type(1);
-//    inputs(0,0,2,0) = type(1);
-//    inputs(0,0,2,1) = 8.0;
-//    inputs(0,0,2,2) = 27.0;
-//    inputs(0,0,2,3) = 64.0;
-//    inputs(0,0,3,0) = 256.0;
-//    inputs(0,0,3,1) = 81.0;
-//    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = type(1);
-
-//    pooling_layer.set_pool_size(3, 3);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_average_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 1 &&
-//                outputs.dimension(1) == 1 &&
-//                outputs.dimension(2) == 2 &&
-//                outputs.dimension(3) == 2 &&
-//                outputs(0,0,0,0) - 7.8888 < 0.001 &&
-//                outputs(0,0,0,1) - 13.5555 < 0.001 &&
-//                outputs(0,0,1,0) - 46.4444 < 0.001 &&
-//                outputs(0,0,1,1) - 23.4444 < 0.001, LOG);
-}
-
-
-void PoolingLayerTest::test_forward_propagate_average_pooling()
-{
-
-/*
-    const Index batch_samples_number = 1;
-
-    const Index inputs_channels_number = 3;
-    const Index inputs_rows_number = 5;
-    const Index inputs_columns_number = 5;
-
-    const Index pool_rows_number = 2;
-    const Index pool_columns_number = 2;
-
-    const Index targets_number = 1;
-
-    DataSet data_set(batch_samples_number,
-                     inputs_channels_number,
-                     inputs_rows_number,
-                     inputs_columns_number,
-                     targets_number);
-
-    data_set.set_data_constant(static_cast<type>(1));
-
-    Tensor<Index, 1> input_variables_dimensions(3);
-    input_variables_dimensions.setValues({inputs_channels_number,
-                                          inputs_rows_number,
-                                          inputs_columns_number});
-
-    Tensor<Index, 1> pool_dimensions(2);
-    pool_dimensions.setValues({pool_rows_number,
-                               pool_columns_number});
-
-    PoolingLayer pooling_layer(input_variables_dimensions, pool_dimensions);
-
-
-    PoolingLayerForwardPropagation pooling_layer_forward(batch_samples_number, &pooling_layer);
-
-    Tensor<type, 4> inputs_data(batch_samples_number,
-                                inputs_channels_number,
-                                inputs_rows_number,
-                                inputs_columns_number);
-
-    inputs_data.setValues({
-                    {
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
-        },
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
-        },
-        {
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0},
-            {0.0, 1.0, 2.0, 2.0, 2.0}
+    for (Index b = 0; b < batch_samples_number; ++b) {
+        for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
+            for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
+                for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
+                    EXPECT_NEAR(output_tensor(b, h, w, c), parameters.expected_output(b, h, w, c), 1e-5)
+                        << "Mismatch at batch=" << b << ", height=" << h
+                        << ", width=" << w << ", channel=" << c;
+                }
+            }
         }
     }
-});
-
-
-    bool is_training = true;
-
-    pooling_layer.forward_propagate_average_pooling(inputs_data.data(),
-                                                    input_variables_dimensions,
-                                                    &pooling_layer_forward,
-                                                    is_training);
-
-    Tensor<Index, 1> outputs_dimensions = pooling_layer_forward.outputs_dimensions;
-
-    assert_true(outputs_dimensions.size() == input_variables_dimensions.size(), LOG);
-    for(Index i = 0; i < outputs_dimensions.size(); ++i)
-    {
-        assert_true(outputs_dimensions(i) <= input_variables_dimensions(i), LOG);
-    }
-
-    type* outputs_data = pooling_layer_forward.outputs_data(0);
-
-    TensorMap<Tensor<type, 4>> outputs(outputs_data,
-                                       outputs_dimensions[0],
-                                       outputs_dimensions(1),
-                                       outputs_dimensions(2),
-                                       outputs_dimensions(3));
-
-    Tensor<type, 3> batch = outputs.chip(0,0);
-
-    cout << "1 single channel: " << endl << batch.chip(0,0) << endl;
-
-    cout << "outputs: " << endl << outputs << endl;
-
-    cout << "Bye!" << endl;
-*/
-}
-
-void PoolingLayerTest::test_calculate_max_pooling_outputs()
-{
-    cout << "test_calculate_max_pooling_outputs\n";
-
-//
-
-//    Tensor<type, 2> inputs;
-//    Tensor<type, 2> outputs;
-
-    // Test
-
-//    inputs.resize(({6,6,6,6}));
-
-//    pooling_layer.set_pool_size(1,1);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 6 &&
-//                outputs.dimension(1) == 6 &&
-//                outputs.dimension(2) == 6 &&
-//                outputs.dimension(3) == 6, LOG);
-
-    // Test
-
-//    inputs.resize(({10,3,20,20}));
-
-//    pooling_layer.set_pool_size(2,2);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 10 &&
-//                outputs.dimension(1) == 3 &&
-//                outputs.dimension(2) == 19 &&
-//                outputs.dimension(3) == 19, LOG);
-
-    // Test
-
-//    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = type(1);
-//    inputs(0,0,0,1) = 2.0;
-//    inputs(0,0,0,2) = 3.0;
-//    inputs(0,0,0,3) = 4.0;
-//    inputs(0,0,1,0) = 16.0;
-//    inputs(0,0,1,1) = 9.0;
-//    inputs(0,0,1,2) = 4.0;
-//    inputs(0,0,1,3) = type(1);
-//    inputs(0,0,2,0) = type(1);
-//    inputs(0,0,2,1) = 8.0;
-//    inputs(0,0,2,2) = 27.0;
-//    inputs(0,0,2,3) = 64.0;
-//    inputs(0,0,3,0) = 256.0;
-//    inputs(0,0,3,1) = 81.0;
-//    inputs(0,0,3,2) = 16.0;
-//    inputs(0,0,3,3) = type(1);
-
-//    pooling_layer.set_pool_size(2, 2);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 1 &&
-//                outputs.dimension(1) == 1 &&
-//                outputs.dimension(2) == 3 &&
-//                outputs.dimension(3) == 3 &&
-//                outputs(0,0,0,0) == 16.0 &&
-//                outputs(0,0,0,1) == 9.0 &&
-//                outputs(0,0,0,2) == 4.0 &&
-//                outputs(0,0,1,0) == 16.0 &&
-//                outputs(0,0,1,1) == 27.0 &&
-//                outputs(0,0,1,2) == 64.0 &&
-//                outputs(0,0,2,0) == 256.0 &&
-//                outputs(0,0,2,1) == 81.0 &&
-//                outputs(0,0,2,2) == 64.0, LOG);
-
-    // Test
-
-//    inputs.resize(({1,1,4,4}));
-//    inputs(0,0,0,0) = type(1);
-//    inputs(0,0,0,1) = 2.0;
-//    inputs(0,0,0,2) = 3.0;
-//    inputs(0,0,0,3) = 4.0;
-//    inputs(0,0,1,0) = -16.0;
-//    inputs(0,0,1,1) = -9.0;
-//    inputs(0,0,1,2) = -4.0;
-//    inputs(0,0,1,3) = -1.0;
-//    inputs(0,0,2,0) = type(1);
-//    inputs(0,0,2,1) = 8.0;
-//    inputs(0,0,2,2) = 27.0;
-//    inputs(0,0,2,3) = 64.0;
-//    inputs(0,0,3,0) = -256.0;
-//    inputs(0,0,3,1) = -81.0;
-//    inputs(0,0,3,2) = -16.0;
-//    inputs(0,0,3,3) = -1.0;
-
-//    pooling_layer.set_pool_size(3, 3);
-//    pooling_layer.set_row_stride(1);
-//    pooling_layer.set_column_stride(1);
-
-//    outputs = pooling_layer.calculate_max_pooling_outputs(inputs);
-
-//    assert_true(outputs.dimension(0) == 1 &&
-//                outputs.dimension(1) == 1 &&
-//                outputs.dimension(2) == 2 &&
-//                outputs.dimension(3) == 2 &&
-//                outputs(0,0,0,0) == 27.0 &&
-//                outputs(0,0,0,1) == 64.0 &&
-//                outputs(0,0,1,0) == 27.0 &&
-//                outputs(0,0,1,1) == 64.0, LOG);
 }
 
 
-void PoolingLayerTest::run_test_case()
-{
-   cout << "Running pooling layer test case...\n";
+TEST_P(PoolingLayerTest, BackPropagate) {
 
-   // Constructor and destructor
+    PoolingLayerConfig parameters = GetParam();
 
-    test_constructor();
-    test_destructor();
+    PoolingLayer pooling_layer(
+        parameters.input_dimensions,
+        parameters.pool_dimensions,
+        parameters.stride_dimensions,
+        parameters.padding_dimensions,
+        parameters.pooling_method,
+        parameters.test_name
+    );
 
-    // Outputs
+    const Index batch_samples_number = parameters.input_data.dimension(0);
 
-    test_calculate_average_pooling_outputs();
-    test_calculate_max_pooling_outputs();
+    unique_ptr<LayerForwardPropagation> forward_propagation =
+        make_unique<PoolingLayerForwardPropagation>(batch_samples_number, &pooling_layer);
 
-   cout << "End of pooling layer test case.\n\n";
+    unique_ptr<LayerBackPropagation> back_propagation =
+        make_unique<PoolingLayerBackPropagation>(batch_samples_number, &pooling_layer);
+
+    pair<type*, dimensions> input_pair( parameters.input_data.data(),
+        { batch_samples_number,
+          parameters.input_dimensions[0],
+          parameters.input_dimensions[1],
+          parameters.input_dimensions[2] } );
+
+    pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
+
+    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
+
+    pooling_layer.back_propagate({ input_pair }, { output_pair }, forward_propagation, back_propagation);
+
+    vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation.get()->get_input_derivative_pairs();
+
+    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_samples_number);
+    EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
+    EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
+    EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
+
+    // @todo check input derivatives vs numeric input_derivatives
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

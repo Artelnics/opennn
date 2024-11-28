@@ -6,50 +6,92 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
-
-#include <cstring>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
 #include <time.h>
 
-// OpenNN includes
+#include "../../opennn/data_set.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
+#include "../../opennn/testing_analysis.h"
+#include "../../opennn/forward_propagation.h"
 
-#include "../../opennn/opennn.h"
 
 using namespace opennn;
+using namespace Eigen;
 
 int main()
 {
     try
     {
-        cout << "OpenNN. Airfoil self noise example." << endl;
+        srand(unsigned(time(nullptr)));
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        cout << "Airfoil self noise" << endl;
+
+        DataSet data_set(1, { 1 }, { 1 });
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+/*
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
+        neural_network.set_parameters_constant(10);
+
+        Tensor<type, 2> inputs(2,2);
+        inputs.setConstant(0);
+
+//        neural_network.print();
+
+        neural_network.calculate_outputs(inputs);
 
         // Data set
 
-        DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
+        DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        data_set.split_samples_random(0.99, 0.005, 0.005);
+
+//        data_set.scale_data();
+
+        //data_set.save("../data/data_set.xml");
+        //data_set.load("../data/data_set.xml");
+
+        // data_set.print();
+        // data_set.print_data();
+
+        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         // Neural network
 
         const Index neurons_number = 10;
 
-        NeuralNetwork neural_network(NeuralNetwork::ProjectType::Approximation, {input_variables_number, neurons_number, target_variables_number});
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+                                     {input_variables_number}, {neurons_number}, {target_variables_number});
+
+        // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+
+        neural_network.print();
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.set_maximum_epochs_number(100);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        training_strategy.set_maximum_epochs_number(10000);
+
+        //training_strategy.save("../data/training_strategy.xml");
+        //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
 
@@ -57,14 +99,30 @@ int main()
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        testing_analysis.print_goodness_of_fit_analysis();
+        testing_analysis.print_goodness_of_fit_analysis();                
 
         // Save results
+        
+//        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+//        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_c("../data/airfoil_self_noise.c");
+        // Deploy
 
+        NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+
+        Tensor<type, 2> inputs(1, input_variables_number);
+        inputs.setRandom();
+
+        inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
+
+        cout << inputs << endl;
+
+        const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
+
+//        cout << outputs << endl;
+*/
         cout << "Good bye!" << endl;
+
 
         return 0;
     }

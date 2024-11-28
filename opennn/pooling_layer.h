@@ -9,104 +9,74 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-//// System includes
 
-#include <cmath>
-#include <cstdlib>
-#include <ctype.h>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <sstream>
-
-// OpenNN includes
-
-#include "config.h"
-//#include "convolutional_layer.h"
 #include "layer.h"
-#include "flatten_layer.h"
-
-#include "statistics.h"
+#include "layer_forward_propagation.h"
+#include "layer_back_propagation.h"
 
 namespace opennn
 {
 
 class ConvolutionalLayer;
 
-struct PoolingLayerForwardPropagation;
-struct PoolingLayerBackPropagation;
-
-/// This class represents the Pooling Layer in Convolutional Neural Network(CNN).
-/// Pooling: is the procross_entropy_errors of merging, ie, reducing the size of the data and remove some noise by different processes.
+#ifdef OPENNN_CUDA
+struct PoolingLayerForwardPropagationCuda;
+struct PoolingLayerBackPropagationCuda;
+#endif
 
 class PoolingLayer : public Layer
 {
 
 public:
 
-    /// Enumeration of the available methods for pooling data.
+    enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    enum class PoolingMethod{NoPooling, MaxPooling, AveragePooling};
+    explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+                          const dimensions& = { 2, 2 }, // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 2, 2 }, // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_height, padding_width}
+                          const PoolingMethod& = PoolingMethod::MaxPooling,
+                          const string = "pooling_layer");
 
-    // Constructors
+    dimensions get_input_dimensions() const;
 
-    explicit PoolingLayer();
-
-    explicit PoolingLayer(const Tensor<Index, 1>&);
-
-    explicit PoolingLayer(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-
-    // Get methods
-
-    Tensor<Index, 1> get_inputs_dimensions() const;
-    Tensor<Index, 1> get_outputs_dimensions() const;
+    dimensions get_output_dimensions() const;
 
     Index get_inputs_number() const;
 
+    Index get_input_height() const;
+    Index get_input_width() const;
     Index get_channels_number() const;
 
-    Index get_inputs_rows_number() const;
+    Index get_output_height() const;
+    Index get_output_width() const;
 
-    Index get_inputs_columns_number() const;
-
-    Index get_neurons_number() const;
-
-    Index get_outputs_rows_number() const;
-
-    Index get_outputs_columns_number() const;
-
+    Index get_padding_height() const;
     Index get_padding_width() const;
 
     Index get_row_stride() const;
-
     Index get_column_stride() const;
 
-    Index get_pool_rows_number() const;
-
-    Index get_pool_columns_number() const;
-
-    Index get_parameters_number() const;
-
-    Tensor<type, 1> get_parameters() const;
+    Index get_pool_height() const;
+    Index get_pool_width() const;
 
     PoolingMethod get_pooling_method() const;
 
     string write_pooling_method() const;
 
-    // Set methods
+    void set(const dimensions& = {0, 0, 0},
+             const dimensions& = {1, 1},
+             const dimensions& = {1, 1},
+             const dimensions& = {0, 0},
+             const PoolingMethod& = PoolingMethod::MaxPooling,
+             const string = "pooling_layer");
 
-    void set(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+    void set_input_dimensions(const dimensions&);
 
-    void set_inputs_number(const Index&) {}
-    void set_neurons_number(const Index&) {}
-    void set_name(const string&);
-
-    void set_inputs_dimensions(const Tensor<Index, 1>&);
-
+    void set_padding_height(const Index&);
     void set_padding_width(const Index&);
 
     void set_row_stride(const Index&);
-
     void set_column_stride(const Index&);
 
     void set_pool_size(const Index&, const Index&);
@@ -116,56 +86,50 @@ public:
 
     void set_default();
 
-    // Outputs
-
-    // First order activations
-
-    void forward_propagate(const Tensor<DynamicTensor<type>, 1>&,
-                           LayerForwardPropagation*,
+    void forward_propagate(const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
 
-    void forward_propagate_no_pooling(const DynamicTensor<type>&,
-                           LayerForwardPropagation*,
-                           const bool&);
+    void forward_propagate_max_pooling(const Tensor<type, 4>&,
+                                       unique_ptr<LayerForwardPropagation>&,
+                                       const bool&) const;
 
-    void forward_propagate_max_pooling(const DynamicTensor<type>&,
-                           LayerForwardPropagation*,
-                           const bool&);
+    void forward_propagate_average_pooling(const Tensor<type, 4>&,
+                                           unique_ptr<LayerForwardPropagation>&,
+                                           const bool&) const;
 
-    void forward_propagate_average_pooling(const DynamicTensor<type>&,
-                           LayerForwardPropagation*,
-                           const bool&);
+    void back_propagate(const vector<pair<type*, dimensions>>&,
+                        const vector<pair<type*, dimensions>>&,
+                        unique_ptr<LayerForwardPropagation>&,
+                        unique_ptr<LayerBackPropagation>&) const final;
 
-    // Delta methods
+    void back_propagate_max_pooling(const Tensor<type, 4>&,
+                                    const Tensor<type, 4>&,
+                                    unique_ptr<LayerForwardPropagation>&,
+                                    unique_ptr<LayerBackPropagation>&) const;
 
-    void calculate_hidden_delta(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void back_propagate_average_pooling(const Tensor<type, 4>&,
+                                        const Tensor<type, 4>&,
+                                        unique_ptr<LayerBackPropagation>&) const;
 
-    void calculate_hidden_delta_convolutional(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void from_XML(const XMLDocument&) final;
+    void to_XML(XMLPrinter&) const final;
 
-    void calculate_hidden_delta_pooling(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    void print() const;
 
-    void calculate_hidden_delta_flatten(LayerForwardPropagation*,
-                                LayerBackPropagation*,
-                                LayerBackPropagation*) const;
+    #ifdef OPENNN_CUDA
+        #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
+    #endif
 
-    // Serialization methods
+private:
 
-    void from_XML(const tinyxml2::XMLDocument&) final;
-    void write_XML(tinyxml2::XMLPrinter&) const final;
+    dimensions input_dimensions;
 
-protected:
+    Index pool_height = 1;
 
-    Tensor<Index, 1> inputs_dimensions;
+    Index pool_width = 1;
 
-    Index pool_rows_number = 2;
-
-    Index pool_columns_number = 2;
+    Index padding_height = 0;
 
     Index padding_width = 0;
 
@@ -175,172 +139,49 @@ protected:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 4> convolution_dimensions = {0, 1, 2, 3}; // For average pooling
-    const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
-
-//#ifdef OPENNN_CUDA
-//#include "../../opennn-cuda/opennn-cuda/pooling_layer_cuda.h"
-//#endif
-
+    const Eigen::array<ptrdiff_t, 2> pooling_dimensions = {1, 2};
+    const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
-{
-    // Default constructor
+{   
+    explicit PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    
+    pair<type*, dimensions> get_outputs_pair() const final;
 
-    explicit PoolingLayerForwardPropagation()
-        : LayerForwardPropagation()
-    {
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    // Constructor
+    void print() const;
 
-    explicit PoolingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
-
-    Eigen::array<ptrdiff_t, 4> get_inputs_dimensions_array() const
-    {
-        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
-
-        const Index inputs_rows_number = pooling_layer_pointer->get_inputs_rows_number();
-        const Index inputs_columns_number = pooling_layer_pointer->get_inputs_columns_number();
-        const Index inputs_channels_number = pooling_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           inputs_rows_number,
-                                           inputs_columns_number,
-                                           inputs_channels_number});
-    }
-
-    Eigen::array<ptrdiff_t, 4> get_outputs_dimensions_array() const
-    {
-        PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
-
-        const Index oututs_columns_number =  pooling_layer_pointer->get_outputs_columns_number();
-        const Index oututs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index outputs_channels_number = pooling_layer_pointer->get_channels_number();
-
-        return Eigen::array<ptrdiff_t, 4>({batch_samples_number,
-                                           oututs_rows_number,
-                                           oututs_columns_number,
-                                           outputs_channels_number});
-    }
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
-
-        layer_pointer = new_layer_pointer;
-
-        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
-
-        Index pool_rows_number = pooling_layer_pointer->get_pool_rows_number();
-
-        Index pool_columns_number = pooling_layer_pointer->get_pool_columns_number();
-
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
-
-        const Index channels_number = pooling_layer_pointer->get_channels_number();
-
-        outputs.resize(1);
-        Tensor<Index, 1> output_dimensions(4);
-        output_dimensions.setValues({batch_samples_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number,
-                                     channels_number});
-        outputs(0).set_dimensions(output_dimensions);
-
-        image_patches.resize(batch_samples_number,
-                             pool_rows_number,
-                             pool_columns_number,
-                             outputs_rows_number*outputs_columns_number,
-                             channels_number);
-    }
-
-
-    void print() const
-    {
-        cout << "Pooling layer forward propagation" << endl;
-
-        cout << "Outputs dimensions:" << endl;
-        cout << outputs[0].get_dimensions() << endl;
-
-        cout << "Outputs:" << endl;
-
-        cout << outputs(0).to_tensor_map<4>() << endl;
-
-        cout << "Image patches" << endl;
-        cout << image_patches << endl;
-     }
+    Tensor<type, 4> outputs;
 
     Tensor<type, 5> image_patches;
+
+    Tensor<Index, 4> maximal_indices;
 };
 
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
+    explicit PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    explicit PoolingLayerBackPropagation() : LayerBackPropagation()
-    {
-    }
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    virtual ~PoolingLayerBackPropagation()
-    {
-    }
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-    explicit PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-        : LayerBackPropagation()
-    {
-        set(new_batch_samples_number, new_layer_pointer);
-    }
+    void print() const;
 
+    Tensor<type, 4> deltas_by_pool_size;
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
-    {
-        batch_samples_number = new_batch_samples_number;
-
-        layer_pointer = new_layer_pointer;
-
-        const PoolingLayer* pooling_layer_pointer = static_cast<PoolingLayer*>(layer_pointer);
-
-        const Index outputs_rows_number = pooling_layer_pointer->get_outputs_rows_number();
-        const Index outputs_columns_number = pooling_layer_pointer->get_outputs_columns_number();
-
-        deltas_dimensions.resize(4);
-/*
-        deltas_dimensions.setValues({batch_samples_number,
-                                     kernels_number,
-                                     outputs_rows_number,
-                                     outputs_columns_number});
-
-        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*kernels_number*outputs_rows_number*outputs_columns_number*sizeof(type)));
-
-        deltas_times_activations_derivatives.resize(batch_samples_number,
-                                                    kernels_number,
-                                                    outputs_rows_number,
-                                                    outputs_columns_number);
-*/
-    }
-
-
-    void print() const
-    {
-        cout << "Deltas:" << endl;
-        //cout << deltas << endl;
-
-    }
+    Tensor<type, 4> input_derivatives;
 };
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn-cuda/opennn-cuda/struct_convolutional_layer_cuda.h"
-//#endif
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_forward_propagation_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/pooling_layer_back_propagation_cuda.h"
+#endif
 
 }
 
