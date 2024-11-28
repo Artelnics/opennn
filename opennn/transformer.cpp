@@ -432,6 +432,7 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     tokenize_wordpiece(context_tokens[0], context);
 
     Tensor<type, 2> input(batch_samples_number, input_length);
+    // Tensor<type, 2> input(batch_samples_number, 1);
 
     input.setZero();
     input(0) = start_indicator;
@@ -440,6 +441,7 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
 
     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
+    // const pair<type*, dimensions> input_pair(input.data(), { 1, 1 });
 
     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
 
@@ -458,9 +460,9 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     {
         forward_propagate(input_pairs, forward_propagation);
 
-        current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
+        current_outputs/*.device(*thread_pool_device)*/ = outputs.chip(i - 1, 0);
 
-        prediction.device(*thread_pool_device) = current_outputs.argmax();
+        prediction/*.device(*thread_pool_device)*/ = current_outputs.argmax();
 
         input(i) = type(prediction(0));
 
@@ -474,20 +476,20 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     // detokenize_whitespace(input, output_string);
     //else
 
-    // detokenize_wordpiece(input, output_string); //coment for amazon reviews example
+    detokenize_wordpiece(input, output_string); //coment for amazon reviews example
+cout<<"Works properly"<<endl;
+    // // new for amazon reviews example
+    // cout<<input<<endl;
+    // if(input(0,0) == 0)
+    //     return "good";
+    // else if(input(0,0) == 1)
+    //     return "bad";
+    // else
+    //     return "unknown";
 
-    // new for amazon reviews example
+    // // end new
 
-    if(input(0,1) == 2)
-        return "good";
-    else if(input(0,1) == 3)
-        return "bad";
-    else
-        return "unknown";
-
-    // end new
-
-    // return output_string.str(); //coment for amazon reviews example
+    return output_string.str(); //coment for amazon reviews example
     
 }
 
@@ -544,7 +546,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 {
     unordered_map<string, type> context_vocabulary_map;
 
-    for(Index i = 0; i < context_vocabulary.size(); i++)
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
     Index token_counter = 1;
@@ -637,21 +639,22 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& output_string)
-{
+{   cout<<Index(predictions(1))<<endl;
+    cout<<input_vocabulary.size()<<endl;
     output_string << input_vocabulary[Index(predictions(1))];
-
+    cout<<"Works properly"<<endl;
     string current_prediction;
 
     for(Index i = 2; i < input_length; i++)
     {
-        if(predictions(i) == 3)   break;
+        if(predictions(i) == 3)
+            break;
 
         current_prediction = input_vocabulary[Index(predictions(i))];
 
-        if(current_prediction.substr(0, 2) == "##")
-            output_string << current_prediction.substr(2);
-        else
-            output_string << " " << current_prediction;
+        current_prediction.substr(0, 2) == "##"
+           ? output_string << current_prediction.substr(2)
+           : output_string << " " << current_prediction;
     }
 }
 

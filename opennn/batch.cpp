@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
@@ -28,7 +27,6 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     if (image_data_set && image_data_set->get_augmentation())
     {
-
         ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 /*
         // @TODO
@@ -76,19 +74,15 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 
     for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
-        const Tensor<type, 3> image = inputs.chip(batch_index, 0);
+        Tensor<type, 3> image = inputs.chip(batch_index, 0);
         cout << image << endl;
         system("pause");
 
         if(random_reflection_axis_x)
-        {
-            //reflect_image_x(thread_pool_device, image);
-        }
+            reflect_image_x(thread_pool_device.get(), image);
 
         if(random_reflection_axis_y)
-        {
-            //reflect_image_y(thread_pool_device, image);
-        }
+            reflect_image_y(thread_pool_device.get(), image);
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
         {
@@ -96,7 +90,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                              ? random_rotation_minimum + type(rand())
                              : random_rotation_maximum;
 
-            //rotate_image(thread_pool_device, image, image, angle);
+            rotate_image(thread_pool_device.get(), image, image, angle);
         }
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
@@ -105,7 +99,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                                    ? random_horizontal_translation_minimum + type(rand())
                                    : random_horizontal_translation_maximum;
 
-            //translate_image(thread_pool_device, image, image, translation);
+            translate_image(thread_pool_device.get(), image, image, translation);
         }
     } 
 

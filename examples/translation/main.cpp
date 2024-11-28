@@ -49,11 +49,12 @@ int main()
         language_data_set.set_separator(DataSet::Separator::Tab);
 
         language_data_set.read_txt_language_model();
-
+        // cout<<language_data_set.get_data().dimensions()<<endl;
         language_data_set.set_raw_variable_scalers(Scaler::None);
 
-        const vector<string> completion_vocabulary = { "[START]", "[END]", "good" ,  "bad" };;
-        const vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
+        vector<string> completion_vocabulary = language_data_set.get_completion_vocabulary();
+        // const vector<string> completion_vocabulary = { "good" ,  "bad" };
+        vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
 
         language_data_set.save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/completion_vocabulary.txt",completion_vocabulary);
         language_data_set.save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/context_vocabulary.txt",context_vocabulary);
@@ -63,6 +64,7 @@ int main()
         Index input_length = language_data_set.get_completion_length();
         Index context_length = language_data_set.get_context_length();
         Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
+        // Index inputs_dimension = completion_vocabulary.size()+1;
         Index context_dimension = language_data_set.get_context_vocabulary_size();
 
         Index number_of_layers = 1;
@@ -80,9 +82,6 @@ int main()
 
         cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
 
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
-
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -95,10 +94,10 @@ int main()
 
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.1);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.9);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
@@ -113,12 +112,12 @@ int main()
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/sentimental_model.xml");
+        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/sentimental_analysis.xml");
 
         string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
         cout<<prediction<<endl;
 
-        // string translation = testing_analysis.test_transformer({"I like dogs."},true);
+        // string translation = testing_analysis.test_transformer({"I like dogs."},false);
         // cout<<translation<<endl;
 
 
@@ -137,8 +136,8 @@ int main()
         // // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/completion_vocabulary.txt",completion_vocabulary);
         // // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_50000/context_vocabulary.txt",context_vocabulary);
 
-        // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/completion_vocabulary.txt",completion_vocabulary);
-        // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/context_vocabulary.txt",context_vocabulary);
+        // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/completion_vocabulary.txt",completion_vocabulary);
+        // language_data_set.import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/context_vocabulary.txt",context_vocabulary);
 
         // language_data_set.set_completion_vocabulary(completion_vocabulary);
         // language_data_set.set_context_vocabulary(context_vocabulary);
@@ -146,7 +145,7 @@ int main()
         // Index input_length;
         // Index context_length;
 
-        // language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/lengths.txt", input_length, context_length);
+        // language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/lengths.txt", input_length, context_length);
 
         // Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
         // Index context_dimension = language_data_set.get_context_vocabulary_size();
@@ -159,7 +158,6 @@ int main()
         // Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
         //                          depth, perceptron_depth, heads_number, number_of_layers });
 
-        // transformer.set_model_type_string("TextClassification");
         // transformer.set_dropout_rate(0);
 
         // cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
@@ -167,15 +165,16 @@ int main()
         // transformer.set_input_vocabulary(completion_vocabulary);
         // transformer.set_context_vocabulary(context_vocabulary);
 
-        // transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_model.xml");
+        // transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/EnToEs.xml");
+        // transformer.set_model_type_string("TextClassification");
 
         // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 
-        // string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
-        // cout<<prediction<<endl;
+        // // string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
+        // // cout<<prediction<<endl;
 
-        // // string translation = testing_analysis.test_transformer({"I like dogs."},true);
-        // // cout<<translation<<endl;
+        // string translation = testing_analysis.test_transformer({"I like dogs."},true);
+        // cout<<translation<<endl;
 
         cout << "Bye!" << endl;
 

@@ -21,10 +21,14 @@ TEST(ProbabilisticLayerTest, GeneralConstructor)
 }
 
 
-/*
 
-void ProbabilisticLayerTest::test_calculate_combinations()
+TEST(ProbabilisticLayerTest, CalculateCombinations)
 {
+    ProbabilisticLayer probabilistic_layer({ 1 }, { 2 });
+
+    EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{ 1 });
+    EXPECT_EQ(probabilistic_layer.get_output_dimensions(), dimensions{ 2 });
+    EXPECT_EQ(probabilistic_layer.get_parameters_number(), 4);
 
     Tensor<type, 1> biases(1);
     Tensor<type, 2> synaptic_weights(1, 1);
@@ -34,7 +38,7 @@ void ProbabilisticLayerTest::test_calculate_combinations()
 
     Tensor<type, 2> inputs(1, 1);
     inputs.setConstant(type(3));
-    
+/*
     Tensor<type, 2> combinations(1, 1);
     probabilistic_layer.set(1, 1);
 
@@ -44,35 +48,28 @@ void ProbabilisticLayerTest::test_calculate_combinations()
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
     EXPECT_EQ(combinations.rank() == 2
-             && combinations.dimension(0) == 1
-             && combinations.dimension(1) == 1);
+        && combinations.dimension(0) == 1
+        && combinations.dimension(1) == 1);
 
     EXPECT_EQ(abs(combinations(0, 0) - type(7)) < type(1e-5));
+*/
 }
 
 
-void ProbabilisticLayerTest::test_calculate_activations()
+TEST(ProbabilisticLayerTest, CalculateActivations)
 {
-    cout << "test_calculate_activations\n";
+    ProbabilisticLayer probabilistic_layer({ 1 }, { 1 });
 
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    neurons_number = 1;
-
-    probabilistic_layer.set(inputs_number, neurons_number);
-
-    combinations.resize(samples_number, neurons_number);
+    Tensor<type, 2> combinations(1, 1);
     combinations.setConstant({ type(-1.55) });
 
-    activations.resize(samples_number, neurons_number);
-    activation_derivatives.resize(samples_number, neurons_number);
-
+    Tensor<type, 2> activations(1, 1);
+    Tensor<type, 2> activation_derivatives(1, 1);
+/*
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     probabilistic_layer.calculate_activations(combinations,
-                                              activation_derivatives);
+        activation_derivatives);
 
     EXPECT_EQ(abs(activations(0, 0) - type(0.175)) < type(1e-2));
 
@@ -82,6 +79,19 @@ void ProbabilisticLayerTest::test_calculate_activations()
         activation_derivatives.dimension(1) == neurons_number);
 
     EXPECT_EQ(abs(activation_derivatives(0, 0) - type(0.1444)) < type(1e-3));
+*/
+}
+
+
+
+/*
+void ProbabilisticLayerTest::test_calculate_activations()
+{
+    // Test
+
+    samples_number = 1;
+    inputs_number = 1;
+    neurons_number = 1;
 
 }
 

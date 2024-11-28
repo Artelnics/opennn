@@ -4,9 +4,6 @@
 #include "neural_network_back_propagation.h"
 #include "loss_index.h"
 
-using namespace std;
-using namespace Eigen;
-
 namespace opennn
 {
 

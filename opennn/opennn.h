@@ -9,7 +9,7 @@
 #ifndef OPENNN_H
 #define OPENNN_H
 
-#include "config.h"
+
 
 // Data set
 
@@ -22,7 +22,7 @@
 
 // Neural network
 
-#include "config.h"
+
 #include "layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"

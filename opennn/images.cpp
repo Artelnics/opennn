@@ -99,20 +99,20 @@ void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_i
 
 
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
-                     TensorMap<Tensor<type, 3>>& image)
+                     Tensor<type, 3>& image)
 {
     const Eigen::array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
 
-    image = image.reverse(reflect_horizontal_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(reflect_horizontal_dimensions);
 }
 
 
 void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
-                     TensorMap<Tensor<type, 3>>& image)
+                     Tensor<type, 3>& image)
 {
     const Eigen::array<bool, 3> reflect_vertical_dimensions = { true, false, false };
 
-    image = image.reverse(reflect_vertical_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(reflect_vertical_dimensions);
 }
 
 
@@ -161,11 +161,9 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
             && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
             {
                 for(Index channel = 0; channel < channels; channel++)
-                {
                     output(x, y, channel) = input(int(transformed_coordinates[0]),
                                                   int(transformed_coordinates[1]),
                                                   channel);
-                }
             }
             else
             {

@@ -35,7 +35,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const Index outputs_number = targets_pair.second[1];
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
-    
+
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
@@ -56,7 +56,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     Tensor<bool, 2>& matches = back_propagation.matches;
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
-    
+
     Tensor<type, 0>& error = back_propagation.error;
 
     if(!built_mask)
@@ -90,6 +90,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
     if(isnan(error())) throw runtime_error("Error is NAN");
+
 }
 
 

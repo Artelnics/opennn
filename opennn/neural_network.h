@@ -9,9 +9,6 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
 #include "layer.h"
 #include "perceptron_layer.h"
 //#include "perceptron_layer_3d.h"
@@ -48,7 +45,8 @@ class NeuralNetwork
 
 public:
 
-   enum class ModelType{AutoAssociation,
+   enum class ModelType{Default,
+                        AutoAssociation,
                         Approximation,
                         Classification,
                         Forecasting,
@@ -56,11 +54,10 @@ public:
                         TextClassification,
                         TextClassificationTransformer};
 
-   // Constructors
-
-   explicit NeuralNetwork();
-
-   explicit NeuralNetwork(const NeuralNetwork::ModelType&, const dimensions&, const dimensions&, const dimensions&);
+   explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
+                          const dimensions& = {},
+                          const dimensions& = {},
+                          const dimensions& = {});
 
    explicit NeuralNetwork(const string&);
 
@@ -117,9 +114,7 @@ public:
 
    // Set
 
-   void set();
-
-   void set(const NeuralNetwork::ModelType&, 
+   void set(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
             const dimensions& = {}, 
             const dimensions& = {},
             const dimensions& = {});
@@ -201,10 +196,7 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
 
-   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&)
-   {
-       return Tensor<type, 2>();
-   }
+   Tensor<type, 2> calculate_scaled_outputs(const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
@@ -267,9 +259,6 @@ protected:
    vector<unique_ptr<Layer>> layers;
 
    vector<vector<Index>> layer_input_indices;
-
-   ThreadPool* thread_pool;
-   ThreadPoolDevice* thread_pool_device;
 
    bool display = true;
 

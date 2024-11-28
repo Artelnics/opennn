@@ -6,7 +6,6 @@
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/forward_propagation.h"
 
-
 TEST(MeanSquaredErrorTest, DefaultConstructor)
 {
     MeanSquaredError mean_squared_error;
@@ -51,11 +50,11 @@ TEST(MeanSquaredErrorTest, BackPropagateApproximationZero)
     neural_network.set_parameters_constant(type(0)); 
 
     ForwardPropagation forward_propagation(1, &neural_network);
-    /*
-    //neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+/*
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
-
+/*
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
     BackPropagation back_propagation(1, &mean_squared_error);
@@ -71,6 +70,19 @@ TEST(MeanSquaredErrorTest, BackPropagateApproximationZero)
 */
 
     EXPECT_EQ(1, 1);
+}
+
+
+
+TEST(MeanSquaredErrorTest, BackPropagateImageClassification)
+{
+    DataSet data_set(1, { 1, 1, 1 }, {1});
+
+    //NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification, { 1 }, { }, { 1 });
+
+    ForwardPropagation forward_propagation;
+
+    BackPropagation back_propagation;
 }
 
 

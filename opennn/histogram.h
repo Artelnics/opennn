@@ -1,10 +1,7 @@
 #ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {

@@ -9,7 +9,7 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "config.h"
+
 #include "data_set.h"
 #include "neural_network.h"
 
@@ -96,8 +96,6 @@ public:
    void set_data_set(DataSet*);
 
    void set_display(const bool&);
-
-   void set_default();
 
    void set_threads_number(const int&);
 

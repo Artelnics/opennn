@@ -9,7 +9,7 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-#include "config.h"
+
 #include "training_strategy.h"
 
 namespace opennn

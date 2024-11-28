@@ -101,7 +101,7 @@ int main()
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        testing_analysis.print_goodness_of_fit_analysis();
+        testing_analysis.print_goodness_of_fit_analysis();                
 
         // Save results
         

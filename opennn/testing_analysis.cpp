@@ -22,8 +22,7 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
     : neural_network(new_neural_network),
       data_set(new_data_set)
 {
-    set_default();
-
+    // set_default();
 }
 
 
@@ -45,23 +44,10 @@ const bool& TestingAnalysis::get_display() const
 }
 
 
-void TestingAnalysis::set_default()
-{
-/*
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-*/
-}
-
-
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -1111,11 +1097,11 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_cur
 
     type minimun_distance = numeric_limits<type>::max();
 
-    type distance;
-
     for(Index i = 0; i < points_number; i++)
     {
-        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1)));
+        //const type distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1)));
+
+        const type distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - type(1));
 
         if(distance < minimun_distance)
         {
@@ -1137,9 +1123,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
-
-    return cumulative_gain;
+    return calculate_cumulative_gain(targets, outputs);
 }
 
 
@@ -1248,7 +1232,6 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
                  negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
-
         negative_cumulative_gain(i + 1, 1) = type(negatives)/type(total_negatives);
     }
 
@@ -1266,9 +1249,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
-    const Tensor<type, 2> lift_chart = calculate_lift_chart(cumulative_gain);
-
-    return lift_chart;
+    return calculate_lift_chart(cumulative_gain);
 }
 
 
@@ -2064,7 +2045,8 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
 
 string TestingAnalysis::test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const
-{   cout<<"Testing transformer"<<endl;
+{   cout<<endl;
+    cout<<"Testing transformer..."<<endl;
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
 
@@ -2322,8 +2304,6 @@ void TestingAnalysis::save(const string& file_name) const
 
 void TestingAnalysis::load(const string& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
@@ -2335,8 +2315,7 @@ void TestingAnalysis::load(const string& file_name)
 
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
 {
-    ofstream file;
-    file.open(file_name);
+    ofstream file(file_name);
 
     file << "Goodness-of-fit analysis\n"
          << "Determination: " << determination << endl;

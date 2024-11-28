@@ -132,6 +132,8 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
 void NormalizedSquaredError::set_default()
 {
+
+
     if(has_neural_network() && has_data_set() && !data_set->get_samples_number() == 0)
     {
         set_normalization_coefficient();
@@ -148,13 +150,13 @@ void NormalizedSquaredError::set_default()
 type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets,
                                                                  const Tensor<type, 1>& targets_mean) const
 {
-    const Index size = targets.dimension(0);
+    const Index rows_number = targets.dimension(0);
 
     type normalization_coefficient = type(0);
 
     Tensor<type, 0> norm;
 
-    for(Index i = 0; i < size; i++)
+    for(Index i = 0; i < rows_number; i++)
     {
         norm.device(*thread_pool_device) = (targets.chip(i, 0) - targets_mean).square().sum();
 

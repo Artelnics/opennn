@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
@@ -162,7 +163,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     vector<Index> context_variable_indices;
-    
+
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
@@ -175,8 +176,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
     const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
@@ -307,9 +308,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
+
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
             // cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
-            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
             // cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 

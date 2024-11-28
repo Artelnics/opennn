@@ -218,27 +218,14 @@ Tensor<Index, 1> count_unique(const vector<string>& tokens)
 
 bool is_numeric_string(const string& text)
 {
-    string::size_type index;
-
-    istringstream iss(text.data());
-
-    float dTestSink;
-
-    iss >> dTestSink;
-
-    if(!iss) return false;
-
     try
     {
-        stod(text, &index);
+        size_t index;
+        [[maybe_unused]] double value = std::stod(text, &index);
 
-        if(index == text.size()
-        || (text.find("%") != string::npos && index+1 == text.size()))
-            return true;
-        else
-            return  false;
+        return (index == text.size() || (text.find('%') != std::string::npos && index + 1 == text.size()));
     }
-    catch(const exception&)
+    catch (const std::exception&)
     {
         return false;
     }
@@ -271,44 +258,29 @@ bool is_numeric_string(const string& text)
 
 bool is_date_time_string(const string& text)
 {
-    if(is_numeric_string(text))return false;
+    if(is_numeric_string(text))
+        return false;
 
-    const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_3 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
-    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
-    const string format_7 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_8 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_9 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
-    const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
-    const string format_12 = "^\\d{1,2}/\\d{1,2}/\\d{4}$";
-    const string format_13 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_14 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-//    const string format_15  = "(0[1-9]|[1-2][0-9]|3[0-1])[.|/|-](0[1-9]|1[0-2])[.|/|-](20[0-9]{2}|[2-9][0-9]{3})\\s([0-1][0-9]|2[0-3])[:]([0-5][0-9])[:]([0-5][0-9])[.][0-9]{6}";
-    const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-    const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-    const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
+    const string year = "(19[0-9][0-9]|20[0-9][0-9])";
+    const string month = "(0[1-9]|1[0-2])";
+    const string day = "(0[1-9]|[12][0-9]|3[01])";
+    const string hour = "([01]?[0-9]|2[0-3])";
+    const string minute = "([0-5][0-9])";
+    const string second = "([0-5][0-9])";
+    const string delimiter = "[-|/|.|\\s]";
+    const string am_pm = "[AP]M";
+    const string full_month = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:ust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)";
 
-    const regex regular_expression(format_1 + "|"
-                                   + format_2 + "|"
-                                   + format_3 + "|"
-                                   + format_4 + "|"
-                                   + format_5 + "|"
-                                   + format_6 + "|"
-                                   + format_7 + "|"
-                                   + format_8 + "|"
-                                   + format_9 + "|"
-                                   + format_10 + "|"
-                                   + format_11 +"|"
-                                   + format_12  + "|"
-                                   + format_13 + "|"
-                                   + format_14 + "|"
-                                   + format_15 + "|"
-                                   + format_16 + "|"
-                                   + format_17);
+    // Combine the formats into a single regex
+    const std::regex regular_expression(
+        year + delimiter + month + delimiter + day + "(\\s+" + hour + ":" + minute + "(:" + second + ")?)?|"
+        + day + delimiter + month + delimiter + year + "(\\s+" + hour + ":" + minute + "(:" + second + ")?(\\s+" + am_pm + ")?)?|"
+        + year + delimiter + full_month + delimiter + day + "(\\s+" + hour + ":" + minute + "(:" + second + ")?)?|"
+        + full_month + "\\s+" + day + "[,\\.]?\\s+" + year + "(\\s+" + hour + ":" + minute + ")?|"
+        + day + delimiter + month + delimiter + year + "\\s+" + hour + ":" + minute + ":" + second + "\\.\\d{6}|"
+        + year + delimiter + month + delimiter + day + "\\s+" + hour + ":" + minute + ":" + second + "\\.\\d{6}|"
+        + "^\\d{1,2}/\\d{1,2}/\\d{4}$|"
+        + "^" + hour + ":" + minute + ":" + second + "$");
 
     return regex_match(text, regular_expression);
 }
@@ -322,12 +294,6 @@ bool is_email(const string& word)
 }
 
 
-// bool contains_number(const string& word)
-// {
-//     return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
-// }
-
-
 bool starts_with(const string& word, const string& starting)
 {
     if(starting.length() > word.length() || starting.length() == 0)
@@ -335,355 +301,6 @@ bool starts_with(const string& word, const string& starting)
 
     return(word.substr(0,starting.length()) == starting);
 }
-
-
-//bool ends_with(const string& word, const string& ending)
-//{
-//    if(ending.length() > word.length())
-//    {
-//        return false;
-//    }
-
-//    return(word.substr(word.length() - ending.length()) == ending);
-//}
-
-
-// bool ends_with(const string& word, const vector<string>& endings)
-// {
-//     const Index endings_size = endings.size();
-
-//     for(Index i = 0; i < endings_size; i++)
-//     {
-//         if(ends_with(word, endings[i]))
-//         {
-//             return true;
-//         }
-//     }
-
-//     return false;
-// }
-
-
-// time_t date_to_timestamp(const string& date, const Index& gmt)
-// {
-//     struct tm time_structure = {};
-
-//     smatch month;
-
-//     const regex months("([Jj]an(?:uary)?)|([Ff]eb(?:ruary)?)|([Mm]ar(?:ch)?)|([Aa]pr(?:il)?)|([Mm]ay)|([Jj]un(?:e)?)|([Jj]ul(?:y)?)"
-//                        "|([Aa]ug(?:gust)?)|([Ss]ep(?:tember)?)|([Oo]ct(?:ober)?)|([Nn]ov(?:ember)?)|([Dd]ec(?:ember)?)");
-
-//     smatch matchs;
-
-//     const string format_1 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-//     const string format_2 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-//     const string format_3 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-//     const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-//     const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
-//     const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
-//     const string format_7 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-//     const string format_8 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-//     const string format_9 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-//     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
-//     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
-//     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-//     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-//     const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
-//     const string format_15 = "(\\d{4})[.|/|-](\\d{2})[.|/|-](\\d{2})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-//     const string format_16 = "(\\d{2})[.|/|-](\\d{2})[.|/|-](\\d{4})\\s(\\d{2})[:](\\d{2}):(\\d{2})\\.\\d{6}";
-//     const string format_17 = "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/(\\d{2}) ([01]?\\d|2[0-3]):([0-5]\\d)$";
-
-//     const regex regular_expression(format_1 + "|"
-//                                    + format_2 + "|"
-//                                    + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-//                                    + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14 + "|" + format_15
-//                                    + "|" + format_16 + "|" + format_17);
-
-//     regex_search(date, matchs, regular_expression);
-
-//     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
-//     {
-//         if(stoi(matchs[1].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[1].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[2].str())-1;
-//             time_structure.tm_mday = stoi(matchs[3].str());
-//             time_structure.tm_hour = stoi(matchs[4].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[5].str());
-//             time_structure.tm_sec = stoi(matchs[6].str());
-//         }
-//     }
-//     else if(matchs[7] != "") // yyyy/mm/dd hh:mm
-//     {
-//         if(stoi(matchs[7].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[7].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[8].str())-1;
-//             time_structure.tm_mday = stoi(matchs[9].str());
-//             time_structure.tm_hour = stoi(matchs[10].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[11].str());
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[12] != "") // yyyy/mm/dd
-//     {
-//         if(stoi(matchs[12].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[12].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[13].str())-1;
-//             time_structure.tm_mday = stoi(matchs[14].str());
-//             time_structure.tm_hour = 0;
-//             time_structure.tm_min = 0;
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[15] != "") // dd/mm/yyyy hh:mm:ss
-//     {
-//         if(stoi(matchs[17].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[17].str()) - 1900;
-//             time_structure.tm_mon = stoi(matchs[16].str()) - 1;
-//             time_structure.tm_mday = stoi(matchs[15].str());
-//             time_structure.tm_hour = stoi(matchs[18].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[19].str());
-//             time_structure.tm_sec = stoi(matchs[20].str());
-//         }
-//     }
-//     else if(matchs[21] != "") // dd/mm/yyyy hh:mm
-//     {
-//         if(stoi(matchs[23].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[23].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[22].str())-1;
-//             time_structure.tm_mday = stoi(matchs[21].str());
-//             time_structure.tm_hour = stoi(matchs[24].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[25].str());
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[26] != "") // dd/mm/yyyy
-//     {
-//         if(stoi(matchs[28].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[28].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[27].str())-1;
-//             time_structure.tm_mday = stoi(matchs[26].str());
-//             time_structure.tm_hour = 0;
-//             time_structure.tm_min = 0;
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
-//     {
-//         if(stoi(matchs[29].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             regex_search(date, month, months);
-
-//             Index month_number = 0;
-
-//             if(!month.empty())
-//                 for(Index i = 1; i < 13; i++)
-//                     if(month[size_t(i)] != "")
-//                         month_number = i;
-
-//             time_structure.tm_year = stoi(matchs[29].str())-1900;
-//             time_structure.tm_mon = int(month_number) - 1;
-//             time_structure.tm_mday = stoi(matchs[31].str());
-//             time_structure.tm_hour = stoi(matchs[32].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[33].str());
-//             time_structure.tm_sec = stoi(matchs[34].str());
-//         }
-//     }
-//     else if(matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
-//     {
-//         if(stoi(matchs[35].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             regex_search(date, month, months);
-
-//             Index month_number = 0;
-
-//             if(!month.empty())
-//                 for(Index i = 1 ; i < 13  ; i++)
-//                     if(month[size_t(i)] != "")
-//                         month_number = i;
-
-//             time_structure.tm_year = stoi(matchs[35].str()) - 1900;
-//             time_structure.tm_mon = int(month_number) - 1;
-//             time_structure.tm_mday = stoi(matchs[37].str());
-//             time_structure.tm_hour = stoi(matchs[38].str()) - int(gmt);
-//             time_structure.tm_min = stoi(matchs[39].str());
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[40] != "") // yyyy/mmm|mmmm/dd
-//     {
-//         if(stoi(matchs[40].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             regex_search(date, month, months);
-
-//             Index month_number = 0;
-
-//             if(!month.empty())
-//                 for(Index i =1 ; i < 13  ; i++)
-//                     if(month[size_t(i)] != "")
-//                         month_number = i;
-
-//             time_structure.tm_year = stoi(matchs[40].str())-1900;
-//             time_structure.tm_mon = int(month_number)-1;
-//             time_structure.tm_mday = stoi(matchs[42].str())- int(gmt);
-//             time_structure.tm_hour = 0;
-//             time_structure.tm_min = 0;
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[43] != "") // mmm dd, yyyy
-//     {
-//         if(stoi(matchs[45].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             regex_search(date,month,months);
-
-//             Index month_number = 0;
-
-//             if(!month.empty())
-//                 for(Index i =1 ; i<13  ; i++)
-//                     if(month[size_t(i)] != "")
-//                         month_number = i;
-
-//             time_structure.tm_year = stoi(matchs[45].str())-1900;
-//             time_structure.tm_mon = int(month_number)-1;
-//             time_structure.tm_mday = stoi(matchs[44].str());
-//             time_structure.tm_hour = 0;
-//             time_structure.tm_min = 0;
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[46] != "") // yyyy/ mm
-//     {
-//         if(stoi(matchs[46].str()) < 1970)
-//         {
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-//         }
-//         else
-//         {
-//             time_structure.tm_year = stoi(matchs[46].str())-1900;
-//             time_structure.tm_mon = stoi(matchs[47].str())-1;
-//             time_structure.tm_mday = 1;
-//             time_structure.tm_hour = 0;
-//             time_structure.tm_min = 0;
-//             time_structure.tm_sec = 0;
-//         }
-//     }
-//     else if(matchs[48] != "") // hh:mm:ss
-//     {
-//         time_structure.tm_year = 70;
-//         time_structure.tm_mon = 0;
-//         time_structure.tm_mday = 1;
-//         time_structure.tm_hour = stoi(matchs[48].str());
-//         time_structure.tm_min = stoi(matchs[49].str());
-//         time_structure.tm_sec = stoi(matchs[50].str());
-//     }
-//     else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
-//     {
-//         time_structure.tm_year = stoi(matchs[53].str())-1900;
-//         time_structure.tm_mon = stoi(matchs[51].str());
-//         time_structure.tm_mday = stoi(matchs[52].str());
-//         time_structure.tm_min = stoi(matchs[55].str());
-//         time_structure.tm_sec = stoi(matchs[56].str());
-
-//         time_structure.tm_hour = (matchs[57].str() == "PM")
-//             ? stoi(matchs[54].str()) + 12
-//             : stoi(matchs[54].str());
-//     }
-//     else if(matchs[58] != "") // yyyy
-//     {
-//         time_structure.tm_year = stoi(matchs[57].str())-1900;
-//         time_structure.tm_mon = 0;
-//         time_structure.tm_mday = 1;
-//         time_structure.tm_hour = 0;
-//         time_structure.tm_min = 0;
-//         time_structure.tm_sec = 0;
-
-//         return mktime(&time_structure);
-//     }
-//     else if(matchs[59] != "") // yyyy/mm/dd hh:mm:ss.ssssss
-//     {
-//         if(stoi(matchs[60].str()) < 1970)
-//             throw runtime_error("Cannot convert dates below 1970.\n");
-        
-//         time_structure.tm_year = stoi(matchs[60].str())-1900;
-//         time_structure.tm_mon = stoi(matchs[59].str())-1;
-//         time_structure.tm_mday = stoi(matchs[58].str());
-//         time_structure.tm_hour = stoi(matchs[61].str()) - int(gmt);
-//         time_structure.tm_min = stoi(matchs[62].str());
-//         time_structure.tm_sec = stof(matchs[63].str());
-//     }
-//     else if(matchs[70] != "") // %d/%m/%y %H:%M
-//     {
-//         time_structure.tm_year = stoi(matchs[72].str()) + 100;
-//         time_structure.tm_mon = stoi(matchs[71].str())-1;
-//         time_structure.tm_mday = stoi(matchs[70].str());
-//         time_structure.tm_hour = stoi(matchs[73].str());
-//         time_structure.tm_min = stoi(matchs[74].str());
-//         time_structure.tm_sec = 0;
-//     }
-//     else if(is_numeric_string(date))
-//     {
-//     }
-//     else
-//     {
-//         throw runtime_error("Date format (" + date + ") is not implemented.\n");
-//     }
-
-//     if(is_numeric_string(date))
-//     {
-//         time_t time_t_date = stoi(date);
-//         return time_t_date;
-//     }
-//     else
-//     {
-//         return mktime(&time_structure);
-//     }
-// }
 
 
 time_t date_to_timestamp(const string& date, const Index& gmt)
@@ -738,6 +355,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     throw runtime_error("Date format (" + date + ") is not implemented.");
 }
+
 
 bool contains_substring(const string& text, const string& sub_string)
 {
@@ -911,8 +529,8 @@ void trim(string& text)
     replace_double_char_with_label(text, ";", "NA");
     replace_double_char_with_label(text, ",", "NA");
 
-    replac_substring_within_quotes(text, ",", "");
-    replac_substring_within_quotes(text, ";", "");
+    replace_substring_within_quotes(text, ",", "");
+    replace_substring_within_quotes(text, ";", "");
 }
 
 
@@ -922,13 +540,13 @@ void replace_first_and_last_char_with_missing_label(string &str, char target_cha
     
     if(str[0] == target_char)
     {
-        string new_string = first_missing_label + target_char;
+        const string new_string = first_missing_label + target_char;
         str.replace(0, 1, new_string);
     }
 
     if(str[str.length() - 1] == target_char)
     {
-        string new_string = target_char + last_missing_label;
+        const string new_string = target_char + last_missing_label;
         str.replace(str.length() - 1, 1, new_string);
     }    
 }
@@ -949,7 +567,7 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
 }
 
 
-void replac_substring_within_quotes(string &str, const string &target, const string &replacement)
+void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
     regex r("\"([^\"]*)\"");
     smatch match;
@@ -1138,11 +756,7 @@ bool is_not_alnum(char &c)
 
 bool contains(vector<string>& v, const string& str)
 {
-    for(size_t i = 0; i < v.size(); i++)
-        if(v[i] == str) 
-            return true;
-
-    return false;
+    return find(v.begin(), v.end(), str) != v.end();
 }
 
 
@@ -1427,20 +1041,6 @@ string multiple_one_hot_decode(const Tensor<type, 2>& tensor)
 */
     return string();
 }
-
-
-//Tensor<type, 2> str_to_input(const string& input_string)
-//{
-//    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
-
-//    Tensor<type, 2> flatten_input_data(1, input_data.size());
-
-//    copy(input_data.data(),
-//         input_data.data() + input_data.size(),
-//         flatten_input_data.data());
-
-//    return flatten_input_data;
-//}
 
 
 Index count_tokens(const vector<vector<string>>& tokens)
@@ -1848,7 +1448,7 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < Index(documents_number); i++)
     {
         for(size_t j = 0; j < documents_words[i].size(); j++)
         {
@@ -1863,11 +1463,11 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
 void delete_numbers(vector<vector<string>>& documents_words)
 {
-    const size_t documents_number = documents_words.size();
+    const Index documents_number = documents_words.size();
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < Index(documents_number); i++)
         for(size_t j = 0; j < documents_words[i].size(); j++)
             if(is_numeric_string(documents_words[i][j]))
                 documents_words[i][j].clear();
@@ -1914,7 +1514,7 @@ void replace_accented_words(vector<vector<string>>& documents)
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_size; i++)
+    for(Index i = 0; i < Index(documents_size); i++)
         for(size_t j = 0; j < documents[i].size(); j++)
             replace_accented_words(documents[i][j]);
 }
@@ -2734,21 +2334,6 @@ string TextGenerationAlphabet::multiple_one_hot_decode(const Tensor<type, 2>& te
     return result;
 }
 
-
-Tensor<type, 2> TextGenerationAlphabet::str_to_input(const string &input_string)
-{
-    Tensor<type, 2> input_data = multiple_one_hot_encode(input_string);
-
-    Tensor<type, 2> flatten_input_data(1, input_data.size());
-
-    copy(execution::par,
-        input_data.data(),
-        input_data.data() + input_data.size(),
-        flatten_input_data.data());
-
-    return flatten_input_data;
-}
-
 }
 */
 
@@ -2898,7 +2483,7 @@ void stem(vector<vector<string>>& words)
 {
     #pragma omp parallel for
 
-    for(size_t i = 0; i < words.size(); i++)
+    for(Index i = 0; i < Index(words.size()); i++)
         for(size_t j = 0; j < words[i].size(); j++)
             stem(words[i][j]);
 }

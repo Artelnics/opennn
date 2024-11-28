@@ -9,9 +9,6 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
 #include "data_set.h"
 #include "batch.h"
 #include "neural_network.h"

@@ -73,7 +73,7 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 }
 
 
-Tensor<Scaler, 1> UnscalingLayer::get_unscaling_method() const
+vector<Scaler> UnscalingLayer::get_unscaling_method() const
 {
     return scalers;
 }
@@ -90,7 +90,7 @@ string UnscalingLayer::get_expression(const vector<string>& input_names,
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        const Scaler scaler = scalers(i);
+        const Scaler scaler = scalers[i];
 
         switch (scaler)
         { 
@@ -221,9 +221,7 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
     // }
     //end new
 
-    scalers.resize(new_neurons_number);
-
-    scalers.setConstant(Scaler::MinimumMaximum);
+    scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
     name = new_name;
 
@@ -235,7 +233,7 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 }
 
 
-void UnscalingLayer::set(const vector<Descriptives>& new_descriptives, const Tensor<Scaler, 1>& new_scalers)
+void UnscalingLayer::set(const vector<Descriptives>& new_descriptives, const vector<Scaler>& new_scalers)
 {
     descriptives = new_descriptives;
 }
@@ -261,7 +259,7 @@ void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& i
 }
 
 
-void UnscalingLayer::set_scalers(const Tensor<Scaler,1>& new_unscaling_method)
+void UnscalingLayer::set_scalers(const vector<Scaler>& new_unscaling_method)
 {
     scalers = new_unscaling_method;
 }
@@ -298,22 +296,22 @@ void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
     const Index neurons_number = get_output_dimensions()[0];
 
     for(Index i = 0; i < neurons_number; i++)
-        scalers(i) = new_unscaling_method;
+        scalers[i] = new_unscaling_method;
 }
 
 
 void UnscalingLayer::set_scaler(const Index& variable_index, const string& new_scaler)
 {
     if(new_scaler == "None")
-        scalers(variable_index) = Scaler::None;
+        scalers[variable_index] = Scaler::None;
     else if(new_scaler == "MeanStandardDeviation")
-        scalers(variable_index) = Scaler::MeanStandardDeviation;
+        scalers[variable_index] = Scaler::MeanStandardDeviation;
     else if(new_scaler == "StandardDeviation")
-        scalers(variable_index) = Scaler::StandardDeviation;
+        scalers[variable_index] = Scaler::StandardDeviation;
     else if(new_scaler == "MinimumMaximum")
-        scalers(variable_index) = Scaler::MinimumMaximum;
+        scalers[variable_index] = Scaler::MinimumMaximum;
     else if(new_scaler == "Logarithm")
-        scalers(variable_index) = Scaler::Logarithm;
+        scalers[variable_index] = Scaler::Logarithm;
     else
         throw runtime_error("Unknown scaling method: " + new_scaler + ".\n");
 }
@@ -340,7 +338,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        const Scaler& scaler = scalers(i);
+        const Scaler& scaler = scalers[i];
 
         const Descriptives& descriptive = descriptives[i];
 

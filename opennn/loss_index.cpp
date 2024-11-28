@@ -70,8 +70,8 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -176,7 +176,7 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error();
 
     // Regularization
-    
+
     add_regularization(back_propagation);   
 }
 

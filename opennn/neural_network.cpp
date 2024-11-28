@@ -14,7 +14,7 @@
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-#include "config.h"
+
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -34,12 +34,6 @@
 
 namespace opennn
 {
-
-NeuralNetwork::NeuralNetwork() : layers(0)
-{
-    set();
-}
-
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
                              const dimensions& input_dimensions,
@@ -380,18 +374,6 @@ const bool& NeuralNetwork::get_display() const
 }
 
 
-void NeuralNetwork::set()
-{
-    input_names.resize(0);
-
-    output_names.resize(0);
-
-    layers.resize(0);
-
-    set_default();
-}
-
-
 void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& input_dimensions, 
                         const dimensions& complexity_dimensions,
@@ -435,10 +417,11 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     case ModelType::AutoAssociation:
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
-
+/*
     case ModelType::TextClassificationTransformer:
         set_text_classification_transformer(input_dimensions, complexity_dimensions, output_dimensions);
         break;
+*/
     }
     const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 
@@ -569,7 +552,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                                   ConvolutionalLayer::ActivationFunction::RectifiedLinear,
                                                   convolution_stride_dimensions,
                                                   convolution_type,
-            "convolutional_layer_" + to_string(i+1)));
+                                                  "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -581,21 +564,18 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pooling_stride_dimensions,
                                             padding_dimensions,
                                             pooling_method,
-            "pooling_layer_" + to_string(i + 1)));
+                                            "pooling_layer_" + to_string(i + 1)));
 
     }
 
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
-
-    //const dimensions neurons_number = { complexity_dimensions[complexity_dimensions.size()]*2 };
-    //add_layer(make_unique<PerceptronLayer>(get_output_dimensions(), neurons_number, PerceptronLayer::ActivationFunction::RectifiedLinear), "perceptron_layer");
 
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
 }
 
-
+/*
 void NeuralNetwork::set_text_classification_transformer(const dimensions& input_dimensions,
                                          const dimensions& complexity_dimensions,
                                                         const dimensions& output_dimensions)
@@ -753,13 +733,12 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
         set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
     }
+*/
 };
 
 
 void NeuralNetwork::set(const string& file_name)
 {
-    layers.resize(0);
-
     load(file_name);
 }
 
@@ -825,11 +804,6 @@ void NeuralNetwork::set_default()
     display = true;
 
     layer_input_indices = vector<vector<Index>>();
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = new ThreadPool(threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 }
 
 
@@ -908,17 +882,16 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-
     if(layers.empty())
         return 0;
 
-    dimensions input_dimensions = layers[0]->get_input_dimensions();
+    const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
     Index inputs_number = 1;
-    for (Index dimension : input_dimensions) {
-        inputs_number *= dimension;
-    }
 
+    for (Index dimension : input_dimensions) 
+        inputs_number *= dimension;
+    
     return inputs_number;
 }
 
@@ -1268,25 +1241,21 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
 string NeuralNetwork::get_expression() const
 {
-    /*
-    const Index layers_number = neural_network.get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& layers = neural_network.get_layers();
-    const vector<string> layer_names = neural_network.get_layer_names();
+    const vector<unique_ptr<Layer>>& layers = get_layers();
+    const vector<string> layer_names = get_layer_names();
 
-    vector<string> input_names = neural_network.get_input_names();
-    vector<string> output_names = neural_network.get_output_names();
+    vector<string> input_names = get_input_names();
+    vector<string> output_names = get_output_names();
 
     const Index inputs_number = input_names.size();
 
-    string aux_name;
-
     for (int i = 0; i < inputs_number; i++)
-    if (!input_names[i].empty())
-    input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
-    else
-    input_names[i] = "input_" + to_string(i);
-
+        input_names[i].empty()
+            ? input_names[i] = "input_" + to_string(i)
+            : input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
+/*
     Index layer_neurons_number;
 
     vector<string> scaled_input_names(inputs_number);
@@ -1384,6 +1353,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
     return tensor_map_2(outputs_pair);
+}
+
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(const Tensor<type, 2>&)
+{
+    return Tensor<type, 2>();
 }
 
 

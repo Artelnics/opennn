@@ -198,6 +198,7 @@ void lstm_c()
 
 void auto_association_c(const NeuralNetwork& neural_network)
 {
+/*
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
     string expression;
@@ -213,6 +214,7 @@ void auto_association_c(const NeuralNetwork& neural_network)
 
     if (index != string::npos)
         expression.erase(index, string::npos);
+*/
 }
 
 
@@ -226,10 +228,10 @@ string get_expression_c(const NeuralNetwork& neural_network)
 
     vector<string> input_names =  neural_network.get_input_names();
     vector<string> output_names = neural_network.get_output_names();
-
+/*
     fix_input_names(input_names);
     fix_output_names(output_names);
-
+*/
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
 
@@ -1034,7 +1036,7 @@ string get_expression_javascript(const NeuralNetwork& neural_network)
 
     ostringstream buffer;
 
-    buffer << inputs_outputs_buffer(2)[0]
+    buffer << inputs_outputs_buffer[2][0]
            << "-->\n" << endl
            << "<!DOCTYPE HTML>" << endl
            << "<html lang=\"en\">\n" << endl
@@ -1940,6 +1942,7 @@ vector<string> fix_get_expression_outputs(const string& str,
     {
         if(token.size() > 1 && token.back() == '{')
             break;
+
         if(token.size() > 1 && token.back() != ';')
             token += ';';
  
@@ -1984,7 +1987,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + " = "
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 //Php
@@ -1995,7 +1997,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + "$"
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 //Python
@@ -2003,7 +2004,6 @@ vector<string> fix_get_expression_outputs(const string& str,
                     out_string = old_variable
                      + " = "
                      + new_variable;
-                    out.push_back(out_string);
                 break;
 
                 //C
@@ -2013,12 +2013,14 @@ vector<string> fix_get_expression_outputs(const string& str,
                      + " = "
                      + new_variable
                      + ";";
-                    out.push_back(out_string);
                 break;
 
                 default:
                 break;
             }
+
+            out.push_back(out_string);
+
         }
     }
 
@@ -2028,6 +2030,7 @@ vector<string> fix_get_expression_outputs(const string& str,
 
 void fix_input_names(vector<string>& input_names)
 {
+/*
     const Index inputs_number = input_names.size();
 
     vector<string> input_names(inputs_number);
@@ -2037,21 +2040,23 @@ void fix_input_names(vector<string>& input_names)
             input_names[i] = "input_" + to_string(i);
         else
             input_names[i] = replace_reserved_keywords(input_names[i]);
+*/
 }
 
 
-vector<string> fix_output_names(vector<string>& output_names)
+void fix_output_names(vector<string>& output_names)
 {
+/*
     const Index outputs_number = output_names.size();
 
-    vector<string> input_names(outputs_number);
+    vector<string> output_names(outputs_number);
 
     for (int i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
             output_names[i] = "output_" + to_string(i);
         else
             input_names[i] = replace_reserved_keywords(input_names[i]);
-
+*/
 }
 
 }

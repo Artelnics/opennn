@@ -214,10 +214,10 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
     const Index batch_size = inputs.dimension(0);
 
     #pragma omp parallel for
-    for(Index row = 0; row < batch_size; row++)
-        for(Index input_position = 0; input_position < inputs_number; input_position++)
+    for(Index row = 0; row < batch_size; row++){
+        for(Index input_position = 0; input_position < inputs_number; input_position++){
             outputs.chip(row, 0).chip(input_position, 0)
-                = embedding_weights.chip(inputs(row, input_position), 0);
+                = embedding_weights.chip(inputs(row, input_position), 0);}}
 
 
 }

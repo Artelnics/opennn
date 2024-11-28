@@ -49,7 +49,8 @@ Index LanguageDataSet::get_context_length() const
 
 Index LanguageDataSet::get_completion_length() const
 {
-    return max_completion_length + 1;
+    // return max_completion_length + 2;
+    return max_completion_length+1;
 }
 
 
@@ -2013,8 +2014,8 @@ void LanguageDataSet::read_txt_language_model()
         const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
-        // completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
-        completion_vocabulary= { "[START]", "[END]", "good" ,  "bad" };
+        completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+        // completion_vocabulary= {"[START]", "good" ,  "bad" };
     }
     else
     {
@@ -2027,15 +2028,15 @@ void LanguageDataSet::read_txt_language_model()
 
     const Index LIMIT = 126;
 
-    Index max_context_tokens = context_tokens[0].size();
+    size_t max_context_tokens = context_tokens[0].size();
 
-    for(Index i = 0; i < entry_number; i++)
+    for(size_t i = 0; i < entry_number; i++)
         if(context_tokens[i].size() > max_context_tokens)
             max_context_tokens = context_tokens[i].size();
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
 
-    Index max_completion_tokens = completion_tokens[0].size();
+    size_t max_completion_tokens = completion_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
         if(completion_tokens[i].size() > max_completion_tokens)

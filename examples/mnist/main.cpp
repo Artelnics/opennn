@@ -11,10 +11,6 @@
 #include <vector>
 #include <exception>
 
-#ifndef _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#endif
-
 #include "../../opennn/opennn.h"
 
 using namespace opennn;
@@ -38,11 +34,18 @@ int main()
 
         image_data_set.set_image_data_random();
 
+        image_data_set.set(DataSet::SampleUse::Training);
+
+
         //ImageDataSet image_data_set;
 
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
+
         //image_data_set.set_data_source_path("/home/artelnics/Documentos/binary_mnist");
+
+        //image_data_set.set_data_source_path("C:/binary_mnist");
+
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");

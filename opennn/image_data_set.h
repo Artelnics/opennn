@@ -9,7 +9,7 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-#include "config.h"
+
 #include "data_set.h"
 
 #ifdef _WIN32

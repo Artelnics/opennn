@@ -9,13 +9,12 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define EIGEN_USE_THREADS
+#include "pch.h"
 
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-#include "config.h"
+
 #include "correlation.h"
 #include "scaling.h"
 
@@ -173,7 +172,7 @@ public:
     const dimensions& get_input_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
-    Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
+    vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
     vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
 
@@ -287,7 +286,7 @@ public:
 
     void set_raw_variable_scalers(const Scaler&);
 
-    void set_raw_variable_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variable_scalers(const vector<Scaler>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();
@@ -443,8 +442,8 @@ public:
 
     void set_data_random();
     void set_data_rosenbrock();
-    void generate_sum_data(const Index&, const Index&);
-    void generate_classification_data(const Index&, const Index&, const Index&);
+    void set_data_sum();
+    void set_data_classification();
 
     // Serialization
 

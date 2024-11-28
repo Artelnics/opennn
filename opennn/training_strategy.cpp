@@ -16,7 +16,9 @@ namespace opennn
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
+
     set(new_neural_network, new_data_set);
+
 }
 
 
@@ -266,11 +268,20 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-    if (new_neural_network)
-        set_neural_network(new_neural_network);
+    mean_squared_error.set(new_neural_network, new_data_set);
+    normalized_squared_error.set(new_neural_network, new_data_set);
+    cross_entropy_error.set(new_neural_network, new_data_set);
+    cross_entropy_error_3d.set(new_neural_network, new_data_set);
+    weighted_squared_error.set(new_neural_network, new_data_set);
+    Minkowski_error.set(new_neural_network, new_data_set);
 
-    if (new_data_set)
-        set_data_set(new_data_set);
+    LossIndex* new_loss_index = get_loss_index();
+
+    conjugate_gradient.set_loss_index(new_loss_index);
+    stochastic_gradient_descent.set_loss_index(new_loss_index);
+    adaptive_moment_estimation.set_loss_index(new_loss_index);
+    quasi_Newton_method.set_loss_index(new_loss_index);
+    Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 
     set_default();
 }
@@ -326,9 +337,17 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 
 void TrainingStrategy::set_threads_number(const int& new_threads_number)
 {
-    set_loss_index_threads_number(new_threads_number);
+    mean_squared_error.set_threads_number(new_threads_number);
+    normalized_squared_error.set_threads_number(new_threads_number);
+    Minkowski_error.set_threads_number(new_threads_number);
+    weighted_squared_error.set_threads_number(new_threads_number);
+    cross_entropy_error.set_threads_number(new_threads_number);
 
-    set_optimization_algorithm_threads_number(new_threads_number);
+    conjugate_gradient.set_threads_number(new_threads_number);
+    quasi_Newton_method.set_threads_number(new_threads_number);
+    Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
+    stochastic_gradient_descent.set_threads_number(new_threads_number);
+    adaptive_moment_estimation.set_threads_number(new_threads_number);
 }
 
 
@@ -336,7 +355,16 @@ void TrainingStrategy::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
 
-    set_loss_index_data_set(data_set);
+    mean_squared_error.set_data_set(new_data_set);
+
+    normalized_squared_error.set_data_set(new_data_set);
+
+    cross_entropy_error.set_data_set(new_data_set);
+    cross_entropy_error_3d.set_data_set(new_data_set);
+
+    weighted_squared_error.set_data_set(new_data_set);
+
+    Minkowski_error.set_data_set(new_data_set);
 }
 
 
@@ -344,27 +372,12 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
 
-    set_loss_index_neural_network(neural_network);
-}
-
-
-void TrainingStrategy::set_loss_index_threads_number(const int& new_threads_number)
-{
-    mean_squared_error.set_threads_number(new_threads_number);
-    normalized_squared_error.set_threads_number(new_threads_number);
-    Minkowski_error.set_threads_number(new_threads_number);
-    weighted_squared_error.set_threads_number(new_threads_number);
-    cross_entropy_error.set_threads_number(new_threads_number);
-}
-
-
-void TrainingStrategy::set_optimization_algorithm_threads_number(const int& new_threads_number)
-{
-    conjugate_gradient.set_threads_number(new_threads_number);
-    quasi_Newton_method.set_threads_number(new_threads_number);
-    Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
-    stochastic_gradient_descent.set_threads_number(new_threads_number);
-    adaptive_moment_estimation.set_threads_number(new_threads_number);
+    mean_squared_error.set_neural_network(new_neural_network);
+    normalized_squared_error.set_neural_network(new_neural_network);
+    cross_entropy_error.set_neural_network(new_neural_network);
+    cross_entropy_error_3d.set_neural_network(new_neural_network);
+    weighted_squared_error.set_neural_network(new_neural_network);
+    Minkowski_error.set_neural_network(new_neural_network);
 }
 
 
@@ -375,28 +388,6 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
     Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
-}
-
-
-void TrainingStrategy::set_loss_index_data_set(DataSet* new_data_set)
-{
-    mean_squared_error.set_data_set(new_data_set);
-    normalized_squared_error.set_data_set(new_data_set);
-    cross_entropy_error.set_data_set(new_data_set);
-    cross_entropy_error_3d.set_data_set(new_data_set);
-    weighted_squared_error.set_data_set(new_data_set);
-    Minkowski_error.set_data_set(new_data_set);
-}
-
-
-void TrainingStrategy::set_loss_index_neural_network(NeuralNetwork* new_neural_network)
-{
-    mean_squared_error.set_neural_network(new_neural_network);
-    normalized_squared_error.set_neural_network(new_neural_network);
-    cross_entropy_error.set_neural_network(new_neural_network);
-    cross_entropy_error_3d.set_neural_network(new_neural_network);
-    weighted_squared_error.set_neural_network(new_neural_network);
-    Minkowski_error.set_neural_network(new_neural_network);
 }
 
 
@@ -474,9 +465,9 @@ void TrainingStrategy::set_default()
 
 TrainingResults TrainingStrategy::perform_training()
 {
-    if(neural_network->has(Layer::Type::Recurrent)
-        || neural_network->has(Layer::Type::LongShortTermMemory))
-        fix_forecasting();
+    // if(neural_network->has(Layer::Type::Recurrent)
+    //     || neural_network->has(Layer::Type::LongShortTermMemory))
+    //     fix_forecasting();
 
     set_display(display);
 
@@ -615,7 +606,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Minkowski error
 
     const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
-    if (minkowski_error_element) {
+
+    if (minkowski_error_element)
+    {
         XMLDocument minkowski_document;
         XMLElement* minkowski_error_element_copy = minkowski_document.NewElement("MinkowskiError");
 

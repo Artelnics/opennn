@@ -34,7 +34,7 @@ public:
    Tensor<type, 1> get_means() const;
    Tensor<type, 1> get_standard_deviations() const;
 
-   Tensor<Scaler, 1> get_scaling_methods() const;
+   vector<Scaler> get_scaling_methods() const;
 
    vector<string> write_scalers() const;
    vector<string> write_scalers_text() const;
@@ -54,7 +54,7 @@ public:
 
    void set_min_max_range(const type& min, const type& max);
 
-   void set_scalers(const Tensor<Scaler, 1>&);
+   void set_scalers(const vector<Scaler>&);
    void set_scalers(const vector<string>&);
 
    void set_scaler(const Index&, const Scaler&);
@@ -87,7 +87,7 @@ private:
 
    vector<Descriptives> descriptives;
 
-   Tensor<Scaler, 1> scalers;
+   vector<Scaler> scalers;
 
    type min_range;
    type max_range;
