@@ -176,6 +176,8 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+
+
     if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     else if(loss_index->get_loss_method() == "CROSS_ENTROPY_ERROR")
@@ -284,13 +286,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                           is_training);
         
         // Loss index
-        
+
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
-        
+
         results.training_error_history(epoch) = training_back_propagation_lm.error();
-        
+/*
         if(has_selection)
         {           
             neural_network->forward_propagate(selection_batch.get_input_pairs(),
@@ -314,7 +316,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
         }
-        
+*/
         // Elapsed time
 
         time(&current_time);
@@ -395,7 +397,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
-        
     }
 
     if(neural_network->has(Layer::Type::Scaling2D))
@@ -498,7 +499,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             }
             else
             {
-                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters_increment(i) = (gradient(i) > type(0))
+                    ? -epsilon
+                    : epsilon;
+
                 parameters(i) += parameters_increment(i);
             }
         }
