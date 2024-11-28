@@ -70,12 +70,8 @@ public:
 
     void set_display(const bool&);
 
-    // Parameters initialization
-
     virtual void set_parameters_constant(const type&);
     virtual void set_parameters_random();
-
-    // Architecture
 
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
@@ -83,19 +79,9 @@ public:
     virtual dimensions get_input_dimensions() const = 0;
     virtual dimensions get_output_dimensions() const = 0;
 
-    Index get_inputs_number() const
-    {
-        const dimensions input_dimensions = get_input_dimensions();
+    Index get_inputs_number() const;
 
-        return accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
-    }
-
-    Index get_outputs_number() const
-    {
-        const dimensions output_dimensions = get_output_dimensions();
-
-        return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
-    }
+    Index get_outputs_number() const;
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -131,46 +117,17 @@ public:
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
 
-    // Serialization
-
     virtual void from_XML(const XMLDocument&) {}
 
     virtual void to_XML(XMLPrinter&) const {}
 
-    // Expression
-
-    virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const
-    {
-        return string();
-    }
+    virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const;
 
     virtual void print() const {}
 
+    vector<string> get_default_input_names() const;
 
-    vector<string> get_default_input_names() const
-    {
-        const Index inputs_number = get_inputs_number();
-
-        vector<string> input_names(inputs_number);
-
-        for(Index i = 0; i < inputs_number; i++)
-            input_names[i] = "input_" + to_string(i);
-
-        return input_names;
-    }
-
-
-    vector<string> get_default_output_names() const
-    {
-        const Index outputs_number = get_outputs_number();
-
-        vector<string> output_names(outputs_number);
-
-        for(Index i = 0; i < outputs_number; i++)
-            output_names[i] = "output_" + to_string(i);
-
-        return output_names;
-    }
+    vector<string> get_default_output_names() const;
 
 protected:
 

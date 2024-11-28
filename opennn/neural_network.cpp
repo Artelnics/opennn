@@ -2113,7 +2113,8 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
             break;
 
         default:
-            throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
+            continue;
+            //throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
 }
