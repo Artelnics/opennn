@@ -42,12 +42,6 @@ dimensions PoolingLayer::get_output_dimensions() const
 }
 
 
-Index PoolingLayer::get_inputs_number() const
-{
-    return input_dimensions.size();
-}
-
-
 Index PoolingLayer::get_input_height() const
 {
     return input_dimensions[0];
@@ -242,7 +236,6 @@ void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
                                  const Index& new_pool_columns_number)
 {
     pool_height = new_pool_rows_number;
-
     pool_width = new_pool_columns_number;
 }
 
@@ -260,7 +253,7 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
     else if(new_pooling_method == "AveragePooling")
         pooling_method = PoolingMethod::AveragePooling;
     else
-        throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\batch_index");
+        throw runtime_error("Unknown pooling type: " + new_pooling_method);
 }
 
 
@@ -646,6 +639,8 @@ vector<pair<type*, dimensions>> PoolingLayerBackPropagation::get_input_derivativ
 void PoolingLayerBackPropagation::print() const
 {
     cout << "PoolingLayer layer back propagation" << endl;
+    cout << "Input derivatives:" << endl
+         << input_derivatives << endl;
 }
 
 }

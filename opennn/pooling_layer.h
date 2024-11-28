@@ -32,24 +32,22 @@ public:
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
     explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
-                          const dimensions& = { 2, 2 }, // Pool dimensions {pool_height,pool_width}
-                          const dimensions& = { 2, 2 }, // Stride dimensions {row_stride, column_stride}
-                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_height, padding_width}
+                          const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
                           const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
 
     dimensions get_input_dimensions() const;
-
     dimensions get_output_dimensions() const;
-
-    Index get_inputs_number() const;
 
     Index get_input_height() const;
     Index get_input_width() const;
-    Index get_channels_number() const;
 
     Index get_output_height() const;
     Index get_output_width() const;
+
+    Index get_channels_number() const;
 
     Index get_padding_height() const;
     Index get_padding_width() const;
