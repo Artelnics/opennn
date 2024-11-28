@@ -414,9 +414,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
@@ -427,11 +424,10 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
+    set_neural_network_variable_names();
+
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
-
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -477,7 +473,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
     type loss_decrease = numeric_limits<type>::max();
 
     time_t beginning_time;
-    time_t current_time;
     time(&beginning_time);
     type elapsed_time;
 
@@ -531,8 +526,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {

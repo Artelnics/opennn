@@ -247,7 +247,6 @@ TrainingResults ConjugateGradient::perform_training()
     // Elapsed time
 
     time_t beginning_time;
-    time_t current_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -356,8 +355,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Optimization algorithm
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {

@@ -161,19 +161,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    vector<Index> context_variable_indices;
-    
-    if(is_language_model)
-    {
-        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
-    }
+
+    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
+                                                       ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
+                                                       : vector<Index>();
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
-
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -182,19 +176,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     vector<Descriptives> target_variable_descriptives;
 
-    Index training_batch_samples_number = 0;
-    Index selection_batch_samples_number = 0;
-
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    training_samples_number < batch_samples_number
-            ? training_batch_samples_number = training_samples_number
-            : training_batch_samples_number = batch_samples_number;
+    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
-    selection_samples_number < batch_samples_number && selection_samples_number != 0
-            ? selection_batch_samples_number = selection_samples_number
-            : selection_batch_samples_number = batch_samples_number;
+    const Index selection_batch_samples_number = (selection_samples_number > 0)
+           ? min(selection_samples_number, batch_samples_number)
+           : 0;
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
@@ -209,8 +198,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
+    set_neural_network_variable_names();
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
@@ -254,9 +242,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     bool is_training = true;
 
     time_t beginning_time;
-    time_t current_time;
-
     time(&beginning_time);
+
     type elapsed_time = type(0);
 
     bool shuffle = false;
@@ -271,7 +258,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -375,8 +361,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
         // Elapsed time
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {
