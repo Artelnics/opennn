@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "statistics.h"
 #include "scaling.h"
 

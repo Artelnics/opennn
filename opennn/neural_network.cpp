@@ -14,7 +14,7 @@
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-#include "config.h"
+
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -34,12 +34,6 @@
 
 namespace opennn
 {
-
-NeuralNetwork::NeuralNetwork() : layers(0)
-{
-    set();
-}
-
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type, 
                              const dimensions& input_dimensions,
@@ -66,8 +60,8 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
 
     layers.push_back(std::move(layer));
 
-    layer_input_indices.push_back(input_indices.empty() 
-        ? std::vector<Index>(1, old_layers_number - 1) 
+    layer_input_indices.push_back(input_indices.empty()
+        ? vector<Index>(1, old_layers_number - 1)
         : input_indices);
 }
 
@@ -131,6 +125,8 @@ string NeuralNetwork::get_model_type_string() const
 {
     switch (model_type)
     {
+        case ModelType::Default:
+            return "Default";
         case ModelType::AutoAssociation:
             return "AutoAssociation";
         case ModelType::Approximation:
@@ -380,18 +376,6 @@ const bool& NeuralNetwork::get_display() const
 }
 
 
-void NeuralNetwork::set()
-{
-    input_names.resize(0);
-
-    output_names.resize(0);
-
-    layers.resize(0);
-
-    set_default();
-}
-
-
 void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                         const dimensions& input_dimensions, 
                         const dimensions& complexity_dimensions,
@@ -436,6 +420,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
+    default:
+        break;
     }
     const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 
@@ -560,12 +546,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions convolution_stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                  kernel_dimensions,
-                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                  convolution_stride_dimensions,
-                                                  convolution_type,
-                                                  "convolutional_layer_" + to_string(i+1)));
+        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+        //                                          kernel_dimensions,
+        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+        //                                          convolution_stride_dimensions,
+        //                                          convolution_type,
+        //                                          "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -591,8 +577,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
 
 void NeuralNetwork::set(const string& file_name)
 {
-    layers.resize(0);
-
     load(file_name);
 }
 
@@ -658,11 +642,6 @@ void NeuralNetwork::set_default()
     display = true;
 
     layer_input_indices = vector<vector<Index>>();
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    thread_pool = new ThreadPool(threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 }
 
 
@@ -1099,25 +1078,21 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
 string NeuralNetwork::get_expression() const
 {
-    /*
-    const Index layers_number = neural_network.get_layers_number();
+    const Index layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& layers = neural_network.get_layers();
-    const vector<string> layer_names = neural_network.get_layer_names();
+    const vector<unique_ptr<Layer>>& layers = get_layers();
+    const vector<string> layer_names = get_layer_names();
 
-    vector<string> input_names = neural_network.get_input_names();
-    vector<string> output_names = neural_network.get_output_names();
+    vector<string> input_names = get_input_names();
+    vector<string> output_names = get_output_names();
 
     const Index inputs_number = input_names.size();
 
-    string aux_name;
-
     for (int i = 0; i < inputs_number; i++)
-    if (!input_names[i].empty())
-    input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
-    else
-    input_names[i] = "input_" + to_string(i);
-
+        input_names[i].empty()
+            ? input_names[i] = "input_" + to_string(i)
+            : input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
+/*
     Index layer_neurons_number;
 
     vector<string> scaled_input_names(inputs_number);
@@ -1187,7 +1162,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagate({input_pair}, forward_propagation);
 
-    forward_propagation.print();
+    //forward_propagation.print();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -1216,6 +1191,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
     return tensor_map_2(outputs_pair);
 }
+
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(const Tensor<type, 2>&)
 {
@@ -1730,12 +1706,19 @@ void NeuralNetwork::outputs_from_XML(const XMLDocument& document)
 
 void NeuralNetwork::print() const
 {
-    cout << "Neural network" << endl;
-/*
+    cout << "Neural network" << endl
+         << "Model type:" << endl
+         << get_model_type_string() << endl;
+
+
+    print_vector(get_input_names());
+
+
     if(model_type != ModelType::ImageClassification)
-        cout << "Inputs:" << endl
-             << get_input_names() << endl;
-*/
+    {
+        cout << "Inputs:" << endl;
+        print_vector(get_input_names());
+    }
     const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;
@@ -1746,12 +1729,12 @@ void NeuralNetwork::print() const
              << "Layer " << i << ": " << endl;
         layers[i]->print();
     }
-/*
-    cout << "Outputs:" << endl
-         << get_output_names() << endl
-         << "Parameters:" << endl
+
+    cout << "Outputs:" << endl;
+    print_vector(get_output_names());
+
+    cout << "Parameters number:" << endl
          << get_parameters_number() << endl;
-*/
 }
 
 
@@ -1778,8 +1761,6 @@ void NeuralNetwork::save_parameters(const string& file_name) const
     const Tensor<type, 1> parameters = get_parameters();
 
     file << parameters << endl;
-
-    // Close file
 
     file.close();
 }

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "statistics.h"
 #include "tensors.h"
 
@@ -123,14 +122,10 @@ void Descriptives::save(const string &file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open descriptives data file.\n");
 
-    // Write file
-
     file << "Minimum: " << minimum << endl
          << "Maximum: " << maximum << endl
          << "Mean: " << mean << endl
          << "Standard deviation: " << standard_deviation << endl;
-
-    // Close file
 
     file.close();
 }
@@ -2038,18 +2033,6 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     percentiles[9] = maximum(new_vector);
 
     return percentiles;
-}
-
-
-Index count_nan(const Tensor<type, 1>& vector)
-{
-    Index nan_number = 0;
-
-    for(Index i = 0; i < vector.dimension(0); i++)
-        if(isnan(vector(i))) 
-            nan_number++;
-
-    return nan_number;
 }
 
 }

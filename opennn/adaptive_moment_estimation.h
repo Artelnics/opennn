@@ -9,7 +9,6 @@
 #ifndef ADAPTIVEMOMENTESTIMATION_H
 #define ADAPTIVEMOMENTESTIMATION_H
 
-#include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 
@@ -40,8 +39,6 @@ public:
    const type& get_maximum_time() const;
 
    // Set
-
-   void set_loss_index(LossIndex*) final;
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 

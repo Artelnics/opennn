@@ -9,7 +9,6 @@
 #ifndef ADDITIONLAYER3D_H
 #define ADDITIONLAYER3D_H
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"

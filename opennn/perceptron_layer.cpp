@@ -512,6 +512,9 @@ void PerceptronLayer::print() const
     cout << biases << endl;
     cout << "Synaptic weights:" << endl;
     cout << synaptic_weights << endl;
+
+    cout << "Activation function:" << endl;
+    cout << get_activation_function_string() << endl;
 }
 
 

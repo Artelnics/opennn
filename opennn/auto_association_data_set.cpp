@@ -7,9 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "auto_association_data_set.h"
-#include "tensors.h"
 
 namespace opennn
 {

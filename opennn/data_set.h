@@ -9,50 +9,20 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
-#include <string>
-
 #include "pch.h"
-
 
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-#include "config.h"
+
 #include "correlation.h"
 #include "scaling.h"
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
 
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {
-
-#ifdef _WIN32
-    inline std::wstring string_to_wide_string(const std::string& string)
-    {
-        if (string.empty())
-        {
-            return L"";
-        }
-
-        const auto size_needed = MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), nullptr, 0);
-        if (size_needed <= 0)
-        {
-            throw std::runtime_error("MultiByteToWideChar() failed: " + std::to_string(size_needed));
-        }
-
-        std::wstring result(size_needed, 0);
-        MultiByteToWideChar(CP_UTF8, 0, string.data(), (int)string.size(), const_cast<wchar_t*>(result.data()), size_needed);
-        return result;
-    }
-#endif
 
 class DataSet
 {
@@ -62,8 +32,8 @@ public:
     enum class Codification { UTF8, SHIFT_JIS };
 
     explicit DataSet(const Index& = 0, 
-                     const dimensions& = {}, 
-                     const dimensions& = {});
+                     const dimensions& = {0}, 
+                     const dimensions& = {0});
 
     explicit DataSet(const string&,
                      const string&,
@@ -471,8 +441,8 @@ public:
 
     void set_data_random();
     void set_data_rosenbrock();
-    void generate_sum_data(const Index&, const Index&);
-    void generate_classification_data(const Index&, const Index&, const Index&);
+    void set_data_sum();
+    void set_data_classification();
 
     // Serialization
 
@@ -532,8 +502,6 @@ public:
 
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
-
-    void shuffle();
 
     // Reader
 

@@ -179,7 +179,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
         throw runtime_error("Data set is null");
 
     const Index new_genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
-/*
+
     population.resize(new_individuals_number, new_genes_number);
 
     parameters.resize(new_individuals_number);
@@ -194,9 +194,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
     selection.resize(new_individuals_number);
 
-    if(elitism_size > new_individuals_number) 
-        elitism_size = new_individuals_number;
-*/
+    elitism_size = min(elitism_size, new_individuals_number);
 }
 
 
@@ -398,7 +396,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 */
         raw_variables_active = 1 + rand() % raw_variables_number;
 
-        while(std::count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
+        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = type(distribution(gen));
 
@@ -422,12 +420,6 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
         for(Index j = 0; j < genes_number; j++)
             population(i, j) = individual_variables(j);
     }
-}
-
-
-type GeneticAlgorithm::generate_random_between_0_and_1()
-{
-    return type(rand()) / type(RAND_MAX);
 }
 
 
@@ -585,7 +577,7 @@ void GeneticAlgorithm::perform_selection()
 
     // The next individuals are selected randomly but their probability is set according to their fitness.
 
-    while(std::count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
+    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
         weighted_random(selection_probabilities);
     }
@@ -593,25 +585,17 @@ void GeneticAlgorithm::perform_selection()
 }
 
 
-Tensor<Index,1> GeneticAlgorithm::get_selected_individuals_indices()
+Tensor<Index, 1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-/*
-    Tensor<Index,1> selection_indices(std::count(selection.data(), selection.data() + selection.size(), 1));
+    Tensor<Index,1> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
+
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
-    {
         if(selection(i))
-        {
-            selection_indices(activated_index_count) = i;
-
-            activated_index_count++;
-        }
-    }
+            selection_indices(activated_index_count++) = i;
 
     return selection_indices;
-*/
-    return Tensor<Index, 1>();
 }
 
 
@@ -726,7 +710,7 @@ void GeneticAlgorithm::perform_mutation()
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            const type random_0_1 = generate_random_between_0_and_1();
+            const type random_0_1 = type(rand()) / type(RAND_MAX);
 
             if(random_0_1 < mutation_rate)
                 individual_raw_variables(j) = !individual_raw_variables(j);

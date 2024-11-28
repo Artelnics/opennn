@@ -2,16 +2,12 @@
 #define DESCRIPTIVES_H
 
 #include "pch.h"
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
 
 namespace opennn
 {
 
-struct Descriptives {
-
+struct Descriptives
+{
   explicit Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
   Tensor<type, 1> to_tensor() const;

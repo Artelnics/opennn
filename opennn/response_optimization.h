@@ -9,7 +9,6 @@
 #ifndef RESPONSEOPTIMIZATION_H
 #define RESPONSEOPTIMIZATION_H
 
-#include "config.h"
 #include "neural_network.h"
 #include "data_set.h"
 
@@ -29,18 +28,18 @@ public:
 
    // Get
 
-   Tensor<Condition, 1> get_inputs_conditions() const;
-   Tensor<Condition, 1> get_outputs_conditions() const;
+   Tensor<Condition, 1> get_input_conditions() const;
+   Tensor<Condition, 1> get_output_conditions() const;
    Index get_evaluations_number() const;
 
-   Tensor<type, 1> get_inputs_minimums() const;
-   Tensor<type, 1> get_inputs_maximums() const;
+   Tensor<type, 1> get_input_minimums() const;
+   Tensor<type, 1> get_input_maximums() const;
    Tensor<type, 1> get_outputs_minimums() const;
    Tensor<type, 1> get_outputs_maximums() const;
 
    // Set
 
-   void set(NeuralNetwork*);
+   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set_evaluations_number(const Index&);
 
@@ -50,7 +49,7 @@ public:
    void set_input_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const Index&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
 
-   void set_inputs_outputs_conditions(const vector<string>&, const vector<string>&, const Tensor<type, 1>& = Tensor<type, 1>());
+   void set_inputs_output_conditions(const vector<string>&, const vector<string>&, const Tensor<type, 1>& = Tensor<type, 1>());
 
    Tensor<Condition, 1> get_conditions(const vector<string>&) const;
    Tensor<Tensor<type, 1>, 1> get_values_conditions(const Tensor<Condition, 1>&, const Tensor<type, 1>&) const;
@@ -67,12 +66,12 @@ private:
 
     DataSet* data_set = nullptr;
 
-    Tensor<Condition, 1> inputs_conditions;
-    Tensor<Condition, 1> outputs_conditions;
+    Tensor<Condition, 1> input_conditions;
+    Tensor<Condition, 1> output_conditions;
     Tensor<Condition, 1> conditions;
 
-    Tensor<type, 1> inputs_minimums;
-    Tensor<type, 1> inputs_maximums;
+    Tensor<type, 1> input_minimums;
+    Tensor<type, 1> input_maximums;
 
     Tensor<type, 1> output_minimums;
     Tensor<type, 1> output_maximums;

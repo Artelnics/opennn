@@ -1,11 +1,7 @@
 #ifndef LAYERFORWARDPROPAGATION_H
 #define LAYERFORWARDPROPAGATION_H
 
-//#include "layer.h"
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {

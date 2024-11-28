@@ -10,7 +10,7 @@
 #define BOUNDINGLAYER_H
 
 #include "layer.h"
-#include "config.h"
+
 #include "layer_forward_propagation.h"
 
 namespace opennn

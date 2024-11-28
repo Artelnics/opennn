@@ -9,7 +9,7 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-#include "config.h"
+
 #include "data_set.h"
 
 namespace opennn

@@ -7,14 +7,15 @@
 #define _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING
 #define _CRT_SECURE_NO_WARNINGS
 #define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
+#include <algorithm>
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <unordered_map>
-#include <algorithm>
 #include <numeric>
 #include <exception>
 #include <memory>
@@ -33,16 +34,14 @@
 #include <sstream>
 #include <iomanip>
 
-using namespace std;
-
 #include <omp.h>
-
 
 #define EIGEN_USE_THREADS
 
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
+
 
 #ifdef OPENNN_CUDA
 
@@ -56,7 +55,11 @@ using namespace std;
 
 #endif
 
+//#include "tinyxml2.h"
+
+using namespace std;
 using namespace Eigen;
+//using namespace tinyxml2;
 
 using type = float;
 

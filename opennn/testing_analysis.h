@@ -9,7 +9,7 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "config.h"
+
 #include "data_set.h"
 #include "neural_network.h"
 
@@ -97,8 +97,6 @@ public:
 
    void set_display(const bool&);
 
-   void set_default();
-
    void set_threads_number(const int&);
 
    // Checking
@@ -165,12 +163,10 @@ public:
 
    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&) const;
-
-   Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<Index, 2> calculate_confusion() const;
+
+   Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // ROC curve
 

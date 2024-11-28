@@ -9,7 +9,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "config.h"
+
 #include "descriptives.h"
 #include "box_plot.h"
 #include "histogram.h"
@@ -106,9 +106,6 @@ namespace opennn
  
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
-
- // NAN
- Index count_nan(const Tensor<type, 1>&);
 }
 
 #endif // STATISTICS_H

@@ -14,8 +14,6 @@
 #include "tensors.h"
 #include "strings_utilities.h"
 
-using namespace std;
-
 namespace opennn
 {
 
@@ -1024,7 +1022,16 @@ vector<DataSet::RawVariable> DataSet::get_raw_variables(const VariableUse& varia
 
 Index DataSet::get_variables_number() const
 {
-    return data.dimension(1);
+    const Index raw_variables_number = get_raw_variables_number();
+
+    Index count = 0;
+
+    for (Index i = 0; i < raw_variables_number; i++)
+        count += (raw_variables[i].type == RawVariableType::Categorical)
+                     ? raw_variables[i].get_categories_number()
+                     : 1;
+
+    return count;
 }
 
 
@@ -1755,6 +1762,7 @@ void DataSet::set(const string& data_path,
     input_dimensions = {input_variables_number};
 
     target_dimensions = {target_variables_number};
+
 }
 
 
@@ -2000,8 +2008,8 @@ void DataSet::set_missing_values_method(const string & new_missing_values_method
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -2115,7 +2123,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 
     for (Index i = 0; i < raw_variables_number; i++)
     {
-        const RawVariable raw_variable = raw_variables[i];
+        const RawVariable& raw_variable = raw_variables[i];
 
         if (raw_variable.use == VariableUse::None)
         {
@@ -2193,7 +2201,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
         default:
 
             throw runtime_error("Unknown raw variable type.");
-
         }
     }
 
@@ -2293,15 +2300,11 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_positive_sampl
 
     const Index samples_number = used_sample_indices.size();
 
-    // Count used positive samples
-
     Index positive_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
         if(abs(data(used_sample_indices[i], target_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             positive_samples_number++;
-
-    // Get used positive samples indices
 
     vector<Index> positive_used_sample_indices(positive_samples_number);
     Index positive_sample_index = 0;
@@ -2461,7 +2464,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
     {
         const Index input_raw_variable_index = input_raw_variable_indices[i];
 
-        const Tensor<type, 2> input_raw_variable_data 
+        const Tensor<type, 2> input_raw_variable_data
             = get_raw_variable_data(input_raw_variable_index, used_sample_indices);
 
         for(Index j = 0; j < target_raw_variables_number; j++)
@@ -2470,7 +2473,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
 
             const Tensor<type, 2> target_raw_variable_data 
                 = get_raw_variable_data(target_raw_variable_index, used_sample_indices);
-            
+
             correlations(i, j) = correlation(thread_pool_device.get(), input_raw_variable_data, target_raw_variable_data);
         }
     }
@@ -3510,15 +3513,12 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-void DataSet::generate_classification_data(const Index& samples_number, const Index& variables_number, const Index& classes_number)
+void DataSet::set_data_classification()
 {
-/*
-    set(samples_number, variables_number + classes_number);
-
     set_random(data);
 
     data.setConstant(0.0);
-
+/*
 #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
@@ -3534,13 +3534,10 @@ void DataSet::generate_classification_data(const Index& samples_number, const In
 }
 
 
-void DataSet::generate_sum_data(const Index& samples_number, const Index& variables_number)
+void DataSet::set_data_sum()
 {
-/*
-    set(samples_number,variables_number);
-
     set_random(data);
-
+/*
     for(Index i = 0; i < samples_number; i++)
     {
         data(i,variables_number-1) = type(0);
@@ -3859,7 +3856,7 @@ void DataSet::process_tokens(vector<string>& tokens)
         }
         else if(is_numeric_string(token))
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::Numeric)
                 raw_variable.type = RawVariableType::Numeric;
 
             if(raw_variable.type == RawVariableType::Categorical)
@@ -3867,12 +3864,12 @@ void DataSet::process_tokens(vector<string>& tokens)
         }
         else if(is_date_time_string(token))
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::DateTime)
                 raw_variable.type = RawVariableType::DateTime;
         }
         else // is string
         {
-            if(raw_variable.type == RawVariableType::None)
+            if(raw_variable.type != RawVariableType::Categorical)
                 raw_variable.type = RawVariableType::Categorical;
 
             if(!contains(raw_variable.categories, token))
@@ -3884,7 +3881,6 @@ void DataSet::process_tokens(vector<string>& tokens)
 
 void DataSet::read_csv()
 {
-
     if(data_path.empty())
         throw runtime_error("Data source path is empty.\n");
 
@@ -3960,7 +3956,8 @@ void DataSet::read_csv()
         tokens = get_tokens(line, separator_string);
 
         if(tokens.size() != columns_number)
-            throw runtime_error("Tokens number is not equal to columns number.");
+            throw runtime_error("Sample " + to_string(samples_number+1) + ": "
+                                "Tokens number is not equal to columns number.");
 
         process_tokens(tokens);
 
@@ -4013,6 +4010,7 @@ void DataSet::read_csv()
         prepare_line(line);
 
         if(line.empty()) continue;
+
         check_separators(line);
 
         tokens = get_tokens(line, separator_string);
@@ -4101,6 +4099,7 @@ void DataSet::read_csv()
         }
 
         sample_index++;
+
     }
 
     file.close();
@@ -4108,6 +4107,7 @@ void DataSet::read_csv()
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
+
 }
 
 
@@ -4277,7 +4277,7 @@ void DataSet::check_separators(const string& line) const
     const string separator_string = get_separator_string();
 
     if(line.find(separator_string) == string::npos)
-        throw runtime_error("Error: Separarot '" + separator_string + "' not found in line " + line + ".\n");
+        throw runtime_error("Error: Separator '" + separator_string + "' not found in line " + line + ".\n");
 
     if(separator == Separator::Space)
     {
@@ -4527,47 +4527,9 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
 
         for (Index j = 0; j < batch_size; ++j)
             batches[i][j] = sample_indices[count++];
-
     }
 
     return batches;
-}
-
-
-void DataSet::shuffle()
-{
-    random_device rng;
-    mt19937 urng(rng());
-
-    const Index data_rows = data.dimension(0);
-    const Index data_columns = data.dimension(1);
-
-    Tensor<Index, 1> indices(data_rows);
-
-    for(Index i = 0; i < data_rows; i++)
-        indices(i) = i;
-
-    std::shuffle(&indices(0), &indices(data_rows-1), urng);
-
-    Tensor<type, 2> new_data(data_rows, data_columns);
-    vector<string> new_rows_labels(data_rows);
-
-    Index index = 0;
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < data_rows; i++)
-    {
-        index = indices(i);
-
-        new_rows_labels[i] = sample_ids[index];
-
-        for(Index j = 0; j < data_columns; j++)
-            new_data(i, j) = data(index, j);
-    }
-
-    data = new_data;
-    sample_ids = new_rows_labels;
 }
 
 
