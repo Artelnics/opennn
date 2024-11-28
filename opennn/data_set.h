@@ -20,7 +20,6 @@
 
 
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {
@@ -503,8 +502,6 @@ public:
 
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
-
-    void shuffle();
 
     // Reader
 

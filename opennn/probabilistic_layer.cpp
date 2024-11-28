@@ -327,9 +327,19 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 
 void ProbabilisticLayer::print() const
 {
-    cout << "Probabilistic layer" << endl;
-    cout << "Output dimensions: " << endl;
-    print_vector(get_output_dimensions());
+    cout << "Probabilistic layer" << endl
+         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Output dimensions: " << get_output_dimensions()[0] << endl
+         << "Biases dimensions: " << biases.dimensions() << endl
+         << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+
+    cout << "Biases:" << endl;
+    cout << biases << endl;
+    cout << "Synaptic weights:" << endl;
+    cout << synaptic_weights << endl;
+
+    cout << "Activation function:" << endl;
+    cout << get_activation_function_string() << endl;
 }
 
 

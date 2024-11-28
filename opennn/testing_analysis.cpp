@@ -885,7 +885,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
         
-        return calculate_confusion(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets);
     }
     else if(input_dimensions.size() == 2)
     {
@@ -904,7 +904,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
-        return calculate_confusion(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets);
     }
 
     return Tensor<Index, 2>();
@@ -912,9 +912,10 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
-                                                      const Tensor<type, 2>& targets,
-                                                      const Index& outputs_number) const
+                                                      const Tensor<type, 2>& targets) const
 {
+    const Index outputs_number = neural_network->get_outputs_number();
+
     if (outputs_number == 1)
     {
         const type decision_threshold = neural_network->get_probabilistic_layer()
@@ -940,19 +941,11 @@ TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 
     RocAnalysis roc_analysis;
 
-    cout << "Calculating ROC curve..." << endl;
-
     roc_analysis.roc_curve = calculate_roc_curve(targets, outputs);
-
-    cout << "Calculating area under curve..." << endl;
 
     roc_analysis.area_under_curve = calculate_area_under_curve(roc_analysis.roc_curve);
 
-    cout << "Calculating confidence limits..." << endl;
-
     roc_analysis.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
-
-    cout << "Calculating optimal threshold..." << endl;
 
     roc_analysis.optimal_threshold = calculate_optimal_threshold(roc_analysis.roc_curve);
 
@@ -1993,7 +1986,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     for(Index i = 0; i < testing_batch_size; i++)
         testing_target.chip(i, 0) = target.chip(i, 0);
 
-    Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+    const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
@@ -2076,13 +2069,12 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     const type informedness = sensitivity + specificity - type(1);
 
-    type markedness = (true_negative + false_positive == 0)
+    const type markedness = (true_negative + false_positive == 0)
                           ? precision - type(1)
                           : precision + type(true_negative) / type(true_negative + false_positive) - type(1);
 
-    //Arrange vector
-
     Tensor<type, 1> binary_classification_test(15);
+
     binary_classification_test.setValues(
     {classification_accuracy,
     error_rate,
@@ -2108,11 +2100,11 @@ void TestingAnalysis::print_binary_classification_tests() const
 {
     const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
 
-    cout << "Binary classification tests: " << endl;
-    cout << "Classification accuracy : " << binary_classification_tests[0] << endl;
-    cout << "Error rate              : " << binary_classification_tests[1] << endl;
-    cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
-    cout << "Specificity             : " << binary_classification_tests[3] << endl;
+    cout << "Binary classification tests: " << endl
+         << "Classification accuracy : " << binary_classification_tests[0] << endl
+         << "Error rate              : " << binary_classification_tests[1] << endl
+         << "Sensitivity             : " << binary_classification_tests[2] << endl
+         << "Specificity             : " << binary_classification_tests[3] << endl;
 }
 
 

@@ -582,38 +582,31 @@ bool is_constant_vector(const Tensor<type, 1>& vector)
 
 
 bool is_constant_matrix(const Tensor<type, 2>& matrix)
-{// @todo copy old code
-/*
-    const Index size = matrix.size();
-
-    Index first_non_nan_index = 0;
-
-    while (first_non_nan_index < size && isnan(matrix[first_non_nan_index])) 
-        first_non_nan_index++;
-    
-    if (first_non_nan_index == size) 
+{
+    if(matrix.size() == 0)
         return true;
 
-    type first_not_nan_element = matrix[first_non_nan_index];
+    type first_value = matrix(0,0);
 
-    for (Index i = first_non_nan_index + 1; i < size; ++i)
-        if (!isnan(matrix[i]) && abs(first_not_nan_element - matrix[i]) > std::numeric_limits<float>::min())
-            return false;
-*/
-    return true;
-}
-
-
-bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
-{
-    const Index size = matrix.size();
-
-    for(Index i = 0; i < size; i++)
-        if(abs(matrix(i) - value) > tolerance) 
-            return false;
+    for(Index i = 0; i < matrix.dimension(0); i++)
+        for(Index j = 0; j < matrix.dimension(1); j++)
+            if(matrix(i, j) != first_value)
+                return false;
 
     return true;
 }
+
+
+//bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
+//{
+//    const Index size = matrix.size();
+
+//    for(Index i = 0; i < size; i++)
+//        if(abs(matrix[i] - value) > tolerance)
+//            return false;
+
+//    return true;
+//}
 
 
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)

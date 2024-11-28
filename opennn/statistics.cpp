@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "statistics.h"
 #include "tensors.h"
 
@@ -123,14 +122,10 @@ void Descriptives::save(const string &file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open descriptives data file.\n");
 
-    // Write file
-
     file << "Minimum: " << minimum << endl
          << "Maximum: " << maximum << endl
          << "Mean: " << mean << endl
          << "Standard deviation: " << standard_deviation << endl;
-
-    // Close file
 
     file.close();
 }

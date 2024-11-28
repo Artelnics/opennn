@@ -46,8 +46,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
 Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
-{      
-
+{
     if(is_constant_matrix(x) || is_constant_matrix(y))
         return Correlation();
 
@@ -362,7 +361,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-    if(is_constant_vector(x) || !is_constant_vector(y))
+    if(is_constant_vector(x) || is_constant_vector(y))
         return Correlation();
     
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
