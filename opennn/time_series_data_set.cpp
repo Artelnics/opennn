@@ -38,14 +38,16 @@ TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
 const string& TimeSeriesDataSet::get_time_raw_variable() const
 {
     //return time_column; @todo
-    return "";
+    static const std::string dummy;
+    return dummy;
 }
 
 
 const string& TimeSeriesDataSet::get_group_by_column() const
 {
     //return group_by_column; @todo
-    return string();
+    static const std::string dummy;
+    return dummy;
 }
 
 
