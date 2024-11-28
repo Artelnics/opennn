@@ -30,23 +30,11 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination)
-       {
-           targets = new_targets;
-           outputs = new_outputs;
-           determination = new_determination;
-       }
+       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination);
 
        void save(const string& file_name) const;
 
-       void print() const
-       {
-           cout << "Goodness-of-fit analysis" << endl
-                << "Determination: " << determination << endl;
-
-           // cout << targets << endl;
-           // cout << outputs << endl;
-       }              
+       void print() const;
     };
 
 

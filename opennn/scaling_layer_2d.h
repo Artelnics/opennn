@@ -76,7 +76,7 @@ public:
 
    string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    void print() const;
 

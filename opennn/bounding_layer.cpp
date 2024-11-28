@@ -193,8 +193,17 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string BoundingLayer::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
+    const vector<string> input_names = new_input_names.empty()
+    ? get_default_input_names()
+    : new_input_names;
+
+    const vector<string> output_names = new_output_names.empty()
+                                            ? get_default_output_names()
+                                            : new_output_names;
+
+
     if (bounding_method == BoundingMethod::NoBounding)
         return string();
 

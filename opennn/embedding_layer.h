@@ -34,7 +34,7 @@ public:
                             const bool& = false);
 
     Index get_input_dimension() const;
-    Index get_inputs_number() const;
+    Index get_inputs_number_xxx() const;
     Index get_depth() const;
     bool get_positional_encoding() const;
 
@@ -89,7 +89,7 @@ private:
 
     Index input_dimensions;
 
-    Index inputs_number;
+    Index inputs_number_xxx;
 
     Index depth;
 

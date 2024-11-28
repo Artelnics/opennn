@@ -80,8 +80,22 @@ public:
     virtual Index get_parameters_number() const;
     virtual Tensor<type, 1> get_parameters() const;
 
-    virtual dimensions get_input_dimensions() const;
-    virtual dimensions get_output_dimensions() const;
+    virtual dimensions get_input_dimensions() const = 0;
+    virtual dimensions get_output_dimensions() const = 0;
+
+    Index get_inputs_number() const
+    {
+        const dimensions input_dimensions = get_input_dimensions();
+
+        return accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+    }
+
+    Index get_outputs_number() const
+    {
+        const dimensions output_dimensions = get_output_dimensions();
+
+        return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
+    }
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
@@ -125,12 +139,38 @@ public:
 
     // Expression
 
-    virtual string get_expression(const vector<string>&, const vector<string>&) const 
+    virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const
     {
         return string();
     }
 
     virtual void print() const {}
+
+
+    vector<string> get_default_input_names() const
+    {
+        const Index inputs_number = get_inputs_number();
+
+        vector<string> input_names(inputs_number);
+
+        for(Index i = 0; i < inputs_number; i++)
+            input_names[i] = "input_" + to_string(i);
+
+        return input_names;
+    }
+
+
+    vector<string> get_default_output_names() const
+    {
+        const Index outputs_number = get_outputs_number();
+
+        vector<string> output_names(outputs_number);
+
+        for(Index i = 0; i < outputs_number; i++)
+            output_names[i] = "output_" + to_string(i);
+
+        return output_names;
+    }
 
 protected:
 

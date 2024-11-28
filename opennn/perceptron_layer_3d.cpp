@@ -27,9 +27,9 @@ PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
 }
 
 
-Index PerceptronLayer3D::get_inputs_number() const
+Index PerceptronLayer3D::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -53,7 +53,7 @@ Index PerceptronLayer3D::get_neurons_number() const
 
 dimensions PerceptronLayer3D::get_output_dimensions() const
 {
-    return { inputs_number, get_neurons_number() };
+    return { inputs_number_xxx, get_neurons_number() };
 }
 
 
@@ -110,7 +110,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
                             const Index& new_neurons_number,
                             const PerceptronLayer3D::ActivationFunction& new_activation_function)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     biases.resize(new_neurons_number);
 
@@ -413,7 +413,7 @@ void PerceptronLayer3D::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Perceptron3D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "ActivationFunction", get_activation_function_string());
@@ -445,7 +445,7 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
     return { (type*)outputs.data(), { batch_samples_number, inputs_number, neurons_number } };
 }
@@ -461,7 +461,7 @@ void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_num
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
 
@@ -478,7 +478,7 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     batch_samples_number = new_batch_samples_number;
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
 
     biases_derivatives.resize(neurons_number);
@@ -511,7 +511,7 @@ vector<pair<type*, dimensions>> PerceptronLayer3DBackPropagation::get_input_deri
 {
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
+    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
 
     return {{(type*)(input_derivatives.data()),

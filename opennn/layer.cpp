@@ -276,18 +276,6 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_input_dimensions() const
-{
-    return dimensions();
-}
-
-
-dimensions Layer::get_output_dimensions() const
-{
-    return dimensions();
-}
-
-
 void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
                               unique_ptr<LayerForwardPropagation>&, const bool&)
 {

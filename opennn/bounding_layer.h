@@ -62,7 +62,7 @@ public:
 
    // Expression
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    // Serialization
 

@@ -898,18 +898,18 @@ vector<Scaler> DataSet::get_variable_scalers(const VariableUse& variable_use) co
 
     const vector<RawVariable> input_raw_variables = get_raw_variables(variable_use);
 
-    vector<Scaler> input_variables_scalers(input_variables_number);
+    vector<Scaler> input_variable_scalers(input_variables_number);
 
     Index index = 0;
 
     for(Index i = 0; i < input_raw_variables_number; i++)
         if(input_raw_variables[i].type == RawVariableType::Categorical)
             for(Index j = 0; j < input_raw_variables[i].get_categories_number(); j++)
-                input_variables_scalers[index++] = input_raw_variables[i].scaler;
+                input_variable_scalers[index++] = input_raw_variables[i].scaler;
         else
-            input_variables_scalers[index++] = input_raw_variables[i].scaler;
+            input_variable_scalers[index++] = input_raw_variables[i].scaler;
 
-    return input_variables_scalers;
+    return input_variable_scalers;
 }
 
 
@@ -2794,13 +2794,13 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
     const Index input_variables_number = get_variables_number(variable_use);
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<Scaler> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
     const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
-        switch(input_variables_scalers[i])
+        switch(input_variable_scalers[i])
         {
         case Scaler::None:
             break;
@@ -2822,7 +2822,7 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
             break;
 
         default:
-            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variables_scalers[i])) + "\n");
+            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variable_scalers[i])) + "\n");
         }
     }
 
@@ -2837,11 +2837,11 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
 
-    const vector<Scaler> input_variables_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
     for(Index i = 0; i < input_variables_number; i++)
     {
-        switch(input_variables_scalers[i])
+        switch(input_variable_scalers[i])
         {
         case Scaler::None:
             break;
@@ -2867,7 +2867,7 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
             break;
 
         default:
-            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variables_scalers[i])) + "\n");
+            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variable_scalers[i])) + "\n");
         }
     }
 }

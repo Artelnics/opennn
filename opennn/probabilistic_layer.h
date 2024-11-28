@@ -152,7 +152,7 @@ public:
     string write_competitive_expression(const vector<string>&, const vector<string>&) const;
     string write_softmax_expression(const vector<string>&, const vector<string>&) const;
 
-    string get_expression(const vector<string>&, const vector<string>&) const final;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
     string write_combinations(const vector<string>&) const;
     string write_activations(const vector<string>&) const;
 

@@ -41,6 +41,12 @@ public:
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
+    // @todo
+    dimensions get_input_dimensions() const final
+    {
+        throw runtime_error("XXX");
+    }
+
     dimensions get_output_dimensions() const final;
 
     Tensor<type, 3> get_query_weights() const;

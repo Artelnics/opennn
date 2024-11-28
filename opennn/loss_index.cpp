@@ -600,8 +600,8 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 
     vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
 
-    Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
-    Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
+    const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {

@@ -95,18 +95,7 @@ public:
 
    Index find_input_index(const vector<Index>&, const Index&) const;
 
-   ScalingLayer2D* get_scaling_layer_2d() const;
-   ScalingLayer4D* get_scaling_layer_4d() const;
-   UnscalingLayer* get_unscaling_layer() const;
-   BoundingLayer* get_bounding_layer() const;
-   //FlattenLayer* get_flatten_layer() const;
-   //ConvolutionalLayer* get_convolutional_layer() const;
-   //PoolingLayer* get_pooling_layer() const;
-   ProbabilisticLayer* get_probabilistic_layer() const;
-   LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
-   RecurrentLayer* get_recurrent_layer() const;
-
-   PerceptronLayer* get_first_perceptron_layer() const;
+   Layer* get_first(const Layer::Type&) const;
 
    const bool& get_display() const;
 

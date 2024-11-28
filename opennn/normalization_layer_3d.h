@@ -29,8 +29,14 @@ public:
 
     explicit NormalizationLayer3D(const Index& = 0, const Index& = 0);
 
-    Index get_inputs_number() const;
+    Index get_inputs_number_xxx() const;
     Index get_inputs_depth() const;
+
+    // @todo
+    dimensions get_input_dimensions() const final
+    {
+        throw runtime_error("XXX");
+    }
 
     dimensions get_output_dimensions() const final;
 
@@ -77,7 +83,7 @@ public:
 
 private:
 
-    Index inputs_number;
+    Index inputs_number_xxx;
 
     Index inputs_depth;
         
