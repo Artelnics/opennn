@@ -1,12 +1,7 @@
 #ifndef NEURALNETWORKBACKPROPAGATIONLM_H
 #define NEURALNETWORKBACKPROPAGATIONLM_H
 
-#include <string>
-
 #include "neural_network.h"
-
-using namespace std;
-using namespace Eigen;
 
 namespace opennn
 {

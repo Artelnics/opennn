@@ -37,7 +37,8 @@ class PoolingLayerTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
 
 
 INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
-    PoolingLayerConfig{
+    PoolingLayerConfig
+    {
         {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
         ([] {
         Tensor<type, 2> data(4, 16);
@@ -52,24 +53,59 @@ INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
         const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
         return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
-    })(),
-    ([] {
-        Tensor<type, 4> expected_output(4, 2, 2, 1);
-        expected_output.setValues({
-                                  {{{6}, {14}},
-                                   {{8}, {16}}},
+        })(),
+        ([] {
+            Tensor<type, 4> expected_output(4, 2, 2, 1);
+            expected_output.setValues({
+                                      {{{6}, {14}},
+                                       {{8}, {16}}},
 
-                                  {{{16}, {8}},
-                                   {{14}, {6}}},
+                                      {{{16}, {8}},
+                                       {{14}, {6}}},
 
-                                  {{{2}, {4}},
-                                   {{2}, {4}}},
+                                      {{{2}, {4}},
+                                       {{2}, {4}}},
 
-                                  {{{1}, {3}},
-                                   {{1}, {3}}}
-                                  });
-        return expected_output;
-    })()
+                                      {{{1}, {3}},
+                                       {{1}, {3}}}
+                                      });
+            return expected_output;
+        })()
+    },
+    PoolingLayerConfig
+    {
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
+        ([] {
+        Tensor<type, 2> data(4, 16);
+        data.setValues({
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+            {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+            {1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4},
+            {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
+        });
+
+        const vector<Index> rows_indices = {0, 1, 2, 3};
+        const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+        return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
+        })(),
+        ([] {
+            Tensor<type, 4> expected_output(4, 2, 2, 1);
+            expected_output.setValues({
+                                        {{{3.5}, {11.5}},
+                                        {{5.5}, {13.5}}},
+
+                                        {{{13.5}, {5.5}},
+                                        {{11.5}, {3.5}}},
+
+                                        {{{1.5}, {3.5}},
+                                        {{1.5}, {3.5}}},
+
+                                        {{{0.5}, {2.5}},
+                                        {{0.5}, {2.5}}}
+                                        });
+            return expected_output;
+        })()
     }
     // More configurations here
     )
@@ -101,7 +137,6 @@ TEST_P(PoolingLayerTest, Constructor)
 
 TEST_P(PoolingLayerTest, ForwardPropagate) 
 {
-/*
     PoolingLayerConfig parameters = GetParam();
 
     PoolingLayer pooling_layer(
@@ -150,7 +185,6 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
             }
         }
     }
-*/
 }
 
 

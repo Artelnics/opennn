@@ -85,7 +85,7 @@ void WeightedSquaredError::set_weights()
 
     const vector<DataSet::RawVariable>& target_raw_variables 
         = data_set->get_raw_variables(DataSet::VariableUse::Target);
-    
+
     if(target_raw_variables.size() == 0)
     {
         positives_weight = type(1);

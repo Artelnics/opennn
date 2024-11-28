@@ -22,7 +22,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
     : neural_network(new_neural_network),
       data_set(new_data_set)
 {
-    set_default();
 }
 
 
@@ -44,23 +43,10 @@ const bool& TestingAnalysis::get_display() const
 }
 
 
-void TestingAnalysis::set_default()
-{
-/*
-    delete thread_pool;
-    delete thread_pool_device;
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-    thread_pool = new ThreadPool(n);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-*/
-}
-
-
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -899,7 +885,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
         
-        return calculate_confusion(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets);
     }
     else if(input_dimensions.size() == 2)
     {
@@ -918,7 +904,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
-        return calculate_confusion(outputs, targets, outputs_number);
+        return calculate_confusion(outputs, targets);
     }
 
     return Tensor<Index, 2>();
@@ -926,9 +912,10 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
-                                                      const Tensor<type, 2>& targets,
-                                                      const Index& outputs_number) const
+                                                      const Tensor<type, 2>& targets) const
 {
+    const Index outputs_number = neural_network->get_outputs_number();
+
     if (outputs_number == 1)
     {
         const type decision_threshold = neural_network->get_probabilistic_layer()
@@ -954,19 +941,11 @@ TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 
     RocAnalysis roc_analysis;
 
-    cout << "Calculating ROC curve..." << endl;
-
     roc_analysis.roc_curve = calculate_roc_curve(targets, outputs);
-
-    cout << "Calculating area under curve..." << endl;
 
     roc_analysis.area_under_curve = calculate_area_under_curve(roc_analysis.roc_curve);
 
-    cout << "Calculating confidence limits..." << endl;
-
     roc_analysis.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs);
-
-    cout << "Calculating optimal threshold..." << endl;
 
     roc_analysis.optimal_threshold = calculate_optimal_threshold(roc_analysis.roc_curve);
 
@@ -1113,11 +1092,11 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_cur
 
     type minimun_distance = numeric_limits<type>::max();
 
-    type distance;
-
     for(Index i = 0; i < points_number; i++)
     {
-        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1)));
+        //const type distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1)));
+
+        const type distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - type(1));
 
         if(distance < minimun_distance)
         {
@@ -1139,9 +1118,7 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
-
-    return cumulative_gain;
+    return calculate_cumulative_gain(targets, outputs);
 }
 
 
@@ -1250,7 +1227,6 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
                  negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
-
         negative_cumulative_gain(i + 1, 1) = type(negatives)/type(total_negatives);
     }
 
@@ -1268,9 +1244,7 @@ Tensor<type, 2> TestingAnalysis::perform_lift_chart_analysis() const
 
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
-    const Tensor<type, 2> lift_chart = calculate_lift_chart(cumulative_gain);
-
-    return lift_chart;
+    return calculate_lift_chart(cumulative_gain);
 }
 
 
@@ -2012,7 +1986,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     for(Index i = 0; i < testing_batch_size; i++)
         testing_target.chip(i, 0) = target.chip(i, 0);
 
-    Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+    const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
@@ -2095,13 +2069,12 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     const type informedness = sensitivity + specificity - type(1);
 
-    type markedness = (true_negative + false_positive == 0)
+    const type markedness = (true_negative + false_positive == 0)
                           ? precision - type(1)
                           : precision + type(true_negative) / type(true_negative + false_positive) - type(1);
 
-    //Arrange vector
-
     Tensor<type, 1> binary_classification_test(15);
+
     binary_classification_test.setValues(
     {classification_accuracy,
     error_rate,
@@ -2127,11 +2100,11 @@ void TestingAnalysis::print_binary_classification_tests() const
 {
     const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
 
-    cout << "Binary classification tests: " << endl;
-    cout << "Classification accuracy : " << binary_classification_tests[0] << endl;
-    cout << "Error rate              : " << binary_classification_tests[1] << endl;
-    cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
-    cout << "Specificity             : " << binary_classification_tests[3] << endl;
+    cout << "Binary classification tests: " << endl
+         << "Classification accuracy : " << binary_classification_tests[0] << endl
+         << "Error rate              : " << binary_classification_tests[1] << endl
+         << "Sensitivity             : " << binary_classification_tests[2] << endl
+         << "Specificity             : " << binary_classification_tests[3] << endl;
 }
 
 
@@ -2272,8 +2245,6 @@ void TestingAnalysis::save(const string& file_name) const
 
 void TestingAnalysis::load(const string& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
@@ -2285,8 +2256,7 @@ void TestingAnalysis::load(const string& file_name)
 
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
 {
-    ofstream file;
-    file.open(file_name);
+    ofstream file(file_name);
 
     file << "Goodness-of-fit analysis\n"
          << "Determination: " << determination << endl;

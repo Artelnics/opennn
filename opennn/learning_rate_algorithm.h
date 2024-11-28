@@ -9,9 +9,6 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-#define EIGEN_USE_THREADS
-
-#include "config.h"
 #include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"

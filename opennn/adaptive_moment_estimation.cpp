@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
@@ -122,12 +121,6 @@ void AdaptiveMomentEstimation::set_accuracy_goal(const type& new_accuracy_goal)
 }
 
 
-void AdaptiveMomentEstimation::set_loss_index(LossIndex* new_loss_index)
-{
-    loss_index = new_loss_index;
-}
-
-
 void AdaptiveMomentEstimation::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
@@ -143,23 +136,29 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
     TrainingResults results(maximum_epochs_number + 1);
-
+    
     check();
 
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-    
+
+    if(!loss_index)
+        throw runtime_error("Loss index is null.");
+
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
+
+    if(!data_set)
+        throw runtime_error("Data set is null.");
 
     const bool has_selection = data_set->has_selection();
     
     const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
-   
+
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
     vector<Index> context_variable_indices;
@@ -231,7 +230,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
-    
+
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -272,6 +271,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -305,13 +305,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
+            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            //cout << "numerical gradient:\n" << loss_index->calculate_numerical_gradient() << endl;
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - loss_index->calculate_numerical_gradient() << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-
-            system("pause");
 
             training_error += training_back_propagation.error();
 
@@ -454,6 +452,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         }
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
+
     }
 
     data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
@@ -462,7 +461,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
-    
+
     return results;
 }
 

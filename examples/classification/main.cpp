@@ -38,7 +38,7 @@ int main()
         const Index classes_number = 100;
         const Index hidden_neurons_number = 1000;
 
-        data_set.generate_classification_data(samples_number, variables_number, classes_number);
+        data_set.set_data_classification();
 
         //      const Index input_variables_number = data_set.get_input_variables_number();
         //      const Index target_variables_number = data_set.get_target_variables_number();

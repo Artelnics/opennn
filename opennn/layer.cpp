@@ -244,16 +244,8 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-/*
-    if(thread_pool) 
-        delete thread_pool;
-
-    if(thread_pool_device) 
-        delete thread_pool_device;
-
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
-*/
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 

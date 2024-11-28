@@ -1970,18 +1970,18 @@ void LanguageDataSet::read_txt_language_model()
 
     const Index LIMIT = 126;
 
-    Index max_context_tokens = context_tokens[0].size();
+    size_t max_context_tokens = context_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
-        if(Index(context_tokens[i].size()) > max_context_tokens)
+        if(context_tokens[i].size() > max_context_tokens)
             max_context_tokens = context_tokens[i].size();
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
 
-    Index max_completion_tokens = completion_tokens[0].size();
+    size_t max_completion_tokens = completion_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
-        if(Index(completion_tokens[i].size()) > max_completion_tokens)
+        if(completion_tokens[i].size() > max_completion_tokens)
             max_completion_tokens = completion_tokens[i].size();
 
     max_completion_length = max_completion_tokens > LIMIT + 1 ? LIMIT + 1 : max_completion_tokens;
@@ -2193,7 +2193,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
         
         for(Index j = 0; j < max_context_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < max_context_length + 1)
+            if(j < line_tokens.size() && token_counter < max_context_length + 1)
             {
                 word = line_tokens[j];
 
@@ -2277,7 +2277,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         for(Index j = 0; j < max_completion_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < max_completion_length + 1)
+            if(j < line_tokens.size() && token_counter < max_completion_length + 1)
             {
                 word = line_tokens[j];
                 

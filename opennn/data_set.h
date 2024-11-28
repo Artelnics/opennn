@@ -9,22 +9,17 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#define EIGEN_USE_THREADS
-
 #include "pch.h"
-
 
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-#include "config.h"
+
 #include "correlation.h"
 #include "scaling.h"
 
 
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {
@@ -37,8 +32,8 @@ public:
     enum class Codification { UTF8, SHIFT_JIS };
 
     explicit DataSet(const Index& = 0, 
-                     const dimensions& = {}, 
-                     const dimensions& = {});
+                     const dimensions& = {0}, 
+                     const dimensions& = {0});
 
     explicit DataSet(const string&,
                      const string&,
@@ -446,8 +441,8 @@ public:
 
     void set_data_random();
     void set_data_rosenbrock();
-    void generate_sum_data(const Index&, const Index&);
-    void generate_classification_data(const Index&, const Index&, const Index&);
+    void set_data_sum();
+    void set_data_classification();
 
     // Serialization
 
@@ -507,8 +502,6 @@ public:
 
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
-
-    void shuffle();
 
     // Reader
 

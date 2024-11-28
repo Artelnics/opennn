@@ -27,88 +27,21 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Translation Example." << endl;
+        cout << "OpenNN. Blank project." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
+        const unsigned int threads_number = thread::hardware_concurrency();
+        unique_ptr<ThreadPool> thread_pool = make_unique<ThreadPool>(threads_number);
+        unique_ptr<ThreadPoolDevice> thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
-        /*
-        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-        */
+        Tensor<type, 1> x(10);
+        x.setValues({0,1,2,3,4,5,6,7,8,9,10});
 
-        // Data set
+        Tensor<type, 1> y(10);
+        y.setValues({0,1,2,3,4,5,6,7,8,9,10});
 
-        LanguageDataSet language_data_set;
+        Correlation correlation = linear_correlation(thread_pool_device.get(), x, y);
 
-        language_data_set.set_data_source_path("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/language_dataset_debug.txt");
-
-        language_data_set.set_separator(DataSet::Separator::Tab);
-
-        language_data_set.read_txt_language_model();
-
-        //language_data_set.set_raw_variables_scalers(Scaler::None);
-
-        vector<string> completion_vocabulary = language_data_set.get_completion_vocabulary();
-        vector<string> context_vocabulary = language_data_set.get_context_vocabulary();
-
-        // Neural network
-
-        Index input_length = language_data_set.get_completion_length();
-        Index context_length = language_data_set.get_context_length();
-        Index inputs_dimension = language_data_set.get_completion_vocabulary_size();
-        Index context_dimension = language_data_set.get_context_vocabulary_size();
-
-        Index number_of_layers = 1;
-        Index depth = 64;
-        Index perceptron_depth = 128;
-        Index heads_number = 4;
-
-        Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
-                                 depth, perceptron_depth, heads_number, number_of_layers });
-
-        transformer.set_dropout_rate(0);
-        transformer.print();
-
-        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
-
-        transformer.set_input_vocabulary(completion_vocabulary);
-        transformer.set_context_vocabulary(context_vocabulary);
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&transformer, &language_data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
-
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
-
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(type(0.99));
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(10800);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
-
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
-
-        TrainingResults training_results = training_strategy.perform_training();
-
-        // Testing analysis
-
-        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
-
-        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
-
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
-
-        // Save results
-
-        transformer.save("data/ENtoES_model.xml");
+        correlation.print();
 
         cout << "Bye!" << endl;
 
