@@ -84,8 +84,6 @@ public:
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
 
-    void set_default();
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) final;
