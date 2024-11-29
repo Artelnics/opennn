@@ -23,6 +23,7 @@ int main()
 {
     try
     {
+
         cout << "OpenNN. ViT Example." << endl;
 
         // srand(static_cast<unsigned>(time(nullptr)));
@@ -109,6 +110,7 @@ int main()
         // // cout << "TESTING ANALYSIS:" << endl;
         // // cout << "Testing error: " << transformer_error_accuracy.first << endl;
         // // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+
 
         cout << "Bye!" << endl;
 

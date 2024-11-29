@@ -20,7 +20,6 @@
 
 
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {
@@ -33,8 +32,8 @@ public:
     enum class Codification { UTF8, SHIFT_JIS };
 
     explicit DataSet(const Index& = 0, 
-                     const dimensions& = {}, 
-                     const dimensions& = {});
+                     const dimensions& = {0}, 
+                     const dimensions& = {0});
 
     explicit DataSet(const string&,
                      const string&,
@@ -504,8 +503,6 @@ public:
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
 
-    void shuffle();
-
     // Reader
 
     void decode(string&) const;
@@ -530,7 +527,7 @@ public:
     virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
 
     //Languaje Models
-    virtual void read_txt_language_model();
+    virtual void read_txt();
 
     //AutoAssociation Models
 

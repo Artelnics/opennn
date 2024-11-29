@@ -28,6 +28,8 @@ public:
 
     explicit Transformer(const initializer_list<Index>&);
 
+    explicit Transformer(const vector <Index>&, const vector <Index>&, const vector <Index>&);
+
     // Index get_input_length() const
     // {
     //     return 0;
@@ -86,14 +88,11 @@ private:
 
     vector<string> input_vocabulary;
     vector<string> context_vocabulary;
-
 };
 
 
 struct TransformerForwardPropagation : ForwardPropagation
 {
-    // Constructors
-
     TransformerForwardPropagation(const Index& new_batch_samples = 0, NeuralNetwork* new_neural_network = nullptr)
     {
         set(new_batch_samples, new_neural_network);

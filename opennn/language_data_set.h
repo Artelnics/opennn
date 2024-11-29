@@ -20,7 +20,14 @@ class LanguageDataSet : public DataSet
 
 public:
 
+    // explicit LanguageDataSet(const Index& = 0,
+    //                          const dimensions& = {0},
+    //                          const dimensions& = {0});
+
+
     explicit LanguageDataSet();
+
+    explicit LanguageDataSet(const string&);
 
     vector<string> get_context_vocabulary() const;
     vector<string> get_completion_vocabulary() const;
@@ -86,7 +93,7 @@ public:
 
     void read_csv_language_model();
 
-    void read_txt_language_model();
+    void read_txt();
 
 //    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
     void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);

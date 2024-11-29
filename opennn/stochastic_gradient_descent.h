@@ -33,8 +33,6 @@ public:
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
 
-   void set_loss_index(LossIndex*) override;
-
    void set_default() final;
 
    void set_batch_samples_number(const Index&);

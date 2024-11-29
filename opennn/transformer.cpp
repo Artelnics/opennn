@@ -33,6 +33,35 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
     set(architecture_list);
 }
 
+Transformer::Transformer(const vector <Index>& input_dimension, const vector <Index>& context_dimensions, const vector <Index>& complexity)
+{
+    if(input_dimension.size() != 2)
+        throw runtime_error("Input dimensions size must be 2.");
+    if(context_dimensions.size() != 2)
+        throw runtime_error("Context dimensions size must be 2.");
+    if(complexity.size() != 4)
+        throw runtime_error("Complexity size must be 4.");
+
+    input_length = input_dimension[0];
+    context_length = context_dimensions[0];
+    input_dimensions = input_dimension[1];
+    context_dimension = context_dimensions[1];
+    embedding_depth = complexity[0];
+    perceptron_depth = complexity[1];
+    heads_number = complexity[2];
+    layers_number = complexity[3];
+
+    set(input_length,
+        context_length,
+        input_dimensions,
+        context_dimension,
+        embedding_depth,
+        perceptron_depth,
+        heads_number,
+        layers_number);
+
+}
+
 void Transformer::set(const Tensor<Index, 1>& architecture)
 {
     if(architecture.size() != 8)
@@ -477,7 +506,7 @@ string Transformer::calculate_outputs(const vector<string>& context_string, cons
     //else
 
     detokenize_wordpiece(input, output_string); //coment for amazon reviews example
-cout<<"Works properly"<<endl;
+
     // // new for amazon reviews example
     // cout<<input<<endl;
     // if(input(0,0) == 0)
@@ -639,10 +668,9 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& output_string)
-{   cout<<Index(predictions(1))<<endl;
-    cout<<input_vocabulary.size()<<endl;
+{
     output_string << input_vocabulary[Index(predictions(1))];
-    cout<<"Works properly"<<endl;
+
     string current_prediction;
 
     for(Index i = 2; i < input_length; i++)

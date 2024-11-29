@@ -16,9 +16,7 @@ namespace opennn
 
 TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
-
     set(new_neural_network, new_data_set);
-
 }
 
 
@@ -50,7 +48,7 @@ LossIndex* TrainingStrategy::get_loss_index()
 
         case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
 
-        default: return nullptr;
+        default: throw runtime_error("Unknown loss method.");
     }
 }
 
@@ -268,13 +266,18 @@ const bool& TrainingStrategy::get_display() const
 
 void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {
+    neural_network = new_neural_network;
+    data_set = new_data_set;
+
+    set_default();
+
     mean_squared_error.set(new_neural_network, new_data_set);
     normalized_squared_error.set(new_neural_network, new_data_set);
     cross_entropy_error.set(new_neural_network, new_data_set);
     cross_entropy_error_3d.set(new_neural_network, new_data_set);
     weighted_squared_error.set(new_neural_network, new_data_set);
     Minkowski_error.set(new_neural_network, new_data_set);
-
+    
     LossIndex* new_loss_index = get_loss_index();
 
     conjugate_gradient.set_loss_index(new_loss_index);
@@ -282,8 +285,6 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
     Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
-
-    set_default();
 }
 
 
@@ -460,14 +461,31 @@ void TrainingStrategy::set_default()
     loss_method = LossMethod::MEAN_SQUARED_ERROR;
 
     optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
+
+    if(has_neural_network())
+    {
+        if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
+            loss_method = LossMethod::CROSS_ENTROPY_ERROR;
+
+        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+            loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
+    }
+
+
 }
 
 
 TrainingResults TrainingStrategy::perform_training()
 {
-    // if(neural_network->has(Layer::Type::Recurrent)
-    //     || neural_network->has(Layer::Type::LongShortTermMemory))
-    //     fix_forecasting();
+    if(!has_neural_network())
+        throw runtime_error("Neural network is null.");
+
+    if(!has_data_set())
+        throw runtime_error("Data set is null.");
+
+    if(neural_network->has(Layer::Type::Recurrent)
+    || neural_network->has(Layer::Type::LongShortTermMemory))
+        fix_forecasting();
 
     set_display(display);
 

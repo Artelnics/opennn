@@ -20,6 +20,14 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
+LanguageDataSet::LanguageDataSet(const string& data_source_path) : DataSet()
+{
+    set_data_source_path(data_source_path);
+    set_separator(DataSet::Separator::Tab);
+    context_dimensions = { 0 };
+}
+
+
 vector<string> LanguageDataSet::get_context_vocabulary() const
 {
     return context_vocabulary;
@@ -774,9 +782,7 @@ void LanguageDataSet::save_vocabulary(const string& path, const vector<string>& 
         throw runtime_error("Cannot open file to save vocabulary: " + path + "\n");
 
     for (const auto& word : vocabulary)
-    {
         file << word << '\n';
-    }
 
     file.close();
 }
@@ -1815,7 +1821,7 @@ void LanguageDataSet::read_csv_language_model()
     read_csv_3_language_model();
 }
 
-// void LanguageDataSet::read_txt_language_model()
+// void LanguageDataSet::read_txt()
 // {
 //     cout << "Reading .txt file..." << endl;
 
@@ -1964,7 +1970,7 @@ void LanguageDataSet::read_csv_language_model()
 // }
 
 
-void LanguageDataSet::read_txt_language_model()
+void LanguageDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 

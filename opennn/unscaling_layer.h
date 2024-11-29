@@ -9,7 +9,6 @@
 #ifndef UNSCALINGLAYER_H
 #define UNSCALINGLAYER_H
 
-
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "scaling.h"

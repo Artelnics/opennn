@@ -75,8 +75,6 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
     for(Index batch_index = 0; batch_index < batch_size; batch_index++)
     {
         Tensor<type, 3> image = inputs.chip(batch_index, 0);
-        cout << image << endl;
-        system("pause");
 
         if(random_reflection_axis_x)
             reflect_image_x(thread_pool_device.get(), image);
