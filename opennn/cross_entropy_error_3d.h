@@ -10,7 +10,6 @@
 #define CROSSENTROPYERROR3D_H
 
 #include "loss_index.h"
-#include "data_set.h"
 
 namespace opennn
 {

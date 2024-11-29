@@ -9,9 +9,7 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
-
 
 namespace opennn
 {

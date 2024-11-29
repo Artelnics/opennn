@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "text_data_set.h"
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -64,8 +62,6 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 
 void TextDataSet::to_XML(XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     time_t start, finish;
     time(&start);
 
@@ -259,6 +255,8 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    ostringstream buffer;
 
     // Missing values number
 

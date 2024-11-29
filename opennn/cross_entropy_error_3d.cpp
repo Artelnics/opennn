@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
+#include "tensors.h"
 #include "cross_entropy_error_3d.h"
 #include "probabilistic_layer_3d.h"
 #include "forward_propagation.h"

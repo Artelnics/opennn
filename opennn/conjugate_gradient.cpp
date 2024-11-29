@@ -6,9 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "conjugate_gradient.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 

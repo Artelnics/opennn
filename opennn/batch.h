@@ -2,9 +2,6 @@
 #define BATCH_H
 
 #include "data_set.h"
-#include "tensors.h"
-#include "image_data_set.h"
-#include "images.h"
 
 namespace opennn
 {

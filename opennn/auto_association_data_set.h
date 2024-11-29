@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef AUTOASSOCIATION_H
-#define AUTOASSOCIATION_H
+#ifndef AUTOASSOCIATIONDATASET_H
+#define AUTOASSOCIATIONDATASET_H
 
 #include "data_set.h"
 

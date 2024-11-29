@@ -6,15 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -31,6 +28,8 @@
 #include "flatten_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -367,7 +366,6 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
-
 }
 
 
@@ -1248,7 +1246,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LayersInputsIndices");
     ostringstream buffer;
-    
+
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
     {
         printer.OpenElement("LayerInputsIndices");
@@ -1546,8 +1544,6 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
 void NeuralNetwork::outputs_from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* root_element = document.FirstChildElement("Outputs");
 
     if(!root_element)

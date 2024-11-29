@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "auto_associative_neural_network.h"
@@ -187,8 +185,6 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const XMLDocument& document
     if(!minimum_element)
         throw runtime_error("Minimum element is nullptr.\n");
 
-    type new_minimum = type(0);
-
     if(minimum_element->GetText())
         set_box_plot_minimum(type(stod(minimum_element->GetText())));
 
@@ -236,8 +232,6 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const XMLDocument& document
 
 void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
 
     if(!root_element)
@@ -300,8 +294,6 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocu
 
 void AutoAssociativeNeuralNetwork::multivariate_box_plot_from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* multivariate_distances_element = document.FirstChildElement("MultivariateDistancesBoxPlot");
 
     if(!multivariate_distances_element)
@@ -710,8 +702,6 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
 void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
 
     if(!root_element)

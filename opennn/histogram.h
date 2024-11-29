@@ -8,7 +8,6 @@ namespace opennn
 
 struct Histogram
 {
-
   explicit Histogram(const Index& = 0);
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);

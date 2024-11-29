@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"
@@ -261,7 +259,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation_lm.get_layer_delta_pairs();
-/*
+
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -285,7 +283,6 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
-*/
 }
 
 
@@ -673,12 +670,12 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     const Index parameters_number = parameters.size();
 
-    type h;
+    type h = 0;
     Tensor<type, 1> parameters_forward = parameters;
     Tensor<type, 1> parameters_backward = parameters;
 
-    type error_forward;
-    type error_backward;
+    type error_forward = 0;
+    type error_backward = 0;
 
     Tensor<type, 1> numerical_gradient(parameters_number);
     numerical_gradient.setConstant(type(0));

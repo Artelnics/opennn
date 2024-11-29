@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "language_data_set.h"
 #include "strings_utilities.h"
 
@@ -61,13 +60,13 @@ const dimensions& LanguageDataSet::get_context_dimensions() const
 }
 
 
-const vector<vector<string>> LanguageDataSet::get_documents() const
+const vector<vector<string>>& LanguageDataSet::get_documents() const
 {
     return documents;
 }
 
 
-const vector<vector<string>> LanguageDataSet::get_targets() const
+const vector<vector<string>>& LanguageDataSet::get_targets() const
 {
     return targets;
 }
@@ -82,17 +81,17 @@ void LanguageDataSet::set_default_raw_variables_uses()
 }
 
 
-void LanguageDataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_uses)
+void LanguageDataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
 {
-    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+    DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
     context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
-void LanguageDataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
+void LanguageDataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
-    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+    DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
     context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
@@ -1395,24 +1394,8 @@ void LanguageDataSet::read_csv_1()
     }
 
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
-/*
-#ifdef _WIN32
+    ifstream file(data_path);
 
-    if(regex_search(data_path, accent_regex))
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }
-    else
-    {
-        file.open(data_path.c_str());
-    }
-#else
-    file.open(data_path.c_str());
-#endif
-*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1645,23 +1628,6 @@ void LanguageDataSet::read_csv_2_simple()
     regex accent_regex("[\\xC0-\\xFF]");
     ifstream file(data_path);
 
-/*
-#ifdef _WIN32
-
-    if(regex_search(data_path, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }else
-    {
-        file.open(data_path.c_str());
-    }
-
-#else
-    file.open(data_path.c_str());
-#endif
-*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1745,9 +1711,7 @@ void LanguageDataSet::read_csv_2_simple()
     //samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
-
 }
-
 
 
 void LanguageDataSet::read_csv_language_model()
@@ -1955,8 +1919,8 @@ void LanguageDataSet::read_txt_language_model()
         const Index target_vocabulary_size = 8000;
         const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
-        context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
-        completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+        context_vocabulary = calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
+        completion_vocabulary = calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
     }
     else
     {
@@ -2031,7 +1995,6 @@ void LanguageDataSet::read_txt_language_model()
 
     data_path = transformed_data_path;
     separator = Separator::Semicolon;
-    bool has_raw_variables_names = true;
 
     read_csv_language_model();
 

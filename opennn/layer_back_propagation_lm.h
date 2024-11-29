@@ -8,7 +8,6 @@ namespace opennn
 
 class Layer;
 
-
 struct LayerBackPropagationLM
 {
     explicit LayerBackPropagationLM() {}

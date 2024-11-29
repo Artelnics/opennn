@@ -10,6 +10,7 @@
 #define AUTOASSOCIATIVENEURALNETWORK_H
 
 #include "neural_network.h"
+#include "descriptives.h"
 #include "box_plot.h"
 
 namespace opennn

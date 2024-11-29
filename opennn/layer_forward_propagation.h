@@ -8,7 +8,6 @@ namespace opennn
 
 class Layer;
 
-
 struct LayerForwardPropagation
 {
     explicit LayerForwardPropagation()

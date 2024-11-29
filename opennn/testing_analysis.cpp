@@ -6,13 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "testing_analysis.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_data_set.h"
 #include "transformer.h"
 #include "statistics.h"
+#include "unscaling_layer.h"
+#include "probabilistic_layer.h"
 
 namespace opennn
 {

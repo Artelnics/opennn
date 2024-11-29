@@ -9,17 +9,13 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
-
 
 namespace opennn
 {
 
 #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
+    #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
 class RecurrentLayer : public Layer

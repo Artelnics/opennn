@@ -10,10 +10,10 @@
 #define MODELEXPRESSION_H
 
 #include "strings_utilities.h"
-#include "tensors.h"
 #include "neural_network.h"
 
-#include <unordered_map>
+//#include "tensors.h"
+//#include <unordered_map>
 
 namespace opennn
 {

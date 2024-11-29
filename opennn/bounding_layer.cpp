@@ -6,14 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "bounding_layer.h"
 #include "tensors.h"
 
 namespace opennn
 {
-
 
 BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
 {

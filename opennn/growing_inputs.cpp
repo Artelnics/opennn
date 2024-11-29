@@ -6,10 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "growing_inputs.h"
 #include "correlations.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {

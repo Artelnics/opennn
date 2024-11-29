@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"
@@ -1083,8 +1081,7 @@ vector<Index> DataSet::get_used_variable_indices() const
 }
 
 
-
-void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_uses)
+void DataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
 {
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
@@ -1101,7 +1098,7 @@ void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_use
 }
 
 
-void DataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
+void DataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
     const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
 
@@ -2897,9 +2894,9 @@ void DataSet::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("DataSource");
     add_xml_element(printer, "FileType", "csv");
-/*
-    add_xml_element(printer, "Path", data_path);
-*/
+
+    add_xml_element(printer, "Path", data_path.string());
+
     add_xml_element(printer, "Separator", get_separator_name());
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
@@ -4167,54 +4164,6 @@ string DataSet::RawVariable::get_scaler_string() const
 }
 
 
-void DataSet::open_file(const string& data_file_name, ifstream& file) const
-{
-    #ifdef _WIN32
-
-    const regex accent_regex("[\\xC0-\\xFF]");
-
-    if(regex_search(data_file_name, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        const wstring file_name_wide = conv.from_bytes(data_file_name);
-        file.open(file_name_wide, ios::binary);
-    }
-    else
-    {
-        file.open(data_file_name.c_str(), ios::binary);
-    }
-    #else
-        file.open(data_file_name.c_str(), ios::binary);
-    #endif
-
-    if(!file.is_open())
-        throw runtime_error("Error: Cannot open file " + data_file_name + "\n");
-}
-
-
-void DataSet::open_file(const string& file_name, ofstream& file) const
-{
-    #ifdef _WIN32
-
-    const regex accent_regex("[\\xC0-\\xFF]");
-
-    if(regex_search(file_name, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(file_name);
-        file.open(file_name_wide, ios::binary);
-    }
-    else
-    {
-        file.open(file_name.c_str(), ios::binary);
-    }
-
-    #else
-        file.open(file_name.c_str(), ios::binary);
-    #endif
-}
-
-
 void DataSet::read_data_file_preview(ifstream& file)
 {
     if(display) cout << "Reading data file preview..." << endl;
@@ -4557,7 +4506,7 @@ void DataSet::decode(string& input_string) const
 }
 
 
-Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
+Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_name,
                                         const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
@@ -4609,7 +4558,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     Tensor<type, 2> input_data(input_samples_count, input_variables_number);
     input_data.setZero();
 
-    open_file(input_data_file_name, file);
+    file.open(input_data_file_name);
 
     //skip_header(file);
 

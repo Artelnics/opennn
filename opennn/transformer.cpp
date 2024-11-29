@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "transformer.h"
 #include "tensors.h"
 #include "embedding_layer.h"
@@ -16,7 +14,7 @@
 #include "addition_layer_3d.h"
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
-#include "strings_utilities.h"
+//#include "strings_utilities.h"
 
 namespace opennn
 {

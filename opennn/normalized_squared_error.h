@@ -9,9 +9,7 @@
 #ifndef NORMALIZEDSQUAREDERROR_H
 #define NORMALIZEDSQUAREDERROR_H
 
-
 #include "loss_index.h"
-#include "data_set.h"
 
 namespace opennn
 {

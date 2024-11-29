@@ -6,16 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "correlations.h"
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {
-
 
 GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
     : InputsSelection(new_training_strategy)

@@ -6,11 +6,11 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "response_optimization.h"
 #include "statistics.h"
+#include "scaling_layer_2d.h"
+#include "bounding_layer.h"
 
 namespace opennn
 {
@@ -132,8 +132,6 @@ void ResponseOptimization::set_input_condition(const Index& index,
 {
     input_conditions[index] = condition;
 
-    ostringstream buffer;
-
     switch(condition)
     {
     case Condition::Minimum:
@@ -186,11 +184,11 @@ void ResponseOptimization::set_input_condition(const Index& index,
 }
 
 
-void ResponseOptimization::set_output_condition(const Index& index, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
+void ResponseOptimization::set_output_condition(const Index& index,
+                                                const ResponseOptimization::Condition& condition,
+                                                const Tensor<type, 1>& values)
 {
     output_conditions[index] = condition;
-
-    ostringstream buffer;
 
     switch(condition)
     {
@@ -318,8 +316,6 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
     Tensor<Tensor<type, 1>, 1> values_conditions(conditions_size);
 
     Index index = 0;
-
-    ostringstream buffer;
 
     for(Index i = 0; i < conditions_size; i++)
     {

@@ -9,10 +9,7 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -21,7 +18,6 @@ namespace opennn
 struct PerceptronLayer3DForwardPropagationCuda;
 struct PerceptronLayer3DBackPropagationCuda;
 #endif
-
 
 class PerceptronLayer3D : public Layer
 {

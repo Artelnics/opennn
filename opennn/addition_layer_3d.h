@@ -10,8 +10,6 @@
 #define ADDITIONLAYER3D_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {

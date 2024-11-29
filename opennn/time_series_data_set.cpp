@@ -6,13 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "time_series_data_set.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
-#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -25,7 +22,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
 }
 
 
-TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
+TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
                                      const string& separator,
                                      const bool& has_header,
                                      const bool& has_sample_ids,

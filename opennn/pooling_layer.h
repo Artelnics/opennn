@@ -9,10 +9,7 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {

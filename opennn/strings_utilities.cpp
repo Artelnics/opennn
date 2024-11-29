@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
