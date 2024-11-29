@@ -1662,9 +1662,7 @@ void NeuralNetwork::load(const string& file_name)
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
-    ifstream file;
-
-    file.open(file_name.c_str(), ios::binary);
+    ifstream file(file_name, ios::binary);
 
     if(!file.is_open())
         throw runtime_error("Cannot open binary file: " + file_name + "\n");

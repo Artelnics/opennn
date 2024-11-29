@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "language_data_set.h"
 #include "strings_utilities.h"
 
@@ -20,26 +19,29 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
-vector<string> LanguageDataSet::get_context_vocabulary() const
+const vector<string>& LanguageDataSet::get_context_vocabulary() const
 {
     return context_vocabulary;
 }
 
 
-vector<string> LanguageDataSet::get_completion_vocabulary() const
+const vector<string>& LanguageDataSet::get_completion_vocabulary() const
 {
     return completion_vocabulary;
 }
+
 
 Index LanguageDataSet::get_context_vocabulary_size() const
 {
     return context_vocabulary.size();
 }
 
+
 Index LanguageDataSet::get_completion_vocabulary_size() const
 {
     return completion_vocabulary.size();
 }
+
 
 Index LanguageDataSet::get_context_length() const
 {
@@ -529,7 +531,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_xml_string(data_source_element, "Codification"));
@@ -1191,7 +1193,7 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
 }
 
 
-void LanguageDataSet::load_documents(const string& path)
+void LanguageDataSet::load_documents(const filesystem::path& path)
 {
     const Index original_size = documents.size();
 
@@ -1201,7 +1203,7 @@ void LanguageDataSet::load_documents(const string& path)
     ifstream file(path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open data file: " + path + "\n");
+        throw runtime_error("Cannot open data file: " + path.string() + "\n");
 
     vector<vector<string>> documents_copy(documents);
 
@@ -1309,9 +1311,7 @@ void LanguageDataSet::load_documents(const string& path)
 
 void LanguageDataSet::read_csv_3_language_model()
 {
-    ifstream file;
-
-    open_file(data_path, file);
+    ifstream file(data_path);
 
     const bool is_float = is_same<type, float>::value;
 
@@ -1396,7 +1396,7 @@ void LanguageDataSet::read_csv_1()
 
     regex accent_regex("[\\xC0-\\xFF]");
     ifstream file;
-
+/*
 #ifdef _WIN32
 
     if(regex_search(data_path, accent_regex))
@@ -1412,7 +1412,7 @@ void LanguageDataSet::read_csv_1()
 #else
     file.open(data_path.c_str());
 #endif
-
+*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1643,8 +1643,9 @@ void LanguageDataSet::read_csv_1()
 void LanguageDataSet::read_csv_2_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
+    ifstream file(data_path);
 
+/*
 #ifdef _WIN32
 
     if(regex_search(data_path, accent_regex))
@@ -1660,7 +1661,7 @@ void LanguageDataSet::read_csv_2_simple()
 #else
     file.open(data_path.c_str());
 #endif
-
+*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1849,8 +1850,7 @@ void LanguageDataSet::read_csv_language_model()
 //     replace(transformed_data_path,".txt","_data.txt");
 //     replace(transformed_data_path,".csv","_data.csv");
 
-//     ofstream file;
-//     file.open(transformed_data_path);
+//     ofstream file(transformed_data_path);
 
      // @todo maybe context does NOT need start and end tokens
 
@@ -1889,7 +1889,6 @@ void LanguageDataSet::read_csv_language_model()
 //     data_path = transformed_data_path;
 //     separator = Separator::Semicolon;
 //     has_header = true;
-
 
 //     read_csv_language_model();
 
@@ -1990,12 +1989,12 @@ void LanguageDataSet::read_txt_language_model()
 
     cout << "Writting data file..." << endl;
 
-    string transformed_data_path = data_path;
+    filesystem::path transformed_data_path = data_path;
+/*
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
-
-    ofstream file;
-    file.open(transformed_data_path);
+*/
+    ofstream file(transformed_data_path);
 
     // @todo maybe context does NOT need start and end tokens
 

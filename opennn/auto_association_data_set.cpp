@@ -228,9 +228,7 @@ void AutoAssociationDataSet::transform_associative_dataset()
 
 void AutoAssociationDataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
 {
-    ifstream file;
-
-    file.open(auto_associative_data_file_name.c_str(), ios::binary);
+    ifstream file(auto_associative_data_file_name.c_str(), ios::binary);
 
     if(!file.is_open())
         throw runtime_error("Cannot open binary file: " + auto_associative_data_file_name + "\n");

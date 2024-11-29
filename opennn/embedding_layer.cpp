@@ -28,9 +28,9 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 }
 
 
-Index EmbeddingLayer::get_input_dimension() const
+Index EmbeddingLayer::get_input_dimension_xxx() const
 {
-    return input_dimensions;
+    return input_dimensions_xxx;
 }
 
 
@@ -54,6 +54,7 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
+    // @todo
     return {};
 }
 
@@ -107,13 +108,13 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
-    input_dimensions = new_inputs_dimension;
+    input_dimensions_xxx = new_inputs_dimension;
 
     inputs_number_xxx = new_inputs_number;
 
     depth = new_depth;
 
-    embedding_weights.resize(input_dimensions, depth);
+    embedding_weights.resize(input_dimensions_xxx, depth);
 
     set_parameters_random();
 
@@ -125,9 +126,9 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 }
 
 
-void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
+void EmbeddingLayer::set_input_dimensions_xxx(const Index& new_inputs_dimension)
 {
-    input_dimensions = new_inputs_dimension;
+    input_dimensions_xxx = new_inputs_dimension;
 
     set_embedding_weights();
 }
@@ -161,7 +162,7 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 
 void EmbeddingLayer::set_embedding_weights()
 {
-    embedding_weights.resize(input_dimensions, depth);
+    embedding_weights.resize(input_dimensions_xxx, depth);
 
     set_parameters_random();
 }
@@ -324,7 +325,7 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
         throw runtime_error("Embedding element is nullptr.\n");
 
     set_name(read_xml_string(embedding_layer_element, "Name"));
-    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+    set_input_dimensions_xxx(read_xml_index(embedding_layer_element, "InputDimensions"));
     set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
     set_depth(read_xml_index(embedding_layer_element, "Depth"));
     set_positional_encoding(read_xml_bool(embedding_layer_element, "PositionalEncoding"));
@@ -447,7 +448,7 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
-    const Index input_dimension = embedding_layer->get_input_dimension();
+    const Index input_dimension = embedding_layer->get_input_dimension_xxx();
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);

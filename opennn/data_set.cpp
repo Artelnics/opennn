@@ -25,7 +25,7 @@ DataSet::DataSet(const Index& new_samples_number,
 }
 
 
-DataSet::DataSet(const string& data_path,
+DataSet::DataSet(const filesystem::path& data_path,
                  const string& separator,
                  const bool& has_header,
                  const bool& has_sample_ids,
@@ -1391,7 +1391,7 @@ string DataSet::get_missing_values_method_string() const
 }
 
 
-const string& DataSet::get_data_source_path() const
+const filesystem::path& DataSet::get_data_path() const
 {
     return data_path;
 }
@@ -1732,7 +1732,7 @@ vector<vector<string>> DataSet::get_data_file_preview() const
 }
 
 
-void DataSet::set(const string& data_path,
+void DataSet::set(const filesystem::path& data_path,
                   const string& separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
@@ -1740,7 +1740,7 @@ void DataSet::set(const string& data_path,
 {
     set_default();
 
-    set_data_source_path(data_path);
+    set_data_path(data_path);
 
     set_separator_string(separator);
 
@@ -1908,9 +1908,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 }
 
 
-void DataSet::set_data_source_path(const string& new_data_file_name)
+void DataSet::set_data_path(const filesystem::path& new_data_path)
 {
-    data_path = new_data_file_name;
+    data_path = new_data_path;
 }
 
 
@@ -2897,7 +2897,9 @@ void DataSet::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("DataSource");
     add_xml_element(printer, "FileType", "csv");
+/*
     add_xml_element(printer, "Path", data_path);
+*/
     add_xml_element(printer, "Separator", get_separator_name());
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
@@ -2953,7 +2955,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element) 
         throw runtime_error("Data source element is nullptr.\n");
     
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
@@ -3146,7 +3148,7 @@ void DataSet::save_data() const
     ofstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open matrix data file: " + data_path + "\n");
+        throw runtime_error("Cannot open matrix data file: " + data_path.string() + "\n");
 
     file.precision(20);
 
@@ -3192,9 +3194,7 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file;
-
-    open_file(binary_data_file_name, file);
+    ofstream file(binary_data_file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open data binary file.");
@@ -3225,9 +3225,10 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::load_data_binary()
 {
-    ifstream file;
+    ifstream file(data_path);
 
-    open_file(data_path, file);
+    if (!file.is_open())
+        throw runtime_error("Failed to open file: " + data_path.string());
 
     streamsize size = sizeof(Index);
 
@@ -3882,12 +3883,12 @@ void DataSet::process_tokens(vector<string>& tokens)
 void DataSet::read_csv()
 {
     if(data_path.empty())
-        throw runtime_error("Data source path is empty.\n");
+        throw runtime_error("Data path is empty.\n");
 
-    ifstream file(data_path.c_str());
+    ifstream file(data_path);
 
     if(!file.is_open())
-        throw runtime_error("Error: Cannot open file " + data_path + "\n");
+        throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
     const string separator_string = get_separator_string();
     
@@ -4250,7 +4251,7 @@ void DataSet::read_data_file_preview(ifstream& file)
     // Check empty file
 
     if(data_file_preview[0].size() == 0)
-        throw runtime_error("File " + data_path + " is empty.\n");
+        throw runtime_error("File " + data_path.string() + " is empty.\n");
 
     // Resize data file preview to original
 
@@ -4286,26 +4287,26 @@ void DataSet::check_separators(const string& line) const
     if(separator == Separator::Space)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is space (' ').");
         else if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is tab ('   ').");
         else if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
     {
         if(line.find(";") != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is comma (',').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is comma (',').");
     }
     else if(separator == Separator::Semicolon)
     {
         if(line.find(",") != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is semicolon (';').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is semicolon (';').");
     }
 }
 
@@ -4564,9 +4565,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    ifstream file;
-
-    open_file(input_data_file_name, file);
+    ifstream file(input_data_file_name);
 
     // Count samples number
 

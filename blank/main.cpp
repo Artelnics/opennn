@@ -29,19 +29,12 @@ int main()
     {
         cout << "OpenNN. Blank project." << endl;
 
-        const unsigned int threads_number = thread::hardware_concurrency();
-        unique_ptr<ThreadPool> thread_pool = make_unique<ThreadPool>(threads_number);
-        unique_ptr<ThreadPoolDevice> thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+        //std::wstring path = L"C:/áaa.csv";
 
-        Tensor<type, 1> x(10);
-        x.setValues({0,1,2,3,4,5,6,7,8,9,10});
+        //wcout << path << endl;
 
-        Tensor<type, 1> y(10);
-        y.setValues({0,1,2,3,4,5,6,7,8,9,10});
+        DataSet data_set("C:/áaa.csv", ";", true);
 
-        Correlation correlation = linear_correlation(thread_pool_device.get(), x, y);
-
-        correlation.print();
 
         cout << "Bye!" << endl;
 

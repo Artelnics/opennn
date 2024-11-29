@@ -45,8 +45,8 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     input_length = architecture(0);
     context_length = architecture(1);
-    input_dimensions = architecture(2);
-    context_dimension = architecture(3);
+    input_dimensions_xxx = architecture(2);
+    context_dimension_xxx = architecture(3);
     embedding_depth = architecture(4);
     perceptron_depth = architecture(5);
     heads_number = architecture(6);
@@ -54,8 +54,8 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     set(input_length,
         context_length,
-        input_dimensions,
-        context_dimension,
+        input_dimensions_xxx,
+        context_dimension_xxx,
         embedding_depth,
         perceptron_depth,
         heads_number,

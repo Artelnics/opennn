@@ -66,9 +66,9 @@ private:
 
     Index context_length;
 
-    Index input_dimensions;
+    Index input_dimensions_xxx;
 
-    Index context_dimension;
+    Index context_dimension_xxx;
 
     Index embedding_depth;
 

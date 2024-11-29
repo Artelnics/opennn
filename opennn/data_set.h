@@ -35,7 +35,7 @@ public:
                      const dimensions& = {0}, 
                      const dimensions& = {0});
 
-    explicit DataSet(const string&,
+    explicit DataSet(const filesystem::path&,
                      const string&,
                      const bool& = true,
                      const bool& = false,
@@ -202,7 +202,7 @@ public:
     MissingValuesMethod get_missing_values_method() const;
     string get_missing_values_method_string() const;
 
-    const string& get_data_source_path() const;
+    const filesystem::path& get_data_path() const;
 
     const bool& get_header_line() const;
     const bool& get_has_sample_ids() const;
@@ -234,8 +234,9 @@ public:
     // Set
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
+    void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
+
     void set(const string&);
-    void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
 
     void set_default();
 
@@ -305,7 +306,7 @@ public:
 
     // Members set
 
-    void set_data_source_path(const string&);
+    void set_data_path(const filesystem::path&);
 
     void set_has_header(const bool&);
     void set_has_ids(const bool&);
@@ -561,7 +562,7 @@ protected:
 
     // DATA FILE
 
-    string data_path;
+    filesystem::path data_path;
 
     Separator separator = Separator::Comma;
 
