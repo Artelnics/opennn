@@ -87,8 +87,6 @@ public:
 
     void perform_mutation();
 
-    void check_categorical_raw_variables();
-
     Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 
     Tensor<bool, 1> get_individual_variables(Tensor<bool,1>&);

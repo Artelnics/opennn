@@ -36,6 +36,11 @@ public:
                         ImageClassification,
                         TextClassification};
 
+    enum class ProgrammingLanguage{C,
+                                   Python,
+                                   JavaScript,
+                                   PHP};
+
    explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
                           const dimensions& = {},
                           const dimensions& = {},
@@ -183,7 +188,7 @@ public:
 
    void print() const;
    void save(const string&) const;
-   void save_parameters(const string&) const;
+   void save_parameters(const filesystem::path&) const;
 
    void load(const string&);
    void load_parameters_binary(const string&);
@@ -191,7 +196,7 @@ public:
    vector<string> get_layer_names() const;
    vector<string> get_layer_types_string() const;
 
-   void save_outputs(Tensor<type, 2>&, const string&);
+   void save_outputs(Tensor<type, 2>&, const filesystem::path&);
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           ForwardPropagation&,
@@ -203,10 +208,7 @@ public:
 
    string get_expression() const;
 
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
-   void save_expression_api(const string&) const;
-   void save_expression_javascript(const string&) const;
+   void save_expression(const ProgrammingLanguage&, const filesystem::path&) const;
 
 
 #ifdef OPENNN_CUDA

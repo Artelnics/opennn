@@ -387,11 +387,11 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     for(Index i = 0; i < individuals_number; i++)
     {
-/*
+
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
-*/
+
         raw_variables_active = 1 + rand() % raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
@@ -931,56 +931,6 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 }
 
 
-void GeneticAlgorithm::check_categorical_raw_variables()
-{
-/*
-    TrainingStrategy* training_strategy = get_training_strategy();
-
-    DataSet* data_set = training_strategy->get_data_set();
-
-    const Index individuals_number = get_individuals_number();
-
-    const Index variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
-
-    Index raw_variable_index = 0;
-
-    if(data_set->has_categorical_raw_variables())
-    {
-        for(Index i = 0; i < variables_number; i++)
-        {
-            const DataSet::RawVariableType column_type = data_set->get_raw_variable_type(raw_variable_index);
-
-            if(column_type != DataSet::RawVariableType::Categorical)
-            {
-                raw_variable_index++;
-                continue;
-            }
-
-            const Index categories_number = data_set->get_raw_variables()[raw_variable_index].get_categories_number();
-
-            for(Index j = 0; j < individuals_number; j++)
-            {
-                const Tensor<bool, 1> individual = population.chip(j, 0);
-
-                if(!(std::find(individual.data() + i, individual.data() + i + categories_number, 1) == individual.data() + i + categories_number))
-                {
-                    const Index random_index = rand() % categories_number;
-
-                    for(Index categories_index = 0; categories_index < categories_number; categories_index++)
-                        population(j, i + categories_index) = false;
-
-                    population(j, i + random_index) = true;
-                }
-            }
-
-            i += categories_number - 1;
-            raw_variable_index++;
-        }
-    }
-*/
-}
-
-
 Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& individual) // upadted
 {
     DataSet* data_set = training_strategy->get_data_set();
@@ -1209,8 +1159,8 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
     const Index individuals_number = get_individuals_number();
 
-    vector<string> labels(6);
-    vector<string> values(6);
+    Tensor<string, 1> labels(6);
+    Tensor<string, 1> values(6);
 
     Tensor<string, 2> string_matrix(labels.size(), 2);
 
@@ -1231,10 +1181,10 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     labels[5] = "Maximum time";
     values[5] = to_string(maximum_time);
-/*
+
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-*/
+
     return string_matrix;
 }
 

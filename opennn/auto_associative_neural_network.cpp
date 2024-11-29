@@ -426,15 +426,17 @@ Tensor<type, 1> AutoAssociativeNeuralNetwork::calculate_samples_distances(type* 
 }
 
 
-void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,const vector<string>& types_vector, const string& file_name) const
+void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<type, 1>& distances_vector,
+                                                                const vector<string>& types_vector,
+                                                                const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(distances_vector.size() != types_vector.size())
         throw runtime_error("Distances and types vectors must have the same dimensions.\n");
 
     if(!file.is_open())
-        throw runtime_error("Cannot open " + file_name + " file.\n");
+        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
     const Index samples_number = distances_vector.dimension(0);
 

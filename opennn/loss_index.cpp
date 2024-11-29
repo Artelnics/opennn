@@ -931,51 +931,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
         }
     }
 
-/*
-    const NeuralNetwork* neural_network_ptr = neural_network.get_neural_network();
-
-    const Index layers_number = 0;
-
-    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
-
-    const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
-    const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
-
-    const vector<unique_ptr<LayerBackPropagationLM>>& layers_back_propagation = neural_network.get_layers();
-
-    const Index last_trainable_layer_index = 0;
-    const Index first_trainable_layer_index = 0;
-
-    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
-    {
-        const vector<Index>& this_layer_output_indices = layer_output_indices[i];
-
-        const Index this_layer_output_connections = this_layer_output_indices.size();
-
-        if (i == last_trainable_layer_index)
-        {
-            layer_delta_pairs[i].push_back(get_output_deltas_pair());
-
-            continue;
-        }
-
-        layer_delta_pairs[i].resize(this_layer_output_connections);
-
-        for (Index j = 0; j < this_layer_output_connections; j++)
-        {          
-            const Index this_layer_output_index = this_layer_output_indices[j];
-            
-            const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[this_layer_output_index], i);
-
-            const unique_ptr<LayerBackPropagationLM>& layer_back_propagation = layers_back_propagation[this_layer_output_index];
-
-            const vector<pair<type*, dimensions>> input_derivative_pairs
-                = layer_back_propagation->get_input_derivative_pairs();
-
-            layer_delta_pairs[i][j] = input_derivative_pairs[input_index];
-        }
-    }
-*/
     return layer_delta_pairs;
 }
 

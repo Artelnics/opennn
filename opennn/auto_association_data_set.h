@@ -33,8 +33,8 @@ public:
     void transform_associative_raw_variables();
     void transform_associative_data();
 
-    void save_auto_associative_data_binary(const string&) const;
-    void load_auto_associative_data_binary(const string&);
+    void save_auto_associative_data_binary(const filesystem::path&) const;
+    void load_auto_associative_data_binary(const filesystem::path&);
 
 private:
 

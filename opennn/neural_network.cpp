@@ -1628,9 +1628,9 @@ void NeuralNetwork::save(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_parameters(const string& file_name) const
+void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
@@ -1682,9 +1682,10 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 }
 
 
-void NeuralNetwork::save_expression_c(const string& file_name) const
+void NeuralNetwork::save_expression(const ProgrammingLanguage& programming_language,
+                                    const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
@@ -1695,53 +1696,14 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_expression_api(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_api();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_javascript(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_javascript();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_python(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-/*
-    file << get_expression_python();
-*/
-    file.close();
-}
-
-
-void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
+void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path& file_name)
 {
     const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open " + file_name + " file.\n");
+        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
     const vector<string> output_names = get_output_names();
 

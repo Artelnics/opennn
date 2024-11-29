@@ -91,8 +91,7 @@ int main()
 
         // Save results
 
-        neural_network.save_expression_c("../data/amazon_reviews.txt");
-        neural_network.save_expression_python("../data/amazon_reviews.py");
+        neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/amazon_reviews.py");
         
         cout << "Good bye!" << endl;
 
