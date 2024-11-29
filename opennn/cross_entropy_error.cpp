@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "cross_entropy_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -73,11 +75,15 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
+    // cout<<"============Error============="<<endl;
+
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
     
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+
+    // cout<<"============Error============="<<endl;
 
     // cout<<targets<<endl<<endl<<outputs<<endl;
 
@@ -88,11 +94,19 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
     ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
         static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
+    // cout<<"============Error============="<<endl;
+
     probabilistic_layer_back_propagation->targets = targets;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1/*batch_samples_number*/);
+    // cout<<"============Error============="<<endl;
+
+    // cout<<targets<<endl<<endl<<endl<<endl<<outputs<<endl<<endl<<endl<<endl;
+
+    error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-1*batch_samples_number);
+
+    // cout<<"============Error============="<<endl;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -162,9 +176,11 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    const type coefficient = -type(1) / type(batch_samples_number);
+    const type coefficient = type(1) / type(batch_samples_number);
 
-    output_deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
+    output_deltas.device(*thread_pool_device) = (outputs - targets)*coefficient;
+
+    // output_deltas.device(*thread_pool_device) = (targets/outputs)*coefficient;
 }
 
 

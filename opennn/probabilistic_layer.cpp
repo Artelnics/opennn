@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "probabilistic_layer.h"
@@ -266,9 +268,9 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     }
     else
     {
-        const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
+        // const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
 
-        combinations_derivatives.device(*thread_pool_device) = outputs - targets;
+        combinations_derivatives.device(*thread_pool_device) = deltas/*outputs - targets*/;
     }
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;
@@ -325,9 +327,19 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
 
 void ProbabilisticLayer::print() const
 {
-    cout << "Probabilistic layer" << endl;
-    cout << "Output dimensions: " << endl;
-    print_vector(get_output_dimensions());
+    cout << "Probabilistic layer" << endl
+         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Output dimensions: " << get_output_dimensions()[0] << endl
+         << "Biases dimensions: " << biases.dimensions() << endl
+         << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+
+    cout << "Biases:" << endl;
+    cout << biases << endl;
+    cout << "Synaptic weights:" << endl;
+    cout << synaptic_weights << endl;
+
+    cout << "Activation function:" << endl;
+    cout << get_activation_function_string() << endl;
 }
 
 
@@ -367,7 +379,7 @@ string ProbabilisticLayer::write_binary_expression(const vector<string>& input_n
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
         buffer << output_names[j] << " = binary(" << input_names[j] << ");\n";
 
     return buffer.str();
@@ -379,7 +391,7 @@ string ProbabilisticLayer::write_logistic_expression(const vector<string>& input
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
         buffer << output_names[j] << " = logistic(" << input_names[j] << ");\n";
 
     return buffer.str();
@@ -390,7 +402,7 @@ string ProbabilisticLayer::write_competitive_expression(const vector<string>& in
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
         buffer << output_names[j] << " = competitive(" << input_names[j] << ");\n";
 
     return buffer.str();
@@ -401,7 +413,7 @@ string ProbabilisticLayer::write_softmax_expression(const vector<string>& input_
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
         buffer << output_names[j] << " = softmax(" << input_names[j] << ");\n";
 
     return buffer.str();
