@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "neurons_selection.h"
 
 namespace opennn
@@ -181,8 +179,6 @@ void NeuronsSelection::delete_training_error_history()
 void NeuronsSelection::check() const
 {
     // Optimization algorithm
-
-    ostringstream buffer;
 
     if(!training_strategy)
         throw runtime_error("Pointer to training strategy is nullptr.\n");

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "probabilistic_layer.h"
@@ -504,9 +502,8 @@ string ProbabilisticLayer::get_expression(const vector<string>& input_names,
 {
     ostringstream buffer;
 
-    buffer << write_combinations(input_names);
-
-    buffer << write_activations(output_names);
+    buffer << write_combinations(input_names)
+           << write_activations(output_names);
 
     return buffer.str();
 }

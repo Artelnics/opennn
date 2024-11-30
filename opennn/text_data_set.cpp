@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "text_data_set.h"
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -64,8 +62,6 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 
 void TextDataSet::to_XML(XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     time_t start, finish;
     time(&start);
 
@@ -260,6 +256,8 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
+    ostringstream buffer;
+
     // Missing values number
 
     file_stream.OpenElement("MissingValuesNumber");
@@ -402,7 +400,7 @@ void TextDataSet::from_XML(const XMLDocument& data_set_document)
     {
         const string new_data_file_name = data_source_path_element->GetText();
 
-        set_data_source_path(new_data_file_name);
+        set_data_path(new_data_file_name);
     }
 
     // Separator
@@ -1737,7 +1735,7 @@ void TextDataSet::read_txt()
     ifstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open text file: " + data_path + "\n");
+        throw runtime_error("Cannot open text file: " + data_path.string() + "\n");
 
     const string separator_string = get_separator_string();
 
@@ -1842,10 +1840,11 @@ void TextDataSet::read_txt()
 
     cout << "Writting data file..." << endl;
 
-    string new_data_source_path = data_path;
+    filesystem::path new_data_source_path = data_path;
+/*
     replace(new_data_source_path, ".txt", "_data.txt");
     replace(new_data_source_path, ".csv", "_data.csv");
-
+*/
     ofstream new_file;
     new_file.open(new_data_source_path);
 

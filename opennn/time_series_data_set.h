@@ -23,7 +23,7 @@ public:
                                const dimensions& = {},
                                const dimensions& = {});
 
-    explicit TimeSeriesDataSet(const string&,
+    explicit TimeSeriesDataSet(const filesystem::path&,
                                const string&,
                                const bool& = true,
                                const bool& = false,

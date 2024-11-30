@@ -9,9 +9,6 @@
 #ifndef CONJUGATEGRADIENT_H
 #define CONJUGATEGRADIENT_H
 
-
-#include "tinyxml2.h"
-#include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 

@@ -9,7 +9,6 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-
 #include "data_set.h"
 #include "neural_network.h"
 
@@ -30,23 +29,11 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination)
-       {
-           targets = new_targets;
-           outputs = new_outputs;
-           determination = new_determination;
-       }
+       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination);
 
        void save(const string& file_name) const;
 
-       void print() const
-       {
-           cout << "Goodness-of-fit analysis" << endl
-                << "Determination: " << determination << endl;
-
-           // cout << targets << endl;
-           // cout << outputs << endl;
-       }              
+       void print() const;
     };
 
 
@@ -164,6 +151,9 @@ public:
    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
+   Tensor<Index, 2> calculate_confusion(const Tensor<type, 3>&, const Tensor<type, 3>&) const;
+
    Tensor<Index, 2> calculate_confusion() const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;

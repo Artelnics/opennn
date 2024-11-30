@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "auto_association_data_set.h"
 
 namespace opennn
@@ -116,7 +115,7 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
     vector<Index> indices;
     iota(indices.begin(), indices.end(), 0);
 
-    std::shuffle(indices.data(), indices.data() + indices.size(), urng);
+    shuffle(indices.data(), indices.data() + indices.size(), urng);
 
     Index i = 0;
     Index index;
@@ -183,9 +182,9 @@ void AutoAssociationDataSet::set_associative_raw_variables_number(const Index& n
 }
 
 
-void AutoAssociationDataSet::save_auto_associative_data_binary(const string& binary_data_file_name) const
+void AutoAssociationDataSet::save_auto_associative_data_binary(const filesystem::path& binary_data_file_name) const
 {
-    ofstream file(binary_data_file_name.c_str(), ios::binary);
+    ofstream file(binary_data_file_name, ios::binary);
 
     if(!file.is_open())
         throw runtime_error("Cannot open data binary file.");
@@ -226,14 +225,12 @@ void AutoAssociationDataSet::transform_associative_dataset()
 }
 
 
-void AutoAssociationDataSet::load_auto_associative_data_binary(const string& auto_associative_data_file_name)
+void AutoAssociationDataSet::load_auto_associative_data_binary(const filesystem::path& auto_associative_data_file_name)
 {
-    ifstream file;
-
-    file.open(auto_associative_data_file_name.c_str(), ios::binary);
+    ifstream file(auto_associative_data_file_name, ios::binary);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open binary file: " + auto_associative_data_file_name + "\n");
+        throw runtime_error("Cannot open binary file: " + auto_associative_data_file_name.string() + "\n");
 
     streamsize size = sizeof(Index);
 

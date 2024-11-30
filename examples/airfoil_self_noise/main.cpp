@@ -14,7 +14,6 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/forward_propagation.h"
 
 int main()
 {
@@ -26,38 +25,22 @@ int main()
 
         // Data set
 
-        DataSet data_set("C:/line.csv", ",", true);
-
-        data_set.set_raw_variable_scalers(Scaler::MeanStandardDeviation);
-
-//        data_set.print_input_target_raw_variables_correlations();
-
-//        data_set.split_samples_random(0.99, 0.005, 0.005);
-
-//        data_set.scale_data();
-
-        //data_set.save("../data/data_set.xml");
-        //data_set.load("../data/data_set.xml");
-
-        // data_set.print();
-        // data_set.print_data();
+        DataSet data_set("C:/airfoil_self_noise.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+
+        //data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 
         const Index neurons_number = 10;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {input_variables_number}, {}, {target_variables_number});
-
-        //neural_network.print();
+                                     {input_variables_number}, {neurons_number}, {target_variables_number});
 
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-
-        //neural_network.print();
 
         // Training strategy
 
@@ -65,15 +48,13 @@ int main()
 
 //        training_strategy.set_display(false);
 
-        //training_strategy.print();
-
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
@@ -84,12 +65,11 @@ int main()
 
         training_strategy.perform_training();
 
-
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        testing_analysis.print_goodness_of_fit_analysis();                
+        //testing_analysis.print_goodness_of_fit_analysis();
 /*
         // Save results
         

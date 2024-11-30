@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef AUTOASSOCIATION_H
-#define AUTOASSOCIATION_H
+#ifndef AUTOASSOCIATIONDATASET_H
+#define AUTOASSOCIATIONDATASET_H
 
 #include "data_set.h"
 
@@ -33,8 +33,8 @@ public:
     void transform_associative_raw_variables();
     void transform_associative_data();
 
-    void save_auto_associative_data_binary(const string&) const;
-    void load_auto_associative_data_binary(const string&);
+    void save_auto_associative_data_binary(const filesystem::path&) const;
+    void load_auto_associative_data_binary(const filesystem::path&);
 
 private:
 

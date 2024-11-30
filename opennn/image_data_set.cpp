@@ -6,14 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "image_data_set.h"
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-
-using namespace fs;
 
 namespace opennn
 {
@@ -438,7 +434,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
 
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
     // Input dimensions
@@ -535,12 +531,12 @@ void ImageDataSet::read_bmp()
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
     
-    vector<fs::path> directory_path;
+    vector<filesystem::path> directory_path;
     vector<string> image_path;
 
-    const fs::path path = data_path;
+    const filesystem::path path = data_path;
 
-    for(const fs::directory_entry& current_directory : fs::directory_iterator(path))
+    for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(path))
         if(is_directory(current_directory))
             directory_path.emplace_back(current_directory.path().string());
 
@@ -553,7 +549,7 @@ void ImageDataSet::read_bmp()
 
     for(Index i = 0; i < folders_number; i++)
     {
-        for(const fs::directory_entry& current_directory : fs::directory_iterator(directory_path[i]))
+        for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
         {
             if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {

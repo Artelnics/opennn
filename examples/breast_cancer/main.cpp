@@ -73,7 +73,7 @@ int main()
         // Save results
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression_python("../data/breast_cancer.py");
+        neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/breast_cancer.py");
 
         cout << "End breast cancer application" << endl;
 

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "growing_neurons.h"
 
 namespace opennn
@@ -231,8 +229,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
-    vector<string> labels(8);
-    vector<string> values(8);
+    Tensor<string, 1> labels(8);
+    Tensor<string, 1> values(8);
 
     labels[0] = "Minimum neurons";
     values[0] = to_string(minimum_neurons);
@@ -262,10 +260,10 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
     const Index raw_variables_number = 2;
 
     Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-/*
+
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-*/
+
     return string_matrix;
 }
 

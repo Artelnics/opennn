@@ -10,7 +10,6 @@
 #define MINKOWSKIERROR_H
 
 #include "loss_index.h"
-#include "data_set.h"
 
 namespace opennn
 {

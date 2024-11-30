@@ -11,8 +11,6 @@
 
 #include "layer.h"
 
-#include "layer_forward_propagation.h"
-
 namespace opennn
 {
 
@@ -62,7 +60,7 @@ public:
 
    // Expression
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    // Serialization
 

@@ -9,7 +9,6 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-
 #include "data_set.h"
 
 namespace opennn
@@ -22,8 +21,8 @@ public:
 
     explicit LanguageDataSet();
 
-    vector<string> get_context_vocabulary() const;
-    vector<string> get_completion_vocabulary() const;
+    const vector<string>& get_context_vocabulary() const;
+    const vector<string>& get_completion_vocabulary() const;
 
     Index get_context_vocabulary_size() const;
     Index get_completion_vocabulary_size() const;
@@ -33,12 +32,12 @@ public:
 
     const dimensions& get_context_dimensions() const;
 
-    const vector<vector<string>> get_documents() const;
-    const vector<vector<string>> get_targets() const;
+    const vector<vector<string>>& get_documents() const;
+    const vector<vector<string>>& get_targets() const;
 
     void set_default_raw_variables_uses();
-    void set_raw_variables_uses(const vector<string>& new_raw_variables_uses);
-    void set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses);
+    void set_raw_variable_uses(const vector<string>& new_raw_variables_uses);
+    void set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses);
 
     void set_context_dimensions(const dimensions& new_context_dimensions);
 
@@ -69,7 +68,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents(const string&);
+    void load_documents(const filesystem::path&);
 
     void read_csv_1();
 

@@ -9,15 +9,11 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#include "pch.h"
-
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-
 #include "correlation.h"
 #include "scaling.h"
-
 
 using namespace tinyxml2;
 
@@ -35,7 +31,7 @@ public:
                      const dimensions& = {0}, 
                      const dimensions& = {0});
 
-    explicit DataSet(const string&,
+    explicit DataSet(const filesystem::path&,
                      const string&,
                      const bool& = true,
                      const bool& = false,
@@ -59,13 +55,13 @@ public:
 
     struct RawVariable
     {
-        RawVariable(const string& = "",
+        RawVariable(const string& = string(),
                     const DataSet::VariableUse& = DataSet::VariableUse::None,
                     const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const vector<string>& = vector<string>());
 
-        void set(const string& = "",
+        void set(const string& = string(),
                  const DataSet::VariableUse& = DataSet::VariableUse::None,
                  const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                  const Scaler& = Scaler::MeanStandardDeviation,
@@ -202,7 +198,7 @@ public:
     MissingValuesMethod get_missing_values_method() const;
     string get_missing_values_method_string() const;
 
-    const string& get_data_source_path() const;
+    const filesystem::path& get_data_path() const;
 
     const bool& get_header_line() const;
     const bool& get_has_sample_ids() const;
@@ -234,8 +230,9 @@ public:
     // Set
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
+    void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
+
     void set(const string&);
-    void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
 
     void set_default();
 
@@ -262,8 +259,8 @@ public:
 
     void set_default_raw_variables_names();
 
-    void set_raw_variables_uses(const vector<string>&);
-    void set_raw_variables_uses(const vector<VariableUse>&);
+    void set_raw_variable_uses(const vector<string>&);
+    void set_raw_variable_uses(const vector<VariableUse>&);
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
@@ -305,7 +302,7 @@ public:
 
     // Members set
 
-    void set_data_source_path(const string&);
+    void set_data_path(const filesystem::path&);
 
     void set_has_header(const bool&);
     void set_has_ids(const bool&);
@@ -512,14 +509,11 @@ public:
     void prepare_line(string&) const;
     void process_tokens(vector<string>&);
 
-    void open_file(const string&, ifstream&) const;
-    void open_file(const string&, ofstream&) const;
-
     void read_data_file_preview(ifstream&);
 
     void check_separators(const string&) const;
 
-    Tensor<type, 2> read_input_csv(const string&, const string&, const string&, const bool&, const bool&) const;
+    Tensor<type, 2> read_input_csv(const filesystem::path&, const string&, const string&, const bool&, const bool&) const;
 
     //Virtual functions
 
@@ -561,7 +555,7 @@ protected:
 
     // DATA FILE
 
-    string data_path;
+    filesystem::path data_path;
 
     Separator separator = Separator::Comma;
 

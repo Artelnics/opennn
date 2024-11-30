@@ -10,7 +10,6 @@
 #define UNSCALINGLAYER_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
 #include "scaling.h"
 
 namespace opennn
@@ -68,7 +67,7 @@ public:
    void from_XML(const XMLDocument&) final;
    void to_XML(XMLPrinter&) const final;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
 private:
 
