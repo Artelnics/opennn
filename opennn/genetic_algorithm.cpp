@@ -1243,7 +1243,7 @@ void GeneticAlgorithm::print() const
 }
 
 
-void GeneticAlgorithm::save(const string& file_name) const
+void GeneticAlgorithm::save(const filesystem::path& file_name) const
 {
     try
     {
@@ -1260,7 +1260,7 @@ void GeneticAlgorithm::save(const string& file_name) const
         }
         else
         {
-            throw runtime_error("Cannot open file: " + file_name);
+            throw runtime_error("Cannot open file: " + file_name.string());
         }
     }
     catch (const exception& e)
@@ -1270,14 +1270,14 @@ void GeneticAlgorithm::save(const string& file_name) const
 }
 
 
-void GeneticAlgorithm::load(const string& file_name)
+void GeneticAlgorithm::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

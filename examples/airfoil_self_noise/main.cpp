@@ -68,7 +68,7 @@ int main()
 
         ModelSelection model_selection(&training_strategy);
 
-        model_selection.perform_neurons_selection();
+        model_selection.perform_inputs_selection();
 
         // Testing analysis
 

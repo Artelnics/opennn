@@ -666,12 +666,12 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 }
 
 
-void save_csv(const Tensor<type,2>& data, const string& filename)
+void save_csv(const Tensor<type,2>& data, const filesystem::path& filename)
 {
     ofstream file(filename);
 
     if(!file.is_open())
-      throw runtime_error("Cannot open matrix data file: " + filename + "\n");
+      throw runtime_error("Cannot open matrix data file: " + filename.string() + "\n");
 
     file.precision(20);
 

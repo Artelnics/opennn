@@ -43,7 +43,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type,
 }
 
 
-NeuralNetwork::NeuralNetwork(const string& file_name)
+NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -465,7 +465,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
 }
 
 
-void NeuralNetwork::set(const string& file_name)
+void NeuralNetwork::set(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -1615,7 +1615,7 @@ void NeuralNetwork::print() const
 }
 
 
-void NeuralNetwork::save(const string& file_name) const
+void NeuralNetwork::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -1643,25 +1643,25 @@ void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 }
 
 
-void NeuralNetwork::load(const string& file_name)
+void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
 
 
-void NeuralNetwork::load_parameters_binary(const string& file_name)
+void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
     ifstream file(file_name, ios::binary);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open binary file: " + file_name + "\n");
+        throw runtime_error("Cannot open binary file: " + file_name.string() + "\n");
 
     streamsize size = sizeof(type);
 

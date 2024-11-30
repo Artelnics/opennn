@@ -167,7 +167,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
         if(input_raw_variables_number >= minimum_inputs_number)
         {
-            long long epoch = input_raw_variables_number - minimum_inputs_number + 1;
+            Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
             neural_network->set_input_dimensions({ input_variables_number });
 
             if(display)
@@ -399,7 +399,7 @@ void GrowingInputs::from_XML(const XMLDocument& document)
 }
 
 
-void GrowingInputs::save(const string& file_name) const
+void GrowingInputs::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -412,14 +412,14 @@ void GrowingInputs::save(const string& file_name) const
 }
 
 
-void GrowingInputs::load(const string& file_name)
+void GrowingInputs::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

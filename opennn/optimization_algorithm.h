@@ -81,8 +81,8 @@ public:
 
    virtual void to_XML(XMLPrinter&) const;
 
-   void save(const string&) const;
-   void load(const string&);
+   void save(const filesystem::path&) const;
+   void load(const filesystem::path&);
 
    static type get_elapsed_time(const time_t& beginning_time);
 
@@ -145,7 +145,7 @@ struct TrainingResults
 
     Index get_epochs_number() const;
 
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
     void print(const string& message = string());
 

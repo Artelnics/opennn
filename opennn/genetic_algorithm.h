@@ -109,9 +109,9 @@ public:
 
     void print() const;
     
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
-    void load(const string&);
+    void load(const filesystem::path&);
 
     Tensor<Tensor<type, 1>, 1> parameters;
 

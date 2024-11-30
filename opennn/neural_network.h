@@ -46,7 +46,7 @@ public:
                           const dimensions& = {},
                           const dimensions& = {});
 
-   explicit NeuralNetwork(const string&);
+   explicit NeuralNetwork(const filesystem::path&);
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
@@ -98,7 +98,7 @@ public:
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
 
-   void set(const string&);
+   void set(const filesystem::path&);
 
    void set_layers_number(const Index&);
 
@@ -187,11 +187,11 @@ public:
    void to_XML(XMLPrinter&) const;
 
    void print() const;
-   void save(const string&) const;
+   void save(const filesystem::path&) const;
    void save_parameters(const filesystem::path&) const;
 
-   void load(const string&);
-   void load_parameters_binary(const string&);
+   void load(const filesystem::path&);
+   void load_parameters_binary(const filesystem::path&);
 
    vector<string> get_layer_names() const;
    vector<string> get_layer_types_string() const;
