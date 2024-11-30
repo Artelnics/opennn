@@ -345,40 +345,17 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    Tensor<string, 1> labels(8);
-    Tensor<string, 1> values(8);
+    Tensor<string, 2> string_matrix(8, 2);
 
-    labels[0] = "Trials number";
-    values[0] = to_string(trials_number);
-
-    labels[1] = "Selection error goal";
-    values[1] = to_string(selection_error_goal);
-
-    labels[2] = "Maximum selection failures";
-    values[2] = to_string(maximum_selection_failures);
-
-    labels[3] = "Maximum inputs number";
-    values[3] = to_string(maximum_inputs_number);
-
-    labels[4] = "Minimum correlations";
-    values[4] = to_string(minimum_correlation);
-
-    labels[5] = "Maximum correlation";
-    values[5] = to_string(maximum_correlation);
-
-    labels[6] = "Maximum iterations number";
-    values[6] = to_string(maximum_epochs_number);
-
-    labels[7] = "Maximum time";
-    values[7] = to_string(maximum_time);
-
-    const Index rows_number = labels.size();
-    const Index raw_variables_number = 2;
-
-    Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-
-    string_matrix.chip(0, 1) = labels;
-    string_matrix.chip(1, 1) = values;
+    string_matrix.setValues({
+    {"Trials number", to_string(trials_number)},
+    {"Selection error goal", to_string(selection_error_goal)},
+    {"Maximum selection failures", to_string(maximum_selection_failures)},
+    {"Maximum inputs number", to_string(maximum_inputs_number)},
+    {"Minimum correlations", to_string(minimum_correlation)},
+    {"Maximum correlation", to_string(maximum_correlation)},
+    {"Maximum iterations number", to_string(maximum_epochs_number)},
+    {"Maximum time", to_string(maximum_time)}});
 
     return string_matrix;
 }

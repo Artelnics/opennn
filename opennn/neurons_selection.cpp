@@ -235,6 +235,10 @@ string NeuronsSelection::write_time(const type& time) const
 }
 
 
+NeuronsSelectionResults::NeuronsSelectionResults()
+{
+}
+
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {
     neurons_number_history.resize(maximum_epochs_number);
@@ -296,6 +300,16 @@ string NeuronsSelectionResults::write_stopping_condition() const
         default:
             return string();
     }
+}
+
+
+void NeuronsSelectionResults::print() const
+{
+    cout << endl
+         << "Neurons Selection Results" << endl
+         << "Optimal neurons number: " << optimal_neurons_number << endl
+         << "Optimum training error: " << optimum_training_error << endl
+         << "Optimum selection error: " << optimum_selection_error << endl;
 }
 
 }
