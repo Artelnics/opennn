@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
@@ -454,15 +452,19 @@ string ScalingLayer2D::write_standard_deviation_expression(const vector<string>&
 }
 
 
-string ScalingLayer2D::get_expression(const vector<string>& input_names, const vector<string>&) const
+string ScalingLayer2D::get_expression(const vector<string>& new_input_names, const vector<string>&) const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const vector<string> input_names = new_input_names.empty()
+    ? get_default_input_names()
+    : new_input_names;
+
+    const Index outputs_number = get_outputs_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         switch(scalers[i])
         { 

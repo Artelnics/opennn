@@ -9,10 +9,7 @@
 #ifndef MULTIHEADATTENTIONLAYER_H
 #define MULTIHEADATTENTIONLAYER_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -40,6 +37,12 @@ public:
     Index get_depth() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
+
+    // @todo
+    dimensions get_input_dimensions() const final
+    {
+        throw runtime_error("XXX");
+    }
 
     dimensions get_output_dimensions() const final;
 

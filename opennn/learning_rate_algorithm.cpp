@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "learning_rate_algorithm.h"
 #include "back_propagation.h"
 
@@ -17,6 +15,11 @@ namespace opennn
 LearningRateAlgorithm::LearningRateAlgorithm(LossIndex* new_loss_index)
     : loss_index(new_loss_index)
 {
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
     set_default();
 }
 
@@ -134,14 +137,17 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
 {
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    ostringstream buffer;
+    const Tensor<type, 1>& parameters = back_propagation.parameters;
 
-    // Bracket minimum
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
+
+    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
 
     Triplet triplet = calculate_bracketing_triplet(batch,
                                                    forward_propagation,
                                                    back_propagation,
                                                    optimization_data);
+
     try
     {
         triplet.check();
@@ -180,14 +186,14 @@ pair<type, type> LearningRateAlgorithm::calculate_directional_point(
 
         // Calculate loss for V
 
-        optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation.parameters + optimization_data.training_direction*V.first;
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*V.first;
         
-        neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
+        neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
 
         V.second = back_propagation.error() + regularization_weight * regularization;
 
@@ -246,6 +252,12 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     const type regularization_weight = loss_index->get_regularization_weight();
 
+    Tensor<type, 1>& potential_parameters = optimization_data.potential_parameters;
+
+    const Tensor<type, 1>& parameters = back_propagation.parameters;
+
+    const Tensor<type, 1>& training_direction = optimization_data.training_direction;
+
     // Left point
 
     triplet.A = { type(0), back_propagation.loss };
@@ -256,19 +268,20 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     do
     {
+
         count++;
 
         triplet.B.first = optimization_data.initial_learning_rate*type(count);
 
-        optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation.parameters + optimization_data.training_direction * triplet.B.first;
-        
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction * triplet.B.first;
+
         neural_network->forward_propagate(batch.get_input_pairs(),
-            optimization_data.potential_parameters, forward_propagation);
+            potential_parameters, forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
 
         triplet.B.second = back_propagation.error() + regularization_weight * regularization;
 
@@ -280,16 +293,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.first *= golden_ratio;
 
-        optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*triplet.B.first;
         
         neural_network->forward_propagate(batch.get_input_pairs(),
-                                          optimization_data.potential_parameters,
+                                          potential_parameters,
                                           forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
 
         triplet.B.second = back_propagation.error() + regularization_weight * regularization;
 
@@ -300,16 +313,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            optimization_data.potential_parameters.device(*thread_pool_device)
-                    = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+            potential_parameters.device(*thread_pool_device)
+                    = parameters + training_direction*triplet.B.first;
             
             neural_network->forward_propagate(batch.get_input_pairs(),
-                                              optimization_data.potential_parameters,
+                                              potential_parameters,
                                               forward_propagation);
 
             loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-            const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+            const type regularization = loss_index->calculate_regularization(potential_parameters);
 
             triplet.B.second = back_propagation.error() + regularization_weight * regularization;
         }
@@ -318,16 +331,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*type(0.382);
 
-        optimization_data.potential_parameters.device(*thread_pool_device)
-                = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
+        potential_parameters.device(*thread_pool_device)
+                = parameters + training_direction*triplet.U.first;
         
         neural_network->forward_propagate(batch.get_input_pairs(),
-                                          optimization_data.potential_parameters,
+                                          potential_parameters,
                                           forward_propagation);
 
         loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-        const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+        const type regularization = loss_index->calculate_regularization(potential_parameters);
 
         triplet.U.second = back_propagation.error() + regularization_weight * regularization;
 
@@ -337,14 +350,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.U.first = triplet.A.first + (triplet.B.first-triplet.A.first)*type(0.382);
 
-            optimization_data.potential_parameters.device(*thread_pool_device)
-                    = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
+            potential_parameters.device(*thread_pool_device)
+                    = parameters + training_direction*triplet.U.first;
             
-            neural_network->forward_propagate(batch.get_input_pairs(), optimization_data.potential_parameters, forward_propagation);
+            neural_network->forward_propagate(batch.get_input_pairs(), potential_parameters, forward_propagation);
 
             loss_index->calculate_error(batch, forward_propagation, back_propagation);
 
-            const type regularization = loss_index->calculate_regularization(optimization_data.potential_parameters);
+            const type regularization = loss_index->calculate_regularization(potential_parameters);
 
             triplet.U.second = back_propagation.error() + regularization_weight * regularization;
 

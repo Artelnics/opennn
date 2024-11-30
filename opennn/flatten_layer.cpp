@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "flatten_layer.h"
 
@@ -26,21 +24,9 @@ dimensions FlattenLayer::get_input_dimensions() const
 }
 
 
-Index FlattenLayer::get_outputs_number() const
-{
-    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
-}
-
-
 dimensions FlattenLayer::get_output_dimensions() const
 {
     return { input_dimensions[0] * input_dimensions[1] * input_dimensions[2] };
-}
-
-
-Index FlattenLayer::get_inputs_number() const
-{
-    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 

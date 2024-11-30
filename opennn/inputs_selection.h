@@ -11,7 +11,6 @@
 
 #include "training_strategy.h"
 
-
 namespace opennn
 {
 

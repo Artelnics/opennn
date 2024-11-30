@@ -84,6 +84,10 @@ public:
    void save(const string&) const;
    void load(const string&);
 
+   static type get_elapsed_time(const time_t& beginning_time);
+
+   void set_neural_network_variable_names();
+
 protected:
 
    unique_ptr<ThreadPool> thread_pool;
@@ -118,19 +122,9 @@ protected:
 
 struct OptimizationAlgorithmData
 {
-    explicit OptimizationAlgorithmData()
-    {
-    }
+    explicit OptimizationAlgorithmData();
 
-    void print() const
-    {
-        cout << "Potential parameters:" << endl
-             << potential_parameters << endl
-             << "Training direction:" << endl
-             << training_direction << endl
-             << "Initial learning rate:" << endl
-             << initial_learning_rate << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
@@ -141,7 +135,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults(const Index& epochs_number = 0);
+    explicit TrainingResults(const Index& = 0);
 
     string write_stopping_condition() const;
 

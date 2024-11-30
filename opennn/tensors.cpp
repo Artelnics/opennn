@@ -6,13 +6,10 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "../eigen/Eigen/Dense"
 
 #include "strings_utilities.h"
 #include "tensors.h"
-
 
 namespace opennn
 {

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "images.h"
 
 namespace opennn

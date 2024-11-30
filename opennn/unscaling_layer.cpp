@@ -6,15 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "unscaling_layer.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 
 namespace opennn
 {
-
 
 UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
     : Layer()
@@ -79,16 +76,24 @@ vector<Scaler> UnscalingLayer::get_unscaling_method() const
 }
 
 
-string UnscalingLayer::get_expression(const vector<string>& input_names,
-                                        const vector<string>& output_names) const
+string UnscalingLayer::get_expression(const vector<string>& new_input_names,
+                                      const vector<string>& new_output_names) const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const vector<string> input_names = new_input_names.empty()
+        ? get_default_input_names()
+        : new_input_names;
+
+    const vector<string> output_names = new_output_names.empty()
+       ? get_default_output_names()
+       : new_output_names;
+
+    const Index outputs_number = get_outputs_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler scaler = scalers[i];
 

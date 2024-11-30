@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "normalization_layer_3d.h"
@@ -26,9 +24,9 @@ NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
 }
 
 
-Index NormalizationLayer3D::get_inputs_number() const
+Index NormalizationLayer3D::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -40,7 +38,7 @@ Index NormalizationLayer3D::get_inputs_depth() const
 
 dimensions NormalizationLayer3D::get_output_dimensions() const
 {
-    return { inputs_number, inputs_depth };
+    return { inputs_number_xxx, inputs_depth };
 }
 
 
@@ -76,7 +74,7 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 
 void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     inputs_depth = new_inputs_depth;
 
@@ -94,7 +92,7 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
 
 void NormalizationLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 }
 
 
@@ -209,7 +207,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     const Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
 
-    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_samples_number, inputs_number);
+    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_samples_number, inputs_number_xxx);
 
     const type& epsilon = normalization_layer_3d_forward_propagation->epsilon;
 
@@ -308,7 +306,7 @@ void NormalizationLayer3D::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Normalization3D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -327,7 +325,7 @@ pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair
 {
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
 
-    const Index inputs_number = normalization_layer_3d->get_inputs_number();
+    const Index inputs_number = normalization_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     return { (type*)outputs.data(), { batch_samples_number, inputs_number, inputs_depth } };
@@ -342,7 +340,7 @@ void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = normalization_layer_3d->get_inputs_number();
+    const Index inputs_number = normalization_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
@@ -369,7 +367,7 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_batch_samples_num
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = normalization_layer_3d->get_inputs_number();
+    const Index inputs_number = normalization_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     gammas_derivatives.resize(inputs_depth);
@@ -404,7 +402,7 @@ vector<pair<type*, dimensions>> NormalizationLayer3DBackPropagation::get_input_d
 {
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
 
-    const Index inputs_number = normalization_layer_3d->get_inputs_number();
+    const Index inputs_number = normalization_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     return { {(type*)(input_derivatives.data()), {batch_samples_number, inputs_number, inputs_depth}} };

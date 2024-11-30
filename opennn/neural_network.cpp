@@ -6,15 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -31,6 +28,8 @@
 #include "flatten_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -250,123 +249,15 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 }
 
 
-ScalingLayer2D* NeuralNetwork::get_scaling_layer_2d() const
+Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Scaling2D)
-            return static_cast<ScalingLayer2D*>(layers[i].get());
+        if(layers[i]->get_type() == layer_type)
+            return layers[i].get();
 
-    throw runtime_error("No scaling layer 2d in neural network.\n");
-}
-
-
-ScalingLayer4D* NeuralNetwork::get_scaling_layer_4d() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Scaling4D)
-            return dynamic_cast<ScalingLayer4D*>(layers[i].get());
-
-    throw runtime_error("No scaling layer in neural network.\n");
-}
-
-
-UnscalingLayer* NeuralNetwork::get_unscaling_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Unscaling)
-            return dynamic_cast<UnscalingLayer*>(layers[i].get());
-
-    throw runtime_error("No unscaling layer in neural network.\n");
-}
-
-
-BoundingLayer* NeuralNetwork::get_bounding_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Bounding)
-            return dynamic_cast<BoundingLayer*>(layers[i].get());
-
-    throw runtime_error("No bounding layer in neural network.\n");
-}
-
-
-// FlattenLayer* NeuralNetwork::get_flatten_layer() const
-// {
-//     const Index layers_number = get_layers_number();
-
-//     for(Index i = 0; i < layers_number; i++)
-//         if(layers[i]->get_type() == Layer::Type::Flatten)
-//             return dynamic_cast<FlattenLayer*>(layers[i]);
-
-//     throw runtime_error("No flatten layer in neural network.\n");
-// }
-
-
-//ConvolutionalLayer* NeuralNetwork::get_convolutional_layer() const
-//{
-//    const Index layers_number = get_layers_number();
-//
-//    for(Index i = 0; i < layers_number; i++)
-//        if(layers[i]->get_type() == Layer::Type::Convolutional)
-//            return dynamic_cast<ConvolutionalLayer*>(layers[i]);
-//
-//    throw runtime_error("No convolutional layer in neural network.\n");
-//}
-
-
-// PoolingLayer* NeuralNetwork::get_pooling_layer() const
-// {
-//     const Index layers_number = get_layers_number();
-
-//     for(Index i = 0; i < layers_number; i++)
-//         if(layers[i]->get_type() == Layer::Type::PoolingLayer)
-//             return dynamic_cast<PoolingLayer*>(layers[i]);
-
-//     throw runtime_error("No pooling layer in neural network.\n");
-// }
-
-
-ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Probabilistic)
-            return dynamic_cast<ProbabilisticLayer*>(layers[i].get());
-
-    throw runtime_error("No probabilistic layer in neural network.\n");
-}
-
-
-LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::LongShortTermMemory)
-            return dynamic_cast<LongShortTermMemoryLayer*>(layers[i].get());
-
-    throw runtime_error("No long-short-term memory layer in neural network.\n");
-}
-
-
-RecurrentLayer* NeuralNetwork::get_recurrent_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Recurrent)
-            return dynamic_cast<RecurrentLayer*>(layers[i].get());
-
-    throw runtime_error("No recurrent layer in neural network.\n");
+    throw runtime_error("Neural network has not layer type.");
 }
 
 
@@ -475,7 +366,6 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
-
 }
 
 
@@ -703,18 +593,6 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& n
     const Index layer_index = get_layer_index(name);
 
     layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
-}
-
-
-PerceptronLayer* NeuralNetwork::get_first_perceptron_layer() const
-{
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Perceptron)
-            return static_cast<PerceptronLayer*>(layers[i].get());
-
-    return nullptr;
 }
 
 
@@ -1087,26 +965,27 @@ string NeuralNetwork::get_expression() const
     vector<string> output_names = get_output_names();
 
     const Index inputs_number = input_names.size();
+    const Index outputs_number = output_names.size();
 
     for (int i = 0; i < inputs_number; i++)
         input_names[i].empty()
             ? input_names[i] = "input_" + to_string(i)
             : input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
-/*
-    Index layer_neurons_number;
 
     vector<string> scaled_input_names(inputs_number);
-    vector<string> unscaled_output_namess(inputs_number);
+    vector<string> unscaled_output_names(outputs_number);
 
     ostringstream buffer;
 
     for (Index i = 0; i < layers_number; i++)
-    {
+        buffer << layers[i]->get_expression();
+
+/*
     if (i == layers_number - 1)
     {
     for (int j = 0; j < output_names.size(); j++)
     if (!output_names[j].empty())
-    output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
+  ;//  output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
     else
     output_names[j] = "output_" + to_string(i);
 
@@ -1115,14 +994,14 @@ string NeuralNetwork::get_expression() const
     else
     {
 
-    layer_neurons_number = layers[i]->get_neurons_number();
-    output_namess_vector.resize(layer_neurons_number);
+//    layer_neurons_number = layers[i]->get_neurons_number();
+//    output_namess_vector.resize(layer_neurons_number);
 
     for (Index j = 0; j < layer_neurons_number; j++)
     {
     if (layer_names[i] == "scaling_layer")
     {
-    output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
+//    output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
     scaled_input_names[j] = output_names[j];
     }
     else
@@ -1133,16 +1012,14 @@ string NeuralNetwork::get_expression() const
 
     //            buffer << layers[i]->get_expression(input_names, output_names) << endl;
     //            input_namess_vector = output_namess_vector;
-    //            unscaled_output_namess = input_namess_vector;
+    //            unscaled_output_names = input_namess_vector;
     }
     }
-
+*/
     string expression = buffer.str();
 
-    replace(expression, "+-", "-");
+    //replace(expression, "+-", "-");
     return expression;
-    */
-    return string();
 }
 
 
@@ -1229,9 +1106,11 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
-    const Index height = this->get_scaling_layer_4d()->get_input_dimensions()[0];
-    const Index width = this->get_scaling_layer_4d()->get_input_dimensions()[1];
-    const Index image_channels = this->get_scaling_layer_4d()->get_input_dimensions()[2];
+    ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Unscaling));
+
+    const Index height = scaling_layer_4d->get_input_dimensions()[0];
+    const Index width = scaling_layer_4d->get_input_dimensions()[1];
+    const Index image_channels = scaling_layer_4d->get_input_dimensions()[2];
 
     const Index current_height = image_data.dimension(0);
     const Index current_width = image_data.dimension(1);
@@ -1367,7 +1246,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("LayersInputsIndices");
     ostringstream buffer;
-    
+
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
     {
         printer.OpenElement("LayerInputsIndices");
@@ -1665,8 +1544,6 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
 void NeuralNetwork::outputs_from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* root_element = document.FirstChildElement("Outputs");
 
     if(!root_element)
@@ -1751,9 +1628,9 @@ void NeuralNetwork::save(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_parameters(const string& file_name) const
+void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
@@ -1781,9 +1658,7 @@ void NeuralNetwork::load(const string& file_name)
 
 void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
-    ifstream file;
-
-    file.open(file_name.c_str(), ios::binary);
+    ifstream file(file_name, ios::binary);
 
     if(!file.is_open())
         throw runtime_error("Cannot open binary file: " + file_name + "\n");
@@ -1807,9 +1682,10 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 }
 
 
-void NeuralNetwork::save_expression_c(const string& file_name) const
+void NeuralNetwork::save_expression(const ProgrammingLanguage& programming_language,
+                                    const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
@@ -1820,53 +1696,14 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_expression_api(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_api();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_javascript(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_javascript();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_python(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-/*
-    file << get_expression_python();
-*/
-    file.close();
-}
-
-
-void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
+void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path& file_name)
 {
     const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open " + file_name + " file.\n");
+        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
     const vector<string> output_names = get_output_names();
 
@@ -2232,7 +2069,8 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
             break;
 
         default:
-            throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
+            continue;
+            //throw runtime_error("Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n");
         }
     }
 }

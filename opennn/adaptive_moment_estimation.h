@@ -9,7 +9,6 @@
 #ifndef ADAPTIVEMOMENTESTIMATION_H
 #define ADAPTIVEMOMENTESTIMATION_H
 
-#include "loss_index.h"
 #include "optimization_algorithm.h"
 
 namespace opennn

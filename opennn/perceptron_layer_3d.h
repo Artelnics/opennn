@@ -9,10 +9,7 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -21,7 +18,6 @@ namespace opennn
 struct PerceptronLayer3DForwardPropagationCuda;
 struct PerceptronLayer3DBackPropagationCuda;
 #endif
-
 
 class PerceptronLayer3D : public Layer
 {
@@ -37,9 +33,15 @@ public:
                               const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   Index get_inputs_number() const;
+   Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
    Index get_neurons_number() const;
+
+   // @todo
+   dimensions get_input_dimensions() const final
+   {
+       throw runtime_error("XXX");
+   }
 
    dimensions get_output_dimensions() const final;
 
@@ -102,7 +104,7 @@ public:
 
 private:
 
-   Index inputs_number;
+   Index inputs_number_xxx;
 
    Tensor<type, 1> biases;
 

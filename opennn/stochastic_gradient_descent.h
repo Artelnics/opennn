@@ -9,8 +9,6 @@
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H
 
-
-#include "loss_index.h"
 #include "optimization_algorithm.h"
 
 namespace opennn

@@ -10,23 +10,6 @@
 #define NEURALNETWORK_H
 
 #include "layer.h"
-#include "perceptron_layer.h"
-//#include "perceptron_layer_3d.h"
-//#include "addition_layer_3d.h"
-//#include "normalization_layer_3d.h"
-#include "scaling_layer_2d.h"
-#include "scaling_layer_4d.h"
-#include "unscaling_layer.h"
-#include "bounding_layer.h"
-#include "probabilistic_layer.h"
-//#include "probabilistic_layer_3d.h"
-//#include "flatten_layer.h"
-//#include "pooling_layer.h"
-//#include "convolutional_layer.h"
-#include "long_short_term_memory_layer.h"
-//#include "multihead_attention_layer.h"
-#include "embedding_layer.h"
-#include "recurrent_layer.h"
 
 namespace opennn
 {
@@ -53,14 +36,17 @@ public:
                         ImageClassification,
                         TextClassification};
 
+    enum class ProgrammingLanguage{C,
+                                   Python,
+                                   JavaScript,
+                                   PHP};
+
    explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
                           const dimensions& = {},
                           const dimensions& = {},
                           const dimensions& = {});
 
    explicit NeuralNetwork(const string&);
-
-   // APPENDING LAYERS
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
@@ -95,18 +81,7 @@ public:
 
    Index find_input_index(const vector<Index>&, const Index&) const;
 
-   ScalingLayer2D* get_scaling_layer_2d() const;
-   ScalingLayer4D* get_scaling_layer_4d() const;
-   UnscalingLayer* get_unscaling_layer() const;
-   BoundingLayer* get_bounding_layer() const;
-   //FlattenLayer* get_flatten_layer() const;
-   //ConvolutionalLayer* get_convolutional_layer() const;
-   //PoolingLayer* get_pooling_layer() const;
-   ProbabilisticLayer* get_probabilistic_layer() const;
-   LongShortTermMemoryLayer* get_long_short_term_memory_layer() const;
-   RecurrentLayer* get_recurrent_layer() const;
-
-   PerceptronLayer* get_first_perceptron_layer() const;
+   Layer* get_first(const Layer::Type&) const;
 
    const bool& get_display() const;
 
@@ -213,7 +188,7 @@ public:
 
    void print() const;
    void save(const string&) const;
-   void save_parameters(const string&) const;
+   void save_parameters(const filesystem::path&) const;
 
    void load(const string&);
    void load_parameters_binary(const string&);
@@ -221,7 +196,7 @@ public:
    vector<string> get_layer_names() const;
    vector<string> get_layer_types_string() const;
 
-   void save_outputs(Tensor<type, 2>&, const string&);
+   void save_outputs(Tensor<type, 2>&, const filesystem::path&);
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           ForwardPropagation&,
@@ -233,10 +208,7 @@ public:
 
    string get_expression() const;
 
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
-   void save_expression_api(const string&) const;
-   void save_expression_javascript(const string&) const;
+   void save_expression(const ProgrammingLanguage&, const filesystem::path&) const;
 
 
 #ifdef OPENNN_CUDA

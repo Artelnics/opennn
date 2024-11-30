@@ -6,12 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -155,53 +156,45 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
-
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    vector<Index> context_variable_indices;
-    
-    if(is_language_model)
-    {
-        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
-    }
+
+    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
+                                                       ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
+                                                       : vector<Index>();
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
-    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     vector<Descriptives> target_variable_descriptives;
 
-    Index training_batch_samples_number = 0;
-    Index selection_batch_samples_number = 0;
-
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    training_samples_number < batch_samples_number
-            ? training_batch_samples_number = training_samples_number
-            : training_batch_samples_number = batch_samples_number;
+    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
-    selection_samples_number < batch_samples_number && selection_samples_number != 0
-            ? selection_batch_samples_number = selection_samples_number
-            : selection_batch_samples_number = batch_samples_number;
+    const Index selection_batch_samples_number = (selection_samples_number > 0)
+           ? min(selection_samples_number, batch_samples_number)
+           : 0;
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
-    
+    const Index training_batches_number = (training_batch_samples_number != 0)
+        ? training_samples_number / training_batch_samples_number
+        : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+       ? selection_samples_number / selection_batch_samples_number
+       : 0;
+
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
 
@@ -209,23 +202,22 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
+    set_neural_network_variable_names();
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
 
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
         target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
-        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
@@ -254,9 +246,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     bool is_training = true;
 
     time_t beginning_time;
-    time_t current_time;
-
     time(&beginning_time);
+
     type elapsed_time = type(0);
 
     bool shuffle = false;
@@ -271,7 +262,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -375,8 +365,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
         // Elapsed time
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {

@@ -9,9 +9,7 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
-
 
 namespace opennn
 {
@@ -88,8 +86,6 @@ public:
     void perform_crossover();
 
     void perform_mutation();
-
-    void check_categorical_raw_variables();
 
     Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 

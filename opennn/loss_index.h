@@ -10,8 +10,8 @@
 #define LOSSINDEX_H
 
 #include "data_set.h"
-#include "batch.h"
 #include "neural_network.h"
+#include "batch.h"
 #include "neural_network_back_propagation_lm.h"
 
 namespace opennn

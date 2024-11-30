@@ -9,18 +9,7 @@
 #ifndef IMAGEDATASET_H
 #define IMAGEDATASET_H
 
-
 #include "data_set.h"
-
-#ifdef _WIN32
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#else
-    // AlmaLinux-specific includes
-    #include "filesystem.h"  // Assuming `ghc::filesystem` is a separate header
-    namespace fs = ghc::filesystem;
-#endif
-
 
 namespace opennn
 {

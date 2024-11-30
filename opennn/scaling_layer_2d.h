@@ -9,9 +9,8 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-#include "scaling.h"
 #include "layer.h"
-#include "layer_forward_propagation.h"
+#include "scaling.h"
 
 namespace opennn
 {
@@ -76,7 +75,7 @@ public:
 
    string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    void print() const;
 

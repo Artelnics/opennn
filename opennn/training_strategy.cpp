@@ -6,10 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -513,9 +513,9 @@ void TrainingStrategy::fix_forecasting()
     Index time_steps = 0;
 
     if(neural_network->has(Layer::Type::Recurrent))
-        time_steps = neural_network->get_recurrent_layer()->get_timesteps();
+        time_steps = static_cast<RecurrentLayer*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
     else if(neural_network->has(Layer::Type::LongShortTermMemory))
-        time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
+        time_steps = static_cast<LongShortTermMemoryLayer*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
     else
         return;
 

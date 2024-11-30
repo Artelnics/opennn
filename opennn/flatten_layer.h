@@ -10,9 +10,6 @@
 #define FLATTENLAYER_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
-
 
 namespace opennn
 {
@@ -34,9 +31,6 @@ public:
 
     dimensions get_input_dimensions() const;
     dimensions get_output_dimensions() const final;
-
-    Index get_inputs_number() const;
-    Index get_outputs_number() const;
 
     Index get_input_height() const;
     Index get_input_width() const;

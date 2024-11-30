@@ -6,10 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "growing_inputs.h"
 #include "correlations.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {
@@ -120,17 +119,13 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
     vector<Index> correlation_indices(original_input_raw_variables_number);
-/*
-    initialize_sequential(correlation_indices);
-*/
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
-
 
     sort(correlation_indices.data(),
          correlation_indices.data() + correlation_indices.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
@@ -321,7 +316,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     data_set->set_input_target_raw_variable_indices(inputs_selection_results.optimal_input_raw_variables_indices, target_raw_variable_indices);
 
-    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
     const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
@@ -335,9 +330,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(inputs_selection_results.optimal_parameters);
@@ -350,8 +345,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    vector<string> labels(8);
-    vector<string> values(8);
+    Tensor<string, 1> labels(8);
+    Tensor<string, 1> values(8);
 
     labels[0] = "Trials number";
     values[0] = to_string(trials_number);
@@ -381,10 +376,10 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
     const Index raw_variables_number = 2;
 
     Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-/*
+
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
-*/
+
     return string_matrix;
 }
 
