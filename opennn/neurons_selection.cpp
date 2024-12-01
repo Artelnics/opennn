@@ -197,9 +197,6 @@ void NeuronsSelection::check() const
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
-    if(neural_network->is_empty())
-        throw runtime_error("Multilayer Perceptron is empty.\n");
-
     if(neural_network->get_layers_number() == 1)
         throw runtime_error("Number of layers in neural network must be greater than 1.\n");
 
