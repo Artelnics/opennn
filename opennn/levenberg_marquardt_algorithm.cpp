@@ -284,9 +284,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
-
-        results.training_error_history(epoch) = training_back_propagation_lm.error();
 /*
+        results.training_error_history(epoch) = training_back_propagation_lm.error();
+
         if(has_selection)
         {           
             neural_network->forward_propagate(selection_batch.get_input_pairs(),

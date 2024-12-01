@@ -108,8 +108,6 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
-    // Back propagation
-
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 

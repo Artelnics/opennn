@@ -371,6 +371,7 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, Tensor<type, 2>&
     for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
         column.device(*thread_pool_device) = column / vector;
     }
@@ -383,7 +384,8 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
         column.device(*thread_pool_device) = column / vector;
     }

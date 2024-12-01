@@ -181,7 +181,8 @@ void LossIndex::back_propagate(const Batch& batch,
 
 void LossIndex::add_regularization(BackPropagation& back_propagation) const
 {
-    if(regularization_method == RegularizationMethod::NoRegularization) return;
+    if(regularization_method == RegularizationMethod::NoRegularization)
+        return;
 
     type& regularization = back_propagation.regularization;
     type& loss = back_propagation.loss;
@@ -200,6 +201,25 @@ void LossIndex::add_regularization(BackPropagation& back_propagation) const
 }
 
 
+void LossIndex::add_regularization_lm(BackPropagationLM& back_propagation_lm) const
+{
+    if(regularization_method == RegularizationMethod::NoRegularization)
+        return;
+
+    const type regularization = calculate_regularization(back_propagation_lm.parameters);
+
+    back_propagation_lm.loss += regularization_weight*regularization;
+
+    calculate_regularization_gradient(back_propagation_lm.parameters, back_propagation_lm.regularization_gradient);
+
+    back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation_lm.regularization_gradient;
+
+    calculate_regularization_hessian(back_propagation_lm.parameters, back_propagation_lm.regularization_hessian);
+
+    back_propagation_lm.hessian += regularization_weight*back_propagation_lm.regularization_hessian;
+}
+
+
 void LossIndex::back_propagate_lm(const Batch& batch,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagationLM& back_propagation_lm) const
@@ -212,7 +232,7 @@ void LossIndex::back_propagate_lm(const Batch& batch,
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
     calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
-
+/*
     calculate_error_gradient_lm(batch, back_propagation_lm);
 
     calculate_error_hessian_lm(batch, back_propagation_lm);
@@ -223,20 +243,8 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 
     // Regularization
     
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-        const type regularization = calculate_regularization(back_propagation_lm.parameters);
-
-        back_propagation_lm.loss += regularization_weight*regularization;
-
-        calculate_regularization_gradient(back_propagation_lm.parameters, back_propagation_lm.regularization_gradient);
-
-        back_propagation_lm.gradient.device(*thread_pool_device) += regularization_weight*back_propagation_lm.regularization_gradient;
-
-        calculate_regularization_hessian(back_propagation_lm.parameters, back_propagation_lm.regularization_hessian);
-
-        back_propagation_lm.hessian += regularization_weight*back_propagation_lm.regularization_hessian;
-    }
+    add_regularization_lm(back_propagation_lm);
+*/
 }
 
 
@@ -261,7 +269,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         = back_propagation_lm.get_layer_delta_pairs();
 
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
-
+/*
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate_lm(layer_input_pairs[i],
                                      layer_delta_pairs[i],
@@ -283,6 +291,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
+*/
 }
 
 
