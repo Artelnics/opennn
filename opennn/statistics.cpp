@@ -1819,28 +1819,6 @@ Index maximal_index(const Tensor<type, 1>& vector)
 }
 
 
-Index maximal_index_from_indices(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
-{
-    const Index size = vector.dimension(0);
-
-    if(size == 0) return Index();
-
-    Index maximal_index = 0;
-    type maximum = vector[0];
-
-    for(Index i = 1; i < size; i++)
-    {
-        if(vector(i) > maximum)
-        {
-            maximal_index = indices(i);
-            maximum = vector(i);
-        }
-    }
-
-    return maximal_index;
-}
-
-
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
     Tensor<type, 1> vector_ = vector;

@@ -2101,7 +2101,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             continue;
         }
 
-       
         switch (raw_variable.type)
         {
 
@@ -2298,15 +2297,11 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_sampl
 
     const Index samples_number = used_sample_indices.size();
 
-    // Count used negative samples
-
     Index negative_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
         if(data(used_sample_indices[i], target_index) < type(NUMERIC_LIMITS_MIN))
             negative_samples_number++;
-
-    // Get used negative samples indices
 
     vector<Index> negative_used_sample_indices(negative_samples_number);
     Index negative_sample_index = 0;
@@ -2337,8 +2332,6 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(con
     for(Index i = 0; i < samples_number; i++)
         if(abs(data(used_sample_indices[i], class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             class_samples_number++;
-
-    // Get used class samples indices
 
     vector<Index> class_used_sample_indices(class_samples_number, 0);
 
@@ -2408,7 +2401,7 @@ Index DataSet::get_gmt() const
 }
 
 
-void DataSet::set_gmt(Index& new_gmt)
+void DataSet::set_gmt(const Index& new_gmt)
 {
     gmt = new_gmt;
 }
@@ -2500,7 +2493,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
     const Index variables_number = get_variables_number();
 
     for(Index j = 0; j < variables_number; j++)
-        if(isnan(data(row_index,j)))
+        if(isnan(data(row_index, j)))
             return true;
 
     return false;
@@ -2858,6 +2851,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
 {
     if (model_type == ModelType::Forecasting)
         throw runtime_error("Forecasting");
+
     if (model_type == ModelType::ImageClassification)
         throw runtime_error("Image classification");
 
@@ -2907,6 +2901,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
+
     printer.CloseElement();  
 
     printer.CloseElement();
@@ -2980,9 +2975,10 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (missing_values_number > 0)
     {
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++) {
-            raw_variables_missing_values_number(i) = std::stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
-        }
+
+        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
+            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
 

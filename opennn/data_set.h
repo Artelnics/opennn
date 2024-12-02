@@ -320,7 +320,7 @@ public:
     void set_missing_values_method(const MissingValuesMethod&);
     void set_missing_values_method(const string&);
 
-    void set_gmt(Index&);
+    void set_gmt(const Index&);
 
     void set_display(const bool&);
 
