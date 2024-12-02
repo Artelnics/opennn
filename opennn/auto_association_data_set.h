@@ -14,12 +14,12 @@
 namespace opennn
 {
 
-class AutoAssociationDataSet : public DataSet
+class AutoAssociativeDataSet : public DataSet
 {
 
 public:
 
-    explicit AutoAssociationDataSet();
+    explicit AutoAssociativeDataSet();
 
     vector<RawVariable> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;

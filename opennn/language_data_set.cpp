@@ -2114,11 +2114,11 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 {
     const Index entry_number = context_tokens.size();
 
-    unordered_map<std::string, type> context_vocabulary_map;
+    unordered_map<string, type> context_vocabulary_map;
     for(size_t i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
-    unordered_map<std::string, type> completion_vocabulary_map;
+    unordered_map<string, type> completion_vocabulary_map;
     for(size_t i = 0; i < completion_vocabulary.size(); i++)
         completion_vocabulary_map[completion_vocabulary[i]] = type(i);
 

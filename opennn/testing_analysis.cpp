@@ -1721,8 +1721,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
 
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<type, 2>& targets,
-                                                                      const Tensor<type, 2>& outputs,
-                                                                      const vector<string>& labels) const
+                                                                   const Tensor<type, 2>& outputs,
+                                                                   const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
