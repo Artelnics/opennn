@@ -12,16 +12,16 @@
 namespace opennn
 {
 
-Tensor<unsigned char, 3> read_bmp_image(const string& filename)
+Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 {
-    FILE* file = fopen(filename.data(), "rb");
+    ifstream file(filename, std::ios::binary);
 
     if(!file)
         throw runtime_error("Cannot open the file.\n");
 
     unsigned char info[54];
 
-    fread(info, sizeof(unsigned char), 54, file);
+    file.read(reinterpret_cast<char*>(info), 54);
 
     const Index width_no_padding = *(int*)&info[18];
     const Index height = *(int*)&info[22];
@@ -43,11 +43,11 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     Tensor<unsigned char, 1> raw_image(size);
 
     const int data_offset = *(int*)(&info[0x0A]);
-    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
+    file.seekg(data_offset, std::ios::beg);
 
-    fread(raw_image.data(), sizeof(unsigned char), size, file);
+    file.read(reinterpret_cast<char*>(raw_image.data()), size);
 
-    fclose(file);
+    file.close();
 
     Tensor<unsigned char, 3> image(height, width, channels);
 

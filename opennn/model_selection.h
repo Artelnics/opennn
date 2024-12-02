@@ -75,8 +75,8 @@ public:
     string write_inputs_selection_method() const;
 
     void print() const;
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
 private: 
 

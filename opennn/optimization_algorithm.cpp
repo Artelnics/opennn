@@ -191,7 +191,7 @@ void OptimizationAlgorithm::print() const
 }
 
 
-void OptimizationAlgorithm::save(const string& file_name) const
+void OptimizationAlgorithm::save(const filesystem::path& file_name) const
 {
     try
     {
@@ -208,7 +208,7 @@ void OptimizationAlgorithm::save(const string& file_name) const
         }
         else
         {
-            throw runtime_error("Cannot open file: " + file_name);
+            throw runtime_error("Cannot open file: " + file_name.string());
         }
     }
     catch (const exception& e)
@@ -218,14 +218,14 @@ void OptimizationAlgorithm::save(const string& file_name) const
 }
 
 
-void OptimizationAlgorithm::load(const string& file_name)
+void OptimizationAlgorithm::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
@@ -369,7 +369,7 @@ string OptimizationAlgorithm::write_time(const type& time) const
 }
 
 
-void TrainingResults::save(const string& file_name) const
+void TrainingResults::save(const filesystem::path& file_name) const
 {
     const Tensor<string, 2> final_results = write_final_results();
 

@@ -755,7 +755,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 }
 
 
-void TrainingStrategy::save(const string& file_name) const
+void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -768,14 +768,14 @@ void TrainingStrategy::save(const string& file_name) const
 }
 
 
-void TrainingStrategy::load(const string& file_name)
+void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
