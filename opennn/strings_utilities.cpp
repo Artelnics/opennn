@@ -218,7 +218,7 @@ bool is_numeric_string(const string& text)
         size_t index;
         [[maybe_unused]] double value = std::stod(text, &index);
 
-        return (index == text.size() || (text.find('%') != std::string::npos && index + 1 == text.size()));
+        return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
     catch (const std::exception&)
     {
@@ -625,7 +625,7 @@ string get_trimmed(const string& text)
 
     auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
 
-    return (start < end) ? std::string(start, end) : std::string();
+    return (start < end) ? string(start, end) : string();
 }
 
 

@@ -13,6 +13,7 @@
 #include "../../opennn/data_set.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
+#include "../../opennn/model_selection.h"
 #include "../../opennn/testing_analysis.h"
 
 int main()
@@ -65,11 +66,15 @@ int main()
 
         training_strategy.perform_training();
 
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.perform_inputs_selection();
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        //testing_analysis.print_goodness_of_fit_analysis();
+//        testing_analysis.print_goodness_of_fit_analysis();
 /*
         // Save results
         

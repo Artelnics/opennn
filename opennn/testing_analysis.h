@@ -29,9 +29,9 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void set(const Tensor<type, 1>& new_targets, const Tensor<type, 1>& new_outputs, const type& new_determination);
+       void set(const Tensor<type, 1>&, const Tensor<type, 1>&, const type&);
 
-       void save(const string& file_name) const;
+       void save(const filesystem::path&) const;
 
        void print() const;
     };
@@ -215,25 +215,25 @@ public:
 
    // Save
 
-   void save_confusion(const string&) const;
+   void save_confusion(const filesystem::path&) const;
 
-   void save_multiple_classification_tests(const string&) const;
+   void save_multiple_classification_tests(const filesystem::path&) const;
 
-   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
+   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const string&) const;
+   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<string>&, const filesystem::path&) const;
 
-   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
+   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const filesystem::path&) const;
 
    // Forecasting
 
@@ -251,8 +251,8 @@ public:
 
    virtual void to_XML(XMLPrinter&) const;
 
-   void save(const string&) const;
-   void load(const string&);
+   void save(const filesystem::path&) const;
+   void load(const filesystem::path&);
 
 private: 
 

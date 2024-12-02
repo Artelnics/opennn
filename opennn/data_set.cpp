@@ -147,45 +147,25 @@ void DataSet::RawVariable::from_XML(const XMLDocument& document)
 
     if (type == RawVariableType::Categorical) 
     {
-        const std::string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
+        const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
 }
 
 
-void DataSet::RawVariable::to_XML(XMLPrinter& file_stream) const
+void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
 {
-    // Name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Scaler
-
-    file_stream.OpenElement("Scaler");
-    file_stream.PushText(get_scaler_string().c_str());
-    file_stream.CloseElement();
-
-    // raw_variable use
-
-    file_stream.OpenElement("Use");
-    file_stream.PushText(get_use_string().c_str());
-    file_stream.CloseElement();
-
-    // Type
-
-    file_stream.OpenElement("Type");
-    file_stream.PushText(get_type_string().c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer,"Name", name);
+    add_xml_element(printer,"Scaler", get_scaler_string());
+    add_xml_element(printer,"Use", get_use_string());
+    add_xml_element(printer,"Type", get_type_string());
 
     if(type == RawVariableType::Categorical || type == RawVariableType::Binary)
     {
         if(categories.size() == 0) 
             return;
-        file_stream.OpenElement("Categories");
-        file_stream.PushText(string_tensor_to_string(categories).c_str());
-        file_stream.CloseElement();
+
+        add_xml_element(printer,"Categories", string_tensor_to_string(categories));
     }
 }
 
@@ -203,7 +183,6 @@ void DataSet::RawVariable::print() const
         cout << "Categories: " << endl;
         print_vector(categories);
     }
-
 }
 
 
@@ -500,17 +479,8 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
 Index DataSet::get_samples_number(const SampleUse& sample_use) const
 {
-    const Index samples_number = get_samples_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+:count)
-
-    for (Index i = 0; i < samples_number; i++)
-        if (sample_uses[i] == sample_use)
-            count++;
-
-    return count;
+    return count_if(sample_uses.begin(), sample_uses.end(),
+                    [&sample_use](const SampleUse& new_sample_use) { return new_sample_use == sample_use; });
 }
 
 
@@ -680,6 +650,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     };
 
     Index index = 0;
+
     set_sample_uses(SampleUse::Training, training_samples_number, index);
     set_sample_uses(SampleUse::Selection, selection_samples_number, index);
     set_sample_uses(SampleUse::Testing, testing_samples_number, index);
@@ -1025,7 +996,7 @@ Index DataSet::get_variables_number() const
     Index count = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        count += (raw_variables[i].type == RawVariableType::Categorical)
+        count += raw_variables[i].type == RawVariableType::Categorical
                      ? raw_variables[i].get_categories_number()
                      : 1;
 
@@ -1844,7 +1815,7 @@ void DataSet::set(const Index& new_samples_number,
 }
 
 
-void DataSet::set(const string& file_name)
+void DataSet::set(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -3057,7 +3028,7 @@ void DataSet::print() const
 }
 
 
-void DataSet::save(const string& file_name) const
+void DataSet::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -3072,12 +3043,12 @@ void DataSet::save(const string& file_name) const
 }
 
 
-void DataSet::load(const string& file_name)
+void DataSet::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

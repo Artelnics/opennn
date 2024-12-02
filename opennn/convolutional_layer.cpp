@@ -879,7 +879,6 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
     set_row_stride(stride_dimensions[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
-
     set_parameters(string_to_tensor(read_xml_string(convolutional_layer_element, "Parameters")));
 }
 
@@ -963,7 +962,6 @@ ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation(const Index
 
 void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-
     batch_samples_number = new_batch_samples_number;
 
     layer = new_layer;
@@ -998,10 +996,6 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                                kernel_height,
                                                kernel_width,
                                                kernel_channels);
-
-    //image_convolutions_derivatives.resize(output_height,
-    //                                      output_width,
-    //                                      1);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,

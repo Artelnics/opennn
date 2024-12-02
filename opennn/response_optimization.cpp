@@ -27,6 +27,8 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
     neural_network = new_neural_network;
     data_set = new_data_set;
 
+    if(!neural_network) return;
+
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
@@ -36,10 +38,13 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
     output_conditions.resize(outputs_number);
     output_conditions.setConstant(Condition::None);
 
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+    if(neural_network->has(Layer::Type::Scaling2D))
+    {
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
 
-    input_minimums = scaling_layer_2d->get_minimums();
-    input_maximums = scaling_layer_2d->get_maximums();
+        input_minimums = scaling_layer_2d->get_minimums();
+        input_maximums = scaling_layer_2d->get_maximums();
+    }
 
     if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
     {
@@ -47,9 +52,10 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
         output_minimums.setZero();
 
         output_maximums.resize(outputs_number);
-        output_maximums.setConstant({type(1)});
+        output_maximums.setConstant(type(1));
     }
-    else // Approximation and forecasting
+
+    if(neural_network->has(Layer::Type::Bounding))
     {
         BoundingLayer* bounding_layer = static_cast<BoundingLayer*>(neural_network->get_first(Layer::Type::Bounding));
 
@@ -242,47 +248,46 @@ void ResponseOptimization::set_output_condition(const Index& index,
 }
 
 
-void ResponseOptimization::set_inputs_output_conditions(const vector<string>& names,
-                                                         const vector<string>& conditions_string,
-                                                         const Tensor<type, 1>& values)
-{
-    const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
+// void ResponseOptimization::set_inputs_output_conditions(const vector<string>& names,
+//                                                          const vector<string>& conditions_string,
+//                                                          const Tensor<type, 1>& values)
+// {
+//     const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
 
-    const Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
+//     const Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
 
-    const Index variables_number = conditions_string.size();
+//     const Index variables_number = conditions_string.size();
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+//     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-    const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+//     const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < variables_number; i++)
-    {
-        if(contains(input_names, names[i]))
-        {
-            const Index index = neural_network->get_input_index(names[i]);
+//     #pragma omp parallel for
+//     for(Index i = 0; i < variables_number; i++)
+//     {
+//         if(contains(input_names, names[i]))
+//         {
+//             const Index index = neural_network->get_input_index(names[i]);
 
-            set_input_condition(index, conditions[i], values_conditions[i]);
-        }
-        else if(contains(output_names, names[i]))
-        {
-            const Index index = neural_network->get_output_index(names[i]);
+//             set_input_condition(index, conditions[i], values_conditions[i]);
+//         }
+//         else if(contains(output_names, names[i]))
+//         {
+//             const Index index = neural_network->get_output_index(names[i]);
 
-            set_output_condition(index, conditions[i], values_conditions[i]);
-        }
-    }
-}
+//             set_output_condition(index, conditions[i], values_conditions[i]);
+//         }
+//     }
+// }
 
 
 Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(const vector<string>& conditions_string) const
 {
-    const Index conditions_size = conditions_string.size();
+    const Index conditions_number = conditions_string.size();
 
-    Tensor<Condition, 1> conditions(conditions_size);
+    Tensor<Condition, 1> conditions(conditions_number);
 
-    for(Index i = 0; i < conditions_size; i++)
-    {
+    for(Index i = 0; i < conditions_number; i++)
         if(conditions_string[i] == "Minimize" || conditions_string[i] == "Minimum")
             conditions[i] = Condition::Minimum;
         else if(conditions_string[i] == "Maximize" || conditions_string[i] == "Maximum")
@@ -303,7 +308,6 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
             conditions[i] = Condition::LessEqualTo;
         else
             conditions[i] = Condition::None;
-    }
 
     return conditions;
 }
@@ -326,44 +330,23 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
         switch(current_condition)
         {
         case Condition::Minimum:
-            values_conditions[i].resize(0);
-            index++;
-            break;
-
         case Condition::Maximum:
             values_conditions[i].resize(0);
             index++;
             break;
 
         case Condition::EqualTo:
-            current_values.resize(1);
-            current_values[0] = values[index];
-            index++;
-            values_conditions[i] = current_values;
-
-            break;
-
         case Condition::LessEqualTo:
-            current_values.resize(1);
-            current_values[0] = values[index];
-            index++;
-            values_conditions[i] = current_values;
-
-            break;
-
         case Condition::GreaterEqualTo:
             current_values.resize(1);
-            current_values[0] = values[index];
-            index++;
+            current_values[0] = values[index++];
             values_conditions[i] = current_values;
             break;
 
         case Condition::Between:
             current_values.resize(2);
-            current_values[0] = values[index];
-            index++;
-            current_values[1] = values[index];
-            index++;
+            current_values[0] = values[index++];
+            current_values[1] = values[index++];
             values_conditions[i] = current_values;
             break;
 
@@ -413,14 +396,15 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
         {
             used_raw_variable_index = used_raw_variables_indices[j];
 
-            DataSet::RawVariableType column_type = data_set->get_raw_variable_type(used_raw_variable_index);
+            const DataSet::RawVariableType raw_variable_type = data_set->get_raw_variable_type(used_raw_variable_index);
 
-            if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
+            if(raw_variable_type == DataSet::RawVariableType::Numeric
+            || raw_variable_type == DataSet::RawVariableType::Constant)
             {
                 inputs(i, index++) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
                 index++;
             }
-            else if(column_type == DataSet::RawVariableType::Binary)
+            else if(raw_variable_type == DataSet::RawVariableType::Binary)
             {
                 inputs(i, index) = (input_conditions(index) == ResponseOptimization::Condition::EqualTo)
                     ? input_minimums[index]
@@ -428,7 +412,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
                 index++;
             }
-            else if(column_type == DataSet::RawVariableType::Categorical)
+            else if(raw_variable_type == DataSet::RawVariableType::Categorical)
             {
                 const Index categories_number = data_set->get_raw_variables()[used_raw_variable_index].get_categories_number();
                 Index equal_index = -1;
@@ -447,11 +431,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 }
 
                 if(equal_index == -1)
-                {
-                    const Index random = rand() % categories_number;
-
-                    inputs(i, index + random) = type(1);
-                }
+                    inputs(i, index + rand() % categories_number) = type(1);
 
                 index += categories_number;
             }

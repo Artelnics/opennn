@@ -38,7 +38,7 @@ struct Histogram
 
   Index calculate_frequency(const type&) const;
 
-  void save(const string&) const;
+  void save(const filesystem::path&) const;
 
   Tensor<type, 1> minimums;
 

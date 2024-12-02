@@ -288,7 +288,7 @@ void ModelSelection::print() const
 }
 
 
-void ModelSelection::save(const string& file_name) const
+void ModelSelection::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -301,12 +301,12 @@ void ModelSelection::save(const string& file_name) const
 }
 
 
-void ModelSelection::load(const string& file_name)
+void ModelSelection::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

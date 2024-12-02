@@ -232,7 +232,7 @@ public:
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
 
-    void set(const string&);
+    void set(const filesystem::path&);
 
     void set_default();
 
@@ -448,8 +448,8 @@ public:
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
     void print_raw_variables() const;
 

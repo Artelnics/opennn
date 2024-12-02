@@ -232,49 +232,29 @@ void GeneticAlgorithm::initialize_population_random()
 
     population.resize(individuals_number, genes_number);
 
-    // Original inputs, targets and unused index
-
-    original_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-
-    original_target_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
+    original_input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    original_target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const vector<DataSet::RawVariable> raw_variables = data_set->get_raw_variables();
 
-    Index index = 0;
+    original_unused_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::None);
 
-    Index unused_number = 0;
-
-    for(size_t i = 0; i < raw_variables.size(); i++)
-        if(raw_variables[i].use == DataSet::VariableUse::None)
-            unused_number++;
-
-    original_unused_raw_variables_indices.resize(unused_number);
-
-    for(size_t i = 0; i < raw_variables.size(); i++)
-        if(raw_variables[i].use == DataSet::VariableUse::None)
-            original_unused_raw_variables_indices[index++] = i;
-
-    const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
 
     const Index random_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    type percentage = type(1);
-
-    if(random_raw_variables_number > 10000)
-        percentage = type(0.1);
-    else if(random_raw_variables_number > 5000)
-        percentage = type(0.2);
-    else if(random_raw_variables_number > 1000)
-        percentage = type(0.4);
-    else if(random_raw_variables_number > 500)
-       percentage = type(0.6);
+    const type percentage = (random_raw_variables_number > 10000) ? type(0.1) :
+                            (random_raw_variables_number >  5000) ? type(0.2) :
+                            (random_raw_variables_number >  1000) ? type(0.4) :
+                            (random_raw_variables_number >   500) ? type(0.6) :
+                            type(1);
 
     // Original inputs raw_variables
 
     original_input_raw_variables.resize(raw_variables_number, false);
 
-    for(size_t i = 0; i < original_input_raw_variables_indices.size(); i++)
-        original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
+    for(size_t i = 0; i < original_input_raw_variable_indices.size(); i++)
+        original_input_raw_variables[original_input_raw_variable_indices[i]] = true;
 
     // Initialization a random population
 
@@ -290,6 +270,8 @@ void GeneticAlgorithm::initialize_population_random()
 
     cout << "Creating initial random population" << endl;
 
+    const int upper_limit = int(ceil(random_raw_variables_number * percentage) - 1);
+
     for(Index i = 0; i < individuals_number; i++)
     {
         random_device rd;
@@ -298,11 +280,9 @@ void GeneticAlgorithm::initialize_population_random()
 
         individual_raw_variables.setConstant(false);
 
-        const int upper_limit = int(ceil(random_raw_variables_number * percentage) - 1);
         const int random_number = rand() % upper_limit + 1;
 
-        for(Index j = 0; j < random_number; j++)
-            individual_raw_variables(j) = true;
+        fill_n(individual_raw_variables.data(), random_number, true);
 
         shuffle(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), g);
 
@@ -320,14 +300,13 @@ void GeneticAlgorithm::initialize_population_random()
         }
 
         if(is_false(individual_variables))
-            for(Index j = 0; j < individual_variables.size(); j++)
-                individual_variables(j) = true;
+            individual_variables.setConstant(true);
 
         population.chip(i, 0) = individual_variables;
     }
 
-    cout << "Initial random population created" << endl;
-    cout << "Initial random population: \n" << population << endl;
+    cout << "Initial random population created" << endl
+         << "Initial random population: \n" << population << endl;
 }
 
 
@@ -348,7 +327,7 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
     Tensor<type, 1> fitness_correlations(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
-        fitness_correlations(rank(i))=type(i+1);
+        fitness_correlations(rank(i)) = type(i+1);
 
     Tensor<type, 1> probabilities_vector(raw_variables_number);
 
@@ -387,7 +366,6 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
 
     for(Index i = 0; i < individuals_number; i++)
     {
-
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
@@ -398,16 +376,13 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
         {
             arrow = type(distribution(gen));
 
-            if(arrow < inputs_activation_probabilities(0) && !individual_raw_variables(0))
-                individual_raw_variables(0) = true;
+            individual_raw_variables(0) = arrow < inputs_activation_probabilities(0) && !individual_raw_variables(0);
 
             for(Index j = 1; j < raw_variables_number; j++)
-            {
                 if(arrow >= inputs_activation_probabilities(j - 1)
                 && arrow < inputs_activation_probabilities(j)
                 && !individual_raw_variables(j))
                     individual_raw_variables(j) = true;
-            }
         }
 
         if(is_false(individual_raw_variables))
@@ -441,7 +416,7 @@ void GeneticAlgorithm::evaluate_population()
 
     // Optimization algorithm
 
-    Tensor<bool, 1> individual; //.
+    Tensor<bool, 1> individual;
 
     // Model selection
 
@@ -467,7 +442,7 @@ void GeneticAlgorithm::evaluate_population()
 
         // Neural network
 
-        data_set->set_input_target_raw_variable_indices(individual_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(individual_raw_variables_indices, original_target_raw_variable_indices);
 
         data_set->scrub_missing_values();
 
@@ -495,31 +470,24 @@ void GeneticAlgorithm::evaluate_population()
                  << "Variables number: " << input_names.size() << endl
                  << "Inputs number: " << data_set->get_raw_variables_number(DataSet::VariableUse::Input) << endl;
 
-        data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
     }
 
     // Mean generational selection and training error calculation (primitive way)
 
-    type sum_training_errors = type(0);
-
-    type sum_selection_errors = type(0);
+    const Tensor<type, 0> sum_training_errors = training_errors.sum();
+    const Tensor<type, 0> sum_selection_errors = selection_errors.sum();
 
     type sum_inputs_number = type(0);
 
     for(Index i = 0; i < individuals_number; i++)
-    {
-        sum_training_errors += training_errors(i);
-
-        sum_selection_errors += selection_errors(i);
-
         sum_inputs_number += type(inputs_number(i));
-    }
 
-    mean_training_error = (type(sum_training_errors) / type(individuals_number));
+    mean_training_error = type(sum_training_errors(0)) / type(individuals_number);
 
-    mean_selection_error = (type(sum_selection_errors) / type(individuals_number));
+    mean_selection_error = type(sum_selection_errors(0)) / type(individuals_number);
 
-    mean_inputs_number = (type(sum_inputs_number)/type(individuals_number));
+    mean_inputs_number = type(sum_inputs_number)/type(individuals_number);
 }
 
 
@@ -538,21 +506,14 @@ Tensor<type, 1> GeneticAlgorithm::calculate_selection_probabilities()
 {
     const Index individuals_number = get_individuals_number();
 
-    Tensor<type, 1> selection_probabilities(individuals_number);
-
-    // Calculation of cumulative probabilities
-
-    Index sum_from_1_to_n = 0;
-
-    for(Index i = 0; i < individuals_number; i++)
-        sum_from_1_to_n += (i+1);
+    const Index sum_from_1_to_n = individuals_number * (individuals_number + 1) / 2;
 
     Tensor<type, 1> probabilities(individuals_number);
 
     for(Index i = 0; i < individuals_number; i++)
         probabilities(i) = (type(individuals_number) - type(fitness(i) - 1)) / sum_from_1_to_n;
 
-    selection_probabilities = probabilities.cumsum(0);
+//    const Tensor<type, 1> selection_probabilities = probabilities.cumsum(0);
 
     return probabilities;
 }
@@ -570,28 +531,24 @@ void GeneticAlgorithm::perform_selection()
 
     if(elitism_size != 0)
         for(Index i = 0; i < individuals_number; i++)
-            if(fitness(i) - 1 >= 0 && fitness(i) - 1 < elitism_size)
-                selection(i) = true;
+            selection(i) = fitness(i) - 1 >= 0 && fitness(i) - 1 < elitism_size;
 
     // The next individuals are selected randomly but their probability is set according to their fitness.
 
     while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
-    {
         weighted_random(selection_probabilities);
-    }
-
 }
 
 
-Tensor<Index, 1> GeneticAlgorithm::get_selected_individuals_indices()
+vector<Index> GeneticAlgorithm::get_selected_individuals_indices()
 {
-    Tensor<Index,1> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
+    vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
 
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
         if(selection(i))
-            selection_indices(activated_index_count++) = i;
+            selection_indices[activated_index_count++] = i;
 
     return selection_indices;
 }
@@ -606,7 +563,7 @@ void GeneticAlgorithm::perform_crossover()
 
     const Index genes_number = get_genes_number();
 
-    const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
 
     // Couples generation
 
@@ -630,21 +587,21 @@ void GeneticAlgorithm::perform_crossover()
 
     mt19937 g(rd());
 
-    Tensor<Index, 1> parent_1_indices = get_selected_individuals_indices();
+    vector<Index> parent_1_indices = get_selected_individuals_indices();
 
-    std::shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
+    shuffle(parent_1_indices.data(), parent_1_indices.data() + parent_1_indices.size(), g);
 
-    Tensor<Index, 1> parent_2_indices = get_selected_individuals_indices();
+    vector<Index> parent_2_indices = get_selected_individuals_indices();
 
     Index descendent_index = 0;
 
     for(Index i = 0; i < parent_1_indices.size(); i++)
     {
-        parent_1_variables = population.chip(parent_1_indices(i), 0);
+        parent_1_variables = population.chip(parent_1_indices[i], 0);
 
         parent_1_raw_variables = get_individual_raw_variables(parent_1_variables);
 
-        parent_2_variables = population.chip(parent_2_indices(i), 0);
+        parent_2_variables = population.chip(parent_2_indices[i], 0);
 
         descendent_raw_variables = get_individual_raw_variables(parent_2_variables);
 
@@ -672,11 +629,9 @@ void GeneticAlgorithm::perform_crossover()
             }
 
             if(is_false(descendent_genes))
-                for(Index j = 0; j < descendent_genes.size(); j++)
-                    descendent_genes(j) = true;
+                descendent_genes.setConstant(true);
 
-            new_population.chip(descendent_index, 0) = descendent_genes;
-            descendent_index++;
+            new_population.chip(descendent_index++, 0) = descendent_genes;
         }
     }
 
@@ -690,7 +645,7 @@ void GeneticAlgorithm::perform_mutation()
 {
     const Index individuals_number = get_individuals_number();
 
-    const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
 
     const Index genes_number = get_genes_number();
 
@@ -707,12 +662,7 @@ void GeneticAlgorithm::perform_mutation()
         individual_raw_variables = get_individual_raw_variables(individual_variables);
 
         for(Index j = 0; j < raw_variables_number; j++)
-        {
-            const type random_0_1 = type(rand()) / type(RAND_MAX);
-
-            if(random_0_1 < mutation_rate)
-                individual_raw_variables(j) = !individual_raw_variables(j);
-        }
+            individual_raw_variables(j) ^= (type(rand())/type(RAND_MAX) < mutation_rate);
 
         new_individual_variables = get_individual_variables(individual_raw_variables);
 
@@ -728,8 +678,7 @@ void GeneticAlgorithm::perform_mutation()
         }
 
         if(is_false(new_individual_variables))
-            for(Index j = 0; j < new_individual_variables.size(); j++)
-                new_individual_variables(j) = true;
+            new_individual_variables.setConstant(true);
 
         population.chip(i, 0) = new_individual_variables;
     }
@@ -816,7 +765,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             generation_selected = epoch;
 
-            data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
 
             // Neural network
 
@@ -824,7 +773,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             optimal_inputs_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-            data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variable_indices);
 
             inputs_selection_results.optimal_input_raw_variables_names 
                 = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
@@ -839,12 +788,12 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         }
         else
         {
-            data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices,original_target_raw_variables_indices);
+            data_set->set_input_target_raw_variable_indices(original_input_raw_variable_indices,original_target_raw_variable_indices);
         }
 
-        data_set->set_input_target_raw_variable_indices(original_input_raw_variables_indices, original_target_raw_variables_indices);
+        data_set->set_input_target_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
 
-        std::time(&current_time);
+        time(&current_time);
 
         elapsed_time = type(difftime(current_time, beginning_time));
 
@@ -904,7 +853,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     vector<Index> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
 
-    data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variables_indices);
+    data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variable_indices);
 
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
@@ -935,7 +884,7 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& i
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index raw_variables_number = original_input_raw_variables_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
 
     Tensor<bool, 1> raw_variables_from_variables(raw_variables_number);
 
@@ -984,11 +933,9 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
         }
     }
 
-    Index indexes_dimension = 0;
-
-    for(Index i = 0; i < individual_raw_variables.size(); i++)
-        if(inputs_pre_indexes(i))
-            indexes_dimension++;
+    const Index indexes_dimension = count(inputs_pre_indexes.data(),
+                                          inputs_pre_indexes.data() + inputs_pre_indexes.size(),
+                                          true);
 
     if(is_false(inputs_pre_indexes))
     {
@@ -1037,8 +984,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& indi
             }
             else
             {
-                individual_raw_variables_to_variables(variable_index) = true;
-                variable_index++;
+                individual_raw_variables_to_variables(variable_index++) = true;
             }
         }
         else
@@ -1162,28 +1108,15 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
     Tensor<string, 1> labels(6);
     Tensor<string, 1> values(6);
 
-    Tensor<string, 2> string_matrix(labels.size(), 2);
+    Tensor<string, 2> string_matrix(6, 2);
 
-    labels[0] = "Population size";
-    values[0] = to_string(individuals_number);
-
-    labels[1] = "Elitism size";
-    values[1] = to_string(elitism_size);
-
-    labels[2] = "Mutation rate";
-    values[2] = to_string(mutation_rate);
-
-    labels[3] = "Selection loss goal";
-    values[3] = to_string(selection_error_goal);
-
-    labels[4] = "Maximum Generations number";
-    values[4] = to_string(maximum_epochs_number);
-
-    labels[5] = "Maximum time";
-    values[5] = to_string(maximum_time);
-
-    string_matrix.chip(0, 1) = labels;
-    string_matrix.chip(1, 1) = values;
+    string_matrix.setValues({
+    {"Population size", to_string(individuals_number)},
+    {"Elitism size", to_string(elitism_size)},
+    {"Mutation rate", to_string(mutation_rate)},
+    {"Selection loss goal", to_string(selection_error_goal)},
+    {"Maximum Generations number", to_string(maximum_epochs_number)},
+    {"Maximum time", to_string(maximum_time)}});
 
     return string_matrix;
 }
@@ -1256,7 +1189,7 @@ void GeneticAlgorithm::print() const
 }
 
 
-void GeneticAlgorithm::save(const string& file_name) const
+void GeneticAlgorithm::save(const filesystem::path& file_name) const
 {
     try
     {
@@ -1273,7 +1206,7 @@ void GeneticAlgorithm::save(const string& file_name) const
         }
         else
         {
-            throw runtime_error("Cannot open file: " + file_name);
+            throw runtime_error("Cannot open file: " + file_name.string());
         }
     }
     catch (const exception& e)
@@ -1283,14 +1216,14 @@ void GeneticAlgorithm::save(const string& file_name) const
 }
 
 
-void GeneticAlgorithm::load(const string& file_name)
+void GeneticAlgorithm::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

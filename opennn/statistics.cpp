@@ -377,7 +377,7 @@ Index Histogram::calculate_frequency(const type&value) const
 }
 
 
-void Histogram::save(const string& histogram_file_name) const
+void Histogram::save(const filesystem::path& histogram_file_name) const
 {
     const Index bins_number = centers.dimension(0);
     ofstream histogram_file(histogram_file_name);
