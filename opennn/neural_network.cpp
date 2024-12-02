@@ -98,12 +98,6 @@ const vector<string>& NeuralNetwork::get_input_names() const
 }
 
 
-string NeuralNetwork::get_input_name(const Index& index) const
-{
-    return input_names[index];
-}
-
-
 Index NeuralNetwork::get_input_index(const string& name) const
 {
     for(Index i = 0; i < Index(input_names.size()); i++)
@@ -147,12 +141,6 @@ string NeuralNetwork::get_model_type_string() const
 const vector<string>& NeuralNetwork::get_output_names() const
 {
     return output_names;
-}
-
-
-string NeuralNetwork::get_output_name(const Index& index) const
-{
-    return output_names[index];
 }
 
 
@@ -757,29 +745,29 @@ Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
 }
 
 
-bool NeuralNetwork::is_input_layer(const vector<Index>& this_layer_inputs_indices) const
-{
-    const Index input_layers_number = this_layer_inputs_indices.size();
+// bool NeuralNetwork::is_input_layer(const vector<Index>& this_layer_inputs_indices) const
+// {
+//     const Index input_layers_number = this_layer_inputs_indices.size();
 
-    for(Index i = 0; i < input_layers_number; i++)
-        if(this_layer_inputs_indices[i] == -1)
-            return true;
+//     for(Index i = 0; i < input_layers_number; i++)
+//         if(this_layer_inputs_indices[i] == -1)
+//             return true;
 
-    return false;
-}
+//     return false;
+// }
 
 
-bool NeuralNetwork::is_context_layer(const vector<Index>& this_layer_inputs_indices) const
-{   
-    // @todo Is this ok?
-    const Index layers_number = get_layers_number();
+// bool NeuralNetwork::is_context_layer(const vector<Index>& this_layer_inputs_indices) const
+// {
+//     // @todo Is this ok?
+//     const Index layers_number = get_layers_number();
 
-    for(Index i = 0; i < layers_number; i++)
-        if(this_layer_inputs_indices[i] == -2)
-            return true;
+//     for(Index i = 0; i < layers_number; i++)
+//         if(this_layer_inputs_indices[i] == -2)
+//             return true;
 
-    return false;
-}
+//     return false;
+// }
 
 
 void NeuralNetwork::set_parameters_constant(const type& value) const

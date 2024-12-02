@@ -58,7 +58,7 @@ namespace opennn
 
  // Standard deviation
  type standard_deviation(const Tensor<type, 1>&);
- type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+ //type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&);
  Tensor<type, 1> standard_deviation(const Tensor<type, 1>&, const Index&);
 
  // Assymetry
