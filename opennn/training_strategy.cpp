@@ -467,8 +467,12 @@ void TrainingStrategy::set_default()
         if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
             loss_method = LossMethod::CROSS_ENTROPY_ERROR;
 
-        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification){
             loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
+            get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+            get_adaptive_moment_estimation()->set_display(true);
+            get_adaptive_moment_estimation()->set_display_period(1);
+        }
     }
 
 
@@ -517,9 +521,9 @@ void TrainingStrategy::fix_forecasting()
     Index time_steps = 0;
 
     if(neural_network->has(Layer::Type::Recurrent))
-        time_steps = neural_network->get_recurrent_layer()->get_timesteps();
+        time_steps = static_cast<RecurrentLayer*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
     else if(neural_network->has(Layer::Type::LongShortTermMemory))
-        time_steps = neural_network->get_long_short_term_memory_layer()->get_timesteps();
+        time_steps = static_cast<LongShortTermMemoryLayer*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
     else
         return;
 

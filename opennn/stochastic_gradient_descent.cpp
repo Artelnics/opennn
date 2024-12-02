@@ -197,36 +197,25 @@ TrainingResults StochasticGradientDescent::perform_training()
     
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    vector<Index> context_variable_indices;
 
-    if(is_instance_of<LanguageDataSet>(data_set))
-    {
-        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
-    }
-        
+    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
+        ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
+        : vector<Index>();
+
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
 
-    Index training_batch_samples_number = 0;
-    Index selection_batch_samples_number = 0;
-
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
-    
-    training_samples_number < batch_samples_number
-            ? training_batch_samples_number = training_samples_number
-            : training_batch_samples_number = batch_samples_number;
+        
+    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
-    selection_samples_number < batch_samples_number && selection_samples_number != 0
-            ? selection_batch_samples_number = selection_samples_number
-            : selection_batch_samples_number = batch_samples_number;
+    const Index selection_batch_samples_number = (selection_samples_number > 0)
+         ? min(selection_samples_number, batch_samples_number)
+         : 0;
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
-    const vector<Scaler> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     vector<Descriptives> input_variable_descriptives;
     vector<Descriptives> target_variable_descriptives;
@@ -249,22 +238,22 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
+    set_neural_network_variable_names();
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
         target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
-        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
     }
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
@@ -291,7 +280,6 @@ TrainingResults StochasticGradientDescent::perform_training()
     bool is_training = true;
 
     time_t beginning_time;
-    time_t current_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -322,9 +310,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             
             // Data set
 
-            training_batch_indices = training_batches[iteration];
-
-            training_batch.fill(training_batch_indices,
+            training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
                                 context_variable_indices);
@@ -370,9 +356,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                selection_batch_indices = selection_batches[iteration];
-
-                selection_batch.fill(selection_batch_indices,
+                selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
                                      target_variable_indices);
 
@@ -402,8 +386,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         
         // Elapsed time
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {
@@ -417,57 +400,44 @@ TrainingResults StochasticGradientDescent::perform_training()
         if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
-
             stop_training = true;
-
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
-
-        if(elapsed_time >= maximum_time)
+        else if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
-
             stop_training = true;
-
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
-
-        if(results.training_error_history(epoch) < training_loss_goal)
+        else if(results.training_error_history(epoch) < training_loss_goal)
         {
             stop_training = true;
-
             results.stopping_condition  = StoppingCondition::LossGoal;
-
             if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
-
-        if(selection_failures >= maximum_selection_failures)
+        else if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
-
             stop_training = true;
-
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
 
         if(stop_training)
         {
             results.loss = training_back_propagation.loss;
-
             results.selection_failures = selection_failures;
+            results.elapsed_time = write_time(elapsed_time);
 
             results.resize_training_error_history(epoch+1);
-
             results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
-
-            results.elapsed_time = write_time(elapsed_time);
 
             break;
         }
 
         // Update stuff
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0)
+            neural_network->save(neural_network_file_name);
     }
 
     if(!is_instance_of<LanguageDataSet>(data_set))

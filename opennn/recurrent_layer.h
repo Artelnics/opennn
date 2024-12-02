@@ -85,7 +85,7 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const final;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    string get_activation_function_string_expression() const;
 

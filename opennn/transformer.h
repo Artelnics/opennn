@@ -28,7 +28,7 @@ public:
 
     explicit Transformer(const initializer_list<Index>&);
 
-    explicit Transformer(const vector <Index>&, const vector <Index>&, const vector <Index>&);
+    explicit Transformer(const dimensions&, const dimensions&, const vector <Index>&);
 
     // Index get_input_length() const
     // {

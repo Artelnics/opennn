@@ -27,6 +27,8 @@ public:
 
     explicit LanguageDataSet();
 
+    explicit LanguageDataSet(const vector<Index>&, const vector<string>&);
+
     explicit LanguageDataSet(const string&);
 
     vector<string> get_context_vocabulary() const;
@@ -38,6 +40,7 @@ public:
     Index get_context_length() const;
     Index get_completion_length() const;
 
+    const dimensions& get_completion_dimensions() const;
     const dimensions& get_context_dimensions() const;
 
     const vector<vector<string>> get_documents() const;
@@ -54,6 +57,8 @@ public:
 
     void set_context_vocabulary(const vector<string>&);
     void set_completion_vocabulary(const vector<string>&);
+
+    void set_complexity(const vector<Index>&);
 
     void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
 
@@ -112,8 +117,6 @@ private:
 
     string completion_vocabulary_path;
 
-    dimensions context_dimensions = dimensions{ 0 };
-
     Index max_completion_length = 0;
 
     Index max_context_length = 0;
@@ -121,6 +124,10 @@ private:
     vector<vector<string>> documents;
 
     vector<vector<string>> targets;
+
+    dimensions completion_dimensions;
+
+    dimensions context_dimensions;
 };
 
 }

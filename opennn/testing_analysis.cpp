@@ -22,7 +22,11 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
     : neural_network(new_neural_network),
       data_set(new_data_set)
 {
-    // set_default();
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
 }
 
 
@@ -119,6 +123,7 @@ void TestingAnalysis::print_linear_correlations() const
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
+
     check();
 
     // Data set
@@ -144,8 +149,8 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     for(Index i = 0;  i < outputs_number; i++)
     {
-        const Tensor<type, 1> targets = testing_target_data.chip(i,1);
-        const Tensor<type, 1> outputs = testing_output_data.chip(i,1);
+        const TensorMap<Tensor<type, 1>> targets = tensor_map(testing_target_data, i);
+        const TensorMap<Tensor<type, 1>> outputs = tensor_map(testing_output_data, i);
 
         const type determination = calculate_determination(outputs, targets);
 
@@ -179,7 +184,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> outputs  = neural_network->calculate_outputs(inputs);
 
-    const UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+    UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer->get_minimums();
 
@@ -225,7 +230,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
+    UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
 
     const Tensor<type, 1>& outputs_minimum = unscaling_layer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer->get_maximums();
@@ -754,8 +759,11 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 
 type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, const Tensor<type, 1>& targets) const
 {
-    const Tensor<type, 0> targets_mean = targets.mean();
-    const Tensor<type, 0> outputs_mean = outputs.mean();
+    Tensor<type, 0> targets_mean;
+    targets_mean.device(*thread_pool_device) = targets.mean();
+
+    Tensor<type, 0> outputs_mean;
+    outputs_mean.device(*thread_pool_device) = outputs.mean();
 
     Tensor<type,0> numerator;
     numerator.device(*thread_pool_device) = ((-targets_mean(0) + targets)*(-outputs_mean(0) + outputs)).sum();
@@ -763,11 +771,10 @@ type TestingAnalysis::calculate_determination(const Tensor<type, 1>& outputs, co
     Tensor<type,0> denominator;
     denominator.device(*thread_pool_device) = ((-targets_mean(0) + targets).square().sum()*(-outputs_mean(0) + outputs).square().sum()).sqrt();
 
-    denominator(0) == type(0) ? denominator(0) = type(1) : type(0);
+    if(denominator(0) == type(0))
+        denominator(0) = 1;
 
-    const type determination_coefficient = (numerator(0)*numerator(0))/(denominator(0)*denominator(0));
-
-    return determination_coefficient;
+    return (numerator(0)*numerator(0))/(denominator(0)*denominator(0));
 }
 
 
@@ -911,19 +918,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
 Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_confusion() const
 {
-    // const Index outputs_number = neural_network->get_outputs_number();
-
-    // Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-
-    // const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
-
-    // const Index samples_number = targets.dimension(0);
-
-    // const dimensions& input_dimensions = data_set->get_input_dimensions();
-
-
-
-
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
@@ -954,7 +948,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
     if(input_dimensions.size() == 1)
     {
         Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
-
+        cout<<outputs.dimensions()<<endl;
         Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
 
         for (Index i = 0; i < outputs.dimension(0); i++) {
@@ -982,27 +976,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
         // }
         // cout<<reduced_outputs.dimensions()<<endl;
 
-        return calculate_confusion(reduced_outputs, targets);
+        return calculate_confusion(reduced_outputs, testing_target);
     }
-    else if(input_dimensions.size() == 2)
-    {
-        // @todo not needed?
-    }
-    // else if(input_dimensions.size() == 3)
-    // {
-    //     type* input_data = inputs.data();
-
-    //     Tensor<type, 4> inputs_4d(samples_number,
-    //                               input_dimensions[0],
-    //                               input_dimensions[1],
-    //                               input_dimensions[2]);
-
-    //     memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
-
-    //     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
-
-    //     return calculate_confusion(outputs, targets);
-    // }
 
     return Tensor<Index, 2>();
 }
@@ -1015,8 +990,10 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 
     if (outputs_number == 1)
     {
-        const type decision_threshold = neural_network->get_probabilistic_layer()
-                                        ? neural_network->get_probabilistic_layer()->get_decision_threshold()
+        ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network->get_first(Layer::Type::Probabilistic));
+
+        const type decision_threshold = probabilistic_layer
+                                        ? probabilistic_layer->get_decision_threshold()
                                         : type(0.5);
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
@@ -1510,8 +1487,10 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const vector<Index> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
 
-    const type decision_threshold = neural_network->get_probabilistic_layer()
-                                  ? neural_network->get_probabilistic_layer()->get_decision_threshold()
+    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network->get_first(Layer::Type::Probabilistic));
+
+    const type decision_threshold = probabilistic_layer
+                                  ? probabilistic_layer->get_decision_threshold()
                                   : type(0.5);
 
     BinaryClassificationRates binary_classification_rates;
@@ -2404,6 +2383,14 @@ void TestingAnalysis::load(const string& file_name)
 }
 
 
+void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targets, const Tensor<type, 1> &new_outputs, const type &new_determination)
+{
+    targets = new_targets;
+    outputs = new_outputs;
+    determination = new_determination;
+}
+
+
 void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
 {
     ofstream file(file_name);
@@ -2412,6 +2399,16 @@ void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
          << "Determination: " << determination << endl;
 
     file.close();
+}
+
+
+void TestingAnalysis::GoodnessOfFitAnalysis::print() const
+{
+    cout << "Goodness-of-fit analysis" << endl
+         << "Determination: " << determination << endl;
+
+    // cout << targets << endl;
+    // cout << outputs << endl;
 }
 
 }

@@ -1,0 +1,1 @@
+/usr/bin/c++ -fopenmp -fopenmp -rdynamic CMakeFiles/blank.dir/main.cpp.o -o blank  ../opennn/libopennn.a 

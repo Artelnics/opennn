@@ -103,7 +103,7 @@ public:
                                            const Index&,
                                            Tensor<type, 2>&) const final;
 
-    string get_expression(const vector<string>&, const vector<string>&) const final;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
     string get_activation_function_string_expression() const;
 

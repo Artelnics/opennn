@@ -249,6 +249,38 @@ void Layer::set_threads_number(const int& new_threads_number)
 }
 
 
+string Layer::get_expression(const vector<string> &, const vector<string> &) const
+{
+    return string();
+}
+
+
+vector<string> Layer::get_default_input_names() const
+{
+    const Index inputs_number = get_inputs_number();
+
+    vector<string> input_names(inputs_number);
+
+    for(Index i = 0; i < inputs_number; i++)
+        input_names[i] = "input_" + to_string(i);
+
+    return input_names;
+}
+
+
+vector<string> Layer::get_default_output_names() const
+{
+    const Index outputs_number = get_outputs_number();
+
+    vector<string> output_names(outputs_number);
+
+    for(Index i = 0; i < outputs_number; i++)
+        output_names[i] = "output_" + to_string(i);
+
+    return output_names;
+}
+
+
 void Layer::set_parameters_constant(const type&)
 {
 }
@@ -276,15 +308,19 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_input_dimensions() const
+Index Layer::get_inputs_number() const
 {
-    return dimensions();
+    const dimensions input_dimensions = get_input_dimensions();
+
+    return accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 }
 
 
-dimensions Layer::get_output_dimensions() const
+Index Layer::get_outputs_number() const
 {
-    return dimensions();
+    const dimensions output_dimensions = get_output_dimensions();
+
+    return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 }
 
 

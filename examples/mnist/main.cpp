@@ -62,10 +62,10 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
-            { 8 },
+            { 1 },
             image_data_set.get_target_dimensions());
 
-        neural_network.print();
+        //neural_network.print();
 
         // Training strategy
 

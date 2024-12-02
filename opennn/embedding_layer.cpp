@@ -34,9 +34,9 @@ Index EmbeddingLayer::get_input_dimension() const
 }
 
 
-Index EmbeddingLayer::get_inputs_number() const
+Index EmbeddingLayer::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -54,13 +54,17 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
-    return {inputs_number};
+    return {inputs_number_xxx};
 }
 
 
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
-    return { inputs_number, get_depth() };
+
+    // return { inputs_number, get_depth() };
+
+    return { inputs_number_xxx, get_depth() };
+
 }
 
 
@@ -108,7 +112,7 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 {
     //input_dimensions = new_inputs_dimension;
 
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     //depth = new_depth;
 
@@ -126,7 +130,7 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 
 void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 }
 
 
@@ -214,10 +218,11 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
     const Index batch_size = inputs.dimension(0);
 
     #pragma omp parallel for
-    for(Index row = 0; row < batch_size; row++){
-        for(Index input_position = 0; input_position < inputs_number; input_position++){
+
+    for(Index row = 0; row < batch_size; row++)
+        for(Index input_position = 0; input_position < inputs_number_xxx; input_position++)
             outputs.chip(row, 0).chip(input_position, 0)
-                = embedding_weights.chip(inputs(row, input_position), 0);}}
+                = embedding_weights.chip(inputs(row, input_position), 0);
 
 
 }
@@ -341,8 +346,8 @@ void EmbeddingLayer::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Embedding");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputDimensions", dimensions_to_string({get_input_dimension()}));
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "Depth", to_string(get_depth()));
     add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
@@ -362,7 +367,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
 
     const Index depth = embedding_layer->get_depth();
     
@@ -378,7 +383,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
 
     const Index depth = embedding_layer->get_depth();
 
@@ -408,7 +413,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
 
     positional_encoding.resize(inputs_number, depth);
@@ -449,7 +454,7 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
     const Index input_dimension = embedding_layer->get_input_dimension();
 

@@ -16,15 +16,64 @@ namespace opennn
 
 LanguageDataSet::LanguageDataSet() : DataSet()
 {
-    context_dimensions = { 0 };
+    context_dimensions = {0};
 }
+/*
+LanguageDataSet::LanguageDataSet(const vector<Index>& complexity, const vector<string>& input) : DataSet()
+{
+    import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/completion_vocabulary.txt",completion_vocabulary);
+    import_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/context_vocabulary.txt",context_vocabulary);
 
+    set_completion_vocabulary(completion_vocabulary);
+    set_context_vocabulary(context_vocabulary);
+
+    Index input_length;
+    Index context_length;
+
+    // language_data_set.import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/lengths.txt", input_length, context_length);
+    import_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/lengths.txt", input_length, context_length);
+
+    const dimensions input_dimensions = {input_length, get_completion_vocabulary_size()};
+    const dimensions context_dimensions = {context_length, get_context_vocabulary_size()};
+
+    Transformer transformer(input_dimensions, context_dimensions, complexity);
+
+    transformer.set_dropout_rate(0);
+
+    cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+
+    transformer.set_input_vocabulary(completion_vocabulary);
+    transformer.set_context_vocabulary(context_vocabulary);
+
+    // transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/EnToEs.xml");
+    transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/testing/sentimental_analysis.xml");
+
+    transformer.set_model_type_string("TextClassification");
+
+    const TestingAnalysis testing_analysis(&transformer, this);
+
+    string prediction = testing_analysis.test_transformer(input,false);
+    cout<<prediction<<endl;
+
+}
+*/
 
 LanguageDataSet::LanguageDataSet(const string& data_source_path) : DataSet()
 {
     set_data_source_path(data_source_path);
     set_separator(DataSet::Separator::Tab);
-    context_dimensions = { 0 };
+    read_txt();
+    set_raw_variable_scalers(Scaler::None);
+
+    completion_vocabulary = get_completion_vocabulary();
+    context_vocabulary = get_context_vocabulary();
+
+    completion_dimensions = {get_completion_length(), get_completion_vocabulary_size()};
+    context_dimensions = {get_context_length(), get_context_vocabulary_size()};
+
+    save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/completion_vocabulary.txt",completion_vocabulary);
+    save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/context_vocabulary.txt",context_vocabulary);
+    save_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/lengths.txt", input_dimensions[0], context_dimensions[0]);
 }
 
 
@@ -59,6 +108,12 @@ Index LanguageDataSet::get_completion_length() const
 {
     // return max_completion_length + 2;
     return max_completion_length+1;
+}
+
+
+const dimensions& LanguageDataSet::get_completion_dimensions() const
+{
+    return completion_dimensions;
 }
 
 

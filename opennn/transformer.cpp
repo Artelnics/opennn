@@ -33,7 +33,7 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
     set(architecture_list);
 }
 
-Transformer::Transformer(const vector <Index>& input_dimension, const vector <Index>& context_dimensions, const vector <Index>& complexity)
+Transformer::Transformer(const dimensions& input_dimension, const dimensions& context_dimensions, const vector <Index>& complexity)
 {
     if(input_dimension.size() != 2)
         throw runtime_error("Input dimensions size must be 2.");
