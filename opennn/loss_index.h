@@ -30,7 +30,7 @@ class LossIndex
 
 public:
 
-   explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
@@ -197,7 +197,7 @@ protected:
 
 struct BackPropagationLM
 {
-    explicit BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
+    BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
 
     void set(const Index& = 0, LossIndex* = nullptr);
 

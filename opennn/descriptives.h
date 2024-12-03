@@ -8,7 +8,7 @@ namespace opennn
 
 struct Descriptives
 {
-  explicit Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
+  Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
   Tensor<type, 1> to_tensor() const;
 

@@ -41,12 +41,12 @@ public:
                                    JavaScript,
                                    PHP};
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
+   NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
                           const dimensions& = {},
                           const dimensions& = {},
                           const dimensions& = {});
 
-   explicit NeuralNetwork(const filesystem::path&);
+   NeuralNetwork(const filesystem::path&);
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());

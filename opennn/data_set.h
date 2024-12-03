@@ -27,15 +27,15 @@ public:
 
     enum class Codification { UTF8, SHIFT_JIS };
 
-    explicit DataSet(const Index& = 0, 
-                     const dimensions& = {0}, 
-                     const dimensions& = {0});
+    DataSet(const Index& = 0,
+            const dimensions& = {0},
+            const dimensions& = {0});
 
-    explicit DataSet(const filesystem::path&,
-                     const string&,
-                     const bool& = true,
-                     const bool& = false,
-                     const Codification& = Codification::UTF8);
+    DataSet(const filesystem::path&,
+            const string&,
+            const bool& = true,
+            const bool& = false,
+            const Codification& = Codification::UTF8);
 
     // Enumerations
 

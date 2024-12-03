@@ -25,7 +25,7 @@ class AdaptiveMomentEstimation : public OptimizationAlgorithm
     
 public:
 
-   explicit AdaptiveMomentEstimation(LossIndex* = nullptr);   
+   AdaptiveMomentEstimation(LossIndex* = nullptr);
    
    const type& get_learning_rate() const;
    const type& get_beta_1() const;
@@ -41,7 +41,7 @@ public:
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
-   void set_default() final;
+   void set_default() override;
 
    // Get
 
@@ -67,17 +67,17 @@ public:
 
    // Training
 
-   TrainingResults perform_training() final;
+   TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const final;
+   string write_optimization_algorithm_type() const override;
 
    // Serialization
 
-   Tensor<string, 2> to_string_matrix() const final;
+   Tensor<string, 2> to_string_matrix() const override;
 
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
    void update_parameters(BackPropagation&, AdaptiveMomentEstimationData&) const;
 
@@ -120,7 +120,7 @@ private:
 
 struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 {
-    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
+    AdaptiveMomentEstimationData(AdaptiveMomentEstimation* = nullptr);
 
     void set(AdaptiveMomentEstimation* = nullptr);
 

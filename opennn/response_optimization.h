@@ -24,7 +24,7 @@ public:
 
     enum class Condition { None, Between, EqualTo, LessEqualTo, GreaterEqualTo, Minimum, Maximum };
 
-    explicit ResponseOptimization(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    ResponseOptimization(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    // Get
 
@@ -80,7 +80,7 @@ private:
 
 struct ResponseOptimizationResults
 {
-    explicit ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
+    ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
     DataSet* data_set = nullptr;
 

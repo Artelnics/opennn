@@ -24,7 +24,7 @@ public:
 
     // Constructors
 
-    explicit ModelSelection(TrainingStrategy* = nullptr);
+    ModelSelection(TrainingStrategy* = nullptr);
 
     enum class NeuronsSelectionMethod{GROWING_NEURONS};
 

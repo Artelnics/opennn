@@ -21,7 +21,7 @@ class OptimizationAlgorithm
 
 public:
 
-   explicit OptimizationAlgorithm(LossIndex* = nullptr);
+   OptimizationAlgorithm(LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
@@ -122,7 +122,7 @@ protected:
 
 struct OptimizationAlgorithmData
 {
-    explicit OptimizationAlgorithmData();
+    OptimizationAlgorithmData();
 
     void print() const;
 
@@ -135,7 +135,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults(const Index& = 0);
+    TrainingResults(const Index& = 0);
 
     string write_stopping_condition() const;
 
@@ -151,7 +151,7 @@ struct TrainingResults
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 
-    Tensor<string, 2> write_final_results(const Index& = 3) const;
+    Tensor<string, 2> write_override_results(const Index& = 3) const;
 
     void resize_training_error_history(const Index&);
 
