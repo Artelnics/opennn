@@ -257,7 +257,7 @@ Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
         if(layers[i]->get_type() == layer_type)
             return layers[i].get();
 
-    throw runtime_error("Neural network has not layer type.");
+    throw runtime_error("Neural network does not have layer type.");
 }
 
 
@@ -448,12 +448,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions padding_dimensions = { 0, 0 };
         const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
-        add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-                                            pool_dimensions,
-                                            pooling_stride_dimensions,
-                                            padding_dimensions,
-                                            pooling_method,
-                                            "pooling_layer_" + to_string(i + 1)));
+        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+        //                                    pool_dimensions,
+        //                                    pooling_stride_dimensions,
+        //                                    padding_dimensions,
+        //                                    pooling_method,
+        //                                    "pooling_layer_" + to_string(i + 1)));
 
     }
 
@@ -1106,7 +1106,7 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
-    ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Unscaling));
+    ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Scaling4D));
 
     const Index height = scaling_layer_4d->get_input_dimensions()[0];
     const Index width = scaling_layer_4d->get_input_dimensions()[1];
@@ -1649,7 +1649,7 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);

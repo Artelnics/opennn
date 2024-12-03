@@ -65,10 +65,11 @@ void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& in
         static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-
+    cout << inputs << endl;
     Tensor<type, 4>& outputs = scaling_layer_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = inputs/type(255); 
+    cout << outputs << endl;
 }
 
 
