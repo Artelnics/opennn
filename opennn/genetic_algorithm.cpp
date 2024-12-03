@@ -82,9 +82,9 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
 }
 
 
-vector<Index> GeneticAlgorithm::get_original_unused_raw_variables()
+const vector<Index>& GeneticAlgorithm::get_original_unused_raw_variables()
 {
-    return original_unused_raw_variables_indices;
+    return original_unused_raw_variable_indices;
 }
 
 
@@ -145,24 +145,6 @@ void GeneticAlgorithm::set_genes_number(const Index& new_genes_number)
 void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
     maximum_epochs_number = new_maximum_epochs_number;
-}
-
-
-void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_errors)
-{
-    training_errors = new_training_errors;
-}
-
-
-void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
-{
-    selection_errors = new_selection_errors;
-}
-
-
-void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
-{
-    fitness = new_fitness;
 }
 
 
@@ -237,9 +219,9 @@ void GeneticAlgorithm::initialize_population_random()
 
     const vector<DataSet::RawVariable> raw_variables = data_set->get_raw_variables();
 
-    original_unused_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::None);
+    original_unused_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::None);
 
-    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variable_indices.size();
 
     const Index random_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
@@ -563,7 +545,7 @@ void GeneticAlgorithm::perform_crossover()
 
     const Index genes_number = get_genes_number();
 
-    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variable_indices.size();
 
     // Couples generation
 
@@ -645,7 +627,7 @@ void GeneticAlgorithm::perform_mutation()
 {
     const Index individuals_number = get_individuals_number();
 
-    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variable_indices.size();
 
     const Index genes_number = get_genes_number();
 
@@ -884,10 +866,9 @@ Tensor<bool,1 > GeneticAlgorithm::get_individual_raw_variables(Tensor<bool,1>& i
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variables_indices.size();
+    const Index raw_variables_number = original_input_raw_variable_indices.size() + original_unused_raw_variable_indices.size();
 
     Tensor<bool, 1> raw_variables_from_variables(raw_variables_number);
-
     raw_variables_from_variables.setConstant(false);
 
     Index genes_count = 0;
@@ -933,7 +914,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
         }
     }
 
-    const Index indexes_dimension = count(inputs_pre_indexes.data(),
+    const Index indices_dimension = count(inputs_pre_indexes.data(),
                                           inputs_pre_indexes.data() + inputs_pre_indexes.size(),
                                           true);
 
@@ -945,7 +926,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     Index index = 0;
 
-    vector<Index> indices(indexes_dimension);
+    vector<Index> indices(indices_dimension);
 
     for(Index i = 0; i < individual_raw_variables.size(); i++)
         if(inputs_pre_indexes(i))
@@ -1222,7 +1203,7 @@ void GeneticAlgorithm::load(const filesystem::path& file_name)
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);

@@ -659,14 +659,14 @@ bool has_numbers(const vector<string>& string_list)
 }
 
 
-bool has_strings(const vector<string>& string_list)
-{
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(!is_numeric_string(string_list[i])) 
-            return true;
+// bool has_strings(const vector<string>& string_list)
+// {
+//     for(size_t i = 0; i < string_list.size(); i++)
+//         if(!is_numeric_string(string_list[i]))
+//             return true;
 
-    return false;
-}
+//     return false;
+// }
 
 
 bool is_not_numeric(const vector<string>& string_list)

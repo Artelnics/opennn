@@ -53,12 +53,6 @@ public:
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
-    void set_training_errors(const Tensor<type, 1>&);
-
-    void set_selection_errors(const Tensor<type, 1>&);
-
-    void set_fitness(const Tensor<type, 1>&);
-
     void set_mutation_rate(const type&);
 
     void set_elitism_size(const Index&);
@@ -97,7 +91,7 @@ public:
 
     void set_unused_raw_variables(vector<Index>&);
 
-    vector<Index> get_original_unused_raw_variables();
+    const vector<Index>& get_original_unused_raw_variables();
 
     InputsSelectionResults perform_inputs_selection ()  final;
 
@@ -120,7 +114,7 @@ private:
     vector<Index> initial_raw_variables_indices;
     vector<bool> original_input_raw_variables;
 
-    vector<Index> original_unused_raw_variables_indices;
+    vector<Index> original_unused_raw_variable_indices;
     vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> inputs_activation_probabilities;

@@ -301,7 +301,7 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 }
 
 
-string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
+string Transformer::calculate_outputs(const string& context_string)
 {
     //type start_indicator = 1;
     //type end_indicator = 2;
