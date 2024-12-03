@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "scaling_layer_4d.h"
 
@@ -61,7 +59,7 @@ bool ScalingLayer4D::is_empty() const
 
 void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
+                                       const bool&)
 {
     ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation =
         static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());

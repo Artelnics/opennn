@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "perceptron_layer.h"
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -20,12 +18,10 @@ PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const ActivationFunction& new_activation_function,
                                  const string& new_layer_name) : Layer()
 {
-
     set(new_input_dimensions,
         new_output_dimensions,
         new_activation_function,
         new_layer_name);
-
 }
 
 

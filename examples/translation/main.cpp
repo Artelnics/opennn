@@ -38,9 +38,9 @@ int main()
         // Data set
 
         LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
-        //LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt", complexity);
-        //LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt", complexity);
-
+        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
+        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
+        cout<<language_data_set.get_data().dimensions()<<endl;
         const Index embedding_depth = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
@@ -64,12 +64,21 @@ int main()
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
 
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.4);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.9);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+
+        training_strategy.get_adaptive_moment_estimation()->set_display(true);
+        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
 
         TrainingResults training_results = training_strategy.perform_training();
 

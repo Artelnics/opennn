@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "optimization_algorithm.h"
 
 namespace opennn
@@ -192,7 +191,7 @@ void OptimizationAlgorithm::print() const
 }
 
 
-void OptimizationAlgorithm::save(const string& file_name) const
+void OptimizationAlgorithm::save(const filesystem::path& file_name) const
 {
     try
     {
@@ -209,7 +208,7 @@ void OptimizationAlgorithm::save(const string& file_name) const
         }
         else
         {
-            throw runtime_error("Cannot open file: " + file_name);
+            throw runtime_error("Cannot open file: " + file_name.string());
         }
     }
     catch (const exception& e)
@@ -219,16 +218,38 @@ void OptimizationAlgorithm::save(const string& file_name) const
 }
 
 
-void OptimizationAlgorithm::load(const string& file_name)
+void OptimizationAlgorithm::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
+}
+
+
+type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
+{
+    time_t current_time;
+    time(&current_time);
+    return type(difftime(current_time, beginning_time));
+}
+
+
+void OptimizationAlgorithm::set_neural_network_variable_names()
+{
+    DataSet* data_set = loss_index->get_data_set();
+
+    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    neural_network->set_input_names(input_names);
+    neural_network->set_output_namess(target_names);
 }
 
 
@@ -348,7 +369,7 @@ string OptimizationAlgorithm::write_time(const type& time) const
 }
 
 
-void TrainingResults::save(const string& file_name) const
+void TrainingResults::save(const filesystem::path& file_name) const
 {
     const Tensor<string, 2> final_results = write_final_results();
 
@@ -381,8 +402,6 @@ void TrainingResults::print(const string &message)
 
 Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) const
 {
-    ostringstream buffer;
-
     Tensor<string, 2> final_results(6, 2);
 
     final_results(0,0) = "Epochs number";
@@ -411,6 +430,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 
     // Final selection error
 
+    ostringstream buffer;
     buffer.str("");
 
     selection_error_history.size() == 0
@@ -420,6 +440,22 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(4,1) = buffer.str();
 
     return final_results;
+}
+
+
+OptimizationAlgorithmData::OptimizationAlgorithmData()
+{
+}
+
+
+void OptimizationAlgorithmData::print() const
+{
+    cout << "Potential parameters:" << endl
+         << potential_parameters << endl
+         << "Training direction:" << endl
+         << training_direction << endl
+         << "Initial learning rate:" << endl
+         << initial_learning_rate << endl;
 }
 
 }

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"
@@ -25,7 +23,7 @@ DataSet::DataSet(const Index& new_samples_number,
 }
 
 
-DataSet::DataSet(const string& data_path,
+DataSet::DataSet(const filesystem::path& data_path,
                  const string& separator,
                  const bool& has_header,
                  const bool& has_sample_ids,
@@ -458,18 +456,17 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
     const Index samples_number = sample_indices.size();
 
-    Index buffer_size = new_buffer_size;
+    //Index buffer_size = min(new_buffer_size, samples_number);
+
     Index batches_number;
 
     const Index batch_size = min(batch_samples_number, samples_number);
 
-    if(buffer_size > samples_number)
-        buffer_size = samples_number;
 
     if(samples_number < batch_size)
     {
         batches_number = 1;
-        buffer_size = batch_size;
+//        buffer_size = batch_size;
     }
     else
     {
@@ -502,17 +499,7 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
 Index DataSet::get_samples_number(const SampleUse& sample_use) const
 {
-    const Index samples_number = get_samples_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+:count)
-
-    for (Index i = 0; i < samples_number; i++)
-        if (sample_uses[i] == sample_use)
-            count++;
-
-    return count;
+    return count(sample_uses.begin(), sample_uses.end(), sample_use);
 }
 
 
@@ -1083,10 +1070,9 @@ vector<Index> DataSet::get_used_variable_indices() const
 }
 
 
-
-void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_uses)
+void DataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
 {
-    const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
+    const size_t new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
         throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
@@ -1101,9 +1087,9 @@ void DataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_use
 }
 
 
-void DataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
+void DataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
-    const Index new_raw_variables_uses_size = new_raw_variables_uses.size();
+    const size_t new_raw_variables_uses_size = new_raw_variables_uses.size();
 
     if(new_raw_variables_uses_size != raw_variables.size())
         throw runtime_error("Size of raw_variables uses (" + to_string(new_raw_variables_uses_size) + ") "
@@ -1258,13 +1244,13 @@ void DataSet::set_raw_variable_scalers(const Scaler& scalers)
 
 void DataSet::set_raw_variable_scalers(const vector<Scaler>& new_scalers)
 {
-    const Index raw_variables_number = get_raw_variables_number();
+    const size_t raw_variables_number = get_raw_variables_number();
 
     if(new_scalers.size() != raw_variables_number)
         throw runtime_error("Size of raw_variable scalers(" + to_string(new_scalers.size()) + ") "
                             "has to be the same as raw_variables numbers(" + to_string(raw_variables_number) + ").\n");
 
-    for(Index i = 0; i < raw_variables_number; i++)
+    for(size_t i = 0; i < raw_variables_number; i++)
         raw_variables[i].scaler = new_scalers[i];
 }
 
@@ -1391,7 +1377,7 @@ string DataSet::get_missing_values_method_string() const
 }
 
 
-const string& DataSet::get_data_source_path() const
+const filesystem::path& DataSet::get_data_path() const
 {
     return data_path;
 }
@@ -1457,7 +1443,7 @@ string DataSet::get_separator_name() const
 }
 
 
-const DataSet::Codification DataSet::get_codification() const
+const DataSet::Codification& DataSet::get_codification() const
 {
     return codification;
 }
@@ -1487,7 +1473,7 @@ Tensor<type, 2> DataSet::get_data(const SampleUse& sample_use) const
 {
     const vector<Index> variable_indices = get_used_variable_indices();
 
-    const vector<Index> sample_indices = get_sample_indices(SampleUse::Training);
+    const vector<Index> sample_indices = get_sample_indices(sample_use);
 
     Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
 
@@ -1732,7 +1718,7 @@ vector<vector<string>> DataSet::get_data_file_preview() const
 }
 
 
-void DataSet::set(const string& data_path,
+void DataSet::set(const filesystem::path& data_path,
                   const string& separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
@@ -1740,7 +1726,7 @@ void DataSet::set(const string& data_path,
 {
     set_default();
 
-    set_data_source_path(data_path);
+    set_data_path(data_path);
 
     set_separator_string(separator);
 
@@ -1847,7 +1833,7 @@ void DataSet::set(const Index& new_samples_number,
 }
 
 
-void DataSet::set(const string& file_name)
+void DataSet::set(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -1908,9 +1894,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 }
 
 
-void DataSet::set_data_source_path(const string& new_data_file_name)
+void DataSet::set_data_path(const filesystem::path& new_data_path)
 {
-    data_path = new_data_file_name;
+    data_path = new_data_path;
 }
 
 
@@ -2897,7 +2883,9 @@ void DataSet::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("DataSource");
     add_xml_element(printer, "FileType", "csv");
-    add_xml_element(printer, "Path", data_path);
+
+    add_xml_element(printer, "Path", data_path.string());
+
     add_xml_element(printer, "Separator", get_separator_name());
     add_xml_element(printer, "HasHeader", to_string(has_header));
     add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
@@ -2937,6 +2925,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
+
     printer.CloseElement();  
 
     printer.CloseElement();
@@ -2953,7 +2942,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element) 
         throw runtime_error("Data source element is nullptr.\n");
     
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_has_header(read_xml_bool(data_source_element, "HasHeader"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
@@ -3058,7 +3047,7 @@ void DataSet::print() const
 }
 
 
-void DataSet::save(const string& file_name) const
+void DataSet::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -3073,12 +3062,12 @@ void DataSet::save(const string& file_name) const
 }
 
 
-void DataSet::load(const string& file_name)
+void DataSet::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
@@ -3146,7 +3135,7 @@ void DataSet::save_data() const
     ofstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open matrix data file: " + data_path + "\n");
+        throw runtime_error("Cannot open matrix data file: " + data_path.string() + "\n");
 
     file.precision(20);
 
@@ -3192,9 +3181,7 @@ void DataSet::save_data() const
 
 void DataSet::save_data_binary(const string& binary_data_file_name) const
 {
-    ofstream file;
-
-    open_file(binary_data_file_name, file);
+    ofstream file(binary_data_file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open data binary file.");
@@ -3225,9 +3212,10 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 void DataSet::load_data_binary()
 {
-    ifstream file;
+    ifstream file(data_path);
 
-    open_file(data_path, file);
+    if (!file.is_open())
+        throw runtime_error("Failed to open file: " + data_path.string());
 
     streamsize size = sizeof(Index);
 
@@ -3882,12 +3870,12 @@ void DataSet::process_tokens(vector<string>& tokens)
 void DataSet::read_csv()
 {
     if(data_path.empty())
-        throw runtime_error("Data source path is empty.\n");
+        throw runtime_error("Data path is empty.\n");
 
-    ifstream file(data_path.c_str());
+    ifstream file(data_path);
 
     if(!file.is_open())
-        throw runtime_error("Error: Cannot open file " + data_path + "\n");
+        throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
     const string separator_string = get_separator_string();
     
@@ -3899,7 +3887,7 @@ void DataSet::read_csv()
 
     vector<string> tokens;
 
-    Index columns_number = 0;
+    size_t columns_number = 0;
 
     // Read first line
 
@@ -4168,54 +4156,6 @@ string DataSet::RawVariable::get_scaler_string() const
 }
 
 
-void DataSet::open_file(const string& data_file_name, ifstream& file) const
-{
-    #ifdef _WIN32
-
-    const regex accent_regex("[\\xC0-\\xFF]");
-
-    if(regex_search(data_file_name, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        const wstring file_name_wide = conv.from_bytes(data_file_name);
-        file.open(file_name_wide, ios::binary);
-    }
-    else
-    {
-        file.open(data_file_name.c_str(), ios::binary);
-    }
-    #else
-        file.open(data_file_name.c_str(), ios::binary);
-    #endif
-
-    if(!file.is_open())
-        throw runtime_error("Error: Cannot open file " + data_file_name + "\n");
-}
-
-
-void DataSet::open_file(const string& file_name, ofstream& file) const
-{
-    #ifdef _WIN32
-
-    const regex accent_regex("[\\xC0-\\xFF]");
-
-    if(regex_search(file_name, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(file_name);
-        file.open(file_name_wide, ios::binary);
-    }
-    else
-    {
-        file.open(file_name.c_str(), ios::binary);
-    }
-
-    #else
-        file.open(file_name.c_str(), ios::binary);
-    #endif
-}
-
-
 void DataSet::read_data_file_preview(ifstream& file)
 {
     if(display) cout << "Reading data file preview..." << endl;
@@ -4252,7 +4192,7 @@ void DataSet::read_data_file_preview(ifstream& file)
     // Check empty file
 
     if(data_file_preview[0].size() == 0)
-        throw runtime_error("File " + data_path + " is empty.\n");
+        throw runtime_error("File " + data_path.string() + " is empty.\n");
 
     // Resize data file preview to original
 
@@ -4288,26 +4228,26 @@ void DataSet::check_separators(const string& line) const
     if(separator == Separator::Space)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is space (' ').");
         else if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is space (' ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is space (' ').");
     }
     else if(separator == Separator::Tab)
     {
         if(line.find(',') != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is tab ('   ').");
         else if(line.find(';') != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is tab ('   ').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is tab ('   ').");
     }
     else if(separator == Separator::Comma)
     {
         if(line.find(";") != string::npos)
-            throw runtime_error("Error: Found semicolon (';') in data file " + data_path + ", but separator is comma (',').");
+            throw runtime_error("Error: Found semicolon (';') in data file " + data_path.string() + ", but separator is comma (',').");
     }
     else if(separator == Separator::Semicolon)
     {
         if(line.find(",") != string::npos)
-            throw runtime_error("Error: Found comma (',') in data file " + data_path + ", but separator is semicolon (';').");
+            throw runtime_error("Error: Found comma (',') in data file " + data_path.string() + ", but separator is semicolon (';').");
     }
 }
 
@@ -4545,7 +4485,7 @@ bool DataSet::get_has_rows_labels() const
 }
 
 
-void DataSet::decode(string& input_string) const
+void DataSet::decode(string&) const
 {
     switch(codification)
     {
@@ -4558,7 +4498,7 @@ void DataSet::decode(string& input_string) const
 }
 
 
-Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
+Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_name,
                                         const string& separator_string,
                                         const string& missing_values_label,
                                         const bool& has_raw_variables_name,
@@ -4566,9 +4506,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 {
     const Index raw_variables_number = get_raw_variables_number();
 
-    ifstream file;
-
-    open_file(input_data_file_name, file);
+    ifstream file(input_data_file_name);
 
     // Count samples number
 
@@ -4612,7 +4550,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
     Tensor<type, 2> input_data(input_samples_count, input_variables_number);
     input_data.setZero();
 
-    open_file(input_data_file_name, file);
+    file.open(input_data_file_name);
 
     //skip_header(file);
 
@@ -4795,9 +4733,9 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 // Virtual functions
 
 // Image Models
-void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& data) {}
+void DataSet::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
 
-// Languaje Models
+// Language Models
 void DataSet::read_txt(){}
 
 // AutoAssociation Models

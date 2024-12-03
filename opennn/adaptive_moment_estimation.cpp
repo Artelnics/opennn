@@ -6,12 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "language_data_set.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -154,30 +155,27 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         throw runtime_error("Data set is null.");
 
     const bool has_selection = data_set->has_selection();
-    
-    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
 
+    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
+    
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
 
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    vector<Index> context_variable_indices;
 
-    // vector<Index> context_variable_indices;
-
-    // if(is_language_model)
-    // {
-    //     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-    //     context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
-    // }
-
-
-    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
-                                                       ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
-                                                       : vector<Index>();
+    if(is_language_model)
+    {
+        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
+    }
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+
+    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -186,23 +184,33 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     vector<Descriptives> target_variable_descriptives;
 
+    Index training_batch_samples_number = 0;
+    Index selection_batch_samples_number = 0;
+
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
+    training_samples_number < batch_samples_number
+        ? training_batch_samples_number = training_samples_number
+        : training_batch_samples_number = batch_samples_number;
 
-    const Index selection_batch_samples_number = (selection_samples_number > 0)
-           ? min(selection_samples_number, batch_samples_number)
-           : 0;
+    selection_samples_number < batch_samples_number && selection_samples_number != 0
+        ? selection_batch_samples_number = selection_samples_number
+        : selection_batch_samples_number = batch_samples_number;
 
-
+    cout<<"Works properly"<<endl;
     Batch training_batch(training_batch_samples_number, data_set);
+    cout<<"Works properly"<<endl;
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
+    const Index training_batches_number = (training_batch_samples_number != 0)
+        ? training_samples_number / training_batch_samples_number
+        : 0;
 
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
-    
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+       ? selection_samples_number / selection_batch_samples_number
+       : 0;
+
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
 
@@ -469,38 +477,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(9, 2);
+    Tensor<string, 2> string_matrix(9, 2);
 
-    labels_values(0,0) = "Learning rate";
-    labels_values(0,1) = to_string(double(learning_rate));
+    string_matrix.setValues({
+    {"Learning rate", to_string(double(learning_rate))},
+    {"Initial decay", to_string(double(initial_decay))},
+    {"Beta 1", to_string(double(beta_1))},
+    {"Beta 2", to_string(double(beta_2))},
+    {"Epsilon", to_string(double(epsilon))},
+    {"Training loss goal", to_string(double(training_loss_goal))},
+    {"Maximum epochs number", to_string(maximum_epochs_number)},
+    {"Maximum time", write_time(maximum_time)},
+    {"Batch samples number", to_string(batch_samples_number)}});
 
-    labels_values(1,0) = "Initial decay";
-    labels_values(1,1) = to_string(double(initial_decay));
-
-    labels_values(2,0) = "Beta 1";
-    labels_values(2,1) = to_string(double(beta_1));
-
-    labels_values(3,0) = "Beta 2";
-    labels_values(3,1) = to_string(double(beta_2));
-
-    labels_values(4,0) = "Epsilon";
-    labels_values(4,1) = to_string(double(epsilon));
-
-    labels_values(5,0) = "Training loss goal";
-    labels_values(5,1) = to_string(double(training_loss_goal));
-
-    labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
-
-    labels_values(7,0) = "Maximum time";
-    labels_values(7,1) = write_time(maximum_time);
-
-    // Batch samples number
-
-    labels_values(8,0) = "Batch samples number";
-    labels_values(8,1) = to_string(batch_samples_number);
-
-    return labels_values;
+    return string_matrix;
 }
 
 

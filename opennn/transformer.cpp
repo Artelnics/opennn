@@ -6,9 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
-#include "layer.h"
 #include "transformer.h"
 #include "tensors.h"
 #include "embedding_layer.h"
@@ -33,8 +30,9 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
     set(architecture_list);
 }
 
-Transformer::Transformer(const dimensions& input_dimension, const dimensions& context_dimensions, const vector <Index>& complexity)
-{
+
+Transformer::Transformer(const dimensions& input_dimensions, const dimensions& context_dimensions, const vector <Index>& complexity)
+{/*
     if(input_dimension.size() != 2)
         throw runtime_error("Input dimensions size must be 2.");
     if(context_dimensions.size() != 2)
@@ -44,8 +42,8 @@ Transformer::Transformer(const dimensions& input_dimension, const dimensions& co
 
     input_length = input_dimension[0];
     context_length = context_dimensions[0];
-    input_dimensions = input_dimension[1];
-    context_dimension = context_dimensions[1];
+    input_dimensions_xxx = input_dimension[1];
+    context_dimension_xxx = context_dimensions[1];
     embedding_depth = complexity[0];
     perceptron_depth = complexity[1];
     heads_number = complexity[2];
@@ -53,13 +51,15 @@ Transformer::Transformer(const dimensions& input_dimension, const dimensions& co
 
     set(input_length,
         context_length,
-        input_dimensions,
-        context_dimension,
+        input_dimensions_xxx,
+        context_dimension_xxx,
         embedding_depth,
         perceptron_depth,
         heads_number,
         layers_number);
+*/
 
+//    set({input_dimensions[0], context_dimensions[0], input_dimensions[1], context_dimensions[1], complexity[0], complexity[1], complexity[2], complexity[3]});
 }
 
 void Transformer::set(const Tensor<Index, 1>& architecture)
@@ -69,8 +69,8 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     input_length = architecture(0);
     context_length = architecture(1);
-    input_dimensions = architecture(2);
-    context_dimension = architecture(3);
+    input_dimensions_xxx = architecture(2);
+    context_dimension_xxx = architecture(3);
     embedding_depth = architecture(4);
     perceptron_depth = architecture(5);
     heads_number = architecture(6);
@@ -78,8 +78,8 @@ void Transformer::set(const Tensor<Index, 1>& architecture)
 
     set(input_length,
         context_length,
-        input_dimensions,
-        context_dimension,
+        input_dimensions_xxx,
+        context_dimension_xxx,
         embedding_depth,
         perceptron_depth,
         heads_number,
@@ -633,18 +633,14 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
             }
 
             if(!tokenized)
-            {
-                context(token_counter) = 1; // unknown indicator
-                token_counter++;
-            }
+                context(token_counter++) = 1; // unknown indicator
         }
         else
         {
             if(j == context_tokens.size()
             || (token_counter == context_length - 1 && !line_ended))
             {
-                context(token_counter) = 3; // end indicator
-                token_counter++;
+                context(token_counter++) = 3; // end indicator
                 line_ended = true;
             }
             else

@@ -10,8 +10,8 @@
 #define LOSSINDEX_H
 
 #include "data_set.h"
-#include "batch.h"
 #include "neural_network.h"
+#include "batch.h"
 #include "neural_network_back_propagation_lm.h"
 
 namespace opennn
@@ -77,6 +77,7 @@ public:
                                 BackPropagation&) const = 0;
 
    void add_regularization(BackPropagation&) const;
+   void add_regularization_lm(BackPropagationLM&) const;
 
    virtual void calculate_output_delta(const Batch&,
                                        ForwardPropagation&,

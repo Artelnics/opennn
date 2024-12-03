@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "unscaling_layer.h"
 #include "strings_utilities.h"
 #include "tensors.h"
@@ -17,7 +16,7 @@ namespace opennn
 UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
     : Layer()
 {
-    set(new_input_dimensions[0]);      
+    set(new_input_dimensions[0], layer_name);
 }
 
 
@@ -331,7 +330,7 @@ bool UnscalingLayer::is_empty() const
 
 void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
+                                       const bool&)
 {
     const Index neurons_number = get_output_dimensions()[0];
 

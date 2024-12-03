@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "neurons_selection.h"
 
 namespace opennn
@@ -182,8 +180,6 @@ void NeuronsSelection::check() const
 {
     // Optimization algorithm
 
-    ostringstream buffer;
-
     if(!training_strategy)
         throw runtime_error("Pointer to training strategy is nullptr.\n");
 
@@ -200,9 +196,6 @@ void NeuronsSelection::check() const
 
     if(!neural_network)
         throw runtime_error("Pointer to neural network is nullptr.\n");
-
-    if(neural_network->is_empty())
-        throw runtime_error("Multilayer Perceptron is empty.\n");
 
     if(neural_network->get_layers_number() == 1)
         throw runtime_error("Number of layers in neural network must be greater than 1.\n");
@@ -238,6 +231,10 @@ string NeuronsSelection::write_time(const type& time) const
     return elapsed_time.str();
 }
 
+
+NeuronsSelectionResults::NeuronsSelectionResults()
+{
+}
 
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {
@@ -300,6 +297,16 @@ string NeuronsSelectionResults::write_stopping_condition() const
         default:
             return string();
     }
+}
+
+
+void NeuronsSelectionResults::print() const
+{
+    cout << endl
+         << "Neurons Selection Results" << endl
+         << "Optimal neurons number: " << optimal_neurons_number << endl
+         << "Optimum training error: " << optimum_training_error << endl
+         << "Optimum selection error: " << optimum_selection_error << endl;
 }
 
 }

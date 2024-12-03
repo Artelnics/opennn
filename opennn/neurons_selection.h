@@ -9,7 +9,6 @@
 #ifndef NEURONSSELECTION_H
 #define NEURONSSELECTION_H
 
-
 #include "training_strategy.h"
 
 namespace opennn
@@ -75,29 +74,25 @@ protected:
 
     Tensor<type, 1> training_error_history;
 
-    Index minimum_neurons;
+    Index minimum_neurons = 0;
 
-    Index maximum_neurons;
+    Index maximum_neurons = 0;
 
     Index trials_number = 1;
 
+    type selection_error_goal = 0;
+
+    Index maximum_epochs_number = 10;
+
+    type maximum_time = 0;
+
     bool display = true;
-
-    type selection_error_goal;
-
-    Index maximum_epochs_number;
-
-    type maximum_time;
 };
 
 
 struct NeuronsSelectionResults
 {
-    
-
-    explicit NeuronsSelectionResults()
-    {
-    }
+    explicit NeuronsSelectionResults();
 
     // Epochs constructor
 
@@ -107,14 +102,7 @@ struct NeuronsSelectionResults
 
    string write_stopping_condition() const;
 
-   void print() const
-   {
-       cout << endl
-            << "Neurons Selection Results" << endl
-            << "Optimal neurons number: " << optimal_neurons_number << endl
-            << "Optimum training error: " << optimum_training_error << endl
-            << "Optimum selection error: " << optimum_selection_error << endl;
-   }
+   void print() const;
 
    // Neural network
 

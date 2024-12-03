@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "normalization_layer_3d.h"
@@ -143,7 +141,7 @@ void NormalizationLayer3D::set_parameters_random()
 
 void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                              unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                             const bool& is_training)
+                                             const bool&)
 {
     const Index samples_number = input_pairs[0].second[0];
     const Index inputs_number = input_pairs[0].second[1];
@@ -165,23 +163,18 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     const Eigen::array<Index, 3> range_3{ { samples_number, inputs_number, 1 }};
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
-    
+       
     means.device(*thread_pool_device) = inputs.mean(normalization_axis)
-                                       .reshape(range_3).broadcast(expand_normalization_axis);
+                                            .reshape(range_3).broadcast(expand_normalization_axis);
 
     standard_deviations.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis).sqrt()
-                                           .reshape(range_3).broadcast(expand_normalization_axis);
+                                                          .reshape(range_3).broadcast(expand_normalization_axis);
 
     normalized_inputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
-    // @todo outputs is assigned twice!!!
-
     outputs.device(*thread_pool_device) = normalized_inputs;
 
-    outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
-
     multiply_matrices(thread_pool_device.get(), outputs, gammas);
-
     sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 

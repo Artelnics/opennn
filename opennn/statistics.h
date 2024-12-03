@@ -9,7 +9,6 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-
 #include "descriptives.h"
 #include "box_plot.h"
 #include "histogram.h"
@@ -102,8 +101,7 @@ namespace opennn
  Index maximal_index_from_indices(const Tensor<type, 1>&, const Tensor<Index, 1>&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
- Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>&, const Index&);
- 
+
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 }

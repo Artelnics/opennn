@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "addition_layer_3d.h"
 
@@ -64,7 +62,7 @@ void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 
 void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                        const bool& is_training)
+                                        const bool&)
 {
     const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(input_pairs[0]);
     
@@ -79,9 +77,9 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>&,
                                      const vector<pair<type*, dimensions>>& delta_pairs,
-                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                     unique_ptr<LayerForwardPropagation>&,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);

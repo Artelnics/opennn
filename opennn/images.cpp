@@ -7,22 +7,21 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "images.h"
 
 namespace opennn
 {
 
-Tensor<unsigned char, 3> read_bmp_image(const string& filename)
+Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 {
-    FILE* file = fopen(filename.data(), "rb");
+    ifstream file(filename, std::ios::binary);
 
     if(!file)
         throw runtime_error("Cannot open the file.\n");
 
     unsigned char info[54];
 
-    fread(info, sizeof(unsigned char), 54, file);
+    file.read(reinterpret_cast<char*>(info), 54);
 
     const Index width_no_padding = *(int*)&info[18];
     const Index height = *(int*)&info[22];
@@ -44,11 +43,11 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     Tensor<unsigned char, 1> raw_image(size);
 
     const int data_offset = *(int*)(&info[0x0A]);
-    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
+    file.seekg(data_offset, std::ios::beg);
 
-    fread(raw_image.data(), sizeof(unsigned char), size, file);
+    file.read(reinterpret_cast<char*>(raw_image.data()), size);
 
-    fclose(file);
+    file.close();
 
     Tensor<unsigned char, 3> image(height, width, channels);
 
@@ -134,14 +133,10 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type,2> rotation_matrix(3, 3);
 
-    rotation_matrix.setZero();
-    rotation_matrix(0, 0) = cos_angle;
-    rotation_matrix(0, 1) = -sin_angle;
-    rotation_matrix(1, 0) = sin_angle;
-    rotation_matrix(1, 1) = cos_angle;
-    rotation_matrix(0, 2) = rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y;
-    rotation_matrix(1, 2) = rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y;
-    rotation_matrix(2, 2) = type(1);
+    rotation_matrix.setValues({
+        {cos_angle, -sin_angle, rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y},
+        {sin_angle, cos_angle, rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y},
+        {type(0), type(0), type(1)}});
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);

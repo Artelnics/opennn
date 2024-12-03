@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
@@ -113,11 +112,12 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
+
 }
 
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
-{        
+{
     if (!new_data_set) return;
 
     batch_size = new_batch_size;
@@ -188,7 +188,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
 
         if(data_set_context_dimensions.size() == 1)
-        {
+        {cout<<"Works properly"<<endl;
             context_dimensions = {{batch_size, context_variables_number}};
 
             context_tensor.resize(batch_size*context_variables_number);

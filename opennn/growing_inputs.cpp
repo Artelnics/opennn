@@ -6,10 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "growing_inputs.h"
 #include "correlations.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn
 {
@@ -120,17 +119,13 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
     vector<Index> correlation_indices(original_input_raw_variables_number);
-/*
-    initialize_sequential(correlation_indices);
-*/
     iota(correlation_indices.begin(), correlation_indices.end(), 0);
-
 
     sort(correlation_indices.data(),
          correlation_indices.data() + correlation_indices.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
@@ -172,7 +167,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
         if(input_raw_variables_number >= minimum_inputs_number)
         {
-            long long epoch = input_raw_variables_number - minimum_inputs_number + 1;
+            Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
             neural_network->set_input_dimensions({ input_variables_number });
 
             if(display)
@@ -350,41 +345,18 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    vector<string> labels(8);
-    vector<string> values(8);
+    Tensor<string, 2> string_matrix(8, 2);
 
-    labels[0] = "Trials number";
-    values[0] = to_string(trials_number);
+    string_matrix.setValues({
+    {"Trials number", to_string(trials_number)},
+    {"Selection error goal", to_string(selection_error_goal)},
+    {"Maximum selection failures", to_string(maximum_selection_failures)},
+    {"Maximum inputs number", to_string(maximum_inputs_number)},
+    {"Minimum correlations", to_string(minimum_correlation)},
+    {"Maximum correlation", to_string(maximum_correlation)},
+    {"Maximum iterations number", to_string(maximum_epochs_number)},
+    {"Maximum time", to_string(maximum_time)}});
 
-    labels[1] = "Selection error goal";
-    values[1] = to_string(selection_error_goal);
-
-    labels[2] = "Maximum selection failures";
-    values[2] = to_string(maximum_selection_failures);
-
-    labels[3] = "Maximum inputs number";
-    values[3] = to_string(maximum_inputs_number);
-
-    labels[4] = "Minimum correlations";
-    values[4] = to_string(minimum_correlation);
-
-    labels[5] = "Maximum correlation";
-    values[5] = to_string(maximum_correlation);
-
-    labels[6] = "Maximum iterations number";
-    values[6] = to_string(maximum_epochs_number);
-
-    labels[7] = "Maximum time";
-    values[7] = to_string(maximum_time);
-
-    const Index rows_number = labels.size();
-    const Index raw_variables_number = 2;
-
-    Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-/*
-    string_matrix.chip(0, 1) = labels;
-    string_matrix.chip(1, 1) = values;
-*/
     return string_matrix;
 }
 
@@ -427,7 +399,7 @@ void GrowingInputs::from_XML(const XMLDocument& document)
 }
 
 
-void GrowingInputs::save(const string& file_name) const
+void GrowingInputs::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -440,14 +412,14 @@ void GrowingInputs::save(const string& file_name) const
 }
 
 
-void GrowingInputs::load(const string& file_name)
+void GrowingInputs::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

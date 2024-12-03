@@ -6,14 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "testing_analysis.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_data_set.h"
 #include "transformer.h"
 #include "statistics.h"
+#include "unscaling_layer.h"
+#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -876,8 +876,6 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
-    const Index outputs_number = neural_network->get_outputs_number();
-
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
@@ -900,14 +898,14 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     {
         type* input_data = inputs.data();
 
-        Tensor<type, 4> inputs_4d(samples_number,
-                                  input_dimensions[0],
-                                  input_dimensions[1],
-                                  input_dimensions[2]);
+        Tensor<type, 4> inputs(samples_number,
+                               input_dimensions[0],
+                               input_dimensions[1],
+                               input_dimensions[2]);
         
-        memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
+        memcpy(inputs.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
 
-        const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
+        const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
         return calculate_confusion(outputs, targets);
     }
@@ -930,19 +928,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
     const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
 
     Tensor<type, 2> testing_input(testing_batch_size, inputs.dimension(1));
-
-    for(Index i = 0; i < testing_batch_size; i++)
-        testing_input.chip(i, 0) = inputs.chip(i, 0);
-
     Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
-
-    for(Index i = 0; i < testing_batch_size; i++)
-        testing_context.chip(i, 0) = context.chip(i, 0);
-
     Tensor<type, 2> testing_target(testing_batch_size, targets.dimension(1));
 
     for(Index i = 0; i < testing_batch_size; i++)
+    {
+        testing_input.chip(i, 0) = inputs.chip(i, 0);
+        testing_context.chip(i, 0) = context.chip(i, 0);
         testing_target.chip(i, 0) = targets.chip(i, 0);
+    }
 
 
     if(input_dimensions.size() == 1)
@@ -955,8 +949,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
             reduced_outputs(i,0) = outputs(i,1,9);
             reduced_outputs(i,1) = outputs(i,1,10);
         }
-
-
 
         // Tensor<type, 2> reduced_outputs(outputs.dimension(0), outputs.dimension(1));
         // type index;
@@ -1002,6 +994,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
     {
         return calculate_confusion_multiple_classification(targets, outputs);
     }
+}
+
+
+Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 3>& outputs,
+                                                      const Tensor<type, 3>& targets) const
+{
+    return Tensor<Index, 2>();
 }
 
 
@@ -1635,7 +1634,7 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_precision() c
 }
 
 
-void TestingAnalysis::save_confusion(const string& file_name) const
+void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
 {
     const Tensor<Index, 2> confusion = calculate_confusion();
 
@@ -1651,7 +1650,7 @@ void TestingAnalysis::save_confusion(const string& file_name) const
     {
         file << target_variable_names[i];
 
-        if(i != target_variable_names.size() - 1)
+        if(i != Index(target_variable_names.size()) - 1)
             file << ",";
     }
 
@@ -1672,7 +1671,7 @@ void TestingAnalysis::save_confusion(const string& file_name) const
 }
 
 
-void TestingAnalysis::save_multiple_classification_tests(const string& file_name) const
+void TestingAnalysis::save_multiple_classification_tests(const filesystem::path& file_name) const
 {
     const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_precision();
 
@@ -1832,7 +1831,7 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
 void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& targets,
                                                     const Tensor<type, 2>& outputs,
                                                     const vector<string>& labels,
-                                                    const string& file_name) const
+                                                    const filesystem::path& file_name) const
 {
     const Tensor<string,2> well_classified_samples = calculate_well_classified_samples(targets,
                                                                                        outputs,
@@ -1855,7 +1854,7 @@ void TestingAnalysis::save_well_classified_samples(const Tensor<type, 2>& target
 void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
                                                  const Tensor<type, 2>& outputs,
                                                  const vector<string>& labels,
-                                                 const string& file_name) const
+                                                 const filesystem::path& file_name) const
 {
     const Tensor<string,2> misclassified_samples = calculate_misclassified_samples(targets,
                                                                                    outputs,
@@ -1878,7 +1877,7 @@ void TestingAnalysis::save_misclassified_samples(const Tensor<type, 2>& targets,
 void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type, 2>& targets,
                                                               const Tensor<type, 2>& outputs,
                                                               const vector<string>& labels,
-                                                              const string& file_name) const
+                                                              const filesystem::path& file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
                                                                                         outputs,
@@ -1902,7 +1901,7 @@ void TestingAnalysis::save_well_classified_samples_statistics(const Tensor<type,
 void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2>& targets,
                                                             const Tensor<type, 2>& outputs,
                                                             const vector<string>& labels,
-                                                            const string& statistics_file_name) const
+                                                            const filesystem::path& statistics_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
                                                                                     outputs,
@@ -1925,11 +1924,11 @@ void TestingAnalysis::save_misclassified_samples_statistics(const Tensor<type, 2
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<type, 2>& targets,
                                                                          const Tensor<type, 2>& outputs,
                                                                          const vector<string>& labels,
-                                                                         const string& histogram_file_name) const
+                                                                         const filesystem::path& histogram_file_name) const
 {
     const Tensor<string, 2> well_classified_samples = calculate_well_classified_samples(targets,
-                                                                                            outputs,
-                                                                                            labels);
+                                                                                        outputs,
+                                                                                        labels);
 
     Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
 
@@ -1943,9 +1942,8 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 
 
 void TestingAnalysis::save_well_classified_samples_probability_histogram(const Tensor<string, 2>& well_classified_samples,
-                                                                           const string& histogram_file_name) const
+                                                                         const filesystem::path& histogram_file_name) const
 {
-
     Tensor<type, 1> well_classified_numerical_probabilities(well_classified_samples.dimension(0));
 
     for(Index i = 0; i < well_classified_numerical_probabilities.size(); i++)
@@ -1958,13 +1956,13 @@ void TestingAnalysis::save_well_classified_samples_probability_histogram(const T
 
 
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<type, 2>& targets,
-                                                                          const Tensor<type, 2>& outputs,
-                                                                          const vector<string>& labels,
-                                                                          const string& histogram_file_name) const
+                                                                       const Tensor<type, 2>& outputs,
+                                                                       const vector<string>& labels,
+                                                                       const filesystem::path& histogram_file_name) const
 {
     const Tensor<string, 2> misclassified_samples = calculate_misclassified_samples(targets,
-                                                                                          outputs,
-                                                                                          labels);
+                                                                                    outputs,
+                                                                                    labels);
 
     Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
 
@@ -1978,7 +1976,7 @@ void TestingAnalysis::save_misclassified_samples_probability_histogram(const Ten
 
 
 void TestingAnalysis::save_misclassified_samples_probability_histogram(const Tensor<string, 2>& misclassified_samples,
-                                                                          const string& histogram_file_name) const
+                                                                       const filesystem::path& histogram_file_name) const
 {
     Tensor<type, 1> misclassified_numerical_probabilities(misclassified_samples.dimension(0));
 
@@ -2357,7 +2355,7 @@ void TestingAnalysis::from_XML(const XMLDocument& document)
 }
 
 
-void TestingAnalysis::save(const string& file_name) const
+void TestingAnalysis::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -2372,18 +2370,20 @@ void TestingAnalysis::save(const string& file_name) const
 }
 
 
-void TestingAnalysis::load(const string& file_name)
+void TestingAnalysis::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
 
 
-void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targets, const Tensor<type, 1> &new_outputs, const type &new_determination)
+void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targets,
+                                                 const Tensor<type, 1> &new_outputs,
+                                                 const type &new_determination)
 {
     targets = new_targets;
     outputs = new_outputs;
@@ -2391,7 +2391,7 @@ void TestingAnalysis::GoodnessOfFitAnalysis::set(const Tensor<type, 1> &new_targ
 }
 
 
-void TestingAnalysis::GoodnessOfFitAnalysis::save(const string& file_name) const
+void TestingAnalysis::GoodnessOfFitAnalysis::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 

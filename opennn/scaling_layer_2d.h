@@ -9,9 +9,8 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-#include "scaling.h"
 #include "layer.h"
-#include "layer_forward_propagation.h"
+#include "scaling.h"
 
 namespace opennn
 {

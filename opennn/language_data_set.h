@@ -9,13 +9,12 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-
 #include "data_set.h"
 
 namespace opennn
 {
 
-class LanguageDataSet : public DataSet
+class  LanguageDataSet : public DataSet
 {
 
 public:
@@ -25,14 +24,10 @@ public:
     //                          const dimensions& = {0});
 
 
-    explicit LanguageDataSet();
+    explicit LanguageDataSet(const filesystem::path& = filesystem::path());
 
-    explicit LanguageDataSet(const vector<Index>&, const vector<string>&);
-
-    explicit LanguageDataSet(const string&);
-
-    vector<string> get_context_vocabulary() const;
-    vector<string> get_completion_vocabulary() const;
+    const vector<string>& get_context_vocabulary() const;
+    const vector<string>& get_completion_vocabulary() const;
 
     Index get_context_vocabulary_size() const;
     Index get_completion_vocabulary_size() const;
@@ -40,17 +35,17 @@ public:
     Index get_context_length() const;
     Index get_completion_length() const;
 
-    const dimensions& get_completion_dimensions() const;
     const dimensions& get_context_dimensions() const;
+    const dimensions& get_completion_dimensions() const;
 
-    const vector<vector<string>> get_documents() const;
-    const vector<vector<string>> get_targets() const;
+    const vector<vector<string>>& get_documents() const;
+    const vector<vector<string>>& get_targets() const;
 
-    void set_default_raw_variables_uses();
-    void set_raw_variables_uses(const vector<string>& new_raw_variables_uses);
-    void set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses);
+    void set_default_raw_variables_uses() override;
+    void set_raw_variable_uses(const vector<string>&) override;
+    void set_raw_variable_uses(const vector<VariableUse>&) override;
 
-    void set_context_dimensions(const dimensions& new_context_dimensions);
+    void set_context_dimensions(const dimensions&);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
@@ -58,22 +53,18 @@ public:
     void set_context_vocabulary(const vector<string>&);
     void set_completion_vocabulary(const vector<string>&);
 
-    void set_complexity(const vector<Index>&);
+    void set_data_random() override;
 
-    void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
+    void set_default() override;
 
-    void set_default();
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    Tensor<string, 2> get_text_data_file_preview() const;
+    // void save_vocabulary(const filesystem::path&, const vector<string>&);
+    void import_vocabulary(const filesystem::path&, vector<string>&);
 
-    void from_XML(const XMLDocument&);
-    void to_XML(XMLPrinter&) const;
-
-    void save_vocabulary(const string&, const vector<string>&);
-    void import_vocabulary(const string&, vector<string>&);
-
-    void save_lengths(const string&, Index, Index);
-    void import_lengths(const string&, Index&, Index&);
+    // void save_lengths(const filesystem::path&, const Index&, const Index&);
+    void import_lengths(const filesystem::path&, Index&, Index&);
 
     vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
                                         const Index& vocabulary_size,
@@ -96,7 +87,7 @@ public:
 
     void read_csv_3_language_model();
 
-    void read_csv_language_model();
+    void read_csv() override;
 
     void read_txt();
 
@@ -105,9 +96,8 @@ public:
 
 private:
 
-    Tensor<string, 2> text_data_file_preview;
-
-    // LARGE LANGUAGE MODEL
+    dimensions completion_dimensions;
+    dimensions context_dimensions;
 
     vector<string> context_vocabulary;
 
@@ -117,17 +107,14 @@ private:
 
     string completion_vocabulary_path;
 
-    Index max_completion_length = 0;
+    Index maximum_completion_length = 0;
 
-    Index max_context_length = 0;
+    Index maximum_context_length = 0;
 
     vector<vector<string>> documents;
 
     vector<vector<string>> targets;
 
-    dimensions completion_dimensions;
-
-    dimensions context_dimensions;
 };
 
 }

@@ -9,10 +9,7 @@
 #ifndef NORMALIZATIONLAYER3D_H
 #define NORMALIZATIONLAYER3D_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {

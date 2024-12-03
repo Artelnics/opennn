@@ -111,7 +111,6 @@ int main()
         // // cout << "Testing error: " << transformer_error_accuracy.first << endl;
         // // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-
         cout << "Bye!" << endl;
 
         return 0;

@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
+#include "tensors.h"
 #include "cross_entropy_error_3d.h"
 #include "probabilistic_layer_3d.h"
 #include "forward_propagation.h"
@@ -94,9 +93,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 }
 
 
-void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
-                                                 ForwardPropagation& forward_propagation,
-                                                 BackPropagation& back_propagation) const
+void CrossEntropyError3D::calculate_output_delta(const Batch&,
+                                                 ForwardPropagation&,
+                                                 BackPropagation&) const
 {
     // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
 }

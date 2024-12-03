@@ -11,8 +11,6 @@
 
 #include "layer.h"
 
-#include "layer_forward_propagation.h"
-
 namespace opennn
 {
 

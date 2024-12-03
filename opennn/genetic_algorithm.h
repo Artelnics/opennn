@@ -9,9 +9,7 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
-
 
 namespace opennn
 {
@@ -89,13 +87,11 @@ public:
 
     void perform_mutation();
 
-    void check_categorical_raw_variables();
-
     Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 
     Tensor<bool, 1> get_individual_variables(Tensor<bool,1>&);
 
-    Tensor<Index, 1> get_selected_individuals_indices ();
+    vector<Index> get_selected_individuals_indices ();
 
     vector<Index> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
 
@@ -113,9 +109,9 @@ public:
 
     void print() const;
     
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
-    void load(const string&);
+    void load(const filesystem::path&);
 
     Tensor<Tensor<type, 1>, 1> parameters;
 
@@ -147,9 +143,9 @@ private:
     
     Tensor<bool, 2> optimal_individuals_history;
 
-    vector<Index> original_input_raw_variables_indices;
+    vector<Index> original_input_raw_variable_indices;
 
-    vector<Index> original_target_raw_variables_indices;
+    vector<Index> original_target_raw_variable_indices;
 
     Index genes_number;
 

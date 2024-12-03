@@ -10,7 +10,6 @@
 #define OPTIMIZATIONALGORITHM_H
 
 #include "loss_index.h"
-#include "language_data_set.h"
 
 namespace opennn
 {
@@ -82,54 +81,12 @@ public:
 
    virtual void to_XML(XMLPrinter&) const;
 
-   void save(const string&) const;
-   void load(const string&);
+   void save(const filesystem::path&) const;
+   void load(const filesystem::path&);
 
-   static type get_elapsed_time(const time_t& beginning_time)
-   {
-       time_t current_time;
-       time(&current_time);
-       return type(difftime(current_time, beginning_time));
-   }
+   static type get_elapsed_time(const time_t& beginning_time);
 
-   void set_neural_network_variable_names()
-   {
-       DataSet* data_set = loss_index->get_data_set();
-
-       const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-       const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
-       NeuralNetwork* neural_network = loss_index->get_neural_network();
-
-       neural_network->set_input_names(input_names);
-       neural_network->set_output_namess(target_names);
-/*
-       const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-       const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-
-       vector<Descriptives> input_variable_descriptives;
-       vector<Descriptives> target_variable_descriptives;
-
-       if(!is_instance_of<LanguageDataSet>(data_set))
-           input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-
-       if(neural_network->has(Layer::Type::Scaling2D))
-       {
-           ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-
-           scaling_layer_2d->set_descriptives(input_variable_descriptives);
-           scaling_layer_2d->set_scalers(input_variable_scalers);
-       }
-
-       if(neural_network->has(Layer::Type::Unscaling))
-       {
-           target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-           UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-           unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-       }
-*/
-   }
+   void set_neural_network_variable_names();
 
 protected:
 
@@ -165,19 +122,9 @@ protected:
 
 struct OptimizationAlgorithmData
 {
-    explicit OptimizationAlgorithmData()
-    {
-    }
+    explicit OptimizationAlgorithmData();
 
-    void print() const
-    {
-        cout << "Potential parameters:" << endl
-             << potential_parameters << endl
-             << "Training direction:" << endl
-             << training_direction << endl
-             << "Initial learning rate:" << endl
-             << initial_learning_rate << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
@@ -188,7 +135,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults(const Index& epochs_number = 0);
+    explicit TrainingResults(const Index& = 0);
 
     string write_stopping_condition() const;
 
@@ -198,7 +145,7 @@ struct TrainingResults
 
     Index get_epochs_number() const;
 
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
     void print(const string& message = string());
 

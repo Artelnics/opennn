@@ -11,7 +11,6 @@
 
 #include "training_strategy.h"
 
-
 namespace opennn
 {
 
@@ -76,8 +75,8 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    vector<Index> original_input_raw_variables_indices;
-    vector<Index> original_target_raw_variables_indices;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
 
     Index trials_number = 1;
 

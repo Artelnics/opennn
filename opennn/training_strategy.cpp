@@ -6,10 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -467,15 +467,14 @@ void TrainingStrategy::set_default()
         if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
             loss_method = LossMethod::CROSS_ENTROPY_ERROR;
 
-        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification){
+        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+        {
             loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
             get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
             get_adaptive_moment_estimation()->set_display(true);
             get_adaptive_moment_estimation()->set_display_period(1);
         }
     }
-
-
 }
 
 
@@ -644,7 +643,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Cross entropy error
 
     const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
-    if (cross_entropy_element) {
+
+    if (cross_entropy_element)
+    {
         XMLDocument cross_entropy_document;
         XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
 
@@ -658,7 +659,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Weighted squared error
 
     const XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
-    if (weighted_squared_error_element) {
+
+    if (weighted_squared_error_element)
+    {
         XMLDocument weighted_squared_error_document;
         XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
 
@@ -672,7 +675,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Regularization
 
     const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
-    if (regularization_element) {
+
+    if (regularization_element)
+    {
         XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         get_loss_index()->regularization_from_XML(regularization_document);
@@ -763,7 +768,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 }
 
 
-void TrainingStrategy::save(const string& file_name) const
+void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -776,14 +781,14 @@ void TrainingStrategy::save(const string& file_name) const
 }
 
 
-void TrainingStrategy::load(const string& file_name)
+void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

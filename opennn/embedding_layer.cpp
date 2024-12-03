@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "embedding_layer.h"
@@ -28,9 +26,13 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 }
 
 
-Index EmbeddingLayer::get_input_dimension() const
+Index EmbeddingLayer::get_input_dimension_xxx() const
 {
+
     return embedding_weights.dimension(0);
+
+    // return input_dimensions_xxx;
+
 }
 
 
@@ -54,7 +56,11 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
+
     return {inputs_number_xxx};
+
+    // @todo
+    // return {};
 }
 
 
@@ -112,11 +118,15 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 {
     //input_dimensions = new_inputs_dimension;
 
+    // input_dimensions_xxx = new_inputs_dimension;
+
     inputs_number_xxx = new_inputs_number;
 
     //depth = new_depth;
 
     embedding_weights.resize(new_inputs_dimension, new_depth);
+
+    // embedding_weights.resize(input_dimensions_xxx, depth);
 
     set_parameters_random();
 
@@ -128,24 +138,33 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 }
 
 
+void EmbeddingLayer::set_input_dimensions_xxx(const Index& new_inputs_dimension)
+{
+    // input_dimensions_xxx = new_inputs_dimension;
+
+    set_embedding_weights();
+}
+
+
 void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     inputs_number_xxx = new_inputs_number;
 }
 
 
+/*
 void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
 {
     embedding_weights.resize(new_inputs_dimension, get_depth());
 
     set_parameters_random();
 }
-
+*/
 
 
 void EmbeddingLayer::set_depth(const Index& new_depth)
 {
-    embedding_weights.resize(get_input_dimension(), new_depth);
+    // embedding_weights.resize(get_input_dimension(), new_depth);
 
     set_parameters_random();
 }
@@ -163,12 +182,12 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-// void EmbeddingLayer::set_embedding_weights()
-// {
-//     embedding_weights.resize(input_dimensions, depth);
+void EmbeddingLayer::set_embedding_weights()
+{
+    embedding_weights.resize(get_input_dimension_xxx(), get_depth());
 
-//     set_parameters_random();
-// }
+    set_parameters_random();
+}
 
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
@@ -259,7 +278,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
-                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                    unique_ptr<LayerForwardPropagation>&,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
@@ -333,7 +352,7 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
         throw runtime_error("Embedding element is nullptr.\n");
 
     set_name(read_xml_string(embedding_layer_element, "Name"));
-    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+    set_input_dimensions_xxx(read_xml_index(embedding_layer_element, "InputDimensions"));
     set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
     set_depth(read_xml_index(embedding_layer_element, "Depth"));
     set_positional_encoding(read_xml_bool(embedding_layer_element, "PositionalEncoding"));
@@ -456,7 +475,7 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
-    const Index input_dimension = embedding_layer->get_input_dimension();
+    const Index input_dimension = embedding_layer->get_input_dimension_xxx();
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);

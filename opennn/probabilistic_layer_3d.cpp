@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "probabilistic_layer_3d.h"
 #include "strings_utilities.h"
@@ -126,10 +124,12 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
     decision_threshold = type(0.5);
 }
 
+
 void ProbabilisticLayer3D::set_inputs_number(const Index new_inputs_number)
 {
     inputs_number_xxx = new_inputs_number;
 }
+
 
 void ProbabilisticLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
@@ -261,7 +261,7 @@ void ProbabilisticLayer3D::calculate_activations(Tensor<type, 3>& activations) c
 
 void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                              unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                             const bool& is_training)
+                                             const bool&)
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
@@ -272,15 +272,12 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     calculate_combinations(inputs, outputs);
 
-    //if(is_training)
-        calculate_activations(outputs);
-    //else competitive(outputs);
-
+    calculate_activations(outputs);
 }
 
 
 void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          const vector<pair<type*, dimensions>>& delta_pairs,
+                                          const vector<pair<type*, dimensions>>&,
                                           unique_ptr<LayerForwardPropagation>& forward_propagation,
                                           unique_ptr<LayerBackPropagation>& back_propagation) const
 {

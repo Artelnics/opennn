@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
@@ -327,7 +325,7 @@ bool ScalingLayer2D::is_empty() const
 
 void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
+                                       const bool&)
 {
     const Index neurons_number = get_output_dimensions()[0];
 

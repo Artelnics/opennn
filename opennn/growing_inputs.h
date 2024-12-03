@@ -9,7 +9,6 @@
 #ifndef GROWINGINPUTS_H
 #define GROWINGINPUTS_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
 
 namespace opennn
@@ -44,8 +43,8 @@ public:
 
     void to_XML(XMLPrinter&) const;
     
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
 private:
 

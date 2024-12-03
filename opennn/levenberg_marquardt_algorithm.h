@@ -9,16 +9,12 @@
 #ifndef LEVENBERGMARQUARDTALGORITHM_H
 #define LEVENBERGMARQUARDTALGORITHM_H
 
-
 #include "optimization_algorithm.h"
-
-#include "../eigen/Eigen/Dense"
 
 namespace opennn
 {
 
 struct LevenbergMarquardtAlgorithmData;
-
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 {

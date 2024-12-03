@@ -6,41 +6,11 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "statistics.h"
 #include "scaling.h"
 
 namespace opennn
 {
-
-void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
-                                  const type& value_1,
-                                  const type& value_2,
-                                  const Index& raw_variable_index)
-{
-    const Index rows_number = matrix.dimension(0);
-
-    type slope = type(0);
-    type intercept = type(0);
-
-    if(value_1 > value_2)
-    {
-        slope = type(1)/(value_1-value_2);
-        intercept = -value_2/(value_1-value_2);
-    }
-    else
-    {
-        slope = type(1)/(value_2 - value_1);
-        intercept = -value_1/(value_2-value_1);
-    }
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        matrix(i, raw_variable_index) = slope*matrix(i, raw_variable_index)+intercept;
-    }
-}
 
 
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
@@ -58,9 +28,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, raw_variable_index) = matrix(i, raw_variable_index) * slope + intercept;
-    }
 }
 
 

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "perceptron_layer_3d.h"
 #include "tensors.h"
 #include "strings_utilities.h"

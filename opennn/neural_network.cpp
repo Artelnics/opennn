@@ -6,15 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
 #include "forward_propagation.h"
 #include "neural_network_back_propagation.h"
 #include "neural_network_back_propagation_lm.h"
-
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
@@ -31,6 +28,8 @@
 #include "flatten_layer.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -44,7 +43,7 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork::ModelType& model_type,
 }
 
 
-NeuralNetwork::NeuralNetwork(const string& file_name)
+NeuralNetwork::NeuralNetwork(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -377,7 +376,6 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
-
 }
 
 
@@ -638,7 +636,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 };
 
 
-void NeuralNetwork::set(const string& file_name)
+void NeuralNetwork::set(const filesystem::path& file_name)
 {
     load(file_name);
 }
@@ -1398,7 +1396,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     const Index inputs_number = get_inputs_number();
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
-    if (input_names.size() != inputs_number) 
+    if (input_names.size() != size_t(inputs_number))
         throw runtime_error("Size of input names is not equal to inputs number");
 
     for (Index i = 0; i < inputs_number; i++) 
@@ -1421,7 +1419,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     printer.OpenElement("LayersInputsIndices");
     ostringstream buffer;
 
-    for (Index i = 0; i < Index(layer_input_indices.size()); i++)
+    for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
     {
         printer.OpenElement("LayerInputsIndices");
         printer.PushAttribute("LayerIndex", to_string(i).c_str());
@@ -1430,7 +1428,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
         buffer.str("");
         
-        for (Index j = 0; j < Index(indices.size()); j++)
+        for (size_t j = 0; j < indices.size(); j++)
         {
             buffer << indices[j];
             if (j != indices.size() - 1) buffer << " ";
@@ -1707,7 +1705,7 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
         vector<Index> input_index = string_to_dimensions(string(text), " ");
 
-        if (layer_index >= layer_input_indices.size()) {
+        if ((size_t)layer_index >= layer_input_indices.size()) {
             layer_input_indices.resize(layer_index + 1);
         }
 
@@ -1718,8 +1716,6 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
 void NeuralNetwork::outputs_from_XML(const XMLDocument& document)
 {
-    ostringstream buffer;
-
     const XMLElement* root_element = document.FirstChildElement("Outputs");
 
     if(!root_element)
@@ -1791,7 +1787,7 @@ void NeuralNetwork::print() const
 }
 
 
-void NeuralNetwork::save(const string& file_name) const
+void NeuralNetwork::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -1804,9 +1800,9 @@ void NeuralNetwork::save(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_parameters(const string& file_name) const
+void NeuralNetwork::save_parameters(const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open parameters data file.\n");
@@ -1819,27 +1815,25 @@ void NeuralNetwork::save_parameters(const string& file_name) const
 }
 
 
-void NeuralNetwork::load(const string& file_name)
+void NeuralNetwork::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if(document.LoadFile(file_name.u8string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }
 
 
-void NeuralNetwork::load_parameters_binary(const string& file_name)
+void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 {
-    ifstream file;
-
-    file.open(file_name.c_str(), ios::binary);
+    ifstream file(file_name, ios::binary);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open binary file: " + file_name + "\n");
+        throw runtime_error("Cannot open binary file: " + file_name.string() + "\n");
 
     streamsize size = sizeof(type);
 
@@ -1860,9 +1854,10 @@ void NeuralNetwork::load_parameters_binary(const string& file_name)
 }
 
 
-void NeuralNetwork::save_expression_c(const string& file_name) const
+void NeuralNetwork::save_expression(const ProgrammingLanguage& programming_language,
+                                    const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open expression text file.\n");
@@ -1873,60 +1868,21 @@ void NeuralNetwork::save_expression_c(const string& file_name) const
 }
 
 
-void NeuralNetwork::save_expression_api(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_api();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_javascript(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_javascript();
-    */
-    file.close();
-}
-
-
-void NeuralNetwork::save_expression_python(const string& file_name) const
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-/*
-    file << get_expression_python();
-*/
-    file.close();
-}
-
-
-void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const string & file_name)
+void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path& file_name)
 {
     const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open " + file_name + " file.\n");
+        throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
     const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
 
-    for(Index i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < size_t(outputs_number); i++)
     {
         file << output_names[i];
 

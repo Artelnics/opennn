@@ -6,12 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "stochastic_gradient_descent.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "language_data_set.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -225,8 +225,13 @@ TrainingResults StochasticGradientDescent::perform_training()
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
+    const Index training_batches_number = (training_batch_samples_number != 0)
+                                              ? training_samples_number / training_batch_samples_number
+                                              : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+                                               ? selection_samples_number / selection_batch_samples_number
+                                               : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
@@ -460,30 +465,22 @@ string StochasticGradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(7, 2);
+    Tensor<string, 2> string_matrix(7, 2);
 
-    labels_values(0,0) = "Inital learning rate";
-    labels_values(0,1) = to_string(double(initial_learning_rate));
+    const string apply_momentum = momentum > type(0)
+        ? "true"
+        : "false";
 
-    labels_values(1,0) = "Inital decay";
-    labels_values(1,1) = to_string(double(initial_decay));
+    string_matrix.setValues({
+    {"Inital learning rate", to_string(double(initial_learning_rate))},
+    {"Inital decay", to_string(double(initial_decay))},
+    {"Apply momentum", apply_momentum},
+    {"Training loss goal", to_string(double(training_loss_goal))},
+    {"Maximum epochs number", to_string(maximum_epochs_number)},
+    {"Maximum time", write_time(maximum_time)},
+    {"Batch samples number", to_string(batch_samples_number)}});
 
-    labels_values(2,0) = "Apply momentum";    
-    momentum > type(0) ? labels_values(2,1) = "true" : labels_values(2,1) = "false";
-
-    labels_values(3,0) = "Training loss goal";
-    labels_values(3,1) = to_string(double(training_loss_goal));
-
-    labels_values(4,0) = "Maximum epochs number";
-    labels_values(4,1) = to_string(maximum_epochs_number);
-
-    labels_values(5,0) = "Maximum time";
-    labels_values(5,1) = write_time(maximum_time);
-
-    labels_values(6,0) = "Batch samples number";
-    labels_values(6,1) = to_string(batch_samples_number);
-
-    return labels_values;
+    return string_matrix;
 }
 
 

@@ -6,13 +6,10 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "../eigen/Eigen/Dense"
 
 #include "strings_utilities.h"
 #include "tensors.h"
-
 
 namespace opennn
 {
@@ -374,6 +371,7 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, Tensor<type, 2>&
     for(Index i = 0; i < columns_number; i++)
     {
         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
         column.device(*thread_pool_device) = column / vector;
     }
@@ -386,7 +384,8 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
         column.device(*thread_pool_device) = column / vector;
     }
@@ -669,12 +668,12 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 }
 
 
-void save_csv(const Tensor<type,2>& data, const string& filename)
+void save_csv(const Tensor<type,2>& data, const filesystem::path& filename)
 {
     ofstream file(filename);
 
     if(!file.is_open())
-      throw runtime_error("Cannot open matrix data file: " + filename + "\n");
+      throw runtime_error("Cannot open matrix data file: " + filename.string() + "\n");
 
     file.precision(20);
 
