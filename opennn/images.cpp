@@ -206,43 +206,43 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, 
-                                        const int& rows_number,
-                                        const int& columns_number,
-                                        const int& padding)
-{
-    Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
+// Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
+//                                         const int& rows_number,
+//                                         const int& columns_number,
+//                                         const int& padding)
+// {
+//     Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
 
-    unsigned char* image_data = image.data();
+//     unsigned char* image_data = image.data();
 
-    const int channels = 3;
+//     const int channels = 3;
 
-    if(rows_number % 4 == 0)
-    {
-        copy(image_data,
-             image_data + columns_number * channels * rows_number,
-             data_without_padding.data());
-    }
-    else
-    {
-        for(int i = 0; i < rows_number; i++)
-        {
-            if(i == 0)
-            {
-                copy(image_data,
-                     image_data + columns_number * channels, data_without_padding.data());
-            }
-            else
-            {
-                copy(image_data + channels * columns_number * i + padding * i,
-                    image_data + channels * columns_number * (i+1) + padding * i,
-                    data_without_padding.data() + channels * columns_number * i);
-            }
-        }
-    }
+//     if(rows_number % 4 == 0)
+//     {
+//         copy(image_data,
+//              image_data + columns_number * channels * rows_number,
+//              data_without_padding.data());
+//     }
+//     else
+//     {
+//         for(int i = 0; i < rows_number; i++)
+//         {
+//             if(i == 0)
+//             {
+//                 copy(image_data,
+//                      image_data + columns_number * channels, data_without_padding.data());
+//             }
+//             else
+//             {
+//                 copy(image_data + channels * columns_number * i + padding * i,
+//                     image_data + channels * columns_number * (i+1) + padding * i,
+//                     data_without_padding.data() + channels * columns_number * i);
+//             }
+//         }
+//     }
 
-    return data_without_padding;
-}
+//     return data_without_padding;
+// }
 
 
 void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)

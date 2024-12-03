@@ -35,80 +35,111 @@ int main()
         _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
         */
 
-        // Data set
+        // // Data set
 
-        LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
-        cout<<language_data_set.get_data().dimensions()<<endl;
-        const Index embedding_depth = 64;
-        const Index perceptron_depth = 128;
-        const Index heads_number = 4;
-        const Index number_of_layers = 1;
+        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
+        // // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
+        // // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
 
-        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+        // cout<<language_data_set.get_context_length()<<endl;
+        // cout<<language_data_set.get_completion_length()<<endl;
 
+        // const Index embedding_depth = 64;
+        // const Index perceptron_depth = 128;
+        // const Index heads_number = 4;
+        // const Index number_of_layers = 1;
 
-        // Neural network
-        const dimensions completion_dimensions = language_data_set.get_completion_dimensions();
-        const dimensions context_dimensions = language_data_set.get_context_dimensions();
-
-        Transformer transformer(completion_dimensions, context_dimensions, complexity);
-        transformer.set_model_type_string("TextClassification");
-        transformer.set_dropout_rate(0);
-
-        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
+        // const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
 
 
-        // Training strategy
+        // // Neural network
+        // const dimensions completion_dimensions = language_data_set.get_completion_dimensions();
+        // const dimensions context_dimensions = language_data_set.get_context_dimensions();
 
-        TrainingStrategy training_strategy(&transformer, &language_data_set);
+        // Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        // transformer.set_model_type_string("TextClassification");
+        // transformer.set_dropout_rate(0);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+        // cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
 
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        // const filesystem::path& file_name = "/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml";
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // ofstream file(file_name);
 
-        training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
+        // if (!file.is_open())
+        //     throw runtime_error("file not found");
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.9);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
-
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
-
-        TrainingResults training_results = training_strategy.perform_training();
+        // XMLPrinter printer;
+        // language_data_set.to_XML(printer);
+        // file << printer.CStr();
 
 
-        //Testing
+        // // Training strategy
 
-        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
-        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+        // TrainingStrategy training_strategy(&transformer, &language_data_set);
 
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
 
-        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
+        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        // cout << "Calculating confusion...." << endl;
-        // const Tensor<Index, 2> confusion = testing_analysis.calculate_sentimental_analysis_transformer_confusion();
-        // cout << "\nConfusion matrix:\n" << confusion << endl;
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        // string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
-        // cout<<prediction<<endl;
+        // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
 
-        // string translation = testing_analysis.test_transformer({"I like dogs."},false);
-        // cout<<translation<<endl;
+        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.9);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
+        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
+        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+
+        // training_strategy.get_adaptive_moment_estimation()->set_display(true);
+        // training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+
+        // TrainingResults training_results = training_strategy.perform_training();
+
+
+        // //Testing
+
+        // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+
+        // cout << "TESTING ANALYSIS:" << endl;
+        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+
+        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
+
+        // // cout << "Calculating confusion...." << endl;
+        // // const Tensor<Index, 2> confusion = testing_analysis.calculate_sentimental_analysis_transformer_confusion();
+        // // cout << "\nConfusion matrix:\n" << confusion << endl;
+
+        // // string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
+        // // cout<<prediction<<endl;
+
+        // // string translation = testing_analysis.test_transformer({"I like dogs."},false);
+        // // cout<<translation<<endl;
 
 
 
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
+
+        // Data Set
+
+        LanguageDataSet language_data_set({0},{0});
+
+        language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
+
+
+
+        const dimensions completion_dimensions = {language_data_set.get_completion_length(),language_data_set.get_completion_vocabulary_size()};
+        const dimensions context_dimensions = {language_data_set.get_context_length(),language_data_set.get_context_vocabulary_size()};
+
+        cout<<language_data_set.get_context_length()<<endl;
+        cout<<language_data_set.get_completion_length()<<endl;
+
+        cout<<language_data_set.get_completion_vocabulary_size()<<endl;
+        cout<<language_data_set.get_context_vocabulary_size()<<endl;
 
         // // Testing analysis
 

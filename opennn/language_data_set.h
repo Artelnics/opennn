@@ -19,9 +19,7 @@ class  LanguageDataSet : public DataSet
 
 public:
 
-    // explicit LanguageDataSet(const Index& = 0,
-    //                          const dimensions& = {0},
-    //                          const dimensions& = {0});
+    explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
 
     explicit LanguageDataSet(const filesystem::path& = filesystem::path());
@@ -46,6 +44,7 @@ public:
     void set_raw_variable_uses(const vector<VariableUse>&) override;
 
     void set_context_dimensions(const dimensions&);
+    void set_completion_dimensions(const dimensions&);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
@@ -96,7 +95,7 @@ public:
 
 private:
 
-    dimensions completion_dimensions;
+        dimensions completion_dimensions;
     dimensions context_dimensions;
 
     vector<string> context_vocabulary;
@@ -107,7 +106,7 @@ private:
 
     string completion_vocabulary_path;
 
-    Index maximum_completion_length = 0;
+    Index maximum_completion_length;
 
     Index maximum_context_length = 0;
 

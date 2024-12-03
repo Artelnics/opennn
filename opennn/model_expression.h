@@ -1571,13 +1571,13 @@ string get_expression_python(const NeuralNetwork& neural_network)
     if(model_type == NeuralNetwork::ModelType::AutoAssociation)
     {
 /*
-        buffer << "\t" << "minimum = " << to_string(distances_descriptives.minimum) << endl;
+        buffer << "\t" << "minimum = " << to_string(distance_descriptives.minimum) << endl;
         buffer << "\t" << "first_quartile = " << to_string(auto_associative_distances_box_plot.first_quartile) << endl;
         buffer << "\t" << "median = " << to_string(auto_associative_distances_box_plot.median) << endl;
-        buffer << "\t" << "mean = " << to_string(distances_descriptives.mean) << endl;
+        buffer << "\t" << "mean = " << to_string(distance_descriptives.mean) << endl;
         buffer << "\t" << "third_quartile = "  << to_string(auto_associative_distances_box_plot.third_quartile) << endl;
-        buffer << "\t" << "maximum = " << to_string(distances_descriptives.maximum) << endl;
-        buffer << "\t" << "standard_deviation = " << to_string(distances_descriptives.standard_deviation) << endl;
+        buffer << "\t" << "maximum = " << to_string(distance_descriptives.maximum) << endl;
+        buffer << "\t" << "standard_deviation = " << to_string(distance_descriptives.standard_deviation) << endl;
         buffer << "\n" << endl;
 */
     }

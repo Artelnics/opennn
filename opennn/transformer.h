@@ -68,21 +68,21 @@ private:
 
     string name = "transformer";
 
-    Index input_length;
+    Index input_length = 0;
 
-    Index context_length;
+    Index context_length = 0;
 
-    Index input_dimensions_xxx;
+    Index input_dimensions_xxx = 0;
 
-    Index context_dimension_xxx;
+    Index context_dimension_xxx = 0;
 
-    Index embedding_depth;
+    Index embedding_depth = 0;
 
-    Index perceptron_depth;
+    Index perceptron_depth = 0;
 
-    Index heads_number;
+    Index heads_number = 0;
 
-    Index layers_number;
+    Index layers_number = 0;
 
     type dropout_rate = 0;
 
@@ -90,22 +90,6 @@ private:
     vector<string> context_vocabulary;
 };
 
-
-struct TransformerForwardPropagation : ForwardPropagation
-{
-    TransformerForwardPropagation(const Index& new_batch_samples = 0, NeuralNetwork* new_neural_network = nullptr)
-    {
-        set(new_batch_samples, new_neural_network);
-    }
-
-    void set(const Index&, NeuralNetwork*);
-
-    void print() const;
-
-    Index batch_samples_number = 0;
-
-    Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
-};
 };
 
 #endif // TRANSFORMER_H

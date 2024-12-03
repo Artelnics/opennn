@@ -32,17 +32,17 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 
 
 Transformer::Transformer(const dimensions& input_dimensions, const dimensions& context_dimensions, const vector <Index>& complexity)
-{/*
-    if(input_dimension.size() != 2)
+{
+    if(input_dimensions.size() != 2)
         throw runtime_error("Input dimensions size must be 2.");
     if(context_dimensions.size() != 2)
         throw runtime_error("Context dimensions size must be 2.");
     if(complexity.size() != 4)
         throw runtime_error("Complexity size must be 4.");
 
-    input_length = input_dimension[0];
+    input_length = input_dimensions[0];
     context_length = context_dimensions[0];
-    input_dimensions_xxx = input_dimension[1];
+    input_dimensions_xxx = input_dimensions[1];
     context_dimension_xxx = context_dimensions[1];
     embedding_depth = complexity[0];
     perceptron_depth = complexity[1];
@@ -57,7 +57,7 @@ Transformer::Transformer(const dimensions& input_dimensions, const dimensions& c
         perceptron_depth,
         heads_number,
         layers_number);
-*/
+
 
 //    set({input_dimensions[0], context_dimensions[0], input_dimensions[1], context_dimensions[1], complexity[0], complexity[1], complexity[2], complexity[3]});
 }
@@ -688,61 +688,6 @@ void Transformer::load_transformer(const string& path)
     cout << "Loading transformer model..." << endl;
 
     load(path);
-}
-
-
-void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-{
-    Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-    batch_samples_number = new_batch_samples;
-
-    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
-
-    const Index layers_number = layers.size();
-
-    layers.resize(layers_number);
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Embedding:
-            layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::MultiheadAttention:
-            layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Perceptron3D:
-            layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::Probabilistic3D:
-            layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
-
-        default: break;
-        }
-    }
-}
-
-
-void TransformerForwardPropagation::print() const
-{
-    cout << "Transformer forward propagation" << endl;
-
-    const Index layers_number = layers.size();
-
-    cout << "Layers number: " << layers_number << endl;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
-
-        layers[i]->print();
-    }
 }
 
 };

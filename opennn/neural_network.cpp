@@ -100,12 +100,6 @@ const vector<string>& NeuralNetwork::get_input_names() const
 }
 
 
-string NeuralNetwork::get_input_name(const Index& index) const
-{
-    return input_names[index];
-}
-
-
 Index NeuralNetwork::get_input_index(const string& name) const
 {
     for(Index i = 0; i < Index(input_names.size()); i++)
@@ -149,12 +143,6 @@ string NeuralNetwork::get_model_type_string() const
 const vector<string>& NeuralNetwork::get_output_names() const
 {
     return output_names;
-}
-
-
-string NeuralNetwork::get_output_name(const Index& index) const
-{
-    return output_names[index];
 }
 
 
@@ -774,12 +762,7 @@ Index NeuralNetwork::get_inputs_number() const
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
-    Index inputs_number = 1;
-
-    for (Index dimension : input_dimensions) 
-        inputs_number *= dimension;
-    
-    return inputs_number;
+    return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
 }
 
 
@@ -792,14 +775,7 @@ Index NeuralNetwork::get_outputs_number() const
 
     const dimensions output_dimensions = last_layer->get_output_dimensions();
 
-    const Index outputs_rank = output_dimensions.size();
-
-    Index outputs_number = 1;
-
-    for(Index i = 0; i < outputs_rank; i++)
-        outputs_number *= output_dimensions[i];
-
-    return outputs_number;
+    return accumulate(output_dimensions.begin(), output_dimensions.end(), Index(1), multiplies<Index>());
 }
 
 
@@ -831,19 +807,16 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    const Index layers_number = get_layers_number();
-
     Index position = 0;
 
-    for(Index i = 0; i < layers_number; i++)
+    for (const auto& layer : layers)
     {
-        const Tensor<type, 1> layer_parameters = layers[i]->get_parameters();
+        const Tensor<type, 1> layer_parameters = layer->get_parameters();
 
-        // @todo use memcpy
+        copy(layer_parameters.data(),
+             layer_parameters.data() + layer_parameters.size(),
+             parameters.data() + position);
 
-        for(Index j = 0; j < layer_parameters.size(); j++)
-            parameters(j + position) = layer_parameters(j);
-        
         position += layer_parameters.size();
     }
 
@@ -927,8 +900,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     throw runtime_error("The neural network has no trainable layers.");
 }
 
-
-Index NeuralNetwork::get_perceptron_layers_number() const
+Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
 {
     const Index layers_number = get_layers_number();
 
@@ -937,132 +909,36 @@ Index NeuralNetwork::get_perceptron_layers_number() const
     #pragma omp parallel for reduction(+: count)
 
     for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Perceptron)
+        if(layers[i]->get_type() == layer_type)
             count++;
 
     return count;
 }
 
 
-Index NeuralNetwork::get_probabilistic_layers_number() const
-{
-    const Index layers_number = get_layers_number();
+// bool NeuralNetwork::is_input_layer(const vector<Index>& this_layer_inputs_indices) const
+// {
+//     const Index input_layers_number = this_layer_inputs_indices.size();
 
-    Index count = 0;
+//     for(Index i = 0; i < input_layers_number; i++)
+//         if(this_layer_inputs_indices[i] == -1)
+//             return true;
 
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Probabilistic)
-            count++;
-
-    return count;
-}
+//     return false;
+// }
 
 
-Index NeuralNetwork::get_long_short_term_memory_layers_number() const
-{
-    const Index layers_number = get_layers_number();
+// bool NeuralNetwork::is_context_layer(const vector<Index>& this_layer_inputs_indices) const
+// {
+//     // @todo Is this ok?
+//     const Index layers_number = get_layers_number();
 
-    Index count = 0;
+//     for(Index i = 0; i < layers_number; i++)
+//         if(this_layer_inputs_indices[i] == -2)
+//             return true;
 
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::LongShortTermMemory)
-            count++;
- 
-    return count;
-}
-
-
-Index NeuralNetwork::get_flatten_layers_number() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Flatten)
-            count++;
-
-    return count;
-}
-
-
-Index NeuralNetwork::get_convolutional_layers_number() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Convolutional)
-            count++;
-
-    return count;
-}
-
-
-Index NeuralNetwork::get_pooling_layers_number() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Pooling)
-            count++;
-
-    return count;
-}
-
-
-Index NeuralNetwork::get_recurrent_layers_number() const
-{
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == Layer::Type::Recurrent)
-            count++;
-
-    return count;
-}
-
-
-bool NeuralNetwork::is_input_layer(const vector<Index>& this_layer_inputs_indices) const
-{
-    const Index input_layers_number = this_layer_inputs_indices.size();
-
-    for(Index i = 0; i < input_layers_number; i++)
-        if(this_layer_inputs_indices[i] == -1)
-            return true;
-
-    return false;
-}
-
-
-bool NeuralNetwork::is_context_layer(const vector<Index>& this_layer_inputs_indices) const
-{   
-    // @todo Is this ok?
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(this_layer_inputs_indices[i] == -2)
-            return true;
-
-    return false;
-}
+//     return false;
+// }
 
 
 void NeuralNetwork::set_parameters_constant(const type& value) const
@@ -1330,7 +1206,7 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index perceptron_layers_number = get_perceptron_layers_number();
+    const Index perceptron_layers_number = get_layers_number(Layer::Type::Perceptron);
 
     Tensor<string, 2> information(perceptron_layers_number, 3);
 
@@ -1361,7 +1237,7 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 {
     const Index layers_number = get_layers_number();
 
-    const Index probabilistic_layers_number = get_probabilistic_layers_number();
+    const Index probabilistic_layers_number = get_layers_number(Layer::Type::Probabilistic);
 
     Tensor<string, 2> information(probabilistic_layers_number, 3);
 
@@ -1835,20 +1711,14 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
     if(!file.is_open())
         throw runtime_error("Cannot open binary file: " + file_name.string() + "\n");
 
-    streamsize size = sizeof(type);
-
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> new_parameters(parameters_number);
 
-    type value = 0;
+    file.read(reinterpret_cast<char*>(new_parameters.data()), parameters_number * sizeof(type));
 
-    for(Index i = 0; i < parameters_number; i++)
-    {
-        file.read(reinterpret_cast<char*>(&value), size);
-
-        new_parameters(i) = value;
-    }
+    if (!file)
+        throw runtime_error("Error reading binary file: " + file_name.string());
 
     set_parameters(new_parameters);
 }
@@ -2037,8 +1907,8 @@ void NeuralNetworkBackPropagation::print() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        cout << "Layer " << i << ": ";
-        cout << neural_network->get_layer(i)->get_type_string() << endl;
+        cout << "Layer " << i << ": "
+             << neural_network->get_layer(i)->get_type_string() << endl;
 
         if (!layers[i]) continue;
 

@@ -65,54 +65,6 @@ dimensions MultiheadAttentionLayer::get_output_dimensions() const
 }
 
 
-Tensor<type, 3> MultiheadAttentionLayer::get_query_weights() const
-{
-    return query_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_query_biases() const
-{
-    return query_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_key_weights() const
-{
-    return key_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_key_biases() const
-{
-    return key_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_value_weights() const
-{
-    return value_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_value_biases() const
-{
-    return value_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_projection_weights() const
-{
-    return projection_weights;
-}
-
-
-Tensor<type, 1> MultiheadAttentionLayer::get_projection_biases() const
-{
-    return projection_biases;
-}
-
-
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
     return

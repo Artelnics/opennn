@@ -3051,14 +3051,14 @@ bool XMLPrinter::Visit(const XMLUnknown& unknown )
     return true;
 }
 
-void add_xml_element(XMLPrinter& printer, const std::string& name, const std::string& value)
+void add_xml_element(XMLPrinter& printer, const string& name, const string& value)
 {
     printer.OpenElement(name.c_str());
     printer.PushText(value.c_str());
     printer.CloseElement();
 }
 
-type read_xml_type(const XMLElement* root, const std::string& element_name)
+type read_xml_type(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
@@ -3090,7 +3090,7 @@ Index read_xml_index(const XMLElement* root, const string& element_name)
 }
 
 
-bool read_xml_bool(const XMLElement* root, const std::string& element_name)
+bool read_xml_bool(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 
@@ -3106,7 +3106,7 @@ bool read_xml_bool(const XMLElement* root, const std::string& element_name)
 }
 
 
-string read_xml_string(const XMLElement* root, const std::string& element_name)
+string read_xml_string(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
 

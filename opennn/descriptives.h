@@ -22,13 +22,13 @@ struct Descriptives
 
   void set_standard_deviation(const type&);
 
-  Tensor<type, 1> to_vector() const;
+  // Tensor<type, 1> to_vector() const;
 
 //  bool has_minimum_minus_one_maximum_one();
 
 //  bool has_mean_zero_standard_deviation_one();
 
-  void save(const string &file_name) const;
+  void save(const filesystem::path&) const;
 
   void print(const string& = "Descriptives:") const;
 
