@@ -3043,7 +3043,7 @@ void DataSet::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
