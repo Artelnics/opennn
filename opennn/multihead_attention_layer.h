@@ -46,18 +46,6 @@ public:
 
     dimensions get_output_dimensions() const final;
 
-    Tensor<type, 3> get_query_weights() const;
-    Tensor<type, 2> get_query_biases() const;
-
-    Tensor<type, 3> get_key_weights() const;
-    Tensor<type, 2> get_key_biases() const;
-
-    Tensor<type, 3> get_value_weights() const;
-    Tensor<type, 2> get_value_biases() const;
-
-    Tensor<type, 3> get_projection_weights() const;
-    Tensor<type, 1> get_projection_biases() const;
-
     Index get_parameters_number() const final;
     Tensor<type, 1> get_parameters() const final;
 

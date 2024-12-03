@@ -230,7 +230,9 @@ void ModelSelection::from_XML(const XMLDocument& document)
         set_neurons_selection_method(read_xml_string(neurons_selection_element, "NeuronsSelectionMethod"));
 
         const XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
-        if (growing_neurons_element) {
+
+        if (growing_neurons_element)
+        {
             XMLDocument growing_neurons_document;
             growing_neurons_document.InsertFirstChild(growing_neurons_element->DeepClone(&growing_neurons_document));
             growing_neurons.from_XML(growing_neurons_document);

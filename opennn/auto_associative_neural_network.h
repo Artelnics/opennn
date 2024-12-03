@@ -21,10 +21,10 @@ class AutoAssociativeNeuralNetwork : public NeuralNetwork
 
 public:
 
-   explicit AutoAssociativeNeuralNetwork();
+    explicit AutoAssociativeNeuralNetwork();
 
     BoxPlot get_auto_associative_distances_box_plot() const;
-    Descriptives get_distances_descriptives() const;
+    Descriptives get_distance_descriptives() const;
 
     type get_box_plot_minimum() const;
     type get_box_plot_first_quartile() const;
@@ -48,10 +48,10 @@ public:
     void set_distances_box_plot(BoxPlot&);
     void set_multivariate_distances_box_plot(Tensor<BoxPlot, 1>&);
     void set_variable_distance_names(const vector<string>&);
-    void set_distances_descriptives(const Descriptives&);
+    void set_distance_descriptives(const Descriptives&);
 
     void box_plot_from_XML(const XMLDocument&);
-    void distances_descriptives_from_XML(const XMLDocument&);
+    void distance_descriptives_from_XML(const XMLDocument&);
     void multivariate_box_plot_from_XML(const XMLDocument&);
 
     void to_XML(XMLPrinter&) const;
@@ -71,7 +71,7 @@ private:
 
     Tensor<BoxPlot, 1> multivariate_distances_box_plot;
 
-    Descriptives distances_descriptives;
+    Descriptives distance_descriptives;
 
     vector<string> variable_distance_names;
 

@@ -92,11 +92,7 @@ protected:
 
 struct NeuronsSelectionResults
 {
-    explicit NeuronsSelectionResults();
-
-    // Epochs constructor
-
-   explicit NeuronsSelectionResults(const Index& maximum_epochs_number);
+   explicit NeuronsSelectionResults(const Index& maximum_epochs_number = 0);
 
    void resize_history(const Index& new_size);
 

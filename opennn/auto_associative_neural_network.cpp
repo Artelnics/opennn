@@ -23,15 +23,18 @@ BoxPlot AutoAssociativeNeuralNetwork::get_auto_associative_distances_box_plot() 
     return auto_associative_distances_box_plot;
 }
 
-Descriptives AutoAssociativeNeuralNetwork::get_distances_descriptives() const
+
+Descriptives AutoAssociativeNeuralNetwork::get_distance_descriptives() const
 {
-    return distances_descriptives;
+    return distance_descriptives;
 }
+
 
 type AutoAssociativeNeuralNetwork::get_box_plot_minimum() const
 {
     return auto_associative_distances_box_plot.minimum;
 }
+
 
 type AutoAssociativeNeuralNetwork::get_box_plot_first_quartile() const
 {
@@ -159,9 +162,9 @@ void AutoAssociativeNeuralNetwork::set_multivariate_distances_box_plot(Tensor<Bo
 }
 
 
-void AutoAssociativeNeuralNetwork::set_distances_descriptives(const Descriptives& new_distances_descriptives)
+void AutoAssociativeNeuralNetwork::set_distance_descriptives(const Descriptives& new_distance_descriptives)
 {
-    distances_descriptives = new_distances_descriptives;
+    distance_descriptives = new_distance_descriptives;
 }
 
 
@@ -230,7 +233,7 @@ void AutoAssociativeNeuralNetwork::box_plot_from_XML(const XMLDocument& document
 }
 
 
-void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocument& document)
+void AutoAssociativeNeuralNetwork::distance_descriptives_from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("DistancesDescriptives");
 
@@ -285,9 +288,9 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocu
     if(standard_deviation_element->GetText())
         new_standard_deviation = type(stod(standard_deviation_element->GetText()));
 
-    const Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
+    const Descriptives distance_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
 
-    set_distances_descriptives(distances_descriptives);
+    set_distance_descriptives(distance_descriptives);
 
 }
 
@@ -534,11 +537,8 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     for(Index i = 0; i < outputs_number; i++)
     {
         file_stream.OpenElement("Output");
-
         file_stream.PushAttribute("Index", to_string(i+1).c_str());
-
         file_stream.PushText(output_names[i].c_str());
-
         file_stream.CloseElement();
     }
 
@@ -591,7 +591,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
     // DistancesDescriptives
 
-    Descriptives distances_descriptives = get_distances_descriptives();
+    Descriptives distance_descriptives = get_distance_descriptives();
 
     file_stream.OpenElement("DistancesDescriptives");
 
@@ -600,7 +600,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("Minimum");
 
     buffer.str("");
-    buffer << distances_descriptives.minimum;
+    buffer << distance_descriptives.minimum;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -611,7 +611,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("Maximum");
 
     buffer.str("");
-    buffer << distances_descriptives.maximum;
+    buffer << distance_descriptives.maximum;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -622,7 +622,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("Mean");
 
     buffer.str("");
-    buffer << distances_descriptives.mean;
+    buffer << distance_descriptives.mean;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -633,7 +633,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
     file_stream.OpenElement("StandardDeviation");
 
     buffer.str("");
-    buffer << distances_descriptives.standard_deviation;
+    buffer << distance_descriptives.standard_deviation;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -762,9 +762,9 @@ void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 
         if(element)
         {
-            XMLDocument distances_descriptives_document;
-            distances_descriptives_document.InsertFirstChild(element->DeepClone(&distances_descriptives_document));
-            distances_descriptives_from_XML(distances_descriptives_document);
+            XMLDocument distance_descriptives_document;
+            distance_descriptives_document.InsertFirstChild(element->DeepClone(&distance_descriptives_document));
+            distance_descriptives_from_XML(distance_descriptives_document);
         }
     }
 

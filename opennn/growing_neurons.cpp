@@ -115,7 +115,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         for(Index trial = 0; trial < trials_number; trial++)
         {
-
             neural_network->set_parameters_random();
 
             training_results = training_strategy->perform_training();

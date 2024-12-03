@@ -147,45 +147,25 @@ void DataSet::RawVariable::from_XML(const XMLDocument& document)
 
     if (type == RawVariableType::Categorical) 
     {
-        const std::string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
+        const string categories_text = read_xml_string(document.FirstChildElement(), "Categories");
         categories = get_tokens(categories_text, ";");
     }
 }
 
 
-void DataSet::RawVariable::to_XML(XMLPrinter& file_stream) const
+void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
 {
-    // Name
-
-    file_stream.OpenElement("Name");
-    file_stream.PushText(name.c_str());
-    file_stream.CloseElement();
-
-    // Scaler
-
-    file_stream.OpenElement("Scaler");
-    file_stream.PushText(get_scaler_string().c_str());
-    file_stream.CloseElement();
-
-    // raw_variable use
-
-    file_stream.OpenElement("Use");
-    file_stream.PushText(get_use_string().c_str());
-    file_stream.CloseElement();
-
-    // Type
-
-    file_stream.OpenElement("Type");
-    file_stream.PushText(get_type_string().c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer,"Name", name);
+    add_xml_element(printer,"Scaler", get_scaler_string());
+    add_xml_element(printer,"Use", get_use_string());
+    add_xml_element(printer,"Type", get_type_string());
 
     if(type == RawVariableType::Categorical || type == RawVariableType::Binary)
     {
         if(categories.size() == 0) 
             return;
-        file_stream.OpenElement("Categories");
-        file_stream.PushText(string_tensor_to_string(categories).c_str());
-        file_stream.CloseElement();
+
+        add_xml_element(printer,"Categories", string_tensor_to_string(categories));
     }
 }
 
@@ -203,7 +183,6 @@ void DataSet::RawVariable::print() const
         cout << "Categories: " << endl;
         print_vector(categories);
     }
-
 }
 
 
@@ -500,17 +479,8 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
 Index DataSet::get_samples_number(const SampleUse& sample_use) const
 {
-    const Index samples_number = get_samples_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+:count)
-
-    for (Index i = 0; i < samples_number; i++)
-        if (sample_uses[i] == sample_use)
-            count++;
-
-    return count;
+    return count_if(sample_uses.begin(), sample_uses.end(),
+                    [&sample_use](const SampleUse& new_sample_use) { return new_sample_use == sample_use; });
 }
 
 
@@ -680,6 +650,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
     };
 
     Index index = 0;
+
     set_sample_uses(SampleUse::Training, training_samples_number, index);
     set_sample_uses(SampleUse::Selection, selection_samples_number, index);
     set_sample_uses(SampleUse::Testing, testing_samples_number, index);
@@ -1025,7 +996,7 @@ Index DataSet::get_variables_number() const
     Index count = 0;
 
     for (Index i = 0; i < raw_variables_number; i++)
-        count += (raw_variables[i].type == RawVariableType::Categorical)
+        count += raw_variables[i].type == RawVariableType::Categorical
                      ? raw_variables[i].get_categories_number()
                      : 1;
 
@@ -2130,7 +2101,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             continue;
         }
 
-       
         switch (raw_variable.type)
         {
 
@@ -2327,15 +2297,11 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_sampl
 
     const Index samples_number = used_sample_indices.size();
 
-    // Count used negative samples
-
     Index negative_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
         if(data(used_sample_indices[i], target_index) < type(NUMERIC_LIMITS_MIN))
             negative_samples_number++;
-
-    // Get used negative samples indices
 
     vector<Index> negative_used_sample_indices(negative_samples_number);
     Index negative_sample_index = 0;
@@ -2366,8 +2332,6 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(con
     for(Index i = 0; i < samples_number; i++)
         if(abs(data(used_sample_indices[i], class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             class_samples_number++;
-
-    // Get used class samples indices
 
     vector<Index> class_used_sample_indices(class_samples_number, 0);
 
@@ -2437,7 +2401,7 @@ Index DataSet::get_gmt() const
 }
 
 
-void DataSet::set_gmt(Index& new_gmt)
+void DataSet::set_gmt(const Index& new_gmt)
 {
     gmt = new_gmt;
 }
@@ -2529,7 +2493,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
     const Index variables_number = get_variables_number();
 
     for(Index j = 0; j < variables_number; j++)
-        if(isnan(data(row_index,j)))
+        if(isnan(data(row_index, j)))
             return true;
 
     return false;
@@ -2887,6 +2851,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
 {
     if (model_type == ModelType::Forecasting)
         throw runtime_error("Forecasting");
+
     if (model_type == ModelType::ImageClassification)
         throw runtime_error("Image classification");
 
@@ -2936,6 +2901,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
+
     printer.CloseElement();  
 
     printer.CloseElement();
@@ -3009,9 +2975,10 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (missing_values_number > 0)
     {
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++) {
-            raw_variables_missing_values_number(i) = std::stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
-        }
+
+        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
+            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
 

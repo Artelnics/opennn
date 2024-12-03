@@ -60,14 +60,12 @@ public:
    bool is_empty() const;
 
    const vector<string>& get_input_names() const;
-   string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
    const vector<string>& get_output_names() const;
-   string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
    const vector<unique_ptr<Layer>>& get_layers() const;
@@ -127,19 +125,13 @@ public:
    static bool is_trainable(const Layer::Type&);
 
    Index get_layers_number() const;
+   Index get_layers_number(const Layer::Type&) const;
+
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
-   Index get_perceptron_layers_number() const;
-   Index get_probabilistic_layers_number() const;
-   Index get_flatten_layers_number() const;
-   Index get_convolutional_layers_number() const;
-   Index get_pooling_layers_number() const;
-   Index get_long_short_term_memory_layers_number() const;
-   Index get_recurrent_layers_number() const;
-
-   bool is_input_layer(const vector<Index>&) const;
-   bool is_context_layer(const vector<Index>&) const;
+   // bool is_input_layer(const vector<Index>&) const;
+   // bool is_context_layer(const vector<Index>&) const;
 
    // Architecture
 
