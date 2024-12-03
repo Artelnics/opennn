@@ -4229,21 +4229,15 @@ void DataSet::check_separators(const string& line) const
 
 bool DataSet::has_binary_raw_variables() const
 {
-    for (const auto& raw_variable : raw_variables)
-        if (raw_variable.type == RawVariableType::Binary)
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Binary; });
 }
 
 
 bool DataSet::has_categorical_raw_variables() const
-{    
-    for (const auto& raw_variable : raw_variables)
-        if (raw_variable.type == RawVariableType::Categorical)
-            return true;
-
-    return false;
+{
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Categorical; });
 }
 
 
