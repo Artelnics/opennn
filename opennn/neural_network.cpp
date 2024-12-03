@@ -1135,8 +1135,11 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
         for (Index j = 0; j < Index(indices.size()); j++) 
         {
             buffer << indices[j];
-            if (j != indices.size() - 1) buffer << " ";
+
+            if (j != indices.size() - 1)
+                buffer << " ";
         }
+
         printer.PushText(buffer.str().c_str());
         printer.CloseElement();
     }
@@ -1149,12 +1152,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
     for (Index i = 0; i < outputs_number; i++) 
-    {
-        printer.OpenElement("Output");
-        printer.PushAttribute("Index", to_string(i + 1).c_str());
-        printer.PushText(output_names[i].c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement(); 
 

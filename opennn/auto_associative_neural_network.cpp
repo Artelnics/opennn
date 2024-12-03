@@ -451,46 +451,40 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
     file.close();
 }
 
-void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
+
+void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& printer) const
 {
     ostringstream buffer;
 
-    file_stream.OpenElement("NeuralNetwork");
+    printer.OpenElement("NeuralNetwork");
 
     // Inputs
 
-    file_stream.OpenElement("Inputs");
+    printer.OpenElement("Inputs");
 
-    // Inputs number
-
-    file_stream.OpenElement("InputsNumber");
-    file_stream.PushText(to_string(input_names.size()).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "InputsNumber", to_string(input_names.size()));
 
     // Inputs names
 
     for(size_t i = 0; i < input_names.size(); i++)
     {
-        file_stream.OpenElement("Input");
-
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
-
-        file_stream.PushText(input_names[i].c_str());
-
-        file_stream.CloseElement();
+        printer.OpenElement("Input");
+        printer.PushAttribute("Index", to_string(i+1).c_str());
+        printer.PushText(input_names[i].c_str());
+        printer.CloseElement();
     }
 
     // Inputs (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Layers
 
-    file_stream.OpenElement("Layers");
+    printer.OpenElement("Layers");
 
     // Layers number
 
-    file_stream.OpenElement("LayerTypes");
+    printer.OpenElement("LayerTypes");
 
     buffer.str("");
 
@@ -502,285 +496,219 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
             buffer << " ";
     }
 
-    file_stream.PushText(buffer.str().c_str());
+    printer.PushText(buffer.str().c_str());
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Layers information
 
     for(Index i = 0; i < Index(layers.size()); i++)
-        layers[i]->to_XML(file_stream);
+        layers[i]->to_XML(printer);
 
     // Layers (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Ouputs
 
-    file_stream.OpenElement("Outputs");
+    printer.OpenElement("Outputs");
 
     // Outputs number
 
     const Index outputs_number = output_names.size();
 
-    file_stream.OpenElement("OutputsNumber");
+    printer.OpenElement("OutputsNumber");
 
     buffer.str("");
     buffer << outputs_number;
 
-    file_stream.PushText(buffer.str().c_str());
+    printer.PushText(buffer.str().c_str());
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Outputs names
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        file_stream.OpenElement("Output");
-        file_stream.PushAttribute("Index", to_string(i+1).c_str());
-        file_stream.PushText(output_names[i].c_str());
-        file_stream.CloseElement();
+        printer.OpenElement("Output");
+        printer.PushAttribute("Index", to_string(i+1).c_str());
+        printer.PushText(output_names[i].c_str());
+        printer.CloseElement();
     }
 
     //Outputs (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // BoxPlot
 
-    file_stream.OpenElement("BoxPlotDistances");
+    printer.OpenElement("BoxPlotDistances");
 
     // Minimum
 
-    file_stream.OpenElement("Minimum");
+    printer.OpenElement("Minimum");
 
     buffer.str("");
     buffer << get_box_plot_minimum();
 
-    file_stream.PushText(buffer.str().c_str());
+    printer.PushText(buffer.str().c_str());
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
-    // First quartile
-
-    file_stream.OpenElement("FirstQuartile");
-    file_stream.PushText(to_string(get_box_plot_first_quartile()).c_str());
-    file_stream.CloseElement();
-
-    // Median
-
-    file_stream.OpenElement("Median");
-    file_stream.PushText(to_string(get_box_plot_median()).c_str());
-    file_stream.CloseElement();
-
-    // Third Quartile
-
-    file_stream.OpenElement("ThirdQuartile");
-    file_stream.PushText(to_string(get_box_plot_third_quartile()).c_str());
-    file_stream.CloseElement();
-
-    // Maximum
-
-    file_stream.OpenElement("Maximum");
-    file_stream.PushText(to_string(get_box_plot_maximum()).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "FirstQuartile", to_string(get_box_plot_first_quartile()));
+    add_xml_element(printer, "Median", to_string(get_box_plot_median()));
+    add_xml_element(printer, "ThirdQuartile", to_string(get_box_plot_third_quartile()));
+    add_xml_element(printer, "Maximum", to_string(get_box_plot_maximum()));
 
     //BoxPlotDistances (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // DistancesDescriptives
 
-    Descriptives distance_descriptives = get_distance_descriptives();
+    const Descriptives distance_descriptives = get_distance_descriptives();
 
-    file_stream.OpenElement("DistancesDescriptives");
-
-    // Minimum
-
-    file_stream.OpenElement("Minimum");
-
-    buffer.str("");
-    buffer << distance_descriptives.minimum;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // First quartile
-
-    file_stream.OpenElement("Maximum");
-
-    buffer.str("");
-    buffer << distance_descriptives.maximum;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Median
-
-    file_stream.OpenElement("Mean");
-
-    buffer.str("");
-    buffer << distance_descriptives.mean;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Third Quartile
-
-    file_stream.OpenElement("StandardDeviation");
-
-    buffer.str("");
-    buffer << distance_descriptives.standard_deviation;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    //DistancesDescriptives (end tag)
-
-    file_stream.CloseElement();
+    printer.OpenElement("DistancesDescriptives");
+    add_xml_element(printer, "Minimum", to_string(distance_descriptives.minimum));
+    add_xml_element(printer, "Maximum", to_string(distance_descriptives.maximum));
+    add_xml_element(printer, "Mean", to_string(distance_descriptives.mean));
+    add_xml_element(printer, "StandardDeviation", to_string(distance_descriptives.standard_deviation));
+    printer.CloseElement();
 
     // Multivariate BoxPlot
 
-    file_stream.OpenElement("MultivariateDistancesBoxPlot");
+    printer.OpenElement("MultivariateDistancesBoxPlot");
 
     // Variables Number
 
-    file_stream.OpenElement("VariablesNumber");
-
-    buffer.str("");
-    buffer << variable_distance_names.size();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
+    add_xml_element(printer, "VariablesNumber", to_string(variable_distance_names.size()));
 
     for(size_t i = 0; i < variable_distance_names.size(); i++)
     {
-        // Scaling neuron
-
-        file_stream.OpenElement("VariableBoxPlot");
+        printer.OpenElement("VariableBoxPlot");
 
         buffer.str(""); buffer << variable_distance_names[i].c_str();
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+        printer.PushText(buffer.str().c_str());
+        printer.PushText("\\");
 
         buffer.str(""); buffer << multivariate_distances_box_plot(i).minimum;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+        printer.PushText(buffer.str().c_str());
+        printer.PushText("\\");
 
         buffer.str(""); buffer << multivariate_distances_box_plot(i).first_quartile;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+        printer.PushText(buffer.str().c_str());
+        printer.PushText("\\");
 
         buffer.str(""); buffer << multivariate_distances_box_plot(i).median;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+        printer.PushText(buffer.str().c_str());
+        printer.PushText("\\");
 
         buffer.str(""); buffer << multivariate_distances_box_plot(i).third_quartile;
-        file_stream.PushText(buffer.str().c_str());
-        file_stream.PushText("\\");
+        printer.PushText(buffer.str().c_str());
+        printer.PushText("\\");
 
         buffer.str(""); buffer << multivariate_distances_box_plot(i).maximum;
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
         // VariableBoxPlot (end tag)
 
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     // MultivariateDistancesBoxPlot (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Neural network (end tag)
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
 void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("NeuralNetwork");
+    const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");
 
-    if(!root_element)
+    if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
     // Inputs
-    {
-        const XMLElement* element = root_element->FirstChildElement("Inputs");
 
-        if(element)
-        {
-            XMLDocument inputs_document;
-            inputs_document.InsertFirstChild(element->DeepClone(&inputs_document));
-            inputs_from_XML(inputs_document);
-        }
-    }
+    const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
+
+    if(!inputs_element)
+        throw runtime_error("Inputs element is nullptr.");
+
+    XMLDocument inputs_document;
+    XMLNode* inputs_element_clone = inputs_element->DeepClone(&inputs_document);
+
+    inputs_document.InsertFirstChild(inputs_element_clone);
+
+    inputs_from_XML(inputs_document);
 
     // Layers
-    {
-        const XMLElement* element = root_element->FirstChildElement("Layers");
 
-        if(element)
-        {
-            XMLDocument layers_document;
-            layers_document.InsertFirstChild(element->DeepClone(&layers_document));
-            layers_from_XML(layers_document);
-        }
-    }
+    const XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
+
+    if(!layers_element)
+        throw runtime_error("Layers element is nullptr.");
+
+    XMLDocument layers_document;
+    XMLNode* layers_element_clone = layers_element->DeepClone(&layers_document);
+
+    layers_document.InsertFirstChild(layers_element_clone);
+
+    layers_from_XML(layers_document);
 
     // Outputs
-    {
-        const XMLElement* element = root_element->FirstChildElement("Outputs");
 
-        if(element)
-        {
-            XMLDocument outputs_document;
-            outputs_document.InsertFirstChild(element->DeepClone(&outputs_document));
-            outputs_from_XML(outputs_document);
-        }
-    }
+    const XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
 
+    if(!outputs_element)
+        throw runtime_error("Outputs element is nullptr.");
 
-    {
-        const XMLElement* element = root_element->FirstChildElement("BoxPlotDistances");
+    XMLDocument outputs_document;
+    XMLNode* outputs_element_clone = outputs_element->DeepClone(&outputs_document);
 
-        if(element)
-        {
-            XMLDocument box_plot_document;
-            box_plot_document.InsertFirstChild(element->DeepClone(&box_plot_document));
-            box_plot_from_XML(box_plot_document);
-        }
-    }
+    outputs_document.InsertFirstChild(outputs_element_clone);
 
-    {
-        const XMLElement* element = root_element->FirstChildElement("DistancesDescriptives");
+    outputs_from_XML(outputs_document);
 
-        if(element)
-        {
-            XMLDocument distance_descriptives_document;
-            distance_descriptives_document.InsertFirstChild(element->DeepClone(&distance_descriptives_document));
-            distance_descriptives_from_XML(distance_descriptives_document);
-        }
-    }
+    // Box plot distances
 
-    const XMLElement* element = root_element->FirstChildElement("MultivariateDistancesBoxPlot");
+    const XMLElement* box_plot_distances_element = neural_network_element->FirstChildElement("BoxPlotDistances");
 
-    if(element)
-    {
-        XMLDocument multivariate_box_plot_document;
-        multivariate_box_plot_document.InsertFirstChild(element->DeepClone(&multivariate_box_plot_document));
+    if(!box_plot_distances_element)
+        throw runtime_error("Box plot distances element is nullptr.");
 
-        multivariate_box_plot_from_XML(multivariate_box_plot_document);
-    }
+    XMLDocument box_plot_document;
+    box_plot_document.InsertFirstChild(box_plot_distances_element->DeepClone(&box_plot_document));
+    box_plot_from_XML(box_plot_document);
+
+    // Distances descriptives
+
+    const XMLElement* distances_descriptives_element = neural_network_element->FirstChildElement("DistancesDescriptives");
+
+    if(!distances_descriptives_element)
+        throw runtime_error("Distances descriptives element is nullptr.");
+
+    XMLDocument distance_descriptives_document;
+    distance_descriptives_document.InsertFirstChild(distances_descriptives_element->DeepClone(&distance_descriptives_document));
+    distance_descriptives_from_XML(distance_descriptives_document);
+
+    const XMLElement* multivariate_distences_box_plot_element = neural_network_element->FirstChildElement("MultivariateDistancesBoxPlot");
+
+    if(!multivariate_distences_box_plot_element)
+        throw runtime_error("MultivariateDistancesBoxPlot element is nullptr.");
+
+    XMLDocument multivariate_box_plot_document;
+    multivariate_box_plot_document.InsertFirstChild(multivariate_distences_box_plot_element->DeepClone(&multivariate_box_plot_document));
+
+    multivariate_box_plot_from_XML(multivariate_box_plot_document);
 
     // Display
 
-    const XMLElement* display_element = root_element->FirstChildElement("Display");
+    const XMLElement* display_element = neural_network_element->FirstChildElement("Display");
 
     if(display_element)
         set_display(display_element->GetText() != string("0"));

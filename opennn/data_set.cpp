@@ -1108,17 +1108,17 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 }
 
 
-void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
-                                                    const vector<string>& target_raw_variables)
-{
-    set_raw_variables(VariableUse::None);
+// void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
+//                                                     const vector<string>& target_raw_variables)
+// {
+//     set_raw_variables(VariableUse::None);
 
-    for(size_t i = 0; i < input_raw_variables.size(); i++)
-        set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
+//     for(size_t i = 0; i < input_raw_variables.size(); i++)
+//         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(size_t i = 0; i < target_raw_variables.size(); i++)
-        set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-}
+//     for(size_t i = 0; i < target_raw_variables.size(); i++)
+//         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
+// }
 
 
 void DataSet::set_input_raw_variables_unused()
@@ -3156,7 +3156,7 @@ void DataSet::save_data() const
 }
 
 
-void DataSet::save_data_binary(const string& binary_data_file_name) const
+void DataSet::save_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name);
 
@@ -4330,22 +4330,22 @@ Index DataSet::count_nan() const
 }
 
 
-void DataSet::set_missing_values_number()
-{
-    missing_values_number = count_nan();
-}
+// void DataSet::set_missing_values_number()
+// {
+//     missing_values_number = count_nan();
+// }
 
 
-void DataSet::set_raw_variables_missing_values_number()
-{
-    raw_variables_missing_values_number = count_raw_variables_with_nan();
-}
+// void DataSet::set_raw_variables_missing_values_number()
+// {
+//     raw_variables_missing_values_number = count_raw_variables_with_nan();
+// }
 
 
-void DataSet::set_samples_missing_values_number()
-{
-    rows_missing_values_number = count_rows_with_nan();
-}
+// void DataSet::set_samples_missing_values_number()
+// {
+//     rows_missing_values_number = count_rows_with_nan();
+// }
 
 
 void DataSet::fix_repeated_names()
