@@ -623,10 +623,7 @@ void ImageDataSet::read_bmp()
 
         if (targets_number == 1)
         {
-            if (i >= images_number[0] && i < images_number[1])
-                data(i, pixels_number) = 0;
-            else
-                data(i, pixels_number) = 1;
+            data(i, pixels_number) = (i >= images_number(0) && i < images_number(1)) ? 0 : 1;
         }
         else
         {

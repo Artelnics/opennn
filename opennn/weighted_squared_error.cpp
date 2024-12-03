@@ -222,7 +222,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.targets_dimensions[0];
+    const Index batch_samples_number = batch.target_dimensions[0];
 
     // Back propagation
 

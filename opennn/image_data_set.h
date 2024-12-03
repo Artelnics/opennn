@@ -19,7 +19,7 @@ class ImageDataSet : public DataSet
 
 public:
 
-    explicit ImageDataSet(const Index& = 0, const dimensions& = { 0,0,0 }, const dimensions& = {0});
+    explicit ImageDataSet(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
 
     Index get_channels_number() const;
     Index get_image_width() const;

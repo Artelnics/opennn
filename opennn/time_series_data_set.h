@@ -36,9 +36,6 @@ public:
 
     const string& get_time_raw_variable() const;
 
-    void set_time_series_data(const Tensor<type, 2>&);
-    void set_time_series_raw_variables_number(const Index&);
-
     const string& get_group_by_column() const;
 
     void set_lags_number(const Index&);
@@ -54,8 +51,6 @@ public:
 
     void to_XML(XMLPrinter&) const final;
     void from_XML(const XMLDocument&) final;
-
-    vector<string> get_time_series_raw_variables_names() const;
 
     Index get_time_series_time_raw_variable_index() const;
 

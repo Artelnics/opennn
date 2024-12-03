@@ -39,7 +39,7 @@ struct Batch
 
     Tensor<type, 1> input_tensor;
 
-    dimensions targets_dimensions;
+    dimensions target_dimensions;
 
     Tensor<type, 1> target_tensor;
 

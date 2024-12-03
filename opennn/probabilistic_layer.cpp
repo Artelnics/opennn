@@ -268,7 +268,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     {
         const Tensor<type, 2>& targets = probabilistic_layer_back_propagation->targets;
 
-        combinations_derivatives.device(*thread_pool_device) = outputs - targets;
+        combinations_derivatives.device(*thread_pool_device) = deltas;
     }
 
     Tensor<type, 1>& biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives;

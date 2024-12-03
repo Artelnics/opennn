@@ -974,7 +974,6 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
 void TimeSeriesDataSet::fill_gaps()
 {   
-
     type start_time = 50;
     type end_time = 100;
 
@@ -1011,7 +1010,6 @@ void TimeSeriesDataSet::fill_gaps()
 
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-
     const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
@@ -1205,7 +1203,6 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
