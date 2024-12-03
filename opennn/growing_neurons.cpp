@@ -115,7 +115,6 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         for(Index trial = 0; trial < trials_number; trial++)
         {
-
             neural_network->set_parameters_random();
 
             training_results = training_strategy->perform_training();
@@ -298,7 +297,7 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);

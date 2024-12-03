@@ -19,9 +19,10 @@ namespace opennn
 {
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    : neural_network(new_neural_network),
-      data_set(new_data_set)
 {
+    neural_network = new_neural_network;
+    data_set = new_data_set;
+
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -878,6 +879,8 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
+    check();
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
@@ -894,22 +897,18 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
         
         return calculate_confusion(outputs, targets);
     }
-    else if(input_dimensions.size() == 2)
-    {
-        // @todo not needed?
-    }
     else if(input_dimensions.size() == 3)
     {
         type* input_data = inputs.data();
 
-        Tensor<type, 4> inputs(samples_number,
-                               input_dimensions[0],
-                               input_dimensions[1],
-                               input_dimensions[2]);
+        Tensor<type, 4> inputs_4d(samples_number,
+                                  input_dimensions[0],
+                                  input_dimensions[1],
+                                  input_dimensions[2]);
         
-        memcpy(inputs.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
+        memcpy(inputs_4d.data(), input_data, samples_number * inputs.dimension(1)*sizeof(type));
 
-        const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+        const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
         return calculate_confusion(outputs, targets);
     }
@@ -1721,8 +1720,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
 
 
 Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<type, 2>& targets,
-                                                                      const Tensor<type, 2>& outputs,
-                                                                      const vector<string>& labels) const
+                                                                   const Tensor<type, 2>& outputs,
+                                                                   const vector<string>& labels) const
 {
     const Index samples_number = targets.dimension(0);
 
@@ -2264,7 +2263,7 @@ void TestingAnalysis::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);

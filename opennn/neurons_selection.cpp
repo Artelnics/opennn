@@ -232,10 +232,6 @@ string NeuronsSelection::write_time(const type& time) const
 }
 
 
-NeuronsSelectionResults::NeuronsSelectionResults()
-{
-}
-
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {
     neurons_number_history.resize(maximum_epochs_number);

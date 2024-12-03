@@ -2251,13 +2251,14 @@ private:
 };
 
 
-void add_xml_element(XMLPrinter& printer, const std::string& name, const std::string& value);
+void add_xml_element(XMLPrinter& printer, const string& name, const string& value);
+void add_xml_element_attribute(XMLPrinter& printer, const string&, const string&, const string&, const string&);
 
 
-type read_xml_type(const XMLElement* root, const std::string& element_name);
-Index read_xml_index(const XMLElement* root, const std::string& element_name);
-bool read_xml_bool(const XMLElement* root, const std::string& element_name);
-string read_xml_string(const XMLElement* root, const std::string& element_name);
+type read_xml_type(const XMLElement* root, const string& element_name);
+Index read_xml_index(const XMLElement* root, const string& element_name);
+bool read_xml_bool(const XMLElement* root, const string& element_name);
+string read_xml_string(const XMLElement* root, const string& element_name);
 
 
 }	// tinyxml2

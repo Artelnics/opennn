@@ -11,13 +11,13 @@
 namespace opennn
 {
 
-AutoAssociationDataSet::AutoAssociationDataSet() : DataSet()
+AutoAssociativeDataSet::AutoAssociativeDataSet() : DataSet()
 {
 
 }
 
 
-void AutoAssociationDataSet::transform_associative_data()
+void AutoAssociativeDataSet::transform_associative_data()
 {
     cout << "Transforming associative data..." << endl;
 
@@ -47,7 +47,7 @@ void AutoAssociationDataSet::transform_associative_data()
 }
 
 
-void AutoAssociationDataSet::transform_associative_raw_variables()
+void AutoAssociativeDataSet::transform_associative_raw_variables()
 {
     cout << "Transforming associative raw variables..." << endl;
 
@@ -87,7 +87,7 @@ void AutoAssociationDataSet::transform_associative_raw_variables()
 }
 
 
-void AutoAssociationDataSet::set_auto_associative_samples_uses()
+void AutoAssociativeDataSet::set_auto_associative_samples_uses()
 {
     random_device rng;
 
@@ -152,37 +152,37 @@ void AutoAssociationDataSet::set_auto_associative_samples_uses()
 }
 
 
-vector<DataSet::RawVariable> AutoAssociationDataSet::get_associative_raw_variables() const
+vector<DataSet::RawVariable> AutoAssociativeDataSet::get_associative_raw_variables() const
 {
     return associative_raw_variables;
 }
 
 
-const Tensor<type, 2>& AutoAssociationDataSet::get_associative_data() const
+const Tensor<type, 2>& AutoAssociativeDataSet::get_associative_data() const
 {
     return associative_data;
 }
 
 
-Index AutoAssociationDataSet::get_associative_raw_variables_number() const
+Index AutoAssociativeDataSet::get_associative_raw_variables_number() const
 {
     return associative_raw_variables.size();
 }
 
 
-void AutoAssociationDataSet::set_associative_data(const Tensor<type, 2>& new_data)
+void AutoAssociativeDataSet::set_associative_data(const Tensor<type, 2>& new_data)
 {
     associative_data = new_data;
 }
 
 
-void AutoAssociationDataSet::set_associative_raw_variables_number(const Index& new_variables_number)
+void AutoAssociativeDataSet::set_associative_raw_variables_number(const Index& new_variables_number)
 {
     associative_raw_variables.resize(new_variables_number);
 }
 
 
-void AutoAssociationDataSet::save_auto_associative_data_binary(const filesystem::path& binary_data_file_name) const
+void AutoAssociativeDataSet::save_auto_associative_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name, ios::binary);
 
@@ -213,7 +213,7 @@ void AutoAssociationDataSet::save_auto_associative_data_binary(const filesystem:
 }
 
 
-void AutoAssociationDataSet::transform_associative_dataset()
+void AutoAssociativeDataSet::transform_associative_dataset()
 {
     transform_associative_data();
 
@@ -225,7 +225,7 @@ void AutoAssociationDataSet::transform_associative_dataset()
 }
 
 
-void AutoAssociationDataSet::load_auto_associative_data_binary(const filesystem::path& auto_associative_data_file_name)
+void AutoAssociativeDataSet::load_auto_associative_data_binary(const filesystem::path& auto_associative_data_file_name)
 {
     ifstream file(auto_associative_data_file_name, ios::binary);
 
