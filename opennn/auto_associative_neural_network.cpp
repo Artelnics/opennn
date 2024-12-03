@@ -464,15 +464,8 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(input_names.size()));
 
-    // Inputs names
-
     for(size_t i = 0; i < input_names.size(); i++)
-    {
-        printer.OpenElement("Input");
-        printer.PushAttribute("Index", to_string(i+1).c_str());
-        printer.PushText(input_names[i].c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
     // Inputs (end tag)
 
@@ -529,12 +522,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& printer) const
     // Outputs names
 
     for(Index i = 0; i < outputs_number; i++)
-    {
-        printer.OpenElement("Output");
-        printer.PushAttribute("Index", to_string(i+1).c_str());
-        printer.PushText(output_names[i].c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     //Outputs (end tag)
 

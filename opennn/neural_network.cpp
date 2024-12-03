@@ -1096,59 +1096,49 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("NeuralNetwork");
 
+    // Inputs
+
     printer.OpenElement("Inputs");
+
     const Index inputs_number = get_inputs_number();
+
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
     if (input_names.size() != inputs_number) 
         throw runtime_error("Size of input names is not equal to inputs number");
 
-    for (Index i = 0; i < inputs_number; i++) 
-    {
-        printer.OpenElement("Input");
-        printer.PushAttribute("Index", to_string(i + 1).c_str());
-        printer.PushText(input_names[i].c_str());
-        printer.CloseElement();
-    }
+    for (Index i = 0; i < inputs_number; i++)
+        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
+    // Layers
+
     printer.OpenElement("Layers");
+
     const Index layers_number = get_layers_number();
+
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
     for (Index i = 0; i < layers_number; i++) 
         layers[i]->to_XML(printer);
 
-    printer.OpenElement("LayersInputsIndices");
-    ostringstream buffer;
+    // Layer input indices
+
+    printer.OpenElement("LayerInputIndices");
 
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
-    {
-        printer.OpenElement("LayerInputsIndices");
-        printer.PushAttribute("LayerIndex", to_string(i).c_str());
-
-        const vector<Index>& indices = layer_input_indices[i];
-        
-        buffer.str("");
-        
-        for (Index j = 0; j < Index(indices.size()); j++) 
-        {
-            buffer << indices[j];
-
-            if (j != indices.size() - 1)
-                buffer << " ";
-        }
-
-        printer.PushText(buffer.str().c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
     printer.CloseElement(); 
-    printer.CloseElement(); 
+    printer.CloseElement();
+
+    // Outputs
 
     printer.OpenElement("Outputs");
+
     const Index outputs_number = output_names.size();
+
     add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
     for (Index i = 0; i < outputs_number; i++) 
@@ -1382,10 +1372,10 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
     // Layers inputs indices
 
-    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayersInputsIndices");
+    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
 
     if(!layer_input_indices_element)
-        throw runtime_error("LayersInputsIndices element is nullptr.\n");
+        throw runtime_error("LayerInputIndices element is nullptr.\n");
 
     layer_input_indices.clear(); // @todo .clear because they are already saved from Add layers for (is this code needed?)
     layer_input_indices.resize(layers.size());

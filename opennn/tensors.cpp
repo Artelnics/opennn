@@ -1576,6 +1576,19 @@ string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
 }
 
 
+string vector_to_string(const vector<Index>& x, const string& separator)
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    for(Index i = 0; i < size; i++)
+        buffer << x[i] << separator;
+
+    return buffer.str();
+}
+
+
 string string_tensor_to_string(const vector<string>& x, const string& separator)
 {
     const Index size = x.size();

@@ -3071,6 +3071,15 @@ void add_xml_element_attribute(XMLPrinter& printer,
 }
 
 
+
+void add_xml_document(XMLPrinter& printer, const string& name, const string& value)
+{
+//    printer.OpenElement(name.c_str());
+//    printer.PushText(value.c_str());
+//    printer.CloseElement();
+}
+
+
 type read_xml_type(const XMLElement* root, const string& element_name)
 {
     const XMLElement* element = root->FirstChildElement(element_name.c_str());
