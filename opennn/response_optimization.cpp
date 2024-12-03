@@ -248,39 +248,6 @@ void ResponseOptimization::set_output_condition(const Index& index,
 }
 
 
-// void ResponseOptimization::set_inputs_output_conditions(const vector<string>& names,
-//                                                          const vector<string>& conditions_string,
-//                                                          const Tensor<type, 1>& values)
-// {
-//     const Tensor<Condition, 1> conditions = get_conditions(conditions_string);
-
-//     const Tensor<Tensor<type, 1>, 1> values_conditions = get_values_conditions(conditions, values);
-
-//     const Index variables_number = conditions_string.size();
-
-//     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-
-//     const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
-//     #pragma omp parallel for
-//     for(Index i = 0; i < variables_number; i++)
-//     {
-//         if(contains(input_names, names[i]))
-//         {
-//             const Index index = neural_network->get_input_index(names[i]);
-
-//             set_input_condition(index, conditions[i], values_conditions[i]);
-//         }
-//         else if(contains(output_names, names[i]))
-//         {
-//             const Index index = neural_network->get_output_index(names[i]);
-
-//             set_output_condition(index, conditions[i], values_conditions[i]);
-//         }
-//     }
-// }
-
-
 Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(const vector<string>& conditions_string) const
 {
     const Index conditions_number = conditions_string.size();

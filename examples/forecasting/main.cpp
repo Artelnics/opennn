@@ -33,6 +33,9 @@ int main()
 
         TimeSeriesDataSet time_series_data_set("../data/load.csv", ",", true, false);
 
+        time_series_data_set.print();
+        time_series_data_set.print_data();
+
         cout << "Good bye!" << endl;
 
         return 0;

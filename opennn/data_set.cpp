@@ -1108,17 +1108,17 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 }
 
 
-void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
-                                                    const vector<string>& target_raw_variables)
-{
-    set_raw_variables(VariableUse::None);
+// void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
+//                                                     const vector<string>& target_raw_variables)
+// {
+//     set_raw_variables(VariableUse::None);
 
-    for(size_t i = 0; i < input_raw_variables.size(); i++)
-        set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
+//     for(size_t i = 0; i < input_raw_variables.size(); i++)
+//         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
 
-    for(size_t i = 0; i < target_raw_variables.size(); i++)
-        set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-}
+//     for(size_t i = 0; i < target_raw_variables.size(); i++)
+//         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
+// }
 
 
 void DataSet::set_input_raw_variables_unused()
@@ -2101,7 +2101,6 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             continue;
         }
 
-       
         switch (raw_variable.type)
         {
 
@@ -2298,15 +2297,11 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_sampl
 
     const Index samples_number = used_sample_indices.size();
 
-    // Count used negative samples
-
     Index negative_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
         if(data(used_sample_indices[i], target_index) < type(NUMERIC_LIMITS_MIN))
             negative_samples_number++;
-
-    // Get used negative samples indices
 
     vector<Index> negative_used_sample_indices(negative_samples_number);
     Index negative_sample_index = 0;
@@ -2337,8 +2332,6 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(con
     for(Index i = 0; i < samples_number; i++)
         if(abs(data(used_sample_indices[i], class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
             class_samples_number++;
-
-    // Get used class samples indices
 
     vector<Index> class_used_sample_indices(class_samples_number, 0);
 
@@ -2408,7 +2401,7 @@ Index DataSet::get_gmt() const
 }
 
 
-void DataSet::set_gmt(Index& new_gmt)
+void DataSet::set_gmt(const Index& new_gmt)
 {
     gmt = new_gmt;
 }
@@ -2500,7 +2493,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
     const Index variables_number = get_variables_number();
 
     for(Index j = 0; j < variables_number; j++)
-        if(isnan(data(row_index,j)))
+        if(isnan(data(row_index, j)))
             return true;
 
     return false;
@@ -2858,6 +2851,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
 {
     if (model_type == ModelType::Forecasting)
         throw runtime_error("Forecasting");
+
     if (model_type == ModelType::ImageClassification)
         throw runtime_error("Image classification");
 
@@ -2907,6 +2901,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
+
     printer.CloseElement();  
 
     printer.CloseElement();
@@ -2980,9 +2975,10 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (missing_values_number > 0)
     {
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
-        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++) {
-            raw_variables_missing_values_number(i) = std::stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
-        }
+
+        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
+            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
+
         rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
 
@@ -3047,7 +3043,7 @@ void DataSet::load(const filesystem::path& file_name)
 {
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
@@ -3160,7 +3156,7 @@ void DataSet::save_data() const
 }
 
 
-void DataSet::save_data_binary(const string& binary_data_file_name) const
+void DataSet::save_data_binary(const filesystem::path& binary_data_file_name) const
 {
     ofstream file(binary_data_file_name);
 
@@ -3849,7 +3845,7 @@ void DataSet::process_tokens(vector<string>& tokens)
 
 
 void DataSet::read_csv()
-{
+{    
     if(data_path.empty())
         throw runtime_error("Data path is empty.\n");
 
@@ -4233,31 +4229,25 @@ void DataSet::check_separators(const string& line) const
 
 bool DataSet::has_binary_raw_variables() const
 {
-    const Index variables_number = raw_variables.size();
-
-    for(Index i = 0; i < variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Binary) 
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Binary; });
 }
 
 
 bool DataSet::has_categorical_raw_variables() const
 {
-    const Index variables_number = raw_variables.size();
-
-    for(Index i = 0; i < variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Categorical) 
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Categorical; });
 }
 
 
 bool DataSet::has_binary_or_categorical_raw_variables() const
 {
-    return has_binary_raw_variables() || has_categorical_raw_variables();
+    for (const auto& raw_variable : raw_variables)
+        if (raw_variable.type == RawVariableType::Binary || raw_variable.type == RawVariableType::Categorical)
+            return true;
+
+    return false;
 }
 
 
@@ -4285,13 +4275,19 @@ Tensor<Index, 1> DataSet::count_raw_variables_with_nan() const
     Tensor<Index, 1> raw_variables_with_nan(raw_variables_number);
     raw_variables_with_nan.setZero();
 
+    #pragma omp parallel for
+
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
         const Index current_variable_index = get_variable_indices(raw_variable_index)[0];
 
+        Index counter = 0;
+
         for(Index row_index = 0; row_index < rows_number; row_index++)
             if(isnan(data(row_index, current_variable_index)))
-                raw_variables_with_nan(raw_variable_index)++;
+                counter++;
+
+        raw_variables_with_nan(raw_variable_index) = counter;
     }
 
     return raw_variables_with_nan;
@@ -4334,22 +4330,22 @@ Index DataSet::count_nan() const
 }
 
 
-void DataSet::set_missing_values_number()
-{
-    missing_values_number = count_nan();
-}
+// void DataSet::set_missing_values_number()
+// {
+//     missing_values_number = count_nan();
+// }
 
 
-void DataSet::set_raw_variables_missing_values_number()
-{
-    raw_variables_missing_values_number = count_raw_variables_with_nan();
-}
+// void DataSet::set_raw_variables_missing_values_number()
+// {
+//     raw_variables_missing_values_number = count_raw_variables_with_nan();
+// }
 
 
-void DataSet::set_samples_missing_values_number()
-{
-    rows_missing_values_number = count_rows_with_nan();
-}
+// void DataSet::set_samples_missing_values_number()
+// {
+//     rows_missing_values_number = count_rows_with_nan();
+// }
 
 
 void DataSet::fix_repeated_names()
@@ -4429,8 +4425,9 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
 {
     const Index samples_number = sample_indices.size();
 
-    Index batches_number;
     Index batch_size = new_batch_size;
+
+    Index batches_number;
 
     if(samples_number < batch_size)
     {
@@ -4441,6 +4438,8 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
     {
         batches_number = samples_number / batch_size;
     }
+
+//    const Index batches_number = (samples_number + new_batch_size - 1) / new_batch_size; // Round up division
 
     vector<vector<Index>> batches(batches_number);
 
@@ -4577,39 +4576,26 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
                 continue;
             }
 
+            const string& token = tokens[token_index];
+
             if(raw_variable.type == RawVariableType::Numeric)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else if(is_float)
-                {
-                    input_data(line_number, variable_index) = type(strtof(tokens[token_index].data(), nullptr));
-                }
+                    input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
                 else
-                {
-                    input_data(line_number, variable_index) = type(stof(tokens[token_index]));
-                }
+                    input_data(line_number, variable_index) = type(stof(token));
 
                 variable_index++;
             }
             else if(raw_variable.type == RawVariableType::Binary)
             {
-                if(tokens[token_index] == missing_values_label)
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label)
                     input_data(line_number, variable_index) = type(NAN);
-                }
-                else if(raw_variable.categories.size() > 0 && tokens[token_index] == raw_variable.categories[0])
-                {
+                else if(token == raw_variable.name
+                     || (raw_variable.categories.size() > 0 && token == raw_variable.categories[0]))
                     input_data(line_number, variable_index) = type(1);
-                }
-                else if(tokens[token_index] == raw_variable.name)
-                {
-                    input_data(line_number, variable_index) = type(1);
-                }
 
                 variable_index++;
             }
@@ -4617,48 +4603,31 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
             {
                 for(Index k = 0; k < raw_variable.get_categories_number(); k++)
                 {
-                    if(tokens[token_index] == missing_values_label)
-                    {
-                        has_missing_values = true;
+                    if(token == missing_values_label)
                         input_data(line_number, variable_index) = type(NAN);
-                    }
-                    else if(tokens[token_index] == raw_variable.categories[k])
-                    {
+                    else if(token == raw_variable.categories[k])
                         input_data(line_number, variable_index) = type(1);
-                    }
 
                     variable_index++;
                 }
             }
             else if(raw_variable.type == RawVariableType::DateTime)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else
-                {
-                    input_data(line_number, variable_index) = type(date_to_timestamp(tokens[token_index], gmt));
-                }
+                    input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
 
                 variable_index++;
             }
             else if(raw_variable.type == RawVariableType::Constant)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else if(is_float)
-                {
-                    input_data(line_number, variable_index) = type(strtof(tokens[token_index].data(), nullptr));
-                }
+                    input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
                 else
-                {
-                    input_data(line_number, variable_index) = type(stof(tokens[token_index]));
-                }
+                    input_data(line_number, variable_index) = type(stof(token));
 
                 variable_index++;
             }

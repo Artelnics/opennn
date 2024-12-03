@@ -33,8 +33,7 @@ int main()
 
         //wcout << path << endl;
 
-        DataSet data_set("C:/áaa.csv", ";", true);
-
+        DataSet data_set(L"C:/áaa.csv", ";", true);
 
         cout << "Bye!" << endl;
 

@@ -135,7 +135,7 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 

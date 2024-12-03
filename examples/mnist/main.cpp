@@ -36,11 +36,12 @@ int main()
 
         //image_data_set.set(DataSet::SampleUse::Training);
 
-        ImageDataSet image_data_set;
+        ImageDataSet image_data_set(0,{0,0,0},{0});
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
-        image_data_set.set_data_path("C:/binary_mnist");
+        // image_data_set.set_data_path("C:/binary_mnist");
+        image_data_set.set_data_path("C:/Users/Roberto Lopez/Documents/opennn/examples/mnist/data");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_path("C:/melanoma_supersmall");
@@ -49,7 +50,7 @@ int main()
         image_data_set.read_bmp();
 
         // Neural network
-
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
             { 1 },
@@ -69,7 +70,7 @@ int main()
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-
+        
         // Testing analysis
         /*
         neural_network.save("C:/xmltest/outputs.xml");
