@@ -33,15 +33,15 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   explicit RecurrentLayer(const dimensions & = {}, const dimensions& = {});
+   RecurrentLayer(const dimensions & = {}, const dimensions& = {});
 
-   dimensions get_input_dimensions() const final;
-   dimensions get_output_dimensions() const final;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    Index get_timesteps() const;
 
-   Index get_parameters_number() const final;
-   Tensor<type, 1> get_parameters() const final;
+   Index get_parameters_number() const override;
+   Tensor<type, 1> get_parameters() const override;
 
    const RecurrentLayer::ActivationFunction& get_activation_function() const;
 
@@ -49,18 +49,18 @@ public:
 
    void set(const dimensions& = {}, const dimensions& = {});
 
-   void set_input_dimensions(const dimensions&) final;
-   void set_output_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
+   void set_output_dimensions(const dimensions&) override;
 
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) final;
+   void set_parameters(const Tensor<type, 1>&, const Index&) override;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
 
-   void set_parameters_constant(const type&) final;
-   void set_parameters_random() final;
+   void set_parameters_constant(const type&) override;
+   void set_parameters_random() override;
 
    void calculate_combinations(const Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
@@ -70,23 +70,23 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index& ,
-                        Tensor<type, 1>&) const final;
+                        Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
                        unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const final;
+                       unique_ptr<LayerBackPropagation>&) const override;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
    string get_activation_function_string_expression() const;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -113,11 +113,11 @@ private:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 
@@ -132,11 +132,11 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    explicit RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 

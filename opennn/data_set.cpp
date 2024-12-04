@@ -2044,7 +2044,7 @@ vector<string> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_cor
 }
 
 
-vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& final_variable_indices)
+vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& override_variable_indices)
 {
     vector<string> unused_raw_variables;
 
@@ -2054,9 +2054,9 @@ vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& ori
 
         bool found = false;
 
-        for(Index j = 0; j < final_variable_indices.size(); j++)
+        for(Index j = 0; j < override_variable_indices.size(); j++)
         {
-            if(original_raw_variable_index == final_variable_indices(j))
+            if(original_raw_variable_index == override_variable_indices(j))
             {
                 found = true;
                 break;

@@ -19,7 +19,7 @@ class WeightedSquaredError : public LossIndex
 
 public:
 
-   explicit WeightedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   WeightedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    type get_positives_weight() const;
    type get_negatives_weight() const;
@@ -35,45 +35,45 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient() final;
+   void set_normalization_coefficient() override;
 
-   void set_data_set(DataSet*) final;
+   void set_data_set(DataSet*) override;
 
-   string get_loss_method() const final;
+   string get_loss_method() const override;
 
-   string get_error_type_text() const final;
+   string get_error_type_text() const override;
 
    // Back propagation
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
-                        BackPropagation&) const final;
+                        BackPropagation&) const override;
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
-                               BackPropagation&) const final;
+                               BackPropagation&) const override;
 
    // Back propagation LM
 
    void calculate_squared_errors_lm(const Batch&,
                                     const ForwardPropagation&,
-                                    BackPropagationLM&) const final;
+                                    BackPropagationLM&) const override;
 
    void calculate_error_lm(const Batch&,
                            const ForwardPropagation&,
-                           BackPropagationLM&) const final;
+                           BackPropagationLM&) const override;
 
    void calculate_error_gradient_lm(const Batch&,
-                                    BackPropagationLM&) const final;
+                                    BackPropagationLM&) const override;
 
    void calculate_error_hessian_lm(const Batch&,
-                                   BackPropagationLM&) const final;
+                                   BackPropagationLM&) const override;
 
    // Serialization
 
    void from_XML(const XMLDocument&);
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 

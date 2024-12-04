@@ -8,7 +8,7 @@ namespace opennn
 
 struct WordBag
 {
-    explicit WordBag() {}
+    WordBag() {}
 
     vector<string> words;
     Tensor<Index, 1> frequencies;

@@ -31,7 +31,7 @@ class TrainingStrategy
 
 public:
 
-    explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     enum class LossMethod
     {

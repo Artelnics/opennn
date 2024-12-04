@@ -206,11 +206,101 @@
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\HostX64\x64</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x86</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Common Files\Oracle\Java\java8path</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3\libnvvp</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft SQL Server\150\Tools\Binn\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\NVIDIA Corporation\Nsight Compute 2023.3.0\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Aperio\Common</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\dotnet\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\AppData\Local\Microsoft\WindowsApps</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\AppData\Local\Programs\Git\cmd</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\AppData\Local\Programs\MiKTeX\miktex\bin\x64\</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\AppData\Roaming\Programs\Zero Install</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\Documents\opennn</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
    </searchCategory>
    <searchCategory>
     <category type="u8_t">2</category>
     <searchDirectory>
      <name>C:\Users\davidgonzalez\Documents\opennn</name>
+     <recursive type="bool">true</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\Documents\opennn</name>
      <recursive type="bool">true</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
@@ -282,15 +372,75 @@
      <recursive type="bool">false</recursive>
      <priority type="bool">false</priority>
     </searchDirectory>
+    <searchDirectory>
+     <name>C:\Users\Roberto Lopez\Documents\opennn\examples\mnist</name>
+     <recursive type="bool">true</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\atlmfc\src\atl</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\crt\src</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Source\10.0.22621.0\ucrt</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\include</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\atlmfc\include</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\shared</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\winrt</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\cppwinrt</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
+    <searchDirectory>
+     <name>C:\Program Files (x86)\Windows Kits\NETFXSDK\4.8\Include\um</name>
+     <recursive type="bool">false</recursive>
+     <priority type="bool">false</priority>
+    </searchDirectory>
    </searchCategory>
    <searchCategory>
     <category type="u8_t">4</category>
    </searchCategory>
   </searchDirs>
  </vs_search_dirs>
- <contextValues type="bag"/>
  <All_Configurations-All_Platforms>
   <target_settings>
+   <inherited_state type="bool">false</inherited_state>
    <selected_workload>
     <localhost>launch</localhost>
    </selected_workload>
@@ -299,13 +449,13 @@
      <launch type="pointer" type_id="dasID_cctrl2::ApplicationWorkload" ptr_type="dasID_cctrl2::IWorkload">
       <workload>
        <targetName>launch</targetName>
-       <launch_app.app_to_launch>C:\Users\davidgonzalez\Documents\opennn\examples\mnist\bin\mnist.exe</launch_app.app_to_launch>
+       <launch_app.app_to_launch>C:\Users\Roberto Lopez\Documents\opennn\examples\mnist\Debug\mnist.exe</launch_app.app_to_launch>
        <launch_app.app_parameters></launch_app.app_parameters>
        <launch_app.environment></launch_app.environment>
        <use_app_dir_as_work_dir type="bool">false</use_app_dir_as_work_dir>
-       <launch_app.working_folder>C:\Users\davidgonzalez\Documents\opennn\examples\mnist\</launch_app.working_folder>
-       <launch.userappworkdir>C:\Users\davidgonzalez\Documents\opennn\examples\mnist\</launch.userappworkdir>
-       <result_directory.path>C:\Users\davidgonzalez\Documents\opennn\examples\mnist\Intel® VTune™ Profiler Results\mnist\r@@@{at}</result_directory.path>
+       <launch_app.working_folder>C:\Users\Roberto Lopez\Documents\opennn\examples\mnist\</launch_app.working_folder>
+       <launch.userappworkdir>C:\Users\Roberto Lopez\Documents\opennn\examples\mnist\</launch.userappworkdir>
+       <result_directory.path>C:\Users\Roberto Lopez\Documents\opennn\examples\mnist\Intel® VTune™ Profiler Results\mnist\r@@@{at}</result_directory.path>
        <context>
         <contextValue>
          <id>allowMultipleRuns</id>
@@ -450,4 +600,5 @@
    </localhost>
   </analysis_type_settings>
  </All_Configurations-All_Platforms>
+ <contextValues type="bag"/>
 </root>
