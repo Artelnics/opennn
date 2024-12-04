@@ -852,10 +852,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Display
 
-    const XMLElement* display_element = data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(neural_network_element, "Display"));
 */
 }
 

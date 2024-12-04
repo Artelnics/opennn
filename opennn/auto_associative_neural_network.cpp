@@ -622,45 +622,9 @@ void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 
     // Inputs
 
-    const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
-
-    if(!inputs_element)
-        throw runtime_error("Inputs element is nullptr.");
-
-    XMLDocument inputs_document;
-    XMLNode* inputs_element_clone = inputs_element->DeepClone(&inputs_document);
-
-    inputs_document.InsertFirstChild(inputs_element_clone);
-
-    inputs_from_XML(inputs_document);
-
-    // Layers
-
-    const XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
-
-    if(!layers_element)
-        throw runtime_error("Layers element is nullptr.");
-
-    XMLDocument layers_document;
-    XMLNode* layers_element_clone = layers_element->DeepClone(&layers_document);
-
-    layers_document.InsertFirstChild(layers_element_clone);
-
-    layers_from_XML(layers_document);
-
-    // Outputs
-
-    const XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
-
-    if(!outputs_element)
-        throw runtime_error("Outputs element is nullptr.");
-
-    XMLDocument outputs_document;
-    XMLNode* outputs_element_clone = outputs_element->DeepClone(&outputs_document);
-
-    outputs_document.InsertFirstChild(outputs_element_clone);
-
-    outputs_from_XML(outputs_document);
+    inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
+    layers_from_XML(neural_network_element->FirstChildElement("Layers"));
+    outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
 
     // Box plot distances
 
@@ -696,10 +660,7 @@ void AutoAssociativeNeuralNetwork::from_XML(const XMLDocument& document)
 
     // Display
 
-    const XMLElement* display_element = neural_network_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(neural_network_element, "Display"));
 }
 
 }

@@ -21,7 +21,7 @@ class AutoAssociativeNeuralNetwork : public NeuralNetwork
 
 public:
 
-    explicit AutoAssociativeNeuralNetwork();
+    AutoAssociativeNeuralNetwork();
 
     BoxPlot get_auto_associative_distances_box_plot() const;
     Descriptives get_distance_descriptives() const;

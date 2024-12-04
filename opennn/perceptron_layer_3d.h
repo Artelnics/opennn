@@ -28,7 +28,7 @@ public:
                                   Linear,
                                   RectifiedLinear};
 
-   explicit PerceptronLayer3D(const Index& = 0,
+   PerceptronLayer3D(const Index& = 0,
                               const Index& = 0,
                               const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
@@ -38,16 +38,16 @@ public:
    Index get_neurons_number() const;
 
    // @todo
-   dimensions get_input_dimensions() const final
+   dimensions get_input_dimensions() const override
    {
        throw runtime_error("XXX");
    }
 
-   dimensions get_output_dimensions() const final;
+   dimensions get_output_dimensions() const override;
 
-   Index get_parameters_number() const final;
+   Index get_parameters_number() const override;
    type get_dropout_rate() const;
-   Tensor<type, 1> get_parameters() const final;
+   Tensor<type, 1> get_parameters() const override;
 
    const PerceptronLayer3D::ActivationFunction& get_activation_function() const;
 
@@ -58,18 +58,18 @@ public:
             const Index& = 0,
             const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   void set_input_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
    void set_inputs_depth(const Index&);
-   void set_output_dimensions(const dimensions&) final;
+   void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
-   void set_parameters_constant(const type&) final;
-   void set_parameters_random() final;
+   void set_parameters_constant(const type&) override;
+   void set_parameters_random() override;
    void set_parameters_glorot();
 
    void calculate_combinations(const Tensor<type, 3>&,
@@ -82,21 +82,21 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
                        unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const final;
+                       unique_ptr<LayerBackPropagation>&) const override;
 
    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&,
-                        Tensor<type, 1>&) const final;
+                        Tensor<type, 1>&) const override;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
@@ -127,11 +127,11 @@ private:
 
 struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    PerceptronLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 
@@ -143,11 +143,11 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit PerceptronLayer3DBackPropagation(const Index& = 0, Layer* = 0);
+    PerceptronLayer3DBackPropagation(const Index& = 0, Layer* = 0);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 

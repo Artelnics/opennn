@@ -980,7 +980,7 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
 }
 
 
-vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
+vector<string> generate_override_vocabulary(const vector<string>& reserved_tokens,
                                          const set<char>& character_tokens,
                                          const map<string, int>& current_tokens)
 {
@@ -1006,18 +1006,18 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
         vocabulary.push_back(token);
 
     set<string> seen_tokens;
-    vector<string> final_vocabulary;
+    vector<string> override_vocabulary;
 
     for(const string& word : vocabulary)
     {
         if(seen_tokens.find(word) == seen_tokens.end())
         {
             seen_tokens.insert(word);
-            final_vocabulary.push_back(word);
+            override_vocabulary.push_back(word);
         }
     }
 
-    return final_vocabulary;
+    return override_vocabulary;
 }
 
 
@@ -1109,7 +1109,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
         current_tokens = ensure_all_tokens_exist(string_tokens, next_tokens, parameters.include_joiner_token, parameters.joiner);
     }
 
-    return generate_final_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
+    return generate_override_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
 }
 
 
@@ -2111,13 +2111,16 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 {
     const Index entry_number = context_tokens.size();
 
-    unordered_map<string, type> context_vocabulary_map;
-    for(size_t i = 0; i < context_vocabulary.size(); i++)
-        context_vocabulary_map[context_vocabulary[i]] = type(i);
+    const unordered_map<string, type> context_vocabulary_map(context_vocabulary.begin(), context_vocabulary.end());
+    const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
 
-    unordered_map<string, type> completion_vocabulary_map;
-    for(size_t i = 0; i < completion_vocabulary.size(); i++)
-        completion_vocabulary_map[completion_vocabulary[i]] = type(i);
+    // unordered_map<string, type> context_vocabulary_map;
+    // for(size_t i = 0; i < context_vocabulary.size(); i++)
+    //     context_vocabulary_map[context_vocabulary[i]] = type(i);
+
+    // unordered_map<string, type> completion_vocabulary_map;
+    // for(size_t i = 0; i < completion_vocabulary.size(); i++)
+    //     completion_vocabulary_map[completion_vocabulary[i]] = type(i);
 
 //    const Index context_vocabulary_size = context_vocabulary.size();
 //    const Index completion_vocabulary_size = completion_vocabulary.size();

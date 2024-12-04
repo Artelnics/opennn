@@ -24,9 +24,8 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
-    if (image_data_set && image_data_set->get_augmentation())
+    if(image_data_set && image_data_set->get_augmentation())
     {
-        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 /*
         // @TODO
         Tensor<type, 2>& augmented_data = perform_augmentation(data);
@@ -154,7 +153,6 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     if(data_set_target_dimensions.size() == 1)
     {
         target_dimensions = {{batch_size, target_variables_number}};
-
         target_tensor.resize(batch_size*target_variables_number);
     }
     else if(data_set_target_dimensions.size() == 2)
@@ -272,18 +270,16 @@ bool Batch::has_context() const
 
 vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-    vector<pair<type*, dimensions>> input_pairs(has_context() ? 2 : 1);
+    vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
 
-    input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
-    
     if (has_context())
-        input_pairs[1] = { (type*)context_tensor.data(), context_dimensions};
-    
+        input_pairs.push_back({(type*)context_tensor.data(), context_dimensions});
+
     return input_pairs;
 }
 
 
-pair<type*, dimensions> Batch::get_targets_pair() const
+pair<type*, dimensions> Batch::get_target_pair() const
 {
     return { (type*)target_tensor.data() , target_dimensions};
 }

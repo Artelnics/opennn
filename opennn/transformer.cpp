@@ -274,11 +274,11 @@ void Transformer::set(const Index& input_length,
     
     // Output layer
     
-    unique_ptr<ProbabilisticLayer3D> final_layer 
+    unique_ptr<ProbabilisticLayer3D> override_layer 
         = make_unique<ProbabilisticLayer3D>(input_length, embedding_depth, input_dimensions);
     
-    final_layer->set_name("probabilistic");
-    add_layer(std::move(final_layer));
+    override_layer->set_name("probabilistic");
+    add_layer(std::move(override_layer));
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
 }
 

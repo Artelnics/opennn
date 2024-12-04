@@ -10,7 +10,7 @@ class Layer;
 
 struct LayerBackPropagationLM
 {
-    explicit LayerBackPropagationLM() {}
+    LayerBackPropagationLM() {}
 
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 

@@ -371,14 +371,14 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
 void TrainingResults::save(const filesystem::path& file_name) const
 {
-    const Tensor<string, 2> final_results = write_final_results();
+    const Tensor<string, 2> override_results = write_override_results();
 
     ofstream file(file_name);
 
     if(!file) return;
 
-    for(Index i = 0; i < final_results.dimension(0); i++)
-        file << final_results(i,0) << "; " << final_results(i,1) << "\n";
+    for(Index i = 0; i < override_results.dimension(0); i++)
+        file << override_results(i,0) << "; " << override_results(i,1) << "\n";
 
     file.close();
 }
@@ -400,33 +400,33 @@ void TrainingResults::print(const string &message)
 }
 
 
-Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) const
+Tensor<string, 2> TrainingResults::write_override_results(const Index& precision) const
 {
-    Tensor<string, 2> final_results(6, 2);
+    Tensor<string, 2> override_results(6, 2);
 
-    final_results(0,0) = "Epochs number";
-    final_results(1,0) = "Elapsed time";
-    final_results(2,0) = "Stopping criterion";
-    final_results(3,0) = "Training error";
-    final_results(4,0) = "Selection error";
+    override_results(0,0) = "Epochs number";
+    override_results(1,0) = "Elapsed time";
+    override_results(2,0) = "Stopping criterion";
+    override_results(3,0) = "Training error";
+    override_results(4,0) = "Selection error";
 
     const Index size = training_error_history.size();
 
     if(size == 0)
     {
-        final_results(0,1) = "NA";
-        final_results(1,1) = "NA";
-        final_results(2,1) = "NA";
-        final_results(3,1) = "NA";
-        final_results(4,1) = "NA";
+        override_results(0,1) = "NA";
+        override_results(1,1) = "NA";
+        override_results(2,1) = "NA";
+        override_results(3,1) = "NA";
+        override_results(4,1) = "NA";
 
-        return final_results;
+        return override_results;
     }
 
-    final_results(0,1) = to_string(training_error_history.size()-1);
-    final_results(1,1) = elapsed_time;
-    final_results(2,1) = write_stopping_condition();
-    final_results(3,1) = to_string(training_error_history(size-1));
+    override_results(0,1) = to_string(training_error_history.size()-1);
+    override_results(1,1) = elapsed_time;
+    override_results(2,1) = write_stopping_condition();
+    override_results(3,1) = to_string(training_error_history(size-1));
 
     // Final selection error
 
@@ -437,9 +437,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
             ? buffer << "NAN"
             : buffer << setprecision(precision) << selection_error_history(size-1);
 
-    final_results(4,1) = buffer.str();
+    override_results(4,1) = buffer.str();
 
-    return final_results;
+    return override_results;
 }
 
 

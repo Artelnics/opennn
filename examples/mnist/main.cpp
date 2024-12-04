@@ -40,8 +40,8 @@ int main()
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
-        // image_data_set.set_data_path("C:/binary_mnist");
-        image_data_set.set_data_path("C:/Users/Roberto Lopez/Documents/opennn/examples/mnist/data");
+        image_data_set.set_data_path("C:/binary_mnist");
+        //image_data_set.set_data_path("C:/Users/Roberto Lopez/Documents/opennn/examples/mnist/data");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_path("C:/melanoma_supersmall");

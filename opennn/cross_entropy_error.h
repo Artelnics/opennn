@@ -19,11 +19,11 @@ class CrossEntropyError : public LossIndex
 
 public:
 
-   explicit CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
-                        BackPropagation&) const final;
+                        BackPropagation&) const override;
 
    void calculate_binary_error(const Batch&,
                         const ForwardPropagation&,
@@ -37,7 +37,7 @@ public:
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
-                               BackPropagation&) const final;
+                               BackPropagation&) const override;
 
    void calculate_binary_output_delta(const Batch&,
                                       ForwardPropagation&,
@@ -47,14 +47,14 @@ public:
                                         ForwardPropagation&,
                                         BackPropagation&) const;
 
-   string get_loss_method() const final;
-   string get_error_type_text() const final;
+   string get_loss_method() const override;
+   string get_error_type_text() const override;
 
    // Serialization
       
    virtual void from_XML(const XMLDocument&);
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
