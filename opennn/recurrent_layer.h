@@ -119,7 +119,7 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 
@@ -134,11 +134,11 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
     RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     //Tensor<type, 1> current_deltas;
 

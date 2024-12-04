@@ -10,8 +10,6 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -534,37 +532,31 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         old_loss = training_back_propagation.loss;
 
+        stop_training = true;
+
         if(results.training_error_history(epoch) < training_loss_goal)
         {
-            stop_training = true;
-
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
-
             if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
-
-            stop_training = true;
-
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
-
-            stop_training = true;
-
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber;
         }
         else if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
-
-            stop_training = true;
-
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
+        }
+        else
+        {
+            stop_training = true;
         }
 
         if(stop_training)
@@ -580,8 +572,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
-
-        if(stop_training) break;
     }
 
     set_unscaling();

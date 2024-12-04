@@ -64,7 +64,7 @@ public:
 
    // Serialization
 
-   void print() const;
+   void print() const override;
 
    void from_XML(const XMLDocument&) override;
 
@@ -88,7 +88,7 @@ struct BoundingLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

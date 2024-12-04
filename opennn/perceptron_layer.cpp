@@ -142,17 +142,17 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
 void PerceptronLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index inputs_number = new_input_dimensions[0];
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    biases.resize(neurons_number);
+    biases.resize(outputs_number);
 
-    synaptic_weights.resize(inputs_number, neurons_number);
+    synaptic_weights.resize(inputs_number, outputs_number);
 }
 
 
 void PerceptronLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
     const Index neurons_number = new_output_dimensions[0];
 
     biases.resize(neurons_number);
@@ -362,8 +362,8 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
-    const Index inputs_number = get_input_dimensions()[0];
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
     const Index synaptic_weights_number = synaptic_weights.size();
 
@@ -394,7 +394,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     Index synaptic_weight_index = 0;
 
-    for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
+    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
         const TensorMap<Tensor<type, 1>> combinations_derivatives_neuron = tensor_map(combinations_derivatives, neuron_index);
 
@@ -460,7 +460,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
                                                         const Index& index,
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {
-    const Index layer_parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
     const Index batch_samples_number = back_propagation->batch_samples_number;
 
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
@@ -470,7 +470,11 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 
     memcpy(squared_errors_Jacobian_data + index, 
            squared_errors_Jacobian_data, 
-           layer_parameters_number * batch_samples_number*sizeof(type));
+           parameters_number * batch_samples_number*sizeof(type));
+
+    // std::copy(squared_errors_Jacobian_data,
+    //           squared_errors_Jacobian_data + data_size,
+    //           squared_errors_Jacobian_data + index);
 }
 
 

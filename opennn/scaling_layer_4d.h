@@ -21,8 +21,8 @@ public:
 
    ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
 
-   dimensions get_input_dimensions() const;
-   dimensions get_output_dimensions() const;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    void set(const dimensions& = { 0, 0, 0, 0 });
 
@@ -34,7 +34,7 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
 
-   void print() const;
+   void print() const override;
 
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
@@ -57,7 +57,7 @@ struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> outputs;
 };

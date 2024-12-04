@@ -577,7 +577,7 @@ void GeneticAlgorithm::perform_crossover()
 
     Index descendent_index = 0;
 
-    for(Index i = 0; i < parent_1_indices.size(); i++)
+    for(size_t i = 0; i < parent_1_indices.size(); i++)
     {
         parent_1_variables = population.chip(parent_1_indices[i], 0);
 

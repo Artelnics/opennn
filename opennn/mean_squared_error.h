@@ -40,10 +40,10 @@ public:
                                   BackPropagationLM&) const override;
 
    void calculate_error_gradient_lm(const Batch&,
-                              BackPropagationLM&) const override;
+                                    BackPropagationLM&) const override;
 
    void calculate_error_hessian_lm(const Batch&,
-                                        BackPropagationLM&) const override;
+                                   BackPropagationLM&) const override;
 
    // Serialization
 

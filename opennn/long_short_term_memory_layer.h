@@ -176,7 +176,7 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> current_inputs;
 
@@ -219,13 +219,13 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     LongShortTermMemoryLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
     void set_derivatives_zero();
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> current_deltas;
 

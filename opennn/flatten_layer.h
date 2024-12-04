@@ -29,7 +29,7 @@ public:
 
     FlattenLayer(const dimensions& = {0,0,0});
 
-    dimensions get_input_dimensions() const;
+    dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
     Index get_input_height() const;
@@ -57,7 +57,7 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
@@ -77,7 +77,7 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
    void set(const Index& = 0, Layer* = nullptr) override;
 
-   void print() const;
+   void print() const override;
 
    Tensor<type, 2> outputs;
 };
@@ -87,11 +87,11 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 {
     FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> input_derivatives;
 };

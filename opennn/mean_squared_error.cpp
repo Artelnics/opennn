@@ -142,6 +142,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& back_propagation_lm) const
 {
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();

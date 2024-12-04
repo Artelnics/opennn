@@ -210,9 +210,9 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
+        for (size_t j = 0; j < layer_input_indices[i].size(); j++)
         {
-            const Index input_index = layer_input_indices[i][k];
+            const Index input_index = layer_input_indices[i][j];
 
             if (input_index != -1) 
                 layer_output_indices[input_index].push_back(i);

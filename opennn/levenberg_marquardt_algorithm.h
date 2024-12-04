@@ -108,10 +108,7 @@ private:
 struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 {
 
-    LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr)
-    {
-        set(new_Levenberg_Marquardt_method);
-    }
+    LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr);
 
     void set(LevenbergMarquardtAlgorithm* = nullptr);
 
@@ -132,7 +129,6 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Index epoch = 0;
 };
-
 
 }
 
