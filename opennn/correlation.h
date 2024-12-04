@@ -12,7 +12,7 @@ struct Correlation
 
     enum class Form{Linear, Logistic, Logarithmic, Exponential, Power};
 
-    explicit Correlation() {}
+    Correlation() {}
 
     void set_perfect()
     {

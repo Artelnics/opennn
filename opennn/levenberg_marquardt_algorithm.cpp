@@ -205,34 +205,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-
-    vector<Descriptives> input_variable_descriptives;
-    vector<Descriptives> target_variable_descriptives;
-
     // Neural network
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
-    set_neural_network_variable_names();
+    set_names();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
+    set_scaling();
 
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
-    
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
@@ -334,7 +314,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << endl;
 
             stop_training = true;
 
@@ -354,7 +334,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -390,11 +370,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           optimization_data);
     }
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
-
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    set_unscaling();
 
     if(display) results.print();
 

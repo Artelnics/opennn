@@ -14,7 +14,7 @@ namespace opennn
 {
 
 NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
-                                            const Index& new_inputs_depth) : Layer()
+                                           const Index& new_inputs_depth) : Layer()
 {
     set(new_inputs_number, new_inputs_depth);
 
@@ -152,9 +152,6 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
         static_cast<NormalizationLayer3DForwardPropagation*>(layer_forward_propagation.get());
 
-    // @todo Can we avoid normalized_inputs
-
-    Tensor<type, 3>& normalized_inputs = normalization_layer_3d_forward_propagation->normalized_inputs;
     Tensor<type, 3>& outputs = normalization_layer_3d_forward_propagation->outputs;
 
     Tensor<type, 3>& means = normalization_layer_3d_forward_propagation->means;
@@ -169,12 +166,6 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
 
     standard_deviations.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis).sqrt()
                                            .reshape(range_3).broadcast(expand_normalization_axis);
-
-    normalized_inputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
-
-    // @todo outputs is assigned twice!!!
-
-    outputs.device(*thread_pool_device) = normalized_inputs;
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
@@ -203,7 +194,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     const NormalizationLayer3DForwardPropagation* normalization_layer_3d_forward_propagation =
         static_cast<NormalizationLayer3DForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& normalized_inputs = normalization_layer_3d_forward_propagation->normalized_inputs;
+    const Tensor<type, 3>& outputs = normalization_layer_3d_forward_propagation->outputs;
 
     const Tensor<type, 3>& standard_deviations = normalization_layer_3d_forward_propagation->standard_deviations;
 
@@ -227,19 +218,19 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
     
     // Parameters derivatives
     
-    gammas_derivatives.device(*thread_pool_device) = (normalized_inputs * deltas).sum(sum_dimensions_2);
+    gammas_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(sum_dimensions_2);
     
     betas_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
 
-    standard_deviation_derivatives.device(*thread_pool_device) = normalized_inputs;
+    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
 
     scaled_deltas.device(*thread_pool_device) = deltas;
 
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * normalized_inputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
+    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * outputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
 
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
@@ -344,8 +335,6 @@ void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_samples_
     const Index inputs_depth = normalization_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
-
-    normalized_inputs.resize(batch_samples_number, inputs_number, inputs_depth);
 
     means.resize(batch_samples_number, inputs_number, inputs_depth);
     standard_deviations.resize(batch_samples_number, inputs_number, inputs_depth);

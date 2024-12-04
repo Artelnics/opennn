@@ -254,7 +254,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             {
                 stop = true;
 
-                if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
+                if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
 
                 inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
             }

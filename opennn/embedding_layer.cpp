@@ -128,7 +128,9 @@ void EmbeddingLayer::set_input_dimensions_xxx(const Index& new_inputs_dimension)
 {
     input_dimensions_xxx = new_inputs_dimension;
 
-    set_embedding_weights();
+    embedding_weights.resize(input_dimensions_xxx, depth);
+    set_parameters_random();
+
 }
 
 
@@ -142,7 +144,8 @@ void EmbeddingLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 
-    set_embedding_weights();
+    embedding_weights.resize(input_dimensions_xxx, depth);
+    set_parameters_random();
 }
 
 
@@ -155,14 +158,6 @@ void EmbeddingLayer::set_positional_encoding(const bool& new_positional_encoding
 void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
-}
-
-
-void EmbeddingLayer::set_embedding_weights()
-{
-    embedding_weights.resize(input_dimensions_xxx, depth);
-
-    set_parameters_random();
 }
 
 
@@ -211,11 +206,11 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 {
     const Index batch_size = inputs.dimension(0);
 
-    #pragma omp parallel for
-    for(Index row = 0; row < batch_size; row++)
-        for(Index input_position = 0; input_position < inputs_number_xxx; input_position++)
-            outputs.chip(row, 0).chip(input_position, 0)
-                = embedding_weights.chip(inputs(row, input_position), 0);
+    #pragma omp parallel for collapse(2)
+     for(Index row = 0; row < batch_size; row++)
+         for(Index input_position = 0; input_position < inputs_number_xxx; input_position++)
+             outputs.chip(row, 0).chip(input_position, 0)
+                 = embedding_weights.chip(inputs(row, input_position), 0);
 }
 
 
@@ -271,14 +266,12 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
     
     embedding_weights_derivatives.setZero();
-    
+
     for(Index i = 0; i < batch_samples_number; i++)
     {
-        if(positional_encoding)
-            sample_deltas.device(*thread_pool_device) 
-                = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth));
-        else
-            sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        positional_encoding
+            ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sample_deltas.constant(sqrt(depth))
+            : sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for(Index j = 0; j < inputs_number; j++)
             embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
@@ -315,8 +308,6 @@ void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
 
 void EmbeddingLayer::from_XML(const XMLDocument& document)
 {
-    // Embedding layer
-
     const XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
 
     if(!embedding_layer_element)

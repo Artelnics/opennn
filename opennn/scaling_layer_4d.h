@@ -19,7 +19,7 @@ class ScalingLayer4D : public Layer
 
 public:
 
-   explicit ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
+   ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
 
    dimensions get_input_dimensions() const;
    dimensions get_output_dimensions() const;
@@ -32,12 +32,12 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    void print() const;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -51,11 +51,11 @@ private:
 
 struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
 {   
-    explicit ScalingLayer4DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    ScalingLayer4DForwardPropagation(const Index& = 0, Layer* = nullptr);
         
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 

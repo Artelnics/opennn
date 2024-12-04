@@ -19,7 +19,7 @@ class LanguageDataSet : public DataSet
 
 public:
 
-    explicit LanguageDataSet();
+    LanguageDataSet();
 
     const vector<string>& get_context_vocabulary() const;
     const vector<string>& get_completion_vocabulary() const;
