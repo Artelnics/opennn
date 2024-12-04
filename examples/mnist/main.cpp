@@ -83,13 +83,13 @@ int main()
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         */
-/*
+
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;
