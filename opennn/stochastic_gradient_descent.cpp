@@ -10,8 +10,6 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "language_data_set.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
 
 namespace opennn
 {

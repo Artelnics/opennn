@@ -9,8 +9,6 @@
 #include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "forward_propagation.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
 
 namespace opennn
 {
