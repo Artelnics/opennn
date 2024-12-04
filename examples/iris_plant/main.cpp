@@ -24,7 +24,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("C:/irisflowers.csv", ",", true);
+        DataSet data_set("C:/Users/Roberto Lopez/Documents/opennn/examples/iris_plant/data/iris_plant_original.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -53,6 +53,10 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 //        training_strategy.print();
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
         training_strategy.perform_training();
 
         // Testing analysis

@@ -19,11 +19,11 @@ class TimeSeriesDataSet : public DataSet
 
 public:
 
-    explicit TimeSeriesDataSet(const Index& = 0,
+    TimeSeriesDataSet(const Index& = 0,
                                const dimensions& = {},
                                const dimensions& = {});
 
-    explicit TimeSeriesDataSet(const filesystem::path&,
+    TimeSeriesDataSet(const filesystem::path&,
                                const string&,
                                const bool& = true,
                                const bool& = false,
@@ -36,9 +36,6 @@ public:
 
     const string& get_time_raw_variable() const;
 
-    void set_time_series_data(const Tensor<type, 2>&);
-    void set_time_series_raw_variables_number(const Index&);
-
     const string& get_group_by_column() const;
 
     void set_lags_number(const Index&);
@@ -50,12 +47,10 @@ public:
     Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
     Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
 
-    void print() const final;
+    void print() const override;
 
-    void to_XML(XMLPrinter&) const final;
-    void from_XML(const XMLDocument&) final;
-
-    vector<string> get_time_series_raw_variables_names() const;
+    void to_XML(XMLPrinter&) const override;
+    void from_XML(const XMLDocument&) override;
 
     Index get_time_series_time_raw_variable_index() const;
 

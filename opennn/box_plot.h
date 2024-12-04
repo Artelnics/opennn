@@ -8,11 +8,11 @@ namespace opennn
 
 struct BoxPlot 
 {
-    explicit BoxPlot(const type& = type(NAN), 
-                     const type& = type(NAN),
-                     const type& = type(NAN),
-                     const type& = type(NAN),
-                     const type& = type(NAN));
+    BoxPlot(const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN));
 
     void set(const type& = type(NAN), 
              const type& = type(NAN), 

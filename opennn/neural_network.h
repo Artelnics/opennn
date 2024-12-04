@@ -41,12 +41,12 @@ public:
                                    JavaScript,
                                    PHP};
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
+   NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
                           const dimensions& = {},
                           const dimensions& = {},
                           const dimensions& = {});
 
-   explicit NeuralNetwork(const filesystem::path&);
+   NeuralNetwork(const filesystem::path&);
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
@@ -172,9 +172,9 @@ public:
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
    void from_XML(const XMLDocument&);
-   void inputs_from_XML(const XMLDocument&);
-   void layers_from_XML(const XMLDocument&);
-   void outputs_from_XML(const XMLDocument&);
+   void inputs_from_XML(const XMLElement*);
+   void layers_from_XML(const XMLElement*);
+   void outputs_from_XML(const XMLElement*);
 
    void to_XML(XMLPrinter&) const;
 

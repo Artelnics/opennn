@@ -31,7 +31,7 @@ public:
     };
 
 
-    explicit InputsSelection(TrainingStrategy* = nullptr);
+    InputsSelection(TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -100,7 +100,7 @@ protected:
 
 struct InputsSelectionResults
 {
-    explicit InputsSelectionResults(const Index& = 0);
+    InputsSelectionResults(const Index& = 0);
 
     Index get_epochs_number() const;
 

@@ -19,7 +19,7 @@ class GeneticAlgorithm : public InputsSelection
 
 public:
 
-    explicit GeneticAlgorithm(TrainingStrategy* = nullptr);
+    GeneticAlgorithm(TrainingStrategy* = nullptr);
 
     enum class InitializationMethod{Random,Correlations};
 
@@ -43,7 +43,7 @@ public:
 
     const InitializationMethod& get_initialization_method() const;
 
-    virtual void set_default() final;
+    virtual void set_default() override;
 
     void set_population(const Tensor<bool, 2>&);
 
@@ -93,7 +93,7 @@ public:
 
     const vector<Index>& get_original_unused_raw_variables();
 
-    InputsSelectionResults perform_inputs_selection ()  final;
+    InputsSelectionResults perform_inputs_selection ()  override;
 
     Tensor<string, 2> to_string_matrix() const;
 

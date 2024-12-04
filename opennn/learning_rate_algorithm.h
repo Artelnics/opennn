@@ -23,7 +23,7 @@ public:
 
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
-   explicit LearningRateAlgorithm(LossIndex* = nullptr);
+   LearningRateAlgorithm(LossIndex* = nullptr);
 
    struct Triplet
    {

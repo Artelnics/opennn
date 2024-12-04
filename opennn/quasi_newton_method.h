@@ -24,7 +24,7 @@ public:
 
    enum class InverseHessianApproximationMethod{DFP, BFGS};
 
-   explicit QuasiNewtonMethod(LossIndex* = nullptr);
+   QuasiNewtonMethod(LossIndex* = nullptr);
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm();
@@ -51,9 +51,9 @@ public:
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
 
-   void set_display(const bool&) final;
+   void set_display(const bool&) override;
 
-   void set_default() final;
+   void set_default() override;
 
    // Stopping criteria
 
@@ -75,17 +75,17 @@ public:
 
    void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
 
-   TrainingResults perform_training() final;
+   TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const final;
+   string write_optimization_algorithm_type() const override;
 
    // Serialization
    
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
    
-   Tensor<string, 2> to_string_matrix() const final;
+   Tensor<string, 2> to_string_matrix() const override;
 
 private: 
 
@@ -112,7 +112,7 @@ private:
 struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
 {
 
-    explicit QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr)
+    QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr)
     {
         set(new_quasi_newton_method);
     }

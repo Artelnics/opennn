@@ -19,7 +19,7 @@ class AutoAssociativeDataSet : public DataSet
 
 public:
 
-    explicit AutoAssociativeDataSet();
+    AutoAssociativeDataSet();
 
     vector<RawVariable> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;

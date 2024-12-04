@@ -269,9 +269,9 @@ class TextGenerationAlphabet
 {
 public:
 
-    explicit TextGenerationAlphabet();
+    TextGenerationAlphabet();
 
-    explicit TextGenerationAlphabet(const string&);
+    TextGenerationAlphabet(const string&);
 
     virtual ~TextGenerationAlphabet();
 

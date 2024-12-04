@@ -12,7 +12,7 @@ struct Batch
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
 
-    pair<type*, dimensions> get_targets_pair() const;
+    pair<type*, dimensions> get_target_pair() const;
 
     Index get_batch_samples_number() const;
 
@@ -39,7 +39,7 @@ struct Batch
 
     Tensor<type, 1> input_tensor;
 
-    dimensions targets_dimensions;
+    dimensions target_dimensions;
 
     Tensor<type, 1> target_tensor;
 

@@ -469,7 +469,7 @@ private:
 // 	false, <b>no children of this node or its siblings</b> will be visited.
 //
 // 	All flavors of Visit have a default implementation that returns 'true'(continue
-// 	visiting). You need to only final that are interesting to you.
+// 	visiting). You need to only override that are interesting to you.
 //
 // 	Generally Accept() is called on the XMLDocument, although all nodes support visiting.
 //
@@ -2213,8 +2213,8 @@ public:
 protected:
 	virtual bool CompactMode(const XMLElement&)	{ return _compactMode; }
 
-// 	 Prints out the space before an element. You may final to change
-// 	    the space and tabs used. A PrintSpace() final should call Print().
+// 	 Prints out the space before an element. You may override to change
+// 	    the space and tabs used. A PrintSpace() override should call Print().
 
     virtual void PrintSpace(int depth );
     void Print(const char* format, ...);

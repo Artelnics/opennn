@@ -49,7 +49,7 @@ public:
                     MultiheadAttention,
                     Embedding};
 
-    explicit Layer();
+    Layer();
 
     string get_name() const;
 

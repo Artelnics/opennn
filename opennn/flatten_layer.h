@@ -27,10 +27,10 @@ class FlattenLayer : public Layer
 
 public:
 
-    explicit FlattenLayer(const dimensions& = {0,0,0});
+    FlattenLayer(const dimensions& = {0,0,0});
 
     dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const final;
+    dimensions get_output_dimensions() const override;
 
     Index get_input_height() const;
     Index get_input_width() const;
@@ -42,20 +42,20 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     // Serialization
 
-    void from_XML(const XMLDocument&) final;
+    void from_XML(const XMLDocument&) override;
 
-    void to_XML(XMLPrinter&) const final;
+    void to_XML(XMLPrinter&) const override;
 
     void print() const;
 
@@ -71,11 +71,11 @@ private:
 
 struct FlattenLayerForwardPropagation : LayerForwardPropagation
 {
-   explicit FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+   FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
       
-   pair<type*, dimensions> get_outputs_pair() const final;
+   pair<type*, dimensions> get_outputs_pair() const override;
 
-   void set(const Index& = 0, Layer* = nullptr) final;
+   void set(const Index& = 0, Layer* = nullptr) override;
 
    void print() const;
 
@@ -85,11 +85,11 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 
 struct FlattenLayerBackPropagation : LayerBackPropagation
 {
-    explicit FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
     void print() const;
 
