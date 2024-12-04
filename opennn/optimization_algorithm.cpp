@@ -8,6 +8,8 @@
 
 #include "pch.h"
 #include "optimization_algorithm.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -239,7 +241,7 @@ type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
 }
 
 
-void OptimizationAlgorithm::set_neural_network_variable_names()
+void OptimizationAlgorithm::set_names()
 {
     DataSet* data_set = loss_index->get_data_set();
 
@@ -250,6 +252,70 @@ void OptimizationAlgorithm::set_neural_network_variable_names()
 
     neural_network->set_input_names(input_names);
     neural_network->set_output_namess(target_names);
+}
+
+
+void OptimizationAlgorithm::set_scaling()
+{
+    DataSet* data_set = loss_index->get_data_set();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(neural_network->has(Layer::Type::Scaling2D))
+    {
+        vector<Descriptives> input_variable_descriptives;
+
+        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+
+        const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+
+
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
+    }
+
+    if(neural_network->has(Layer::Type::Unscaling))
+    {
+        vector<Descriptives> target_variable_descriptives;
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+
+        const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
+    }
+}
+
+
+void OptimizationAlgorithm::set_unscaling()
+{
+    DataSet* data_set = loss_index->get_data_set();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(neural_network->has(Layer::Type::Scaling2D))
+    {
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+
+        const vector<Descriptives> input_variable_descriptives = scaling_layer_2d->get_descriptives();
+
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+    }
+
+    if(neural_network->has(Layer::Type::Unscaling))
+    {
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+
+        const vector<Descriptives> target_variable_descriptives = unscaling_layer->get_descriptives();
+
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    }
+
+    // if(!is_instance_of<LanguageDataSet>(data_set))
+    //     data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+
+    // if(neural_network->has(Layer::Type::Unscaling))
+    //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+
 }
 
 

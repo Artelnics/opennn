@@ -86,7 +86,9 @@ public:
 
    static type get_elapsed_time(const time_t& beginning_time);
 
-   void set_neural_network_variable_names();
+   void set_names();
+   void set_scaling();
+   void set_unscaling();
 
 protected:
 

@@ -238,23 +238,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    set_neural_network_variable_names();
+    set_names();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
-
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
+    set_scaling();
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
@@ -399,13 +385,13 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
             stop_training = true;
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
             stop_training = true;
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
@@ -413,11 +399,11 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             stop_training = true;
             results.stopping_condition  = StoppingCondition::LossGoal;
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
             stop_training = true;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
@@ -440,11 +426,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             neural_network->save(neural_network_file_name);
     }
 
-    if(!is_instance_of<LanguageDataSet>(data_set))
-        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
-
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    set_unscaling();
 
     if(display) results.print();
     

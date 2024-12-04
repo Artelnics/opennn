@@ -416,7 +416,7 @@ void GeneticAlgorithm::evaluate_population()
     {
         individual = population.chip(i, 0);
 
-        cout << endl << "Individual " << i + 1 << endl;
+        cout << "\nIndividual " << i + 1 << endl;
 
         individual_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(individual);
 
@@ -669,7 +669,7 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 {
-    if(display) cout << "Performing genetic inputs selection..." << endl << endl;
+    if(display) cout << "Performing genetic inputs selection...\n" << endl;
 
     initialize_population();
 
@@ -798,7 +798,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
@@ -807,7 +807,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         {
             stop = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }

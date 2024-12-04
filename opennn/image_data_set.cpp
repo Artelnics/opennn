@@ -171,7 +171,7 @@ void ImageDataSet::set_image_data_random()
     }
 
     if (display)
-        cout << endl << "Random image data set generated." << endl;
+        cout << "\nRandom image data set generated." << endl;
 }
 
 
@@ -544,7 +544,7 @@ void ImageDataSet::read_bmp()
         long long seconds = (total_milliseconds % 60000) / 1000;
         long long milliseconds = total_milliseconds % 1000;
 
-        cout << endl << "Image data set loaded in: "
+        cout << "\nImage data set loaded in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;
