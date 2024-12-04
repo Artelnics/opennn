@@ -277,7 +277,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
-
+         
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
@@ -296,11 +296,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
 
 
-            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            cout << "numerical gradient:\n" << numerical_gradient<< endl;
-            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            //cout << "numerical gradient:\n" << numerical_gradient<< endl;
+            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 

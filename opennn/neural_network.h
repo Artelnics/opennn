@@ -42,9 +42,9 @@ public:
                                    PHP};
 
    NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
-                          const dimensions& = {},
-                          const dimensions& = {},
-                          const dimensions& = {});
+                 const dimensions& = {},
+                 const dimensions& = {},
+                 const dimensions& = {});
 
    NeuralNetwork(const filesystem::path&);
 

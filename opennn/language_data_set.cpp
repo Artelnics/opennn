@@ -2111,16 +2111,16 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 {
     const Index entry_number = context_tokens.size();
 
-    const unordered_map<string, type> context_vocabulary_map(context_vocabulary.begin(), context_vocabulary.end());
-    const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
+    //const unordered_map<string, type> context_vocabulary_map(context_vocabulary.begin(), context_vocabulary.end());
+    //const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
 
-    // unordered_map<string, type> context_vocabulary_map;
-    // for(size_t i = 0; i < context_vocabulary.size(); i++)
-    //     context_vocabulary_map[context_vocabulary[i]] = type(i);
+    unordered_map<string, type> context_vocabulary_map;
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
+         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
-    // unordered_map<string, type> completion_vocabulary_map;
-    // for(size_t i = 0; i < completion_vocabulary.size(); i++)
-    //     completion_vocabulary_map[completion_vocabulary[i]] = type(i);
+    unordered_map<string, type> completion_vocabulary_map;
+    for(size_t i = 0; i < completion_vocabulary.size(); i++)
+         completion_vocabulary_map[completion_vocabulary[i]] = type(i);
 
 //    const Index context_vocabulary_size = context_vocabulary.size();
 //    const Index completion_vocabulary_size = completion_vocabulary.size();
