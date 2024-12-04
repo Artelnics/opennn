@@ -91,7 +91,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) =(targets*(outputs.log())).sum() / type(-1*batch_samples_number);
+    error.device(*thread_pool_device) =(targets*(outputs.log())).sum() / type(-batch_samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }

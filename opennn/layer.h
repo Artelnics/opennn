@@ -51,10 +51,7 @@ public:
 
     Layer();
 
-    Layer(const XMLDocument& document)
-    {
-        from_XML(document);
-    }
+    Layer(const XMLDocument& document);
 
     string get_name() const;
 

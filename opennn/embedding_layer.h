@@ -26,13 +26,13 @@ class EmbeddingLayer : public Layer
 public:
 
     EmbeddingLayer(const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const bool& = false);
+                   const Index& = 0,
+                   const Index& = 0,
+                   const bool& = false);
 
-    Index get_input_dimension_xxx() const;
-    Index get_inputs_number_xxx() const;
-    Index get_depth() const;
+    Index get_vocabulary_size() const;
+    Index get_sequence_length() const;
+    Index get_embedding_size() const;
     bool get_positional_encoding() const;
 
     dimensions get_input_dimensions() const override;
@@ -43,9 +43,9 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-    void set_input_dimensions_xxx(const Index&);
-    void set_inputs_number(const Index&);
-    void set_depth(const Index&);
+    void set_vocabulary_size(const Index&);
+    void set_sequence_length(const Index&);
+    void set_embedding_size(const Index&);
     void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
@@ -82,11 +82,7 @@ public:
 
 private:
 
-    Index input_dimensions_xxx;
-
-    Index inputs_number_xxx;
-
-    Index depth;
+    Index sequence_length;
 
     Tensor<type, 2> embedding_weights;
 

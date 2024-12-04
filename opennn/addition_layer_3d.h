@@ -30,6 +30,7 @@ public:
     Index get_inputs_depth() const;
 
     // @todo
+
     dimensions get_input_dimensions() const override
     {
         throw runtime_error("XXX");

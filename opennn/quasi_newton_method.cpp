@@ -505,7 +505,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             results.selection_error_history(epoch) = selection_back_propagation.error();
 
-            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
+            if(epoch != 0
+            && results.selection_error_history(epoch) > results.selection_error_history(epoch-1))
+                selection_failures++;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -520,24 +522,21 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
-        if(loss_decrease < minimum_loss_decrease)
-        {
-            if(display) cout << "Epoch " << epoch << endl
-                             << "Minimum loss decrease reached (" << minimum_loss_decrease << "): " << loss_decrease << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease;
-        }
-
         old_loss = training_back_propagation.loss;
+
+
 
         stop_training = true;
 
-        if(results.training_error_history(epoch) < training_loss_goal)
+        if(loss_decrease < minimum_loss_decrease)
         {
-            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached (" << minimum_loss_decrease << "): " << loss_decrease << endl;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease;
+        }
+        else if(results.training_error_history(epoch) < training_loss_goal)
+        {
             if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
