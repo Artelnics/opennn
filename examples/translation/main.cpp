@@ -126,12 +126,30 @@ int main()
 
         // Data Set
 
+
+
         LanguageDataSet language_data_set({0},{0});
 
-        language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
+//        language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
+
+
+        const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
+
+        const Index maximum_completion_length = language_data_set.get_completion_length(); // 40
+
+        const Index completion_vocabulary size = language_data_set.get_completion_vocabulary_size();
+
+
+        Transformer transformer;
+
+        transformer.set_input_vocabulary(completion_vocabulary); // !!!
+        transformer.set_context_vocabulary(context_vocabulary); // !!!
 
 
 
+        const string outputs = transformer.calculate_outputs("Hello, world!");
+/*
         const dimensions completion_dimensions = {language_data_set.get_completion_length(),language_data_set.get_completion_vocabulary_size()};
         const dimensions context_dimensions = {language_data_set.get_context_length(),language_data_set.get_context_vocabulary_size()};
 
@@ -267,7 +285,7 @@ int main()
 
         // string translation = testing_analysis.test_transformer({"I like dogs."},true);
         // cout<<translation<<endl;
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

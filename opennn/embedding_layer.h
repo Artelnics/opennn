@@ -25,6 +25,10 @@ class EmbeddingLayer : public Layer
 
 public:
 
+    explicit EmbeddingLayer(const dimensions& = {0},
+                            const dimensions& = {0, 0});
+
+
     explicit EmbeddingLayer(const Index& = 0,
                             const Index& = 0,
                             const Index& = 0,

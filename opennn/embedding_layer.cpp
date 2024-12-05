@@ -202,14 +202,16 @@ void EmbeddingLayer::set_parameters_random()
     const type maximum = type(0.05);
 
     // First row must be 0s because input value 0 is padding
-    if(embedding_weights.dimension(0)!=0){
-    embedding_weights.chip(0, 0).setConstant(0);
 
-    #pragma omp parallel for
+    if(embedding_weights.dimension(0) != 0)
+    {
+        embedding_weights.chip(0, 0).setConstant(0);
 
-    for(Index i = 1; i < embedding_weights.dimension(0); i++)
-        for(Index j = 0; j < embedding_weights.dimension(1); j++)
-            embedding_weights(i, j) = minimum + (maximum - minimum)* type(rand() / (RAND_MAX + 1.0));
+        #pragma omp parallel for
+
+        for(Index i = 1; i < embedding_weights.dimension(0); i++)
+            for(Index j = 0; j < embedding_weights.dimension(1); j++)
+                embedding_weights(i, j) = minimum + (maximum - minimum)* type(rand() / (RAND_MAX + 1.0));
     }
 }
 

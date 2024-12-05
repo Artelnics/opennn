@@ -320,11 +320,8 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
         for(Index i = 0; i < raw_variables_number; i++)
         {
             file_stream.OpenElement("RawVariable");
-
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
             raw_variables[i].to_XML(file_stream);
-
             file_stream.CloseElement();
         }
     }

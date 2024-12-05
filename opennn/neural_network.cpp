@@ -247,7 +247,7 @@ Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
         if(layers[i]->get_type() == layer_type)
             return layers[i].get();
 
-    throw runtime_error("Neural network has not layer type.");
+    throw runtime_error("Neural network does not have layer type.");
 }
 
 
@@ -434,12 +434,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions convolution_stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-        //                                          kernel_dimensions,
-        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-        //                                          convolution_stride_dimensions,
-        //                                          convolution_type,
-        //                                          "convolutional_layer_" + to_string(i+1)));
+        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                  kernel_dimensions,
+                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                  convolution_stride_dimensions,
+                                                  convolution_type,
+                                                  "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -1154,7 +1154,7 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
-    ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Unscaling));
+    ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Scaling4D));
 
     const Index height = scaling_layer_4d->get_input_dimensions()[0];
     const Index width = scaling_layer_4d->get_input_dimensions()[1];
@@ -1268,65 +1268,53 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("NeuralNetwork");
 
+    // Inputs
+
     printer.OpenElement("Inputs");
+
     const Index inputs_number = get_inputs_number();
+
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
 
     if (input_names.size() != size_t(inputs_number))
         throw runtime_error("Size of input names is not equal to inputs number");
 
-    for (Index i = 0; i < inputs_number; i++) 
-    {
-        printer.OpenElement("Input");
-        printer.PushAttribute("Index", to_string(i + 1).c_str());
-        printer.PushText(input_names[i].c_str());
-        printer.CloseElement();
-    }
+    for (Index i = 0; i < inputs_number; i++)
+        add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 
+    // Layers
+
     printer.OpenElement("Layers");
+
     const Index layers_number = get_layers_number();
+
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
     for (Index i = 0; i < layers_number; i++) 
         layers[i]->to_XML(printer);
 
-    printer.OpenElement("LayersInputsIndices");
-    ostringstream buffer;
+    // Layer input indices
+
+    printer.OpenElement("LayerInputIndices");
 
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
-    {
-        printer.OpenElement("LayerInputsIndices");
-        printer.PushAttribute("LayerIndex", to_string(i).c_str());
-
-        const vector<Index>& indices = layer_input_indices[i];
-
-        buffer.str("");
-        
-        for (size_t j = 0; j < indices.size(); j++)
-        {
-            buffer << indices[j];
-            if (j != indices.size() - 1) buffer << " ";
-        }
-        printer.PushText(buffer.str().c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
     printer.CloseElement(); 
-    printer.CloseElement(); 
+    printer.CloseElement();
+
+    // Outputs
 
     printer.OpenElement("Outputs");
+
     const Index outputs_number = output_names.size();
+
     add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
     for (Index i = 0; i < outputs_number; i++) 
-    {
-        printer.OpenElement("Output");
-        printer.PushAttribute("Index", to_string(i + 1).c_str());
-        printer.PushText(output_names[i].c_str());
-        printer.CloseElement();
-    }
+        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement(); 
 
@@ -1556,10 +1544,10 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
 
     // Layers inputs indices
 
-    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayersInputsIndices");
+    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
 
     if(!layer_input_indices_element)
-        throw runtime_error("LayersInputsIndices element is nullptr.\n");
+        throw runtime_error("LayerInputIndices element is nullptr.\n");
 
     layer_input_indices.clear(); // @todo .clear because they are already saved from Add layers for (is this code needed?)
     layer_input_indices.resize(layers.size());
@@ -1697,7 +1685,7 @@ void NeuralNetwork::load(const filesystem::path& file_name)
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.u8string().c_str()))
+    if (document.LoadFile(file_name.string().c_str()))
         throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);

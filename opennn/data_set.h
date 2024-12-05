@@ -264,7 +264,7 @@ public:
 
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
-    void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
+    //void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
     void set_input_raw_variables_unused();
 
     //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
@@ -461,7 +461,7 @@ public:
 
     void save_data() const;
 
-    void save_data_binary(const string&) const;
+    void save_data_binary(const filesystem::path&) const;
 
     void load_data_binary();
 
@@ -484,11 +484,11 @@ public:
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
-    void set_missing_values_number();
+    //void set_missing_values_number();
 
-    void set_raw_variables_missing_values_number();
+    //void set_raw_variables_missing_values_number();
 
-    void set_samples_missing_values_number();
+    //void set_samples_missing_values_number();
 
     // Other
 

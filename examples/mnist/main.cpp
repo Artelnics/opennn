@@ -36,6 +36,7 @@ int main()
 
         //image_data_set.set(DataSet::SampleUse::Training);
 
+<<<<<<< HEAD
         //ImageDataSet image_data_set;
 
         //image_data_set.set_data_source_path("data");
@@ -47,6 +48,9 @@ int main()
 
 
         ImageDataSet image_data_set;
+=======
+        ImageDataSet image_data_set(0,{0,0,0},{0});
+>>>>>>> bcf7aaf966a431b1629c597d0c4c67f369607120
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
@@ -59,7 +63,7 @@ int main()
         image_data_set.read_bmp();
 
         // Neural network
-
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
             { 1 },
@@ -79,7 +83,7 @@ int main()
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-
+        
         // Testing analysis
         /*
         neural_network.save("C:/xmltest/outputs.xml");
