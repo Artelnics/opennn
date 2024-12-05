@@ -53,7 +53,7 @@ int main()
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
-            { 1 },
+            { 16 },
             image_data_set.get_target_dimensions());
 
         //neural_network.print();
