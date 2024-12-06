@@ -1907,7 +1907,7 @@ void LanguageDataSet::read_txt_language_model()
     const vector<vector<string>> context_tokens = preprocess_language_documents(context);
     const vector<vector<string>> completion_tokens = preprocess_language_documents(completion);
 
-    bool imported_vocabulary = false;
+//    bool imported_vocabulary = false;
 
     if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
@@ -1923,7 +1923,7 @@ void LanguageDataSet::read_txt_language_model()
     {
         cout << "Importing vocabularies..." << endl;
 
-        imported_vocabulary = true;
+//        imported_vocabulary = true;
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
     }

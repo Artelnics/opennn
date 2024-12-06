@@ -103,7 +103,7 @@ public:
 
     string get_activation_function_string_expression() const;
 
-    void print() const;
+    void print() const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -134,7 +134,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 
@@ -146,11 +146,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
     PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
@@ -164,11 +164,11 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
     PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;

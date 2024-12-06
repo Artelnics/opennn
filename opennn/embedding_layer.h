@@ -26,16 +26,16 @@ class EmbeddingLayer : public Layer
 public:
 
     EmbeddingLayer(const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const bool& = false);
+                   const Index& = 0,
+                   const Index& = 0,
+                   const bool& = false);
 
-    Index get_input_dimension_xxx() const;
-    Index get_inputs_number_xxx() const;
-    Index get_depth() const;
+    Index get_vocabulary_size() const;
+    Index get_sequence_length() const;
+    Index get_embedding_size() const;
     bool get_positional_encoding() const;
 
-    dimensions get_input_dimensions() const;
+    dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
@@ -43,9 +43,9 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-    void set_input_dimensions_xxx(const Index&);
-    void set_inputs_number(const Index&);
-    void set_depth(const Index&);
+    void set_vocabulary_size(const Index&);
+    void set_sequence_length(const Index&);
+    void set_embedding_size(const Index&);
     void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
@@ -69,9 +69,9 @@ public:
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-    void insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                         const Index& index, 
-                         Tensor<type, 1>& gradient) const;
+    void insert_gradient(unique_ptr<LayerBackPropagation>&,
+                         const Index&,
+                         Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -82,11 +82,7 @@ public:
 
 private:
 
-    Index input_dimensions_xxx;
-
-    Index inputs_number_xxx;
-
-    Index depth;
+    Index sequence_length;
 
     Tensor<type, 2> embedding_weights;
 
@@ -106,7 +102,7 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     void build_positional_encoding_matrix();
 
@@ -122,11 +118,11 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
 {
     EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> sample_deltas;
     Tensor<type, 2> embedding_weights_derivatives;

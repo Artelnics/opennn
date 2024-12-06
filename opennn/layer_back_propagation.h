@@ -14,8 +14,6 @@ struct LayerBackPropagation
         
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 
-    virtual void set(const Index& = 0, Layer* = nullptr) {}
-
     virtual void print() const {}
 
     Index batch_samples_number = 0;

@@ -133,7 +133,7 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 3> outputs;
 
@@ -145,11 +145,11 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 {
     PerceptronLayer3DBackPropagation(const Index& = 0, Layer* = 0);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;

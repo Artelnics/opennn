@@ -269,29 +269,27 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         = back_propagation_lm.get_layer_delta_pairs();
 
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
-/*
+
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate_lm(layer_input_pairs[i],
                                      layer_delta_pairs[i],
                                      forward_propagation.layers[i],
                                      back_propagation_lm.neural_network.layers[i]);
 
-    const vector<Index> layer_parameter_numbers
-        = neural_network->get_layer_parameter_numbers();
+    const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     Index index = 0;
 
-    for(Index i = 0; i < last_trainable_layer_index - first_trainable_layer_index; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->insert_squared_errors_Jacobian_lm(back_propagation_lm.neural_network.layers[i],
                                                      index,
                                                      back_propagation_lm.squared_errors_jacobian);
-        
+
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
-*/
 }
 
 

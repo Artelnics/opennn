@@ -22,7 +22,7 @@ public:
 
    UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
-   dimensions get_input_dimensions() const;
+   dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
 
    vector<Descriptives> get_descriptives() const; 
@@ -62,7 +62,7 @@ public:
 
    vector<string> write_scalers_text() const;
 
-   void print() const;
+   void print() const override;
 
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
@@ -88,7 +88,7 @@ struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

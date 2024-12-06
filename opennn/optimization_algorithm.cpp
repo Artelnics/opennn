@@ -161,6 +161,12 @@ void OptimizationAlgorithm::check() const
 }
 
 
+string OptimizationAlgorithm::write_optimization_algorithm_type() const
+{
+    return string();
+}
+
+
 void OptimizationAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("OptimizationAlgorithm");

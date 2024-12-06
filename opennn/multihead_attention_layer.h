@@ -150,7 +150,7 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> query;
     Tensor<type, 4> key;
@@ -172,11 +172,11 @@ struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 
     MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> error_attention_scores_derivatives;
     Tensor<type, 4> error_attention_weights_derivatives;

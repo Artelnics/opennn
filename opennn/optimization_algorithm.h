@@ -71,7 +71,7 @@ public:
 
    virtual TrainingResults perform_training() = 0;
 
-   virtual string write_optimization_algorithm_type() const {return string();}
+   virtual string write_optimization_algorithm_type() const;
 
    virtual void print() const;
 
@@ -97,7 +97,7 @@ protected:
 
    LossIndex* loss_index = nullptr;
 
-   Index epochs_number = 10000;
+   Index epochs_number = 1000;
 
    BoxPlot auto_association_box_plot;
 
