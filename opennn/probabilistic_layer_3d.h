@@ -27,7 +27,7 @@ public:
 
    ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   enum class ActivationFunction{Softmax, Competitive, Binary, Logistic};
+   enum class ActivationFunction{Softmax, Competitive};
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;

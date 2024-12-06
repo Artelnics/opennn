@@ -1436,7 +1436,7 @@ void delete_short_long_words(vector<vector<string>>& documents_words,
 
     #pragma omp parallel for
 
-    for(size_t i = 0; i < documents_number; i++)
+    for(Index i = 0; i < Index(documents_number); i++)
     {
         for(size_t j = 0; j < documents_words[i].size(); j++)
         {
