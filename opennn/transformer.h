@@ -10,13 +10,13 @@
 #define TRANSFORMER_H
 
 #include "neural_network.h"
-#include "forward_propagation.h"
+//#include "forward_propagation.h"
 
 namespace opennn
 {
 
-struct TransformerForwardPropagation;
-struct TransformerBackPropagation;
+//struct TransformerForwardPropagation;
+//struct TransformerBackPropagation;
 
 class Transformer : public NeuralNetwork
 {
@@ -86,25 +86,25 @@ private:
 };
 
 
-struct TransformerForwardPropagation : ForwardPropagation
-{
-    // Constructors
+// struct TransformerForwardPropagation : ForwardPropagation
+// {
+//     // Constructors
 
-    TransformerForwardPropagation() {}
+//     TransformerForwardPropagation() {}
 
-    TransformerForwardPropagation(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-    {
-        set(new_batch_samples, new_neural_network);
-    }
+//     TransformerForwardPropagation(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
+//     {
+//         set(new_batch_samples, new_neural_network);
+//     }
 
-    void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
+//     void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
 
-    void print() const;
+//     void print() const;
 
-    Index batch_samples_number = 0;
+//     Index batch_samples_number = 0;
 
-    Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
-};
+//     Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
+// };
 };
 
 #endif // TRANSFORMER_H

@@ -159,7 +159,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
           parameters.input_dimensions[1],
           parameters.input_dimensions[2] } );
 
-    pooling_layer.forward_propagate({ input_pair }, forward_propagation, true);
+    pooling_layer.forward_propagate({ input_pair }, forward_propagation, false);
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 

@@ -210,9 +210,9 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
+        for (size_t j = 0; j < layer_input_indices[i].size(); j++)
         {
-            const Index input_index = layer_input_indices[i][k];
+            const Index input_index = layer_input_indices[i][j];
 
             if (input_index != -1) 
                 layer_output_indices[input_index].push_back(i);
@@ -424,25 +424,24 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions convolution_stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-        //                                          kernel_dimensions,
-        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-        //                                          convolution_stride_dimensions,
-        //                                          convolution_type,
-        //                                          "convolutional_layer_" + to_string(i+1)));
+        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                  kernel_dimensions,
+                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                  convolution_stride_dimensions,
+                                                  convolution_type,
+                                                  "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
         const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
 
-        // add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-        //                                     pool_dimensions,
-        //                                     pooling_stride_dimensions,
-        //                                     padding_dimensions,
-        //                                     pooling_method,
-        //                                     "pooling_layer_" + to_string(i + 1)));
-
+        add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+                                            pool_dimensions,
+                                            pooling_stride_dimensions,
+                                            padding_dimensions,
+                                            pooling_method,
+                                            "pooling_layer_" + to_string(i + 1)));
     }
 
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
@@ -1217,8 +1216,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
-
-        //add_layer(std::move(unique_ptr<ScalingLayer2D>(layer_document)));
 
         if (layer_type_string == "Scaling2D") {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();

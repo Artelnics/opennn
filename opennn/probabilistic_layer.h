@@ -28,7 +28,7 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
     Tensor<type, 2> activation_derivatives;
@@ -39,11 +39,11 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
     ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> targets;
 
@@ -64,11 +64,11 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
                                                  Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> deltas_row;
 
@@ -156,7 +156,7 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
 
 private:
 

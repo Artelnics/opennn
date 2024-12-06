@@ -22,8 +22,8 @@ public:
 
    ScalingLayer2D(const dimensions& = {0});
 
-   dimensions get_input_dimensions() const;
-   dimensions get_output_dimensions() const;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    vector<Descriptives> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
@@ -77,7 +77,7 @@ public:
 
    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-   void print() const;
+   void print() const override;
 
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
@@ -101,7 +101,7 @@ struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

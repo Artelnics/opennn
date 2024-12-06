@@ -203,7 +203,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
    void set(const Index& = 0, Layer* = nullptr) override;
 
-   void print() const;
+   void print() const override;
 
    Tensor<type, 4> outputs;
 
@@ -220,11 +220,11 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
    ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-   vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+   vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-   void set(const Index& = 0, Layer* = nullptr) override;
+   void set(const Index& = 0, Layer* = nullptr);
 
-   void print() const;
+   void print() const override;
 
    //Tensor<type, 3> image_convolutions_derivatives;
 

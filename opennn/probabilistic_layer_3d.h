@@ -139,7 +139,7 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 3> outputs;
 };
@@ -149,11 +149,11 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
 {
     ProbabilisticLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> targets;
     Tensor<type, 2> mask;

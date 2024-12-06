@@ -24,7 +24,7 @@ public:
     type get_normalization_coefficient() const;
     type get_selection_normalization_coefficient() const;
 
-    void set_normalization_coefficient();
+    void set_normalization_coefficient() override;
 //    void set_normalization_coefficient(const type&);
 
     void set_time_series_normalization_coefficient();

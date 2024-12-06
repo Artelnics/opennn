@@ -35,8 +35,8 @@ public:
                           const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
 
-    dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
     Index get_input_height() const;
     Index get_input_width() const;
@@ -66,7 +66,7 @@ public:
              const PoolingMethod& = PoolingMethod::MaxPooling,
              const string = "pooling_layer");
 
-    void set_input_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&) override;
 
     void set_padding_height(const Index&);
     void set_padding_width(const Index&);
@@ -108,7 +108,7 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
@@ -145,7 +145,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
     void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> outputs;
 
@@ -159,11 +159,11 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 {
     PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> deltas_by_pool_size;
 

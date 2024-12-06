@@ -30,6 +30,7 @@ public:
     Index get_inputs_depth() const;
 
     // @todo
+
     dimensions get_input_dimensions() const override
     {
         throw runtime_error("XXX");
@@ -86,7 +87,7 @@ struct AdditionLayer3DBackPropagation : LayerBackPropagation
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
