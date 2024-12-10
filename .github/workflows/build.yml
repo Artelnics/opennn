@@ -7,24 +7,35 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - dev
+
 jobs:
   build:
     name: Build
     runs-on: windows-latest
     env:
-      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
       - name: Set up msbuild
         uses: microsoft/setup-msbuild@v2
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v3
+      
+      - name: Build with build-wrapper
+        run: |
+          build-wrapper-win-x86-64.exe --out-dir build_wrapper_output_directory msbuild opennn.sln /t:Rebuild /p:Configuration=Release
+
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }} # Put the name of your token here
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         run: |
           sonar-scanner \
-            --define sonar.inclusions="opennn/opennn/**/*.cpp,opennn/opennn/**/*.h"
+            -Dsonar.projectKey=opennn \
+            -Dsonar.organization=Artelnics \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }} \
+            -Dsonar.cfamily.build-wrapper-output=build_wrapper_output_directory \
+            -Dsonar.inclusions="opennn/opennn/**/*.cpp,opennn/opennn/**/*.h"
