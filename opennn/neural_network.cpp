@@ -1389,8 +1389,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        //add_layer(std::move(unique_ptr<ScalingLayer2D>(layer_document)));
-
         if (layer_type_string == "Scaling2D") {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
             scaling_layer->from_XML(layer_document);

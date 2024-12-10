@@ -21,12 +21,6 @@ Layer::Layer()
 }
 
 
-Layer::Layer(const XMLDocument &document)
-{
-    from_XML(document);
-}
-
-
 const bool& Layer::get_display() const
 {
     return display;
