@@ -23,9 +23,6 @@ jobs:
       - name: Install sonar-scanner and build-wrapper
         uses: sonarsource/sonarcloud-github-c-cpp@v3
       
-      - name: Build opennn
-        run: msbuild opennn\opennn.vcxproj /t:Rebuild /p:Configuration=Release
-      
       - name: Build with build-wrapper (mnist)
         run: |
           build-wrapper-win-x86-64.exe --out-dir build_wrapper_output_directory msbuild examples\mnist\mnist.vcxproj /t:Rebuild /p:Configuration=Release
@@ -36,9 +33,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=opennn \
-            -Dsonar.organization=Artelnics \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONARCLOUD_TOKEN }} \
-            -Dsonar.cfamily.build-wrapper-output=build_wrapper_output_directory \
-            -Dsonar.inclusions="opennn/opennn/**/*.cpp,opennn/opennn/**/*.h"
+            --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json" \
+            --define sonar.inclusions="opennn/opennn/**/*.cpp,opennn/opennn/**/*.h"
