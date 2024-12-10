@@ -33,6 +33,8 @@ public:
 
     explicit YOLODataset(const string&, const string&);
 
+    vector<Descriptives> scale_variables(const VariableUse&);
+
     size_t size() const;
 
     Tensor<type, 3> get_image(const Index&) const;
@@ -46,6 +48,11 @@ public:
     vector<Tensor<type, 1>> get_anchors() const;
 
     string get_class(const Index&) const;
+
+    Index get_grid_size() const
+    {
+        return grid_size;
+    }
 
     void rotate_90_degrees(Tensor<type, 3>&, Tensor<type, 2>&);
 
@@ -71,8 +78,6 @@ protected:
 
     Index grid_size = 13;
     Index anchor_number = 5;
-
-    ModelType model_type = opennn::DataSet::ModelType::ObjectDetection;
 
     Tensor<type, 4> tensor_targets;
     Tensor<type, 4> tensor_images;

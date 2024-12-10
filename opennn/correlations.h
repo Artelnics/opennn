@@ -9,8 +9,10 @@
 #ifndef CORRELATIONS_H
 #define CORRELATIONS_H
 
+#include "pch.h"
+
 #include "correlation.h"
-#include "config.h"
+
 
 namespace opennn
 {

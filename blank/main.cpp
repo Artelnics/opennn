@@ -42,10 +42,6 @@ using namespace Eigen;
 
 
 
-
-type loss_function(const Tensor<type, 4> &, const vector<Tensor<type, 1> > &, Tensor<type, 4> &);
-
-
 vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>&, const type&, const Index&);
 
 
@@ -59,7 +55,6 @@ int main()
 {
     try
     {
-
         YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages_fixing","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels_fixing");     //PARA COMPROBAR DONDE FALLA
 
         // YOLODataset train_dataset("/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/BMPImages_debug","/Users/artelnics/Desktop/Testing_dataset/VOCdevkit/VOC2007/Labels_debug");     //PARA DEBUGGEAR
@@ -71,7 +66,7 @@ int main()
         // cout<<train_dataset.get_anchors()[1]<<endl;
         // cout<<train_dataset.get_label(1)<<endl;
 
-        // yolo.print();
+        yolo.print();
         // yolo.calculate_outputs(train_dataset.get_images());
 
         // cout<<yolo.calculate_outputs(train_dataset.get_images())<<endl;
@@ -95,8 +90,6 @@ int main()
 
 
         training_strategy.perform_training();
-
-
 
 
 
@@ -226,59 +219,6 @@ int main()
 
 // @TODO check if the loss is calculated for each image or for each batch
 
-type loss_function(const Tensor<type, 4>& targets, const vector<Tensor<type, 1>>& anchors, Tensor<type, 4>& outputs)
-{
-    const Index batch_size = outputs.dimension(0);
-    const Index grid_size = outputs.dimension(1);
-    const Index boxes_per_cell = anchors.size();
-    const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
-    const Index box_data_size = 5 + classes_number;
-    type coordinate_loss = 0, confidence_loss_object = 0, confidence_loss_noobject = 0, confidence_loss = 0, class_loss = 0;
-    const type lambda_coord = 5.0;
-    const type lambda_noobject = 0.5;
-
-
-    for(Index i = 0; i < batch_size; i++)
-    {
-        for(Index j = 0; j < grid_size; j++)
-        {
-            for(Index k = 0; k < grid_size; k++)
-            {
-                for(Index l = 0; l < boxes_per_cell; l++)
-                {
-                    if(targets(i,j, k, l * box_data_size + 4) == 1)
-                    {
-
-
-                        coordinate_loss += pow(targets(i, j, k, l * box_data_size + 0) - outputs(i, j, k, l * box_data_size + 0), 2)
-                                    + pow(targets(i, j, k, l * box_data_size + 1) - outputs(i, j, k, l * box_data_size + 1), 2) +
-                                      pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs(i, j, k, l * box_data_size + 2) * anchors[l](0)), 2) +
-                                      pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs(i, j, k, l * box_data_size + 3) * anchors[l](1)), 2);
-
-                        confidence_loss_object += pow(1 - outputs(i, j, k, l * box_data_size + 4), 2);
-
-                        for(Index c = 0; c < classes_number; c++)
-                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(outputs(i,j, k, l * box_data_size + (5 + c)));
-                    }
-                    else
-
-                        confidence_loss_noobject += pow(outputs(i, j, k, l * box_data_size + 4), 2);
-                }
-
-            }
-        }
-    }
-
-    coordinate_loss = lambda_coord * coordinate_loss;
-    // class_loss = -class_loss;
-    confidence_loss = confidence_loss_object + lambda_noobject * confidence_loss_noobject;
-
-    // total_loss = coord_loss + class_loss + conf_loss;
-    const type total_loss = coordinate_loss - class_loss + confidence_loss;
-
-    return total_loss;
-}
-
 
 vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_output, const type& overlap_threshold, const Index& classes_number)
 {
@@ -286,10 +226,12 @@ vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_o
 
     // @TODO check if I need to pre-convert the boxes format to a 6-data format (x,y,w,h,p,c) where p = object_prob * class_prob and c = class (bc if I do it, the output of the NMS will be the standard one)
 
+    Tensor<type, 4> converted_network_output(batch_size, 13, 13, 30);
+
     vector<vector<Tensor<type, 1>>> input_bounding_boxes(batch_size);
     vector<vector<Tensor<type, 1>>> final_boxes(batch_size);
     vector<vector<vector<Tensor<type, 1>>>> classified_boxes(batch_size);
-    Tensor<type, 1> box(25);
+    Tensor<type, 1> box(6);
 
     vector<Tensor<type, 2>> tensor_final_boxes(batch_size);
 
@@ -301,42 +243,59 @@ vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_o
         {
             for(Index k = 0; k < network_output.dimension(2); k++)
             {
+                for(Index b = 0; b < 5; b++)
+                {
+                    Index object_class = 0;
+                    Tensor<type, 0> max_class_probability = network_output.slice(Eigen::array<Index, 4>{0, 0, 0, b * 25 + 5},
+                                                                                 Eigen::array<Index, 4>{1, 1, 1, 20}).maximum().eval();
+
+                    while(network_output(i,j,k,b * 25 + 5 + b) != max_class_probability())
+                        object_class++;
+
+                    converted_network_output(i,j,k,b * 6 + 0) = network_output(i,j,k,b * 25 + 0);
+                    converted_network_output(i,j,k,b * 6 + 1) = network_output(i,j,k,b * 25 + 1);
+                    converted_network_output(i,j,k,b * 6 + 2) = network_output(i,j,k,b * 25 + 2);
+                    converted_network_output(i,j,k,b * 6 + 3) = network_output(i,j,k,b * 25 + 3);
+                    converted_network_output(i,j,k,b * 6 + 4) = network_output(i,j,k,b * 25 + 4) * network_output(i,j,k,b * 25 + object_class);
+                    converted_network_output(i,j,k,b * 6 + 5) = object_class;
+                }
+
                 if(network_output(i,j,k,4) > 0.5)
                 {
-                    for(Index l = 0; l < 25; l++)
-                        box(l) = network_output(i,j,k,l);
+                    for(Index l = 0; l < 6; l++)
+                        box(l) = converted_network_output(i,j,k,l);
 
                     input_bounding_boxes[i].push_back(box);
                 }
 
                 if(network_output(i,j,k,29) > 0.5)
                 {
-                    for(Index l = 0; l < 25; l++)
-                        box(l) = network_output(i,j,k,25 + l);
+                    for(Index l = 0; l < 6; l++)
+                        box(l) = converted_network_output(i,j,k,6 + l);
 
                     input_bounding_boxes[i].push_back(box);
                 }
 
                 if (network_output(i,j,k, 54) > 0.5)
                 {
-                    for(Index l = 0; l < 25; l++)
-                        box(l) = network_output(i,j,k,50 + l);
+                    for(Index l = 0; l < 6; l++)
+                        box(l) = converted_network_output(i,j,k,12 + l);
 
                     input_bounding_boxes[i].push_back(box);
                 }
 
                 if (network_output(i,j,k, 79) > 0.5)
                 {
-                    for(Index l = 0; l < 25; l++)
-                        box(l) = network_output(i,j,k,75 + l);
+                    for(Index l = 0; l < 6; l++)
+                        box(l) = converted_network_output(i,j,k,18 + l);
 
                     input_bounding_boxes[i].push_back(box);
                 }
 
                 if (network_output(i,j,k, 104) > 0.5)
                 {
-                    for(Index l = 0; l < 25; l++)
-                        box(l) = network_output(i,j,k,100 + l);
+                    for(Index l = 0; l < 6; l++)
+                        box(l) = converted_network_output(i,j,k,24 + l);
 
                     input_bounding_boxes[i].push_back(box);
                 }
@@ -345,14 +304,7 @@ vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_o
 
         for(size_t j = 0; j < input_bounding_boxes[i].size(); j++)
         {
-            for(Index k = 0; k < classes_number; k++)
-            {
-                if(input_bounding_boxes[i][j](5+k) > 0.4)
-                {
-                    classified_boxes[i][k].push_back(input_bounding_boxes[i][j]);
-                    break;
-                }
-            }
+            classified_boxes[i][input_bounding_boxes[i][j](5)].push_back(input_bounding_boxes[i][j]);
         }
 
         for(Index k = 0; k < classes_number; k++)
@@ -381,6 +333,10 @@ vector<Tensor<type, 2>> non_maximum_suppression(const Tensor<type, 4>& network_o
         }
 
         // @todo use memcpy
+
+        // memcpy(tensor_final_boxes[i].data(), final_boxes[i].data(), tensor_final_boxes[i].size()*sizeof(type));     // @TODO check if I'm doing it right
+
+        tensor_final_boxes[i].resize(final_boxes.size(), 6);
 
         for(size_t box = 0; box < final_boxes.size(); box++)
             for(Index element = 0; element < final_boxes[i][box].dimension(0); element++)

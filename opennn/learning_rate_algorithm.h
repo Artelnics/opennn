@@ -9,12 +9,6 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-#include <iostream>
-#include <limits>
-#include <cmath>
-#include <cstdlib>
-
-#include "config.h"
 #include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"

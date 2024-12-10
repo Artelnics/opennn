@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include "pch.h"
 
 #include "tensors.h"
 #include "pooling_layer.h"
@@ -39,12 +39,6 @@ dimensions PoolingLayer::get_output_dimensions() const
     const Index channels = input_dimensions[2];
 
     return { rows_number, columns_number, channels };
-}
-
-
-Index PoolingLayer::get_inputs_number() const
-{
-    return input_dimensions.size();
 }
 
 
@@ -201,8 +195,6 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
 
     set_name(new_name);
 
-    // layer_type = Layer::Type::Pooling;
-
     name = "pooling_layer";
 }
 
@@ -244,7 +236,6 @@ void PoolingLayer::set_pool_size(const Index& new_pool_rows_number,
                                  const Index& new_pool_columns_number)
 {
     pool_height = new_pool_rows_number;
-
     pool_width = new_pool_columns_number;
 }
 
@@ -262,7 +253,7 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
     else if(new_pooling_method == "AveragePooling")
         pooling_method = PoolingMethod::AveragePooling;
     else
-        throw runtime_error("Unknown pooling type: " + new_pooling_method + ".\batch_index");
+        throw runtime_error("Unknown pooling type: " + new_pooling_method);
 }
 
 
@@ -293,27 +284,30 @@ void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 void PoolingLayer::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
                                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                      const bool& is_training) const
-{ 
+{
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
-
-    const Eigen::array<int, 2>& reduction_dimensions = pooling_layer_forward_propagation->reduction_dimensions;
-
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({outputs.dimension(0),
+                                                               outputs.dimension(1),
+                                                               outputs.dimension(2),
+                                                               outputs.dimension(3)});
+
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
-        pool_height,
-        pool_width,
-        row_stride,
+        pool_height,     
+        pool_width,      
+        row_stride,          
         column_stride,
-        1, 1,
+        1, 
+        1,
         PADDING_VALID,
-        type(padding_width));
+        type(padding_width)
+    );
 
-    outputs.device(*thread_pool_device) = image_patches.mean(reduction_dimensions);
-
+    outputs.device(*thread_pool_device) = image_patches.mean(pooling_dimensions).reshape(outputs_dimensions_array);
 }
 
 
@@ -321,21 +315,20 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
-    const Index batch_samples_number = inputs.dimension(0);
-
-    const Index output_width = get_output_width();
-    const Index output_height = get_output_height();
-    const Index channels = get_channels_number();
-
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
+    const Index batch_samples_number = outputs.dimension(0);
+    const Index output_width = outputs.dimension(1);
+    const Index output_height = outputs.dimension(2);
+    const Index channels = outputs.dimension(3);
+
     const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({batch_samples_number,
-                                                               output_height,
                                                                output_width,
+                                                               output_height,
                                                                channels});
 
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
@@ -348,7 +341,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         type(padding_width));
 
     outputs.device(*thread_pool_device)
-        = image_patches.maximum(max_pooling_dimensions).reshape(outputs_dimensions_array);
+        = image_patches.maximum(pooling_dimensions).reshape(outputs_dimensions_array);
 
     if (!is_training) return;
 
@@ -439,9 +432,9 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                     const Index maximal_index = maximal_indices(batch_index, output_height_index, output_width_index, channel_index);
 
                     const Index input_row = output_height_index * row_stride + maximal_index % pool_height;
-                    const Index input_column = output_width_index * column_stride + maximal_index / pool_width;
+                    const Index input_column = output_width_index * column_stride + floor(maximal_index / pool_height);
 
-                    input_derivatives(batch_index, input_row, input_column, channel_index) 
+                    input_derivatives(batch_index, input_row, input_column, channel_index)
                         += deltas(batch_index, output_height_index, output_width_index, channel_index);
                 }
 }
@@ -646,6 +639,8 @@ vector<pair<type*, dimensions>> PoolingLayerBackPropagation::get_input_derivativ
 void PoolingLayerBackPropagation::print() const
 {
     cout << "PoolingLayer layer back propagation" << endl;
+    cout << "Input derivatives:" << endl
+         << input_derivatives << endl;
 }
 
 }

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "weighted_squared_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -40,19 +42,21 @@ type WeightedSquaredError::get_normalizaton_coefficient() const
 
 void WeightedSquaredError::set_default()
 {
-    if(has_data_set() && !data_set->get_samples_number() == 0)
-    {
-        set_weights();
 
-        set_normalization_coefficient();
-    }
-    else
-    {
-        negatives_weight = type(-1.0);
-        positives_weight = type(-1.0);
+    negatives_weight = type(-1.0);
+    positives_weight = type(-1.0);
 
-        normalization_coefficient = type(-1.0);
-    }
+    normalization_coefficient = type(-1.0);
+
+    if(!has_data_set())
+        return;
+
+    if(data_set->get_samples_number() == 0)
+        return;
+
+    set_weights();
+
+    set_normalization_coefficient();
 }
 
 
@@ -91,7 +95,7 @@ void WeightedSquaredError::set_weights()
          && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
-
+        
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
 

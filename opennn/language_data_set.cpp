@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <set>
-#include <map>
-#include <numeric>
-#include <regex>
-#include <codecvt>
-#include <algorithm>
-
+#include "pch.h"
 #include "language_data_set.h"
 #include "strings_utilities.h"
 
@@ -25,26 +19,29 @@ LanguageDataSet::LanguageDataSet() : DataSet()
 }
 
 
-vector<string> LanguageDataSet::get_context_vocabulary() const
+const vector<string>& LanguageDataSet::get_context_vocabulary() const
 {
     return context_vocabulary;
 }
 
 
-vector<string> LanguageDataSet::get_completion_vocabulary() const
+const vector<string>& LanguageDataSet::get_completion_vocabulary() const
 {
     return completion_vocabulary;
 }
+
 
 Index LanguageDataSet::get_context_vocabulary_size() const
 {
     return context_vocabulary.size();
 }
 
+
 Index LanguageDataSet::get_completion_vocabulary_size() const
 {
     return completion_vocabulary.size();
 }
+
 
 Index LanguageDataSet::get_context_length() const
 {
@@ -460,13 +457,13 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
-        for(Index i = 0; i < data_file_preview.size(); i++)
+        for(size_t i = 0; i < data_file_preview.size(); i++)
         {
             file_stream.OpenElement("Row");
 
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
-            for(Index j = 0; j < data_file_preview[i].size(); j++)
+            for(size_t j = 0; j < data_file_preview[i].size(); j++)
             {
                 file_stream.PushText(data_file_preview[i][j].c_str());
 
@@ -534,7 +531,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_separator_name(read_xml_string(data_source_element, "Separator"));
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_codification(read_xml_string(data_source_element, "Codification"));
@@ -670,7 +667,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
             raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
 
-            for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
+            for(size_t i = 0; i < new_raw_variables_missing_values_number.size(); i++)
                 raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number[i].c_str());
         }
 
@@ -1196,7 +1193,7 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
 }
 
 
-void LanguageDataSet::load_documents(const string& path)
+void LanguageDataSet::load_documents(const filesystem::path& path)
 {
     const Index original_size = documents.size();
 
@@ -1206,7 +1203,7 @@ void LanguageDataSet::load_documents(const string& path)
     ifstream file(path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open data file: " + path + "\n");
+        throw runtime_error("Cannot open data file: " + path.string() + "\n");
 
     vector<vector<string>> documents_copy(documents);
 
@@ -1314,9 +1311,7 @@ void LanguageDataSet::load_documents(const string& path)
 
 void LanguageDataSet::read_csv_3_language_model()
 {
-    ifstream file;
-
-    open_file(data_path, file);
+    ifstream file(data_path);
 
     const bool is_float = is_same<type, float>::value;
 
@@ -1399,12 +1394,12 @@ void LanguageDataSet::read_csv_1()
         throw runtime_error(buffer.str());
     }
 
-    std::regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
-
+    regex accent_regex("[\\xC0-\\xFF]");
+    ifstream file;
+/*
 #ifdef _WIN32
 
-    if(std::regex_search(data_path, accent_regex))
+    if(regex_search(data_path, accent_regex))
     {
         std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
         std::wstring file_name_wide = conv.from_bytes(data_path);
@@ -1417,7 +1412,7 @@ void LanguageDataSet::read_csv_1()
 #else
     file.open(data_path.c_str());
 #endif
-
+*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1529,7 +1524,7 @@ void LanguageDataSet::read_csv_1()
         if(lines_number > 10)
             break;
 
-        for(Index i = 0; i < data_file_preview[0].size(); i++)
+        for(size_t i = 0; i < data_file_preview[0].size(); i++)
         {
             if(get_has_rows_labels() && i == 0) continue;
 
@@ -1588,7 +1583,7 @@ void LanguageDataSet::read_csv_1()
 
     Index raw_variable_index = 0;
 
-    for(Index i = 0; i < data_file_preview[0].size(); i++)
+    for(size_t i = 0; i < data_file_preview[0].size(); i++)
     {
         if(get_has_rows_labels() && i == 0) continue;
 
@@ -1648,8 +1643,9 @@ void LanguageDataSet::read_csv_1()
 void LanguageDataSet::read_csv_2_simple()
 {
     regex accent_regex("[\\xC0-\\xFF]");
-    std::ifstream file;
+    ifstream file(data_path);
 
+/*
 #ifdef _WIN32
 
     if(regex_search(data_path, accent_regex))
@@ -1665,7 +1661,7 @@ void LanguageDataSet::read_csv_2_simple()
 #else
     file.open(data_path.c_str());
 #endif
-
+*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1854,8 +1850,7 @@ void LanguageDataSet::read_csv_language_model()
 //     replace(transformed_data_path,".txt","_data.txt");
 //     replace(transformed_data_path,".csv","_data.csv");
 
-//     ofstream file;
-//     file.open(transformed_data_path);
+//     ofstream file(transformed_data_path);
 
      // @todo maybe context does NOT need start and end tokens
 
@@ -1895,7 +1890,6 @@ void LanguageDataSet::read_csv_language_model()
 //     separator = Separator::Semicolon;
 //     has_header = true;
 
-
 //     read_csv_language_model();
 
 //     set_raw_variable_types(RawVariableType::Numeric);
@@ -1911,20 +1905,21 @@ void LanguageDataSet::read_csv_language_model()
 //     cout<<"Works properly"<<endl;
 // }
 
+
 void LanguageDataSet::read_txt_language_model()
 {
     cout << "Reading .txt file..." << endl;
 
     load_documents(data_path);
 
-    Index entry_number = documents[0].size();
+    size_t entry_number = documents[0].size();
 
-    for(Index i = 1; i < documents.size(); i++)
+    for(size_t i = 1; i < documents.size(); i++)
         entry_number += documents[i].size();
 
     Index completion_entry_number = targets[0].size();
 
-    for(Index i = 1; i < targets.size(); i++)
+    for(size_t i = 1; i < targets.size(); i++)
         completion_entry_number += targets[i].size();
 
     if(entry_number != completion_entry_number)
@@ -1934,16 +1929,16 @@ void LanguageDataSet::read_txt_language_model()
 
     Index entry_index = 0;
 
-    for(Index i = 0; i < documents.size(); i++)
-        for(Index j = 0; j < documents[i].size(); j++)
+    for(size_t i = 0; i < documents.size(); i++)
+        for(size_t j = 0; j < documents[i].size(); j++)
             context[entry_index++] = documents[i][j];
 
     vector<string> completion(entry_number);
 
     entry_index = 0;
 
-    for (Index i = 0; i < targets.size(); i++)
-        for (Index j = 0; j < targets[i].size(); j++)
+    for (size_t i = 0; i < targets.size(); i++)
+        for (size_t j = 0; j < targets[i].size(); j++)
             completion[entry_index++] = targets[i][j];
 
     cout << "Processing documents..." << endl;
@@ -1958,7 +1953,7 @@ void LanguageDataSet::read_txt_language_model()
         cout << "Calculating vocabularies..." << endl;
 
         const Index target_vocabulary_size = 8000;
-        vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
+        const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
         completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
@@ -1974,17 +1969,17 @@ void LanguageDataSet::read_txt_language_model()
 
     const Index LIMIT = 126;
 
-    Index max_context_tokens = context_tokens[0].size();
+    size_t max_context_tokens = context_tokens[0].size();
 
-    for(Index i = 0; i < entry_number; i++)
+    for(size_t i = 0; i < entry_number; i++)
         if(context_tokens[i].size() > max_context_tokens)
             max_context_tokens = context_tokens[i].size();
 
     max_context_length = max_context_tokens > LIMIT ? LIMIT : max_context_tokens;
 
-    Index max_completion_tokens = completion_tokens[0].size();
+    size_t max_completion_tokens = completion_tokens[0].size();
 
-    for(Index i = 0; i < entry_number; i++)
+    for(size_t i = 0; i < entry_number; i++)
         if(completion_tokens[i].size() > max_completion_tokens)
             max_completion_tokens = completion_tokens[i].size();
 
@@ -1994,12 +1989,12 @@ void LanguageDataSet::read_txt_language_model()
 
     cout << "Writting data file..." << endl;
 
-    string transformed_data_path = data_path;
+    filesystem::path transformed_data_path = data_path;
+/*
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
-
-    std::ofstream file;
-    file.open(transformed_data_path);
+*/
+    ofstream file(transformed_data_path);
 
     // @todo maybe context does NOT need start and end tokens
 
@@ -2157,11 +2152,11 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     const Index entry_number = context_tokens.size();
 
     unordered_map<std::string, type> context_vocabulary_map;
-    for(Index i = 0; i < context_vocabulary.size(); i++)
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
         context_vocabulary_map[context_vocabulary[i]] = type(i);
 
     unordered_map<std::string, type> completion_vocabulary_map;
-    for(Index i = 0; i < completion_vocabulary.size(); i++)
+    for(size_t i = 0; i < completion_vocabulary.size(); i++)
         completion_vocabulary_map[completion_vocabulary[i]] = type(i);
 
 //    const Index context_vocabulary_size = context_vocabulary.size();
@@ -2333,7 +2328,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if(token_counter > max_completion_length + 1)    break;
+                if(token_counter > max_completion_length + 1)
+                    break;
 
                 if(j == line_tokens.size() || (token_counter == max_completion_length + 1 && !line_ended))
                 {

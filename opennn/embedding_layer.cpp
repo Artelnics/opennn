@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "strings_utilities.h"
 #include "embedding_layer.h"
@@ -26,15 +28,15 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
 }
 
 
-Index EmbeddingLayer::get_input_dimension() const
+Index EmbeddingLayer::get_input_dimension_xxx() const
 {
-    return input_dimensions;
+    return input_dimensions_xxx;
 }
 
 
-Index EmbeddingLayer::get_inputs_number() const
+Index EmbeddingLayer::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -52,13 +54,14 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
+    // @todo
     return {};
 }
 
 
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
-    return { inputs_number, depth };
+    return { inputs_number_xxx, depth };
 }
 
 
@@ -105,13 +108,13 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
                          const Index& new_depth,
                          const bool& new_positional_encoding)
 {
-    input_dimensions = new_inputs_dimension;
+    input_dimensions_xxx = new_inputs_dimension;
 
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     depth = new_depth;
 
-    embedding_weights.resize(input_dimensions, depth);
+    embedding_weights.resize(input_dimensions_xxx, depth);
 
     set_parameters_random();
 
@@ -123,9 +126,9 @@ void EmbeddingLayer::set(const Index& new_inputs_dimension,
 }
 
 
-void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
+void EmbeddingLayer::set_input_dimensions_xxx(const Index& new_inputs_dimension)
 {
-    input_dimensions = new_inputs_dimension;
+    input_dimensions_xxx = new_inputs_dimension;
 
     set_embedding_weights();
 }
@@ -133,7 +136,7 @@ void EmbeddingLayer::set_input_dimensions(const Index& new_inputs_dimension)
 
 void EmbeddingLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 }
 
 
@@ -159,7 +162,7 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 
 void EmbeddingLayer::set_embedding_weights()
 {
-    embedding_weights.resize(input_dimensions, depth);
+    embedding_weights.resize(input_dimensions_xxx, depth);
 
     set_parameters_random();
 }
@@ -212,7 +215,7 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 
     #pragma omp parallel for
     for(Index row = 0; row < batch_size; row++)
-        for(Index input_position = 0; input_position < inputs_number; input_position++)
+        for(Index input_position = 0; input_position < inputs_number_xxx; input_position++)
             outputs.chip(row, 0).chip(input_position, 0)
                 = embedding_weights.chip(inputs(row, input_position), 0);
 }
@@ -322,7 +325,7 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
         throw runtime_error("Embedding element is nullptr.\n");
 
     set_name(read_xml_string(embedding_layer_element, "Name"));
-    set_input_dimensions(read_xml_index(embedding_layer_element, "InputDimensions"));
+    set_input_dimensions_xxx(read_xml_index(embedding_layer_element, "InputDimensions"));
     set_inputs_number(read_xml_index(embedding_layer_element, "InputsNumber"));
     set_depth(read_xml_index(embedding_layer_element, "Depth"));
     set_positional_encoding(read_xml_bool(embedding_layer_element, "PositionalEncoding"));
@@ -336,7 +339,7 @@ void EmbeddingLayer::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputDimensions", dimensions_to_string(get_input_dimensions()));
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "Depth", to_string(get_depth()));
     add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
@@ -356,7 +359,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
 
     const Index depth = embedding_layer->get_depth();
     
@@ -372,7 +375,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
 
     const Index depth = embedding_layer->get_depth();
 
@@ -402,7 +405,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
 
     positional_encoding.resize(inputs_number, depth);
@@ -443,9 +446,9 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = embedding_layer->get_inputs_number();
+    const Index inputs_number = embedding_layer->get_inputs_number_xxx();
     const Index depth = embedding_layer->get_depth();
-    const Index input_dimension = embedding_layer->get_input_dimension();
+    const Index input_dimension = embedding_layer->get_input_dimension_xxx();
 
     sample_deltas.resize(inputs_number, depth);
     embedding_weights_derivatives.resize(input_dimension, depth);

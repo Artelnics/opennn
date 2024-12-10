@@ -1,13 +1,7 @@
 #ifndef CORRELATION_H
 #define CORRELATION_H
 
-#include <iostream>
-#include <string>
-
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {

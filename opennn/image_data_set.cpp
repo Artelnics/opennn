@@ -6,23 +6,20 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "image_data_set.h"
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"
 
-using namespace fs;
-
 namespace opennn
 {
-
 
 ImageDataSet::ImageDataSet(const Index& new_samples_number,
                            const dimensions& new_input_dimensions,
                            const dimensions& new_target_dimensions)
 {
-
-
     if (new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions is not 3");
 
@@ -138,7 +135,7 @@ void ImageDataSet::set_image_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = rand() % 255;
+                data(i, j) = arc4random() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -153,7 +150,7 @@ void ImageDataSet::set_image_data_random()
 
         for (Index i = 0; i < targets_number; i++)
         {
-            images_number[i] = images_per_category + (remainder > 0 ? 1 : 0);
+            images_number(i) = images_per_category + (remainder > 0 ? 1 : 0);
 
             if (remainder > 0)
                 remainder--;
@@ -163,10 +160,10 @@ void ImageDataSet::set_image_data_random()
 
         for (Index k = 0; k < targets_number; k++)
         {
-            for (Index i = 0; i < images_number[k]; i++)
+            for (Index i = 0; i < images_number(k); i++)
             {
                 for (Index j = 0; j < inputs_number; j++)
-                    data(current_sample, j) = rand() % 255;
+                    data(current_sample, j) = arc4random() % 255;
 
                 data(current_sample, k + inputs_number) = 1;
 
@@ -439,7 +436,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
 
-    set_data_source_path(read_xml_string(data_source_element, "Path"));
+    set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
     // Input dimensions
@@ -536,12 +533,12 @@ void ImageDataSet::read_bmp()
 {
     chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
     
-    vector<fs::path> directory_path;
+    vector<filesystem::path> directory_path;
     vector<string> image_path;
 
-    const fs::path path = data_path;
+    const filesystem::path path = data_path;
 
-    for(const fs::directory_entry& current_directory : fs::directory_iterator(path))
+    for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(path))
         if(is_directory(current_directory))
             directory_path.emplace_back(current_directory.path().string());
 
@@ -554,7 +551,7 @@ void ImageDataSet::read_bmp()
 
     for(Index i = 0; i < folders_number; i++)
     {
-        for(const fs::directory_entry& current_directory : fs::directory_iterator(directory_path[i]))
+        for(const filesystem::directory_entry& current_directory : filesystem::directory_iterator(directory_path[i]))
         {
             if(current_directory.is_regular_file() && current_directory.path().extension() == ".bmp")
             {
@@ -622,7 +619,7 @@ void ImageDataSet::read_bmp()
         else
             resized_image_data = image_data;
 
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for (Index j = 0; j < pixels_number; j++)
             data(i, j) = resized_image_data(j);
 
@@ -642,13 +639,15 @@ void ImageDataSet::read_bmp()
                     data(i, k + pixels_number) = 1;
                     break;
                 }
+                if(k == targets_number)
+                    throw runtime_error("It's not saving the target value");
             }
         }
 
         if (display && i % 1000 == 0)
             display_progress_bar(i, samples_number - 1000);
     }
-    
+
     if (display)
     {
         chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();

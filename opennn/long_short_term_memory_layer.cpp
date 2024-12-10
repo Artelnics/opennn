@@ -6,9 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// OpeNN Includes
-
-#include "strings_utilities.h"
+#include "pch.h"
 
 #include "long_short_term_memory_layer.h"
 #include "tensors.h"

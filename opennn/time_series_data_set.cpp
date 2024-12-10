@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "time_series_data_set.h"
 #include "statistics.h"
 #include "correlations.h"
@@ -396,7 +398,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Path element is nullptr.\n");
 
     if(data_source_path_element->GetText())
-        set_data_source_path(data_source_path_element->GetText());
+        set_data_path(data_source_path_element->GetText());
 
     // Separator
 

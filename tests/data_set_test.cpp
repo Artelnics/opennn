@@ -31,7 +31,7 @@ TEST(DataSetTest, VariablesDescriptives)
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(0));
 
-//    vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
+//    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
 
 //    EXPECT_EQ(variable_descriptives.size() == 1);
 
@@ -900,7 +900,7 @@ void DataSetTest::test_scrub_missing_values()
 
     Tensor<DataSet::SampleUse, 1> sample_uses;
 
-    std::ofstream file;
+    ofstream file;
 
     data_set.set_data_source_path(data_path);
 

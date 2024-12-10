@@ -9,10 +9,7 @@
 #ifndef WEIGHTEDSQUAREDERROR_H
 #define WEIGHTEDSQUAREDERROR_H
 
-#include <string>
-#include <math.h>
 
-#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 

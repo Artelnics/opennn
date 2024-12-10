@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "minkowski_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -71,7 +73,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    error.device(*thread_pool_device) = (errors.abs().pow(minkowski_parameter).sum()).pow(type(1)/minkowski_parameter) / type(batch_samples_number);
+    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(batch_samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -90,11 +92,9 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
-
-    Tensor<type, 0> p_norm_derivative;
-   
+/*
     p_norm_derivative.device(*thread_pool_device) 
-        = (errors.abs().pow(minkowski_parameter).sum().pow(type(1) / minkowski_parameter)).pow(minkowski_parameter - type(1));
+        = ;
 
     if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
     {
@@ -104,8 +104,8 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     }
 
     const type coefficient = type(1.0 / (p_norm_derivative() * batch_samples_number));
-
-    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*coefficient;
+*/
+    deltas.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter - 1)*(minkowski_parameter/(type)batch_samples_number);
 }
 
 

@@ -14,6 +14,8 @@
 // 3. This notice may not be removed or altered from any source
 // distribution.
 
+#include "pch.h"
+
 
 #pragma warning(push, 0)
 #include "tinyxml2.h"

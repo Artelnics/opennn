@@ -6,11 +6,14 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"
 #include "back_propagation.h"
 #include "cross_entropy_error_3d.h"
+#include "yolo_dataset.h"
 
 namespace opennn
 {
@@ -68,8 +71,8 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-//    thread_pool = make_unique<ThreadPool>(new_threads_number);
-//    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool, new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -163,9 +166,15 @@ void LossIndex::back_propagate(const Batch& batch,
 
     // Loss index
 
+    cout<<"=========backprop========"<<endl;
+
     calculate_error(batch, forward_propagation, back_propagation);
 
+    cout<<"=========backprop========"<<endl;
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
+
+    cout<<"=========backprop========"<<endl;
 
     assemble_layers_error_gradient(back_propagation);
 
@@ -204,14 +213,15 @@ void LossIndex::back_propagate_lm(const Batch& batch,
                                   ForwardPropagation& forward_propagation,
                                   BackPropagationLM& back_propagation_lm) const
 {
+
     calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_error_gradient_lm(batch, back_propagation_lm);
 
     calculate_error_hessian_lm(batch, back_propagation_lm);
@@ -243,6 +253,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
                                                             ForwardPropagation& forward_propagation,
                                                             BackPropagationLM& back_propagation_lm) const
 {
+
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
     const Index layers_number = neural_network->get_layers_number();
@@ -254,10 +265,10 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs 
         = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
-    
+
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation_lm.get_layer_delta_pairs();
-
+/*
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
 
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -281,6 +292,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
+*/
 }
 
 
@@ -559,7 +571,8 @@ void BackPropagation::set(const Index& new_batch_samples_number, LossIndex* new_
 
     const Index parameters_number = neural_network_ptr->get_parameters_number();
 
-    const dimensions output_dimensions = neural_network_ptr->get_output_dimensions();
+    const dimensions output_dimensions = (neural_network_ptr->has(Layer::Type::NonMaxSuppression)) ? neural_network_ptr->get_layer(neural_network_ptr->get_last_trainable_layer_index() + 1)->get_output_dimensions()
+                                                                                                   : neural_network_ptr->get_output_dimensions();
 
     const Index outputs_number = output_dimensions[0];
 
@@ -618,8 +631,8 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 
     vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
 
-    Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
-    Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
+    const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
 
     cout<<"========delta2=========="<<endl;
 
@@ -742,6 +755,147 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     }
 
     return numerical_gradient;
+}
+
+Tensor<type, 4> LossIndex::calculate_yolo_numerical_output_delta()
+{
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+
+    const vector<Index> sample_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+
+    Batch batch(samples_number, data_set);
+    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
+
+    YOLODataset* yolo_dataset = static_cast<YOLODataset*>(data_set);
+
+    const vector<Tensor<type, 1>> anchors = yolo_dataset->get_anchors();
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    BackPropagation back_propagation(samples_number, this);
+
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      forward_propagation,
+                                      true);
+
+    const TensorMap<Tensor<type, 4>> outputs = tensor_map_4(forward_propagation.get_last_trainable_layer_outputs_pair());
+
+    const TensorMap<Tensor<type, 4>> targets = tensor_map_4(batch.get_targets_pair());
+
+    const type epsilon = 1e-05;
+    const Index grid_size = outputs.dimension(1);
+    const Index boxes_per_cell = anchors.size();
+    const Index classes_number = (outputs.dimension(3) / boxes_per_cell) - 5;
+    const Index box_data_size = 5 + classes_number;
+    const type lambda_coord = 5.0;
+    const type lambda_noobject = 0.5;
+
+    const size_t parameters_number = outputs.size();
+
+    Tensor<type, 4> h(samples_number, grid_size, grid_size, boxes_per_cell * box_data_size);
+    Tensor<type, 4> outputs_forward = outputs;
+    Tensor<type, 4> outputs_backward = outputs;
+
+    type deltas_forward;
+    type deltas_backward;
+
+    Tensor<type, 4> numerical_deltas(samples_number, grid_size, grid_size, boxes_per_cell * box_data_size);
+    numerical_deltas.setConstant(type(0));
+
+    for(size_t i = 0; i < parameters_number; i++)
+    {
+        h(i) = calculate_h(outputs(i));
+
+        outputs_forward(i) += h(i);
+
+        outputs_backward(i) -= h(i);
+    }
+
+    // cout<<h<<endl;
+    #pragma omp parallel for
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < grid_size; j++)
+        {
+            for(Index k = 0; k < grid_size; k++)
+            {
+                for(Index l = 0; l < boxes_per_cell; l++)
+                {
+                    if(targets(i,j, k, l * box_data_size + 4) == 1)
+                    {
+                        deltas_forward = lambda_coord * pow(targets(i, j, k, l * box_data_size + 0) - outputs_forward(i, j, k, l * box_data_size + 0), 2);
+
+                        deltas_backward = lambda_coord * pow(targets(i, j, k, l * box_data_size + 0) - outputs_backward(i, j, k, l * box_data_size + 0), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 0) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 0));
+
+                        deltas_forward = lambda_coord * pow(targets(i, j, k, l * box_data_size + 1) - outputs_forward(i, j, k, l * box_data_size + 1), 2);
+
+                        deltas_backward = lambda_coord * pow(targets(i, j, k, l * box_data_size + 1) - outputs_backward(i, j, k, l * box_data_size + 1), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 1) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 1));
+
+                        deltas_forward = lambda_coord * pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs_forward(i, j, k, l * box_data_size + 2)), 2);
+
+                        deltas_backward = lambda_coord * pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs_backward(i, j, k, l * box_data_size + 2)), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 2) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 2));
+
+                        deltas_forward = lambda_coord * pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs_forward(i, j, k, l * box_data_size + 3)), 2);
+
+                        deltas_backward = lambda_coord * pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs_backward(i, j, k, l * box_data_size + 3)), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 3) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 3));
+
+
+
+                        Tensor<type, 1> ground_truth_box(4);
+                        Tensor<type, 1> predicted_box(4);
+
+                        for(Index data = 0; data < 4; data++)
+                        {
+                            ground_truth_box(data) = targets(i, j, k, l * box_data_size + data);
+                            predicted_box(data) = outputs_forward(i, j, k, l * box_data_size + data);
+                        }
+
+                        type confidence = calculate_intersection_over_union(ground_truth_box, predicted_box);
+
+                        // cout<<"ground_truth_box: "<<ground_truth_box<<endl;
+                        // cout<<"predicted_box: "<<predicted_box<<endl;
+
+                        // cout<<"IOU between prediction and ground truth: "<<confidence<<endl<<endl;
+
+                        deltas_forward = pow(confidence - outputs_forward(i, j, k, l * box_data_size + 4), 2);
+
+                        deltas_backward = pow(confidence - outputs_backward(i, j, k, l * box_data_size + 4), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 4) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 4));
+
+                        for(Index c = 0; c < classes_number; c++)
+                        {
+                            deltas_forward = -targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs_forward(i,j, k, l * box_data_size + (5 + c)));
+
+                            deltas_backward = -targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs_backward(i,j, k, l * box_data_size + (5 + c)));
+
+                            numerical_deltas(i,j, k, l * box_data_size + (5 + c)) = (deltas_forward - deltas_backward) / (2 * h(i,j, k, l * box_data_size + (5 + c)));
+                        }
+                    }
+                    else
+                    {
+                        deltas_forward = lambda_noobject * pow(outputs_forward(i, j, k, l * box_data_size + 4), 2);
+
+                        deltas_backward = lambda_noobject * pow(outputs_backward(i, j, k, l * box_data_size + 4), 2);
+
+                        numerical_deltas(i,j,k,l*box_data_size + 4) = (deltas_forward - deltas_backward) / (2 * h(i,j,k,l*box_data_size + 4));
+                    }
+                }
+            }
+        }
+    }
+
+    return numerical_deltas / (type)samples_number;
 }
 
 
@@ -924,7 +1078,44 @@ void BackPropagationLM::print() const
 
 
 vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs() const
-{    
+{
+    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+
+    const Index layers_number = neural_network_ptr->get_layers_number();
+
+    const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
+    const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
+
+    const vector<unique_ptr<LayerBackPropagationLM>>& layer_back_propagations = neural_network.get_layers();
+
+    vector<pair<type*, dimensions>> input_derivative_pairs;
+
+    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
+
+    const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
+
+    for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
+    {
+        if (i == last_trainable_layer_index)
+        {
+            layer_delta_pairs[i].push_back(get_output_deltas_pair());
+
+            continue;
+        }
+
+        for (Index j = 0; j < Index(layer_input_indices[i].size()); j++)
+        {
+            const Index output_index = layer_output_indices[i][j];
+            const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
+
+            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs();
+
+            layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
+        }
+    }
+
+/*
     const NeuralNetwork* neural_network_ptr = neural_network.get_neural_network();
 
     const Index layers_number = 0;
@@ -968,7 +1159,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagationLM::get_layer_delta_pairs
             layer_delta_pairs[i][j] = input_derivative_pairs[input_index];
         }
     }
-
+*/
     return layer_delta_pairs;
 }
 

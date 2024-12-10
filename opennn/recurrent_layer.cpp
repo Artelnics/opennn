@@ -6,10 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <sstream>
+#include "pch.h"
 
-#include "strings_utilities.h"
 #include "tensors.h"
 #include "recurrent_layer.h"
 
@@ -507,13 +505,13 @@ string RecurrentLayer::get_expression(const vector<string>& input_names,
 {
     ostringstream buffer;
 
-    for(Index j = 0; j < output_names.size(); j++)
+    for(size_t j = 0; j < output_names.size(); j++)
     {
         const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
 
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
-        for(Index i = 0; i < input_names.size() - 1; i++)
+        for(size_t i = 0; i < input_names.size() - 1; i++)
            buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
 
         buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";

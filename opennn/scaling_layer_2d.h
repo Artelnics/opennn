@@ -9,9 +9,6 @@
 #ifndef SCALINGLAYER2D_H
 #define SCALINGLAYER2D_H
 
-#include <iostream>
-#include <string>
-
 #include "scaling.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
@@ -37,7 +34,7 @@ public:
    Tensor<type, 1> get_means() const;
    Tensor<type, 1> get_standard_deviations() const;
 
-   Tensor<Scaler, 1> get_scaling_methods() const;
+   vector<Scaler> get_scaling_methods() const;
 
    vector<string> write_scalers() const;
    vector<string> write_scalers_text() const;
@@ -57,7 +54,7 @@ public:
 
    void set_min_max_range(const type& min, const type& max);
 
-   void set_scalers(const Tensor<Scaler, 1>&);
+   void set_scalers(const vector<Scaler>&);
    void set_scalers(const vector<string>&);
 
    void set_scaler(const Index&, const Scaler&);
@@ -79,7 +76,7 @@ public:
 
    string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    void print() const;
 
@@ -90,7 +87,7 @@ private:
 
    vector<Descriptives> descriptives;
 
-   Tensor<Scaler, 1> scalers;
+   vector<Scaler> scalers;
 
    type min_range;
    type max_range;

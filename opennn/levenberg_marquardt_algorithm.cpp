@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "forward_propagation.h"
@@ -174,6 +176,7 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+
     if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
     else if(loss_index->get_loss_method() == "CROSS_ENTROPY_ERROR")
@@ -202,11 +205,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     vector<Descriptives> input_variable_descriptives;
     vector<Descriptives> target_variable_descriptives;
@@ -215,24 +215,22 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
-    neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
+    set_neural_network_variable_names();
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
         input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-
-        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
         target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
-        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
     }
     
     Batch training_batch(training_samples_number, data_set);
@@ -262,7 +260,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     bool is_training = true;
 
     time_t beginning_time;
-    time_t current_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -283,13 +280,13 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                           is_training);
         
         // Loss index
-        
+
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
-        
+
         results.training_error_history(epoch) = training_back_propagation_lm.error();
-        
+/*
         if(has_selection)
         {           
             neural_network->forward_propagate(selection_batch.get_input_pairs(),
@@ -313,11 +310,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
         }
-        
-        // Elapsed time
-
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+*/
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {
@@ -394,7 +388,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
-        
     }
 
     if(neural_network->has(Layer::Type::Scaling2D))
@@ -497,7 +490,10 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             }
             else
             {
-                parameters_increment(i) = (gradient(i) > type(0)) ? -epsilon : epsilon;
+                parameters_increment(i) = (gradient(i) > type(0))
+                    ? -epsilon
+                    : epsilon;
+
                 parameters(i) += parameters_increment(i);
             }
         }

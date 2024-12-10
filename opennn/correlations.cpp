@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <stdexcept>
-#include <ctime>
-#include <algorithm>
+#include "pch.h"
 
 #include "tensors.h"
 #include "correlations.h"
@@ -52,8 +46,7 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
 Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
-{      
-
+{
     if(is_constant_matrix(x) || is_constant_matrix(y))
         return Correlation();
 
@@ -368,10 +361,10 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-    if(is_constant_vector(x) || !is_constant_vector(y))
+    if(is_constant_vector(x) || is_constant_vector(y))
         return Correlation();
     
-    pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
     const Tensor<double, 1> y_filter = filter_vectors.second.cast<double>();
@@ -550,9 +543,14 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
-    neural_network.get_scaling_layer_2d()->set_display(false);
 
-    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+
+    scaling_layer_2d->set_display(false);
+
+    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     neural_network.set_parameters_constant(type(0.001));
 
@@ -607,7 +605,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 {
     Correlation correlation;
 
-    pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
+    const pair<Tensor<type, 1>, Tensor<type, 1>> filtered_elements = filter_missing_values_vector_vector(x,y);
 
     const Tensor<type, 1> x_filtered = filtered_elements.first;
     const Tensor<type, 1> y_filtered = filtered_elements.second;
@@ -634,9 +632,14 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
-    neural_network.get_scaling_layer_2d()->set_display(false);
 
-    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+
+    scaling_layer_2d->set_display(false);
+
+    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -732,8 +735,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { input_variables_number }, {}, {target_variables_number});
 
-    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    neural_network.get_scaling_layer_2d()->set_display(false);
+    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+
+    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -849,9 +856,13 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  {input_variables_number }, {}, {target_variables_number});
 
-    neural_network.get_probabilistic_layer()->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
 
-    neural_network.get_scaling_layer_2d()->set_display(false);
+    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+
+    scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 

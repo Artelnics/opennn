@@ -1,10 +1,7 @@
 #ifndef LAYERBACKPROPAGATION_H
 #define LAYERBACKPROPAGATION_H
 
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {

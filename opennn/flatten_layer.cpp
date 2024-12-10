@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "flatten_layer.h"
 
@@ -24,21 +26,9 @@ dimensions FlattenLayer::get_input_dimensions() const
 }
 
 
-Index FlattenLayer::get_outputs_number() const
-{
-    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
-}
-
-
 dimensions FlattenLayer::get_output_dimensions() const
 {
     return { input_dimensions[0] * input_dimensions[1] * input_dimensions[2] };
-}
-
-
-Index FlattenLayer::get_inputs_number() const
-{
-    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
@@ -100,8 +90,6 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 {
     const Index batch_samples_number = input_pairs[0].second[0];
     const Index neurons_number = get_output_dimensions()[0];
-
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
     // Back propagation
 

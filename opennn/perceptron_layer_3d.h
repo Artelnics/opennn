@@ -9,10 +9,7 @@
 #ifndef PERCEPTRONLAYER3D_H
 #define PERCEPTRONLAYER3D_H
 
-#include <iostream>
-#include <string>
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -40,9 +37,15 @@ public:
                               const Index& = 0,
                               const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
-   Index get_inputs_number() const;
+   Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
    Index get_neurons_number() const;
+
+   // @todo
+   dimensions get_input_dimensions() const final
+   {
+       throw runtime_error("XXX");
+   }
 
    dimensions get_output_dimensions() const final;
 
@@ -105,7 +108,7 @@ public:
 
 private:
 
-   Index inputs_number;
+   Index inputs_number_xxx;
 
    Tensor<type, 1> biases;
 

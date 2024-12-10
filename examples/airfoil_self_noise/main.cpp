@@ -14,11 +14,6 @@
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
-#include "../../opennn/forward_propagation.h"
-
-
-using namespace opennn;
-using namespace Eigen;
 
 int main()
 {
@@ -28,42 +23,14 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
-        DataSet data_set(1, { 1 }, { 1 });
-
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-
-/*
-        NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
-        neural_network.set_parameters_constant(10);
-
-        Tensor<type, 2> inputs(2,2);
-        inputs.setConstant(0);
-
-//        neural_network.print();
-
-        neural_network.calculate_outputs(inputs);
-*/
-
         // Data set
-/*
-        DataSet data_set("../data/airfoil_self_noise.csv", ";", true);
 
-        data_set.split_samples_random(0.99, 0.005, 0.005);
-
-//        data_set.scale_data();
-
-        //data_set.save("../data/data_set.xml");
-        //data_set.load("../data/data_set.xml");
-
-        // data_set.print();
-        // data_set.print_data();
+        DataSet data_set("C:/airfoil_self_noise.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+
+        //data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 
@@ -75,35 +42,34 @@ int main()
         // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
         // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
-        neural_network.print();
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+//        training_strategy.set_display(false);
+
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.set_maximum_epochs_number(10000);
+        //training_strategy.set_maximum_epochs_number(10000);
 
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-/*
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        testing_analysis.print_goodness_of_fit_analysis();                
+        //testing_analysis.print_goodness_of_fit_analysis();
 /*
         // Save results
         
@@ -124,9 +90,20 @@ int main()
         const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
+
+
+        Tensor<type, 2> inputs(1, 1);
+        inputs(0,0) = 0.1;
+
+        cout << inputs << endl;
+
+        const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+
+        cout << outputs << endl;
+
+        neural_network.print();
 */
         cout << "Good bye!" << endl;
-
 
         return 0;
     }

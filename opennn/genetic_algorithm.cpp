@@ -6,13 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <algorithm>
-#include <cmath>
-#include <ctime>
-#include <iostream>
-#include <limits>
-#include <stdio.h>
-#include <random>
+#include "pch.h"
 
 #include "tensors.h"
 #include "correlations.h"
@@ -176,7 +170,15 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-    const Index new_genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
+    if(!training_strategy)
+        throw runtime_error("Training strategy is null");
+
+    const DataSet* data_set = training_strategy->get_data_set();
+
+    if (!data_set)
+        throw runtime_error("Data set is null");
+
+    const Index new_genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
     population.resize(new_individuals_number, new_genes_number);
 
@@ -192,7 +194,7 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
     selection.resize(new_individuals_number);
 
-    if(elitism_size > new_individuals_number) elitism_size = new_individuals_number;
+    elitism_size = min(elitism_size, new_individuals_number);
 }
 
 
@@ -244,13 +246,13 @@ void GeneticAlgorithm::initialize_population_random()
 
     Index unused_number = 0;
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(size_t i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
             unused_number++;
 
     original_unused_raw_variables_indices.resize(unused_number);
 
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(size_t i = 0; i < raw_variables.size(); i++)
         if(raw_variables[i].use == DataSet::VariableUse::None)
             original_unused_raw_variables_indices[index++] = i;
 
@@ -273,7 +275,7 @@ void GeneticAlgorithm::initialize_population_random()
 
     original_input_raw_variables.resize(raw_variables_number, false);
 
-    for(Index i = 0; i < original_input_raw_variables_indices.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables_indices.size(); i++)
         original_input_raw_variables[original_input_raw_variables_indices[i]] = true;
 
     // Initialization a random population
@@ -312,8 +314,6 @@ void GeneticAlgorithm::initialize_population_random()
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(individual_variables);
 
-            const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
-
             for(Index j = 0; j < raw_variables_number; j++)
                 if(original_input_raw_variables[j])
                     individual_raw_variables_false(j) = true;
@@ -329,7 +329,6 @@ void GeneticAlgorithm::initialize_population_random()
     }
 
     cout << "Initial random population created" << endl;
-
     cout << "Initial random population: \n" << population << endl;
 }
 
@@ -394,10 +393,10 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
         individual_raw_variables.setConstant(false);
 
         individual_variables.setConstant(false);
-
+*/
         raw_variables_active = 1 + rand() % raw_variables_number;
 
-        while(std::count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
+        while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = type(distribution(gen));
 
@@ -413,20 +412,14 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
             }
         }
 
-        if(is_false(individual_raw_variables)) individual_raw_variables(rand()%raw_variables_number) = true;
+        if(is_false(individual_raw_variables))
+            individual_raw_variables(rand()%raw_variables_number) = true;
 
         individual_variables = get_individual_variables(individual_raw_variables);
 
         for(Index j = 0; j < genes_number; j++)
             population(i, j) = individual_variables(j);
-*/
     }
-}
-
-
-type GeneticAlgorithm::generate_random_between_0_and_1()
-{
-    return type(rand()) / type(RAND_MAX);
 }
 
 
@@ -583,34 +576,26 @@ void GeneticAlgorithm::perform_selection()
                 selection(i) = true;
 
     // The next individuals are selected randomly but their probability is set according to their fitness.
-/*
-    while(std::count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
+
+    while(count(selection.data(), selection.data() + selection.size(), 1) < selected_individuals_number)
     {
         weighted_random(selection_probabilities);
     }
-*/
+
 }
 
 
-Tensor<Index,1> GeneticAlgorithm::get_selected_individuals_indices()
+Tensor<Index, 1> GeneticAlgorithm::get_selected_individuals_indices()
 {
-/*
-    Tensor<Index,1> selection_indices(std::count(selection.data(), selection.data() + selection.size(), 1));
+    Tensor<Index,1> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
+
     Index activated_index_count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
-    {
         if(selection(i))
-        {
-            selection_indices(activated_index_count) = i;
-
-            activated_index_count++;
-        }
-    }
+            selection_indices(activated_index_count++) = i;
 
     return selection_indices;
-*/
-    return Tensor<Index, 1>();
 }
 
 
@@ -725,7 +710,7 @@ void GeneticAlgorithm::perform_mutation()
 
         for(Index j = 0; j < raw_variables_number; j++)
         {
-            const type random_0_1 = generate_random_between_0_and_1();
+            const type random_0_1 = type(rand()) / type(RAND_MAX);
 
             if(random_0_1 < mutation_rate)
                 individual_raw_variables(j) = !individual_raw_variables(j);
@@ -736,8 +721,6 @@ void GeneticAlgorithm::perform_mutation()
         if(is_false(new_individual_variables))
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(new_individual_variables);
-
-            const vector<DataSet::RawVariable>& raw_variables = training_strategy->get_data_set()->get_raw_variables();
 
             for(Index j = 0; j < raw_variables_number; j++)
                 if(original_input_raw_variables[j])
@@ -925,7 +908,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variables_indices);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
     const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
 
@@ -937,9 +920,9 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d =   neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     neural_network->set_parameters(inputs_selection_results.optimal_parameters);
@@ -1043,7 +1026,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
 
     Index original_input_index = 0;
 
-    for(Index i = 0; i < original_input_raw_variables.size(); i++)
+    for(size_t i = 0; i < original_input_raw_variables.size(); i++)
     {
         if(individual_raw_variables(i) && original_input_raw_variables[i])
         {
@@ -1329,7 +1312,7 @@ void GeneticAlgorithm::save(const string& file_name) const
 {
     try
     {
-         std::ofstream file(file_name);
+        ofstream file(file_name);
 
         if (file.is_open())
         {

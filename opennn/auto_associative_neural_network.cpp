@@ -6,11 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include "pch.h"
 
 #include "tensors.h"
 #include "strings_utilities.h"
@@ -165,7 +161,7 @@ void AutoAssociativeNeuralNetwork::set_multivariate_distances_box_plot(Tensor<Bo
 }
 
 
-void AutoAssociativeNeuralNetwork::set_distances_descriptives(Descriptives& new_distances_descriptives)
+void AutoAssociativeNeuralNetwork::set_distances_descriptives(const Descriptives& new_distances_descriptives)
 {
     distances_descriptives = new_distances_descriptives;
 }
@@ -249,6 +245,8 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocu
 
     // Minimum
 
+    type new_minimum = type(0);
+
     const XMLElement* minimum_element = root_element->FirstChildElement("Minimum");
 
     if(!minimum_element)
@@ -279,9 +277,7 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocu
     type new_mean = type(0);
 
     if(mean_element->GetText())
-    {
         new_mean = type(stod(mean_element->GetText()));
-    }
 
     // ThirdQuartile
 
@@ -294,11 +290,11 @@ void AutoAssociativeNeuralNetwork::distances_descriptives_from_XML(const XMLDocu
 
     if(standard_deviation_element->GetText())
         new_standard_deviation = type(stod(standard_deviation_element->GetText()));
-/*
-    Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
+
+    const Descriptives distances_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
 
     set_distances_descriptives(distances_descriptives);
-*/
+
 }
 
 
@@ -476,7 +472,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
     // Inputs names
 
-    for(Index i = 0; i < input_names.size(); i++)
+    for(size_t i = 0; i < input_names.size(); i++)
     {
         file_stream.OpenElement("Input");
 
@@ -668,7 +664,7 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    for(Index i = 0; i < variable_distance_names.size(); i++)
+    for(size_t i = 0; i < variable_distance_names.size(); i++)
     {
         // Scaling neuron
 

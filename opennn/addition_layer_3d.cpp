@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
+#include "pch.h"
 
+#include "tensors.h"
 #include "addition_layer_3d.h"
 
 namespace opennn
@@ -19,9 +20,9 @@ AdditionLayer3D::AdditionLayer3D(const Index& new_inputs_number, const Index& ne
 }
 
 
-Index AdditionLayer3D::get_inputs_number() const
+Index AdditionLayer3D::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -33,13 +34,13 @@ Index AdditionLayer3D::get_inputs_depth() const
 
 dimensions AdditionLayer3D::get_output_dimensions() const
 {
-    return { inputs_number, inputs_depth };
+    return { inputs_number_xxx, inputs_depth };
 }
 
 
 void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_inputs_depth)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     inputs_depth = new_inputs_depth;
 
@@ -51,7 +52,7 @@ void AdditionLayer3D::set(const Index& new_inputs_number, const Index& new_input
 
 void AdditionLayer3D::set_inputs_number(const Index& new_inputs_number)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 }
 
 
@@ -117,7 +118,7 @@ void AdditionLayer3D::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Addition3D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
 
     printer.CloseElement();
@@ -135,7 +136,7 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
 {
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
 
-    const Index inputs_number = addition_layer_3d->get_inputs_number();
+    const Index inputs_number = addition_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     return {(type*)outputs.data(), {batch_samples_number, inputs_number, inputs_depth}};
@@ -150,7 +151,7 @@ void AdditionLayer3DForwardPropagation::set(const Index& new_batch_samples_numbe
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = addition_layer_3d->get_inputs_number();
+    const Index inputs_number = addition_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     outputs.resize(batch_samples_number, inputs_number, inputs_depth);
@@ -172,7 +173,7 @@ void AdditionLayer3DBackPropagation::set(const Index& new_batch_samples_number, 
 
     batch_samples_number = new_batch_samples_number;
 
-    const Index inputs_number = addition_layer_3d->get_inputs_number();
+    const Index inputs_number = addition_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     input_1_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
@@ -196,7 +197,7 @@ vector<pair<type*, dimensions>> AdditionLayer3DBackPropagation::get_input_deriva
 {
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
 
-    const Index inputs_number = addition_layer_3d->get_inputs_number();
+    const Index inputs_number = addition_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = addition_layer_3d->get_inputs_depth();
 
     return

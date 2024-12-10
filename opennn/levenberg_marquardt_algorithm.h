@@ -9,9 +9,7 @@
 #ifndef LEVENBERGMARQUARDTALGORITHM_H
 #define LEVENBERGMARQUARDTALGORITHM_H
 
-#include <string>
 
-#include "config.h"
 #include "optimization_algorithm.h"
 
 #include "../eigen/Eigen/Dense"

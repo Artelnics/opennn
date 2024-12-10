@@ -6,8 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
-#include "strings_utilities.h"
 #include "probabilistic_layer_3d.h"
 
 namespace opennn
@@ -21,9 +22,9 @@ ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number,
 }
 
 
-Index ProbabilisticLayer3D::get_inputs_number() const
+Index ProbabilisticLayer3D::get_inputs_number_xxx() const
 {
-    return inputs_number;
+    return inputs_number_xxx;
 }
 
 
@@ -41,7 +42,7 @@ Index ProbabilisticLayer3D::get_neurons_number() const
 
 dimensions ProbabilisticLayer3D::get_output_dimensions() const
 {
-    return { inputs_number, get_neurons_number() };
+    return { inputs_number_xxx, get_neurons_number() };
 }
 
 
@@ -107,7 +108,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
                                const Index& new_inputs_depth, 
                                const Index& new_neurons_number)
 {
-    inputs_number = new_inputs_number;
+    inputs_number_xxx = new_inputs_number;
 
     biases.resize(new_neurons_number);
 
@@ -392,7 +393,7 @@ void ProbabilisticLayer3D::to_XML(XMLPrinter& printer) const
     printer.OpenElement("Probabilistic3D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number()));
+    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
     add_xml_element(printer, "DecisionThreshold", to_string(get_decision_threshold()));
@@ -415,7 +416,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
     ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
 
     return {(type*)outputs.data(), {batch_samples_number, inputs_number, neurons_number}};
 }
@@ -430,7 +431,7 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_samples_
     batch_samples_number = new_batch_samples_number;
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     
     outputs.resize(batch_samples_number, inputs_number, neurons_number);
 }
@@ -452,7 +453,7 @@ void ProbabilisticLayer3DBackPropagation::set(const Index& new_batch_samples_num
     batch_samples_number = new_batch_samples_number;
 
     const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
     targets.resize(batch_samples_number, inputs_number);
@@ -488,7 +489,7 @@ vector<pair<type*, dimensions>> ProbabilisticLayer3DBackPropagation::get_input_d
 {
     ProbabilisticLayer3D* probabilistic_layer_3d = static_cast<ProbabilisticLayer3D*>(layer);
 
-    const Index inputs_number = probabilistic_layer_3d->get_inputs_number();
+    const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = probabilistic_layer_3d->get_inputs_depth();
 
     return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number, inputs_depth}} };

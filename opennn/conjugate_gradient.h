@@ -9,9 +9,7 @@
 #ifndef CONJUGATEGRADIENT_H
 #define CONJUGATEGRADIENT_H
 
-#include <string>
 
-#include "config.h"
 #include "tinyxml2.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"

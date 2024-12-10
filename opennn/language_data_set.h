@@ -9,10 +9,7 @@
 #ifndef LANGUAGEDATASET_H
 #define LANGUAGEDATASET_H
 
-#include <string>
-#include <fstream>
 
-#include "config.h"
 #include "data_set.h"
 
 namespace opennn
@@ -25,8 +22,8 @@ public:
 
     explicit LanguageDataSet();
 
-    vector<string> get_context_vocabulary() const;
-    vector<string> get_completion_vocabulary() const;
+    const vector<string>& get_context_vocabulary() const;
+    const vector<string>& get_completion_vocabulary() const;
 
     Index get_context_vocabulary_size() const;
     Index get_completion_vocabulary_size() const;
@@ -72,7 +69,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents(const string&);
+    void load_documents(const filesystem::path&);
 
     void read_csv_1();
 

@@ -58,6 +58,15 @@ void DetectionLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     apply_detection(inputs, outputs, batch_size);
 }
 
+dimensions DetectionLayer::get_input_dimensions() const
+{
+    const Index rows_number = get_height();
+    const Index columns_number = get_width();
+    const Index channels_number = get_channels();
+
+    return { rows_number, columns_number, channels_number };
+}
+
 dimensions DetectionLayer::get_output_dimensions() const
 {
     const Index rows_number = get_height();
@@ -102,15 +111,25 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
                                                     Eigen::array<Index, 4>{batch_size, grid_size, grid_size, classes_number});
 
 
-        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities - class_probabilities.maximum(softmax_dimension)
+        // cout<<"class probabilities before softmax:\n"<<class_probabilities<<endl;
+
+        class_probabilities.device(*thread_pool_device) = class_probabilities - (class_probabilities.maximum(softmax_dimension)
                                                                                                    .eval()
                                                                                                    .reshape(range_4)
-                                                                                                   .broadcast(expand_softmax_dim);
-        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities.exp();
-        class_probabilities/*.device(*thread_pool_device)*/ = class_probabilities / class_probabilities.sum(softmax_dimension)
+                                                                                                   .broadcast(expand_softmax_dim));
+
+        // cout<<"class probabilities before softmax exponential:\n"<<class_probabilities<<endl;
+
+        class_probabilities.device(*thread_pool_device) = class_probabilities.exp();
+
+        // cout<<"class probabilities after softmax exponential:\n"<<class_probabilities<<endl;
+
+        class_probabilities.device(*thread_pool_device) = class_probabilities / (class_probabilities.sum(softmax_dimension)
                                                                                                    .eval()
                                                                                                    .reshape(range_4)
-                                                                                                   .broadcast(expand_softmax_dim);
+                                                                                                   .broadcast(expand_softmax_dim));
+
+        // cout<<"class probabilities after softmax :\n"<<class_probabilities<<endl;
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0, class_start},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, classes_number}) = class_probabilities;
@@ -142,8 +161,15 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
         detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})
                   // .device(*thread_pool_device)
-            =  inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
-                           Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}).exp();
+            =  (inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
+                            Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})).exp();
+
+
+        // cout<<"Detection layer outputs:\n"<<detections<<endl;
+
+        // cout<<"Anchors:\n"<<anchors[0]<<endl<<anchors[1]<<endl<<anchors[2]<<endl<<anchors[3]<<endl<<anchors[4]<<endl;
+
+        // throw runtime_error("n");
 
 
       //  Box dimensions detection
@@ -166,8 +192,9 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 4}) = box_detections;
     }
 
-    // cout<<detections<<endl;
-    // cout<<detections.slice(Eigen::array<Index, 4>{0, 0, 0, 5}, Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 20})<<endl<<endl<<endl<<endl;
+    // cout<<"Detection layer outputs:\n"<<detections<<endl;
+    // throw runtime_error("n");
+    // cout<<detections.slice(Eigen::array<Index, 4>{0, 0, 0, 5}, Eigen::array<Index, 4>{batch_size, grid_size, grid_size, classes_number})<<endl<<endl<<endl<<endl;
 }
 
 void DetectionLayer::print() const

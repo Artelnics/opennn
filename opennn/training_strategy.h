@@ -9,7 +9,6 @@
 #ifndef TRAININGSTRATEGY_H
 #define TRAININGSTRATEGY_H
 
-#include "config.h"
 #include "loss_index.h"
 #include "mean_squared_error.h"
 #include "normalized_squared_error.h"
@@ -55,8 +54,6 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    // Get
-
     DataSet* get_data_set();
 
     NeuralNetwork* get_neural_network() const;
@@ -100,12 +97,7 @@ public:
     void set_data_set(DataSet*);
     void set_neural_network(NeuralNetwork*);
 
-    void set_loss_index_threads_number(const int&);
-    void set_optimization_algorithm_threads_number(const int&);
-
     void set_loss_index(LossIndex*);
-    void set_loss_index_data_set(DataSet*);
-    void set_loss_index_neural_network(NeuralNetwork*);
 
     void set_loss_method(const LossMethod&);
     void set_optimization_method(const OptimizationMethod&);

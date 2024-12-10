@@ -9,19 +9,17 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
-#include <string>
+#include "pch.h"
 
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-#include "config.h"
+
 #include "correlation.h"
 #include "scaling.h"
 
+
 using namespace tinyxml2;
-using namespace Eigen;
 
 namespace opennn
 {
@@ -34,10 +32,10 @@ public:
     enum class Codification { UTF8, SHIFT_JIS };
 
     explicit DataSet(const Index& = 0, 
-                     const dimensions& = {}, 
-                     const dimensions& = {});
+                     const dimensions& = {0}, 
+                     const dimensions& = {0});
 
-    explicit DataSet(const string&,
+    explicit DataSet(const filesystem::path&,
                      const string&,
                      const bool& = true,
                      const bool& = false,
@@ -173,7 +171,7 @@ public:
     const dimensions& get_input_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
-    Tensor<Scaler, 1> get_variable_scalers(const VariableUse&) const;
+    vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
     vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
 
@@ -204,7 +202,7 @@ public:
     MissingValuesMethod get_missing_values_method() const;
     string get_missing_values_method_string() const;
 
-    const string& get_data_source_path() const;
+    const filesystem::path& get_data_path() const;
 
     const bool& get_header_line() const;
     const bool& get_has_sample_ids() const;
@@ -236,8 +234,9 @@ public:
     // Set
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
+    void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
+
     void set(const string&);
-    void set(const string&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
 
     void set_default();
 
@@ -287,7 +286,7 @@ public:
 
     void set_raw_variable_scalers(const Scaler&);
 
-    void set_raw_variable_scalers(const Tensor<Scaler, 1>&);
+    void set_raw_variable_scalers(const vector<Scaler>&);
 
     void set_binary_raw_variables();
     void unuse_constant_raw_variables();
@@ -307,7 +306,7 @@ public:
 
     // Members set
 
-    void set_data_source_path(const string&);
+    void set_data_path(const filesystem::path&);
 
     void set_has_header(const bool&);
     void set_has_ids(const bool&);
@@ -443,8 +442,8 @@ public:
 
     void set_data_random();
     void set_data_rosenbrock();
-    void generate_sum_data(const Index&, const Index&);
-    void generate_classification_data(const Index&, const Index&, const Index&);
+    void set_data_sum();
+    void set_data_classification();
 
     // Serialization
 
@@ -505,8 +504,6 @@ public:
     bool get_has_rows_labels() const;
     bool get_has_text_data() const;
 
-    void shuffle();
-
     // Reader
 
     void decode(string&) const;
@@ -565,7 +562,7 @@ protected:
 
     // DATA FILE
 
-    string data_path;
+    filesystem::path data_path;
 
     Separator separator = Separator::Comma;
 

@@ -9,9 +9,6 @@
 #ifndef EMBEDDINGLAYER_H
 #define EMBEDDINGLAYER_H
 
-#include <iostream>
-
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -35,8 +32,8 @@ public:
                             const Index& = 0,
                             const bool& = false);
 
-    Index get_input_dimension() const;
-    Index get_inputs_number() const;
+    Index get_input_dimension_xxx() const;
+    Index get_inputs_number_xxx() const;
     Index get_depth() const;
     bool get_positional_encoding() const;
 
@@ -48,7 +45,7 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-    void set_input_dimensions(const Index&);
+    void set_input_dimensions_xxx(const Index&);
     void set_inputs_number(const Index&);
     void set_depth(const Index&);
     void set_positional_encoding(const bool&);
@@ -89,9 +86,9 @@ public:
 
 private:
 
-    Index input_dimensions;
+    Index input_dimensions_xxx;
 
-    Index inputs_number;
+    Index inputs_number_xxx;
 
     Index depth;
 

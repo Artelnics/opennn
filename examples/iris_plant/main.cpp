@@ -24,37 +24,60 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/iris_plant_original.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/iris_plant/data/iris_plant_original.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        data_set.save("../data/data_set.xml");
-        data_set.load("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
+//        data_set.load("../data/data_set.xml");
 
         // Neural network
 
-        const Index hidden_neurons_number = 5;
+        // const Index hidden_neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                     {input_variables_number}, {hidden_neurons_number}, {target_variables_number});
+                                     {input_variables_number}, {}, {target_variables_number});
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.load("../data/neural_network.xml");
+//        neural_network.save("../data/neural_network.xml");
+//        neural_network.load("../data/neural_network.xml");
 
-        // Training strategy
+        neural_network.print();
+
+        CrossEntropyError cross_entropy_error(&neural_network, &data_set);
+
+        cross_entropy_error.calculate_numerical_gradient();
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        //training_strategy.perform_training();
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        training_strategy.perform_training();
+
+ /*
+        //AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error);
+        //adaptive_moment_estimation.set_display(false);
+        //adaptive_moment_estimation.perform_training();
+
+        // Training strategy
+
+
+
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.print();
+        training_strategy.perform_training();
 
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
+        testing_analysis.print_binary_classification_tests();
+/*
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        cout << "\nConfusion matrix:\n" << confusion << endl;
 
         Tensor<type, 2> inputs(3, neural_network.get_inputs_number());
 
@@ -66,7 +89,6 @@ int main()
 
         cout << "\nInputs:\n" << inputs << endl;
         cout << "\nOutputs:\n" << outputs << endl;
-        cout << "\nConfusion matrix:\n" << confusion << endl;
 
         // Save results
 
@@ -74,7 +96,7 @@ int main()
 
         neural_network.save_expression_c("data/neural_network.c");
         neural_network.save_expression_python("data/neural_network.py");
-
+*/
         cout << "Bye!" << endl;
 
         return 0;

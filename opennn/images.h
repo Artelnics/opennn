@@ -9,24 +9,17 @@
 #ifndef OPENNN_IMAGES_H
 #define OPENNN_IMAGES_H
 
-#include "config.h"
-
-using namespace std;
-using namespace Eigen;
+#include "pch.h"
 
 namespace opennn
 {
 
-    // Read image
-
     Tensor<unsigned char, 3> read_bmp_image(const string&);
     
-    // Type
-
     void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>&, Tensor<unsigned char, 3>&, Index, Index);
 
-    void reflect_image_x(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&);
-    void reflect_image_y(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&);
+    void reflect_image_x(const ThreadPoolDevice*, Tensor<type, 3>&);
+    void reflect_image_y(const ThreadPoolDevice*, Tensor<type, 3>&);
     void rotate_image(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const type&);
     void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&);
     void translate_image(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const Index&);

@@ -56,6 +56,7 @@ INCLUDEPATH += ../eigen
 
 HEADERS += \
     ../blank/yolo_dataset.h \
+    pch.h \
     codification.h \
     cross_entropy_error_3d.h \
     detection_layer.h \
@@ -143,6 +144,7 @@ HEADERS += \
     forward_propagation.h \
 
 SOURCES += \
+    pch.cpp \
     cross_entropy_error_3d.cpp \
     detection_layer.cpp \
     embedding_layer.cpp \

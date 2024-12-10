@@ -28,7 +28,40 @@ TEST(CrossEntropyErrorTest, BackPropagateEmpty)
     BackPropagation back_propagation;
 
     cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+}
 
+
+TEST(CrossEntropyErrorTest, BackPropagateZero)
+{
+    DataSet data_set(1, {1}, {1});
+    data_set.set_data_constant(type(0));
+
+    Batch batch(1, &data_set);
+    batch.fill({0}, { 0 }, { 1 });
+
+    // Neural network
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, { 1 });
+    neural_network.set_parameters_constant(type(0));
+
+    ForwardPropagation forward_propagation(1, &neural_network);
+ /*
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+
+    // Loss index
+
+    back_propagation.set(samples_number, &cross_entropy_error);
+    cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
+
+    EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+    EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
+
+    EXPECT_EQ(back_propagation.error() >= 0);
+
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
+*/
 }
 
 /*
@@ -39,43 +72,6 @@ void CrossEntropyErrorTest::test_back_propagate()
   
     // Test binary classification trivial
     {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
-        neural_network.set_parameters_constant(type(0));
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &cross_entropy_error);
-        cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation.error() >= 0);
-
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons

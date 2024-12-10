@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "layer.h"
 #include "layer_back_propagation_lm.h"
 
@@ -251,16 +253,40 @@ void Layer::set_display(const bool& new_display)
 
 void Layer::set_threads_number(const int& new_threads_number)
 {
-/*
-    if(thread_pool) 
-        delete thread_pool;
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
 
-    if(thread_pool_device) 
-        delete thread_pool_device;
 
-    thread_pool = new ThreadPool(new_threads_number);
-    thread_pool_device = new ThreadPoolDevice(thread_pool, new_threads_number);
-*/
+string Layer::get_expression(const vector<string> &, const vector<string> &) const
+{
+    return string();
+}
+
+
+vector<string> Layer::get_default_input_names() const
+{
+    const Index inputs_number = get_inputs_number();
+
+    vector<string> input_names(inputs_number);
+
+    for(Index i = 0; i < inputs_number; i++)
+        input_names[i] = "input_" + to_string(i);
+
+    return input_names;
+}
+
+
+vector<string> Layer::get_default_output_names() const
+{
+    const Index outputs_number = get_outputs_number();
+
+    vector<string> output_names(outputs_number);
+
+    for(Index i = 0; i < outputs_number; i++)
+        output_names[i] = "output_" + to_string(i);
+
+    return output_names;
 }
 
 
@@ -291,19 +317,23 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-dimensions Layer::get_input_dimensions() const
+Index Layer::get_inputs_number() const
 {
-    return dimensions();
+    const dimensions input_dimensions = get_input_dimensions();
+
+    return accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
 }
 
 
-dimensions Layer::get_output_dimensions() const
+Index Layer::get_outputs_number() const
 {
-    return dimensions();
+    const dimensions output_dimensions = get_output_dimensions();
+
+    return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 }
 
 
-void Layer::forward_propagate(const vector<pair<type*, dimensions>>&, 
+void Layer::forward_propagate(const vector<pair<type*, dimensions>>&,
                               unique_ptr<LayerForwardPropagation>&, const bool&)
 {
     throw runtime_error("This method is not implemented in the layer type (" + get_type_string() + ").\n");
@@ -338,12 +368,12 @@ void Layer::competitive(Tensor<type, 2>& y) const
 void Layer::softmax(Tensor<type, 2>& y) const
 {
     const Eigen::array<Index, 1> softmax_dimension{{1}};
-    
+
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
-    
+
     const Eigen::array<Index, 2> range_2{ { rows_number, 1 }};
-    const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number} };
+    const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number } };
 
     y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
                                          .eval()
@@ -361,12 +391,12 @@ void Layer::softmax(Tensor<type, 2>& y) const
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{{2}}; 
-    
+    const Eigen::array<Index, 1> softmax_dimension{{2}};
+
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
-    
+
     const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 }};
     const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels }};
 
@@ -409,9 +439,9 @@ void Layer::softmax(Tensor<type, 4>& y) const
 }
 
 
-void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax, 
-                                             const Tensor<type, 3>& tensor, 
-                                             TensorMap<Tensor<type, 3>>& result, 
+void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
+                                             const Tensor<type, 3>& tensor,
+                                             TensorMap<Tensor<type, 3>>& result,
                                              Tensor<type, 1>& aux_rows) const
 {
     const Index rows_number = softmax.dimension(0);
@@ -429,7 +459,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     Tensor<type, 0> sum;
 
     for(Index i = 0; i < channels; i++)
-    {        
+    {
         for(Index j = 0; j < columns_number; j++)
         {
             softmax_vector_data = softmax_data + rows_number * (i * columns_number + j);
@@ -442,7 +472,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
             TensorMap<Tensor<type, 1>> result_vector(result_vector_data, rows_number);
 
             aux_rows.device(*thread_pool_device) = softmax_vector * tensor_vector;
-            
+
             sum.device(*thread_pool_device) = aux_rows.sum();
 
             result_vector.device(*thread_pool_device) = aux_rows - softmax_vector * sum(0);

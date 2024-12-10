@@ -11,6 +11,7 @@ namespace opennn
 YOLODataset::YOLODataset(const string& images_directory, const string& labels_directory)
 {
 
+    model_type = ModelType::ObjectDetection;
 
     for (const auto& entry : fs::directory_iterator(images_directory))
     {
@@ -31,7 +32,7 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
     {
         Tensor<type, 1> image_offsets;
 
-        images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets), false);
+        images[i] = /*normalize_tensor(*/resize_image_416x416(read_bmp_image(images_files[i]).cast<type>(), image_offsets)/*, false)*/;
         offsets[i] = image_offsets;
         tensor_images.chip(i,0) = images[i];
 
@@ -81,7 +82,7 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
 
             modified_label(j, 0) = raw_labels[i](j, 0);
             modified_label(j, 1) = (x_center  + offset_x) / 416;
-            modified_label(j, 2) = 1 - (y_center + offset_y) / 416;         //I do the 1 - (...) because the y coord. is given reversed (we are working that y = 0 is the top part of the image and the label is given as if it started from the bottom part)
+            modified_label(j, 2) = 1 - (y_center + offset_y) / 416;         //I do the 1 - (...) because the y coordinate is given reversed (we are working with y = 0 being the top part of the image and the label is given as if it started from the bottom part)
             modified_label(j, 3) = width / 416;
             modified_label(j, 4) = height / 416;
         }
@@ -103,7 +104,7 @@ YOLODataset::YOLODataset(const string& images_directory, const string& labels_di
         targets[img] = convert_to_YOLO_grid_data(labels[img], anchors, grid_size, anchor_number, classes.size());
         tensor_targets.chip(img, 0) = targets[img];
     }
-    //cout<<images.dimension(0)<<endl<<labels.size()<<endl;
+
 
     target_dimensions = {{grid_size, grid_size, (Index) (anchor_number * (5 + classes.size()))}};
 
@@ -144,8 +145,22 @@ YOLODataset::YOLODataset(const string& images_directory)
         images[i] = normalize_tensor(resize_image_416x416(read_bmp_image(images_files[i]).cast<type>()), false);
     }
 
-    model_type = opennn::DataSet::ModelType::ObjectDetection;
+    model_type = ModelType::ObjectDetection;
 }
+
+vector<Descriptives> YOLODataset::scale_variables(const VariableUse&)
+{
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
+
+    inputs_data.device(*thread_pool_device) = inputs_data / type(255);
+
+    return vector<Descriptives>();
+}
+
 
 size_t YOLODataset::size() const
 {

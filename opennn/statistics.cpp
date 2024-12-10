@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
 #include "statistics.h"
 #include "tensors.h"
 
@@ -121,14 +122,10 @@ void Descriptives::save(const string &file_name) const
     if(!file.is_open())
         throw runtime_error("Cannot open descriptives data file.\n");
 
-    // Write file
-
     file << "Minimum: " << minimum << endl
          << "Maximum: " << maximum << endl
          << "Mean: " << mean << endl
          << "Standard deviation: " << standard_deviation << endl;
-
-    // Close file
 
     file.close();
 }
@@ -1307,19 +1304,14 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
-    const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
     vector<Descriptives> descriptives(columns_number);
-
-    //Tensor<type, 1> column(rows_number);
 
     //    #pragma omp parallel for private(column)
 
     for(Index i = 0; i < columns_number; i++)
     {
-        //column = matrix.chip(i,1);
-
         const TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
         descriptives[i] = opennn::vector_descriptives(column);
@@ -1580,9 +1572,9 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
 
     // Mean
 
-    Tensor<type, 1> mean(column_indices_size);
+    Tensor<type, 1> mean(column_indices_size); // @todo check test crash here
     mean.setZero();
-
+    
     for(Index j = 0; j < column_indices_size; j++)
     {
         column_index = column_indices[j];
@@ -1601,7 +1593,7 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
 
         mean(j) /= type(count);
     }
-
+    
     return mean;
 }
 
@@ -2041,18 +2033,6 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
     percentiles[9] = maximum(new_vector);
 
     return percentiles;
-}
-
-
-Index count_nan(const Tensor<type, 1>& vector)
-{
-    Index nan_number = 0;
-
-    for(Index i = 0; i < vector.dimension(0); i++)
-        if(isnan(vector(i))) 
-            nan_number++;
-
-    return nan_number;
 }
 
 }

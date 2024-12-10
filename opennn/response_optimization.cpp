@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "tensors.h"
 #include "response_optimization.h"
 #include "statistics.h"
@@ -16,51 +18,28 @@ namespace opennn
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : data_set(new_data_set)
 {
-    set(new_neural_network);
-
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
-
-    inputs_conditions.resize(inputs_number);
-    inputs_conditions.setConstant(Condition::None);
-
-    outputs_conditions.resize(outputs_number);
-    outputs_conditions.setConstant(Condition::None);
-
-    inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
-    inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
-
-    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
-    {
-        output_minimums.resize(outputs_number);
-        output_minimums.setZero();
-
-        output_maximums.resize(outputs_number);
-        output_maximums.setConstant({type(1)});
-    }
-    else // Approximation and forecasting
-    {
-        output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
-        output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
-    }
+    set(new_neural_network, new_data_set);
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 {   
     neural_network = new_neural_network;
+    data_set = new_data_set;
 
     const Index inputs_number = neural_network->get_inputs_number();
     const Index outputs_number = neural_network->get_outputs_number();
 
-    inputs_conditions.resize(inputs_number);
-    inputs_conditions.setConstant(Condition::None);
+    input_conditions.resize(inputs_number);
+    input_conditions.setConstant(Condition::None);
 
-    outputs_conditions.resize(outputs_number);
-    outputs_conditions.setConstant(Condition::None);
+    output_conditions.resize(outputs_number);
+    output_conditions.setConstant(Condition::None);
 
-    inputs_minimums = neural_network->get_scaling_layer_2d()->get_minimums();
-    inputs_maximums = neural_network->get_scaling_layer_2d()->get_maximums();
+    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+
+    input_minimums = scaling_layer_2d->get_minimums();
+    input_maximums = scaling_layer_2d->get_maximums();
 
     if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
     {
@@ -72,8 +51,10 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network)
     }
     else // Approximation and forecasting
     {
-        output_minimums = neural_network->get_bounding_layer()->get_lower_bounds();
-        output_maximums = neural_network->get_bounding_layer()->get_upper_bounds();
+        BoundingLayer* bounding_layer = static_cast<BoundingLayer*>(neural_network->get_first(Layer::Type::Bounding));
+
+        output_minimums = bounding_layer->get_lower_bounds();
+        output_maximums = bounding_layer->get_upper_bounds();
     }
 }
 
@@ -84,15 +65,15 @@ void ResponseOptimization::set_evaluations_number(const Index& new_evaluations_n
 }
 
 
-Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_inputs_conditions() const
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_input_conditions() const
 {
-    return inputs_conditions;
+    return input_conditions;
 }
 
 
-Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_outputs_conditions() const
+Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_output_conditions() const
 {
-    return outputs_conditions;
+    return output_conditions;
 }
 
 
@@ -102,15 +83,15 @@ Index ResponseOptimization::get_evaluations_number() const
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_inputs_minimums() const
+Tensor<type, 1> ResponseOptimization::get_input_minimums() const
 {
-    return inputs_minimums;
+    return input_minimums;
 }
 
 
-Tensor<type, 1> ResponseOptimization::get_inputs_maximums() const
+Tensor<type, 1> ResponseOptimization::get_input_maximums() const
 {
-    return inputs_maximums;
+    return input_maximums;
 }
 
 
@@ -149,7 +130,7 @@ void ResponseOptimization::set_input_condition(const Index& index,
                                                const ResponseOptimization::Condition& condition,
                                                const Tensor<type, 1>& values)
 {
-    inputs_conditions[index] = condition;
+    input_conditions[index] = condition;
 
     ostringstream buffer;
 
@@ -169,8 +150,8 @@ void ResponseOptimization::set_input_condition(const Index& index,
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
-        inputs_minimums[index] = values[0];
-        inputs_maximums[index] = values[0];
+        input_minimums[index] = values[0];
+        input_maximums[index] = values[0];
 
         return;
 
@@ -178,7 +159,7 @@ void ResponseOptimization::set_input_condition(const Index& index,
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
-        inputs_maximums[index] = values[0];
+        input_maximums[index] = values[0];
 
         return;
 
@@ -186,7 +167,7 @@ void ResponseOptimization::set_input_condition(const Index& index,
         if(values.size() != 1)
             throw runtime_error("For LessEqualTo condition, size of values must be 1.\n");
 
-        inputs_minimums[index] = values[0];
+        input_minimums[index] = values[0];
 
         return;
 
@@ -194,8 +175,8 @@ void ResponseOptimization::set_input_condition(const Index& index,
         if(values.size() != 2)
             throw runtime_error("For Between condition, size of values must be 2.\n");
 
-        inputs_minimums[index] = values[0];
-        inputs_maximums[index] = values[1];
+        input_minimums[index] = values[0];
+        input_maximums[index] = values[1];
 
         return;
 
@@ -207,7 +188,7 @@ void ResponseOptimization::set_input_condition(const Index& index,
 
 void ResponseOptimization::set_output_condition(const Index& index, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
-    outputs_conditions[index] = condition;
+    output_conditions[index] = condition;
 
     ostringstream buffer;
 
@@ -263,7 +244,7 @@ void ResponseOptimization::set_output_condition(const Index& index, const Respon
 }
 
 
-void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& names,
+void ResponseOptimization::set_inputs_output_conditions(const vector<string>& names,
                                                          const vector<string>& conditions_string,
                                                          const Tensor<type, 1>& values)
 {
@@ -276,7 +257,7 @@ void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& n
     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
     const vector<string> output_names = data_set->get_variable_names(DataSet::VariableUse::Target);
-/*
+
     #pragma omp parallel for
     for(Index i = 0; i < variables_number; i++)
     {
@@ -293,7 +274,6 @@ void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& n
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
     }
-*/
 }
 
 
@@ -395,10 +375,10 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
 
             current_values.resize(2);
 
-            if(i < inputs_minimums.size())
+            if(i < input_minimums.size())
             {
-                current_values[0] = inputs_minimums(i);
-                current_values[1] = inputs_maximums(i);
+                current_values[0] = input_minimums(i);
+                current_values[1] = input_maximums(i);
             }
             else
             {
@@ -441,13 +421,13 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
             if(column_type == DataSet::RawVariableType::Numeric || column_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i, index++) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                inputs(i, index++) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
                 index++;
             }
             else if(column_type == DataSet::RawVariableType::Binary)
             {
-                inputs(i, index) = (inputs_conditions(index) == ResponseOptimization::Condition::EqualTo)
-                    ? inputs_minimums[index]
+                inputs(i, index) = (input_conditions(index) == ResponseOptimization::Condition::EqualTo)
+                    ? input_minimums[index]
                     : type(rand() % 2);
 
                 index++;
@@ -461,9 +441,9 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
                 {
                     inputs(i,index + k) = type(0);
 
-                    if(inputs_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
+                    if(input_conditions(index + k) == ResponseOptimization::Condition::EqualTo)
                     {
-                        inputs(i,index + k) = inputs_minimums(index +k);
+                        inputs(i,index + k) = input_minimums(index +k);
 
                         if(inputs(i, index + k) == 1)
                             equal_index = k;
@@ -481,7 +461,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             }
             else
             {
-                inputs(i, index) = calculate_random_uniform(inputs_minimums[index], inputs_maximums[index]);
+                inputs(i, index) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
                 index++;
             }
         }
@@ -529,15 +509,15 @@ ResponseOptimizationResults* ResponseOptimization::perform_optimization() const
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < inputs_number; j++)
-            if(inputs_conditions[j] == Condition::Minimum)
+            if(input_conditions[j] == Condition::Minimum)
                 objective[i] += envelope(i, j);
-            else if(inputs_conditions[j] == Condition::Maximum)
+            else if(input_conditions[j] == Condition::Maximum)
                 objective[i] += -envelope(i, j);
 
         for(Index j = 0; j < outputs_number; j++)
-            if(outputs_conditions[j] == Condition::Minimum)
+            if(output_conditions[j] == Condition::Minimum)
                 objective[i] += envelope(i, inputs_number+j);
-            else if(outputs_conditions[j] == Condition::Maximum)
+            else if(output_conditions[j] == Condition::Maximum)
                 objective[i] += -envelope(i, inputs_number+j);
     }
 

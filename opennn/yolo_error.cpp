@@ -36,6 +36,8 @@ void YoloError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
+    // cout<<targets_pair.second[0]<<", "<< targets_pair.second[1]<<", "<<targets_pair.second[2]<<", "<< targets_pair.second[3]<<endl;
+
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
 
     // cout<<targets<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
@@ -48,6 +50,7 @@ void YoloError::calculate_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
+
     // cout<<outputs<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
     // Back propagation
@@ -56,11 +59,14 @@ void YoloError::calculate_error(const Batch& batch,
     const type epsilon = 1e-06;
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
-    const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
+    const Index classes_number = (outputs.dimension(3) / boxes_per_cell) - 5;
     const Index box_data_size = 5 + classes_number;
     type coordinate_loss = 0, confidence_loss_object = 0, confidence_loss_noobject = 0, confidence_loss = 0, class_loss = 0;
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
+
+    // cout<< outputs<<endl;
+    // throw runtime_error("ya");
 
     for(Index i = 0; i < batch_samples_number; i++)
     {
@@ -72,10 +78,10 @@ void YoloError::calculate_error(const Batch& batch,
                 {
                     if(targets(i,j, k, l * box_data_size + 4) == 1)
                     {
-                        coordinate_loss += pow(targets(i, j, k, l * box_data_size + 0) - (outputs(i, j, k, l * box_data_size + 0) + j), 2)      // @TODO check if I'm not mistaking the x and y coordinates
-                                           + pow(targets(i, j, k, l * box_data_size + 1) - (outputs(i, j, k, l * box_data_size + 1) + k), 2)
-                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs(i, j, k, l * box_data_size + 2) * anchors[l](0)), 2)
-                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs(i, j, k, l * box_data_size + 3) * anchors[l](1)), 2);
+                        coordinate_loss += pow(targets(i, j, k, l * box_data_size + 0) - outputs(i, j, k, l * box_data_size + 0), 2)      // @TODO check if I'm not mistaking the x and y coordinates
+                                           + pow(targets(i, j, k, l * box_data_size + 1) - outputs(i, j, k, l * box_data_size + 1), 2)
+                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs(i, j, k, l * box_data_size + 2)), 2)
+                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs(i, j, k, l * box_data_size + 3)), 2);
 
 
                         Tensor<type, 1> ground_truth_box(4);
@@ -94,11 +100,10 @@ void YoloError::calculate_error(const Batch& batch,
 
                         // cout<<"IOU between prediction and ground truth: "<<confidence<<endl<<endl;
 
-                        confidence_loss_object += pow(outputs(i, j, k, l * box_data_size + 4) - confidence, 2);
+                        confidence_loss_object += pow(confidence - outputs(i, j, k, l * box_data_size + 4), 2);
 
-                        for(Index c = 0; c < classes_number; c++){
-                            // cout<<outputs(i,j, k, l * box_data_size + (5 + c))<<endl;
-                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs(i,j, k, l * box_data_size + (5 + c)));}
+                        for(Index c = 0; c < classes_number; c++)
+                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs(i,j, k, l * box_data_size + (5 + c)));
                     }
                     else
                     {
@@ -125,16 +130,15 @@ void YoloError::calculate_error(const Batch& batch,
     // cout<<"class_loss: "<<-class_loss<<endl<<endl;
     // cout<<"confidence_loss: "<<confidence_loss<<endl<<endl;
 
-    total_loss() = (coordinate_loss - class_loss + confidence_loss) / batch_samples_number;
+    total_loss() = (coordinate_loss - class_loss + confidence_loss);
 
     Tensor<type, 0>& error = back_propagation.error;
 
     // cout<<"=========error========="<<endl;
 
-    error = total_loss;
+    error = total_loss / (type)batch_samples_number;
 
-    // cout<<back_propagation.error<<endl;
-
+    // cout<<"Error: "<<back_propagation.error<<endl;
 
     // cout<<"=========error========="<<endl;
 
@@ -144,59 +148,6 @@ void YoloError::calculate_error(const Batch& batch,
 
 
 }
-/*
-Tensor<type, 0> YoloError::loss_function(const Tensor<type, 4>& targets, const vector<Tensor<type, 1>>& anchors, const Tensor<type, 4>& outputs) const
-{
-    const Index batch_size = outputs.dimension(0);
-    const Index grid_size = outputs.dimension(1);
-    const Index boxes_per_cell = anchors.size();
-    const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
-    const Index box_data_size = 5 + classes_number;
-    type coordinate_loss = 0, confidence_loss_object = 0, confidence_loss_noobject = 0, confidence_loss = 0, class_loss = 0;
-    const type lambda_coord = 5.0;
-    const type lambda_noobject = 0.5;
-
-
-    for(Index i = 0; i < batch_size; i++)
-    {
-        for(Index j = 0; j < grid_size; j++)
-        {
-            for(Index k = 0; k < grid_size; k++)
-            {
-                for(Index l = 0; l < boxes_per_cell; l++)
-                {
-                    if(targets(i,j, k, l * box_data_size + 4) == 1)
-                    {
-                        coordinate_loss += pow(targets(i, j, k, l * box_data_size + 0) - outputs(i, j, k, l * box_data_size + 0), 2)
-                                           + pow(targets(i, j, k, l * box_data_size + 1) - outputs(i, j, k, l * box_data_size + 1), 2)
-                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 2)) - sqrt(outputs(i, j, k, l * box_data_size + 2) * anchors[l](0)), 2)
-                                           + pow(sqrt(targets(i, j, k, l * box_data_size + 3)) - sqrt(outputs(i, j, k, l * box_data_size + 3) * anchors[l](1)), 2);
-
-                        confidence_loss_object += pow(1 - outputs(i, j, k, l * box_data_size + 4), 2);
-
-                        for(Index c = 0; c < classes_number; c++)
-                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(outputs(i,j, k, l * box_data_size + (5 + c)));
-                    }
-                    else
-                    {
-                        confidence_loss_noobject += pow(outputs(i, j, k, l * box_data_size + 4), 2);
-                    }
-                }
-
-            }
-        }
-    }
-
-    coordinate_loss = lambda_coord * coordinate_loss;
-    // class_loss = -class_loss;
-    confidence_loss = confidence_loss_object + lambda_noobject * confidence_loss_noobject;
-
-    // total_loss = coord_loss + class_loss + conf_loss;
-    const Tensor<type, 0> total_loss = coordinate_loss - class_loss + confidence_loss;
-
-    return total_loss;
-}
-*/
 
 void YoloError::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
@@ -213,11 +164,14 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
+    // cout<<"Outputs:\n"<<outputs<<endl;
+
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 
     cout<<targets_pair.second.size()<<endl;
 
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
+
 
     cout<<"========delta4=========="<<endl;
 
@@ -226,18 +180,20 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
+    // cout<<output_deltas_pair.second.size()<<endl;
+
     TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(output_deltas_pair);
-    // output_deltas.setZero();
+    output_deltas.setZero();
 
     // cout<<output_deltas<<endl;
 
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
-    const Index classes_number = (outputs.dimension(3) / anchors.size()) - 5;
+    const Index classes_number = (outputs.dimension(3) / boxes_per_cell) - 5;
     const Index box_data_size = 5 + classes_number;
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
-    const type epsilon = 1e-06;
+    const type epsilon = 1e-05;
 
     cout<<"========delta4=========="<<endl;
 
@@ -251,26 +207,26 @@ void YoloError::calculate_output_delta(const Batch& batch,
             {
                 for(Index l = 0; l < boxes_per_cell; l++)
                 {
-                    Index base_index = l * box_data_size;
+                    const Index base_index = l * box_data_size;
 
                     if(targets(i, j, k, base_index + 4) == 1)
                     {
 
                         // Center deltas
-                        output_deltas(i, j, k, base_index + 0) = (lambda_coord * 2 * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0)))
+                        output_deltas(i, j, k, base_index + 0) = lambda_coord * 2 * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0))
                                                                  * outputs(i,j,k, base_index + 0) * (1 - outputs(i,j,k, base_index + 0));                                // chain rule
 
-                        output_deltas(i, j, k, base_index + 1) = (lambda_coord * 2 * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1)))
+                        output_deltas(i, j, k, base_index + 1) = lambda_coord * 2 * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1))
                                                                   * outputs(i,j,k, base_index + 1) * (1 - outputs(i,j,k, base_index + 1));                               // chain rule
 
                         // Width and height deltas
-                        output_deltas(i, j, k, base_index + 2) = (lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 2)/* * anchors[l](0) */) - sqrt(targets(i, j, k, base_index + 2)))
-                                                                  * (0.5 / (epsilon + sqrt(outputs(i, j, k, base_index + 2))/* * anchors[l](0) */)))                                    // chain rule
-                                                                  * outputs(i, j, k, base_index + 2)/* * anchors[l](0)*/;                                                   // chain rule
+                        output_deltas(i, j, k, base_index + 2) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 2)) - sqrt(targets(i, j, k, base_index + 2)))
+                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 2)))
+                                                                 * outputs(i,j,k, base_index + 2);                                    // chain rule
 
-                        output_deltas(i, j, k, base_index + 3) = (lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 3)/* * anchors[l](1) */) - sqrt(targets(i, j, k, base_index + 3)))
-                                                                  * (0.5 / (epsilon + sqrt(outputs(i, j, k, base_index + 3))/* * anchors[l](1) */)))                                    // chain rule
-                                                                  * outputs(i, j, k, base_index + 3) /* * anchors[l](1)*/;                                                   // chain rule
+                        output_deltas(i, j, k, base_index + 3) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 3)) - sqrt(targets(i, j, k, base_index + 3)))
+                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 3)))
+                                                                 * outputs(i,j,k, base_index + 3);                                    // chain rule
 
                         // Confidence deltas (there is an object)
                         Tensor<type, 1> ground_truth_box(4);
@@ -287,13 +243,13 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
                         type confidence = calculate_intersection_over_union(ground_truth_box, predicted_box);
 
-                        output_deltas(i, j, k, base_index + 4) = (2 * (outputs(i, j, k, base_index + 4) - confidence))
+                        output_deltas(i, j, k, base_index + 4) = 2 * (outputs(i, j, k, base_index + 4) - confidence)
                                                                  * outputs(i, j, k, base_index + 4) * (1 - outputs(i, j, k, base_index + 4));                           // chain rule
 
                         // Classes deltas
                         for(Index c = 0; c < classes_number; c++)
                         {
-                            output_deltas(i, j, k, base_index + c) = outputs(i, j, k, base_index + 5 + c) - targets(i, j, k, base_index + 5 + c)/* / (epsilon + outputs(i, j, k, base_index + 5 + c))*/;
+                            output_deltas(i, j, k, base_index + 5 + c) = /*-targets(i,j,k,base_index + 5 + c) / (epsilon + outputs(i,j,k,base_index + 5 + c))*/ outputs(i, j, k, base_index + 5 + c) - targets(i, j, k, base_index + 5 + c);
                         }
                     }
                     else
@@ -307,6 +263,10 @@ void YoloError::calculate_output_delta(const Batch& batch,
         }
     }
     // cout<<output_deltas<<endl;
+    output_deltas = output_deltas / (type) batch_samples_number;
+
+    // cout<<"Yolo error output deltas:\n"<<output_deltas<<endl;
+    // throw runtime_error("ya");
 }
 
 string YoloError::get_loss_method() const

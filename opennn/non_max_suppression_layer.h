@@ -34,19 +34,40 @@ class NonMaxSuppressionLayer : public Layer
 public:
    // Constructors
 
-   explicit NonMaxSuppressionLayer();
+   explicit NonMaxSuppressionLayer(const dimensions&,
+                                   const Index&,
+                                   const string = "non_max_suppression_layer");
 
-   void calculate_regions(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&);
+   void set(const dimensions&,
+            const Index&,
+            const string = "non_max_suppression_layer");
 
-   void forward_propagate(Tensor<type*, 1>,
-                          const Tensor<Tensor<Index, 1>, 1>&,
-                          LayerForwardPropagation*,
-                          const bool&);
+   void forward_propagate(const vector<pair<type*, dimensions>>&,
+                          unique_ptr<LayerForwardPropagation>&,
+                          const bool&) final;
+
+   void calculate_boxes(const Tensor<type, 4>&, Tensor<type, 3>&, const Index&, Tensor<type, 0>&);
+
+   void print() const;
+
+
+   dimensions get_input_dimensions() const;
+   dimensions get_output_dimensions() const;
 
 
 protected:
 
    bool display = true;
+
+   const type overlap_threshold = 0.4;
+
+   dimensions input_dimensions;
+   Index boxes_per_cell;
+   Index classes_number;                    // For VOC2007 dataset there are 20 classes
+   Index grid_size;
+   const Index output_box_info = 5;         // x_center, y_center, width, height and object_confidence
+   const Index final_box_info = 6;          // x_center, y_center, width, height, object_confidence * class_probability and class
+
 };
 
 
@@ -54,67 +75,35 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
 {
     // Default constructor
 
-    explicit NonMaxSuppressionLayerForwardPropagation()
-        : LayerForwardPropagation()
-    {
-    }
+    // explicit NonMaxSuppressionLayerForwardPropagation()
+    //     : LayerForwardPropagation()
+    // {
+    // }
 
     // Constructor
 
-    explicit NonMaxSuppressionLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
-        : NonMaxSuppressionLayerForwardPropagation()
-    {
-        set(new_batch_samples_number, new_layer);
-    }
+    explicit NonMaxSuppressionLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer)
-    {
-    layer = new_layer;
 
-    /*NonMaxSuppressionLayerForwardPropagation* perceptron_layer_3d = static_cast<NonMaxSuppressionLayerForwardPropagation*>(layer);
-*/
-    batch_samples_number = new_batch_samples_number;
+    void set(const Index& = 0, Layer* = nullptr) final;
 
-//    const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-
-//    const Index inputs_number = perceptron_layer_3d->get_inputs_number();
-
-   /* outputs.resize(batch_samples_number, grid_height, grid_width, bounding_box_predictions_number);
-
-    outputs_data = outputs.data();
-
-//    activations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
-
-        layer = new_layer;
-
-        outputs.resize(2);
-
-        // Bounding boxes
-
-        outputs(0).set_data(nullptr);
-
-        // Scores
-
-        outputs(1).set_data(nullptr);*/
-    }
+    pair<type *, dimensions> get_outputs_pair() const final;
 
     void print() const
     {
         cout << "Non max suppression layer forward propagation structure" << endl;
 
         cout << "Outputs:" << endl;
-//        cout << TensorMap<Tensor<type,4>>(outputs_data,
-//                                          outputs_dimensions[0],
-//                                          outputs_dimensions(1),
-//                                          outputs_dimensions(2),
-//                                          outputs_dimensions(3)) << endl;
+
+        cout<< outputs <<endl;
 
         cout << "Outputs dimensions:" << endl;
 
-//        cout << outputs_dimensions << endl;
+        cout << outputs.dimensions() << endl;
     }
 
-    //Tensor<pair<type*, dimensions>, 1> outputs;
+    Tensor<type, 3> outputs;
+    Tensor<type, 0> maximum_box_number;
 };
 
 }

@@ -52,7 +52,7 @@ protected:
 
     // Index layers_number;
 
-    type dropout_rate = 0.1;
+    type dropout_rate = 0;
 
 };
 

@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "non_max_suppression_layer.h"
+#include "tensors.h"
+#include "yolo_dataset.h"
 
 namespace opennn
 {
@@ -15,142 +17,198 @@ namespace opennn
 /// It creates a empty layer object.
 /// This constructor also initializes the rest of the class members to their default values.
 
-NonMaxSuppressionLayer::NonMaxSuppressionLayer() : Layer()
+NonMaxSuppressionLayer::NonMaxSuppressionLayer(const dimensions& new_input_dimensions,
+                                               const Index& new_boxes_per_cell,
+                                               const string name) : Layer()
 {
     layer_type = Type::NonMaxSuppression;
 
-    name = "non_max_suppression_layer";
+    set(new_input_dimensions, new_boxes_per_cell, name);
 }
 
-
-void NonMaxSuppressionLayer::calculate_regions(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
-                                               type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+void NonMaxSuppressionLayer::set(const dimensions& new_input_dimensions, const Index& new_boxes_per_cell, const string name)
 {
-    // inputs_data -> Score of each input image bounding box
-    //             -> 4 parameters defining the bbox
-    // outputs_data -> Bounding box that surpasses our criteria
+    if(new_input_dimensions.size() != 3)
+        throw runtime_error("Dimensions must be 3");
 
-    const type overlap_threshold = type(0.65);
-    const type confidence_score_threshold = type(0.4);
+    input_dimensions = new_input_dimensions;
+    boxes_per_cell = new_boxes_per_cell;
+    classes_number = (new_input_dimensions[2] / boxes_per_cell) - output_box_info;
+    grid_size = new_input_dimensions[0];
 
-    const Index regions_number = inputs_dimensions(0);
-    TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+    set_name(name);
+}
 
-    // INPUTS MATRIX
+void NonMaxSuppressionLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                               unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                               const bool&)
+{
 
-    Tensor<Tensor<type, 1>, 1> region_inputs(regions_number); // x_center, y_center, width, height ¿(from region_proposal_layer)?
-    Tensor<type, 1> inputs_confidence_score; // confidence_score
+    const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
-    Tensor<bool, 1> mask_regions(regions_number);
+    const Index batch_size = inputs.dimension(0);
 
-    Index higher_score_regions_number = 0;
+    NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
+            = static_cast<NonMaxSuppressionLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    for(Index i = 0; i < regions_number; i++)
+    Tensor<type, 3>& outputs = non_max_suppression_layer_forward_propagation->outputs;
+
+    Tensor<type, 0>& maximum_box_number = non_max_suppression_layer_forward_propagation->maximum_box_number;
+
+    calculate_boxes(inputs, outputs, batch_size, maximum_box_number);
+}
+
+void NonMaxSuppressionLayer::calculate_boxes(const Tensor<type, 4>& network_output, Tensor<type, 3>& outputs, const Index& batch_size, Tensor<type, 0>& maximum_box_number)
+{
+    Tensor<type, 4> converted_network_output(batch_size, grid_size, grid_size, boxes_per_cell * final_box_info);    // I change p = object_prob to p' = p * maximum_class_probability and (c_0,...,c_19) to c = class_number
+
+    vector<vector<Tensor<type, 1>>> input_bounding_boxes(batch_size);
+    vector<vector<Tensor<type, 1>>> final_boxes(batch_size);
+    Tensor<type, 3> tensor_final_boxes(batch_size, boxes_per_cell * grid_size * grid_size, 1 + final_box_info);
+    vector<vector<vector<Tensor<type, 1>>>> classified_boxes(batch_size);
+    Tensor<type, 1> box(final_box_info);
+
+    Tensor<type, 1> boxes_number(batch_size);
+    boxes_number.setZero();
+
+    for(Index i = 0; i < batch_size; i++)
     {
-        if(inputs_confidence_score(i) > confidence_score_threshold)
+        classified_boxes[i].resize(classes_number);
+
+        for(Index j = 0; j < grid_size; j++)
         {
-            mask_regions(i) = true;
-            higher_score_regions_number++;
-        }
-        else
-        {
-            mask_regions(i) = false;
-        }
-    }
-
-    // Fill filtered input tensor
-
-    Tensor<Tensor<type, 1>, 1> filtered_proposals(higher_score_regions_number);
-    Tensor<type, 1> filtered_proposals_score(higher_score_regions_number);
-
-    Index filtered_proposals_index = 0;
-
-    for(Index i = 0; i < regions_number; i++)
-    {
-        if(mask_regions(i))
-        {
-            filtered_proposals(filtered_proposals_index) = region_inputs(i);
-            filtered_proposals_score(filtered_proposals_index) = inputs_confidence_score(i);
-            filtered_proposals_index++;
-        }
-    }
-
-    // Calculate IoU between regions
-
-    Tensor<bool, 1> final_detections_boolean(higher_score_regions_number);
-    Index final_detections_number = 0;
-
-    for(Index i = 0; i < higher_score_regions_number; i++)
-    {
-        const Index x_center_box_1 = filtered_proposals(i)(0);
-        const Index y_center_box_1 = filtered_proposals(i)(1);
-        const Index width_box_1 = filtered_proposals(i)(2);
-        const Index height_right_box_1 = filtered_proposals(i)(3);
-
-
-        for(Index j = i; j < higher_score_regions_number; j++)
-        {
-            if(i < j)
+            for(Index k = 0; k < grid_size; k++)
             {
-                const Index x_center_box_2 = filtered_proposals(j)(0);
-                const Index y_center_box_2 = filtered_proposals(j)(1);
-                const Index width_box_2 = filtered_proposals(j)(2);
-                const Index height_box_2 = filtered_proposals(j)(3);
-/*
-                const type intersection_over_union_between_boxes = intersection_over_union(x_top_left_box_1, y_top_left_box_1,
-                                                                                           x_bottom_right_box_1, y_bottom_right_box_1,
-                                                                                           x_top_left_box_2, y_top_left_box_2,
-                                                                                           x_bottom_right_box_2, y_bottom_right_box_2);
-                if(intersection_over_union_between_boxes > overlap_threshold)
+                for(Index b = 0; b < boxes_per_cell; b++)
                 {
-                    final_detections_boolean(i) = true;
-                    final_detections_number++;
+                    Index object_class = 0;
+                    const Tensor<type, 0> max_class_probability = network_output.slice(Eigen::array<Index, 4>{0, 0, 0, b * (output_box_info + classes_number) + 5},
+                                                                                 Eigen::array<Index, 4>{1, 1, 1, classes_number}).maximum().eval();
+
+                    while(network_output(i, j, k, b * (output_box_info + classes_number) + 5 + object_class) != max_class_probability() && object_class < 19)
+                        object_class++;
+
+                    if(network_output(i, j, k, b * (output_box_info + classes_number) + 5 + object_class) != max_class_probability())
+                        cerr<<"Error calculating the class probabilities";
+
+                    converted_network_output(i, j, k, b * final_box_info + 0) = network_output(i, j, k, b * (output_box_info + classes_number) + 0);
+                    converted_network_output(i, j, k, b * final_box_info + 1) = network_output(i, j, k, b * (output_box_info + classes_number) + 1);
+                    converted_network_output(i, j, k, b * final_box_info + 2) = network_output(i, j, k, b * (output_box_info + classes_number) + 2);
+                    converted_network_output(i, j, k, b * final_box_info + 3) = network_output(i, j, k, b * (output_box_info + classes_number) + 3);
+                    converted_network_output(i, j, k, b * final_box_info + 4) = network_output(i, j, k, b * (output_box_info + classes_number) + 4) * max_class_probability();
+                    converted_network_output(i, j, k, b * final_box_info + 5) = object_class;
+
+
+                    if(network_output(i, j, k, b * (output_box_info + classes_number) + 4) > 0.5)
+                    {
+                        for(Index l = 0; l < final_box_info; l++)
+                            box(l) = converted_network_output(i, j, k, b * (final_box_info) + l);
+
+                        input_bounding_boxes[i].push_back(box);
+                    }
                 }
-                else
-                {
-                    final_detections_boolean(i) = false;
-                }
-*/
             }
         }
-    }
 
-    Tensor<Tensor<type, 1>, 1> outputs(final_detections_number);
-
-    Tensor<type, 1> outputs_score(final_detections_number);
-
-    Index final_detections_index = 0;
-
-    for(Index i = 0; i < higher_score_regions_number; i++)
-    {
-        if(final_detections_boolean(i))
+        for(size_t j = 0; j < input_bounding_boxes[i].size(); j++)
         {
-            outputs(final_detections_index) = filtered_proposals(i);
-            outputs_score(final_detections_index) = filtered_proposals_score(i);
-            final_detections_index++;
+            classified_boxes[i][input_bounding_boxes[i][j](5)].push_back(input_bounding_boxes[i][j]);
         }
+
+        for(Index k = 0; k < classes_number; k++)
+        {
+            if(classified_boxes[i][k].empty())
+                continue;
+
+            sort(classified_boxes[i][k].begin(), classified_boxes[i][k].end(), [](const Tensor<type, 1>& a, const Tensor<type, 1>& b){
+                return a(4) > b(4);
+            });
+
+
+            while(!classified_boxes[i][k].empty())
+            {
+                const Tensor<type, 1> box = classified_boxes[i][k].front();
+                classified_boxes[i][k].erase(classified_boxes[i][k].begin());
+
+                for(auto it = classified_boxes[i][k].begin(); it != classified_boxes[i][k].end();)
+                    if(calculate_intersection_over_union(box, *it) > overlap_threshold)
+                        it = classified_boxes[i][k].erase(it);
+                    else
+                        it++;
+
+                final_boxes[i].push_back(box);
+            }
+        }
+
+        // @todo use memcpy
+
+        // memcpy(outputs[i].data(), final_boxes[i].data(), tensor_final_boxes[i].size()*sizeof(type));     // @TODO check if I'm doing it right
+
+
+
+
+        for(size_t box = 0; box < final_boxes[i].size(); box++)
+        {
+            for(Index element = 0; element < final_box_info; element++)
+            {
+                tensor_final_boxes(i, boxes_number(i), element) = final_boxes[i][box](element);
+            }
+
+            boxes_number(i)++;
+        }
+
     }
+
+
+
+    maximum_box_number = boxes_number.maximum();
+
+    outputs.resize(batch_size, (Index) maximum_box_number(), 7);
+
+    outputs = tensor_final_boxes.slice(Eigen::array<Index, 3> {0,0},
+                                       Eigen::array<Index, 3> {batch_size,  (Index) maximum_box_number(), final_box_info});
+}
+
+dimensions NonMaxSuppressionLayer::get_input_dimensions() const
+{
+    return input_dimensions;
+}
+
+dimensions NonMaxSuppressionLayer::get_output_dimensions() const
+{
+    return {grid_size * grid_size * boxes_per_cell, final_box_info};
+}
+
+void NonMaxSuppressionLayer::print() const
+{
+    cout << "NonMaxSuppression layer" << endl;
+    cout << "Input dimensions: " << endl;
+    print_vector(input_dimensions);
+    cout << "Maximum output dimensions: " << endl;
+    print_vector(get_output_dimensions());
 }
 
 
-void NonMaxSuppressionLayer::forward_propagate(Tensor<type*, 1> inputs_data,
-                                               const Tensor<Tensor<Index,1>, 1>& inputs_dimensions,
-                                               LayerForwardPropagation* forward_propagation,
-                                               const bool& is_training)
+NonMaxSuppressionLayerForwardPropagation::NonMaxSuppressionLayerForwardPropagation(
+    const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagation()
 {
-    NonMaxSuppressionLayerForwardPropagation* non_max_suppression_layer_forward_propagation
-            = static_cast<NonMaxSuppressionLayerForwardPropagation*>(forward_propagation);
+    set(new_batch_samples_number, new_layer);
+}
 
-    // Propose random region for each image (NON NECESSARY FOR YOLO)
+void NonMaxSuppressionLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    batch_samples_number = new_batch_samples_number;
 
-//    Tensor<type, 2> outputs(regions_number, channels_number * region_rows * region_columns);
+    layer = new_layer;
 
-//    const Tensor<Index, 1> outputs_dimensions = get_dimensions(non_max_suppression_layer_forward_propagation->outputs);
+    // outputs.resize(batch_samples_number, 7);
+}
 
-//    calculate_regions(inputs_data,
-//                      inputs_dimensions,
-//                      non_max_suppression_layer_forward_propagation->outputs_data(0),
-//                      outputs_dimensions);
+
+pair<type*, dimensions> NonMaxSuppressionLayerForwardPropagation::get_outputs_pair() const
+{
+    return {(type*)outputs.data(), {batch_samples_number, (Index) maximum_box_number(), 6}};
 }
 
 }

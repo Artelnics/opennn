@@ -9,9 +9,7 @@
 #ifndef POOLINGLAYER_H
 #define POOLINGLAYER_H
 
-#include <string>
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -34,24 +32,22 @@ public:
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
     explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
-                          const dimensions& = { 2, 2 }, // Pool dimensions {pool_height,pool_width}
-                          const dimensions& = { 2, 2 }, // Stride dimensions {row_stride, column_stride}
-                          const dimensions& = { 0, 0 }, // Padding dimensions {padding_height, padding_width}
+                          const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
+                          const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
+                          const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
                           const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
 
     dimensions get_input_dimensions() const;
-
     dimensions get_output_dimensions() const;
-
-    Index get_inputs_number() const;
 
     Index get_input_height() const;
     Index get_input_width() const;
-    Index get_channels_number() const;
 
     Index get_output_height() const;
     Index get_output_width() const;
+
+    Index get_channels_number() const;
 
     Index get_padding_height() const;
     Index get_padding_width() const;
@@ -85,8 +81,6 @@ public:
 
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
-
-    void set_default();
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -141,7 +135,7 @@ private:
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
-    const Eigen::array<ptrdiff_t, 2> max_pooling_dimensions = {1, 2};
+    const Eigen::array<ptrdiff_t, 2> pooling_dimensions = {1, 2};
     const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
@@ -155,8 +149,6 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     void set(const Index& = 0, Layer* = nullptr) final;
 
     void print() const;
-
-    const Eigen::array<int, 2> reduction_dimensions = { 1, 2 };
 
     Tensor<type, 4> outputs;
 
@@ -179,7 +171,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     Tensor<type, 4> deltas_by_pool_size;
 
     Tensor<type, 4> input_derivatives;
-
 };
 
 
@@ -187,7 +178,6 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
     #include "../../opennn_cuda/opennn_cuda/pooling_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/pooling_layer_back_propagation_cuda.h"
 #endif
-
 
 }
 

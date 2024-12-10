@@ -9,12 +9,8 @@
 #ifndef OPTIMIZATIONALGORITHM_H
 #define OPTIMIZATIONALGORITHM_H
 
-#include <iostream>
-#include <limits>
-#include <cmath>
-
-#include "config.h"
 #include "loss_index.h"
+#include "language_data_set.h"
 
 namespace opennn
 {
@@ -89,6 +85,52 @@ public:
    void save(const string&) const;
    void load(const string&);
 
+   static type get_elapsed_time(const time_t& beginning_time)
+   {
+       time_t current_time;
+       time(&current_time);
+       return type(difftime(current_time, beginning_time));
+   }
+
+   void set_neural_network_variable_names()
+   {
+       DataSet* data_set = loss_index->get_data_set();
+
+       const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+       const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+
+       NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+       neural_network->set_input_names(input_names);
+       neural_network->set_output_namess(target_names);
+/*
+       const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+       const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+
+       vector<Descriptives> input_variable_descriptives;
+       vector<Descriptives> target_variable_descriptives;
+
+       if(!is_instance_of<LanguageDataSet>(data_set))
+           input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+
+       if(neural_network->has(Layer::Type::Scaling2D))
+       {
+           ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+
+           scaling_layer_2d->set_descriptives(input_variable_descriptives);
+           scaling_layer_2d->set_scalers(input_variable_scalers);
+       }
+
+       if(neural_network->has(Layer::Type::Unscaling))
+       {
+           target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+
+           UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+           unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
+       }
+*/
+   }
+
 protected:
 
    unique_ptr<ThreadPool> thread_pool;
@@ -146,11 +188,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults()
-    {
-    }
-
-    explicit TrainingResults(const Index& epochs_number);
+    explicit TrainingResults(const Index& epochs_number = 0);
 
     string write_stopping_condition() const;
 
@@ -162,20 +200,7 @@ struct TrainingResults
 
     void save(const string&) const;
 
-    void print(const string& message = string())
-    {
-        const Index epochs_number = training_error_history.size();
-
-        cout << message << endl
-             << "Training results" << endl
-             << "Epochs number: " << epochs_number-1 << endl
-             << "Training error: " << training_error_history(epochs_number-1) << endl;
-
-        if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
-            cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
-
-        cout << "Stopping condition: " << write_stopping_condition() << endl;
-    }
+    void print(const string& message = string());
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 

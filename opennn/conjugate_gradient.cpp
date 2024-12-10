@@ -6,9 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
-#include <cmath>
-#include <ctime>
+#include "pch.h"
 
 #include "conjugate_gradient.h"
 #include "forward_propagation.h"
@@ -249,7 +247,6 @@ TrainingResults ConjugateGradient::perform_training()
     // Elapsed time
 
     time_t beginning_time;
-    time_t current_time;
     time(&beginning_time);
     type elapsed_time = type(0);
 
@@ -270,8 +267,8 @@ TrainingResults ConjugateGradient::perform_training()
     const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
     const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
-    const Tensor<Scaler, 1> input_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const Tensor<Scaler, 1> target_variables_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
     const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
     vector<Descriptives> target_variable_descriptives;
@@ -282,17 +279,17 @@ TrainingResults ConjugateGradient::perform_training()
 
     if(neural_network->has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d = neural_network->get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variables_scalers);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
         target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
-        UnscalingLayer* unscaling_layer = neural_network->get_unscaling_layer();
-        unscaling_layer->set(target_variable_descriptives, target_variables_scalers);
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
     }
 
     Batch training_batch(training_samples_number, data_set);
@@ -358,8 +355,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         // Optimization algorithm
 
-        time(&current_time);
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = get_elapsed_time(beginning_time);
 
         if(display && epoch%display_period == 0)
         {

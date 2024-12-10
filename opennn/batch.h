@@ -1,16 +1,10 @@
-#ifndef DATASETBATCH_H
-#define DATASETBATCH_H
+#ifndef BATCH_H
+#define BATCH_H
 
 #include "data_set.h"
-
-// Cuda includes
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
-#include "language_data_set.h"
-
-using namespace std;
-using namespace Eigen;
 
 namespace opennn
 {

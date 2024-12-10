@@ -9,9 +9,6 @@
 #ifndef TRANSFORMER_H
 #define TRANSFORMER_H
 
-#include <string>
-#include <sstream>
-
 #include "neural_network.h"
 #include "forward_propagation.h"
 
@@ -37,8 +34,14 @@ public:
 
     void set(const initializer_list<Index>&);
 
-    void set(const Index& input_length, const Index& context_length, const Index& input_dimensions, const Index& context_dimension,
-             const Index& embedding_depth, const Index& perceptron_depth, const Index& heads_number, const Index& layers_number);
+    void set(const Index& input_length,
+             const Index& context_length,
+             const Index& input_dimensions,
+             const Index& context_dimension,
+             const Index& embedding_depth,
+             const Index& perceptron_depth,
+             const Index& heads_number,
+             const Index& layers_number);
 
     void set_dropout_rate(const type&);
     void set_input_vocabulary(const vector<string>&);
@@ -63,9 +66,9 @@ private:
 
     Index context_length;
 
-    Index input_dimensions;
+    Index input_dimensions_xxx;
 
-    Index context_dimension;
+    Index context_dimension_xxx;
 
     Index embedding_depth;
 

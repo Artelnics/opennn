@@ -9,9 +9,6 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#include <string>
-
-#include "config.h"
 #include "data_set.h"
 #include "batch.h"
 #include "neural_network.h"
@@ -159,6 +156,7 @@ public:
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 2> calculate_numerical_jacobian();
    Tensor<type, 1> calculate_numerical_inputs_derivatives();
+   Tensor<type, 4> calculate_yolo_numerical_output_delta();
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"

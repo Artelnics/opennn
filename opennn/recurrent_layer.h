@@ -9,9 +9,7 @@
 #ifndef RECURRENTLAYER_H
 #define RECURRENTLAYER_H
 
-#include <string>
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -87,7 +85,7 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const final;
 
-   string get_expression(const vector<string>&, const vector<string>&) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
 
    string get_activation_function_string_expression() const;
 

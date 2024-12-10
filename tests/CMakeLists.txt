@@ -36,9 +36,9 @@ add_executable(run_tests test.cpp
                          neural_network_test.cpp 
                          neurons_selection_test.cpp 
                          normalized_squared_error_test.cpp 
+                         pooling_layer_test.cpp 
                          ${PCH_SOURCE}                          
                         #  perceptron_layer_test.cpp 
-                        #  pooling_layer_test.cpp 
                         #  probabilistic_layer_3d_test.cpp 
                         #  probabilistic_layer_test.cpp 
                         #  quasi_newton_method_test.cpp 

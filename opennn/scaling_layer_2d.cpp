@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <numeric>
+#include "pch.h"
 
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
@@ -23,13 +23,13 @@ ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
 
 dimensions ScalingLayer2D::get_input_dimensions() const
 {
-    return dimensions{scalers.size()};
+    return dimensions{Index(scalers.size())};
 }
 
 
 dimensions ScalingLayer2D::get_output_dimensions() const
 {
-    return dimensions{scalers.size()};
+    return dimensions{Index(scalers.size())};
 }
 
 
@@ -101,7 +101,7 @@ Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 }
 
 
-Tensor<Scaler, 1> ScalingLayer2D::get_scaling_methods() const
+vector<Scaler> ScalingLayer2D::get_scaling_methods() const
 {
     return scalers;
 }
@@ -166,8 +166,7 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     descriptives.resize(new_inputs_number);
 
-    scalers.resize(new_inputs_number);
-    scalers.setConstant(Scaler::MeanStandardDeviation);
+    scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 
     name = "scaling_layer";
 
@@ -176,6 +175,7 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
     set_min_max_range(type(-1), type(1));
 
     layer_type = Type::Scaling2D;
+
 }
 
 
@@ -183,9 +183,7 @@ void ScalingLayer2D::set_input_dimensions(const dimensions& new_input_dimensions
 {
     descriptives.resize(new_input_dimensions[0]);
 
-    scalers.resize(new_input_dimensions[0]);
-
-    scalers.setConstant(Scaler::MeanStandardDeviation);
+    scalers.resize(new_input_dimensions[0], Scaler::MeanStandardDeviation);
 }
 
 
@@ -238,7 +236,7 @@ void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_stan
 }
 
 
-void ScalingLayer2D::set_scalers(const Tensor<Scaler, 1>& new_scaling_methods)
+void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
 {
     scalers = new_scaling_methods;
 }
@@ -248,20 +246,20 @@ void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_strin
 {
     const Index neurons_number = get_output_dimensions()[0];
 
-    Tensor<Scaler, 1> new_scaling_methods(neurons_number);
+    vector<Scaler> new_scaling_methods(neurons_number);
 
     #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
         if(new_scaling_methods_string[i] == "None")
-            new_scaling_methods(i) = Scaler::None;
+            new_scaling_methods[i] = Scaler::None;
         else if(new_scaling_methods_string[i] == "MinimumMaximum")
-            new_scaling_methods(i) = Scaler::MinimumMaximum;
+            new_scaling_methods[i] = Scaler::MinimumMaximum;
         else if(new_scaling_methods_string[i] == "MeanStandardDeviation")
-            new_scaling_methods(i) = Scaler::MeanStandardDeviation;
+            new_scaling_methods[i] = Scaler::MeanStandardDeviation;
         else if(new_scaling_methods_string[i] == "StandardDeviation")
-            new_scaling_methods(i) = Scaler::StandardDeviation;
+            new_scaling_methods[i] = Scaler::StandardDeviation;
         else if(new_scaling_methods_string[i] == "Logarithm")
-            new_scaling_methods(i) = Scaler::Logarithm;
+            new_scaling_methods[i] = Scaler::Logarithm;
         else
             throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
 
@@ -271,22 +269,22 @@ void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_strin
 
 void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
 {
-    scalers(variable_index) = new_scaler;
+    scalers[variable_index] = new_scaler;
 }
 
 
 void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_scaler_string)
 {
     if(new_scaler_string == "None")
-        scalers(variable_index) = Scaler::None;
+        scalers[variable_index] = Scaler::None;
     else if(new_scaler_string == "MeanStandardDeviation")
-        scalers(variable_index) = Scaler::MeanStandardDeviation;
+        scalers[variable_index] = Scaler::MeanStandardDeviation;
     else if(new_scaler_string == "MinimumMaximum")
-        scalers(variable_index) = Scaler::MinimumMaximum;
+        scalers[variable_index] = Scaler::MinimumMaximum;
     else if(new_scaler_string == "StandardDeviation")
-        scalers(variable_index) = Scaler::StandardDeviation;
+        scalers[variable_index] = Scaler::StandardDeviation;
     else if(new_scaler_string == "Logarithm")
-        scalers(variable_index) = Scaler::Logarithm;
+        scalers[variable_index] = Scaler::Logarithm;
     else
         throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
 }
@@ -308,7 +306,7 @@ void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 
     #pragma omp parallel for
     for(Index i = 0; i < neurons_number; i++)
-        scalers(i) = new_scaling_method;
+        scalers[i] = new_scaling_method;
 }
 
 
@@ -333,7 +331,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        const Scaler& scaler = scalers(i);
+        const Scaler& scaler = scalers[i];
 
         // @todo What's going on with this?
 
@@ -456,17 +454,21 @@ string ScalingLayer2D::write_standard_deviation_expression(const vector<string>&
 }
 
 
-string ScalingLayer2D::get_expression(const vector<string>& input_names, const vector<string>&) const
+string ScalingLayer2D::get_expression(const vector<string>& new_input_names, const vector<string>&) const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const vector<string> input_names = new_input_names.empty()
+    ? get_default_input_names()
+    : new_input_names;
+
+    const Index outputs_number = get_outputs_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
-        switch(scalers(i))
+        switch(scalers[i])
         { 
         case Scaler::None:
             buffer << "scaled_" << input_names[i] << " = " << input_names[i] << ";\n";

@@ -6,6 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "pch.h"
+
 #include "bounding_layer.h"
 #include "tensors.h"
 
@@ -151,6 +153,7 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       const bool& is_training)
 {
+
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
@@ -191,8 +194,17 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string BoundingLayer::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
+    const vector<string> input_names = new_input_names.empty()
+    ? get_default_input_names()
+    : new_input_names;
+
+    const vector<string> output_names = new_output_names.empty()
+                                            ? get_default_output_names()
+                                            : new_output_names;
+
+
     if (bounding_method == BoundingMethod::NoBounding)
         return string();
 

@@ -6,9 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include "pch.h"
 
-#include "strings_utilities.h"
 #include "convolutional_layer.h"
 #include "tensors.h"
 
@@ -87,12 +86,9 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
-void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+void ConvolutionalLayer::normalize(ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation,
                                    const bool& is_training)
 {
-    ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
-        static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
-
     Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
     type* outputs_data = outputs.data();
 
@@ -148,15 +144,12 @@ void ConvolutionalLayer::normalize(unique_ptr<LayerForwardPropagation> layer_for
     }
 }
 
-/*
-void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagation)
+
+void ConvolutionalLayer::shift(ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation)
 {
-    ConvolutionalLayerForwardPropagation convolutional_layer_forward_propagation =
-            static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
+    type* outputs_data = convolutional_layer_forward_propagation->outputs.data();
 
-    type* outputs_data = convolutional_layer_forward_propagation.outputs.data();
-
-    const Index batch_samples_number = convolutional_layer_forward_propagation.batch_samples_number;
+    const Index batch_samples_number = convolutional_layer_forward_propagation->batch_samples_number;
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
     const Index kernels_number = get_kernels_number();
@@ -174,7 +167,7 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
             = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
 }
-*/
+
 
 void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activation_derivatives) const
 {
@@ -235,12 +228,12 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     if(batch_normalization)
     {
-/*
-        normalize(layer_forward_propagation,
+
+        normalize(convolutional_layer_forward_propagation,
                   is_training);
 
-        shift(layer_forward_propagation);
-*/
+        shift(convolutional_layer_forward_propagation);
+
     }
 
     if(is_training)

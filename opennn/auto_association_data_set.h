@@ -9,9 +9,6 @@
 #ifndef AUTOASSOCIATION_H
 #define AUTOASSOCIATION_H
 
-#include <string>
-
-#include "config.h"
 #include "data_set.h"
 
 namespace opennn
@@ -21,8 +18,6 @@ class AutoAssociationDataSet : public DataSet
 {
 
 public:
-
-    // DEFAULT CONSTRUCTOR
 
     explicit AutoAssociationDataSet();
 
