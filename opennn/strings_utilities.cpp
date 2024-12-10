@@ -367,7 +367,7 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
     size_t previous_position;
     const string underscore = "_";
 
-    // Reserve a rough estimate of the final size of the chain
+    // Reserve a rough estimate of the override size of the chain
 
     buffer.reserve(text.size());
 
@@ -416,7 +416,7 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     size_t position = 0;
     size_t previous_position;
 
-    // Reserves rough estimate of final size of string
+    // Reserves rough estimate of override size of string
 
     buffer.reserve(text.size());
 

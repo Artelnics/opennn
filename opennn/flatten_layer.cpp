@@ -64,7 +64,7 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 {
     const Index batch_samples_number = layer_forward_propagation->batch_samples_number;
 
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
@@ -73,9 +73,9 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
     memcpy(outputs_data,
            input_pairs[0].first,
-           batch_samples_number*neurons_number*sizeof(type));
+           batch_samples_number*outputs_number*sizeof(type));
 
-    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_samples_number, neurons_number);
+    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_samples_number, outputs_number);
 }
 
 
@@ -85,7 +85,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_samples_number = input_pairs[0].second[0];
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     // Back propagation
 
@@ -96,7 +96,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 
     memcpy(input_derivatives.data(),
            delta_pairs[0].first,
-           Index(batch_samples_number * neurons_number * sizeof(type)));
+           Index(batch_samples_number * outputs_number * sizeof(type)));
 }
 
 

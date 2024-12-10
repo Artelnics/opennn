@@ -90,6 +90,13 @@ int main()
             input_data(1,i) = processed_review_2(i);
         }
 
+        output_data = neural_network.calculate_outputs(input_data);
+
+        cout << "\n\n" << review_1 << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
+        cout << "\n" << review_2 << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
+
+        // Save results
+
         neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/amazon_reviews.py");
         
         cout << "Good bye!" << endl;

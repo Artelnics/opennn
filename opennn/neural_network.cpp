@@ -212,9 +212,9 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
 
     for (Index i = 0; i < layers_number; i++)
     {
-        for (Index k = 0; k < Index(layer_input_indices[i].size()); k++)
+        for (size_t j = 0; j < layer_input_indices[i].size(); j++)
         {
-            const Index input_index = layer_input_indices[i][k];
+            const Index input_index = layer_input_indices[i][j];
 
             if (input_index != -1) 
                 layer_output_indices[input_index].push_back(i);
@@ -452,7 +452,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             padding_dimensions,
                                             pooling_method,
                                             "pooling_layer_" + to_string(i + 1)));
-
     }
 
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
@@ -1266,18 +1265,17 @@ Tensor<string, 2> NeuralNetwork::get_probabilistic_layer_information() const
 
 void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
+    const Index inputs_number = get_inputs_number();
+    const Index layers_number = get_layers_number();
+    const Index outputs_number = output_names.size();
+
     printer.OpenElement("NeuralNetwork");
 
     // Inputs
 
     printer.OpenElement("Inputs");
 
-    const Index inputs_number = get_inputs_number();
-
     add_xml_element(printer, "InputsNumber", to_string(inputs_number));
-
-    if (input_names.size() != size_t(inputs_number))
-        throw runtime_error("Size of input names is not equal to inputs number");
 
     for (Index i = 0; i < inputs_number; i++)
         add_xml_element_attribute(printer, "Input", input_names[i], "Index", to_string(i + 1));
@@ -1287,8 +1285,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     // Layers
 
     printer.OpenElement("Layers");
-
-    const Index layers_number = get_layers_number();
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
@@ -1302,14 +1298,13 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for (Index i = 0; i < Index(layer_input_indices.size()); i++) 
         add_xml_element_attribute(printer, "LayerInputsIndices", vector_to_string(layer_input_indices[i]), "LayerIndex", to_string(i));
 
-    printer.CloseElement(); 
+    printer.CloseElement();
+
     printer.CloseElement();
 
     // Outputs
 
     printer.OpenElement("Outputs");
-
-    const Index outputs_number = output_names.size();
 
     add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
@@ -1331,76 +1326,23 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
-    // Inputs
-
-    const XMLElement* inputs_element = neural_network_element->FirstChildElement("Inputs");
-
-    if(!inputs_element)
-        throw runtime_error("Inputs element is nullptr.");
-
-    XMLDocument inputs_document;
-    XMLNode* inputs_element_clone = inputs_element->DeepClone(&inputs_document);
-
-    inputs_document.InsertFirstChild(inputs_element_clone);
-
-    inputs_from_XML(inputs_document);
-
-    // Layers
-
-    const XMLElement* layers_element = neural_network_element->FirstChildElement("Layers");
-
-    if(!layers_element)
-        throw runtime_error("Layers element is nullptr.");
-
-    XMLDocument layers_document;
-    XMLNode* layers_element_clone = layers_element->DeepClone(&layers_document);
-
-    layers_document.InsertFirstChild(layers_element_clone);
-
-    layers_from_XML(layers_document);
-
-    // Outputs
-
-    const XMLElement* outputs_element = neural_network_element->FirstChildElement("Outputs");
-
-    if(!outputs_element)
-        throw runtime_error("Outputs element is nullptr.");
-
-    XMLDocument outputs_document;
-    XMLNode* outputs_element_clone = outputs_element->DeepClone(&outputs_document);
-
-    outputs_document.InsertFirstChild(outputs_element_clone);
-
-    outputs_from_XML(outputs_document);
-    
-    // Display
-
-    const XMLElement* display_element = neural_network_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
+    layers_from_XML(neural_network_element->FirstChildElement("Layers"));
+    outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
+    set_display(read_xml_bool(neural_network_element, "Display"));
 }
 
 
-void NeuralNetwork::inputs_from_XML(const XMLDocument& document)
+void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 {
-    const XMLElement* inputs_element = document.FirstChildElement("Inputs");
-
     if(!inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
-    // Inputs number
+    const Index new_inputs_number = read_xml_index(inputs_element, "InputsNumber");
 
-    const XMLElement* inputs_number_element = inputs_element->FirstChildElement("InputsNumber");
-
-    if(!inputs_number_element)
-        throw runtime_error("Inputs number element is nullptr.\n");
-
-    const Index new_inputs_number = Index(atoi(inputs_number_element->GetText()));
     input_names.resize(new_inputs_number);
 
-    // if(inputs_number_element->GetText())
-    //     set_inputs_number(inputs_number);
+    const XMLElement* inputs_number_element = inputs_element->FirstChildElement("InputsNumber");
 
     // Inputs names
 
@@ -1423,10 +1365,8 @@ void NeuralNetwork::inputs_from_XML(const XMLDocument& document)
 }
 
 
-void NeuralNetwork::layers_from_XML(const XMLDocument& document)
+void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 {
-    const XMLElement* layers_element = document.FirstChildElement("Layers");
-
     if(!layers_element)
         throw runtime_error("Layers element is nullptr.\n");
 
@@ -1448,6 +1388,8 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
+
+        //add_layer(std::move(unique_ptr<ScalingLayer2D>(layer_document)));
 
         if (layer_type_string == "Scaling2D") {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
@@ -1558,50 +1500,36 @@ void NeuralNetwork::layers_from_XML(const XMLDocument& document)
     {
         int layer_index;
 
-        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS) {
+        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
             throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
-        }
 
         const char* text = layer_inputs_indices_element->GetText();
-        if (!text) {
-            throw runtime_error("Text is nullptr for LayerInputsIndices element.");
-        }
 
-        vector<Index> input_index = string_to_dimensions(string(text), " ");
+        if (!text)
+            throw runtime_error("Text is nullptr for LayerInputsIndices element.");        
 
-        if ((size_t)layer_index >= layer_input_indices.size()) {
-            layer_input_indices.resize(layer_index + 1);
-        }
+        const vector<Index> input_index = string_to_dimensions(string(text), " ");
+
+        if (layer_index >= layer_input_indices.size())
+            layer_input_indices.resize(layer_index + 1);       
 
         layer_input_indices[layer_index] = input_index;
     }
 }
 
 
-void NeuralNetwork::outputs_from_XML(const XMLDocument& document)
+void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 {
-    const XMLElement* root_element = document.FirstChildElement("Outputs");
-
-    if(!root_element)
+    if(!outputs_element)
         throw runtime_error("Outputs element is nullptr.\n");
 
-    // Outputs number
-    
-    const XMLElement* outputs_number_element = root_element->FirstChildElement("OutputsNumber");
-
-    if(!outputs_number_element)
-        throw runtime_error("Outputs number element is nullptr.\n");
-
-    Index new_outputs_number = 0;
-
-    if(outputs_number_element->GetText())
-        new_outputs_number = Index(atoi(outputs_number_element->GetText()));
-
-    // Outputs names
-
-    const XMLElement* start_element = outputs_number_element;
+    const Index new_outputs_number = read_xml_index(outputs_element, "OutputsNumber");
 
     output_names.resize(new_outputs_number);
+
+    const XMLElement* outputs_number_element = outputs_element->FirstChildElement("OutputsNumber");
+
+    const XMLElement* start_element = outputs_number_element;
 
     for(Index i = 0; i < new_outputs_number; i++)
     {
@@ -1623,9 +1551,7 @@ void NeuralNetwork::print() const
          << "Model type:" << endl
          << get_model_type_string() << endl;
 
-
     print_vector(get_input_names());
-
 
     if(model_type != ModelType::ImageClassification)
     {

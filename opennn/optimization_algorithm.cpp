@@ -8,6 +8,8 @@
 
 #include "pch.h"
 #include "optimization_algorithm.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -159,6 +161,12 @@ void OptimizationAlgorithm::check() const
 }
 
 
+string OptimizationAlgorithm::write_optimization_algorithm_type() const
+{
+    return string();
+}
+
+
 void OptimizationAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("OptimizationAlgorithm");
@@ -239,7 +247,7 @@ type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
 }
 
 
-void OptimizationAlgorithm::set_neural_network_variable_names()
+void OptimizationAlgorithm::set_names()
 {
     DataSet* data_set = loss_index->get_data_set();
 
@@ -250,6 +258,70 @@ void OptimizationAlgorithm::set_neural_network_variable_names()
 
     neural_network->set_input_names(input_names);
     neural_network->set_output_namess(target_names);
+}
+
+
+void OptimizationAlgorithm::set_scaling()
+{
+    DataSet* data_set = loss_index->get_data_set();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(neural_network->has(Layer::Type::Scaling2D))
+    {
+        vector<Descriptives> input_variable_descriptives;
+
+        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+
+        const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+
+
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+        scaling_layer_2d->set_descriptives(input_variable_descriptives);
+        scaling_layer_2d->set_scalers(input_variable_scalers);
+    }
+
+    if(neural_network->has(Layer::Type::Unscaling))
+    {
+        vector<Descriptives> target_variable_descriptives;
+        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+
+        const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
+    }
+}
+
+
+void OptimizationAlgorithm::set_unscaling()
+{
+    DataSet* data_set = loss_index->get_data_set();
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(neural_network->has(Layer::Type::Scaling2D))
+    {
+        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+
+        const vector<Descriptives> input_variable_descriptives = scaling_layer_2d->get_descriptives();
+
+        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+    }
+
+    if(neural_network->has(Layer::Type::Unscaling))
+    {
+        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+
+        const vector<Descriptives> target_variable_descriptives = unscaling_layer->get_descriptives();
+
+        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    }
+
+    // if(!is_instance_of<LanguageDataSet>(data_set))
+    //     data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+
+    // if(neural_network->has(Layer::Type::Unscaling))
+    //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+
 }
 
 
@@ -371,14 +443,14 @@ string OptimizationAlgorithm::write_time(const type& time) const
 
 void TrainingResults::save(const filesystem::path& file_name) const
 {
-    const Tensor<string, 2> final_results = write_final_results();
+    const Tensor<string, 2> override_results = write_override_results();
 
     ofstream file(file_name);
 
     if(!file) return;
 
-    for(Index i = 0; i < final_results.dimension(0); i++)
-        file << final_results(i,0) << "; " << final_results(i,1) << "\n";
+    for(Index i = 0; i < override_results.dimension(0); i++)
+        file << override_results(i,0) << "; " << override_results(i,1) << "\n";
 
     file.close();
 }
@@ -400,33 +472,33 @@ void TrainingResults::print(const string &message)
 }
 
 
-Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) const
+Tensor<string, 2> TrainingResults::write_override_results(const Index& precision) const
 {
-    Tensor<string, 2> final_results(6, 2);
+    Tensor<string, 2> override_results(6, 2);
 
-    final_results(0,0) = "Epochs number";
-    final_results(1,0) = "Elapsed time";
-    final_results(2,0) = "Stopping criterion";
-    final_results(3,0) = "Training error";
-    final_results(4,0) = "Selection error";
+    override_results(0,0) = "Epochs number";
+    override_results(1,0) = "Elapsed time";
+    override_results(2,0) = "Stopping criterion";
+    override_results(3,0) = "Training error";
+    override_results(4,0) = "Selection error";
 
     const Index size = training_error_history.size();
 
     if(size == 0)
     {
-        final_results(0,1) = "NA";
-        final_results(1,1) = "NA";
-        final_results(2,1) = "NA";
-        final_results(3,1) = "NA";
-        final_results(4,1) = "NA";
+        override_results(0,1) = "NA";
+        override_results(1,1) = "NA";
+        override_results(2,1) = "NA";
+        override_results(3,1) = "NA";
+        override_results(4,1) = "NA";
 
-        return final_results;
+        return override_results;
     }
 
-    final_results(0,1) = to_string(training_error_history.size()-1);
-    final_results(1,1) = elapsed_time;
-    final_results(2,1) = write_stopping_condition();
-    final_results(3,1) = to_string(training_error_history(size-1));
+    override_results(0,1) = to_string(training_error_history.size()-1);
+    override_results(1,1) = elapsed_time;
+    override_results(2,1) = write_stopping_condition();
+    override_results(3,1) = to_string(training_error_history(size-1));
 
     // Final selection error
 
@@ -437,9 +509,9 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
             ? buffer << "NAN"
             : buffer << setprecision(precision) << selection_error_history(size-1);
 
-    final_results(4,1) = buffer.str();
+    override_results(4,1) = buffer.str();
 
-    return final_results;
+    return override_results;
 }
 
 

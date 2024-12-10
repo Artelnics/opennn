@@ -20,7 +20,7 @@ class TestingAnalysis
 
 public: 
 
-   explicit TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {

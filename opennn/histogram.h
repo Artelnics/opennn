@@ -8,15 +8,15 @@ namespace opennn
 
 struct Histogram
 {
-  explicit Histogram(const Index& = 0);
+  Histogram(const Index& = 0);
 
-  explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+  Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
-  explicit Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+  Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-  explicit Histogram(const Tensor<type, 1>&, const Index&);
+  Histogram(const Tensor<type, 1>&, const Index&);
 
-  explicit Histogram(const Tensor<type, 1>&);
+  Histogram(const Tensor<type, 1>&);
 
   // Methods
 

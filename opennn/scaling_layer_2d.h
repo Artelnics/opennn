@@ -20,10 +20,10 @@ class ScalingLayer2D : public Layer
 
 public:
 
-   explicit ScalingLayer2D(const dimensions& = {0});
+   ScalingLayer2D(const dimensions& = {0});
 
-   dimensions get_input_dimensions() const;
-   dimensions get_output_dimensions() const;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    vector<Descriptives> get_descriptives() const;
    Descriptives get_descriptives(const Index&) const;
@@ -40,8 +40,8 @@ public:
 
    void set(const dimensions& = {0});
 
-   void set_input_dimensions(const dimensions&) final;
-   void set_output_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
+   void set_output_dimensions(const dimensions&) override;
 
    void set_descriptives(const vector<Descriptives>&);
    void set_item_descriptives(const Index&, const Descriptives&);
@@ -65,7 +65,7 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
 
@@ -75,12 +75,12 @@ public:
 
    string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
-   void print() const;
+   void print() const override;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -95,13 +95,13 @@ private:
 
 struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
 {
-    explicit ScalingLayer2DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    ScalingLayer2DForwardPropagation(const Index& = 0, Layer* = nullptr);
        
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

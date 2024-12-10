@@ -49,7 +49,9 @@ public:
                     MultiheadAttention,
                     Embedding};
 
-    explicit Layer();
+    Layer();
+
+    Layer(const XMLDocument& document);
 
     string get_name() const;
 

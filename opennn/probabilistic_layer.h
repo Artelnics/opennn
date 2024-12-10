@@ -22,13 +22,13 @@ namespace opennn
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit ProbabilisticLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    ProbabilisticLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type *, dimensions> get_outputs_pair() const final;
+    pair<type *, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
     Tensor<type, 2> activation_derivatives;
@@ -37,13 +37,13 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 {
-    explicit ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> targets;
 
@@ -61,14 +61,14 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
+    ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
                                                  Layer* new_layer = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> deltas_row;
 
@@ -93,70 +93,70 @@ public:
 
     enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
-    explicit ProbabilisticLayer(const dimensions& = {0},
+    ProbabilisticLayer(const dimensions& = {0},
                                 const dimensions& = {0},
                                 const string& = "probabilistic_layer");
 
-    dimensions get_input_dimensions() const final;
-    dimensions get_output_dimensions() const final;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
     const type& get_decision_threshold() const;
 
     const ActivationFunction& get_activation_function() const;
     string get_activation_function_string() const;
 
-    Index get_parameters_number() const final;
-    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const override;
+    Tensor<type, 1> get_parameters() const override;
 
     void set(const dimensions& = {0},
              const dimensions & = {0},
              const string& = "probabilistic_layer");
 
-    void set_input_dimensions(const dimensions&) final;
-    void set_output_dimensions(const dimensions&) final;
+    void set_input_dimensions(const dimensions&) override;
+    void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
     void set_decision_threshold(const type&);
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
 
-    void set_parameters_constant(const type&) final;
-    void set_parameters_random() final;
+    void set_parameters_constant(const type&) override;
+    void set_parameters_random() override;
 
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
-                         Tensor<type, 1>&) const final;
+                         Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
-                                           Tensor<type, 2>&) const final;
+                                           Tensor<type, 2>&) const override;
 
     string write_binary_expression(const vector<string>&, const vector<string>&) const;
     string write_logistic_expression(const vector<string>&, const vector<string>&) const;
     string write_competitive_expression(const vector<string>&, const vector<string>&) const;
     string write_softmax_expression(const vector<string>&, const vector<string>&) const;
 
-    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
     string write_combinations(const vector<string>&) const;
     string write_activations(const vector<string>&) const;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
 
 private:
 

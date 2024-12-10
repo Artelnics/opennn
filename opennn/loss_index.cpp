@@ -135,7 +135,7 @@ void LossIndex::calculate_errors_lm(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
@@ -269,29 +269,27 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         = back_propagation_lm.get_layer_delta_pairs();
 
     calculate_output_delta_lm(batch, forward_propagation, back_propagation_lm);
-/*
+
     for(Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate_lm(layer_input_pairs[i],
                                      layer_delta_pairs[i],
                                      forward_propagation.layers[i],
                                      back_propagation_lm.neural_network.layers[i]);
 
-    const vector<Index> layer_parameter_numbers
-        = neural_network->get_layer_parameter_numbers();
+    const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
     Index index = 0;
 
-    for(Index i = 0; i < last_trainable_layer_index - first_trainable_layer_index; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
         layers[i]->insert_squared_errors_Jacobian_lm(back_propagation_lm.neural_network.layers[i],
                                                      index,
                                                      back_propagation_lm.squared_errors_jacobian);
-        
+
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
-*/
 }
 
 
@@ -421,7 +419,8 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             layer_delta_pairs[i],
             forward_propagation.layers[i],
             back_propagation.neural_network.layers[i]);
-
+    // TensorMap<Tensor<type, 3>> deltas = tensor_map_3(layer_delta_pairs[8][0]);
+    // cout<<deltas<<endl;
 }
 
 
@@ -435,7 +434,8 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     Index index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
+    // for(Index i = 0; i < layers_number; i++)
+    for(Index i = 0; i < 1; i++)
     {
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
                                    index,
@@ -443,6 +443,7 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
         index += layers_parameters_number[i];
     }
+
 }
 
 

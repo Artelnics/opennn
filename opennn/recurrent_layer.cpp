@@ -133,15 +133,15 @@ void RecurrentLayer::set(const dimensions& new_input_dimensions, const dimension
 
 void RecurrentLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    input_weights.resize(new_input_dimensions[0], neurons_number);
+    input_weights.resize(new_input_dimensions[0], outputs_number);
 }
 
 
 void RecurrentLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
 
     biases.resize(new_output_dimensions[0]);
 
@@ -290,9 +290,9 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
 
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 2> current_hidden_states(batch_size, neurons_number);
+    Tensor<type, 2> current_hidden_states(batch_size, outputs_number);
     current_hidden_states.setZero();
 
     for (Index time_step = 0; time_step < time_steps; time_step++) 
@@ -323,8 +323,8 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index samples_number = input_pairs[0].second[0];
-    const Index neurons_number = get_output_dimensions()[0];
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
+    const Index inputs_number = get_inputs_number();
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());

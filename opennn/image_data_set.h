@@ -19,7 +19,7 @@ class ImageDataSet : public DataSet
 
 public:
 
-    explicit ImageDataSet(const Index& = 0, const dimensions& = { 0,0,0 }, const dimensions& = {0});
+    ImageDataSet(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
 
     Index get_channels_number() const;
     Index get_image_width() const;
@@ -55,12 +55,12 @@ public:
     void set_random_vertical_translation_minimum(const type&);
     void set_random_vertical_translation_maximum(const type&);
 
-    vector<Descriptives> scale_variables(const VariableUse&) final;
+    vector<Descriptives> scale_variables(const VariableUse&) override;
 
     void read_bmp();
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
 private:
 

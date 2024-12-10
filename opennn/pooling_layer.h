@@ -28,15 +28,15 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    explicit PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+    PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
                           const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
                           const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
                           const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
                           const PoolingMethod& = PoolingMethod::MaxPooling,
                           const string = "pooling_layer");
 
-    dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
     Index get_input_height() const;
     Index get_input_width() const;
@@ -66,7 +66,7 @@ public:
              const PoolingMethod& = PoolingMethod::MaxPooling,
              const string = "pooling_layer");
 
-    void set_input_dimensions(const dimensions&);
+    void set_input_dimensions(const dimensions&) override;
 
     void set_padding_height(const Index&);
     void set_padding_width(const Index&);
@@ -81,7 +81,7 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void forward_propagate_max_pooling(const Tensor<type, 4>&,
                                        unique_ptr<LayerForwardPropagation>&,
@@ -94,7 +94,7 @@ public:
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void back_propagate_max_pooling(const Tensor<type, 4>&,
                                     const Tensor<type, 4>&,
@@ -105,10 +105,10 @@ public:
                                         const Tensor<type, 4>&,
                                         unique_ptr<LayerBackPropagation>&) const;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    void print() const;
+    void print() const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
@@ -139,13 +139,13 @@ private:
 
 struct PoolingLayerForwardPropagation : LayerForwardPropagation
 {   
-    explicit PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
     
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> outputs;
 
@@ -157,13 +157,13 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
 
 struct PoolingLayerBackPropagation : LayerBackPropagation
 {
-    explicit PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> deltas_by_pool_size;
 

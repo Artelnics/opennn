@@ -20,10 +20,10 @@ class UnscalingLayer : public Layer
 
 public:
 
-   explicit UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
+   UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
    
-   dimensions get_input_dimensions() const;
-   dimensions get_output_dimensions() const final;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    vector<Descriptives> get_descriptives() const; 
 
@@ -38,8 +38,8 @@ public:
    void set(const Index& = 0, const string& = "unscaling_layer");
    void set(const vector<Descriptives>&, const vector<Scaler>&);
 
-   void set_input_dimensions(const dimensions&) final;
-   void set_output_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
+   void set_output_dimensions(const dimensions&) override;
 
    void set_descriptives(const vector<Descriptives>&);
 
@@ -58,16 +58,16 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    vector<string> write_scalers_text() const;
 
-   void print() const;
+   void print() const override;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
 private:
 
@@ -82,13 +82,13 @@ private:
 
 struct UnscalingLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit UnscalingLayerForwardPropagation(const Index& = 0, Layer* = 0);
+    UnscalingLayerForwardPropagation(const Index& = 0, Layer* = 0);
     
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

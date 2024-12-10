@@ -125,10 +125,13 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
     dropout_rate = 0;
 }
 
+
+
 void PerceptronLayer3D::set_inputs_number(Index new_input_number)
 {
     inputs_number_xxx = new_input_number;
 }
+
 
 
 void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)

@@ -24,54 +24,54 @@ class NormalizationLayer3D : public Layer
 
 public:
 
-    explicit NormalizationLayer3D(const Index& = 0, const Index& = 0);
+    NormalizationLayer3D(const Index& = 0, const Index& = 0);
 
     Index get_inputs_number_xxx() const;
     Index get_inputs_depth() const;
 
     // @todo
-    dimensions get_input_dimensions() const final
+    dimensions get_input_dimensions() const override
     {
         throw runtime_error("XXX");
     }
 
-    dimensions get_output_dimensions() const final;
+    dimensions get_output_dimensions() const override;
 
     Index get_gammas_number() const;
     Index get_betas_number() const;
-    Index get_parameters_number() const final;
-    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const override;
+    Tensor<type, 1> get_parameters() const override;
 
     void set(const Index& = 0, const Index& = 0);
 
     void set_inputs_number(const Index&);
     void set_inputs_depth(const Index&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
     void set_gammas_constant(const type&);
     void set_betas_constant(const type&);
 
-    void set_parameters_constant(const type&) final;
-    void set_parameters_random() final;
+    void set_parameters_constant(const type&) override;
+    void set_parameters_random() override;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                             unique_ptr<LayerForwardPropagation>&,
-                            const bool&) final;
+                            const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                             const Index&,
-                            Tensor<type, 1>&) const final;
+                            Tensor<type, 1>&) const override;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
 
     #ifdef OPENNN_CUDA
@@ -100,16 +100,15 @@ private:
 
 struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 {        
-    explicit NormalizationLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    NormalizationLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = 0) final;
+    void set(const Index& = 0, Layer* = 0) override;
 
     void print() const;
 
     Tensor<type, 3> outputs;
-    Tensor<type, 3> normalized_inputs;
 
     Tensor<type, 3> means;
     Tensor<type, 3> standard_deviations;
@@ -121,12 +120,12 @@ struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 {
 
-    explicit NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number = 0, 
+    NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number = 0,
                                                  Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const;
 

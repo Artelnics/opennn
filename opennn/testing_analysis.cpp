@@ -877,13 +877,10 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
-<<<<<<< HEAD
-=======
     check();
 
     const Index outputs_number = neural_network->get_outputs_number();
 
->>>>>>> bcf7aaf966a431b1629c597d0c4c67f369607120
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
@@ -2123,7 +2120,7 @@ string TestingAnalysis::test_transformer(const vector<string>& context_string, c
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
 
-    return transformer->calculate_outputs(context_string,imported_vocabulary);
+    return transformer->calculate_outputs(context_string);
 }
 
 

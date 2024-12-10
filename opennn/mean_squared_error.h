@@ -19,38 +19,38 @@ class MeanSquaredError : public LossIndex
 
 public:
    
-   explicit MeanSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   MeanSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
-                        BackPropagation&) const final;
+                        BackPropagation&) const override;
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
-                               BackPropagation&) const final;
+                               BackPropagation&) const override;
 
    // Back propagation LM
 
    void calculate_error_lm(const Batch&,
                            const ForwardPropagation&,
-                           BackPropagationLM&) const final;
+                           BackPropagationLM&) const override;
 
    void calculate_output_delta_lm(const Batch&,
                                   ForwardPropagation&,
-                                  BackPropagationLM&) const final;
+                                  BackPropagationLM&) const override;
 
    void calculate_error_gradient_lm(const Batch&,
-                              BackPropagationLM&) const final;
+                                    BackPropagationLM&) const override;
 
    void calculate_error_hessian_lm(const Batch&,
-                                        BackPropagationLM&) const final;
+                                   BackPropagationLM&) const override;
 
    // Serialization
 
-   void to_XML(XMLPrinter &) const final;
+   void to_XML(XMLPrinter &) const override;
 
-   string get_loss_method() const final;
-   string get_error_type_text() const final;
+   string get_loss_method() const override;
+   string get_error_type_text() const override;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"

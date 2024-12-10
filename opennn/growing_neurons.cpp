@@ -96,8 +96,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     // Main loop
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {               
-        if(display) cout << endl << "Growing neurons epoch: " << epoch << endl;
+    {
+        if(display) cout << "\nGrowing neurons epoch: " << epoch << endl;
 
         // Neural network
 
@@ -163,7 +163,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumTime;
         }
@@ -172,7 +172,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Selection error goal reached: " << training_results.get_selection_error() << endl;
+            if(display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << training_results.get_selection_error() << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::SelectionErrorGoal;
         }
@@ -181,7 +181,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumEpochs;
         }
@@ -190,7 +190,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumSelectionFailures;
         }
@@ -199,7 +199,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum number of neurons reached: " << neurons_number << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum number of neurons reached: " << neurons_number << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumNeurons;
         }

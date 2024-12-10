@@ -44,12 +44,12 @@ vector<Descriptives> UnscalingLayer::get_descriptives() const
 
 Tensor<type, 1> UnscalingLayer::get_minimums() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> minimums(neurons_number);
+    Tensor<type, 1> minimums(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         minimums[i] = descriptives[i].minimum;
 
     return minimums;
@@ -58,12 +58,12 @@ Tensor<type, 1> UnscalingLayer::get_minimums() const
 
 Tensor<type, 1> UnscalingLayer::get_maximums() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> maximums(neurons_number);
+    Tensor<type, 1> maximums(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         maximums[i] = descriptives[i].maximum;
 
     return maximums;
@@ -155,11 +155,11 @@ string UnscalingLayer::get_expression(const vector<string>& new_input_names,
 
 vector<string> UnscalingLayer::write_unscaling_methods() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(outputs_number);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "None";
         else if(scalers[i] == Scaler::MinimumMaximum)
@@ -179,11 +179,11 @@ vector<string> UnscalingLayer::write_unscaling_methods() const
 
 vector<string> UnscalingLayer::write_unscaling_method_text() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(outputs_number);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "no unscaling";
         else if(scalers[i] == Scaler::MinimumMaximum)
@@ -289,18 +289,18 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 
 void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         set_scaler(i, new_scalers[i]);
 }
 
 
 void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         scalers[i] = new_unscaling_method;
 }
 
@@ -332,7 +332,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
             static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.get());
@@ -341,7 +341,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
 
@@ -401,11 +401,11 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 vector<string> UnscalingLayer::write_scalers_text() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(outputs_number);
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "no scaling";
         else if(scalers[i] == Scaler::MeanStandardDeviation)
@@ -427,7 +427,7 @@ void UnscalingLayer::print() const
 {
     cout << "Unscaling layer" << endl;
 
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
 
     const vector<string> scalers_text = write_scalers_text();
 

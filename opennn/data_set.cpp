@@ -2047,7 +2047,7 @@ vector<string> DataSet::unuse_uncorrelated_raw_variables(const type& minimum_cor
 }
 
 
-vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& final_variable_indices)
+vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& override_variable_indices)
 {
     vector<string> unused_raw_variables;
 
@@ -2057,9 +2057,9 @@ vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& ori
 
         bool found = false;
 
-        for(Index j = 0; j < final_variable_indices.size(); j++)
+        for(Index j = 0; j < override_variable_indices.size(); j++)
         {
-            if(original_raw_variable_index == final_variable_indices(j))
+            if(original_raw_variable_index == override_variable_indices(j))
             {
                 found = true;
                 break;
@@ -3848,7 +3848,7 @@ void DataSet::process_tokens(vector<string>& tokens)
 
 
 void DataSet::read_csv()
-{
+{    
     if(data_path.empty())
         throw runtime_error("Data path is empty.\n");
 
@@ -4234,31 +4234,25 @@ void DataSet::check_separators(const string& line) const
 
 bool DataSet::has_binary_raw_variables() const
 {
-    const Index variables_number = raw_variables.size();
-
-    for(Index i = 0; i < variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Binary) 
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Binary; });
 }
 
 
 bool DataSet::has_categorical_raw_variables() const
 {
-    const Index variables_number = raw_variables.size();
-
-    for(Index i = 0; i < variables_number; i++)
-        if(raw_variables[i].type == RawVariableType::Categorical) 
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                  [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Categorical; });
 }
 
 
 bool DataSet::has_binary_or_categorical_raw_variables() const
 {
-    return has_binary_raw_variables() || has_categorical_raw_variables();
+    for (const auto& raw_variable : raw_variables)
+        if (raw_variable.type == RawVariableType::Binary || raw_variable.type == RawVariableType::Categorical)
+            return true;
+
+    return false;
 }
 
 
@@ -4286,13 +4280,19 @@ Tensor<Index, 1> DataSet::count_raw_variables_with_nan() const
     Tensor<Index, 1> raw_variables_with_nan(raw_variables_number);
     raw_variables_with_nan.setZero();
 
+    #pragma omp parallel for
+
     for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
     {
         const Index current_variable_index = get_variable_indices(raw_variable_index)[0];
 
+        Index counter = 0;
+
         for(Index row_index = 0; row_index < rows_number; row_index++)
             if(isnan(data(row_index, current_variable_index)))
-                raw_variables_with_nan(raw_variable_index)++;
+                counter++;
+
+        raw_variables_with_nan(raw_variable_index) = counter;
     }
 
     return raw_variables_with_nan;
@@ -4430,8 +4430,9 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
 {
     const Index samples_number = sample_indices.size();
 
-    Index batches_number;
     Index batch_size = new_batch_size;
+
+    Index batches_number;
 
     if(samples_number < batch_size)
     {
@@ -4442,6 +4443,8 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
     {
         batches_number = samples_number / batch_size;
     }
+
+//    const Index batches_number = (samples_number + new_batch_size - 1) / new_batch_size; // Round up division
 
     vector<vector<Index>> batches(batches_number);
 
@@ -4578,39 +4581,26 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
                 continue;
             }
 
+            const string& token = tokens[token_index];
+
             if(raw_variable.type == RawVariableType::Numeric)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else if(is_float)
-                {
-                    input_data(line_number, variable_index) = type(strtof(tokens[token_index].data(), nullptr));
-                }
+                    input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
                 else
-                {
-                    input_data(line_number, variable_index) = type(stof(tokens[token_index]));
-                }
+                    input_data(line_number, variable_index) = type(stof(token));
 
                 variable_index++;
             }
             else if(raw_variable.type == RawVariableType::Binary)
             {
-                if(tokens[token_index] == missing_values_label)
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label)
                     input_data(line_number, variable_index) = type(NAN);
-                }
-                else if(raw_variable.categories.size() > 0 && tokens[token_index] == raw_variable.categories[0])
-                {
+                else if(token == raw_variable.name
+                     || (raw_variable.categories.size() > 0 && token == raw_variable.categories[0]))
                     input_data(line_number, variable_index) = type(1);
-                }
-                else if(tokens[token_index] == raw_variable.name)
-                {
-                    input_data(line_number, variable_index) = type(1);
-                }
 
                 variable_index++;
             }
@@ -4618,48 +4608,31 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
             {
                 for(Index k = 0; k < raw_variable.get_categories_number(); k++)
                 {
-                    if(tokens[token_index] == missing_values_label)
-                    {
-                        has_missing_values = true;
+                    if(token == missing_values_label)
                         input_data(line_number, variable_index) = type(NAN);
-                    }
-                    else if(tokens[token_index] == raw_variable.categories[k])
-                    {
+                    else if(token == raw_variable.categories[k])
                         input_data(line_number, variable_index) = type(1);
-                    }
 
                     variable_index++;
                 }
             }
             else if(raw_variable.type == RawVariableType::DateTime)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else
-                {
-                    input_data(line_number, variable_index) = type(date_to_timestamp(tokens[token_index], gmt));
-                }
+                    input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
 
                 variable_index++;
             }
             else if(raw_variable.type == RawVariableType::Constant)
             {
-                if(tokens[token_index] == missing_values_label || tokens[token_index].empty())
-                {
-                    has_missing_values = true;
+                if(token == missing_values_label || token.empty())
                     input_data(line_number, variable_index) = type(NAN);
-                }
                 else if(is_float)
-                {
-                    input_data(line_number, variable_index) = type(strtof(tokens[token_index].data(), nullptr));
-                }
+                    input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
                 else
-                {
-                    input_data(line_number, variable_index) = type(stof(tokens[token_index]));
-                }
+                    input_data(line_number, variable_index) = type(stof(token));
 
                 variable_index++;
             }

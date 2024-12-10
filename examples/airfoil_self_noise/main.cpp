@@ -92,7 +92,7 @@ int main()
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-
+/*
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_inputs_selection();

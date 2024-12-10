@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<bag xmlns:unsignedLong="http://www.w3.org/2001/XMLSchema#unsignedLong">
+ <entry path="grouper" unsignedLong:size="263">
+  <indexFields>
+   <field path="global_elapsed_time_data_scale"/>
+   <field path="pmu_data_attr_event_type"/>
+   <field path="pmu_data_scale"/>
+  </indexFields>
+  <int64Fields>
+   <field path="global_elapsed_time_data_duration"/>
+   <field path="pmu_data_duration"/>
+   <field path="pmu_data_count"/>
+   <field path="pmu_data_inst_count"/>
+  </int64Fields>
+  <doubleFields/>
+ </entry>
+</bag>

@@ -19,10 +19,13 @@ class  LanguageDataSet : public DataSet
 
 public:
 
+
     explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
-
     explicit LanguageDataSet(const filesystem::path& = filesystem::path());
+
+    LanguageDataSet();
+
 
     const vector<string>& get_context_vocabulary() const;
     const vector<string>& get_completion_vocabulary() const;
@@ -95,7 +98,7 @@ public:
 
 private:
 
-        dimensions completion_dimensions;
+    dimensions completion_dimensions;
     dimensions context_dimensions;
 
     vector<string> context_vocabulary;

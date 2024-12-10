@@ -19,12 +19,12 @@ class BoundingLayer : public Layer
 
 public:
 
-   explicit BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
+   BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
 
    enum class BoundingMethod{NoBounding, Bounding};
 
-   dimensions get_input_dimensions() const final;
-   dimensions get_output_dimensions() const final;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    const BoundingMethod& get_bounding_method() const;
 
@@ -40,8 +40,8 @@ public:
 
    void set(const dimensions & = { 0 }, const string & = "bounding_layer");
 
-   void set_input_dimensions(const dimensions&) final;
-   void set_output_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
+   void set_output_dimensions(const dimensions&) override;
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -56,19 +56,19 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    // Expression
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
    // Serialization
 
-   void print() const;
+   void print() const override;
 
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -82,13 +82,13 @@ private:
 
 struct BoundingLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit BoundingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    BoundingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
         
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 };

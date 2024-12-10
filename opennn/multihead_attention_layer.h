@@ -24,7 +24,7 @@ class MultiheadAttentionLayer : public Layer
 
 public:
 
-    explicit MultiheadAttentionLayer(const Index& = 0,
+    MultiheadAttentionLayer(const Index& = 0,
                                      const Index& = 0,
                                      const Index& = 0,
                                      const Index& = 0,
@@ -39,19 +39,19 @@ public:
     Index get_weights_depth() const;
 
     // @todo
-    dimensions get_input_dimensions() const final
+    dimensions get_input_dimensions() const override
     {
         throw runtime_error("XXX");
     }
 
-    dimensions get_output_dimensions() const final;
+    dimensions get_output_dimensions() const override;
 
-    Index get_parameters_number() const final;
-    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const override;
+    Tensor<type, 1> get_parameters() const override;
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
     void set_input_size(const Index&);
     void set_context_size(const Index&);
@@ -59,9 +59,9 @@ public:
     void set_heads_number(const Index&);
 
     void set_weights();
-    void set_parameters_random() final;
+    void set_parameters_random() override;
     void set_parameters_glorot();
-    void set_parameters_constant(const type&) final;
+    void set_parameters_constant(const type&) override;
 
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);
@@ -82,19 +82,19 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
-                         Tensor<type, 1>&) const final;
+                         Tensor<type, 1>&) const override;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
@@ -144,14 +144,14 @@ private:
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
 
-    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+    MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
                                                        Layer* new_layer = nullptr);
                 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> query;
     Tensor<type, 4> key;
@@ -171,13 +171,13 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> error_attention_scores_derivatives;
     Tensor<type, 4> error_attention_weights_derivatives;

@@ -9,8 +9,6 @@
 #include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "forward_propagation.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -205,34 +203,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-
-    vector<Descriptives> input_variable_descriptives;
-    vector<Descriptives> target_variable_descriptives;
-
     // Neural network
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
     
-    set_neural_network_variable_names();
+    set_names();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
+    set_scaling();
 
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
-    
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
 
@@ -284,11 +262,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
-/*
+
         results.training_error_history(epoch) = training_back_propagation_lm.error();
 
         if(has_selection)
-        {           
+        {
+/*
             neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                               selection_forward_propagation,
                                               is_training);
@@ -309,9 +288,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
-        }
 */
+        }
+
         elapsed_time = get_elapsed_time(beginning_time);
+        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
+        old_loss = training_back_propagation_lm.loss;
 
         if(display && epoch%display_period == 0)
         {
@@ -321,53 +303,36 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
+        stop_training = true;
+
         if(results.training_error_history(epoch) < training_loss_goal)
         {
-            stop_training = true;
-
-            results.stopping_condition = StoppingCondition::LossGoal;
-
             if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+            results.stopping_condition = StoppingCondition::LossGoal;
         }
-
-        if(epoch != 0) loss_decrease = old_loss - training_back_propagation_lm.loss;
-
-        if(loss_decrease < minimum_loss_decrease)
+        else if(loss_decrease < minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << loss_decrease << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << endl;
             results.stopping_condition = StoppingCondition::MinimumLossDecrease;
         }
-
-        old_loss = training_back_propagation_lm.loss;
-
-        if(selection_failures >= maximum_selection_failures)
+        else if(selection_failures >= maximum_selection_failures)
         {
             if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
-
-            stop_training = true;
-
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
         }
-
-        if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
-
-        if(elapsed_time >= maximum_time)
+        else if(elapsed_time >= maximum_time)
         {
             if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << elapsed_time << endl;
-
-            stop_training = true;
-
             results.stopping_condition = StoppingCondition::MaximumTime;
+        }
+        else
+        {
+            stop_training = false;
         }
 
         if(stop_training)
@@ -390,11 +355,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           optimization_data);
     }
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
-
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    set_unscaling();
 
     if(display) results.print();
 
@@ -555,6 +516,12 @@ void LevenbergMarquardtAlgorithm::from_XML(const XMLDocument& document)
     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
+}
+
+
+LevenbergMarquardtAlgorithmData::LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm *new_Levenberg_Marquardt_method)
+{
+    set(new_Levenberg_Marquardt_method);
 }
 
 

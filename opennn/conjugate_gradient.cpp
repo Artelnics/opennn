@@ -373,12 +373,12 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = StoppingCondition::LossGoal;
 
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
         if(has_selection && selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -387,7 +387,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -396,7 +396,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -407,7 +407,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(loss_decrease <= minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << minimum_loss_decrease << endl;
 
             stop_training = true;
 

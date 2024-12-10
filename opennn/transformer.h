@@ -10,13 +10,13 @@
 #define TRANSFORMER_H
 
 #include "neural_network.h"
-#include "forward_propagation.h"
+//#include "forward_propagation.h"
 
 namespace opennn
 {
 
-struct TransformerForwardPropagation;
-struct TransformerBackPropagation;
+//struct TransformerForwardPropagation;
+//struct TransformerBackPropagation;
 
 class Transformer : public NeuralNetwork
 {
@@ -24,9 +24,14 @@ public:
 
     // Constructors
 
-    explicit Transformer(const Tensor<Index, 1>& = Tensor<Index, 1>());
 
-    explicit Transformer(const initializer_list<Index>&);
+    // explicit Transformer(const Tensor<Index, 1>& = Tensor<Index, 1>());
+
+    Transformer();
+
+    Transformer(const Tensor<Index, 1>&);
+
+    Transformer(const initializer_list<Index>&);
 
     explicit Transformer(const dimensions&, const dimensions&, const vector <Index>&);
 
@@ -52,7 +57,7 @@ public:
     void set_input_vocabulary(const vector<string>&);
     void set_context_vocabulary(const vector<string>&);
 
-    string calculate_outputs(const string&);
+    string calculate_outputs(const vector<string>&);
 
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
@@ -90,6 +95,26 @@ private:
     vector<string> context_vocabulary;
 };
 
+
+// struct TransformerForwardPropagation : ForwardPropagation
+// {
+//     // Constructors
+
+//     TransformerForwardPropagation() {}
+
+//     TransformerForwardPropagation(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
+//     {
+//         set(new_batch_samples, new_neural_network);
+//     }
+
+//     void set(const Index& new_batch_samples, NeuralNetwork* new_neural_network);
+
+//     void print() const;
+
+//     Index batch_samples_number = 0;
+
+//     Tensor<unique_ptr<LayerForwardPropagation>, 1> layers;
+// };
 };
 
 #endif // TRANSFORMER_H

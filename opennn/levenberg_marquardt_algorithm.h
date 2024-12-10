@@ -21,7 +21,7 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
-   explicit LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
+   LevenbergMarquardtAlgorithm(LossIndex* = nullptr);
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
@@ -40,7 +40,7 @@ public:
 
    // Set
 
-   void set_default() final;
+   void set_default() override;
 
    void set_damping_parameter(const type&);
 
@@ -61,9 +61,9 @@ public:
 
    // Training
 
-   void check() const final;
+   void check() const override;
 
-   TrainingResults perform_training() final;
+   TrainingResults perform_training() override;
 
    void update_parameters(
            const Batch&,
@@ -71,15 +71,15 @@ public:
            BackPropagationLM&,
            LevenbergMarquardtAlgorithmData&);
 
-   string write_optimization_algorithm_type() const final;
+   string write_optimization_algorithm_type() const override;
 
    // Serialization
 
-   Tensor<string, 2> to_string_matrix() const final;
+   Tensor<string, 2> to_string_matrix() const override;
    
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
    
 private:
 
@@ -108,10 +108,7 @@ private:
 struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 {
 
-    explicit LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr)
-    {
-        set(new_Levenberg_Marquardt_method);
-    }
+    LevenbergMarquardtAlgorithmData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method = nullptr);
 
     void set(LevenbergMarquardtAlgorithm* = nullptr);
 
@@ -132,7 +129,6 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Index epoch = 0;
 };
-
 
 }
 

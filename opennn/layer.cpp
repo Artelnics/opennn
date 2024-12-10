@@ -21,6 +21,12 @@ Layer::Layer()
 }
 
 
+Layer::Layer(const XMLDocument &document)
+{
+    from_XML(document);
+}
+
+
 const bool& Layer::get_display() const
 {
     return display;
@@ -470,7 +476,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 }
 
 }
-
+ // namespace opennn
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

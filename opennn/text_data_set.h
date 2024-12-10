@@ -19,7 +19,7 @@ class TextDataSet : public DataSet
 
 public:
 
-    explicit TextDataSet();
+    TextDataSet();
 
     const Index& get_short_words_length() const;
     const Index& get_long_words_length() const;

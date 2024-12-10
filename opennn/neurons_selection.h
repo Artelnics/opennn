@@ -22,7 +22,7 @@ public:
 
     enum class StoppingCondition { MaximumTime, SelectionErrorGoal, MaximumEpochs, MaximumSelectionFailures, MaximumNeurons };
 
-    explicit NeuronsSelection(TrainingStrategy* = nullptr);
+    NeuronsSelection(TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -92,7 +92,7 @@ protected:
 
 struct NeuronsSelectionResults
 {
-   explicit NeuronsSelectionResults(const Index& maximum_epochs_number = 0);
+   NeuronsSelectionResults(const Index& maximum_epochs_number = 0);
 
    void resize_history(const Index& new_size);
 

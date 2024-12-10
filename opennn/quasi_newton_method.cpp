@@ -10,8 +10,6 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
 
 namespace opennn
 {
@@ -424,28 +422,12 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    set_neural_network_variable_names();
-
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    set_names();
 
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
-
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
+    set_scaling();
 
     Batch training_batch(training_samples_number, data_set);
 
@@ -523,7 +505,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             results.selection_error_history(epoch) = selection_back_propagation.error();
 
-            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
+            if(epoch != 0
+            && results.selection_error_history(epoch) > results.selection_error_history(epoch-1))
+                selection_failures++;
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -538,49 +522,40 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         if(epoch != 0) loss_decrease = old_loss - training_back_propagation.loss;
 
-        if(loss_decrease < minimum_loss_decrease)
-        {
-            if(display) cout << "Epoch " << epoch << endl
-                             << "Minimum loss decrease reached (" << minimum_loss_decrease << "): " << loss_decrease << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease;
-        }
-
         old_loss = training_back_propagation.loss;
 
-        if(results.training_error_history(epoch) < training_loss_goal)
+
+
+        stop_training = true;
+
+        if(loss_decrease < minimum_loss_decrease)
         {
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached (" << minimum_loss_decrease << "): " << loss_decrease << endl;
+            results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MinimumLossDecrease;
+        }
+        else if(results.training_error_history(epoch) < training_loss_goal)
+        {
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::LossGoal;
-
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumSelectionErrorIncreases;
         }
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumEpochsNumber;
         }
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
             results.stopping_condition = OptimizationAlgorithm::StoppingCondition::MaximumTime;
+        }
+        else
+        {
+            stop_training = true;
         }
 
         if(stop_training)
@@ -596,14 +571,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
-
-        if(stop_training) break;
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
-
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    set_unscaling();
 
     if(display) results.print();
 
