@@ -33,5 +33,4 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
         run: |
           sonar-scanner \
-            --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json" \
-            --define sonar.inclusions="opennn/opennn/**/*.cpp,opennn/opennn/**/*.h"
+            -Dsonar.cfamily.compile-commands="build_wrapper_output_directory/build-wrapper-dump.json"
