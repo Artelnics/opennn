@@ -312,7 +312,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
-    auto start = chrono::high_resolution_clock::now();
+    //auto start = chrono::high_resolution_clock::now();
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
@@ -361,13 +361,14 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
-
+    /*
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
     cout << "Tiempo max pooling forward propagate: "
         << duration.count() / 1000 << "::"
         << duration.count() % 1000
         << " segundos::milisegundos" << endl;
+    */
 }
 
 
