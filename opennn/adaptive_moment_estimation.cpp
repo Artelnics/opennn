@@ -260,12 +260,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            
             // Data set
-         
+
             training_batch.fill(training_batches[iteration],
-                                input_variable_indices,
-                                target_variable_indices,
-                                context_variable_indices);
+                input_variable_indices,
+                target_variable_indices,
+                context_variable_indices);
 
             // Neural network
 
@@ -278,7 +279,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-
 
             //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
