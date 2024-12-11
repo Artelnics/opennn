@@ -228,7 +228,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -272,12 +272,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(is_classification_model) training_accuracy = type(0); 
         //optimization_data.iteration = 1;
 
-
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
-         
+
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
@@ -295,7 +294,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-
             //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
@@ -310,7 +308,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             // Optimization algorithm
-
             update_parameters(training_back_propagation, optimization_data);
 
             //if(display && epoch % display_period == 0)

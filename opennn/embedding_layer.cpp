@@ -247,11 +247,11 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    if(delta_pairs.size() > 1)     
+    if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-    // cout<<deltas<<endl<<endl<<endl<<endl;
+
     // Back propagation
 
     EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
@@ -272,7 +272,6 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
             embedding_weights_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
                 += sample_deltas.chip(j, 0);
     }
-
 }
 
 
@@ -299,6 +298,7 @@ void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
     type* gradient_data = gradient.data();
 
     memcpy(gradient_data + index, embedding_weights_derivatives_data, embedding_weights_number*sizeof(type));
+
 }
 
 

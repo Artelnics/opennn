@@ -583,8 +583,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
     const TensorMap<Tensor<type, 3>> context = tensor_map_3(input_pairs[1]);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-    cout<<deltas<<endl<<endl<<endl<<endl<<endl<<endl;
-    cout<<"different layer"<<endl;
+
     const Index batch_samples_number = input_pairs[0].second[0];
 
     type* query_weights_data = (type*)query_weights.data();
@@ -810,9 +809,16 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         head_key_biases_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(biases_derivatives_sum_indices);
 
         head_value_biases_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(biases_derivatives_sum_indices);
+        cout<<"next"<<endl;
+        cout<<head_query_biases_derivatives<<endl;
     }
 
     projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(projection_biases_derivatives_sum_indices);
+
+    // cout<<"next"<<endl;
+    // cout<<back_propagation<<endl;
+
+
 
 }
 
