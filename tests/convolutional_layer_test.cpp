@@ -1,145 +1,20 @@
 #include "pch.h"
 
 #include "../opennn/convolutional_layer.h"
-/*
-TEST(ConvolutionalLayerTest, EigenConvolution)
-{
-    Tensor<type, 2> input_2;
-    Tensor<type, 2> kernel_2;
-    Tensor<type, 2> output_2;
+#include "../opennn/tensors.h"
 
-    std::cout << "Hello";
 
-    const Eigen::array<ptrdiff_t, 2> dimensions_2 = { 0, 1 };
-
-    Tensor<type, 3> input_3;
-    Tensor<type, 3> kernel_3;
-    Tensor<type, 3> output_3;
-
-    const Eigen::array<ptrdiff_t, 3> dimensions_3 = { 0, 1, 2 };
-
-    Tensor<type, 4> input_4;
-    Tensor<type, 3> kernel_4;
-    Tensor<type, 4> output_4;
-
-    const Eigen::array<ptrdiff_t, 3> dimensions_4 = { 1, 2, 3 };
-
-    // Convolution 2D, 1 channel
-
-    input_2.resize(3, 3);
-    input_2.setRandom();
-
-    kernel_2.resize(2, 2);
-    kernel_2.setRandom();
-
-    output_2 = input_2.convolve(kernel_2, dimensions_2);
-
-//    EXPECT_EQ(output_2.dimension(0), dimensions{ 2,1 });
-
-//    EXPECT_EQ( == 2);
-//    EXPECT_EQ(output_2.dimension(1) == 2);
-
-    // Convolution 3D, 3 channels
-
-    input_3.resize(5, 5, 3);
-    input_3.setRandom();
-
-    kernel_3.resize(2, 2, 3);
-    kernel_3.setRandom();
-
-    output_3 = input_3.convolve(kernel_3, dimensions_3);
-
-//    EXPECT_EQ(output_3.dimension(0) == 4);
-//    EXPECT_EQ(output_3.dimension(1) == 4);
-//    EXPECT_EQ(output_3.dimension(2) == 1);
-
-    // Convolution 2D, 3 channels, multiple images, 1 kernel
-
-    input_4.resize(10, 3, 5, 5);
-    input_4.setConstant(type(1));
-    input_4.chip(1, 0).setConstant(type(2));
-    input_4.chip(2, 0).setConstant(type(3));
-
-    kernel_4.resize(3, 2, 2);
-
-    kernel_4.setConstant(type(1.0 / 12.0));
-
-    output_4 = input_4.convolve(kernel_4, dimensions_4);
-
-//    EXPECT_EQ(output_3.dimension(0) == 10);
-//    EXPECT_EQ(output_3.dimension(1) == 1);
-//    EXPECT_EQ(output_3.dimension(2) == 4);
-//    EXPECT_EQ(output_3.dimension(3) == 4);
-
-    // EXPECT_EQ(abs(output_3(0, 0, 0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
-    //                 && abs(output_3(0, 0, 0, 1) - type(1)) < type(NUMERIC_LIMITS_MIN)
-    //                 && abs(output_3(0, 0, 0, 2) - type(1)) < type(NUMERIC_LIMITS_MIN)
-    //                 && abs(output_3(0, 0, 0, 3) - type(1)) < type(NUMERIC_LIMITS_MIN)
-    //                 && abs(output_3(0, 0, 1, 0) - type(1)) < type(NUMERIC_LIMITS_MIN)
-    //                 && abs(output_3(0, 0, 1, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 1, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 1, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 2, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 2, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 2, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 2, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 3, 0) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 3, 1) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 3, 2) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(0, 0, 3, 3) - type(1)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 0, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 0, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 0, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 1, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 1, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 1, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 1, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 2, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 2, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 2, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 2, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 3, 0) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 3, 1) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 3, 2) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(1, 0, 3, 3) - type(2)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 0, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 0, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 1, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 1, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 1, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 1, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 2, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 2, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 2, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 2, 3) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 3, 0) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 3, 1) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 3, 2) - type(3)) < type(NUMERIC_LIMITS_MIN) &&
-    //             abs(output_3(2, 0, 3, 3) - type(3)) <= type(NUMERIC_LIMITS_MIN));
-
-    // Convolution 3D, 2 channels
-
-    Tensor<type, 3> input(3, 3, 2);
-    Tensor<type, 3> kernel(2, 2, 2);
-    Tensor<type, 3> output(2, 2, 1);
-
-    for (int i = 0; i < 3 * 3 * 2; i++)
-        *(input.data() + i) = i;
-
-    for (int i = 0; i < 2 * 2 * 2; i++)
-        *(kernel.data() + i) = i + 1;
-
-    const Eigen::array<ptrdiff_t, 3> dimensions = { 0, 1, 2 };
-
-    output = input.convolve(kernel, dimensions);
-
-//    EXPECT_EQ(fabs(output(0, 0, 0) - 320) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(fabs(output(1, 0, 0) - 356) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(fabs(output(0, 1, 0) - 428) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(fabs(output(1, 1, 0) - 464) < type(NUMERIC_LIMITS_MIN));
+Tensor<type, 4> generate_input_tensor_convolution(const Tensor<type, 2>& data,
+    const vector<Index>& rows_indices,
+    const vector<Index>& columns_indices,
+    const dimensions& input_dimensions) {
+    Tensor<type, 4> input_tensor(rows_indices.size(),
+        input_dimensions[0],
+        input_dimensions[1],
+        input_dimensions[2]);
+    type* tensor_data = input_tensor.data();
+    fill_tensor_data(data, rows_indices, columns_indices, tensor_data);
+    return input_tensor;
 }
 #include "../opennn/tensors.h"
 
@@ -155,23 +30,7 @@ struct ConvolutionalLayerConfig {
     Tensor<type, 4> expected_output;
 };
 
-
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
-
-
-Tensor<type, 4> generate_input_tensor_convolution(const Tensor<type, 2>& data,
-                                                  const vector<Index>& rows_indices,
-                                                  const vector<Index>& columns_indices,
-                                                  const dimensions& input_dimensions) {
-    Tensor<type, 4> input_tensor(rows_indices.size(),
-                                 input_dimensions[0],
-                                 input_dimensions[1],
-                                 input_dimensions[2]);
-    type* tensor_data = input_tensor.data();
-    fill_tensor_data(data, rows_indices, columns_indices, tensor_data);
-    return input_tensor;
-}
-
 
 INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
@@ -361,4 +220,3 @@ TEST_P(ConvolutionalLayerTest, BackPropagate) {
     EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);
     EXPECT_EQ(weight_derivatives.dimension(3), parameters.kernel_dimensions[2]);
 }
-*/

@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "long_short_term_memory_layer.h"
 #include "tensors.h"
 
@@ -43,10 +41,10 @@ dimensions LongShortTermMemoryLayer::get_output_dimensions() const
 
 Index LongShortTermMemoryLayer::get_parameters_number() const
 {
-    const Index inputs_number = get_input_dimensions()[0];
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
-    return 4 * neurons_number * (1 + inputs_number + neurons_number);
+    return 4 * outputs_number * (1 + inputs_number + outputs_number);
 }
 
 
@@ -212,16 +210,16 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 
 void LongShortTermMemoryLayer::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
     const Index time_steps = get_timesteps();
 
-    set(new_input_dimensions[0], neurons_number, time_steps);
+    set(new_input_dimensions[0], outputs_number, time_steps);
 }
 
 
 void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_output_dimensions)
 {
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
     const Index time_steps = get_timesteps();
 
     set(inputs_number, new_output_dimensions[0], time_steps);
@@ -230,8 +228,8 @@ void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_outpu
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    const Index neurons_number = get_output_dimensions()[0];
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
+    const Index inputs_number = get_inputs_number();
 
     Index current_index = index;
 
@@ -241,7 +239,7 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
     {
         #pragma omp section
         {
-            Index size = neurons_number;
+            Index size = outputs_number;
 
             memcpy(forget_biases.data(), new_parameters_data + current_index, size * sizeof(type));
             current_index += size;
@@ -257,8 +255,8 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
         #pragma omp section
         {
-            Index size = inputs_number * neurons_number;
-            Index local_index = current_index + neurons_number * 4;  
+            Index size = inputs_number * outputs_number;
+            Index local_index = current_index + outputs_number * 4;
 
             memcpy(forget_weights.data(), new_parameters_data + local_index, size * sizeof(type));
             local_index += size;
@@ -274,8 +272,8 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 
         #pragma omp section
         {
-            Index size = neurons_number * neurons_number;
-            Index local_index = current_index + neurons_number * 4 + inputs_number * neurons_number * 4;  // Skip bias and weights size
+            Index size = outputs_number * outputs_number;
+            Index local_index = current_index + outputs_number * 4 + inputs_number * outputs_number * 4;  // Skip bias and weights size
 
             memcpy(forget_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
             local_index += size;
@@ -1952,8 +1950,8 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
                                                const Index& index,
                                                Tensor<type, 1>& gradient) const
 {    
-    const Index inputs_number = get_input_dimensions()[0];
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
     LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
@@ -1963,56 +1961,56 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
     // Biases
 
     copy(long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data() + neurons_number,
+         long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data() + outputs_number,
          gradient_data + index);
 
     copy(long_short_term_memory_layer_back_propagation->input_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_biases_derivatives.data() + neurons_number,
-         gradient_data + index + neurons_number);
+         long_short_term_memory_layer_back_propagation->input_biases_derivatives.data() + outputs_number,
+         gradient_data + index + outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->state_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_biases_derivatives.data() + neurons_number,
-         gradient_data + index + 2*neurons_number);
+         long_short_term_memory_layer_back_propagation->state_biases_derivatives.data() + outputs_number,
+         gradient_data + index + 2*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->output_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_biases_derivatives.data() + neurons_number,
-         gradient_data + index + 3*neurons_number);
+         long_short_term_memory_layer_back_propagation->output_biases_derivatives.data() + outputs_number,
+         gradient_data + index + 3*outputs_number);
 
     // Weights
 
     copy(long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data() + inputs_number*neurons_number,
-         gradient_data + index + 4*neurons_number);
+         long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data() + inputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->input_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_weights_derivatives.data() + inputs_number*neurons_number,
-         gradient_data + index + 4*neurons_number + inputs_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->input_weights_derivatives.data() + inputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + inputs_number*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->state_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_weights_derivatives.data() + inputs_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 2*inputs_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->state_weights_derivatives.data() + inputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 2*inputs_number*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->output_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_weights_derivatives.data() + inputs_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 3*inputs_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->output_weights_derivatives.data() + inputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 3*inputs_number*outputs_number);
 
     // Recurrent weights
 
     copy(long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + neurons_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + outputs_number*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + 2*neurons_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + 2*outputs_number*outputs_number);
 
     copy(long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data() + neurons_number*neurons_number,
-         gradient_data + index + 4*neurons_number + 4*inputs_number*neurons_number + 3*neurons_number*neurons_number);
+         long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
+         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + 3*outputs_number*outputs_number);
 }
 
 

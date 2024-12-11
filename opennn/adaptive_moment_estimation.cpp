@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "language_data_set.h"
+#include "tensors.h"
 #include "yolo_dataset.h"
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
@@ -152,14 +153,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     DataSet* data_set = loss_index->get_data_set();
 
-    const Tensor<type, 2>& data = data_set->get_data();
-
     if(!data_set)
         throw runtime_error("Data set is null.");
 
     const bool has_selection = data_set->has_selection();
-
-    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
 
@@ -192,9 +189,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
-    
+    const Index training_batches_number = (training_batch_samples_number != 0)
+        ? training_samples_number / training_batch_samples_number
+        : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+       ? selection_samples_number / selection_batch_samples_number
+       : 0;
+
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
 
@@ -203,23 +205,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    set_neural_network_variable_names();
+    set_names();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
-
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
+    set_scaling();
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
@@ -345,6 +333,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // system("pause");
 
+
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -420,53 +409,38 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        // Training history
+        // @todo loss and error missmatch
+
+        stop_training = true;
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
             results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
         }
-
-        if(elapsed_time >= maximum_time)
+        else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
-
-        // @todo loss and error missmatch
-
-        if(results.training_error_history(epoch) < training_loss_goal)
+        else if(results.training_error_history(epoch) < training_loss_goal)
         {
-            stop_training = true;
-
             results.stopping_condition  = StoppingCondition::LossGoal;
-
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
-
-        if(training_accuracy >= training_accuracy_goal)
+        else if(training_accuracy >= training_accuracy_goal)
         {
-            stop_training = true;
-
             results.stopping_condition  = StoppingCondition::LossGoal;
-
-            if(display) cout << "Epoch " << epoch << endl << "Accuracy goal reached: " << training_accuracy << endl;
+            if(display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
         }
-
-        if(selection_failures >= maximum_selection_failures)
+        else if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
-
-            stop_training = true;
-
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
             results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+        }
+        else
+        {
+            stop_training = false;
         }
 
         if(stop_training)
@@ -488,10 +462,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
-
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    set_unscaling();
 
     if(display) results.print();
 
@@ -501,38 +472,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(9, 2);
+    Tensor<string, 2> string_matrix(9, 2);
 
-    labels_values(0,0) = "Learning rate";
-    labels_values(0,1) = to_string(double(learning_rate));
+    string_matrix.setValues({
+    {"Learning rate", to_string(double(learning_rate))},
+    {"Initial decay", to_string(double(initial_decay))},
+    {"Beta 1", to_string(double(beta_1))},
+    {"Beta 2", to_string(double(beta_2))},
+    {"Epsilon", to_string(double(epsilon))},
+    {"Training loss goal", to_string(double(training_loss_goal))},
+    {"Maximum epochs number", to_string(maximum_epochs_number)},
+    {"Maximum time", write_time(maximum_time)},
+    {"Batch samples number", to_string(batch_samples_number)}});
 
-    labels_values(1,0) = "Initial decay";
-    labels_values(1,1) = to_string(double(initial_decay));
-
-    labels_values(2,0) = "Beta 1";
-    labels_values(2,1) = to_string(double(beta_1));
-
-    labels_values(3,0) = "Beta 2";
-    labels_values(3,1) = to_string(double(beta_2));
-
-    labels_values(4,0) = "Epsilon";
-    labels_values(4,1) = to_string(double(epsilon));
-
-    labels_values(5,0) = "Training loss goal";
-    labels_values(5,1) = to_string(double(training_loss_goal));
-
-    labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
-
-    labels_values(7,0) = "Maximum time";
-    labels_values(7,1) = write_time(maximum_time);
-
-    // Batch samples number
-
-    labels_values(8,0) = "Batch samples number";
-    labels_values(8,1) = to_string(batch_samples_number);
-
-    return labels_values;
+    return string_matrix;
 }
 
 

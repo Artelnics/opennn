@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 
 #include "inputs_selection.h"
 
@@ -178,6 +177,12 @@ void InputsSelection::check() const
 }
 
 
+InputsSelectionResults::InputsSelectionResults(const Index &maximum_epochs_number)
+{
+    set(maximum_epochs_number);
+}
+
+
 Index InputsSelectionResults::get_epochs_number() const
 {
     return training_error_history.size();
@@ -248,6 +253,21 @@ void InputsSelectionResults::resize_history(const Index& new_size)
         mean_training_error_history(i) = old_mean_training_history(i);
         mean_selection_error_history(i) = old_mean_selection_history(i);
     }
+}
+
+
+void InputsSelectionResults::print() const
+{
+    cout << endl
+         << "Inputs Selection Results" << endl
+         << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl
+         << "Inputs: " << endl;
+
+    for(size_t i = 0; i < optimal_input_raw_variables_names.size(); i++)
+        cout << "   " << optimal_input_raw_variables_names[i] << endl;
+
+    cout << "Optimum training error: " << optimum_training_error << endl
+         << "Optimum selection error: " << optimum_selection_error << endl;
 }
 
 

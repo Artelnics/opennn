@@ -6,13 +6,10 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "../eigen/Eigen/Dense"
 
 #include "strings_utilities.h"
 #include "tensors.h"
-
 
 namespace opennn
 {
@@ -305,49 +302,49 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
-                                 const Tensor<type, 4>& A,
-                                 const Tensor<type, 3>& B,
-                                 TensorMap<Tensor<type, 3>>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
-{
-// Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes).
-// The other dimension of C will be the non-equal dimension of A.
-// By default contraction axes are (1, 0).
+// void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
+//                                  const Tensor<type, 4>& A,
+//                                  const Tensor<type, 3>& B,
+//                                  TensorMap<Tensor<type, 3>>& C,
+//                                  const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+// {
+// // Assumes A, B & C share their last 2 dimensions, and the first dimension of B is equal to one of the 2 remaining of A (the contraction axes).
+// // The other dimension of C will be the non-equal dimension of A.
+// // By default contraction axes are (1, 0).
 
-    const Index A_rows = A.dimension(0);
-    const Index A_columns = A.dimension(1);
-    const Index B_rows = B.dimension(0);
+//     const Index A_rows = A.dimension(0);
+//     const Index A_columns = A.dimension(1);
+//     const Index B_rows = B.dimension(0);
 
-    const Index C_rows = (contraction_axes[0].first == 0) ? A_columns : A_rows;
+//     const Index C_rows = (contraction_axes[0].first == 0) ? A_columns : A_rows;
 
-    const Index channels = A.dimension(2);
-    const Index blocks_number = A.dimension(3);
+//     const Index channels = A.dimension(2);
+//     const Index blocks_number = A.dimension(3);
 
-    type* A_data = (type*)A.data();
-    type* B_data = (type*)B.data();
-    type* C_data = C.data();
+//     type* A_data = (type*)A.data();
+//     type* B_data = (type*)B.data();
+//     type* C_data = C.data();
 
-    type* a_matrix_data = nullptr;
-    type* b_vector_data = nullptr;
-    type* c_vector_data = nullptr;
+//     type* a_matrix_data = nullptr;
+//     type* b_vector_data = nullptr;
+//     type* c_vector_data = nullptr;
 
-    for(Index i = 0; i < blocks_number; i++)
-    {
-        for(Index j = 0; j < channels; j++)
-        {
-            a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
-            b_vector_data = B_data + B_rows * (i * channels + j);
-            c_vector_data = C_data + C_rows * (i * channels + j);
+//     for(Index i = 0; i < blocks_number; i++)
+//     {
+//         for(Index j = 0; j < channels; j++)
+//         {
+//             a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
+//             b_vector_data = B_data + B_rows * (i * channels + j);
+//             c_vector_data = C_data + C_rows * (i * channels + j);
 
-            const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
-            const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
-            TensorMap<Tensor<type, 1>> C_vector(c_vector_data, C_rows);
+//             const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
+//             const TensorMap<Tensor<type, 1>> B_vector(b_vector_data, B_rows);
+//             TensorMap<Tensor<type, 1>> C_vector(c_vector_data, C_rows);
 
-            C_vector.device(*thread_pool_device) = A_matrix.contract(B_vector, contraction_axes);
-        }
-    }
-}
+//             C_vector.device(*thread_pool_device) = A_matrix.contract(B_vector, contraction_axes);
+//         }
+//     }
+// }
 
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
@@ -367,17 +364,17 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
 }
 
 
-void divide_columns(const ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
-{
-    const Index columns_number = matrix.dimension(1);
+// void divide_columns(const ThreadPoolDevice* thread_pool_device, Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+// {
+//     const Index columns_number = matrix.dimension(1);
 
-    for(Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+//     for(Index i = 0; i < columns_number; i++)
+//     {
+//         TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
 
-        column.device(*thread_pool_device) = column / vector;
-    }
-}
+//         column.device(*thread_pool_device) = column / vector;
+//     }
+// }
 
 
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
@@ -386,7 +383,8 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
         column.device(*thread_pool_device) = column / vector;
     }
@@ -669,12 +667,12 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 }
 
 
-void save_csv(const Tensor<type,2>& data, const string& filename)
+void save_csv(const Tensor<type,2>& data, const filesystem::path& filename)
 {
     ofstream file(filename);
 
     if(!file.is_open())
-      throw runtime_error("Cannot open matrix data file: " + filename + "\n");
+      throw runtime_error("Cannot open matrix data file: " + filename.string() + "\n");
 
     file.precision(20);
 
@@ -1566,6 +1564,19 @@ string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
 
 
 string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    for(Index i = 0; i < size; i++)
+        buffer << x[i] << separator;
+
+    return buffer.str();
+}
+
+
+string vector_to_string(const vector<Index>& x, const string& separator)
 {
     const Index size = x.size();
 

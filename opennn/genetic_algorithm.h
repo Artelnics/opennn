@@ -9,9 +9,7 @@
 #ifndef GENETICALGORITHM_H
 #define GENETICALGORITHM_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
-
 
 namespace opennn
 {
@@ -21,7 +19,7 @@ class GeneticAlgorithm : public InputsSelection
 
 public:
 
-    explicit GeneticAlgorithm(TrainingStrategy* = nullptr);
+    GeneticAlgorithm(TrainingStrategy* = nullptr);
 
     enum class InitializationMethod{Random,Correlations};
 
@@ -45,7 +43,7 @@ public:
 
     const InitializationMethod& get_initialization_method() const;
 
-    virtual void set_default() final;
+    virtual void set_default() override;
 
     void set_population(const Tensor<bool, 2>&);
 
@@ -54,12 +52,6 @@ public:
     void set_genes_number(const Index&);  
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
-
-    void set_training_errors(const Tensor<type, 1>&);
-
-    void set_selection_errors(const Tensor<type, 1>&);
-
-    void set_fitness(const Tensor<type, 1>&);
 
     void set_mutation_rate(const type&);
 
@@ -89,21 +81,19 @@ public:
 
     void perform_mutation();
 
-    void check_categorical_raw_variables();
-
     Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
 
     Tensor<bool, 1> get_individual_variables(Tensor<bool,1>&);
 
-    Tensor<Index, 1> get_selected_individuals_indices ();
+    vector<Index> get_selected_individuals_indices ();
 
     vector<Index> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
 
     void set_unused_raw_variables(vector<Index>&);
 
-    vector<Index> get_original_unused_raw_variables();
+    const vector<Index>& get_original_unused_raw_variables();
 
-    InputsSelectionResults perform_inputs_selection ()  final;
+    InputsSelectionResults perform_inputs_selection ()  override;
 
     Tensor<string, 2> to_string_matrix() const;
 
@@ -113,9 +103,9 @@ public:
 
     void print() const;
     
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
-    void load(const string&);
+    void load(const filesystem::path&);
 
     Tensor<Tensor<type, 1>, 1> parameters;
 
@@ -124,7 +114,7 @@ private:
     vector<Index> initial_raw_variables_indices;
     vector<bool> original_input_raw_variables;
 
-    vector<Index> original_unused_raw_variables_indices;
+    vector<Index> original_unused_raw_variable_indices;
     vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> inputs_activation_probabilities;
@@ -147,9 +137,9 @@ private:
     
     Tensor<bool, 2> optimal_individuals_history;
 
-    vector<Index> original_input_raw_variables_indices;
+    vector<Index> original_input_raw_variable_indices;
 
-    vector<Index> original_target_raw_variables_indices;
+    vector<Index> original_target_raw_variable_indices;
 
     Index genes_number;
 

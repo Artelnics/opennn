@@ -68,13 +68,13 @@ void Descriptives::set_standard_deviation(const type& new_standard_deviation)
 }
 
 
-Tensor<type, 1> Descriptives::to_vector() const
-{
-    Tensor<type, 1> statistics_vector(4);
-    statistics_vector.setValues({ minimum, maximum, mean, standard_deviation });
+// Tensor<type, 1> Descriptives::to_vector() const
+// {
+//     Tensor<type, 1> statistics_vector(4);
+//     statistics_vector.setValues({ minimum, maximum, mean, standard_deviation });
 
-    return statistics_vector;
-}
+//     return statistics_vector;
+// }
 
 
 void Descriptives::print(const string& title) const
@@ -115,9 +115,9 @@ void BoxPlot::set(const type& new_minimum,
 }
 
 
-void Descriptives::save(const string &file_name) const
+void Descriptives::save(const filesystem::path& file_name) const
 {
-    ofstream file(file_name.c_str());
+    ofstream file(file_name);
 
     if(!file.is_open())
         throw runtime_error("Cannot open descriptives data file.\n");
@@ -378,7 +378,7 @@ Index Histogram::calculate_frequency(const type&value) const
 }
 
 
-void Histogram::save(const string& histogram_file_name) const
+void Histogram::save(const filesystem::path& histogram_file_name) const
 {
     const Index bins_number = centers.dimension(0);
     ofstream histogram_file(histogram_file_name);
@@ -670,110 +670,110 @@ type standard_deviation(const Tensor<type, 1>& vector)
 }
 
 
-type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
-{
-    return (variance(vector, indices) < type(1e-9)) 
-        ? type(0) 
-        : sqrt(variance(vector, indices));
-}
+// type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+// {
+//     return (variance(vector, indices) < type(1e-9))
+//         ? type(0)
+//         : sqrt(variance(vector, indices));
+// }
 
 
-Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& period)
-{
-    const Index size = vector.dimension(0);
+// Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& period)
+// {
+//     const Index size = vector.dimension(0);
 
-    Tensor<type, 1> std(size);
+//     Tensor<type, 1> std(size);
 
-    type mean_value = type(0);
+//     type mean_value = type(0);
 
-    long double sum = 0.0;
+//     long double sum = 0.0;
 
-    for(Index i = 0; i < size; i++)
-    {
-        const Index begin = i < period ? 0 : i - period + 1;
-        const Index end = i;
+//     for(Index i = 0; i < size; i++)
+//     {
+//         const Index begin = i < period ? 0 : i - period + 1;
+//         const Index end = i;
 
-        sum = type(0);
-        mean_value = mean(vector, begin,end);
+//         sum = type(0);
+//         mean_value = mean(vector, begin,end);
 
-        for(Index j = begin; j < end+1; j++)
-            sum += (vector(j) - mean_value) *(vector(j) - mean_value);
+//         for(Index j = begin; j < end+1; j++)
+//             sum += (vector(j) - mean_value) *(vector(j) - mean_value);
 
-        std(i) = type(sqrt(sum/period));
-    }
+//         std(i) = type(sqrt(sum/period));
+//     }
 
-    return std;
-}
-
-
-type asymmetry(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.dimension(0);
-
-    if(size == 0 || size == 1)
-        return type(0);
-
-    const type standard_deviation_value = standard_deviation(vector);
-
-    if(standard_deviation_value == 0)
-        return type(0);
-
-    const type mean_value = mean(vector);
-
-    long double sum = 0.0;
-
-    Index count = 0;
-
-    for(Index i = 0; i < size; i++)
-    {
-        if (isnan(vector(i))) continue;
-
-        sum += (vector(i) - mean_value) *(vector(i) - mean_value) *(vector(i) - mean_value);
-
-        count++;
-    }
-
-    const type numerator = type(sum/count);
-    const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
-
-    return numerator/denominator;
-}
+//     return std;
+// }
 
 
-type kurtosis(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.dimension(0);
+// type asymmetry(const Tensor<type, 1>& vector)
+// {
+//     const Index size = vector.dimension(0);
 
-    if(size == 1)
-        return type(0);
+//     if(size == 0 || size == 1)
+//         return type(0);
 
-    const type standard_deviation_value = standard_deviation(vector);
+//     const type standard_deviation_value = standard_deviation(vector);
 
-    if(standard_deviation_value == 0)
-        return type(-3);
+//     if(standard_deviation_value == 0)
+//         return type(0);
 
-    const type mean_value = mean(vector);
+//     const type mean_value = mean(vector);
 
-    long double sum = 0.0;
+//     long double sum = 0.0;
 
-    Index count = 0;
+//     Index count = 0;
 
-    for(Index i = 0; i < size; i++)
-    {
-        if (isnan(vector(i))) continue;
+//     for(Index i = 0; i < size; i++)
+//     {
+//         if (isnan(vector(i))) continue;
+
+//         sum += (vector(i) - mean_value) *(vector(i) - mean_value) *(vector(i) - mean_value);
+
+//         count++;
+//     }
+
+//     const type numerator = type(sum/count);
+//     const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
+
+//     return numerator/denominator;
+// }
+
+
+// type kurtosis(const Tensor<type, 1>& vector)
+// {
+//     const Index size = vector.dimension(0);
+
+//     if(size == 1)
+//         return type(0);
+
+//     const type standard_deviation_value = standard_deviation(vector);
+
+//     if(standard_deviation_value == 0)
+//         return type(-3);
+
+//     const type mean_value = mean(vector);
+
+//     long double sum = 0.0;
+
+//     Index count = 0;
+
+//     for(Index i = 0; i < size; i++)
+//     {
+//         if (isnan(vector(i))) continue;
         
-        const long double deviation = vector(i) - mean_value;
+//         const long double deviation = vector(i) - mean_value;
 
-        sum += deviation * deviation * deviation * deviation;
+//         sum += deviation * deviation * deviation * deviation;
 
-        count++;        
-    }
+//         count++;
+//     }
 
-    const type numerator = type(sum/count);
-    const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
+//     const type numerator = type(sum/count);
+//     const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
 
-    return numerator/denominator - type(3);
-}
+//     return numerator/denominator - type(3);
+// }
 
 
 type median(const Tensor<type, 1>& vector)
@@ -1805,35 +1805,13 @@ Index maximal_index(const Tensor<type, 1>& vector)
     if(size == 0) return Index();
 
     Index maximal_index = 0;
-    type maximum = vector[0];
+    type maximum = vector(0);
 
     for(Index i = 1; i < size; i++)
     {
         if(vector(i) > maximum)
         {
             maximal_index = i;
-            maximum = vector(i);
-        }
-    }
-
-    return maximal_index;
-}
-
-
-Index maximal_index_from_indices(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
-{
-    const Index size = vector.dimension(0);
-
-    if(size == 0) return Index();
-
-    Index maximal_index = 0;
-    type maximum = vector[0];
-
-    for(Index i = 1; i < size; i++)
-    {
-        if(vector(i) > maximum)
-        {
-            maximal_index = indices(i);
             maximum = vector(i);
         }
     }

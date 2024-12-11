@@ -27,8 +27,8 @@ public:
                            const bool&) final;
 
 
-    dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
     Index get_height() const;
     Index get_width() const;
@@ -36,7 +36,7 @@ public:
 
     void apply_detection(const Tensor<type, 4>&, Tensor<type, 4>&, const Index&);
 
-    void print() const;
+    void print() const override;
 
 protected:
     dimensions input_dimensions;

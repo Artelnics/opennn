@@ -6,10 +6,8 @@
 // Artificial Intelligence Techniques SL
 // artelnics@artelnics.com
 
-#include "pch.h"
 
 #include "tensors.h"
-
 #include "kmeans.h"
 
 namespace opennn
@@ -170,8 +168,8 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
     Tensor<type, 1> initial_endpoint(2);
     initial_endpoint.setValues({ type(1), type(sum_squared_error_values(0)) });
 
-    Tensor<type, 1> final_endpoint(2);
-    final_endpoint.setValues({ type(clusters_number), sum_squared_error_values(clusters_number - 1) });
+    Tensor<type, 1> override_endpoint(2);
+    override_endpoint.setValues({ type(clusters_number), sum_squared_error_values(clusters_number - 1) });
 
     type max_distance = type(0);
     Index optimal_clusters_number = 1;
@@ -184,10 +182,10 @@ Index KMeans::find_optimal_clusters(const Tensor<type, 1>& sum_squared_error_val
         current_point.setValues({ type(cluster_index), sum_squared_error_values(cluster_index - 1) });
          
         perpendicular_distance
-            = type(abs((final_endpoint(1) - initial_endpoint(1)) * current_point(0) -
-                  (final_endpoint(0) - initial_endpoint(0)) * current_point(1) +
-                   final_endpoint(0) * initial_endpoint(1) - final_endpoint(1) * initial_endpoint(0))) /
-              type(sqrt(pow(final_endpoint(1) - initial_endpoint(1), 2) + pow(final_endpoint(0) - initial_endpoint(0), 2)));
+            = type(abs((override_endpoint(1) - initial_endpoint(1)) * current_point(0) -
+                  (override_endpoint(0) - initial_endpoint(0)) * current_point(1) +
+                   override_endpoint(0) * initial_endpoint(1) - override_endpoint(1) * initial_endpoint(0))) /
+              type(sqrt(pow(override_endpoint(1) - initial_endpoint(1), 2) + pow(override_endpoint(0) - initial_endpoint(0), 2)));
 
         if(perpendicular_distance > max_distance)
         {

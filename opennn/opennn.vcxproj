@@ -229,7 +229,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="adaptive_moment_estimation.h" />
-    <ClCompile Include="adaptive_moment_estimation.cpp" />
+    <ClCompile Include="adaptive_moment_estimation.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClInclude Include="addition_layer_3d.h" />
     <ClInclude Include="auto_association_data_set.h" />
     <ClCompile Include="addition_layer_3d.cpp" />

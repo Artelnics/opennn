@@ -32,7 +32,7 @@ class TrainingStrategy
 
 public:
 
-    explicit TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     enum class LossMethod
     {
@@ -129,8 +129,8 @@ public:
     void from_XML(const XMLDocument&);
     void to_XML(XMLPrinter&) const;
 
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
 private:
 

@@ -7,22 +7,21 @@
 //   artelnics@artelnics.com
 
 #include "pch.h"
-
 #include "images.h"
 
 namespace opennn
 {
 
-Tensor<unsigned char, 3> read_bmp_image(const string& filename)
+Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 {
-    FILE* file = fopen(filename.data(), "rb");
+    ifstream file(filename, std::ios::binary);
 
     if(!file)
         throw runtime_error("Cannot open the file.\n");
 
     unsigned char info[54];
 
-    fread(info, sizeof(unsigned char), 54, file);
+    file.read(reinterpret_cast<char*>(info), 54);
 
     const Index width_no_padding = abs(*(int*)&info[18]);
     const Index height = abs(*(int*)&info[22]);
@@ -44,11 +43,11 @@ Tensor<unsigned char, 3> read_bmp_image(const string& filename)
     Tensor<unsigned char, 1> raw_image(size);
 
     const int data_offset = *(int*)(&info[0x0A]);
-    fseek(file, (long int)(data_offset - 54), SEEK_CUR);
+    file.seekg(data_offset, std::ios::beg);
 
-    fread(raw_image.data(), sizeof(unsigned char), size, file);
+    file.read(reinterpret_cast<char*>(raw_image.data()), size);
 
-    fclose(file);
+    file.close();
 
     Tensor<unsigned char, 3> image(height, width, channels);
 
@@ -211,43 +210,43 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, 
-                                        const int& rows_number,
-                                        const int& columns_number,
-                                        const int& padding)
-{
-    Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
+// Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
+//                                         const int& rows_number,
+//                                         const int& columns_number,
+//                                         const int& padding)
+// {
+//     Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
 
-    unsigned char* image_data = image.data();
+//     unsigned char* image_data = image.data();
 
-    const int channels = 3;
+//     const int channels = 3;
 
-    if(rows_number % 4 == 0)
-    {
-        copy(image_data,
-             image_data + columns_number * channels * rows_number,
-             data_without_padding.data());
-    }
-    else
-    {
-        for(int i = 0; i < rows_number; i++)
-        {
-            if(i == 0)
-            {
-                copy(image_data,
-                     image_data + columns_number * channels, data_without_padding.data());
-            }
-            else
-            {
-                copy(image_data + channels * columns_number * i + padding * i,
-                    image_data + channels * columns_number * (i+1) + padding * i,
-                    data_without_padding.data() + channels * columns_number * i);
-            }
-        }
-    }
+//     if(rows_number % 4 == 0)
+//     {
+//         copy(image_data,
+//              image_data + columns_number * channels * rows_number,
+//              data_without_padding.data());
+//     }
+//     else
+//     {
+//         for(int i = 0; i < rows_number; i++)
+//         {
+//             if(i == 0)
+//             {
+//                 copy(image_data,
+//                      image_data + columns_number * channels, data_without_padding.data());
+//             }
+//             else
+//             {
+//                 copy(image_data + channels * columns_number * i + padding * i,
+//                     image_data + channels * columns_number * (i+1) + padding * i,
+//                     data_without_padding.data() + channels * columns_number * i);
+//             }
+//         }
+//     }
 
-    return data_without_padding;
-}
+//     return data_without_padding;
+// }
 
 
 void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)

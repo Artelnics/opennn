@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "transformer.h"
 #include "tensors.h"
 #include "embedding_layer.h"
@@ -16,7 +14,8 @@
 #include "addition_layer_3d.h"
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
-#include "strings_utilities.h"
+#include "forward_propagation.h"
+//#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -276,11 +275,11 @@ void Transformer::set(const Index& input_length,
     
     // Output layer
     
-    unique_ptr<ProbabilisticLayer3D> final_layer 
+    unique_ptr<ProbabilisticLayer3D> override_layer 
         = make_unique<ProbabilisticLayer3D>(input_length, embedding_depth, input_dimensions);
     
-    final_layer->set_name("probabilistic");
-    add_layer(std::move(final_layer));
+    override_layer->set_name("probabilistic");
+    add_layer(std::move(override_layer));
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
 }
 
@@ -303,7 +302,7 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 }
 
 
-string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
+string Transformer::calculate_outputs(const string& context_string)
 {
     //type start_indicator = 1;
     //type end_indicator = 2;
@@ -372,6 +371,7 @@ string Transformer::calculate_outputs(const string& context_string, const bool& 
     return output_string.str();
     
 }
+
 
 Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, const Tensor<type, 2>& context)
 {
@@ -546,59 +546,59 @@ void Transformer::load_transformer(const string& path)
 }
 
 
-void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-{
-    Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
+// void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
+// {
+//     Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
 
-    batch_samples_number = new_batch_samples;
+//     batch_samples_number = new_batch_samples;
 
-    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+//     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
-    const Index layers_number = layers.size();
+//     const Index layers_number = layers.size();
 
-    layers.resize(layers_number);
+//     layers.resize(layers_number);
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        switch (neural_network_layers[i]->get_type())
-        {
-        case Layer::Type::Embedding:
-            layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
+//     for(Index i = 0; i < layers_number; i++)
+//     {
+//         switch (neural_network_layers[i]->get_type())
+//         {
+//         case Layer::Type::Embedding:
+//             layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+//         break;
 
-        case Layer::Type::MultiheadAttention:
-            layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
+//         case Layer::Type::MultiheadAttention:
+//             layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+//         break;
 
-        case Layer::Type::Perceptron3D:
-            layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
+//         case Layer::Type::Perceptron3D:
+//             layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+//         break;
 
-        case Layer::Type::Probabilistic3D:
-            layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-        break;
+//         case Layer::Type::Probabilistic3D:
+//             layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
+//         break;
 
-        default: break;
-        }
-    }
-}
+//         default: break;
+//         }
+//     }
+// }
 
 
-void TransformerForwardPropagation::print() const
-{
-    cout << "Transformer forward propagation" << endl;
+// void TransformerForwardPropagation::print() const
+// {
+//     cout << "Transformer forward propagation" << endl;
 
-    const Index layers_number = layers.size();
+//     const Index layers_number = layers.size();
 
-    cout << "Layers number: " << layers_number << endl;
+//     cout << "Layers number: " << layers_number << endl;
 
-    for(Index i = 0; i < layers_number; i++)
-    {
-        cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
+//     for(Index i = 0; i < layers_number; i++)
+//     {
+//         cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
 
-        layers[i]->print();
-    }
-}
+//         layers[i]->print();
+//     }
+// }
 
 };
 

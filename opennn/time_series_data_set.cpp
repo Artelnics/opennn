@@ -12,7 +12,6 @@
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
-#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -25,7 +24,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
 }
 
 
-TimeSeriesDataSet::TimeSeriesDataSet(const string& data_path,
+TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
                                      const string& separator,
                                      const bool& has_header,
                                      const bool& has_sample_ids,
@@ -855,10 +854,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Display
 
-    const XMLElement* display_element = data_set_element->FirstChildElement("Display");
-
-    if(display_element)
-        set_display(display_element->GetText() != string("0"));
+    set_display(read_xml_bool(neural_network_element, "Display"));
 */
 }
 
@@ -977,7 +973,6 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
 void TimeSeriesDataSet::fill_gaps()
 {   
-
     type start_time = 50;
     type end_time = 100;
 
@@ -1014,7 +1009,6 @@ void TimeSeriesDataSet::fill_gaps()
 
 Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
 {
-
     const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
@@ -1208,7 +1202,6 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

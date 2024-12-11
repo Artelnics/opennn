@@ -34,7 +34,7 @@ void YoloError::calculate_error(const Batch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     // cout<<targets_pair.second[0]<<", "<< targets_pair.second[1]<<", "<<targets_pair.second[2]<<", "<< targets_pair.second[3]<<endl;
 
@@ -65,7 +65,7 @@ void YoloError::calculate_error(const Batch& batch,
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
 
-    // cout<< outputs<<endl;
+    // cout << "Outputs:\n" << outputs << endl;
     // throw runtime_error("ya");
 
     for(Index i = 0; i < batch_samples_number; i++)
@@ -166,7 +166,7 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     // cout<<"Outputs:\n"<<outputs<<endl;
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     cout<<targets_pair.second.size()<<endl;
 

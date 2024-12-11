@@ -9,12 +9,9 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#include "pch.h"
-
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
-
 #include "correlation.h"
 #include "scaling.h"
 
@@ -31,15 +28,15 @@ public:
 
     enum class Codification { UTF8, SHIFT_JIS };
 
-    explicit DataSet(const Index& = 0, 
-                     const dimensions& = {0}, 
-                     const dimensions& = {0});
+    DataSet(const Index& = 0,
+            const dimensions& = {0},
+            const dimensions& = {0});
 
-    explicit DataSet(const filesystem::path&,
-                     const string&,
-                     const bool& = true,
-                     const bool& = false,
-                     const Codification& = Codification::UTF8);
+    DataSet(const filesystem::path&,
+            const string&,
+            const bool& = true,
+            const bool& = false,
+            const Codification& = Codification::UTF8);
 
     // Enumerations
 
@@ -59,13 +56,13 @@ public:
 
     struct RawVariable
     {
-        RawVariable(const string& = "",
+        RawVariable(const string& = string(),
                     const DataSet::VariableUse& = DataSet::VariableUse::None,
                     const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                     const Scaler& = Scaler::MeanStandardDeviation,
                     const vector<string>& = vector<string>());
 
-        void set(const string& = "",
+        void set(const string& = string(),
                  const DataSet::VariableUse& = DataSet::VariableUse::None,
                  const DataSet::RawVariableType& = DataSet::RawVariableType::Numeric,
                  const Scaler& = Scaler::MeanStandardDeviation,
@@ -235,8 +232,7 @@ public:
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
     void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
-
-    void set(const string&);
+    void set(const filesystem::path&);
 
     void set_default();
 
@@ -263,11 +259,11 @@ public:
 
     void set_default_raw_variables_names();
 
-    void set_raw_variables_uses(const vector<string>&);
-    void set_raw_variables_uses(const vector<VariableUse>&);
+    void set_raw_variable_uses(const vector<string>&);
+    void set_raw_variable_uses(const vector<VariableUse>&);
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
-    void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
+    //void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
     void set_input_raw_variables_unused();
 
     //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
@@ -324,7 +320,7 @@ public:
     void set_missing_values_method(const MissingValuesMethod&);
     void set_missing_values_method(const string&);
 
-    void set_gmt(Index&);
+    void set_gmt(const Index&);
 
     void set_display(const bool&);
 
@@ -452,8 +448,8 @@ public:
     virtual void from_XML(const XMLDocument&);
     virtual void to_XML(XMLPrinter&) const;
 
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
     void print_raw_variables() const;
 
@@ -464,7 +460,7 @@ public:
 
     void save_data() const;
 
-    void save_data_binary(const string&) const;
+    void save_data_binary(const filesystem::path&) const;
 
     void load_data_binary();
 
@@ -487,11 +483,11 @@ public:
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
-    void set_missing_values_number();
+    //void set_missing_values_number();
 
-    void set_raw_variables_missing_values_number();
+    //void set_raw_variables_missing_values_number();
 
-    void set_samples_missing_values_number();
+    //void set_samples_missing_values_number();
 
     // Other
 
@@ -513,14 +509,11 @@ public:
     void prepare_line(string&) const;
     void process_tokens(vector<string>&);
 
-    void open_file(const string&, ifstream&) const;
-    void open_file(const string&, ofstream&) const;
-
     void read_data_file_preview(ifstream&);
 
     void check_separators(const string&) const;
 
-    Tensor<type, 2> read_input_csv(const string&, const string&, const string&, const bool&, const bool&) const;
+    Tensor<type, 2> read_input_csv(const filesystem::path&, const string&, const string&, const bool&, const bool&) const;
 
     //Virtual functions
 

@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 
+#include "tensors.h"
 #include "cross_entropy_error_3d.h"
 #include "probabilistic_layer_3d.h"
 #include "forward_propagation.h"
@@ -30,7 +30,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const Index outputs_number = targets_pair.second[1];
 
@@ -49,14 +49,15 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
         
-    probabilistic_layer_3d_back_propagation->targets = targets;
+    probabilistic_layer_3d_back_propagation->targets.device(*thread_pool_device) = targets;
     
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;
     Tensor<bool, 2>& matches = back_propagation.matches;
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
-    
+    Tensor<type, 0>& accuracy = back_propagation.accuracy;
+
     Tensor<type, 0>& error = back_propagation.error;
 
     if(!built_mask)
@@ -74,18 +75,13 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
-
     error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
 
     // Masked accuracy
     
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
-    matches.device(*thread_pool_device) = predictions == targets;
-    
-    matches.device(*thread_pool_device) = matches && mask;
-
-    Tensor<type, 0>& accuracy = back_propagation.accuracy;
+    matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
     

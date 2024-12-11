@@ -98,8 +98,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
     // Main loop
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {               
-        if(display) cout << endl << "Neurons selection epoch: " << epoch << endl;
+    {
+        if(display) cout << "\nGrowing neurons epoch: " << epoch << endl;
 
         // Neural network
 
@@ -165,7 +165,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumTime;
         }
@@ -174,7 +174,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Selection error goal reached: " << training_results.get_selection_error() << endl;
+            if(display) cout << "Epoch " << epoch << "\nSelection error goal reached: " << training_results.get_selection_error() << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::SelectionErrorGoal;
         }
@@ -183,7 +183,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumEpochs;
         }
@@ -192,7 +192,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumSelectionFailures;
         }
@@ -201,7 +201,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         {
             end = true;
 
-            if(display) cout << "Epoch " << epoch << endl <<  "Maximum number of neurons reached: " << neurons_number << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum number of neurons reached: " << neurons_number << endl;
 
             neurons_selection_results.stopping_condition = GrowingNeurons::StoppingCondition::MaximumNeurons;
         }
@@ -231,41 +231,18 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
 Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
-    vector<string> labels(8);
-    vector<string> values(8);
+    Tensor<string, 2> string_matrix(8, 2);
 
-    labels[0] = "Minimum neurons";
-    values[0] = to_string(minimum_neurons);
+    string_matrix.setValues({
+    {"Minimum neurons", to_string(minimum_neurons)},
+    {"Maximum neurons", to_string(maximum_neurons)},
+    {"NeuronsIncrement", to_string(neurons_increment)},
+    {"Trials number", to_string(trials_number)},
+    {"Selection loss goal", to_string(selection_error_goal)},
+    {"Maximum selection failures", to_string(maximum_selection_failures)},
+    {"Maximum iterations number", to_string(maximum_epochs_number)},
+    {"Maximum time", to_string(maximum_time)}});
 
-    labels[1] = "Maximum neurons";
-    values[1] = to_string(maximum_neurons);
-
-    labels[2] = "NeuronsIncrement";
-    values[2] = to_string(neurons_increment);
-
-    labels[3] = "Trials number";
-    values[3] = to_string(trials_number);
-
-    labels[4] = "Selection loss goal";
-    values[4] = to_string(selection_error_goal);
-
-    labels[5] = "Maximum selection failures";
-    values[5] = to_string(maximum_selection_failures);
-
-    labels[6] = "Maximum iterations number";
-    values[6] = to_string(maximum_epochs_number);
-
-    labels[7] = "Maximum time";
-    values[7] = to_string(maximum_time);
-
-    const Index rows_number = labels.size();
-    const Index raw_variables_number = 2;
-
-    Tensor<string, 2> string_matrix(rows_number, raw_variables_number);
-/*
-    string_matrix.chip(0, 1) = labels;
-    string_matrix.chip(1, 1) = values;
-*/
     return string_matrix;
 }
 
@@ -303,7 +280,7 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
 }
 
 
-void GrowingNeurons::save(const string& file_name) const
+void GrowingNeurons::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -316,14 +293,14 @@ void GrowingNeurons::save(const string& file_name) const
 }
 
 
-void GrowingNeurons::load(const string& file_name)
+void GrowingNeurons::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if (document.LoadFile(file_name.string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

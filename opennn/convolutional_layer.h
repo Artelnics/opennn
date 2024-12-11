@@ -9,10 +9,8 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-#include "tinyxml2.h"
+
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -25,13 +23,13 @@ struct ConvolutionalLayerBackPropagationCuda;
 struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 {
 
-    explicit ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 4> outputs;
 
@@ -44,15 +42,16 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 };
 
 
+
 struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 {
-    explicit ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     //Tensor<type, 3> image_convolutions_derivatives;
 
@@ -64,8 +63,6 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
     Tensor<type, 4> synaptic_weights_derivatives;
 
 };
-
-
 class ConvolutionalLayer : public Layer
 {
 
@@ -84,12 +81,12 @@ public:
 
     enum class ConvolutionType{Valid, Same};
 
-    explicit ConvolutionalLayer(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
-                                const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
-                                const ActivationFunction& = ActivationFunction::Linear,
-                                const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
-                                const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
-                                const string = "convolutional_layer");
+    ConvolutionalLayer(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
+                       const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
+                       const ActivationFunction& = ActivationFunction::Linear,
+                       const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
+                       const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
+                       const string = "convolutional_layer");
 
     bool get_batch_normalization() const;
 
@@ -128,8 +125,8 @@ public:
     Index get_input_height() const;
     Index get_input_width() const;
 
-    Tensor<type, 1> get_parameters() const final;
-    Index get_parameters_number() const final;
+    Tensor<type, 1> get_parameters() const override;
+    Index get_parameters_number() const override;
 
     // Set
 
@@ -178,21 +175,21 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
    // Back propagation
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
                        unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const final;
+                       unique_ptr<LayerBackPropagation>&) const override;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index&,
-                        Tensor<type, 1>&) const final;
+                        Tensor<type, 1>&) const override;
 
-   void from_XML(const XMLDocument&) final;
-   void to_XML(XMLPrinter&) const final;
+   void from_XML(const XMLDocument&) override;
+   void to_XML(XMLPrinter&) const override;
 
    void print() const override;
 
@@ -226,7 +223,7 @@ private:
 
    // Batch normalization
 
-   bool batch_normalization = true;
+   bool batch_normalization = false;
 
    Tensor<type, 1> moving_means;
    Tensor<type, 1> moving_standard_deviations;
@@ -241,48 +238,7 @@ private:
 };
 
 
-// struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
-// {
 
-//    explicit ConvolutionalLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-//    pair<type*, dimensions> get_outputs_pair() const final;
-
-//    void set(const Index& = 0, Layer* = nullptr) final;
-
-//    void print() const;
-
-//    Tensor<type, 4> outputs;
-
-//    Tensor<type, 4> preprocessed_inputs;
-
-//    Tensor<type, 1> means;
-//    Tensor<type, 1> standard_deviations;
-
-//    Tensor<type, 4> activation_derivatives;
-// };
-
-
-// struct ConvolutionalLayerBackPropagation : LayerBackPropagation
-// {
-//    explicit ConvolutionalLayerBackPropagation(const Index& = 0, Layer* = nullptr);
-
-//    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
-
-//    void set(const Index& = 0, Layer* = nullptr) final;
-
-//    void print() const;
-
-//    //Tensor<type, 3> image_convolutions_derivatives;
-
-//    Tensor<type, 4> kernel_synaptic_weights_derivatives;
-//    Tensor<type, 4> convolutions_derivatives;
-//    Tensor<type, 4> input_derivatives;
-
-//    Tensor<type, 1> biases_derivatives;
-//    Tensor<type, 4> synaptic_weights_derivatives;
-
-// };
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"

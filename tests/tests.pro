@@ -57,13 +57,7 @@ SOURCES += test.cpp \
            performance_test.cpp \
            pooling_layer_test.cpp \
            pch.cpp  # Precompiled header source
-
-
-# Include more test files if needed by uncommenting
-# SOURCES += perceptron_layer_test.cpp \
-#            pooling_layer_test.cpp \
-#            probabilistic_layer_3d_test.cpp \
-#            ...
+            # Include more test files if needed by uncommenting
 
 
 # Precompiled Header

@@ -55,6 +55,8 @@ void DetectionLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 4>& outputs = detection_layer_forward_propagation->outputs;
 
+    cout<<"Inputs:\n"<<inputs<<endl;
+
     apply_detection(inputs, outputs, batch_size);
 }
 

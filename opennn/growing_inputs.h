@@ -9,7 +9,6 @@
 #ifndef GROWINGINPUTS_H
 #define GROWINGINPUTS_H
 
-#include "training_strategy.h"
 #include "inputs_selection.h"
 
 namespace opennn
@@ -20,7 +19,7 @@ class GrowingInputs : public InputsSelection
 
 public:
 
-    explicit GrowingInputs(TrainingStrategy* = nullptr);
+    GrowingInputs(TrainingStrategy* = nullptr);
 
     const Index& get_maximum_inputs_number() const;
 
@@ -28,7 +27,7 @@ public:
 
     const Index& get_maximum_selection_failures() const;
 
-    virtual void set_default() final;
+    virtual void set_default() override;
 
     void set_maximum_inputs_number(const Index&);
 
@@ -36,7 +35,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    InputsSelectionResults perform_inputs_selection() final;
+    InputsSelectionResults perform_inputs_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
 
@@ -44,8 +43,8 @@ public:
 
     void to_XML(XMLPrinter&) const;
     
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
 private:
 

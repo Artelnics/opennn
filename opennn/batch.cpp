@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
+
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
@@ -27,9 +27,8 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
-    if (image_data_set && image_data_set->get_augmentation())
+    if(image_data_set && image_data_set->get_augmentation())
     {
-        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 /*
         // @TODO
         Tensor<type, 2>& augmented_data = perform_augmentation(data);
@@ -158,8 +157,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
     if(data_set_target_dimensions.size() == 1)
     {
-        targets_dimensions = {{batch_size, target_variables_number}};
-
+        target_dimensions = {{batch_size, target_variables_number}};
         target_tensor.resize(batch_size*target_variables_number);
     }
     else if(data_set_target_dimensions.size() == 2)
@@ -167,7 +165,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index rows_number = data_set_target_dimensions[0];
         const Index columns_number = data_set_target_dimensions[1];
 
-        targets_dimensions = {{batch_size, rows_number, columns_number}};
+        target_dimensions = {{batch_size, rows_number, columns_number}};
         target_tensor.resize(batch_size*rows_number*columns_number);
     }
     else if(data_set_target_dimensions.size() == 3)
@@ -176,7 +174,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index columns_number = data_set_target_dimensions[1];
         const Index channels = data_set_target_dimensions[2];
 
-        targets_dimensions = {{batch_size, rows_number, columns_number, channels}};
+        target_dimensions = {{batch_size, rows_number, columns_number, channels}};
 
         target_tensor.resize(batch_size*channels*rows_number*columns_number);
     }
@@ -229,7 +227,7 @@ Index Batch::get_batch_samples_number() const
 void Batch::print() const
 {
     const Index inputs_rank = input_dimensions.size();
-    const Index targets_rank = targets_dimensions.size();
+    const Index targets_rank = target_dimensions.size();
 
     cout << "Batch" << endl
          << "Inputs:" << endl
@@ -253,11 +251,11 @@ void Batch::print() const
          << "Targets dimensions:" << endl;
 
     for(Index i = 0; i < targets_rank; i++)
-        cout << targets_dimensions[i] << endl;
+        cout << target_dimensions[i] << endl;
 
     const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
-                                             targets_dimensions[0],
-                                             targets_dimensions[1]);
+                                             target_dimensions[0],
+                                             target_dimensions[1]);
 
     cout << targets << endl;
 }
@@ -277,29 +275,18 @@ bool Batch::has_context() const
 
 vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-    vector<pair<type*, dimensions>> input_pairs(has_context() ? 2 : 1);
+    vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
 
-    // if(data_set->get_model_type() == DataSet::ModelType::ObjectDetection)
-    // {
-    //     input_pairs[0] = { (type*)yolo_input.data(), input_dimensions};
+    if (has_context())
+        input_pairs.push_back({(type*)context_tensor.data(), context_dimensions});
 
-    //     return input_pairs;
-    // }
-    // else
-    // {
-        input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
-
-        if (has_context())
-            input_pairs[1] = { (type*)context_tensor.data(), context_dimensions};
-
-        return input_pairs;
-    // }
+    return input_pairs;
 }
 
 
-pair<type*, dimensions> Batch::get_targets_pair() const
+pair<type*, dimensions> Batch::get_target_pair() const
 {
-    return { (type*)target_tensor.data() , targets_dimensions};
+    return { (type*)target_tensor.data() , target_dimensions};
 }
 
 }

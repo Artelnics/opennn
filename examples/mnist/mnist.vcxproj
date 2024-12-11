@@ -124,6 +124,7 @@
       <ImportLibrary>Debug/mnist.lib</ImportLibrary>
       <ProgramDataBaseFile>Debug/mnist.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
+      <Profile>true</Profile>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -176,6 +177,7 @@
       <ImportLibrary>Release/mnist.lib</ImportLibrary>
       <ProgramDataBaseFile>Release/mnist.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
+      <Profile>true</Profile>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -221,6 +223,7 @@
       <ImportLibrary>MinSizeRel/mnist.lib</ImportLibrary>
       <ProgramDataBaseFile>MinSizeRel/mnist.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
+      <Profile>true</Profile>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
@@ -265,6 +268,7 @@
       <ImportLibrary>RelWithDebInfo/mnist.lib</ImportLibrary>
       <ProgramDataBaseFile>RelWithDebInfo/mnist.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
+      <Profile>true</Profile>
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

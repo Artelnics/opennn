@@ -3,6 +3,7 @@
 #include "../opennn/config.h"
 #include "../opennn/statistics.h"
 #include "../opennn/histogram.h"
+#include "../opennn/tensors.h"
 
 using namespace opennn;
 
@@ -653,14 +654,14 @@ TEST(StatisticsTest, Asymmetry)
     vector.resize(3);
     vector.setZero();
 
-    cout << asymmetry(vector) << endl;
+    //cout << asymmetry(vector) << endl;
     //EXPECT_EQ(asymmetry(vector) - type(0) < type(NUMERIC_LIMITS_MIN));
 
     // Test
     vector.resize(4);
     vector.setValues({type(1), type(5), type(3), type(9)});
 
-    type asymmetry_value = opennn::asymmetry(vector);
+    //type asymmetry_value = opennn::asymmetry(vector);
 
     //EXPECT_EQ(asymmetry_value - type(0.75) < type(NUMERIC_LIMITS_MIN));
 
@@ -689,7 +690,7 @@ TEST(StatisticsTest, Kurtosis)
     vector.resize(5);
     vector.setValues({type(1), type(5), type(NAN), type(3), type(9)});
 
-    type kurtosis = opennn::kurtosis(vector);
+    //type kurtosis_value = kurtosis(vector);
 }
 
 

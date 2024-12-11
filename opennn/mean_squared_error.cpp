@@ -32,7 +32,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
@@ -110,8 +110,6 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagationLM& back_propagation) const
 {
-    // Back propagation
-
     const Tensor<type, 2>& errors = back_propagation.errors;
     const Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
@@ -146,6 +144,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                   BackPropagationLM& back_propagation_lm) const
 {
+
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();

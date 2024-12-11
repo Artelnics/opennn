@@ -34,15 +34,15 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   explicit LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
+   LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   dimensions get_input_dimensions() const final;
-   dimensions get_output_dimensions() const final;
+   dimensions get_input_dimensions() const override;
+   dimensions get_output_dimensions() const override;
 
    Index get_timesteps() const;
 
-   Index get_parameters_number() const final;
-   Tensor<type, 1> get_parameters() const final;
+   Index get_parameters_number() const override;
+   Tensor<type, 1> get_parameters() const override;
 
    const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
    const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
@@ -52,10 +52,10 @@ public:
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0);
 
-   void set_input_dimensions(const dimensions&) final;
-   void set_output_dimensions(const dimensions&) final;
+   void set_input_dimensions(const dimensions&) override;
+   void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) final;
+   void set_parameters(const Tensor<type, 1>&, const Index&) override;
 
    // Activation functions
 
@@ -69,9 +69,9 @@ public:
 
    // Parameters initialization
 
-   void set_parameters_constant(const type&) final;
+   void set_parameters_constant(const type&) override;
 
-   void set_parameters_random() final;
+   void set_parameters_random() override;
 
    // Forward propagation
 
@@ -90,18 +90,18 @@ public:
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           unique_ptr<LayerForwardPropagation>&,
-                          const bool&) final;
+                          const bool&) override;
 
    // Back propagation
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         const Index& ,
-                        Tensor<type, 1>&) const final;
+                        Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
                        const vector<pair<type*, dimensions>>&,
                        unique_ptr<LayerForwardPropagation>&,
-                       unique_ptr<LayerBackPropagation>&) const final;
+                       unique_ptr<LayerBackPropagation>&) const override;
 
    void calculate_forget_parameter_derivatives(const Tensor<type, 2>&,
                                                const Tensor<type, 2>&,
@@ -129,13 +129,13 @@ public:
 
    string get_activation_function_string_expression() const;
 
-   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+   string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
    // Serialization
 
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -170,13 +170,13 @@ private:
 
 struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit LongShortTermMemoryLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    LongShortTermMemoryLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
         
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> current_inputs;
 
@@ -217,15 +217,15 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit LongShortTermMemoryLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    LongShortTermMemoryLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void set_derivatives_zero();
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 1> current_deltas;
 

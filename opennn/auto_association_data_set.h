@@ -6,20 +6,21 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef AUTOASSOCIATION_H
-#define AUTOASSOCIATION_H
+#ifndef AUTOASSOCIATIONDATASET_H
+#define AUTOASSOCIATIONDATASET_H
 
 #include "data_set.h"
 
 namespace opennn
 {
 
-class AutoAssociationDataSet : public DataSet
+class AutoAssociativeDataSet : public DataSet
 {
 
 public:
 
-    explicit AutoAssociationDataSet();
+
+    AutoAssociativeDataSet();
 
     vector<RawVariable> get_associative_raw_variables() const;
     const Tensor<type, 2>& get_associative_data() const;
@@ -33,8 +34,8 @@ public:
     void transform_associative_raw_variables();
     void transform_associative_data();
 
-    void save_auto_associative_data_binary(const string&) const;
-    void load_auto_associative_data_binary(const string&);
+    void save_auto_associative_data_binary(const filesystem::path&) const;
+    void load_auto_associative_data_binary(const filesystem::path&);
 
 private:
 

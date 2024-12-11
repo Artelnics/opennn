@@ -10,8 +10,6 @@
 #define EMBEDDINGLAYER_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -27,36 +25,34 @@ class EmbeddingLayer : public Layer
 
 public:
 
-    explicit EmbeddingLayer(const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const bool& = false);
+    EmbeddingLayer(const Index& = 0,
+                   const Index& = 0,
+                   const Index& = 0,
+                   const bool& = false);
 
-    Index get_input_dimension_xxx() const;
-    Index get_inputs_number_xxx() const;
-    Index get_depth() const;
+    Index get_vocabulary_size() const;
+    Index get_sequence_length() const;
+    Index get_embedding_size() const;
     bool get_positional_encoding() const;
 
-    dimensions get_input_dimensions() const;
-    dimensions get_output_dimensions() const final;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-    Index get_parameters_number() const final;
-    Tensor<type, 1> get_parameters() const final;
+    Index get_parameters_number() const override;
+    Tensor<type, 1> get_parameters() const override;
 
     void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
 
-    void set_input_dimensions_xxx(const Index&);
-    void set_inputs_number(const Index&);
-    void set_depth(const Index&);
+    void set_vocabulary_size(const Index&);
+    void set_sequence_length(const Index&);
+    void set_embedding_size(const Index&);
     void set_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 
-    void set_embedding_weights();
-
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
-    void set_parameters_random() final;
-    void set_parameters_constant(const type&) final;
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters_random() override;
+    void set_parameters_constant(const type&) override;
 
     void dropout(Tensor<type, 3>&) const;
 
@@ -64,21 +60,21 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
-    void insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                         const Index& index, 
-                         Tensor<type, 1>& gradient) const;
+    void insert_gradient(unique_ptr<LayerBackPropagation>&,
+                         const Index&,
+                         Tensor<type, 1>&) const override;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
@@ -86,11 +82,7 @@ public:
 
 private:
 
-    Index input_dimensions_xxx;
-
-    Index inputs_number_xxx;
-
-    Index depth;
+    Index sequence_length;
 
     Tensor<type, 2> embedding_weights;
 
@@ -104,13 +96,13 @@ private:
 
 struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit EmbeddingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    EmbeddingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     void build_positional_encoding_matrix();
 
@@ -124,13 +116,13 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 
 struct EmbeddingLayerBackPropagation : LayerBackPropagation
 {
-    explicit EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> sample_deltas;
     Tensor<type, 2> embedding_weights_derivatives;

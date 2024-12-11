@@ -34,7 +34,8 @@ int main()
 
         // Neural network
 
-        // const Index hidden_neurons_number = 6;
+
+        const Index hidden_neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                      {input_variables_number}, {}, {target_variables_number});
@@ -49,26 +50,13 @@ int main()
         cross_entropy_error.calculate_numerical_gradient();
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
+//        training_strategy.print();
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
         training_strategy.perform_training();
 
- /*
-        //AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error);
-        //adaptive_moment_estimation.set_display(false);
-        //adaptive_moment_estimation.perform_training();
-
-        // Training strategy
-
-
-
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-        training_strategy.print();
-        training_strategy.perform_training();
 
         // Testing analysis
 

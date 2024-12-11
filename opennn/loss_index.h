@@ -10,8 +10,8 @@
 #define LOSSINDEX_H
 
 #include "data_set.h"
-#include "batch.h"
 #include "neural_network.h"
+#include "batch.h"
 #include "neural_network_back_propagation_lm.h"
 
 namespace opennn
@@ -30,7 +30,7 @@ class LossIndex
 
 public:
 
-   explicit LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
@@ -77,6 +77,7 @@ public:
                                 BackPropagation&) const = 0;
 
    void add_regularization(BackPropagation&) const;
+   void add_regularization_lm(BackPropagationLM&) const;
 
    virtual void calculate_output_delta(const Batch&,
                                        ForwardPropagation&,
@@ -197,7 +198,7 @@ protected:
 
 struct BackPropagationLM
 {
-    explicit BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
+    BackPropagationLM(const Index& = 0, LossIndex* = nullptr);
 
     void set(const Index& = 0, LossIndex* = nullptr);
 

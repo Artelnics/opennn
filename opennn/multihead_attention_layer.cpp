@@ -67,54 +67,6 @@ dimensions MultiheadAttentionLayer::get_output_dimensions() const
 }
 
 
-Tensor<type, 3> MultiheadAttentionLayer::get_query_weights() const
-{
-    return query_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_query_biases() const
-{
-    return query_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_key_weights() const
-{
-    return key_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_key_biases() const
-{
-    return key_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_value_weights() const
-{
-    return value_weights;
-}
-
-
-Tensor<type, 2> MultiheadAttentionLayer::get_value_biases() const
-{
-    return value_biases;
-}
-
-
-Tensor<type, 3> MultiheadAttentionLayer::get_projection_weights() const
-{
-    return projection_weights;
-}
-
-
-Tensor<type, 1> MultiheadAttentionLayer::get_projection_biases() const
-{
-    return projection_biases;
-}
-
-
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
     return
@@ -385,13 +337,15 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 {
     const Index batch_samples_number = attention_scores.dimension(2);
     
+    const Index context_input_size = context_size * input_size;
+
+
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
-                + sample_index * context_size * input_size
-                + head_index * context_size * input_size * batch_samples_number;
+            + (sample_index * heads_number + head_index) * context_input_size * batch_samples_number;
 
             TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data, 
                                                                context_size, 
@@ -461,7 +415,6 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
         type* head_attention_output_data = attention_outputs_data + head_index * input_size * hidden_depth * batch_size;
 
         TensorMap<Tensor<type, 3>> head_projection_output(head_projection_output_data, batch_size, input_size, depth);
-
         const TensorMap<Tensor<type, 2>> head_projection_weights(head_projection_weights_data, hidden_depth, depth);
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
@@ -1058,7 +1011,6 @@ vector<pair<type*, dimensions>> MultiheadAttentionLayerBackPropagation::get_inpu
     {{(type*)(input_derivatives.data()), {batch_samples_number, input_size, depth}},
      {(type*)(context_derivatives.data()), {batch_samples_number, context_size, depth}} };
 }
-
 
 }
 

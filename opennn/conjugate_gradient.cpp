@@ -6,9 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 
 #include "conjugate_gradient.h"
+#include "scaling_layer_2d.h"
+#include "unscaling_layer.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -373,12 +374,12 @@ TrainingResults ConjugateGradient::perform_training()
 
             results.stopping_condition = StoppingCondition::LossGoal;
 
-            if(display) cout << "Epoch " << epoch << endl << "Loss goal reached: " << results.training_error_history(epoch) << endl;
+            if(display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
         }
 
         if(has_selection && selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -387,7 +388,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum epochs number reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -396,7 +397,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Maximum training time reached: " << write_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -407,7 +408,7 @@ TrainingResults ConjugateGradient::perform_training()
 
         if(loss_decrease <= minimum_loss_decrease)
         {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum loss decrease reached: " << minimum_loss_decrease << endl;
+            if(display) cout << "Epoch " << epoch << "\nMinimum loss decrease reached: " << minimum_loss_decrease << endl;
 
             stop_training = true;
 
@@ -452,33 +453,19 @@ TrainingResults ConjugateGradient::perform_training()
 
 Tensor<string, 2> ConjugateGradient::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(8, 2);
+    Tensor<string, 2> string_matrix(8, 2);
 
-    labels_values(0,0) = "Training direction method";
-    labels_values(0,1) = write_training_direction_method();
+    string_matrix.setValues({
+    {"Training direction method", write_training_direction_method()},
+    {"Learning rate method", learning_rate_algorithm.write_learning_rate_method()},
+    {"Learning rate tolerance", to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()))},
+    {"Minimum loss decrease", to_string(double(minimum_loss_decrease))},
+    {"Loss goal", to_string(double(training_loss_goal))},
+    {"Maximum selection error increases", to_string(maximum_selection_failures)},
+    {"Maximum epochs number", to_string(maximum_epochs_number)},
+    {"Maximum time", write_time(maximum_time)}});
 
-    labels_values(1,0) = "Learning rate method";
-    labels_values(1,1) = learning_rate_algorithm.write_learning_rate_method();
-
-    labels_values(2,0) = "Learning rate tolerance";
-    labels_values(2,1) = to_string(double(learning_rate_algorithm.get_learning_rate_tolerance()));
-
-    labels_values(3,0) = "Minimum loss decrease";
-    labels_values(3,1) = to_string(double(minimum_loss_decrease));
-
-    labels_values(4,0) = "Loss goal";
-    labels_values(4,1) = to_string(double(training_loss_goal));
-
-    labels_values(5,0) = "Maximum selection error increases";
-    labels_values(5,1) = to_string(maximum_selection_failures);
-
-    labels_values(6,0) = "Maximum epochs number";
-    labels_values(6,1) = to_string(maximum_epochs_number);
-
-    labels_values(7,0) = "Maximum time";
-    labels_values(7,1) = write_time(maximum_time);
-
-    return labels_values;
+    return string_matrix;
 }
 
 

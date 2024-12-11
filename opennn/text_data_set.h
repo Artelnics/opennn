@@ -9,7 +9,6 @@
 #ifndef TEXTDATASET_H
 #define TEXTDATASET_H
 
-
 #include "data_set.h"
 
 namespace opennn
@@ -20,7 +19,7 @@ class TextDataSet : public DataSet
 
 public:
 
-    explicit TextDataSet();
+    TextDataSet();
 
     const Index& get_short_words_length() const;
     const Index& get_long_words_length() const;

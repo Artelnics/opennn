@@ -63,11 +63,11 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type,
 void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 //void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 //void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&, const type& = type(NUMERIC_LIMITS_MIN));
@@ -110,7 +110,6 @@ vector<string> sort_by_rank(const vector<string>&, const Tensor<Index,1>&);
 Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
 Tensor<Index, 1> get_indices_less_than(const Tensor<Index,1>&, const Index&);
-
 Tensor<Index, 1> get_indices_less_than(const Tensor<double,1>&, const double&);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, const Index&);
@@ -162,7 +161,7 @@ Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type
 template <typename T>
 void push_back(Tensor<T, 1>& tensor, const T& value) 
 {
-    int new_size = tensor.dimension(0) + 1;
+    const int new_size = tensor.dimension(0) + 1;
 
     Tensor<T, 1> new_tensor(new_size);
 
@@ -179,6 +178,8 @@ void push_back(Tensor<T, 1>& tensor, const T& value)
 string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
 Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
+
+string vector_to_string(const vector<Index>&, const string& = " ");
 
 string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
 string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");

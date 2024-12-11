@@ -14,7 +14,6 @@
 namespace opennn
 {
 
-
 BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
 {
     set(output_dimensions);

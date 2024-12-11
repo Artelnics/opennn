@@ -63,7 +63,7 @@ namespace opennn
     string prepend(const string&, const string&);
 
     bool has_numbers(const vector<string>&);
-    bool has_strings(const vector<string>&);
+//    bool has_strings(const vector<string>&);
 
     bool is_numeric_string_vector(const vector<string>&);
 
@@ -268,10 +268,9 @@ namespace opennn
 class TextGenerationAlphabet
 {
 public:
+    TextGenerationAlphabet();
 
-    explicit TextGenerationAlphabet();
-
-    explicit TextGenerationAlphabet(const string&);
+    TextGenerationAlphabet(const string&);
 
     virtual ~TextGenerationAlphabet();
 

@@ -10,6 +10,8 @@
 
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
+#include "recurrent_layer.h"
+#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -383,6 +385,7 @@ void TrainingStrategy::set_data_set(DataSet* new_data_set)
 void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 {
     neural_network = new_neural_network;
+
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
     cross_entropy_error.set_neural_network(new_neural_network);
@@ -400,6 +403,7 @@ void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
     quasi_Newton_method.set_loss_index(new_loss_index);
     Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
 }
+
 void TrainingStrategy::set_display(const bool& new_display)
 {
     display = new_display;
@@ -768,7 +772,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 }
 
 
-void TrainingStrategy::save(const string& file_name) const
+void TrainingStrategy::save(const filesystem::path& file_name) const
 {
     ofstream file(file_name);
 
@@ -781,14 +785,14 @@ void TrainingStrategy::save(const string& file_name) const
 }
 
 
-void TrainingStrategy::load(const string& file_name)
+void TrainingStrategy::load(const filesystem::path& file_name)
 {
     set_default();
 
     XMLDocument document;
 
-    if(document.LoadFile(file_name.c_str()))
-        throw runtime_error("Cannot load XML file " + file_name + ".\n");
+    if (document.LoadFile(file_name.string().c_str()))
+        throw runtime_error("Cannot load XML file " + file_name.string() + ".\n");
 
     from_XML(document);
 }

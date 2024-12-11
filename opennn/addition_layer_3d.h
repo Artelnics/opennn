@@ -10,8 +10,6 @@
 #define ADDITIONLAYER3D_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -26,13 +24,14 @@ class AdditionLayer3D : public Layer
 
 public:
 
-    explicit AdditionLayer3D(const Index& = 0, const Index& = 0);
+    AdditionLayer3D(const Index& = 0, const Index& = 0);
 
     Index get_inputs_number_xxx() const;
     Index get_inputs_depth() const;
 
     // @todo
-    dimensions get_input_dimensions() const final
+
+    dimensions get_input_dimensions() const override
     {
         throw runtime_error("XXX");
     }
@@ -46,15 +45,15 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
@@ -70,13 +69,13 @@ private:
 
 struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 {
-    explicit AdditionLayer3DForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
+    AdditionLayer3DForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 3> outputs;
 };
@@ -84,13 +83,13 @@ struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 
 struct AdditionLayer3DBackPropagation : LayerBackPropagation
 {
-    explicit AdditionLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
+    AdditionLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 3> input_1_derivatives;
     Tensor<type, 3> input_2_derivatives;

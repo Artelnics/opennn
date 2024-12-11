@@ -11,7 +11,6 @@
 
 #include "training_strategy.h"
 
-
 namespace opennn
 {
 
@@ -32,7 +31,7 @@ public:
     };
 
 
-    explicit InputsSelection(TrainingStrategy* = nullptr);
+    InputsSelection(TrainingStrategy* = nullptr);
 
     TrainingStrategy* get_training_strategy() const;
 
@@ -76,8 +75,8 @@ protected:
 
     TrainingStrategy* training_strategy = nullptr;
 
-    vector<Index> original_input_raw_variables_indices;
-    vector<Index> original_target_raw_variables_indices;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
 
     Index trials_number = 1;
 
@@ -101,10 +100,7 @@ protected:
 
 struct InputsSelectionResults
 {
-    explicit InputsSelectionResults(const Index& maximum_epochs_number = 0)
-    {
-        set(maximum_epochs_number);
-    }
+    InputsSelectionResults(const Index& = 0);
 
     Index get_epochs_number() const;
 
@@ -114,19 +110,7 @@ struct InputsSelectionResults
 
    void resize_history(const Index& new_size);
 
-   void print() const
-   {
-       cout << endl
-            << "Inputs Selection Results" << endl
-            << "Optimal inputs number: " << optimal_input_raw_variables_names.size() << endl
-            << "Inputs: " << endl;
-
-       for(size_t i = 0; i < optimal_input_raw_variables_names.size(); i++)
-           cout << "   " << optimal_input_raw_variables_names[i] << endl;
-
-       cout << "Optimum training error: " << optimum_training_error << endl
-            << "Optimum selection error: " << optimum_selection_error << endl;
-   }
+   void print() const;
 
    // Neural network
 

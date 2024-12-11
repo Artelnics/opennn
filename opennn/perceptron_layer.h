@@ -9,11 +9,7 @@
 #ifndef PERCEPTRONLAYER_H
 #define PERCEPTRONLAYER_H
 
-
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
-#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
@@ -45,12 +41,12 @@ public:
                     const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
                     const string& = "perceptron_layer");
 
-    dimensions get_input_dimensions() const final;
-    dimensions get_output_dimensions() const final;
+    dimensions get_input_dimensions() const override;
+    dimensions get_output_dimensions() const override;
 
-    Tensor<type, 1> get_parameters() const final;
+    Tensor<type, 1> get_parameters() const override;
 
-    Index get_parameters_number() const final;
+    Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
     const PerceptronLayer::ActivationFunction& get_activation_function() const;
@@ -62,12 +58,12 @@ public:
              const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
              const string& = "perceptron_layer");
 
-    void set_input_dimensions(const dimensions&) final;
-    void set_output_dimensions(const dimensions&) final;
+    void set_input_dimensions(const dimensions&) override;
+    void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) final;
-    void set_parameters_constant(const type&) final;
-    void set_parameters_random() final;
+    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters_constant(const type&) override;
+    void set_parameters_random() override;
 
     void set_activation_function(const ActivationFunction&);
     void set_activation_function(const string&);
@@ -83,34 +79,34 @@ public:
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           const bool&) final;
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
-                        unique_ptr<LayerBackPropagation>&) const final;
+                        unique_ptr<LayerBackPropagation>&) const override;
 
     void back_propagate_lm(const vector<pair<type*, dimensions>>&,
                            const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
-                           unique_ptr<LayerBackPropagationLM>&) const final;
+                           unique_ptr<LayerBackPropagationLM>&) const override;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
-                         Tensor<type, 1>&) const final;
+                         Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
                                            const Index&,
-                                           Tensor<type, 2>&) const final;
+                                           Tensor<type, 2>&) const override;
 
-    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const final;
+    string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const override;
 
     string get_activation_function_string_expression() const;
 
-    void print() const;
+    void print() const override;
 
-    void from_XML(const XMLDocument&) final;
-    void to_XML(XMLPrinter&) const final;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
@@ -132,13 +128,13 @@ private:
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
-    explicit PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const final;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> outputs;
 
@@ -148,13 +144,13 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-    explicit PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;
@@ -166,13 +162,13 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
 struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 {
-    explicit PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
+    PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr) override;
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 2> combinations_derivatives;
     Tensor<type, 2> input_derivatives;

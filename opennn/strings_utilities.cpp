@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques, SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "strings_utilities.h"
 #include "word_bag.h"
 #include "tensors.h"
@@ -220,7 +218,7 @@ bool is_numeric_string(const string& text)
         size_t index;
         [[maybe_unused]] double value = std::stod(text, &index);
 
-        return (index == text.size() || (text.find('%') != std::string::npos && index + 1 == text.size()));
+        return (index == text.size() || (text.find('%') != string::npos && index + 1 == text.size()));
     }
     catch (const std::exception&)
     {
@@ -367,7 +365,7 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
     size_t previous_position;
     const string underscore = "_";
 
-    // Reserve a rough estimate of the final size of the chain
+    // Reserve a rough estimate of the override size of the chain
 
     buffer.reserve(text.size());
 
@@ -416,7 +414,7 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     size_t position = 0;
     size_t previous_position;
 
-    // Reserves rough estimate of final size of string
+    // Reserves rough estimate of override size of string
 
     buffer.reserve(text.size());
 
@@ -627,7 +625,7 @@ string get_trimmed(const string& text)
 
     auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
 
-    return (start < end) ? std::string(start, end) : std::string();
+    return (start < end) ? string(start, end) : string();
 }
 
 
@@ -660,15 +658,13 @@ bool has_numbers(const vector<string>& string_list)
     return false;
 }
 
-
-bool has_strings(const vector<string>& string_list)
-{
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(!is_numeric_string(string_list[i])) 
-            return true;
-
-    return false;
-}
+// bool has_strings(const vector<string>& string_list)
+// {
+//     for(size_t i = 0; i < string_list.size(); i++)
+//         if(!is_numeric_string(string_list[i]))
+//             return true;
+//     return false;
+// }
 
 
 bool is_not_numeric(const vector<string>& string_list)

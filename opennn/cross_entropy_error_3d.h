@@ -10,7 +10,6 @@
 #define CROSSENTROPYERROR3D_H
 
 #include "loss_index.h"
-#include "data_set.h"
 
 namespace opennn
 {
@@ -20,22 +19,22 @@ class CrossEntropyError3D : public LossIndex
 
 public:
 
-   explicit CrossEntropyError3D(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   CrossEntropyError3D(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
-                        BackPropagation&) const final;
+                        BackPropagation&) const override;
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
-                               BackPropagation&) const final;
+                               BackPropagation&) const override;
 
-   string get_loss_method() const final;
-   string get_error_type_text() const final;
+   string get_loss_method() const override;
+   string get_error_type_text() const override;
 
    virtual void from_XML(const XMLDocument&);
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_3d_cuda.h"

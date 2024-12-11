@@ -173,7 +173,7 @@ void ImageDataSet::set_image_data_random()
     }
 
     if (display)
-        cout << endl << "Random image data set generated." << endl;
+        cout << "\nRandom image data set generated." << endl;
 }
 
 
@@ -267,109 +267,34 @@ void ImageDataSet::set_random_vertical_translation_maximum(const type& new_rando
 }
 
 
-void ImageDataSet::to_XML(XMLPrinter& file_stream) const
+void ImageDataSet::to_XML(XMLPrinter& printer) const
 {
-    file_stream.OpenElement("ImageDataSet");
+    printer.OpenElement("ImageDataSet");
 
-    // Data file
+    printer.OpenElement("DataSource");
 
-    file_stream.OpenElement("DataSource");
+    add_xml_element(printer, "FileType", "bmp");
+    add_xml_element(printer, "Path", data_path.string());
+    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
+    add_xml_element(printer, "Channels", to_string(get_channels_number()));
+    add_xml_element(printer, "Width", to_string(get_image_width()));
+    add_xml_element(printer, "Height", to_string(get_image_height()));
+    add_xml_element(printer, "Padding", to_string(get_image_padding()));
+    add_xml_element(printer, "RandomReflectionAxisX", to_string(get_random_reflection_axis_x()));
+    add_xml_element(printer, "RandomReflectionAxisY", to_string(get_random_reflection_axis_y()));
+    add_xml_element(printer, "RandomRotationMinimum", to_string(get_random_rotation_minimum()));
+    add_xml_element(printer, "RandomRotationMaximum", to_string(get_random_rotation_maximum()));
+    add_xml_element(printer, "RandomHorizontalTranslationMinimum", to_string(get_random_horizontal_translation_minimum()));
+    add_xml_element(printer, "RandomHorizontalTranslationMaximum", to_string(get_random_horizontal_translation_maximum()));
+    add_xml_element(printer, "RandomVerticalTranslationMinimum", to_string(get_random_vertical_translation_minimum()));
+    add_xml_element(printer, "RandomVerticalTranslationMaximum", to_string(get_random_vertical_translation_maximum()));
+    add_xml_element(printer, "Codification", get_codification_string());
 
-    // File type
+    printer.CloseElement();
 
-    file_stream.OpenElement("FileType");
-    file_stream.PushText("bmp");
-    file_stream.CloseElement();
+    printer.OpenElement("RawVariables");
 
-    // Data file name
-
-    file_stream.OpenElement("Path");
-    file_stream.PushText(data_path.c_str());
-    file_stream.CloseElement();
-
-    // Samples id
-
-    file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_sample_ids).c_str());
-    file_stream.CloseElement();
-
-    // Channels
-
-    file_stream.OpenElement("Channels");
-    file_stream.PushText(to_string(get_channels_number()).c_str());
-    file_stream.CloseElement();
-
-    // Width
-
-    file_stream.OpenElement("Width");
-    file_stream.PushText(to_string(get_image_width()).c_str());
-    file_stream.CloseElement();
-
-    // Height
-
-    file_stream.OpenElement("Height");
-    file_stream.PushText(to_string(get_image_height()).c_str());
-    file_stream.CloseElement();
-
-    // Padding
-
-    file_stream.OpenElement("Padding");
-    file_stream.PushText(to_string(get_image_padding()).c_str());
-    file_stream.CloseElement();
-
-    // Data augmentation
-
-    file_stream.OpenElement("RandomReflectionAxisX");
-    file_stream.PushText(to_string(get_random_reflection_axis_x()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomReflectionAxisY");
-    file_stream.PushText(to_string(get_random_reflection_axis_y()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomRotationMinimum");
-    file_stream.PushText(to_string(get_random_rotation_minimum()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomRotationMaximum");
-    file_stream.PushText(to_string(get_random_rotation_maximum()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomHorizontalTranslationMinimum");
-    file_stream.PushText(to_string(get_random_horizontal_translation_minimum()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomHorizontalTranslationMaximum");
-    file_stream.PushText(to_string(get_random_horizontal_translation_maximum()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomVerticalTranslationMinimum");
-    file_stream.PushText(to_string(get_random_vertical_translation_minimum()).c_str());
-    file_stream.CloseElement();
-
-    file_stream.OpenElement("RandomVerticalTranslationMaximum");
-    file_stream.PushText(to_string(get_random_vertical_translation_maximum()).c_str());
-    file_stream.CloseElement();
-
-    // Codification
-
-    file_stream.OpenElement("Codification");
-    file_stream.PushText(get_codification_string().c_str());
-    file_stream.CloseElement();
-
-    // Close DataFile
-
-    file_stream.CloseElement();
-
-    // Raw variables
-
-    file_stream.OpenElement("RawVariables");
-
-    // Raw variables number
-
-    file_stream.OpenElement("RawVariablesNumber");
-    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
-    file_stream.CloseElement();
+    add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
 
     // Raw variables items
 
@@ -377,48 +302,25 @@ void ImageDataSet::to_XML(XMLPrinter& file_stream) const
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        file_stream.OpenElement("RawVariable");
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables[i].to_XML(file_stream);
-        file_stream.CloseElement();
+        printer.OpenElement("RawVariable");
+        printer.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables[i].to_XML(printer);
+        printer.CloseElement();
     }
 
-    // Close raw_variables
-
-    file_stream.CloseElement();
-
-    // Samples id
+    printer.CloseElement();
 
     if(has_sample_ids)
-    {
-        file_stream.OpenElement("Ids");
-        file_stream.PushText(string_tensor_to_string(sample_ids).c_str());
-        file_stream.CloseElement();
-    }
+        add_xml_element(printer, "Ids", string_tensor_to_string(sample_ids));
 
-    // Samples
+    printer.OpenElement("Samples");
 
-    file_stream.OpenElement("Samples");
+    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
+    add_xml_element(printer, "SamplesUses", tensor_to_string(get_sample_uses_vector()));
 
-    // Samples number
+    printer.CloseElement();
 
-    file_stream.OpenElement("SamplesNumber");
-    file_stream.PushText(to_string(get_samples_number()).c_str());
-    file_stream.CloseElement();
-
-    // Samples uses
-
-    file_stream.OpenElement("SamplesUses");
-    file_stream.PushText(tensor_to_string(get_sample_uses_vector()).c_str());
-    file_stream.CloseElement();
-
-    // Close samples
-
-    file_stream.CloseElement();
-
-    // Close data set
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 }
 
 
@@ -439,21 +341,13 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    // Input dimensions
-
     set_input_dimensions({ read_xml_index(data_source_element, "Height"),
                            read_xml_index(data_source_element, "Width"),
                            read_xml_index(data_source_element, "Channels") });
 
-    // Padding
-
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
-    // Codification
-
     set_codification(read_xml_string(data_source_element, "Codification"));
-
-    // Augmentation
 
     set_random_reflection_axis_x(read_xml_index(data_source_element, "RandomReflectionAxisX"));
     set_random_reflection_axis_y(read_xml_index(data_source_element, "RandomReflectionAxisY"));
@@ -511,7 +405,6 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
-
 }
 
 
@@ -625,10 +518,7 @@ void ImageDataSet::read_bmp()
 
         if (targets_number == 1)
         {
-            if (i >= images_number[0] && i < images_number[1])
-                data(i, pixels_number) = 0;
-            else
-                data(i, pixels_number) = 1;
+            data(i, pixels_number) = (i >= images_number(0) && i < images_number(1)) ? 0 : 1;
         }
         else
         {
@@ -658,7 +548,7 @@ void ImageDataSet::read_bmp()
         long long seconds = (total_milliseconds % 60000) / 1000;
         long long milliseconds = total_milliseconds % 1000;
 
-        cout << endl << "Image data set loaded in: "
+        cout << "\nImage data set loaded in: "
              << minutes << " minutes, "
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;

@@ -10,7 +10,6 @@
 #define MINKOWSKIERROR_H
 
 #include "loss_index.h"
-#include "data_set.h"
 
 namespace opennn
 {
@@ -20,7 +19,7 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   explicit MinkowskiError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   MinkowskiError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    type get_Minkowski_parameter() const;
 
@@ -30,18 +29,18 @@ public:
 
    void calculate_error(const Batch& batch,
                         const ForwardPropagation& forward_propagation,
-                        BackPropagation& back_propagation) const final;
+                        BackPropagation& back_propagation) const override;
 
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
-                               BackPropagation&) const final;
+                               BackPropagation&) const override;
 
-   string get_loss_method() const final;
-   string get_error_type_text() const final;
+   string get_loss_method() const override;
+   string get_error_type_text() const override;
 
    virtual void from_XML(const XMLDocument&);
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 

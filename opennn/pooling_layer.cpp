@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
 #include "tensors.h"
 #include "pooling_layer.h"
 
@@ -257,7 +255,6 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
 }
 
 
-
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool& is_training)
@@ -353,8 +350,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
 
-    #pragma omp parallel for
-
+#pragma omp parallel for
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)

@@ -6,8 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-
+#include "tensors.h"
 #include "minkowski_error.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
@@ -57,7 +56,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     const Index batch_samples_number = batch.get_batch_samples_number();
 
-    const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
+    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 

@@ -9,9 +9,6 @@
 #ifndef CONJUGATEGRADIENT_H
 #define CONJUGATEGRADIENT_H
 
-
-#include "tinyxml2.h"
-#include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
@@ -27,7 +24,7 @@ public:
 
    enum class TrainingDirectionMethod{PR, FR};
 
-   explicit ConjugateGradient(LossIndex* = nullptr);   
+    ConjugateGradient(LossIndex* = nullptr);
 
    // Get
 
@@ -49,9 +46,9 @@ public:
 
    // Set
 
-   void set_default() final;
+   void set_default() override;
 
-   void set_loss_index(LossIndex*) final;
+   void set_loss_index(LossIndex*) override;
 
    // Training operators
 
@@ -84,17 +81,17 @@ public:
 
    // Training
 
-   TrainingResults perform_training() final;
+   TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const final;
+   string write_optimization_algorithm_type() const override;
 
    // Serialization
 
-   Tensor<string, 2> to_string_matrix() const final;
+   Tensor<string, 2> to_string_matrix() const override;
 
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
    void update_parameters(
            const Batch&,
@@ -126,7 +123,7 @@ private:
 
 struct ConjugateGradientData : public OptimizationAlgorithmData
 {
-    explicit ConjugateGradientData(ConjugateGradient* = nullptr);
+    ConjugateGradientData(ConjugateGradient* = nullptr);
 
     void set(ConjugateGradient* = nullptr);
 

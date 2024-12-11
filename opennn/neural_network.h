@@ -10,23 +10,6 @@
 #define NEURALNETWORK_H
 
 #include "layer.h"
-#include "perceptron_layer.h"
-//#include "perceptron_layer_3d.h"
-//#include "addition_layer_3d.h"
-//#include "normalization_layer_3d.h"
-#include "scaling_layer_2d.h"
-#include "scaling_layer_4d.h"
-#include "unscaling_layer.h"
-#include "bounding_layer.h"
-#include "probabilistic_layer.h"
-//#include "probabilistic_layer_3d.h"
-//#include "flatten_layer.h"
-//#include "pooling_layer.h"
-//#include "convolutional_layer.h"
-#include "long_short_term_memory_layer.h"
-//#include "multihead_attention_layer.h"
-#include "embedding_layer.h"
-#include "recurrent_layer.h"
 
 namespace opennn
 {
@@ -54,14 +37,17 @@ public:
                         Yolo,
                         TextClassification,};
 
-   explicit NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
-                          const dimensions& = {},
-                          const dimensions& = {},
-                          const dimensions& = {});
+    enum class ProgrammingLanguage{C,
+                                   Python,
+                                   JavaScript,
+                                   PHP};
 
-   explicit NeuralNetwork(const string&);
+   NeuralNetwork(const NeuralNetwork::ModelType& = NeuralNetwork::ModelType::Default,
+                 const dimensions& = {},
+                 const dimensions& = {},
+                 const dimensions& = {});
 
-   // APPENDING LAYERS
+   NeuralNetwork(const filesystem::path&);
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
@@ -75,14 +61,12 @@ public:
    bool is_empty() const;
 
    const vector<string>& get_input_names() const;
-   string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
    ModelType get_model_type() const;
    string get_model_type_string() const;
 
    const vector<string>& get_output_names() const;
-   string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
    const vector<unique_ptr<Layer>>& get_layers() const;
@@ -113,7 +97,7 @@ public:
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
 
-   void set(const string&);
+   void set(const filesystem::path&);
 
    void set_layers_number(const Index&);
 
@@ -142,19 +126,13 @@ public:
    static bool is_trainable(const Layer::Type&);
 
    Index get_layers_number() const;
+   Index get_layers_number(const Layer::Type&) const;
+
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
-   Index get_perceptron_layers_number() const;
-   Index get_probabilistic_layers_number() const;
-   Index get_flatten_layers_number() const;
-   Index get_convolutional_layers_number() const;
-   Index get_pooling_layers_number() const;
-   Index get_long_short_term_memory_layers_number() const;
-   Index get_recurrent_layers_number() const;
-
-   bool is_input_layer(const vector<Index>&) const;
-   bool is_context_layer(const vector<Index>&) const;
+   // bool is_input_layer(const vector<Index>&) const;
+   // bool is_context_layer(const vector<Index>&) const;
 
    // Architecture
 
@@ -195,23 +173,23 @@ public:
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
    void from_XML(const XMLDocument&);
-   void inputs_from_XML(const XMLDocument&);
-   void layers_from_XML(const XMLDocument&);
-   void outputs_from_XML(const XMLDocument&);
+   void inputs_from_XML(const XMLElement*);
+   void layers_from_XML(const XMLElement*);
+   void outputs_from_XML(const XMLElement*);
 
    void to_XML(XMLPrinter&) const;
 
    void print() const;
-   void save(const string&) const;
-   void save_parameters(const string&) const;
+   void save(const filesystem::path&) const;
+   void save_parameters(const filesystem::path&) const;
 
-   void load(const string&);
-   void load_parameters_binary(const string&);
+   void load(const filesystem::path&);
+   void load_parameters_binary(const filesystem::path&);
 
    vector<string> get_layer_names() const;
    vector<string> get_layer_types_string() const;
 
-   void save_outputs(Tensor<type, 2>&, const string&);
+   void save_outputs(Tensor<type, 2>&, const filesystem::path&);
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,
                           ForwardPropagation&,
@@ -223,10 +201,7 @@ public:
 
    string get_expression() const;
 
-   void save_expression_c(const string&) const;
-   void save_expression_python(const string&) const;
-   void save_expression_api(const string&) const;
-   void save_expression_javascript(const string&) const;
+   void save_expression(const ProgrammingLanguage&, const filesystem::path&) const;
 
 
 #ifdef OPENNN_CUDA

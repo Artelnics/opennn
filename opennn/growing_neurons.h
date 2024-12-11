@@ -9,7 +9,6 @@
 #ifndef GROWINGNEURONS_H
 #define GROWINGNEURONS_H
 
-#include "training_strategy.h"
 #include "neurons_selection.h"
 
 namespace opennn
@@ -22,7 +21,7 @@ class GrowingNeurons : public NeuronsSelection
 
 public:
 
-    explicit GrowingNeurons(TrainingStrategy* = nullptr);
+    GrowingNeurons(TrainingStrategy* = nullptr);
 
     const Index& get_step() const;
 
@@ -34,7 +33,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    NeuronsSelectionResults perform_neurons_selection() final;
+    NeuronsSelectionResults perform_neurons_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
     
@@ -42,8 +41,8 @@ public:
 
     void to_XML(XMLPrinter&) const;    
 
-    void save(const string&) const;
-    void load(const string&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
 private:
 

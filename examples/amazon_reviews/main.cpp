@@ -86,13 +86,12 @@ int main()
 
         output_data = neural_network.calculate_outputs(input_data);
 
-        cout << "\n\n" << review_1 << endl << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
-        cout << "\n" << review_2 << endl << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
+        cout << "\n\n" << review_1 << "\nBad:" << output_data(0,0) << "%\tGood:" << (1 - output_data(0,0)) << "%" << endl;
+        cout << "\n" << review_2 << "\nBad:" << output_data(1,0) << "%\tGood:" << (1 - output_data(1,0)) << "%\n" << endl;
 
         // Save results
 
-        neural_network.save_expression_c("../data/amazon_reviews.txt");
-        neural_network.save_expression_python("../data/amazon_reviews.py");
+        neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/amazon_reviews.py");
         
         cout << "Good bye!" << endl;
 

@@ -2,6 +2,7 @@
 
 #include "../opennn/forward_propagation.h"
 #include "../opennn/neural_network.h"
+#include "../opennn/perceptron_layer.h"
 
 
 TEST(NeuralNetworkTest, DefaultConstructor)

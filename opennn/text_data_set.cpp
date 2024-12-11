@@ -64,8 +64,6 @@ void TextDataSet::set_long_words_length(const Index& new_long_words_length)
 
 void TextDataSet::to_XML(XMLPrinter& file_stream) const
 {
-    ostringstream buffer;
-
     time_t start, finish;
     time(&start);
 
@@ -259,6 +257,8 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
     }
+
+    ostringstream buffer;
 
     // Missing values number
 

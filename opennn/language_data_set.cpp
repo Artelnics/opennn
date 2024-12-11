@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 #include "language_data_set.h"
 #include "strings_utilities.h"
 
@@ -61,13 +60,13 @@ const dimensions& LanguageDataSet::get_context_dimensions() const
 }
 
 
-const vector<vector<string>> LanguageDataSet::get_documents() const
+const vector<vector<string>>& LanguageDataSet::get_documents() const
 {
     return documents;
 }
 
 
-const vector<vector<string>> LanguageDataSet::get_targets() const
+const vector<vector<string>>& LanguageDataSet::get_targets() const
 {
     return targets;
 }
@@ -82,17 +81,17 @@ void LanguageDataSet::set_default_raw_variables_uses()
 }
 
 
-void LanguageDataSet::set_raw_variables_uses(const vector<string>& new_raw_variables_uses)
+void LanguageDataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
 {
-    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+    DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
     context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
-void LanguageDataSet::set_raw_variables_uses(const vector<VariableUse>& new_raw_variables_uses)
+void LanguageDataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses)
 {
-    DataSet::set_raw_variables_uses(new_raw_variables_uses);
+    DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
     context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
@@ -282,11 +281,8 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
         for(Index i = 0; i < raw_variables_number; i++)
         {
             file_stream.OpenElement("RawVariable");
-
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
             raw_variables[i].to_XML(file_stream);
-
             file_stream.CloseElement();
         }
     }
@@ -984,7 +980,7 @@ vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed
 }
 
 
-vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
+vector<string> generate_override_vocabulary(const vector<string>& reserved_tokens,
                                          const set<char>& character_tokens,
                                          const map<string, int>& current_tokens)
 {
@@ -1010,18 +1006,18 @@ vector<string> generate_final_vocabulary(const vector<string>& reserved_tokens,
         vocabulary.push_back(token);
 
     set<string> seen_tokens;
-    vector<string> final_vocabulary;
+    vector<string> override_vocabulary;
 
     for(const string& word : vocabulary)
     {
         if(seen_tokens.find(word) == seen_tokens.end())
         {
             seen_tokens.insert(word);
-            final_vocabulary.push_back(word);
+            override_vocabulary.push_back(word);
         }
     }
 
-    return final_vocabulary;
+    return override_vocabulary;
 }
 
 
@@ -1113,7 +1109,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
         current_tokens = ensure_all_tokens_exist(string_tokens, next_tokens, parameters.include_joiner_token, parameters.joiner);
     }
 
-    return generate_final_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
+    return generate_override_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
 }
 
 
@@ -1395,24 +1391,9 @@ void LanguageDataSet::read_csv_1()
     }
 
     regex accent_regex("[\\xC0-\\xFF]");
-    ifstream file;
-/*
-#ifdef _WIN32
 
-    if(regex_search(data_path, accent_regex))
-    {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-        std::wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }
-    else
-    {
-        file.open(data_path.c_str());
-    }
-#else
-    file.open(data_path.c_str());
-#endif
-*/
+    ifstream file(data_path);
+
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1645,23 +1626,6 @@ void LanguageDataSet::read_csv_2_simple()
     regex accent_regex("[\\xC0-\\xFF]");
     ifstream file(data_path);
 
-/*
-#ifdef _WIN32
-
-    if(regex_search(data_path, accent_regex))
-    {
-        wstring_convert<codecvt_utf8<wchar_t>> conv;
-        wstring file_name_wide = conv.from_bytes(data_path);
-        file.open(file_name_wide);
-    }else
-    {
-        file.open(data_path.c_str());
-    }
-
-#else
-    file.open(data_path.c_str());
-#endif
-*/
     if(!file.is_open())
     {
         ostringstream buffer;
@@ -1745,9 +1709,7 @@ void LanguageDataSet::read_csv_2_simple()
     //samples_uses.setConstant(SampleUse::Training);
 
     split_samples_random();
-
 }
-
 
 
 void LanguageDataSet::read_csv_language_model()
@@ -1946,7 +1908,7 @@ void LanguageDataSet::read_txt_language_model()
     const vector<vector<string>> context_tokens = preprocess_language_documents(context);
     const vector<vector<string>> completion_tokens = preprocess_language_documents(completion);
 
-    bool imported_vocabulary = false;
+//    bool imported_vocabulary = false;
 
     if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
@@ -1955,14 +1917,14 @@ void LanguageDataSet::read_txt_language_model()
         const Index target_vocabulary_size = 8000;
         const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
-        context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
-        completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+        context_vocabulary = calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
+        completion_vocabulary = calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
     }
     else
     {
         cout << "Importing vocabularies..." << endl;
 
-        imported_vocabulary = true;
+//        imported_vocabulary = true;
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
     }
@@ -2031,7 +1993,6 @@ void LanguageDataSet::read_txt_language_model()
 
     data_path = transformed_data_path;
     separator = Separator::Semicolon;
-    bool has_raw_variables_names = true;
 
     read_csv_language_model();
 
@@ -2151,13 +2112,16 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 {
     const Index entry_number = context_tokens.size();
 
-    unordered_map<std::string, type> context_vocabulary_map;
-    for(size_t i = 0; i < context_vocabulary.size(); i++)
-        context_vocabulary_map[context_vocabulary[i]] = type(i);
+    //const unordered_map<string, type> context_vocabulary_map(context_vocabulary.begin(), context_vocabulary.end());
+    //const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
 
-    unordered_map<std::string, type> completion_vocabulary_map;
+    unordered_map<string, type> context_vocabulary_map;
+    for(size_t i = 0; i < context_vocabulary.size(); i++)
+         context_vocabulary_map[context_vocabulary[i]] = type(i);
+
+    unordered_map<string, type> completion_vocabulary_map;
     for(size_t i = 0; i < completion_vocabulary.size(); i++)
-        completion_vocabulary_map[completion_vocabulary[i]] = type(i);
+         completion_vocabulary_map[completion_vocabulary[i]] = type(i);
 
 //    const Index context_vocabulary_size = context_vocabulary.size();
 //    const Index completion_vocabulary_size = completion_vocabulary.size();

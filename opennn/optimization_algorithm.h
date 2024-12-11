@@ -22,7 +22,7 @@ class OptimizationAlgorithm
 
 public:
 
-   explicit OptimizationAlgorithm(LossIndex* = nullptr);
+   OptimizationAlgorithm(LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
@@ -72,7 +72,7 @@ public:
 
    virtual TrainingResults perform_training() = 0;
 
-   virtual string write_optimization_algorithm_type() const {return string();}
+   virtual string write_optimization_algorithm_type() const;
 
    virtual void print() const;
 
@@ -82,15 +82,14 @@ public:
 
    virtual void to_XML(XMLPrinter&) const;
 
-   void save(const string&) const;
-   void load(const string&);
+   void save(const filesystem::path&) const;
+   void load(const filesystem::path&);
 
-   static type get_elapsed_time(const time_t& beginning_time)
-   {
-       time_t current_time;
-       time(&current_time);
-       return type(difftime(current_time, beginning_time));
-   }
+   static type get_elapsed_time(const time_t& beginning_time);
+
+   void set_names();
+   void set_scaling();
+   void set_unscaling();
 
    void set_neural_network_variable_names()
    {
@@ -138,7 +137,7 @@ protected:
 
    LossIndex* loss_index = nullptr;
 
-   Index epochs_number = 10000;
+   Index epochs_number = 1000;
 
    BoxPlot auto_association_box_plot;
 
@@ -165,19 +164,9 @@ protected:
 
 struct OptimizationAlgorithmData
 {
-    explicit OptimizationAlgorithmData()
-    {
-    }
+    OptimizationAlgorithmData();
 
-    void print() const
-    {
-        cout << "Potential parameters:" << endl
-             << potential_parameters << endl
-             << "Training direction:" << endl
-             << training_direction << endl
-             << "Initial learning rate:" << endl
-             << initial_learning_rate << endl;
-    }
+    void print() const;
 
     Tensor<type, 1> potential_parameters;
     Tensor<type, 1> training_direction;
@@ -188,7 +177,7 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults(const Index& epochs_number = 0);
+    TrainingResults(const Index& = 0);
 
     string write_stopping_condition() const;
 
@@ -198,13 +187,13 @@ struct TrainingResults
 
     Index get_epochs_number() const;
 
-    void save(const string&) const;
+    void save(const filesystem::path&) const;
 
     void print(const string& message = string());
 
     OptimizationAlgorithm::StoppingCondition stopping_condition = OptimizationAlgorithm::StoppingCondition::None;
 
-    Tensor<string, 2> write_final_results(const Index& = 3) const;
+    Tensor<string, 2> write_override_results(const Index& = 3) const;
 
     void resize_training_error_history(const Index&);
 

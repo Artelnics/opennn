@@ -10,6 +10,7 @@
 #define OPENNN_H
 
 
+//#include "pch.h"
 
 // Data set
 
@@ -21,7 +22,6 @@
 #include "language_data_set.h"
 
 // Neural network
-
 
 #include "layer.h"
 #include "pooling_layer.h"

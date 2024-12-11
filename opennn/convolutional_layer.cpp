@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 
 #include "convolutional_layer.h"
 #include "tensors.h"
@@ -121,7 +120,7 @@ void ConvolutionalLayer::normalize(ConvolutionalLayerForwardPropagation* convolu
 
             mean.device(*thread_pool_device) = kernel_output.mean();
 
-            standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
+            standard_deviation.device(*thread_pool_device) = (kernel_output - mean()).square().mean().sqrt();
 
             kernel_output.device(*thread_pool_device)
                 = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
@@ -893,7 +892,6 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
     set_row_stride(stride_dimensions[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
-
     set_parameters(string_to_tensor(read_xml_string(convolutional_layer_element, "Parameters")));
 }
 
@@ -977,7 +975,6 @@ ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation(const Index
 
 void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-
     batch_samples_number = new_batch_samples_number;
 
     layer = new_layer;
@@ -1012,10 +1009,6 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                                kernel_height,
                                                kernel_width,
                                                kernel_channels);
-
-    //image_convolutions_derivatives.resize(output_height,
-    //                                      output_width,
-    //                                      1);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,

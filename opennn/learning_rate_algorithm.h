@@ -9,7 +9,6 @@
 #ifndef LEARNINGRATEALGORITHM_H
 #define LEARNINGRATEALGORITHM_H
 
-#include "neural_network.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "statistics.h"
@@ -24,7 +23,7 @@ public:
 
    enum class LearningRateMethod{GoldenSection, BrentMethod};
 
-   explicit LearningRateAlgorithm(LossIndex* = nullptr);
+   LearningRateAlgorithm(LossIndex* = nullptr);
 
    struct Triplet
    {
@@ -86,8 +85,6 @@ public:
 
        inline void check() const
        {
-           ostringstream buffer;
-
            if(U.first < A.first)
               throw runtime_error("U is less than A:\n" + struct_to_string());
 

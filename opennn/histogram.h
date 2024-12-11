@@ -8,16 +8,15 @@ namespace opennn
 
 struct Histogram
 {
+  Histogram(const Index& = 0);
 
-  explicit Histogram(const Index& = 0);
+  Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
-  explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+  Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-  explicit Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+  Histogram(const Tensor<type, 1>&, const Index&);
 
-  explicit Histogram(const Tensor<type, 1>&, const Index&);
-
-  explicit Histogram(const Tensor<type, 1>&);
+  Histogram(const Tensor<type, 1>&);
 
   // Methods
 
@@ -39,7 +38,7 @@ struct Histogram
 
   Index calculate_frequency(const type&) const;
 
-  void save(const string&) const;
+  void save(const filesystem::path&) const;
 
   Tensor<type, 1> minimums;
 

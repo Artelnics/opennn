@@ -9,8 +9,6 @@
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H
 
-
-#include "loss_index.h"
 #include "optimization_algorithm.h"
 
 namespace opennn
@@ -23,7 +21,7 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-   explicit StochasticGradientDescent(LossIndex* = nullptr);
+   StochasticGradientDescent(LossIndex* = nullptr);
 
    const type& get_initial_learning_rate() const;
    const type& get_initial_decay() const;
@@ -33,7 +31,7 @@ public:
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
 
-   void set_default() final;
+   void set_default() override;
 
    void set_batch_samples_number(const Index&);
 
@@ -52,15 +50,15 @@ public:
 
    void update_parameters(BackPropagation& , StochasticGradientDescentData&) const;
 
-   TrainingResults perform_training() final;
+   TrainingResults perform_training() override;
 
-   string write_optimization_algorithm_type() const final;
+   string write_optimization_algorithm_type() const override;
 
-   Tensor<string, 2> to_string_matrix() const final;
+   Tensor<string, 2> to_string_matrix() const override;
 
-   void from_XML(const XMLDocument&) final;
+   void from_XML(const XMLDocument&) override;
 
-   void to_XML(XMLPrinter&) const final;
+   void to_XML(XMLPrinter&) const override;
 
 private:
 
@@ -92,7 +90,7 @@ private:
 
 struct StochasticGradientDescentData : public OptimizationAlgorithmData
 {
-    explicit StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
+    StochasticGradientDescentData(StochasticGradientDescent* = nullptr);
 
     void set(StochasticGradientDescent* = nullptr);
 

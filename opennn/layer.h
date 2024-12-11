@@ -9,7 +9,6 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#include "pch.h"
 #include "tinyxml2.h"
 #include "layer_forward_propagation.h"
 #include "layer_back_propagation.h"
@@ -51,7 +50,7 @@ public:
                     Embedding,
                     Detection};
 
-    explicit Layer();
+    Layer();
 
     string get_name() const;
 

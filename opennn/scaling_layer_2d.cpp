@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
 
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
@@ -47,12 +46,12 @@ Descriptives ScalingLayer2D::get_descriptives(const Index& index) const
 
 Tensor<type, 1> ScalingLayer2D::get_minimums() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> minimums(neurons_number);
+    Tensor<type, 1> minimums(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         minimums[i] = descriptives[i].minimum;
 
     return minimums;
@@ -61,12 +60,12 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
 
 Tensor<type, 1> ScalingLayer2D::get_maximums() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> maximums(neurons_number);
+    Tensor<type, 1> maximums(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         maximums[i] = descriptives[i].maximum;
 
     return maximums;
@@ -75,12 +74,12 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
 
 Tensor<type, 1> ScalingLayer2D::get_means() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> means(neurons_number);
+    Tensor<type, 1> means(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         means[i] = descriptives[i].mean;
 
     return means;
@@ -89,12 +88,12 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
 
 Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    Tensor<type, 1> standard_deviations(neurons_number);
+    Tensor<type, 1> standard_deviations(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         standard_deviations[i] = descriptives[i].standard_deviation;
 
     return standard_deviations;
@@ -109,12 +108,12 @@ vector<Scaler> ScalingLayer2D::get_scaling_methods() const
 
 vector<string> ScalingLayer2D::write_scalers() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "None";
         else if(scalers[i] == Scaler::MinimumMaximum)
@@ -134,12 +133,12 @@ vector<string> ScalingLayer2D::write_scalers() const
 
 vector<string> ScalingLayer2D::write_scalers_text() const
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<string> scaling_methods_strings(neurons_number);
+    vector<string> scaling_methods_strings(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(scalers[i] == Scaler::None)
             scaling_methods_strings[i] = "no scaling";
         else if(scalers[i] == Scaler::MeanStandardDeviation)
@@ -244,12 +243,12 @@ void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
 
 void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_string)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
-    vector<Scaler> new_scaling_methods(neurons_number);
+    vector<Scaler> new_scaling_methods(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         if(new_scaling_methods_string[i] == "None")
             new_scaling_methods[i] = Scaler::None;
         else if(new_scaling_methods_string[i] == "MinimumMaximum")
@@ -292,20 +291,20 @@ void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_s
 
 void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         set_scaler(i, new_scaling_methods_string);
 }
 
 
 void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     #pragma omp parallel for
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
         scalers[i] = new_scaling_method;
 }
 
@@ -320,7 +319,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 {
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
 
     ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
         static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.get());
@@ -329,7 +328,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
-    for(Index i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
 
@@ -426,7 +425,7 @@ string ScalingLayer2D::write_minimum_maximum_expression(const vector<string>& in
 
 string ScalingLayer2D::write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
 
     ostringstream buffer;
 
@@ -507,7 +506,7 @@ void ScalingLayer2D::print() const
 {
     cout << "Scaling layer" << endl;
 
-    const Index inputs_number = get_input_dimensions()[0];
+    const Index inputs_number = get_inputs_number();
 
     const vector<string> scalers_text = write_scalers_text();
 
@@ -528,10 +527,10 @@ void ScalingLayer2D::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
 
-    const Index neurons_number = get_output_dimensions()[0];
+    const Index outputs_number = get_outputs_number();
     const vector<string> scaling_methods_string = write_scalers();
 
-    for (Index i = 0; i < neurons_number; i++) 
+    for (Index i = 0; i < outputs_number; i++)
     {
         printer.OpenElement("ScalingNeuron");
         printer.PushAttribute("Index", int(i + 1));
