@@ -419,6 +419,9 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
             layer_delta_pairs[i],
             forward_propagation.layers[i],
             back_propagation.neural_network.layers[i]);
+
+    // for(Index i = 0; i < layer_delta_pairs.size(); i++)
+    //     cout<<"layer delta pairs "<<i<<" size : "<<layer_delta_pairs[i].size()<<endl;
     // TensorMap<Tensor<type, 3>> deltas = tensor_map_3(layer_delta_pairs[0][0]);
     // cout<<deltas<<endl;
 }

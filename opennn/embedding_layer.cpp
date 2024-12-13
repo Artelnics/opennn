@@ -232,6 +232,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs);
+
 }
 
 
