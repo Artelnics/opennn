@@ -270,7 +270,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index output_width = get_output_width();
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-
+    
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     // Forward propagation
@@ -286,7 +286,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& convolutions_derivatives =
-        convolutional_layer_back_propagation->convolutions_derivatives;
+        convolutional_layer_back_propagation->convolutions_derivatives;    
 
     Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
 
@@ -294,16 +294,13 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     type* synaptic_weights_data = (type*)synaptic_weights.data();
 
-    Tensor<type, 4>& kernel_synaptic_weights_derivatives = convolutional_layer_back_propagation->kernel_synaptic_weights_derivatives;
+    Tensor<type, 4>& rotated_synaptic_weights = convolutional_layer_back_propagation->rotated_synaptic_weights;
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
+    const Index kernel_synaptic_weights_number = kernel_height*kernel_width*kernel_channels;
 
-    Tensor<type, 0> biases_derivatives_sum;
-
-    Tensor<type, 3> rotated_kernel_synaptic_weights;
-    Tensor<type, 2> rotated_kernel_slice;
+    vector<Tensor<type, 2>> rotated_slices(input_channels);
     Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
     Tensor<type, 2> channel_convolution(input_height, input_width);
 
@@ -321,67 +318,79 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
-    // Biases synaptic weights and input derivatives
+    // Biases derivatives
 
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {       
-        TensorMap<Tensor<type, 3>> kernel_synaptic_weights(
-                                   synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
-                                   kernel_height,
-                                   kernel_width,
-                                   kernel_channels);
+    biases_derivatives.device(*thread_pool_device) = convolutions_derivatives.sum(convolutions_dimensions_3d);
 
-        TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
-                                   convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
-                                   batch_samples_number,
-                                   output_height,
-                                   output_width);
-        
-        // Biases derivatives
+    // Synaptic weigth derivatives
+    
+    #pragma omp parallel for
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+            batch_samples_number,
+            output_height,
+            output_width);
 
-        biases_derivatives_sum.device(*thread_pool_device) = kernel_convolutions_derivatives.sum();
-
-        biases_derivatives(kernel_index) = biases_derivatives_sum();
-
-        // Synaptic weights derivatives
+        TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
+            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number, 
+            1, 
+            kernel_height, 
+            kernel_width, 
+            kernel_channels);
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+    }
+    
+    // Input derivatives
 
-        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
-               kernel_synaptic_weights_derivatives.data(),
-               kernel_synaptic_weights_number * sizeof(type));
+    rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
+    
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+            batch_samples_number,
+            output_height,
+            output_width);
 
-        // Input derivatives
+        const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
+            rotated_synaptic_weights.data() + kernel_index * kernel_synaptic_weights_number,
+            kernel_height,
+            kernel_width,
+            kernel_channels);
 
-        rotated_kernel_synaptic_weights = kernel_synaptic_weights.reverse(reverse_dimensions);
-        
+        #pragma omp parallel for
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) {
+            rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
+        }
+
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
-            image_kernel_convolutions_derivatives_padded 
+            image_kernel_convolutions_derivatives_padded
                 = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
-                rotated_kernel_slice = rotated_kernel_synaptic_weights.chip(channel_index, 2);
-
-                channel_convolution.device(*thread_pool_device) 
-                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
+                channel_convolution.device(*thread_pool_device)
+                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
 
                 #pragma omp parallel for
-                for(Index x = 0; x < input_height; ++x)
-                    for(Index y = 0; y < input_width; ++y)
-                        input_derivatives(image_index, x, y, channel_index) += channel_convolution(x, y);
+                for (Index height = 0; height < input_height; ++height)
+                    for (Index width = 0; width < input_width; ++width)
+                        input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
             }
         }
     }
-    /*
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    cout << "Tiempo convolution back propagate: "
-        << duration.count() / 1000 << "::"
-        << duration.count() % 1000
-        << " segundos::milisegundos" << endl;
-    */
+
+    //auto end = chrono::high_resolution_clock::now();
+    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    //cout << "Tiempo convolution back propagate: "
+    //    << duration.count() / 1000 << "::"
+    //    << duration.count() % 1000
+    //    << " segundos::milisegundos" << endl;
+    
 }
 
 
@@ -1012,10 +1021,10 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                         kernel_width,
                                         kernel_channels);
 
-    kernel_synaptic_weights_derivatives.resize(1,
-                                               kernel_height,
-                                               kernel_width,
-                                               kernel_channels);
+    rotated_synaptic_weights.resize(kernel_height,
+                                    kernel_width,
+                                    kernel_channels,
+                                    kernels_number);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,
