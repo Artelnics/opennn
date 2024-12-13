@@ -255,7 +255,6 @@ void PoolingLayer::set_pooling_method(const string& new_pooling_method)
 }
 
 
-
 void PoolingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool& is_training)
@@ -313,6 +312,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
+    //auto start = chrono::high_resolution_clock::now();
+
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
 
@@ -352,7 +353,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
 
     #pragma omp parallel for
-
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
@@ -361,6 +361,14 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
+    /*
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo max pooling forward propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
+    */
 }
 
 
@@ -396,6 +404,8 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                               unique_ptr<LayerForwardPropagation>& forward_propagation,
                                               unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    //auto start = chrono::high_resolution_clock::now();
+
     const Index batch_samples_number = inputs.dimension(0);
 
     const Index channels = inputs.dimension(3);
@@ -421,9 +431,9 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     
     input_derivatives.setZero();
 
-    #pragma omp parallel
-    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
-        for (Index channel_index = 0; channel_index < channels; channel_index++)
+    #pragma omp parallel for
+    for (Index channel_index = 0; channel_index < channels; channel_index++)
+        for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
             for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
                 for (Index output_width_index = 0; output_width_index < output_width; output_width_index++)
                 {
@@ -432,9 +442,16 @@ void PoolingLayer::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                     const Index input_row = output_height_index * row_stride + maximal_index % pool_height;
                     const Index input_column = output_width_index * column_stride + maximal_index / pool_width;
 
-                    input_derivatives(batch_index, input_row, input_column, channel_index) 
+                    input_derivatives(batch_index, input_row, input_column, channel_index)
                         += deltas(batch_index, output_height_index, output_width_index, channel_index);
                 }
+
+    //auto end = chrono::high_resolution_clock::now();
+    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    //cout << "Tiempo max pooling back propagate: "
+    //    << duration.count() / 1000 << "::"
+    //    << duration.count() % 1000
+    //    << " segundos::milisegundos" << endl;
 }
 
 
