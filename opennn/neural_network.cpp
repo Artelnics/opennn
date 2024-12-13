@@ -434,7 +434,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
-        const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::AveragePooling;
+        const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
 
         add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                             pool_dimensions,

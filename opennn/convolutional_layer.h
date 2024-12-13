@@ -173,7 +173,7 @@ private:
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
 
-   const Eigen::array<ptrdiff_t, 3> reverse_dimensions = {1, 1, 0};
+   const Eigen::array<ptrdiff_t, 4> reverse_dimensions = {1, 1, 0, 0};
 
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
@@ -228,12 +228,12 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
    //Tensor<type, 3> image_convolutions_derivatives;
 
-   Tensor<type, 4> kernel_synaptic_weights_derivatives;
    Tensor<type, 4> convolutions_derivatives;
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> biases_derivatives;
    Tensor<type, 4> synaptic_weights_derivatives;
+   Tensor<type, 4> rotated_synaptic_weights;
 
 };
 
