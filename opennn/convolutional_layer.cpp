@@ -333,10 +333,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             output_height,
             output_width);
 
-        //biases_derivatives_sum.device(*thread_pool_device) = kernel_convolutions_derivatives.sum();
-
-        //bias_derivatives(kernel_index) = biases_derivatives_sum();
-
         // Synaptic weights derivatives
 
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
@@ -368,10 +364,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             kernel_channels);
 
         #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) {
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
-        }
-
+        
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
             image_kernel_convolutions_derivatives_padded
@@ -396,7 +391,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     //    << duration.count() / 1000 << "::"
     //    << duration.count() % 1000
     //    << " segundos::milisegundos" << endl;
-    
 }
 
 
