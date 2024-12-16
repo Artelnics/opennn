@@ -29,9 +29,9 @@ public:
                                   RectifiedLinear};
 
    PerceptronLayer3D(const Index& = 0,
-                              const Index& = 0,
-                              const Index& = 0,
-                              const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+                     const Index& = 0,
+                     const Index& = 0,
+                     const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;

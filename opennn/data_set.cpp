@@ -6,9 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <cassert>
-
-
 #include "data_set.h"
 #include "statistics.h"
 #include "correlations.h"

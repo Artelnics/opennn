@@ -62,13 +62,12 @@ TEST(DataSetTest, VariableDescriptives)
     const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
 
     EXPECT_EQ(variable_descriptives.size(), 3);
-//    EXPECT_NEAR(variable_descriptives[0].minimum, type(1000), NUMERIC_LIMITS_MIN);
-//    EXPECT_NEAR(variable_descriptives[1].minimum, type(2), NUMERIC_LIMITS_MIN);
-//    EXPECT_NEAR(variable_descriptives[2].minimum, 0, NUMERIC_LIMITS_MIN);
-//    EXPECT_NEAR(variable_descriptives[0].maximum, - type(1), NUMERIC_LIMITS_MIN);
-//    EXPECT_NEAR(variable_descriptives[1].maximum, - type(4), NUMERIC_LIMITS_MIN);
-//    EXPECT_NEAR(variable_descriptives[2].maximum, - type(2), NUMERIC_LIMITS_MIN);
-
+    EXPECT_NEAR(variable_descriptives[0].minimum, type(-1000), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[1].minimum, type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[2].minimum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].maximum, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[1].maximum, type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[2].maximum, type(2), NUMERIC_LIMITS_MIN);
 }
 
 
@@ -86,16 +85,16 @@ TEST(DataSetTest, RawVariableDistributions)
 
     const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
 
-//    EXPECT_EQ(histograms.size(), 3);
-/*
-    EXPECT_NEAR(histograms(0).frequencies(0), 2, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms(1).frequencies(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms(2).frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(histograms.size(), 3);
 
-    EXPECT_NEAR(histograms(0).centers(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms(1).centers(0), 1, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(histograms(2).centers(0), 1, NUMERIC_LIMITS_MIN);
-*/
+    EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+
+    EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
+
 }
 
 

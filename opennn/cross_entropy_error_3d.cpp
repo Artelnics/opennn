@@ -67,7 +67,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
 
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)

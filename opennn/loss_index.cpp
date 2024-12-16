@@ -286,7 +286,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
         layers[i]->insert_squared_errors_Jacobian_lm(back_propagation_lm.neural_network.layers[i],
                                                      index,
                                                      back_propagation_lm.squared_errors_jacobian);
-        // @todo crashes here
+
         index += layer_parameter_numbers[i] * batch_samples_number;
     }
 
