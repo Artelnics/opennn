@@ -329,7 +329,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
 
                 for(Index j = 0; j < categories_number; j++)
                 {
-                    if(abs(data(sample_index, variable_index+j) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                    if(abs(data(sample_index, variable_index+j) - type(1)) < NUMERIC_LIMITS_MIN)
                     {
                         sample_string += raw_variable.categories[j];
                         break;
@@ -1738,7 +1738,6 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
-
     input_dimensions = new_input_dimensions;
 
     target_dimensions = new_target_dimensions;
@@ -1757,19 +1756,15 @@ void DataSet::set(const Index& new_samples_number,
                                                 new_target_dimensions.end(),
                                                 1,
                                                 multiplies<Index>());
-
-    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
-
-    target_dimensions = { targets_number };
-
-    const Index new_variables_number = new_inputs_number + targets_number;
+    
+    const Index new_variables_number = new_inputs_number + new_targets_number;
 
     data.resize(new_samples_number, new_variables_number);
 
     raw_variables.resize(new_variables_number);
 
     set_default();
-
+    
     if (model_type == ModelType::ImageClassification)
     {        
         const Index raw_variables_number = new_inputs_number + 1;
@@ -1782,7 +1777,7 @@ void DataSet::set(const Index& new_samples_number,
                 RawVariableType::Numeric,
                 Scaler::ImageMinMax);
         
-        if (targets_number == 1)
+        if (new_targets_number == 1)
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Binary,
@@ -1809,9 +1804,8 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     sample_uses.resize(new_samples_number);
-
+    
     split_samples_random();
-
 }
 
 
@@ -1872,6 +1866,12 @@ void DataSet::set_model_type(const DataSet::ModelType& new_model_type)
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
+    if (new_data.dimension(0) != get_samples_number())
+        throw runtime_error("Rows number is not equal to samples number");
+
+    if (new_data.dimension(1) != get_variables_number())
+        throw runtime_error("Columns number is not equal to variables number");
+
     data = new_data;
 }
 
@@ -2077,14 +2077,14 @@ vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& ori
 }
 
 
-Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& bins_number) const
+vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bins_number) const
 {
     const Index raw_variables_number = raw_variables.size();
     const Index used_raw_variables_number = get_used_raw_variables_number();
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const Index used_samples_number = used_sample_indices.size();
 
-    Tensor<Histogram, 1> histograms(used_raw_variables_number);
+    vector<Histogram> histograms(used_raw_variables_number);
 
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
@@ -2111,7 +2111,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             for (Index j = 0; j < used_samples_number; j++)
                 raw_variable_data(j) = data(used_sample_indices[j], variable_index);
 
-            histograms(used_raw_variable_index++) = histogram(raw_variable_data, bins_number);
+            histograms[used_raw_variable_index++] = histogram(raw_variable_data, bins_number);
 
             variable_index++;
         }
@@ -2128,7 +2128,7 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             for (Index j = 0; j < categories_number; j++)
             {
                 for (Index k = 0; k < used_samples_number; k++)
-                    if (abs(data(used_sample_indices[k], variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+                    if (abs(data(used_sample_indices[k], variable_index) - type(1)) < NUMERIC_LIMITS_MIN)
                         categories_frequencies(j)++;
 
                 centers(j) = type(j);
@@ -2136,8 +2136,8 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
                 variable_index++;
             }
 
-            histograms(used_raw_variable_index).frequencies = categories_frequencies;
-            histograms(used_raw_variable_index).centers = centers;
+            histograms[used_raw_variable_index].frequencies = categories_frequencies;
+            histograms[used_raw_variable_index].centers = centers;
 
             used_raw_variable_index++;
         }
@@ -2149,11 +2149,11 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
             binary_frequencies.setZero();
 
             for (Index j = 0; j < used_samples_number; j++)
-                binary_frequencies(abs(data(used_sample_indices[j], variable_index) - type(1)) < type(NUMERIC_LIMITS_MIN)
+                binary_frequencies(abs(data(used_sample_indices[j], variable_index) - type(1)) < NUMERIC_LIMITS_MIN
                     ? 0
                     : 1)++;
 
-            histograms(used_raw_variable_index).frequencies = binary_frequencies;
+            histograms[used_raw_variable_index].frequencies = binary_frequencies;
             variable_index++;
             used_raw_variable_index++;
         }
@@ -2175,13 +2175,13 @@ Tensor<Histogram, 1> DataSet::calculate_raw_variables_distribution(const Index& 
 }
 
 
-Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
+vector<BoxPlot> DataSet::calculate_raw_variables_box_plots() const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
-    Tensor<BoxPlot, 1> box_plots(raw_variables_number);
+    vector<BoxPlot> box_plots(raw_variables_number);
 
 //    Index used_raw_variable_index = 0;
     Index variable_index = 0;
@@ -2195,7 +2195,7 @@ Tensor<BoxPlot, 1> DataSet::calculate_raw_variables_box_plots() const
         {
             if(raw_variable.use != VariableUse::None)
             {
-                box_plots(i) = box_plot(data.chip(variable_index, 1), used_sample_indices);
+                box_plots[i] = box_plot(data.chip(variable_index, 1), used_sample_indices);
 
 //                used_raw_variable_index++;
             }
@@ -2231,9 +2231,9 @@ Index DataSet::calculate_used_negatives(const Index& target_index)
         if (isnan(data(training_index, target_index))) 
             continue;
         
-        if(abs(data(training_index, target_index)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(training_index, target_index)) < NUMERIC_LIMITS_MIN)
             negatives++;
-        else if(abs(data(training_index, target_index) - type(1)) > type(NUMERIC_LIMITS_MIN)
+        else if(abs(data(training_index, target_index) - type(1)) > NUMERIC_LIMITS_MIN
              || data(training_index, target_index) < type(0))
             throw runtime_error("Training sample is neither a positive nor a negative: "
                                 + to_string(training_index) + "-" + to_string(target_index) + "-" + to_string(data(training_index, target_index)));        
@@ -2270,7 +2270,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_positive_sampl
     Index positive_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if(abs(data(used_sample_indices[i], target_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(used_sample_indices[i], target_index) - type(1)) < NUMERIC_LIMITS_MIN)
             positive_samples_number++;
 
     vector<Index> positive_used_sample_indices(positive_samples_number);
@@ -2280,7 +2280,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_positive_sampl
     {
         const Index sample_index = used_sample_indices[i];
 
-        if(abs(data(sample_index, target_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(sample_index, target_index) - type(1)) < NUMERIC_LIMITS_MIN)
             positive_used_sample_indices[positive_sample_index++] = sample_index;
     }
 
@@ -2300,7 +2300,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_sampl
     Index negative_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if(data(used_sample_indices[i], target_index) < type(NUMERIC_LIMITS_MIN))
+        if(data(used_sample_indices[i], target_index) < NUMERIC_LIMITS_MIN)
             negative_samples_number++;
 
     vector<Index> negative_used_sample_indices(negative_samples_number);
@@ -2310,7 +2310,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_negative_sampl
     {
         const Index sample_index = used_sample_indices[i];
 
-        if(data(sample_index, target_index) < type(NUMERIC_LIMITS_MIN))
+        if(data(sample_index, target_index) < NUMERIC_LIMITS_MIN)
             negative_used_sample_indices[negative_sample_index++] = sample_index;
     }
 
@@ -2330,7 +2330,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(con
     Index class_samples_number = 0;
 
     for(Index i = 0; i < samples_number; i++)
-        if(abs(data(used_sample_indices[i], class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(used_sample_indices[i], class_index) - type(1)) < NUMERIC_LIMITS_MIN)
             class_samples_number++;
 
     vector<Index> class_used_sample_indices(class_samples_number, 0);
@@ -2341,7 +2341,7 @@ vector<Descriptives> DataSet::calculate_raw_variable_descriptives_categories(con
     {
         const Index sample_index = used_sample_indices[i];
 
-        if(abs(data(sample_index, class_index) - type(1)) < type(NUMERIC_LIMITS_MIN))
+        if(abs(data(sample_index, class_index) - type(1)) < NUMERIC_LIMITS_MIN)
             class_used_sample_indices[class_sample_index++] = sample_index;
     }
 
@@ -2375,23 +2375,14 @@ Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
 }
 
 
-Tensor<type, 1> DataSet::calculate_used_targets_mean() const
+Tensor<type, 1> DataSet::calculate_means(const DataSet::SampleUse& sample_use, 
+                                         const DataSet::VariableUse& variable_use) const
 {
-    const vector<Index> used_indices = get_used_sample_indices();
+    const vector<Index> sample_indices = get_sample_indices(sample_use);
 
-    const vector<Index> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> variable_indices = get_variable_indices(variable_use);
 
-    return mean(data, used_indices, target_variable_indices);
-}
-
-
-Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
-{
-    const vector<Index> selection_indices = get_sample_indices(SampleUse::Selection);
-
-    const vector<Index> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
-
-    return mean(data, selection_indices, target_variable_indices);
+    return mean(data, sample_indices, variable_indices);
 }
 
 
@@ -3280,7 +3271,7 @@ vector<vector<Index>> DataSet::calculate_Tukey_outliers(const type& cleaning_par
     return_values[0].resize(samples_number, 0);
     return_values[1].resize(used_raw_variables_number, 0);
 
-    const Tensor<BoxPlot, 1> box_plots = calculate_raw_variables_box_plots();
+    const vector<BoxPlot> box_plots = calculate_raw_variables_box_plots();
 
     Index variable_index = 0;
     Index used_variable_index = 0;
@@ -3318,7 +3309,7 @@ vector<vector<Index>> DataSet::calculate_Tukey_outliers(const type& cleaning_par
         }
         else // Numeric
         {
-            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
+            const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
             if(interquartile_range < numeric_limits<type>::epsilon())
             {
@@ -3333,8 +3324,8 @@ vector<vector<Index>> DataSet::calculate_Tukey_outliers(const type& cleaning_par
             {
                 const Tensor<type, 1> sample = get_sample_data(sample_indices[Index(j)]);
 
-                if(sample(variable_index) < box_plots(i).first_quartile - cleaning_parameter*interquartile_range
-                || sample(variable_index) > box_plots(i).third_quartile + cleaning_parameter*interquartile_range)
+                if(sample(variable_index) < box_plots[i].first_quartile - cleaning_parameter*interquartile_range
+                || sample(variable_index) > box_plots[i].third_quartile + cleaning_parameter*interquartile_range)
                 {
                     return_values[0][j] = 1;
 
@@ -3367,7 +3358,7 @@ vector<vector<Index>> DataSet::replace_Tukey_outliers_with_NaN(const type& clean
     return_values[0].resize(samples_number, 0);
     return_values[1].resize(used_raw_variables_number, 0);
 
-    const Tensor<BoxPlot, 1> box_plots = calculate_raw_variables_box_plots();
+    const vector<BoxPlot> box_plots = calculate_raw_variables_box_plots();
 
     Index variable_index = 0;
     Index used_variable_index = 0;
@@ -3405,7 +3396,7 @@ vector<vector<Index>> DataSet::replace_Tukey_outliers_with_NaN(const type& clean
         }
         else // Numeric
         {
-            const type interquartile_range = box_plots(i).third_quartile - box_plots(i).first_quartile;
+            const type interquartile_range = box_plots[i].third_quartile - box_plots[i].first_quartile;
 
             if(interquartile_range < numeric_limits<type>::epsilon())
             {
@@ -3420,8 +3411,8 @@ vector<vector<Index>> DataSet::replace_Tukey_outliers_with_NaN(const type& clean
             {
                 const Tensor<type, 1> sample = get_sample_data(sample_indices[Index(j)]);
 
-                if(sample[variable_index] < (box_plots(i).first_quartile - cleaning_parameter * interquartile_range)
-                || sample[variable_index] > (box_plots(i).third_quartile + cleaning_parameter * interquartile_range))
+                if(sample[variable_index] < (box_plots[i].first_quartile - cleaning_parameter * interquartile_range)
+                || sample[variable_index] > (box_plots[i].third_quartile + cleaning_parameter * interquartile_range))
                 {
                     return_values[0][Index(j)] = 1;
 
@@ -3480,22 +3471,24 @@ void DataSet::set_data_rosenbrock()
 
 void DataSet::set_data_classification()
 {
-    set_random(data);
+    const Index samples_number = get_samples_number();
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index target_variables_number = get_variables_number(VariableUse::Target);
 
     data.setConstant(0.0);
-/*
-#pragma omp parallel for
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
-        for(Index j = 0; j < variables_number; j++)
-            data(i, j) = rand();
+        for(Index j = 0; j < input_variables_number; j++)
+            data(i, j) = get_random_type(-1, 1);
 
-        const Index random_class = rand() % classes_number;
-
-        data(i, variables_number + random_class) = 1;
+        target_variables_number == 1
+            ? data(i, input_variables_number) = uniform_int_distribution<>(0, 1)(mt19937{random_device{}()})
+            : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
     }
-*/
+
 }
 
 
@@ -3545,8 +3538,8 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums,
 
             const type value = data(sample_index, variable_index);
 
-            if(abs(value - minimums(i)) <= type(NUMERIC_LIMITS_MIN)
-            || abs(value - maximums(i)) <= type(NUMERIC_LIMITS_MIN))
+            if(abs(value - minimums(i)) <= NUMERIC_LIMITS_MIN
+            || abs(value - maximums(i)) <= NUMERIC_LIMITS_MIN)
                 continue;
 
             if(minimums(i) == maximums(i))

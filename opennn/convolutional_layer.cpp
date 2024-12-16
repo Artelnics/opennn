@@ -288,9 +288,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 4>& convolutions_derivatives =
         convolutional_layer_back_propagation->convolutions_derivatives;    
 
-    Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
+    Tensor<type, 1>& bias_derivatives = convolutional_layer_back_propagation->bias_derivatives;
 
-    type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
+    type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weight_derivatives.data();
 
     type* synaptic_weights_data = (type*)synaptic_weights.data();
 
@@ -320,7 +320,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Biases derivatives
 
-    biases_derivatives.device(*thread_pool_device) = convolutions_derivatives.sum(convolutions_dimensions_3d);
+    bias_derivatives.device(*thread_pool_device) = convolutions_derivatives.sum(convolutions_dimensions_3d);
 
     // Synaptic weigth derivatives
     
@@ -333,11 +333,13 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             output_height,
             output_width);
 
+        // Synaptic weights derivatives
+
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
-            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number, 
-            1, 
-            kernel_height, 
-            kernel_width, 
+            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number,
+            1,
+            kernel_height,
+            kernel_width,
             kernel_channels);
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
@@ -362,10 +364,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             kernel_channels);
 
         #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) {
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
-        }
-
+        
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
             image_kernel_convolutions_derivatives_padded
@@ -390,7 +391,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     //    << duration.count() / 1000 << "::"
     //    << duration.count() % 1000
     //    << " segundos::milisegundos" << endl;
-    
 }
 
 
@@ -408,8 +408,8 @@ void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
     ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
         static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
-    const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
-    const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
+    const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weight_derivatives.data();
+    const type* biases_derivatives_data = convolutional_layer_back_propagation->bias_derivatives.data();
 
     #pragma omp parallel sections
     {
@@ -1014,9 +1014,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                     output_width,
                                     kernels_number);
 
-    biases_derivatives.resize(kernels_number);
+    bias_derivatives.resize(kernels_number);
 
-    synaptic_weights_derivatives.resize(kernels_number,
+    synaptic_weight_derivatives.resize(kernels_number,
                                         kernel_height,
                                         kernel_width,
                                         kernel_channels);
@@ -1051,9 +1051,9 @@ void ConvolutionalLayerBackPropagation::print() const
 {
     cout << "Convolutional layer back propagation" << endl
          << "Biases derivatives:\n" << endl
-         << biases_derivatives << endl
+         << bias_derivatives << endl
          << "Synaptic weights derivatives:\n" << endl
-         << synaptic_weights_derivatives << endl;
+         << synaptic_weight_derivatives << endl;
 }
 
 }

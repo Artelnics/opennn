@@ -463,11 +463,8 @@ void TrainingStrategy::set_default()
     optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 
     if(has_neural_network())
-    {
         if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
             loss_method = LossMethod::CROSS_ENTROPY_ERROR;
-
-    }
 }
 
 

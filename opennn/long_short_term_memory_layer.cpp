@@ -2182,46 +2182,46 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
     layer = new_layer;
 
     const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index outputs_number = layer->get_outputs_number();
 
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(batch_samples_number, outputs_number);
 
-    previous_cell_states.resize(neurons_number);
-    previous_hidden_states.resize(neurons_number);
+    previous_cell_states.resize(outputs_number);
+    previous_hidden_states.resize(outputs_number);
 
     current_inputs.resize(inputs_number);
 
-    current_forget_activations.resize(neurons_number);
-    current_input_activations.resize(neurons_number);
-    current_state_activations.resize(neurons_number);
-    current_output_activations.resize(neurons_number);
+    current_forget_activations.resize(outputs_number);
+    current_input_activations.resize(outputs_number);
+    current_state_activations.resize(outputs_number);
+    current_output_activations.resize(outputs_number);
 
-    current_cell_states.resize(neurons_number);
-    current_hidden_states.resize(neurons_number);
+    current_cell_states.resize(outputs_number);
+    current_hidden_states.resize(outputs_number);
 
-    current_forget_activations_derivatives.resize(neurons_number);
-    current_input_activations_derivatives.resize(neurons_number);
-    current_state_activations_derivatives.resize(neurons_number);
-    current_output_activations_derivatives.resize(neurons_number);
+    current_forget_activations_derivatives.resize(outputs_number);
+    current_input_activations_derivatives.resize(outputs_number);
+    current_state_activations_derivatives.resize(outputs_number);
+    current_output_activations_derivatives.resize(outputs_number);
 
-    current_hidden_states_activations_derivatives.resize(neurons_number);
+    current_hidden_states_activations_derivatives.resize(outputs_number);
 
-    forget_activations.resize(batch_samples_number, neurons_number);
-    input_activations.resize(batch_samples_number, neurons_number);
-    state_activations.resize(batch_samples_number, neurons_number);
-    output_activations.resize(batch_samples_number, neurons_number);
+    forget_activations.resize(batch_samples_number, outputs_number);
+    input_activations.resize(batch_samples_number, outputs_number);
+    state_activations.resize(batch_samples_number, outputs_number);
+    output_activations.resize(batch_samples_number, outputs_number);
 
-    cell_states.resize(batch_samples_number, neurons_number);
-    hidden_states.resize(batch_samples_number, neurons_number);
+    cell_states.resize(batch_samples_number, outputs_number);
+    hidden_states.resize(batch_samples_number, outputs_number);
 
-    forget_activations_derivatives.resize(batch_samples_number, neurons_number);
-    input_activations_derivatives.resize(batch_samples_number, neurons_number);
-    state_activations_derivatives.resize(batch_samples_number, neurons_number);
-    output_activations_derivatives.resize(batch_samples_number, neurons_number);
+    forget_activations_derivatives.resize(batch_samples_number, outputs_number);
+    input_activations_derivatives.resize(batch_samples_number, outputs_number);
+    state_activations_derivatives.resize(batch_samples_number, outputs_number);
+    output_activations_derivatives.resize(batch_samples_number, outputs_number);
 
-    hidden_states_activations_derivatives.resize(batch_samples_number, neurons_number);
+    hidden_states_activations_derivatives.resize(batch_samples_number, outputs_number);
 }
 
 

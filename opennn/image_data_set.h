@@ -37,7 +37,7 @@ public:
     type get_random_vertical_translation_minimum() const;
     type get_random_vertical_translation_maximum() const;
 
-    void set_image_data_random();
+    void set_data_random() override;
 
     void set_input_dimensions(const dimensions&);
     void set_channels_number(const int&);

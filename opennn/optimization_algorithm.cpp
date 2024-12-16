@@ -465,7 +465,7 @@ void TrainingResults::print(const string &message)
          << "Epochs number: " << epochs_number-1 << endl
          << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-    if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
+    if(abs(training_error_history(epochs_number-1) + type(1)) < NUMERIC_LIMITS_MIN)
         cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
     cout << "Stopping condition: " << write_stopping_condition() << endl;

@@ -179,6 +179,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
 TrainingResults StochasticGradientDescent::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     TrainingResults results(maximum_epochs_number+1);
     
     check();

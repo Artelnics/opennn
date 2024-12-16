@@ -1,5 +1,6 @@
 #include "pch.h"
 
+#include "../opennn/tensors.h"
 #include "../opennn/cross_entropy_error_3d.h"
 #include "../opennn/probabilistic_layer_3d.h"
 #include "../opennn/embedding_layer.h"
@@ -18,23 +19,29 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
+    const Index samples_number = get_random_index(1, 10);
+    const Index inputs_number = get_random_index(1, 10);
+    const Index targets_number = get_random_index(1, 10);
+    const Index neurons_number = get_random_index(1, 10);
+
+
     DataSet data_set;
 
     NeuralNetwork neural_network;
-
+    
     CrossEntropyError3D cross_entropy_error_3d(&neural_network, &data_set);
-/*
+    
     // Data set
 
     data_set.set(DataSet::SampleUse::Training);
-
+    
     Batch batch(1, &data_set);
-    batch.fill({0}, {0}, {1});
-
+    //batch.fill({0}, {0}, {1});
+    
     // Neural network
-
-    neural_network.set();
 /*
+    NeuralNetwork neural_network;
+
     EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
     neural_network.add_layer(embedding_layer);
 
@@ -56,7 +63,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     EXPECT_EQ(is_zero(back_propagation.gradient));
 */
-    EXPECT_EQ(1, 1);
+    
 }
 
 
@@ -118,15 +125,11 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
 
     EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 */
-    EXPECT_EQ(1, 1);
+    
 }
 
 
 /*
-namespace opennn
-{
-
-
 void CrossEntropyError3DTest::test_back_propagate()
 {
     // Test multi-layer
@@ -201,8 +204,6 @@ void CrossEntropyError3DTest::test_back_propagate()
 
 void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 {
-    cout << "test_calculate_gradient_transformer\n";
-
     Index context_length;
     Index context_dimension;
 
