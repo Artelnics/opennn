@@ -23,19 +23,16 @@ int main()
 
         // Data set
         
-        //Random image data set 
-<<<<<<< HEAD
-        const Index samples_number = 10;
-=======
+        //Random image data set
+
         const Index samples_number = 3;
->>>>>>> d708ae72d027590cb19e8252e20216188803a48e
+
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 3;
         const Index targets = 2;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 /*
         image_data_set.set_data_random();
@@ -43,22 +40,10 @@ int main()
         image_data_set.set(DataSet::SampleUse::Training);
 /*
         //ImageDataSet image_data_set(0,{0,0,0},{0});
-=======
-        //ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
-=======
-        ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
->>>>>>> d708ae72d027590cb19e8252e20216188803a48e
 
         image_data_set.set_image_data_random();
 
         image_data_set.set(DataSet::SampleUse::Training);
-
-<<<<<<< HEAD
-        ImageDataSet image_data_set(0,{0,0,0},{0});
->>>>>>> 84ed8fe4fc319da8d5ad24db545c67fe6af6741a
-=======
-        //ImageDataSet image_data_set(0,{0,0,0},{0});
->>>>>>> d708ae72d027590cb19e8252e20216188803a48e
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");

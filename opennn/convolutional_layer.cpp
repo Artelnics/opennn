@@ -336,10 +336,10 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         // Synaptic weights derivatives
 
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
-            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number, 
-            1, 
-            kernel_height, 
-            kernel_width, 
+            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number,
+            1,
+            kernel_height,
+            kernel_width,
             kernel_channels);
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
