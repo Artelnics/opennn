@@ -479,7 +479,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 
                 TensorMap<Tensor<type, 1>> entry(entry_data, context_size);
 
-                calculate_random_uniform(type(0), type(1)) < dropout_rate 
+                get_random(type(0), type(1)) < dropout_rate 
                     ? entry.setZero()
                     : entry *= scaling_factor;
             }
@@ -488,7 +488,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 */   
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
-        attention_scores(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
+        attention_scores(i) = (get_random_type(type(0), type(1)) < dropout_rate)
             ? 0
             : attention_scores(i) * scaling_factor;
 }

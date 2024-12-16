@@ -64,10 +64,6 @@ TEST(ConjugateGradientTest, FrParameter)
 
 
 /*
-namespace opennn
-{
-
-
 void ConjugateGradientTest::test_calculate_FR_parameter()
 {
     neural_network.set();

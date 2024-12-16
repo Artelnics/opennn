@@ -8,52 +8,23 @@ TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
 {
     LongShortTermMemoryLayer long_short_term_memory_layer;
 
-//    EXPECT_EQ(long_short_term_memory_layer.get_input_dimensions(), dimensions{0});
-//    EXPECT_EQ(long_short_term_memory_layer.get_output_dimensions(), dimensions{1});
+    EXPECT_EQ(long_short_term_memory_layer.get_input_dimensions(), dimensions{0});
+//    EXPECT_EQ(long_short_term_memory_layer.get_output_dimensions(), dimensions{0});
 }
 
 
 TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
 {
-    EXPECT_EQ(1, 1);
+
+//    LongShortTermMemoryLayer long_short_term_memory_layer(inputs_number, neurons_number, time_steps);
+
+//    EXPECT_EQ(long_short_term_memory_layer.get_parameters_number(), 12);
 }
 
 /*
-namespace opennn
-{
-
-void LongShortTermMemoryLayerTest::test_constructor()
-{
-    // Test
-
-    long_short_term_memory_layer.set();
-
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    time_steps = 1;
-
-    long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
-
-    EXPECT_EQ(long_short_term_memory_layer.get_parameters_number() == 12);
-
-    // Test
-
-    inputs_number = 2;
-    neurons_number = 3;
-    time_steps = 1;
-
-    long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
-
-    EXPECT_EQ(long_short_term_memory_layer.get_parameters_number() == 72);
-}
-
 
 void LongShortTermMemoryLayerTest::test_forward_propagate()
 {
-    cout << "test_forward_propagate\n";
-
     Index samples_number;
     Index inputs_number;
     Index neurons_number;

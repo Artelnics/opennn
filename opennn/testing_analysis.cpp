@@ -622,7 +622,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            if(outputs_row(j) < type(NUMERIC_LIMITS_MIN))
+            if(outputs_row(j) < NUMERIC_LIMITS_MIN)
                 outputs_row(j) = type(1.0e-6);
             else if(double(outputs_row(j)) == 1.0)
                 outputs_row(j) = numeric_limits<type>::max();
@@ -1238,7 +1238,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
         maximum_index = Index(percentage* type(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; j++)
-            if(sorted_targets(j) < type(NUMERIC_LIMITS_MIN))
+            if(sorted_targets(j) < NUMERIC_LIMITS_MIN)
                  negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
@@ -1392,7 +1392,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
      {
          for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
          {
-             if(abs(calibration_plot(i, 0) + type(1)) < type(NUMERIC_LIMITS_MIN))
+             if(abs(calibration_plot(i, 0) + type(1)) < NUMERIC_LIMITS_MIN)
              {
                  calibration_plot = delete_row(calibration_plot, i);
 
@@ -2047,9 +2047,9 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     type positive_likelihood;
 
-    if(abs(classification_accuracy - type(1)) < type(NUMERIC_LIMITS_MIN))
+    if(abs(classification_accuracy - type(1)) < NUMERIC_LIMITS_MIN)
         positive_likelihood = type(1);
-    else if(abs(type(1) - specificity) < type(NUMERIC_LIMITS_MIN))
+    else if(abs(type(1) - specificity) < NUMERIC_LIMITS_MIN)
         positive_likelihood = type(0);
     else
         positive_likelihood = sensitivity/(type(1) - specificity);
@@ -2058,7 +2058,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     if(Index(classification_accuracy) == 1)
         negative_likelihood = type(1);
-    else if(abs(type(1) - sensitivity) < type(NUMERIC_LIMITS_MIN))
+    else if(abs(type(1) - sensitivity) < NUMERIC_LIMITS_MIN)
         negative_likelihood = type(0);
     else
         negative_likelihood = specificity/(type(1) - sensitivity);

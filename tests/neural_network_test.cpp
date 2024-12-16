@@ -43,10 +43,10 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-//    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
 //    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
-//    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
-//    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
 }
 
 
@@ -60,22 +60,22 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 {
 /*
     Inputs variables dimension = (channels, width, height)
-        Tensor<Index, 1> inputs_variables_dimension(3);
+    Tensor<Index, 1> inputs_variables_dimension(3);
     inputs_variables_dimension.setValues({ 1,28,28 });
+    
     Index blocks_number = 0;
     Index outputs_number = 10;
     Tensor<Index, 1> filters_dimensions(3);
     filters_dimensions.setValues({ 1,2,2 });
     NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number, filters_dimensions, outputs_number);
 
-    cout << "Layers number: " << neural_network_4.get_layers_number() << endl;
-    EXPECT_EQ(neural_network_4.get_layers_number() == 6); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
-    EXPECT_EQ(neural_network_4.get_layer(0)->get_type() == Layer::Type::Scaling2D);
-    EXPECT_EQ(neural_network_4.get_layer(1)->get_type() == Layer::Type::Convolutional);
-    EXPECT_EQ(neural_network_4.get_layer(2)->get_type() == Layer::Type::Pooling);
-    EXPECT_EQ(neural_network_4.get_layer(3)->get_type() == Layer::Type::Flatten);
-    EXPECT_EQ(neural_network_4.get_layer(4)->get_type() == Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network_4.get_layer(5)->get_type() == Layer::Type::Probabilistic);
+    EXPECT_EQ(neural_network_4.get_layers_number(), 6); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
+    EXPECT_EQ(neural_network_4.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network_4.get_layer(1)->get_type(), Layer::Type::Convolutional);
+    EXPECT_EQ(neural_network_4.get_layer(2)->get_type(), Layer::Type::Pooling);
+    EXPECT_EQ(neural_network_4.get_layer(3)->get_type(), Layer::Type::Flatten);
+    EXPECT_EQ(neural_network_4.get_layer(4)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network_4.get_layer(5)->get_type(), Layer::Type::Probabilistic);
 */
 }
 
@@ -86,9 +86,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1}, dimensions{1}));
 
-//    ForwardPropagation forward_propagation(1, &neural_network);
-
-//    EXPECT_EQ(1, 0);
+    ForwardPropagation forward_propagation(1, &neural_network);
 }
 
 
@@ -106,46 +104,27 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
 TEST(NeuralNetworkTest, CalculateOutputsZero)
 {
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
+    
+    const Index batch_samples_number = 3;
+    const Index inputs_number = 2;
+    const Index neurons_number = 4;
+    const Index outputs_number = 5;
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_constant(type(0));
 
-    Tensor<type, 2> inputs(1,1);
-    inputs.setConstant(type(0));
-
-//    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-
-//    EXPECT_EQ(outputs.size(), 1);
-//    EXPECT_EQ(outputs(0,0), 1);
-}
-
-/*
-
-TEST(NeuralNetworkTest, calculate_outputs)
-{
-
-    // Test
-
-    batch_samples_number = 3;
-    inputs_number = 2;
-    neurons_number = 4;
-    outputs_number = 5;
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-
-    neural_network.set_parameters_constant(type(0));
-
-    inputs.resize(batch_samples_number, inputs_number);
+    Tensor<type, 2> inputs(batch_samples_number, inputs_number);
     inputs.setConstant(type(0));  
 
-    outputs = neural_network.calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    EXPECT_EQ(outputs.size() == batch_samples_number * outputs_number);
-    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0,1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0,2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0,3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0,4)) < type(NUMERIC_LIMITS_MIN));
-
+//    EXPECT_EQ(outputs.size(), batch_samples_number * outputs_number);
+//    EXPECT_NEAR(outputs(0,0), 0, NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(outputs(0,1), 0, NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(outputs(0,2), 0, NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(outputs(0,3), 0, NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(outputs(0,4), 0, NUMERIC_LIMITS_MIN);
+/*
     // Test
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2});
@@ -158,8 +137,8 @@ TEST(NeuralNetworkTest, calculate_outputs)
     outputs = neural_network.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.size() == 2);
-    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,0) - type(3)) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(abs(outputs(0,1) - type(3)) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -174,9 +153,9 @@ TEST(NeuralNetworkTest, calculate_outputs)
 
     EXPECT_EQ(outputs.size() == 3);
 
-    EXPECT_EQ(abs(outputs(0,0) - 3.2847) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,1) - 3.2847) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,2) - 3.2847) < type(1e-3));
+    EXPECT_EQ(outputs(0,0), 3.2847, type(1e-3));
+    EXPECT_EQ(outputs(0,1), 3.2847, type(1e-3));
+    EXPECT_EQ(outputs(0,2), 3.2847, type(1e-3));
 
     // Test
 
@@ -252,13 +231,15 @@ TEST(NeuralNetworkTest, calculate_outputs)
     outputs = neural_network.calculate_outputs(inputs);
 
     EXPECT_EQ(outputs.dimension(1) == outputs_number);
-    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(1,0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0,0)) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(abs(outputs(1,0)) < NUMERIC_LIMITS_MIN);
+*/
 }
 
 
 TEST(NeuralNetworkTest, calculate_directional_inputs)
 {
+/*
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
     Tensor<type, 2> trainable_outputs;
@@ -271,7 +252,7 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
 
     // Test
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {3, 4, 2});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {3, 4, 2});
     neural_network.set_parameters_constant(type(0));
 
     inputs.resize(2,3);
@@ -283,8 +264,8 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
 
     directional_inputs = neural_network.calculate_directional_inputs(0, point, type(0), type(0), 0);
 
-    EXPECT_EQ(directional_inputs.rank() == 2);
-    EXPECT_EQ(directional_inputs.dimension(0) == 0);
+    EXPECT_EQ(directional_inputs.rank(), 2);
+    EXPECT_EQ(directional_inputs.dimension(0), 0);
 
     // Test
 
@@ -292,13 +273,13 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
 
     directional_inputs = neural_network.calculate_directional_inputs(2, point, type(-1), type(1), 3);
 
-    EXPECT_EQ(directional_inputs.rank() == 2);
-    EXPECT_EQ(directional_inputs.dimension(0) == 3);
-    EXPECT_EQ(directional_inputs.dimension(1) == 3);
-    EXPECT_EQ(abs(directional_inputs(0,2) + type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(1,2) - type(0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(2,2) - type(1)) < type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_EQ(directional_inputs.rank(), 2);
+    EXPECT_EQ(directional_inputs.dimension(0), 3);
+    EXPECT_EQ(directional_inputs.dimension(1), 3);
+//    EXPECT_NEAR(directional_inputs(0,2), + type(1), NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(directional_inputs(1,2), - type(0), NUMERIC_LIMITS_MIN);
+//    EXPECT_NEAR(directional_inputs(2,2), - type(1), NUMERIC_LIMITS_MIN);
+/*
     // Test
 
     point.setValues({type(1), type(2), type(3)});
@@ -308,19 +289,17 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
     EXPECT_EQ(directional_inputs.rank() == 2);
     EXPECT_EQ(directional_inputs.dimension(0) == 5);
     EXPECT_EQ(directional_inputs.dimension(1) == 3);
-    EXPECT_EQ(abs(directional_inputs(0,0) + type(4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(1,0) + type(3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(2,0) + type(2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(3,0) + type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(directional_inputs(4,0) + type(0)) < type(NUMERIC_LIMITS_MIN));
-
+    EXPECT_NEAR(abs(directional_inputs(0,0) + type(4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(directional_inputs(1,0) + type(3)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(directional_inputs(2,0) + type(2)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(directional_inputs(3,0) + type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(directional_inputs(4,0) + type(0)) < NUMERIC_LIMITS_MIN);
+*/
 }
 
-
+/*
 void NeuralNetworkTest::test_save()
 {
-    cout << "test_save\n";
-
     Index inputs_number;
     Index neurons_number;
     Index outputs_number;
@@ -350,8 +329,6 @@ void NeuralNetworkTest::test_save()
 
 void NeuralNetworkTest::test_load()
 {
-    cout << "test_load\n";
-
     const string file_name = "../data/neural_network.xml";
 
     // Test
@@ -367,9 +344,6 @@ void NeuralNetworkTest::test_load()
 
 void NeuralNetworkTest::test_forward_propagate()
 {
-
-    cout << "test_forward_propagate\n";
-
     {
         // Test
 
@@ -386,7 +360,7 @@ void NeuralNetworkTest::test_forward_propagate()
                         {0,0,0},
                         {0,0,0} });
 
-        data_set.set(data);
+        data_set.set_data(data);
 
         data_set.set(DataSet::SampleUse::Training);
 
@@ -405,18 +379,6 @@ void NeuralNetworkTest::test_forward_propagate()
         const Index neurons_number = perceptron_layer->get_neurons_number();
 
         perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-
-        Tensor<type, 1> biases_perceptron(neurons_number);
-
-        biases_perceptron.setConstant(type(1));
-
-        perceptron_layer->set_biases(biases_perceptron);
-
-        Tensor<type, 2> synaptic_weights_perceptron(inputs_number, neurons_number);
-
-        synaptic_weights_perceptron.setConstant(type(1));
-
-        perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
@@ -445,7 +407,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         data.resize(batch_samples_number, inputs_number + outputs_number);
         data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
-        data_set.set(data);
+        data_set.set_data(data);
         data_set.set_target();
         data_set.set(DataSet::SampleUse::Training);
 
@@ -473,22 +435,6 @@ void NeuralNetworkTest::test_forward_propagate()
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(outputs_number, outputs_number);
         probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
         const Index neurons_number_probabilistic = probabilistic_layer->get_neurons_number();
-
-        Tensor<type, 1> biases_perceptron(outputs_number);
-        biases_perceptron.setConstant(5);
-        perceptron_layer->set_biases(biases_perceptron);
-
-        Tensor<type, 2> synaptic_weights_perceptron(inputs_number, neurons_number_perceptron);
-        synaptic_weights_perceptron.setConstant(type(-1));
-        perceptron_layer->set_synaptic_weights(synaptic_weights_perceptron);
-
-        Tensor<type, 1> biases_probabilistic(outputs_number);
-        biases_probabilistic.setConstant(3);
-        probabilistic_layer->set_biases(biases_probabilistic);
-
-        Tensor<type, 2> synaptic_weights_probabilistic(neurons_number_perceptron, neurons_number_probabilistic);
-        synaptic_weights_probabilistic.setConstant(type(1));
-        probabilistic_layer->set_synaptic_weights(synaptic_weights_probabilistic);
 
         Tensor<unique_ptr<Layer>, 1> layers(2);
         layers.setValues({ perceptron_layer, probabilistic_layer });

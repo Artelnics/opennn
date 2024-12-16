@@ -23,20 +23,27 @@ int main()
 
         // Data set
         
-        //Random image data set 
+        //Random image data set
+
         const Index samples_number = 3;
+
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 3;
         const Index targets = 2;
 
+
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
+/*
+        image_data_set.set_data_random();
+
+        image_data_set.set(DataSet::SampleUse::Training);
+/*
+        //ImageDataSet image_data_set(0,{0,0,0},{0});
 
         image_data_set.set_image_data_random();
 
         image_data_set.set(DataSet::SampleUse::Training);
-
-        //ImageDataSet image_data_set(0,{0,0,0},{0});
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
@@ -82,14 +89,13 @@ int main()
         cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
-        */
-
+        
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+        */
         cout << "Bye!" << endl;
         
         return 0;

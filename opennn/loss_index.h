@@ -157,6 +157,7 @@ public:
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 2> calculate_numerical_jacobian();
    Tensor<type, 1> calculate_numerical_inputs_derivatives();
+   Tensor<type, 2> calculate_numerical_hessian();
 
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"

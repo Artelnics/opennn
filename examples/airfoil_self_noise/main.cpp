@@ -24,14 +24,17 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
-        // Data set
+        Tensor<type, 2> a(100, 100);
 
+        // Data set
+        
         DataSet data_set("C:/airfoil_self_noise.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        //data_set.set(DataSet::SampleUse::Training);
+        data_set.set(DataSet::SampleUse::Training);
+        
 
         // Neural network
 
@@ -46,7 +49,7 @@ int main()
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
+        
 //        training_strategy.set_display(false);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
@@ -59,13 +62,15 @@ int main()
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
+        training_strategy.get_Levenberg_Marquardt_algorithm()->set_maximum_epochs_number(1);
+
         //training_strategy.set_maximum_epochs_number(10000);
 
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-/*
+        /*
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_inputs_selection();
@@ -75,7 +80,7 @@ int main()
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //        testing_analysis.print_goodness_of_fit_analysis();
-/*
+
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
