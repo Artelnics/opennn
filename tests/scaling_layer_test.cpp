@@ -1,6 +1,5 @@
 #include "pch.h"
 
-
 #include "../opennn/neural_network.h"
 #include "../opennn/forward_propagation.h".h"
 #include "../opennn/scaling_layer_2d.h"
@@ -19,74 +18,61 @@ TEST(ScalingLayerTest, DefaultConstructor)
 
 TEST(ScalingLayerTest, GeneralConstructor)
 {
-/*
     ScalingLayer2D scaling_layer_2d({1});
 
     EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{ 1 });
-*/
+    EXPECT_EQ(scaling_layer_2d.get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(scaling_layer_2d.get_descriptives().size(), 1);
+    EXPECT_EQ(scaling_layer_2d.get_scaling_methods().size(), 1);
 }
 
 
+TEST(ScalingLayerTest, ForwardPropagate)
+{
+    const Index inputs_number = 1;
+    const Index samples_number = 1;
+
+    ScalingLayer2D scaling_layer_2d({ 1 });
 /*
-void ScalingLayer2DTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    ScalingLayer2D scaling_layer_1;
-
-    EXPECT_EQ(scaling_layer_1.get_type() == Layer::Type::Scaling2D);
-    EXPECT_EQ(scaling_layer_1.get_neurons_number() == 0);
-
-    ScalingLayer2D scaling_layer_2({ 3 });
-
-    EXPECT_EQ(scaling_layer_2.get_descriptives().size() == 3);
-    EXPECT_EQ(scaling_layer_2.get_scaling_methods().size() == 3);
-
-}
-
-
-void ScalingLayer2DTest::test_forward_propagate()
-{
-    cout << "test_forward_propagate\n";
-
-    Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
 
-    Tensor<Descriptives,1> inputs_descriptives;
+    Tensor<Descriptives, 1> inputs_descriptives;
 
     pair<type*, dimensions> input_pairs;
 
     // Test
-    
-    inputs_number = 1;
-    samples_number = 1;
+
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{inputs_number}));
+    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{ inputs_number }));
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
 
-    inputs.resize(samples_number, inputs_number);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setRandom();
 
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::None);
+    scaling_layer_2d.set({ inputs_number });
+    scaling_layer_2d.set_display(false);
+    scaling_layer_2d.set_scalers(Scaler::None);
 
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    neural_network.forward_propagate({input_pairs},
-                                     forward_propagation);
+    input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
+/*
+    neural_network.forward_propagate({ input_pairs },
+        forward_propagation);
 
     outputs = forward_propagation.get_last_trainable_layer_outputs_pair();
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == inputs_number);
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
 
-    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(outputs(0), inputs(0), NUMERIC_LIMITS_MIN);
+*/
+}
+
+/*
+void ScalingLayer2DTest::test_forward_propagate()
+{
     
     // Test
 
@@ -113,9 +99,9 @@ void ScalingLayer2DTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(0) == samples_number);
     EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(1) - inputs(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(2) - inputs(2)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0) - inputs(0)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(1) - inputs(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(2) - inputs(2)) < NUMERIC_LIMITS_MIN);
     
     // Test
 
@@ -142,7 +128,7 @@ void ScalingLayer2DTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(0) == samples_number);
     EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    EXPECT_EQ(abs(outputs(0) - inputs(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0) - inputs(0)) < NUMERIC_LIMITS_MIN);
     
     // Test
 
@@ -178,9 +164,9 @@ void ScalingLayer2DTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(0) == samples_number);
     EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
-    EXPECT_EQ(abs(outputs(0,0) - type(-1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(1,0) - type(0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(outputs(2,0) - type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0,0) - type(-1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(1,0) - type(0)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(2,0) - type(1)) < NUMERIC_LIMITS_MIN);
     
     // Test
 
@@ -215,7 +201,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     type scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation - inputs_descriptives(0).mean / inputs_descriptives(0).standard_deviation;
 
-    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
 
     // Test
     
@@ -250,7 +236,7 @@ void ScalingLayer2DTest::test_forward_propagate()
 
     scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
 
-    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -283,10 +269,10 @@ void ScalingLayer2DTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(1) == inputs_number);
 
     scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
-    EXPECT_EQ(abs(outputs(0, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
 
     scaled_input = inputs(1, 0) / inputs_descriptives(1).standard_deviation;
-    EXPECT_EQ(abs(outputs(1, 0) - scaled_input) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(1, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
 
 }
 */

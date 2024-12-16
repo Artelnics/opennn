@@ -134,6 +134,9 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     TrainingResults results(maximum_epochs_number + 1);
     
     check();
@@ -141,9 +144,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-
-    if(!loss_index)
-        throw runtime_error("Loss index is null.");
 
     // Data set
 
@@ -260,12 +260,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            
             // Data set
-         
+
             training_batch.fill(training_batches[iteration],
-                                input_variable_indices,
-                                target_variable_indices,
-                                context_variable_indices);
+                input_variable_indices,
+                target_variable_indices,
+                context_variable_indices);
 
             // Neural network
 
@@ -279,7 +280,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-
             //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
@@ -287,6 +287,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            //system("pause");
 
             training_error += training_back_propagation.error();
 

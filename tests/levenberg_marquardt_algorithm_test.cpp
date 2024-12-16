@@ -26,7 +26,7 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainEmpty)
 {
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
 
-//    levenberg_marquardt_algorithm.perform_training();
+    levenberg_marquardt_algorithm.perform_training();
 
 //    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
@@ -34,7 +34,7 @@ TEST(LevenbergMarquardtAlgorithmTest, TrainEmpty)
 
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
-    /*
+/*
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(1));
 
@@ -47,12 +47,12 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
     levenberg_marquardt_algorithm.set_display(false);
     
-    training_results = levenberg_marquardt_algorithm.perform_training();
+    TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
 
-    EXPECT_EQ(training_results.get_epochs_number() <= 1);
+    EXPECT_LE(training_results.get_epochs_number(), 1);
 
     // Test
-
+/*
     data_set.set(1,1,1);
     data_set.set_data_random();
 
@@ -111,12 +111,3 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 */
 }
-
-
-/*
-void LevenbergMarquardtAlgorithmTest::test_perform_training()
-{
-    
-}
-}
-*/

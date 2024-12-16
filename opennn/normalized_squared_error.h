@@ -21,16 +21,9 @@ public:
 
    NormalizedSquaredError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-    type get_normalization_coefficient() const;
-    type get_selection_normalization_coefficient() const;
-
     void set_normalization_coefficient() override;
-//    void set_normalization_coefficient(const type&);
 
     void set_time_series_normalization_coefficient();
-
-    void set_selection_normalization_coefficient();
-//    void set_selection_normalization_coefficient(const type&);
 
     void set_default();
 
@@ -39,8 +32,6 @@ public:
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
    type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   // Back propagation
      
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
@@ -49,8 +40,6 @@ public:
    void calculate_output_delta(const Batch&,
                                ForwardPropagation&,
                                BackPropagation&) const override;
-
-    // Back propagation LM
 
    void calculate_error_lm(const Batch&,
                            const ForwardPropagation&,
@@ -64,7 +53,7 @@ public:
                               BackPropagationLM&) const override;
 
    void calculate_error_hessian_lm(const Batch&,
-                                        BackPropagationLM&) const override;
+                                   BackPropagationLM&) const override;
 
    string get_loss_method() const override;
    string get_error_type_text() const override;
@@ -73,11 +62,9 @@ public:
 
    void to_XML(XMLPrinter&) const override;
 
-//protected:
+protected:
 
-   type normalization_coefficient = type(NAN);
-
-   type selection_normalization_coefficient = type(NAN);
+   type normalization_coefficient = type(1);
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"

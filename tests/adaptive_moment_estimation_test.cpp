@@ -26,15 +26,24 @@ TEST(AdaptiveMomentEstimationTest, GeneralConstructor)
 }
 
 
+TEST(AdaptiveMomentEstimationTest, TrainEmpty)
+{
+    AdaptiveMomentEstimation adaptive_moment_estimation;
+
+    //const TrainingResults training_results = adaptive_moment_estimation.perform_training();
+
+    //EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
+}
+
+
 TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 {
-
     DataSet data_set(1, {1}, {1});
     data_set.set_data_constant(type(1));
     
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {}, {1});
     neural_network.set_parameters_constant(type(1));
-/*
+
     TrainingStrategy training_strategy(&neural_network, &data_set);
   
     AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
@@ -44,8 +53,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 
     TrainingResults training_results = adaptive_moment_estimation->perform_training();
 
-    EXPECT_EQ(training_results.get_epochs_number() <= 1);
-*/
+    EXPECT_LE(training_results.get_epochs_number(), 1);
 }
 
 
@@ -100,11 +108,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 */
 }
 
-
 /*
-namespace opennn
-{
-
 void AdaptiveMomentEstimationTest::test_perform_training()
 {
     type old_error = numeric_limits<float>::max();
@@ -112,7 +116,6 @@ void AdaptiveMomentEstimationTest::test_perform_training()
 
     // Test
     {
-
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_random();
 
@@ -120,7 +123,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         neural_network.set_parameters_constant(-1);
 
         adaptive_moment_estimation.set_maximum_epochs_number(1);
-        /*
+        
         training_results = adaptive_moment_estimation.perform_training();
 
         error = training_results.get_training_error();
@@ -174,12 +177,5 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
         
     }
-
-    // Transformer model
-    {
-    }
-
-}
-
 }
 */

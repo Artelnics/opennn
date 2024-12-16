@@ -669,112 +669,6 @@ type standard_deviation(const Tensor<type, 1>& vector)
 }
 
 
-// type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
-// {
-//     return (variance(vector, indices) < type(1e-9))
-//         ? type(0)
-//         : sqrt(variance(vector, indices));
-// }
-
-
-// Tensor<type, 1> standard_deviation(const Tensor<type, 1>& vector, const Index& period)
-// {
-//     const Index size = vector.dimension(0);
-
-//     Tensor<type, 1> std(size);
-
-//     type mean_value = type(0);
-
-//     long double sum = 0.0;
-
-//     for(Index i = 0; i < size; i++)
-//     {
-//         const Index begin = i < period ? 0 : i - period + 1;
-//         const Index end = i;
-
-//         sum = type(0);
-//         mean_value = mean(vector, begin,end);
-
-//         for(Index j = begin; j < end+1; j++)
-//             sum += (vector(j) - mean_value) *(vector(j) - mean_value);
-
-//         std(i) = type(sqrt(sum/period));
-//     }
-
-//     return std;
-// }
-
-
-// type asymmetry(const Tensor<type, 1>& vector)
-// {
-//     const Index size = vector.dimension(0);
-
-//     if(size == 0 || size == 1)
-//         return type(0);
-
-//     const type standard_deviation_value = standard_deviation(vector);
-
-//     if(standard_deviation_value == 0)
-//         return type(0);
-
-//     const type mean_value = mean(vector);
-
-//     long double sum = 0.0;
-
-//     Index count = 0;
-
-//     for(Index i = 0; i < size; i++)
-//     {
-//         if (isnan(vector(i))) continue;
-
-//         sum += (vector(i) - mean_value) *(vector(i) - mean_value) *(vector(i) - mean_value);
-
-//         count++;
-//     }
-
-//     const type numerator = type(sum/count);
-//     const type denominator = standard_deviation_value * standard_deviation_value * standard_deviation_value;
-
-//     return numerator/denominator;
-// }
-
-
-// type kurtosis(const Tensor<type, 1>& vector)
-// {
-//     const Index size = vector.dimension(0);
-
-//     if(size == 1)
-//         return type(0);
-
-//     const type standard_deviation_value = standard_deviation(vector);
-
-//     if(standard_deviation_value == 0)
-//         return type(-3);
-
-//     const type mean_value = mean(vector);
-
-//     long double sum = 0.0;
-
-//     Index count = 0;
-
-//     for(Index i = 0; i < size; i++)
-//     {
-//         if (isnan(vector(i))) continue;
-        
-//         const long double deviation = vector(i) - mean_value;
-
-//         sum += deviation * deviation * deviation * deviation;
-
-//         count++;
-//     }
-
-//     const type numerator = type(sum/count);
-//     const type denominator = standard_deviation_value*standard_deviation_value*standard_deviation_value*standard_deviation_value;
-
-//     return numerator/denominator - type(3);
-// }
-
-
 type median(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -1064,7 +958,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
             for(Index j = 0; j < unique_values_number; j++)
             {
-                if(vector(i) - centers(j) < type(NUMERIC_LIMITS_MIN))
+                if(vector(i) - centers(j) < NUMERIC_LIMITS_MIN)
                 {
                     frequencies(j)++;
                     break;
@@ -1336,7 +1230,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
     minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums(column_indices_size);
-    maximums.setConstant(type(NUMERIC_LIMITS_MIN));
+    maximums.setConstant(NUMERIC_LIMITS_MIN);
 
     Tensor<double, 1> sums(column_indices_size);
     Tensor<double, 1> squared_sums(column_indices_size);
@@ -1562,7 +1456,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const vector<Index>& row_ind
     const Index row_indices_size = row_indices.size();
     const Index column_indices_size = column_indices.size();
 
-    if(row_indices_size == 0 && column_indices_size == 0) return Tensor<type, 1>();
+    if(row_indices_size == 0 && column_indices_size == 0) 
+        return Tensor<type, 1>();
 
     Index row_index;
     Index column_index;

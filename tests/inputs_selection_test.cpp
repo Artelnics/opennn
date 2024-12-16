@@ -10,7 +10,7 @@ TEST(InputsSelectionTest, DefaultConstructor)
 
 //    EXPECT_EQ(!gi2.has_training_strategy());
 
-    EXPECT_EQ(1, 1);
+    
 }
 
 
@@ -20,5 +20,5 @@ TEST(InputsSelectionTest, GeneralConstructor)
 
 //    EXPECT_EQ(gi1.has_training_strategy());
 
-    EXPECT_EQ(1, 1);
+    
 }

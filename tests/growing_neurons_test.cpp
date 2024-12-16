@@ -24,14 +24,7 @@ TEST(GrowingNeuronsTest, GeneralConstructor)
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-    TrainingStrategy training_strategy;
-    GrowingNeurons growing_neurons(&training_strategy);
 
-    EXPECT_EQ(growing_neurons.has_training_strategy(), true);
-
-    NeuronsSelectionResults neurons_selection_results;
-/*
-    // Test
 
     Tensor<type, 2> data(21, 2);
 
@@ -57,14 +50,20 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
                     {type(0.9),type(0)},
                     {type(1),type(0)}});
 
-    DataSet data_set(data);
+    DataSet data_set(21, {1}, {1});
+    
+    data_set.set_data(data);
 
-    Tensor<DataSet::VariableUse, 1> uses(2);
-    uses.setValues({ DataSet::VariableUse::Input, DataSet::VariableUse::Target });
-    data_set.set_raw_variables_uses(uses);
+    vector<DataSet::VariableUse> uses = { DataSet::VariableUse::Input, DataSet::VariableUse::Target };
+    data_set.set_raw_variable_uses(uses);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
     neural_network.set_parameters_constant(type(0));
+
+    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
+
+    NeuronsSelectionResults neurons_selection_results;
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -74,16 +73,13 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     growing_neurons.set_maximum_neurons_number(7);
     growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
-*/
-    //EXPECT_EQ(neural_network.get_layers_neurons_numbers()[0] == 1);
+
+    //EXPECT_EQ(neural_network.get_layers_neurons_numbers()[0], 1);
 }
 
 /*
-namespace opennn
-{
 void GrowingNeuronsTest::test_perform_neurons_selection()
 {
-
     growing_neurons.set_training_strategy(&training_strategy);
 
     Index samples_number;
@@ -123,7 +119,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
                     {type(0.9),type(0.9)},
                     {type(1),type(1)}});
 
-    data_set.set(data);
+    data_set.set_data(data);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {3}, {targets_number});
     neural_network.set_parameters_constant(type(0));

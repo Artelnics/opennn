@@ -151,10 +151,10 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 
-    Tensor<type, 3> combinations_derivatives;
+    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 };
 

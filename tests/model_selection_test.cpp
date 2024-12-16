@@ -20,15 +20,12 @@ TEST(ModelSelectionTest, GeneralConstructor)
     EXPECT_EQ(model_selection.has_training_strategy(), true);
 }
 
+TEST(ModelSelectionTest, NeuronsSelection)
+{
 /*
-namespace opennn
-{
+    data_set.generate_sum_data(20, 2);
 
-void ModelSelectionTest::test_perform_neurons_selection()
-{
-    data_set.generate_sum_data(20,2);
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1}, {2}, {1});
+    neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
 
     training_strategy.set_display(false);
 
@@ -47,36 +44,6 @@ void ModelSelectionTest::test_perform_neurons_selection()
     EXPECT_EQ(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
     EXPECT_EQ(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
     EXPECT_EQ(results.optimum_selection_error != 0.0);
-    EXPECT_EQ(results.optimal_neurons_number >= 1 );
-}
-
-
-void ModelSelectionTest::test_save()
-{
-    cout << "test_save\n";
-
-    string file_name = "../data/model_selection1.xml";
-
-    model_selection.save(file_name);
-}
-
-
-void ModelSelectionTest::test_load()
-{
-    cout << "test_load\n";
-
-    string file_name = "../data/model_selection.xml";
-    string file_name2 = "../data/model_selection2.xml";
-
-    model_selection.set_neurons_selection_method(ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
-
-    // Test
-
-    model_selection.save(file_name);
-    model_selection.load(file_name);
-    model_selection.save(file_name2);
-
-}
-
-}
+    EXPECT_EQ(results.optimal_neurons_number >= 1);
 */
+}

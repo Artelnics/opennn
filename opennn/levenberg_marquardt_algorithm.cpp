@@ -174,6 +174,8 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
 
     if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
@@ -445,7 +447,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 parameters_increment(i) = type(0);
             }

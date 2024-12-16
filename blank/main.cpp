@@ -6,10 +6,6 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-// This is a classical pattern recognition problem.
-
-// System includes
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -17,7 +13,6 @@
 #include <cstring>
 #include <time.h>
 
-// OpenNN includes
 #include "../opennn/opennn.h"
 
 using namespace std;
@@ -29,12 +24,37 @@ int main()
     {
         cout << "OpenNN. Blank project." << endl;
 
-        //std::wstring path = L"C:/áaa.csv";
+        const Index samples_number = get_random_index(1, 10);
+        const Index inputs_number = get_random_index(1, 10);
+        const Index targets_number = get_random_index(1, 10);
+        const Index neurons_number = get_random_index(1, 10);
 
-        //wcout << path << endl;
+        DataSet data_set(samples_number, { inputs_number }, { targets_number });
+        data_set.set_data_random();
+        data_set.set(DataSet::SampleUse::Training);
+        
+        //Batch batch(samples_number, &data_set);
+        /*
+        batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
+            data_set.get_variable_indices(DataSet::VariableUse::Input),
+            data_set.get_variable_indices(DataSet::VariableUse::Target));
+        /*
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+            { inputs_number }, { neurons_number }, { targets_number });
 
-        DataSet data_set(L"C:/áaa.csv", ";", true);
+        neural_network.set_parameters_random();
 
+        ForwardPropagation forward_propagation(samples_number, &neural_network);
+
+//        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+
+        // Loss index
+
+//        NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+
+//        BackPropagation back_propagation(samples_number, &normalized_squared_error);
+//        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+*/
         cout << "Bye!" << endl;
 
         return 0;

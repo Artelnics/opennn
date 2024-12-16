@@ -152,11 +152,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> combination_derivatives;
     Tensor<type, 2> input_derivatives;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 };
 
 
@@ -170,7 +170,7 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     void print() const override;
 
-    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> combination_derivatives;
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
