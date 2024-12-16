@@ -466,7 +466,7 @@ string Transformer::calculate_outputs(const vector<string>& context_string)
     Tensor<type, 2> context(batch_samples_number, context_length);
     context.setZero();
     context(0) = start_indicator;
-    
+
     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
     //else
     tokenize_wordpiece(context_tokens[0], context);
@@ -516,20 +516,21 @@ string Transformer::calculate_outputs(const vector<string>& context_string)
     // detokenize_whitespace(input, output_string);
     //else
 
-    detokenize_wordpiece(input, output_string); //coment for amazon reviews example
+    //detokenize_wordpiece(input, output_string); //coment for amazon reviews example
 
-    // // new for amazon reviews example
-    // cout<<input<<endl;
-    // if(input(0,0) == 0)
-    //     return "good";
-    // else if(input(0,0) == 1)
-    //     return "bad";
-    // else
-    //     return "unknown";
+    // new for amazon reviews example
 
-    // // end new
+    cout<<input<<endl;
+    if(input(0,1) == 9)
+        return "good";
+    else if(input(0,1) == 10)
+        return "bad";
+    else
+        return "unknown";
 
-    return output_string.str(); //coment for amazon reviews example
+    // end new
+
+    //return output_string.str(); //coment for amazon reviews example
     
 }
 

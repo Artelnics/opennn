@@ -86,8 +86,8 @@ int main()
 
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.9);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.01);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
@@ -118,13 +118,58 @@ int main()
         // string translation = testing_analysis.test_transformer({"I like dogs."},false);
         // cout<<translation<<endl;
 
+        string prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Buyer Beware, you could flush money right down the toilet."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Best I've found so far .... I've tried 2 other bluetooths and this one has the best quality (for both me and the listener) as well as ease of using."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Arrived quickly and much less expensive than others being sold."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"I can't use this case because the smell is disgusting."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Excellent sound, battery life and inconspicuous to boot!."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"I do not like the product. Very bad quality."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Incredible product. The sound is just excellent."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
 
 
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------
 
-       //  // Data Set
+        // Data Set
 
 
 
@@ -136,23 +181,15 @@ int main()
        //  const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
        //  const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
 
-       //  const Index maximum_completion_length = language_data_set.get_completion_length(); // 1 or 2
-
-       //  const Index completion_vocabulary_size = language_data_set.get_completion_vocabulary_size(); // 16
-
-       //  const Index embedding_depth = 64;
-
        //  cout<<language_data_set.get_context_length()<<endl;
        //  cout<<language_data_set.get_completion_length()<<endl;
 
-        // Transformer transformer;
+       //  Transformer transformer;
 
-        // transformer.set_input_vocabulary(completion_vocabulary); // !!!
-        // transformer.set_context_vocabulary(context_vocabulary); // !!!
+       //  transformer.set_input_vocabulary(completion_vocabulary); // !!!
+       //  transformer.set_context_vocabulary(context_vocabulary); // !!!
 
-
-
-        // const string outputs = transformer.calculate_outputs({"Hello, world!"});
+       //  const string outputs = transformer.calculate_outputs({"Hello, world!"});
 /*
         const dimensions completion_dimensions = {language_data_set.get_completion_length(),language_data_set.get_completion_vocabulary_size()};
         const dimensions context_dimensions = {language_data_set.get_context_length(),language_data_set.get_context_vocabulary_size()};

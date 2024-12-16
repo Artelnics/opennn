@@ -577,7 +577,8 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
                                              const vector<pair<type*, dimensions>>& delta_pairs,
                                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                                              unique_ptr<LayerBackPropagation>& back_propagation) const
-{    const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
+{
+    const TensorMap<Tensor<type, 3>> input = tensor_map_3(input_pairs[0]);
 
     const TensorMap<Tensor<type, 3>> context = tensor_map_3(input_pairs[1]);
 
@@ -760,6 +761,8 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         // cout<<aux_rows<<endl;
         softmax_derivatives_times_tensor(head_attention_weights, head_attention_weights_derivatives, head_attention_scores_derivatives, aux_rows);
 
+        head_attention_scores_derivatives.setZero();
+
         head_attention_scores_derivatives.device(*thread_pool_device) = head_attention_scores_derivatives * scaling_factor;
 
         // QUERY DERIVATIVES
@@ -809,17 +812,14 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         head_key_biases_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(biases_derivatives_sum_indices);
 
         head_value_biases_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(biases_derivatives_sum_indices);
-
+        head_value_biases_derivatives.setZero();
 
     }
-
+    value_weights_derivatives.setZero();
     projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(projection_biases_derivatives_sum_indices);
 
     // cout<<"next"<<endl;
     // cout<<back_propagation<<endl;
-
-
-
 }
 
 

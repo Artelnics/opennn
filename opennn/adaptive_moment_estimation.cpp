@@ -275,12 +275,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            
             // Data set
 
             training_batch.fill(training_batches[iteration],
-                                input_variable_indices,
-                                target_variable_indices,
-                                context_variable_indices);
+                input_variable_indices,
+                target_variable_indices,
+                context_variable_indices);
 
             // Neural network
 

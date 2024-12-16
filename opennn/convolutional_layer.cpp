@@ -204,6 +204,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
+    //auto start = chrono::high_resolution_clock::now();
+
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
@@ -233,6 +235,15 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
         calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
+    
+    /*
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo convolution forward propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
+    */
 }
 
 
@@ -241,6 +252,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    //auto start = chrono::high_resolution_clock::now();
     // Convolutional layer
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
@@ -362,6 +374,14 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             }
         }
     }
+    /*
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo convolution back propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
+    */
 }
 
 
