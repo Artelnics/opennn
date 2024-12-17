@@ -204,6 +204,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
+    //cout << "Calculando tiempo convolution forward..." << endl;
     //auto start = chrono::high_resolution_clock::now();
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
@@ -217,8 +218,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
-    preprocess_inputs(inputs, preprocessed_inputs); 
-    
+    preprocess_inputs(inputs, preprocessed_inputs);
+
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
@@ -231,13 +232,13 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 */
     }
 
-    if(is_training)
+    auto start_activations = chrono::high_resolution_clock::now();
+    if (is_training)
         calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
     
-    /*
-    auto end = chrono::high_resolution_clock::now();
+    /*auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
     cout << "Tiempo convolution forward propagate: "
         << duration.count() / 1000 << "::"
@@ -298,7 +299,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    const Index kernel_synaptic_weights_number = kernel_height*kernel_width*kernel_channels;
+    const Index kernel_size = kernel_height*kernel_width*kernel_channels;
 
     vector<Tensor<type, 2>> rotated_slices(input_channels);
     Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
@@ -334,7 +335,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             output_width);
 
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
-            synaptic_weights_derivatives_data + kernel_index * kernel_synaptic_weights_number, 
+            synaptic_weights_derivatives_data + kernel_index * kernel_size,
             1, 
             kernel_height, 
             kernel_width, 
@@ -356,16 +357,15 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             output_width);
 
         const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
-            rotated_synaptic_weights.data() + kernel_index * kernel_synaptic_weights_number,
+            rotated_synaptic_weights.data() + kernel_index * kernel_size,
             kernel_height,
             kernel_width,
             kernel_channels);
 
         #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) {
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
-        }
-
+        
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
             image_kernel_convolutions_derivatives_padded

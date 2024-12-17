@@ -312,7 +312,8 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
-    //auto start = chrono::high_resolution_clock::now();
+    cout << "Tiempo max pooling forward:" << endl;
+    auto start = chrono::high_resolution_clock::now();
 
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
@@ -335,7 +336,7 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         pool_width,
         row_stride,
         column_stride,
-        1,1,
+        1, 1,
         PADDING_VALID,
         type(padding_width));
 
@@ -346,29 +347,60 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     const Index pool_size = pool_height * pool_width;
     const Index output_size = output_height * output_width * channels;
-    const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height,output_width,channels });
+    const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
 
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
 
+    auto start_maximal_indices = chrono::high_resolution_clock::now();
+    /*
     #pragma omp parallel for
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
     {
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
-                                                          .shuffle(shuffle_dimensions)
-                                                          .reshape(reshape_dimensions);
+            .shuffle(shuffle_dimensions)
+            .reshape(reshape_dimensions);
 
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
+    }*/
+
+    #pragma omp parallel for
+    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    {
+        for (Index oh = 0; oh < output_height; oh++)
+        {
+            for (Index ow = 0; ow < output_width; ow++)
+            {
+                for (Index c = 0; c < channels; c++)
+                {
+                    Eigen::array<Index, 5> offsets = { batch_index, 0, oh, ow, c };
+                    Eigen::array<Index, 5> extents = { 1, pool_size, 1, 1, 1 };
+
+                    Tensor<type, 5> patch_slice = image_patches.slice(offsets, extents);
+
+                    Tensor<Index, 4> argmax_tensor = patch_slice.argmax(1);
+
+                    Index max_idx = argmax_tensor(0, 0, 0, 0);
+
+                    maximal_indices(batch_index, oh, ow, c) = max_idx;
+                }
+            }
+        }
     }
-    /*
+    auto end_maximal_indices = chrono::high_resolution_clock::now();
+    auto duration_maximal_indices = chrono::duration_cast<chrono::milliseconds>(end_maximal_indices - start_maximal_indices);
+    cout << "\tTiempo maximal_indices calculation: "
+        << duration_maximal_indices.count() / 1000 << "::"
+        << duration_maximal_indices.count() % 1000
+        << " segundos::milisegundos" << endl;
+    
     auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
     cout << "Tiempo max pooling forward propagate: "
         << duration.count() / 1000 << "::"
         << duration.count() % 1000
         << " segundos::milisegundos" << endl;
-    */
 }
 
 
