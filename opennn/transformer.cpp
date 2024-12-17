@@ -482,7 +482,8 @@ string Transformer::calculate_outputs(const vector<string>& context_string)
     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
     // const pair<type*, dimensions> input_pair(input.data(), { 1, 1 });
-
+cout<<context_length<<endl;
+    cout<<input_length<<endl;
     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
 
     const Index layers_number = get_layers_number();
@@ -513,24 +514,24 @@ string Transformer::calculate_outputs(const vector<string>& context_string)
     ostringstream output_string;
 
     //if(!imported_vocabulary)    
-    // detokenize_whitespace(input, output_string);
+    detokenize_whitespace(input, output_string);
     //else
-
-    //detokenize_wordpiece(input, output_string); //coment for amazon reviews example
+cout<<input<<endl;
+    // detokenize_wordpiece(input, output_string); //coment for amazon reviews example
 
     // new for amazon reviews example
-
+/*
     cout<<input<<endl;
-    if(input(0,1) == 9)
+    if(Index(input(0,1)) == 10)
         return "good";
-    else if(input(0,1) == 10)
+    else if(Index(input(0,1)) == 9)
         return "bad";
     else
         return "unknown";
-
+*/
     // end new
 
-    //return output_string.str(); //coment for amazon reviews example
+    return output_string.str(); //coment for amazon reviews example
     
 }
 
@@ -665,15 +666,15 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 }
 
 
-// void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
-// {
-//     for(Index i = 1; i < input_length; i++)
-//     {
-//         if(predictions(i) == 2)   break;
+void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
+{
+    for(Index i = 1; i < input_length; i++)
+    {
+        if(predictions(i) == 2)   break;
 
-//         output_string << input_vocabulary[Index(predictions(i))] << " ";
-//     }
-// }
+        output_string << input_vocabulary[Index(predictions(i))] << " ";
+    }
+}
 
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& output_string)

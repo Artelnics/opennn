@@ -57,6 +57,8 @@ int main()
         const dimensions context_dimensions = language_data_set.get_context_dimensions();
 
         Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
+        transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
         transformer.set_model_type_string("TextClassification");
         transformer.set_dropout_rate(0);
 
@@ -86,7 +88,7 @@ int main()
 
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.01);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.1);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
@@ -108,17 +110,84 @@ int main()
 
         transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
 
+        string prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Buyer Beware, you could flush money right down the toilet."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Best I've found so far .... I've tried 2 other bluetooths and this one has the best quality (for both me and the listener) as well as ease of using."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"Arrived quickly and much less expensive than others being sold."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+
+        // Data Set
+
+
+/*
+        LanguageDataSet language_data_set({0},{0});
+
+        language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
+
+
+        const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
+        const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
+
+        const Index embedding_depth = 64;
+        const Index perceptron_depth = 128;
+        const Index heads_number = 4;
+        const Index number_of_layers = 1;
+
+        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+
+        const dimensions completion_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
+
+        const dimensions context_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
+
+        Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
+        transformer.set_model_type_string("TextClassification");
+
+        transformer.set_input_vocabulary(completion_vocabulary);
+        transformer.set_context_vocabulary(context_vocabulary);
+
+        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+
+        string prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: good"<<endl;
+        cout<<endl;
+
+
         // cout << "Calculating confusion...." << endl;
-        // const Tensor<Index, 2> confusion = testing_analysis.calculate_sentimental_analysis_transformer_confusion();
+        // const Tensor<Index, 2> confusion = testing_analysis.calculate_transformer_confusion();
         // cout << "\nConfusion matrix:\n" << confusion << endl;
 
-        // string prediction = testing_analysis.test_transformer({"I only hear garbage for audio."},false);
-        // cout<<prediction<<endl;
 
-        // string translation = testing_analysis.test_transformer({"I like dogs."},false);
-        // cout<<translation<<endl;
 
-        string prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
+        prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
@@ -162,124 +231,6 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
-
-
-
-
-
-//----------------------------------------------------------------------------------------------------------------------------------------------
-
-        // Data Set
-
-
-
-       //  LanguageDataSet language_data_set({0},{0});
-
-       // language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
-
-
-       //  const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-       //  const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
-
-       //  cout<<language_data_set.get_context_length()<<endl;
-       //  cout<<language_data_set.get_completion_length()<<endl;
-
-       //  Transformer transformer;
-
-       //  transformer.set_input_vocabulary(completion_vocabulary); // !!!
-       //  transformer.set_context_vocabulary(context_vocabulary); // !!!
-
-       //  const string outputs = transformer.calculate_outputs({"Hello, world!"});
-/*
-        const dimensions completion_dimensions = {language_data_set.get_completion_length(),language_data_set.get_completion_vocabulary_size()};
-        const dimensions context_dimensions = {language_data_set.get_context_length(),language_data_set.get_context_vocabulary_size()};
-
-        cout<<language_data_set.get_context_length()<<endl;
-        cout<<language_data_set.get_completion_length()<<endl;
-
-        cout<<language_data_set.get_completion_vocabulary_size()<<endl;
-        cout<<language_data_set.get_context_vocabulary_size()<<endl;
-
-        // // Testing analysis
-
-        // const Index embedding_depth = 64;
-        // const Index perceptron_depth = 128;
-        // const Index heads_number = 4;
-        // const Index number_of_layers = 1;
-        // const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
-
-        // LanguageDataSet language_data_set(complexity, {"I only hear garbage for audio."});
-
-
-        // const Index embedding_depth = 64;
-        // const Index perceptron_depth = 128;
-        // const Index heads_number = 4;
-        // const Index number_of_layers = 1;
-
-        // const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // cout << "Calculating confusion...." << endl;
-        // const Tensor<Index, 2> confusion = testing_analysis.calculate_transformer_confusion();
-        // cout << "\nConfusion matrix:\n" << confusion << endl;
-
-
-
-        // prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: bad"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: good"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Buyer Beware, you could flush money right down the toilet."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: bad"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Best I've found so far .... I've tried 2 other bluetooths and this one has the best quality (for both me and the listener) as well as ease of using."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: good"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Arrived quickly and much less expensive than others being sold."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: good"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I can't use this case because the smell is disgusting."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: bad"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Excellent sound, battery life and inconspicuous to boot!."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: good"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"I do not like the product. Very bad quality."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: bad"<<endl;
-        // cout<<endl;
-
-        // prediction = testing_analysis.test_transformer({"Incredible product. The sound is just excellent."},false);
-        // cout<<prediction<<endl;
-        // cout<<"Target: good"<<endl;
-        // cout<<endl;
 
 
         // //only good reviews:

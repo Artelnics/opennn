@@ -64,7 +64,7 @@ public:
 //    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
 
-//    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
+    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
     void load_transformer(const string&);

@@ -1329,7 +1329,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
-    set_display(read_xml_bool(neural_network_element, "Display"));
+    //set_display(read_xml_bool(neural_network_element, "Display"));
 }
 
 
@@ -1966,6 +1966,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
         // }
 
         if(neural_network->get_model_type_string() == "TextClassification"){
+
             if (i == first_trainable_layer_index)
             {   vector<pair<type*, dimensions>> batch_input_pairs1;
                 batch_input_pairs1.push_back(batch_input_pairs[0]);
@@ -1974,7 +1975,8 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
             }
 
             if (i == first_trainable_layer_index+1)
-            {   vector<pair<type*, dimensions>> batch_input_pairs2;
+            {
+                vector<pair<type*, dimensions>> batch_input_pairs2;
                 batch_input_pairs2.push_back(batch_input_pairs[1]);
                 layer_input_pairs[i] = batch_input_pairs2;
                 continue;
@@ -1989,6 +1991,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
 
         const Index this_layer_inputs_number = this_layer_input_indices.size();
         layer_input_pairs[i].resize(this_layer_inputs_number);
+
         for (Index j = 0; j < this_layer_inputs_number; j++)
         {
             const Index this_layer_input_index = this_layer_input_indices[j];

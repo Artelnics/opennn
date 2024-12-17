@@ -301,8 +301,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "numerical gradient:\n" << numerical_gradient<< endl;
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-
+            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            //system("pause");
 
             training_error += training_back_propagation.error();
 

@@ -175,7 +175,7 @@ void LossIndex::back_propagate(const Batch& batch,
 
     // Regularization
 
-    add_regularization(back_propagation);   
+    add_regularization(back_propagation);
 }
 
 
