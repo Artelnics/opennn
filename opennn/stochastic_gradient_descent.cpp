@@ -226,8 +226,13 @@ TrainingResults StochasticGradientDescent::perform_training()
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
+    const Index training_batches_number = (training_batch_samples_number != 0)
+                                              ? training_samples_number / training_batch_samples_number
+                                              : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+                                               ? selection_samples_number / selection_batch_samples_number
+                                               : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);

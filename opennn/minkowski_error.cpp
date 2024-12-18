@@ -91,20 +91,27 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
+
+    const type coefficient = type(1.0 / batch_samples_number);
+
+    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
+
 /*
-    p_norm_derivative.device(*thread_pool_device) 
-        = ;
 
-    if(abs(p_norm_derivative()) < NUMERIC_LIMITS_MIN)
-    {
-        deltas.setZero();
+    // p_norm_derivative.device(*thread_pool_device)
+    //     = ;
 
-        return;
-    }
+    // if(abs(p_norm_derivative()) < NUMERIC_LIMITS_MIN)
+    // {
+    //     deltas.setZero();
+
+    //     return;
+    // }
 
     const type coefficient = type(1.0 / (p_norm_derivative() * batch_samples_number));
-*/
+
     deltas.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter - 1)*(minkowski_parameter/(type)batch_samples_number);
+*/
 }
 
 

@@ -34,13 +34,13 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const Index outputs_number = targets_pair.second[1];
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
-    
+
     // Forward propagation
-    
+
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
-    
+
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
@@ -49,12 +49,13 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
         
     probabilistic_layer_3d_back_propagation->targets.device(*thread_pool_device) = targets;
-    
+
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;
     Tensor<bool, 2>& matches = back_propagation.matches;
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
+
     Tensor<type, 0>& accuracy = back_propagation.accuracy;
 
     Tensor<type, 0>& error = back_propagation.error;
@@ -82,15 +83,25 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
+/*
+    cout<<"predictions: "<<endl;
+    cout<<predictions<<endl;
+    cout<<"targets: "<<endl;
+    cout<<targets<<endl;
+    cout<<"matches: "<<endl;
+    cout<<matches<<endl;
+*/
+
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
-    
+
     if(isnan(error())) throw runtime_error("Error is NAN");
+
 }
 
 
-void CrossEntropyError3D::calculate_output_delta(const Batch& batch,
-                                                 ForwardPropagation& forward_propagation,
-                                                 BackPropagation& back_propagation) const
+void CrossEntropyError3D::calculate_output_delta(const Batch&,
+                                                 ForwardPropagation&,
+                                                 BackPropagation&) const
 {
     // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
 }

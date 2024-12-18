@@ -1826,42 +1826,6 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    Tensor<Index, 2> maximal_column_indices(maximum_number, columns_number);
-
-    Tensor<type, 1> column_minimums = opennn::column_minimums(matrix);
-
-    for(Index j = 0; j < columns_number; j++)
-    {
-        Tensor<type, 1> column = matrix.chip(j,1);
-
-        for(Index i = 0; i < maximum_number; i++)
-        {
-            Index maximal_index = 0;
-            type maximal = column(0);
-
-            for(Index k = 0; k < rows_number; k++)
-            {
-                if(column(k) > maximal && !isnan(column(k)))
-                {
-                    maximal_index = k;
-                    maximal = column(k);
-                }
-            }
-
-            column(maximal_index) = column_minimums(j)-type(1);
-            maximal_column_indices(i, j) = maximal_index;
-        }
-    }
-
-    return maximal_column_indices;
-}
-
-
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -1889,7 +1853,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     Tensor<type, 1> sorted_vector(new_vector);
 
-    std::sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
+    sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
     Tensor<type, 1> percentiles(10);
 

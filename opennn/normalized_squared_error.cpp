@@ -28,7 +28,7 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     data_set = new_data_set;
 
     if(neural_network->has(Layer::Type::Recurrent)
-    || neural_network->has(Layer::Type::LongShortTermMemory))
+        || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
         set_normalization_coefficient();

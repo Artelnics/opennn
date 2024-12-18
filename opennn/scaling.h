@@ -23,6 +23,7 @@ namespace opennn
     // Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
 
     void scale_logarithmic(Tensor<type, 2>&, const Index&);
+
     //void scale_minimum_maximum_binary(Tensor<type, 2>&, const type&, const type&, const Index&);
 
     void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));

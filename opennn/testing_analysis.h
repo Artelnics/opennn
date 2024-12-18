@@ -155,6 +155,7 @@ public:
    Tensor<Index, 2> calculate_confusion(const Tensor<type, 3>&, const Tensor<type, 3>&) const;
 
    Tensor<Index, 2> calculate_confusion() const;
+   Tensor<Index, 2> calculate_sentimental_analysis_transformer_confusion() const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -244,6 +245,8 @@ public:
    // Transformer
 
    pair<type, type> test_transformer() const;
+
+   string test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const;
 
    // Serialization
 

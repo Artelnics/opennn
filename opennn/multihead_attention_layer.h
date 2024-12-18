@@ -24,7 +24,7 @@ class MultiheadAttentionLayer : public Layer
 
 public:
 
-    MultiheadAttentionLayer(const Index& = 0,
+    explicit MultiheadAttentionLayer(const Index& = 0,
                                      const Index& = 0,
                                      const Index& = 0,
                                      const Index& = 0,
@@ -73,7 +73,8 @@ public:
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    //void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -143,9 +144,9 @@ private:
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
 
-    MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
                                                        Layer* new_layer = nullptr);
-                
+
     pair<type*, dimensions> get_outputs_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr) override;
@@ -155,7 +156,7 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
     Tensor<type, 4> query;
     Tensor<type, 4> key;
     Tensor<type, 4> value;
-        
+
     Tensor<type, 2> sample_matrix;
 
     Tensor<type, 4> attention_scores;
@@ -170,7 +171,7 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

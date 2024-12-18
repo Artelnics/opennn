@@ -13,12 +13,12 @@
 namespace opennn
 {
 
-EmbeddingLayer::EmbeddingLayer(const Index& new_inputs_dimension,
-                               const Index& new_inputs_number,
-                               const Index& new_depth,
+EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
+                               const Index& new_sequence_length,
+                               const Index& new_embedding_size,
                                const bool& new_positional_encoding) : Layer()
 {
-    set(new_inputs_dimension, new_inputs_number, new_depth, new_positional_encoding);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_size, new_positional_encoding);
 
     layer_type = Type::Embedding;
 
@@ -52,8 +52,7 @@ bool EmbeddingLayer::get_positional_encoding() const
 
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
-    // @todo
-    return {};
+    return { sequence_length };
 }
 
 
@@ -138,6 +137,17 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
+void EmbeddingLayer::set_embedding_weights()
+{
+    const Index vocabulary_size = get_vocabulary_size();
+    const Index embedding_size = get_embedding_size();
+
+    embedding_weights.resize(vocabulary_size, embedding_size);
+
+    set_parameters_random();
+}
+
+
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     memcpy(embedding_weights.data(), new_parameters.data() + index, embedding_weights.size()*sizeof(type));
@@ -150,14 +160,17 @@ void EmbeddingLayer::set_parameters_random()
     const type maximum = type(0.05);
 
     // First row must be 0s because input value 0 is padding
-    
-    embedding_weights.chip(0, 0).setConstant(0);
-    
-    #pragma omp parallel for
 
-    for(Index i = 1; i < embedding_weights.dimension(0); i++)
-        for(Index j = 0; j < embedding_weights.dimension(1); j++)
-            embedding_weights(i, j) = minimum + (maximum - minimum)* type(rand() / (RAND_MAX + 1.0));
+    if(embedding_weights.dimension(0) != 0)
+    {
+        embedding_weights.chip(0, 0).setConstant(0);
+
+        #pragma omp parallel for
+
+        for(Index i = 1; i < embedding_weights.dimension(0); i++)
+            for(Index j = 0; j < embedding_weights.dimension(1); j++)
+                embedding_weights(i, j) = minimum + (maximum - minimum)* type(rand() / (RAND_MAX + 1.0));
+    }
 }
 
 
@@ -183,11 +196,12 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
 {
     const Index batch_size = inputs.dimension(0);
 
-    #pragma omp parallel for collapse(2)
+    // #pragma omp parallel for collapse(2)
      for(Index row = 0; row < batch_size; row++)
-         for(Index input_position = 0; input_position < sequence_length; input_position++)
+        for(Index input_position = 0; input_position < sequence_length; input_position++)
              outputs.chip(row, 0).chip(input_position, 0)
-                 = embedding_weights.chip(inputs(row, input_position), 0);
+                = embedding_weights.chip(inputs(row, input_position), 0);
+
 }
 
 
@@ -223,7 +237,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
 void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
-                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                    unique_ptr<LayerForwardPropagation>&,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index embedding_size = get_embedding_size();
@@ -233,7 +247,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    if(delta_pairs.size() > 1)     
+    if(delta_pairs.size() > 1)
         add_deltas(delta_pairs);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
@@ -245,7 +259,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
     Tensor<type, 2>& embedding_weights_derivatives = embedding_layer_back_propagation->embedding_weights_derivatives;
-    
+
     embedding_weights_derivatives.setZero();
 
     for(Index i = 0; i < batch_samples_number; i++)
@@ -284,6 +298,7 @@ void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_prop
     type* gradient_data = gradient.data();
 
     memcpy(gradient_data + index, embedding_weights_derivatives_data, embedding_weights_number*sizeof(type));
+
 }
 
 

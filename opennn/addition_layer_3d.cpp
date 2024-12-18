@@ -62,10 +62,10 @@ void AdditionLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 
 void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                        const bool& is_training)
+                                        const bool&)
 {
     const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(input_pairs[0]);
-    
+
     const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(input_pairs[1]);
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
@@ -73,13 +73,14 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
-    outputs.device(*thread_pool_device) = input_1 + input_2;    
+    outputs.device(*thread_pool_device) = input_1 + input_2;
+
 }
 
 
-void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void AdditionLayer3D::back_propagate(const vector<pair<type*, dimensions>>&,
                                      const vector<pair<type*, dimensions>>& delta_pairs,
-                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                     unique_ptr<LayerForwardPropagation>&,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
