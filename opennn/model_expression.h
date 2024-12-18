@@ -1909,7 +1909,7 @@ return string();
 
 vector<string> fix_get_expression_outputs(const string& str,
                                           const vector<string>& outputs,
-                                          const string& programming_languaje)
+                                          const string& programming_Language)
 {
     vector<string> out;
     vector<string> tokens;
@@ -1925,13 +1925,13 @@ vector<string> fix_get_expression_outputs(const string& str,
 
     int option = 0;
 
-    if(programming_languaje == "javascript") 
+    if(programming_Language == "javascript") 
         option = 1;
-    else if(programming_languaje == "php")   
+    else if(programming_Language == "php")   
         option = 2;
-    else if(programming_languaje == "python")
+    else if(programming_Language == "python")
         option = 3;
-    else if(programming_languaje == "c")     
+    else if(programming_Language == "c")     
         option = 4;
 
     const Index outputs_number = outputs.size();

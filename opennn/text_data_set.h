@@ -25,7 +25,7 @@ public:
     const Index& get_long_words_length() const;
     const Tensor<Index,1>& get_words_frequencies() const;
 
-    Tensor<string, 2> get_text_data_file_preview() const;
+    Tensor<string, 2> get_data_file_preview() const;
 
     void set_short_words_length(const Index&);
     void set_long_words_length(const Index&);
@@ -64,7 +64,7 @@ private:
      "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both",
      "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very" };
     
-    Tensor<string, 2> text_data_file_preview;
+    Tensor<string, 2> data_file_preview;
 };
 
 }

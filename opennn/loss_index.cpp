@@ -175,7 +175,7 @@ void LossIndex::back_propagate(const Batch& batch,
 
     // Regularization
     
-    add_regularization(back_propagation);   
+    add_regularization(back_propagation);
 
 }
 
@@ -418,8 +418,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
         layers[i]->back_propagate(layer_input_pairs[i],
             layer_delta_pairs[i],
             forward_propagation.layers[i],
-            back_propagation.neural_network.layers[i]);
-
+                                  back_propagation.neural_network.layers[i]);
 }
 
 
@@ -441,6 +440,8 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
         index += layer_parameter_numbers[i];
     }
+
+
 }
 
 
@@ -606,7 +607,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
 
     const vector<vector<Index>>& layer_input_indices = neural_network_ptr->get_layer_input_indices();
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
-    
     const vector<unique_ptr<LayerBackPropagation>>& layer_back_propagations = neural_network.get_layers();
 
     vector<pair<type*, dimensions>> input_derivative_pairs;
@@ -625,7 +625,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             continue;
         }
 
-        for (Index j = 0; j < Index(layer_input_indices[i].size()); j++)
+        for (Index j = 0; j < Index(layer_output_indices[i].size()); j++)
         {
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
@@ -635,7 +635,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }
     }
-
     return layer_delta_pairs;
 }
 
@@ -959,9 +958,18 @@ void BackPropagationLM::set(const Index &new_batch_samples_number,
     loss_index = new_loss_index;
     
     batch_samples_number = new_batch_samples_number;
-    
-    NeuralNetwork *neural_network_ptr = loss_index->get_neural_network();
-    
+
+    if(!loss_index)
+        return;
+
+    NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
+
+    if(!neural_network_ptr)
+        return;
+
+    if(!neural_network_ptr)
+        throw runtime_error("Neural network is null.");
+
     const Index parameters_number =
         neural_network_ptr->get_parameters_number();
     

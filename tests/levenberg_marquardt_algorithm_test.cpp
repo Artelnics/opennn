@@ -51,24 +51,13 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
         dimensions{ 1 },
         PerceptronLayer::ActivationFunction::Linear));
 
-
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
     
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
     //levenberg_marquardt_algorithm.set_display(false);
 
-    try {
-        //TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
-    }
-    catch (const std::exception& ex) {
-        std::cerr << "Caught exception: " << ex.what() << std::endl;
-        
-        system("pause");
-    }
-    catch (...) {
-        std::cerr << "Caught unknown exception!" << std::endl;
-    }
+    //TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
 
     //system("pause");
 /*
@@ -111,7 +100,7 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     levenberg_marquardt_algorithm.set_minimum_loss_decrease(0.0);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1000);
     levenberg_marquardt_algorithm.set_maximum_time(1000.0);
-    /*
+
     training_results = levenberg_marquardt_algorithm.perform_training();
 
     EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);

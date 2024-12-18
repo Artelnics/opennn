@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "../opennn/config.h"
+//#include "../opennn/config.h"
 #include "../opennn/correlations.h"
-#include "../opennn/tensors.h"
-#include "../opennn/statistics.h"
+//#include "../opennn/tensors.h"
+//#include "../opennn/statistics.h"
 
 using namespace opennn;
 
@@ -89,7 +89,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     EXPECT_GE(correlation.r, type(0.9));
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
-/*
+
     EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
     EXPECT_EQ((correlation.form, Correlation::Form::Logistic));
 

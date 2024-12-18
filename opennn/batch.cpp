@@ -111,11 +111,12 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
+
 }
 
 
 void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
-{        
+{
     if (!new_data_set) return;
 
     batch_size = new_batch_size;
@@ -182,7 +183,8 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 
         const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
 
-        const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
+        // const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
+        const dimensions data_set_context_dimensions = { language_data_set->get_context_length() };
 
         if(data_set_context_dimensions.size() == 1)
         {
@@ -270,10 +272,33 @@ bool Batch::has_context() const
 
 vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
+/*
     vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
+
+//     input_pairs[0] = { input_data, input_dimensions };
+
+
+//     if (has_context)
+//         input_pairs[1] = { context_data, context_dimensions };
+input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
 
     if (has_context())
         input_pairs.push_back({(type*)context_tensor.data(), context_dimensions});
+
+    return input_pairs;
+*/
+
+    vector<pair<type*, dimensions>> input_pairs(has_context() ? 2 : 1);
+
+    //     input_pairs[0] = { input_data, input_dimensions };
+
+
+    //     if (has_context)
+    //         input_pairs[1] = { context_data, context_dimensions };
+    input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
+
+    if (has_context())
+        input_pairs[1] = { (type*)context_tensor.data(), context_dimensions};
 
     return input_pairs;
 }

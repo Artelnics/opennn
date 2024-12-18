@@ -100,8 +100,7 @@ namespace opennn
  Index maximal_index(const Tensor<type, 1>&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
- Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>&, const Index&);
- 
+
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 }
