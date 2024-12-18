@@ -282,7 +282,7 @@ Tensor<type, 1> DataSet::get_sample_use_percentages() const
 }
 
 
-string DataSet::get_sample_string(const Index& sample_index, const string& separator) const
+string DataSet::get_sample_string(const Index& sample_index) const
 {
     const Tensor<type, 1> sample = data.chip(sample_index, 0);
 
@@ -357,7 +357,7 @@ string DataSet::get_sample_string(const Index& sample_index, const string& separ
         }
 
         if(i != raw_variables_number-1) 
-            sample_string += separator + " ";
+            sample_string += get_separator_string() + string(" ");
     }
 
     return sample_string;
@@ -4486,9 +4486,9 @@ void DataSet::decode(string&) const
 
 Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_name,
                                         const string& separator_string,
-                                        const string& missing_values_label,
+                                        const string& new_missing_values_label,
                                         const bool& has_raw_variables_name,
-                                        const bool& has_sample_ids) const
+                                        const bool& new_has_sample_ids) const
 {
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -4547,7 +4547,6 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
     line_number = 0;
     Index variable_index = 0;
     Index token_index = 0;
-    bool is_ID = has_sample_ids;
 
     const bool is_float = is_same<type, float>::value;
     bool has_missing_values = false;
@@ -4562,17 +4561,13 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 
         variable_index = 0;
         token_index = 0;
-        is_ID = has_sample_ids;
 
         for(Index i = 0; i < raw_variables_number; i++)
         {
             const RawVariable& raw_variable = raw_variables[i];
 
-            if(is_ID)
-            {
-                is_ID = false;
+            if(has_sample_ids)
                 continue;
-            }
 
             if(raw_variable.use == VariableUse::None)
             {

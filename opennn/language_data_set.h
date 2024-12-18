@@ -19,7 +19,6 @@ class  LanguageDataSet : public DataSet
 
 public:
 
-
     explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
     explicit LanguageDataSet(const filesystem::path& = filesystem::path());

@@ -526,7 +526,7 @@ void ConjugateGradient::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = numeric_limits<type>::epsilon();
 
         //const Index parameters_number = back_propagation.parameters.size();
 
