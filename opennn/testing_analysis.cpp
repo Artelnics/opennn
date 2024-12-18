@@ -881,7 +881,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     check();
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    //const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
@@ -1592,7 +1592,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
     {
         file << target_variable_names[i];
 
-        if(i != target_variable_names.size() - 1)
+        if(i != Index(target_variable_names.size()) - 1)
             file << ",";
     }
 

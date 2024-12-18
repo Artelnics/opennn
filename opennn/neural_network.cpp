@@ -98,13 +98,13 @@ const vector<string>& NeuralNetwork::get_input_names() const
 }
 
 
-Index NeuralNetwork::get_input_index(const string& name) const
+Index NeuralNetwork::get_input_index(const string& input_name) const
 {
     for(Index i = 0; i < Index(input_names.size()); i++)
-        if(input_names[i] == name) 
+        if(input_names[i] == input_name) 
             return i;
 
-    throw runtime_error("Input name not found: " + name);
+    throw runtime_error("Input name not found: " + input_name);
 }
 
 
@@ -144,13 +144,13 @@ const vector<string>& NeuralNetwork::get_output_names() const
 }
 
 
-Index NeuralNetwork::get_output_index(const string& name) const
+Index NeuralNetwork::get_output_index(const string& output_name) const
 {
     for(size_t i = 0; i < output_names.size(); i++)
-        if(output_names[i] == name) 
+        if(output_names[i] == output_name)
             return i;
 
-    throw runtime_error("Output name not found: " + name);
+    throw runtime_error("Output name not found: " + output_name);
 }
 
 
@@ -166,33 +166,33 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const Index& layer_index) cons
 }
 
 
-const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& name) const
+const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) const
 {
     const vector<string> layer_names = get_layer_names();
 
     for(size_t i = 0; i < layer_names.size(); i++)
-        if(layer_names[i] == name)
+        if(layer_names[i] == layer_name)
             return layers[i];
 
     throw runtime_error("Layer not found in neural network");
 }
 
 
-Index NeuralNetwork::get_layer_index(const string& name) const
+Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
-    if(name == "dataset" || name == "input")
+    if(layer_name == "dataset" || layer_name == "input")
         return -1;
 
-    if(name == "context")
+    if(layer_name == "context")
         return -2;
 
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_name() == name)
+        if(layers[i]->get_name() == layer_name)
             return i;
 
-    throw runtime_error("Layer not found" + name);
+    throw runtime_error("Layer not found" + layer_name);
 }
 
 
@@ -575,12 +575,12 @@ void NeuralNetwork::set_layer_inputs_indices(const string& name,
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name, 
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, 
                                              const initializer_list<string>& new_layer_input_names_list)
 {
     const vector<string> new_layer_input_names = new_layer_input_names_list;
 
-    set_layer_inputs_indices(name, new_layer_input_names);
+    set_layer_inputs_indices(layer_name, new_layer_input_names);
 }
 
 
@@ -650,9 +650,9 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
     {
         const Tensor<type, 1> layer_parameters = layer->get_parameters();
 
-        copy(layer_parameters.data(),
-             layer_parameters.data() + layer_parameters.size(),
-             parameters.data() + position);
+        memcpy(parameters.data() + position,
+               layer_parameters.data(),
+               layer_parameters.size() * sizeof(type));
 
         position += layer_parameters.size();
     }
@@ -792,8 +792,6 @@ void NeuralNetwork::set_parameters_random() const
 {
     const Index layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& layers = get_layers();
-
     #pragma omp parallel for
     for(Index i = 0; i < layers_number; i++)
         layers[i]->set_parameters_random();
@@ -842,19 +840,18 @@ string NeuralNetwork::get_expression() const
 {
     const Index layers_number = get_layers_number();
 
-    const vector<unique_ptr<Layer>>& layers = get_layers();
     const vector<string> layer_names = get_layer_names();
 
-    vector<string> input_names = get_input_names();
-    vector<string> output_names = get_output_names();
+    vector<string> new_input_names = get_input_names();
+    vector<string> new_output_names = get_output_names();
 
     const Index inputs_number = input_names.size();
     const Index outputs_number = output_names.size();
 
     for (int i = 0; i < inputs_number; i++)
         input_names[i].empty()
-            ? input_names[i] = "input_" + to_string(i)
-            : input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
+            ? new_input_names[i] = "input_" + to_string(i)
+            : new_input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
 
     vector<string> scaled_input_names(inputs_number);
     vector<string> unscaled_output_names(outputs_number);
@@ -1496,7 +1493,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
-    const vector<string> output_names = get_output_names();
+    //const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index samples_number = inputs.dimension(0);
@@ -1505,7 +1502,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     {
         file << output_names[i];
 
-        if(i != output_names.size()-1) 
+        if(i != Index(output_names.size()) - 1) 
             file << ";";
     }
 

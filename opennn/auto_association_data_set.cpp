@@ -36,13 +36,13 @@ void AutoAssociativeDataSet::transform_associative_data()
 
     for(Index i = 0; i < old_variables_number; i++)
     {
-        copy(associative_data.data() + (i - index) * samples_number,
-             associative_data.data() + (i + 1 - index) *  samples_number,
-             data.data() + (i - index) * samples_number);
+        memcpy(data.data() + (i - index) * samples_number,
+               associative_data.data() + (i - index) * samples_number,
+               samples_number * sizeof(type));
 
-        copy(associative_data.data() + (i - index) * samples_number,
-             associative_data.data() + (i + 1 - index) *  samples_number,
-             data.data() + samples_number * old_variables_number + (i - index) * samples_number);
+        memcpy(data.data() + samples_number * old_variables_number + (i - index) * samples_number,
+               associative_data.data() + (i - index) * samples_number,
+               samples_number * sizeof(type));
     }
 }
 

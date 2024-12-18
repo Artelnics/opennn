@@ -513,8 +513,7 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
     {
         used_column_indices.resize(columns_number);
 
-        for(Index i = 0; i < columns_number; i++)
-            used_column_indices[i] = i;
+        iota(used_column_indices.begin(), used_column_indices.end(), 0);
     }
     else
     {
@@ -527,8 +526,7 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
     {
         used_row_indices.resize(rows_number);
 
-        for(Index i = 0; i < rows_number; i++)
-            used_row_indices[i] = i;
+        iota(used_row_indices.begin(), used_row_indices.end(), 0);
     }
     else
     {
@@ -1310,8 +1308,7 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
     {
         used_column_indices.resize(columns_number);
 
-        for(Index i = 0; i < columns_number; i++)
-            used_column_indices[i] = i;
+        iota(used_column_indices.begin(), used_column_indices.end(), 0);
     }
     else
     {
@@ -1324,8 +1321,7 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
     {
         used_row_indices.resize(rows_number);
 
-        for(Index i = 0; i < rows_number; i++)
-            used_row_indices[i] = i;
+        iota(used_row_indices.begin(), used_row_indices.end(), 0);
     }
     else
     {

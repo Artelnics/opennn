@@ -61,14 +61,14 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
     Tensor<type, 2> targets_t_1(rows, columns);
 
     for(Index i = 0; i < columns; i++)
-        copy(targets.data() + targets.dimension(0) * i,
-             targets.data() + targets.dimension(0) * i + rows,
-             targets_t_1.data() + targets_t_1.dimension(0) * i);
+        memcpy(targets_t_1.data() + targets_t_1.dimension(0) * i,
+               targets.data() + targets.dimension(0) * i,
+               rows * sizeof(type));
 
     for(Index i = 0; i < columns; i++)
-        copy(targets.data() + targets.dimension(0) * i + 1,
-             targets.data() + targets.dimension(0) * i + 1 + rows,
-             targets_t.data() + targets_t.dimension(0) * i);
+        memcpy(targets_t.data() + targets_t.dimension(0) * i,
+               targets.data() + targets.dimension(0) * i + 1,
+               rows * sizeof(type));
 
     normalization_coefficient = calculate_time_series_normalization_coefficient(targets_t_1, targets_t);
 }
@@ -80,15 +80,15 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
     const Index target_samples_number = targets_t_1.dimension(0);
     const Index target_variables_number = targets_t_1.dimension(1);
 
-    type normalization_coefficient = type(0);
+    type new_normalization_coefficient = type(0);
 
-    #pragma omp parallel for reduction(+:normalization_coefficient)
+    #pragma omp parallel for reduction(+:new_normalization_coefficient)
 
     for(Index i = 0; i < target_samples_number; i++)
         for(Index j = 0; j < target_variables_number; j++)
-            normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
+            new_normalization_coefficient += (targets_t_1(i, j) - targets_t(i, j)) * (targets_t_1(i, j) - targets_t(i, j));
 
-    return normalization_coefficient;
+    return new_normalization_coefficient;
 }
 
 
@@ -107,15 +107,15 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<type, 0> normalization_coefficient;
+    Tensor<type, 0> new_normalization_coefficient;
 
     for(Index i = 0; i < rows_number; i++)
-        normalization_coefficient.device(*thread_pool_device) 
+        new_normalization_coefficient.device(*thread_pool_device)
         += (targets.chip(i, 0) - targets_mean).square().sum();
     
-    return normalization_coefficient() < NUMERIC_LIMITS_MIN
+    return new_normalization_coefficient() < NUMERIC_LIMITS_MIN
         ? type(1)
-        : normalization_coefficient();
+        : new_normalization_coefficient();
 }
 
 

@@ -1700,7 +1700,7 @@ vector<vector<string>> DataSet::get_data_file_preview() const
 }
 
 
-void DataSet::set(const filesystem::path& data_path,
+void DataSet::set(const filesystem::path& new_data_path,
                   const string& separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
@@ -1708,7 +1708,7 @@ void DataSet::set(const filesystem::path& data_path,
 {
     set_default();
 
-    set_data_path(data_path);
+    set_data_path(new_data_path);
 
     set_separator_string(separator);
 
@@ -3484,9 +3484,17 @@ void DataSet::set_data_classification()
         for(Index j = 0; j < input_variables_number; j++)
             data(i, j) = get_random_type(-1, 1);
 
-        target_variables_number == 1
-            ? data(i, input_variables_number) = uniform_int_distribution<>(0, 1)(mt19937{random_device{}()})
-            : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
+        if(target_variables_number == 1)
+        {
+            random_device rd;
+            mt19937 gen(rd());
+            uniform_int_distribution<int> dist(0, 1);
+            data(i, input_variables_number) = dist(gen);
+        }
+        else
+        {
+            data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
+        }
     }
 
 }
@@ -4674,7 +4682,7 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 // Virtual functions
 
 // Image Models
-void DataSet::fill_image_data(const int& width, const int& height, const int& channels, const Tensor<type, 2>& data) {}
+void DataSet::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
 
 // Languaje Models
 void DataSet::read_txt_language_model(){}

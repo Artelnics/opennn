@@ -24,6 +24,22 @@ int main()
     {
         cout << "OpenNN. Blank project." << endl;
 
+        Eigen::Tensor<float, 4> input(1, 1, 1, 1);
+        input.setRandom();
+
+        Eigen::Tensor<float, 2> kernel(1, 1, 1, 1);
+        kernel.setRandom();
+
+        Eigen::Tensor<float, 4> output(1, 1, 1, 1);
+
+        Eigen::array<int, 3> dims;
+        output = input.convolve(kernel, dims);
+
+        std::cout << "input:\n\n" << input << "\n\n";
+        std::cout << "kernel:\n\n" << kernel << "\n\n";
+        std::cout << "output:\n\n" << output << "\n\n";
+
+
         const Index samples_number = get_random_index(1, 10);
         const Index inputs_number = get_random_index(1, 10);
         const Index targets_number = get_random_index(1, 10);

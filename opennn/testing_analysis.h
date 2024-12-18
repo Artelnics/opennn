@@ -41,11 +41,11 @@ public:
     {
         Tensor<type, 2> roc_curve;
 
-        type area_under_curve;
+        type area_under_curve = 0;
 
-        type confidence_limit;
+        type confidence_limit = 0;
 
-        type optimal_threshold;
+        type optimal_threshold = 0;
     };
 
 

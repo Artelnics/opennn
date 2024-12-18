@@ -250,7 +250,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        const Index training_batches_number = training_batches.size();
+        //const Index training_batches_number = training_batches.size();
 
         training_error = type(0);
 

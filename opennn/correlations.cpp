@@ -830,8 +830,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     vector<Index> input_columns_indices(x_filtered.dimension(1));
 
-    for(Index i = 0; i < x_filtered.dimension(1); i++)
-        input_columns_indices[i] = i;
+    iota(input_columns_indices.begin(), input_columns_indices.end(), 0);
 
     vector<Index> target_columns_indices(y_filtered.dimension(1));
 

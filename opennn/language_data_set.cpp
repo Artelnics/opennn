@@ -820,9 +820,9 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 
 
 map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
-    map<string, int> output_tokens,
-    bool include_joiner_token,
-    const string& joiner)
+                                         map<string, int> output_tokens,
+                                         bool include_joiner_token,
+                                         const string& joiner)
 {
     for(const string& token : input_tokens)
     {
@@ -848,7 +848,7 @@ vector<int> get_split_indices(const string& word,
                               const string& joiner)
 {
     vector<int> indices;
-    int start = 0;
+    size_t start = 0;
 
     while(start < word.size())
     {
@@ -896,6 +896,8 @@ tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_count
     return { upper_search, lower_search };
 }
 
+
+// @todo move to strings utilities?
 
 vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_counts,
     const vector<string>& reserved_tokens,
@@ -1291,12 +1293,12 @@ void LanguageDataSet::load_documents(const filesystem::path& path)
     vector<string> document_target_copy(lines_count);
 
     copy(document.data(),
-        document.data() + lines_count,
-        document_copy.data());
+         document.data() + lines_count,
+         document_copy.data());
 
     copy(document_target.data(),
-        document_target.data() + lines_count,
-        document_target_copy.data());
+         document_target.data() + lines_count,
+         document_target_copy.data());
 
     documents[original_size] = document_copy;
     targets[original_size] = document_target_copy;
@@ -2207,11 +2209,12 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if(token_counter > max_context_length + 1)    break;
+                if(token_counter > max_context_length + 1)    
+                    break;
+
                 if(j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
                 {
-                    context_row(token_counter) = 3; // end indicator
-                    token_counter++;
+                    context_row(token_counter++) = 3; // end indicator
                     line_ended = true;
                 }
                 else

@@ -871,26 +871,6 @@ void delete_indices(Tensor<double,1>& vector, const Tensor<Index,1>& indices)
 }
 
 
-//vector<string> get_first(const vector<string>& vector, const Index& index)
-//{
-//    vector<string> new_vector(index);
-
-//    copy(vector.data(), vector.data() + index, new_vector.data());
-
-//    return new_vector;
-//}
-
-
-//Tensor<Index, 1> get_first(const Tensor<Index,1>& vector, const Index& index)
-//{
-//    Tensor<Index, 1> new_vector(index);
-
-//    copy(vector.data(), vector.data() + index, new_vector.data());
-
-//    return new_vector;
-//}
-
-
 Index count_between(const Tensor<type, 1>& vector,const type& minimum, const type& maximum)
 {
     const Index size = vector.size();
