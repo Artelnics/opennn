@@ -310,8 +310,8 @@ void QuasiNewtonMethod::update_parameters(
     // Get training direction
 
     if(optimization_data.epoch == 0 
-    || is_zero(parameters_difference) 
-    || is_zero(gradient_difference))
+    || is_equal(parameters_difference, type(0)) 
+    || is_equal(gradient_difference, type(0)))
         set_identity(inverse_hessian);
     else
         calculate_inverse_hessian_approximation(optimization_data);
@@ -355,7 +355,7 @@ void QuasiNewtonMethod::update_parameters(
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 parameters_increment(i) = type(0);
             }
@@ -387,6 +387,9 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     // Start training
 
     if(display) cout << "Training with quasi-Newton method...\n";

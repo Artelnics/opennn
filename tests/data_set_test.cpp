@@ -25,63 +25,33 @@ TEST(DataSetTest, DimensionsConstructor)
 }
 
 
-TEST(DataSetTest, VariablesDescriptives)
+TEST(DataSetTest, VariableDescriptivesZero)
 {
 
     DataSet data_set(1, { 1 }, { 1 });
     data_set.set_data_constant(type(0));
 
-//    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
+    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
 
-//    EXPECT_EQ(variable_descriptives.size() == 1);
+    EXPECT_EQ(variable_descriptives.size(), 2);
 
-//    EXPECT_EQ(abs(variable_descriptives[0].minimum) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(abs(variable_descriptives[0].maximum) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(abs(variable_descriptives[0].mean) < type(NUMERIC_LIMITS_MIN));
-//    EXPECT_EQ(abs(variable_descriptives[0].standard_deviation) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(variable_descriptives[0].minimum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].maximum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].mean, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
 }
 
 
-
-TEST(DataSetTest, CalculateVariablesDescriptives)
+TEST(DataSetTest, VariableDescriptives)
 {
-    // Test
+    
+    const Index samples_number = 3;
+    const Index inputs_number = 2;
+    const Index targets_number = 1;
 
-    DataSet data_set(2, { 2 }, { 2 });
+    DataSet data_set(samples_number, { inputs_number }, { targets_number });
 
-    data_set.set_data_constant(type(0));
-/*
-    variable_descriptives = data_set.calculate_variable_descriptives();
-
-    EXPECT_EQ(variable_descriptives.size() == 4);
-
-    EXPECT_EQ(variable_descriptives[0].minimum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[0].maximum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[0].mean < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[0].standard_deviation < type(NUMERIC_LIMITS_MIN));
-
-    EXPECT_EQ(variable_descriptives[1].minimum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[1].maximum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[1].mean < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[1].standard_deviation < type(NUMERIC_LIMITS_MIN));
-
-    EXPECT_EQ(variable_descriptives[2].minimum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[2].maximum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[2].mean < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[2].standard_deviation < type(NUMERIC_LIMITS_MIN));
-
-    EXPECT_EQ(variable_descriptives[3].minimum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[3].maximum < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[3].mean < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(variable_descriptives[3].standard_deviation < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    inputs_number = 2;
-    targets_number = 1;
-    samples_number = 3;
-
-    data.resize(samples_number, inputs_number + targets_number);
+    Tensor<type, 2> data(samples_number, inputs_number + targets_number);
 
     data.setValues({{type(-1000),type(2),type(0)},
                     {type(1)    ,type(4),type(2)},
@@ -89,29 +59,23 @@ TEST(DataSetTest, CalculateVariablesDescriptives)
 
     data_set.set_data(data);
 
-    variable_descriptives = data_set.calculate_variable_descriptives();
+    const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
 
-    EXPECT_EQ(variable_descriptives.size() == 3);
-
-    EXPECT_EQ(abs(variable_descriptives[0].minimum + type(1000)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(variable_descriptives[1].minimum - type(2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(variable_descriptives[2].minimum) < type(NUMERIC_LIMITS_MIN));
-
-    EXPECT_EQ(abs(variable_descriptives[0].maximum - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(variable_descriptives[1].maximum - type(4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(variable_descriptives[2].maximum - type(2)) < type(NUMERIC_LIMITS_MIN));
-*/
+    EXPECT_EQ(variable_descriptives.size(), 3);
+    EXPECT_NEAR(variable_descriptives[0].minimum, type(-1000), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[1].minimum, type(2), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[2].minimum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[0].maximum, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[1].maximum, type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(variable_descriptives[2].maximum, type(2), NUMERIC_LIMITS_MIN);
 }
 
-TEST(DataSetTest, CalculateRawVariablesDistributions)
+
+TEST(DataSetTest, RawVariableDistributions)
 {
-    Tensor<Histogram, 1> histograms;
-/*
-    data_set.set();
-
-    // Test
-
-    data.resize(3, 3);
+    DataSet data_set(3, {2}, {1});
+    
+    Tensor<type, 2> data(3, 3);
 
     data.setValues({{type(2),type(2),type(1)},
                     {type(1),type(1),type(1)},
@@ -119,72 +83,58 @@ TEST(DataSetTest, CalculateRawVariablesDistributions)
 
     data_set.set_data(data);
 
-    histograms = data_set.calculate_raw_variables_distribution(2);
+    const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
 
-    EXPECT_EQ(histograms.size() == 3);
+    EXPECT_EQ(histograms.size(), 3);
 
-    EXPECT_EQ(abs( histograms(0).frequencies(0) - 2 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs( histograms(1).frequencies(0) - 1 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs( histograms(2).frequencies(0) - 2 ) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
 
-    EXPECT_EQ(abs( histograms(0).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs( histograms(1).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs( histograms(2).centers(0) - 1 ) < type(NUMERIC_LIMITS_MIN));
-*/
+    EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
+
 }
 
 
 TEST(DataSetTest, FilterData)
 {
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
-
-    Tensor<type, 1> minimums;
-    Tensor<type, 1> maximums;
-
-    // Test
-/*
-    samples_number = 2;
-    inputs_number = 1;
-    targets_number = 1;
-
-    data_set.set(samples_number, inputs_number, targets_number);
+    DataSet data_set(2, {1}, {1});
     data_set.set_data_constant(type(1));
 
-    minimums.resize(2);
+    Tensor<type, 1> minimums(2);
     minimums.setValues({ type(2), type(0)});
 
-    maximums.resize(2);
+    Tensor<type, 1> maximums(2);
     maximums.setValues({type(2), type(0.5)});
 
     data_set.filter_data(minimums, maximums);
 
-    EXPECT_EQ(data_set.get_sample_use(0) == DataSet::SampleUse::None);
-    EXPECT_EQ(data_set.get_sample_use(1) == DataSet::SampleUse::None);
-*/
+    EXPECT_EQ(data_set.get_sample_use(0), DataSet::SampleUse::None);
+    EXPECT_EQ(data_set.get_sample_use(1), DataSet::SampleUse::None);
+
 }
 
-/*
+
 TEST(DataSetTest, ScaleData)
 {
-    vector<Descriptives> data_descriptives;
-    Tensor<type, 2> scaled_data;
+    DataSet data_set(2, {1}, {1});
 
-    // Test
-
-    data.resize(2,2);
+    Tensor<type, 2> data(2, 2);
     data.setValues({{type(1), type(2)},
                     {type(3), type(4)}});
 
     data_set.set_data(data);
 
     data_set.set_raw_variable_scalers(Scaler::None);
-    data_descriptives = data_set.scale_data();
+    vector<Descriptives> data_descriptives = data_set.scale_data();
+
+    Tensor<type, 2> scaled_data;
 
     scaled_data = data_set.get_data();
 
-    EXPECT_EQ(are_equal(scaled_data, data));
+//    EXPECT_EQ(are_equal(scaled_data, data), true);
 
     // Test
 
@@ -193,53 +143,49 @@ TEST(DataSetTest, ScaleData)
 
     scaled_data = data_set.get_data();
 
-    EXPECT_EQ(abs(scaled_data(0) - type(-1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(scaled_data(1) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(scaled_data(2) - type(-1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(scaled_data(3) - type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(scaled_data(0), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data(1), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data(2), type(-1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data(3), type(1), NUMERIC_LIMITS_MIN);
+
 }
 
 
 TEST(DataSetTest, UnuseConstantRawVariables)
 {
-    // Test
+    DataSet data_set(3, { 2 }, { 1 });
 
-    samples_number = 3;
-    inputs_number = 2;
-    targets_number = 1;
-
-    data.resize(samples_number, inputs_number + targets_number);
+    Tensor<type, 2> data(3, 3);
 
     data.setValues({{type(1),type(2),type(0)},
                     {type(1),type(2),type(1)},
                     {type(1),type(2),type(2)}});
 
     data_set.set_data(data);
-    data_set.set_has_header(false);
     data_set.unuse_constant_raw_variables();
 
     data_set.unuse_constant_raw_variables();
 
-    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Input) == 0);
-    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Target) == 1);
+    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Input), 0);
+    EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
 }
 
 
 TEST(DataSetTest, CalculateTargetDistribution)
 {
-    Tensor<Index, 1> target_distribution;
+    DataSet data_set(5, { 3 }, { 2 });
+    
+    vector<Index> target_distribution;
 
-    // Test two classes
-
-    data.resize(5, 5);
+    Tensor<type, 2> data(5, 5);
 
     data.setValues({{type(2),type(5),type(6),type(9),type(0)},
                     {type(2),type(9),type(1),type(9),type(0)},
                     {type(2),type(9),type(1),type(9),type(NAN)},
                     {type(6),type(5),type(6),type(7),type(1)},
                     {type(0),type(1),type(0),type(1),type(1)}});
-
-    data_set.set(data);
+    /*
+    data_set.set_data(data);
 
     input_variables_indices.resize(4);
     input_variables_indices.setValues({0, 1, 2, 3});
@@ -284,30 +230,26 @@ TEST(DataSetTest, CalculateTargetDistribution)
     EXPECT_EQ(target_distribution[0] == 1);
     EXPECT_EQ(target_distribution[1] == 2);
     EXPECT_EQ(target_distribution[2] == 2);
+*/
 }
 
 
-TEST(DataSetTest, CalculateTukeyOutliers)
+TEST(DataSetTest, TukeyOutliers)
 {
-    Tensor<type, 1> sample;
-
-    Tensor<Tensor<Index, 1>, 1> outliers_indices;
-
-    // Test
-
-    data_set.set(100, 5, 1);
+    DataSet data_set(100, { 5 }, { 1 });
     data_set.set_data_random();
 
-    outliers_indices = data_set.calculate_Tukey_outliers(type(1.5));
+    const vector<vector<Index>> outliers_indices = data_set.calculate_Tukey_outliers(type(1.5));
 
-    EXPECT_EQ(outliers_indices.size() == 2);
-    EXPECT_EQ(outliers_indices(0)(0) == 0);
+    EXPECT_EQ(outliers_indices.size(), 2);
+    EXPECT_EQ(outliers_indices[0][0], 0);
 }
+
 
 TEST(DataSetTest, ReadCSV)
 {
     // Test
-
+/*
     data_set.set(2, 2, 2);
     data_set.set_separator(DataSet::Separator::Comma);
     data_path = "../data/data.dat";
@@ -334,18 +276,18 @@ TEST(DataSetTest, ReadCSV)
     data_set.read_csv();
     data = data_set.get_data();
 
-    EXPECT_EQ(data.dimension(0) == 3);
-    EXPECT_EQ(data.dimension(1) == 2);
+    EXPECT_NEAR(data.dimension(0) == 3);
+    EXPECT_NEAR(data.dimension(1) == 2);
 
-    EXPECT_EQ(abs(data(0, 0) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(0, 1) - type(2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(1, 0) - type(3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(1, 1) - type(4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(2, 0) - type(5)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(2, 1) - type(6)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(data(0, 0) - type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(0, 1) - type(2)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(1, 0) - type(3)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(1, 1) - type(4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(2, 0) - type(5)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(2, 1) - type(6)) < NUMERIC_LIMITS_MIN);
 
-    EXPECT_EQ(data_set.get_samples_number() == 3);
-    EXPECT_EQ(data_set.get_variables_number() == 2);
+    EXPECT_NEAR(data_set.get_samples_number() == 3);
+    EXPECT_NEAR(data_set.get_variables_number() == 2);
 
     // Test
 
@@ -365,12 +307,12 @@ TEST(DataSetTest, ReadCSV)
     EXPECT_EQ(data.dimension(0) == 3);
     EXPECT_EQ(data.dimension(1) == 2);
 
-    EXPECT_EQ(abs(data(0,0) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(0,1) - type(2)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(1,0) - type(3)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(1,1) - type(4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(2,0) - type(5)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(2,1) - type(6)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(data(0,0) - type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(0,1) - type(2)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(1,0) - type(3)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(1,1) - type(4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(2,0) - type(5)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(data(2,1) - type(6)) < NUMERIC_LIMITS_MIN);
 
     EXPECT_EQ(data_set.get_samples_number() == 3);
     EXPECT_EQ(data_set.get_variables_number() == 2);
@@ -393,17 +335,17 @@ TEST(DataSetTest, ReadCSV)
 
     data = data_set.get_data();
 
-    EXPECT_EQ(data_set.get_header_line());
-    EXPECT_EQ(data_set.get_variable_name(0) == "x");
-    EXPECT_EQ(data_set.get_variable_name(1) == "y");
+    EXPECT_NEAR(data_set.get_header_line());
+    EXPECT_NEAR(data_set.get_variable_name(0) == "x");
+    EXPECT_NEAR(data_set.get_variable_name(1) == "y");
 
-    EXPECT_EQ(data.dimension(0) == 3);
-    EXPECT_EQ(data.dimension(1) == 2);
+    EXPECT_NEAR(data.dimension(0) == 3);
+    EXPECT_NEAR(data.dimension(1) == 2);
 
-    EXPECT_EQ((data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR((data(0,0) - 1.0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR((data(0,1) - 2.0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR((data(1,0) - 3.0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR((data(1,1) - 4.0) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -422,13 +364,13 @@ TEST(DataSetTest, ReadCSV)
 
     data = data_set.get_data();
 
-    EXPECT_EQ(data_set.get_variable_name(0) == "x");
-    EXPECT_EQ(data_set.get_variable_name(1) == "y");
+    EXPECT_NEAR(data_set.get_variable_name(0) == "x");
+    EXPECT_NEAR(data_set.get_variable_name(1) == "y");
 
-    EXPECT_EQ((data(0,0) - 1.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,1) - 2.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,0) - 3.0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,1) - 4.0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(data(0,0), 1.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,1), 2.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,0), 3.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,1), 4.0, NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -447,13 +389,13 @@ TEST(DataSetTest, ReadCSV)
 
     data = data_set.get_data();
 
-    EXPECT_EQ(data_set.get_variable_name(0) == "x");
-    EXPECT_EQ(data_set.get_variable_name(1) == "y");
+    EXPECT_NEAR(data_set.get_variable_name(0) == "x");
+    EXPECT_NEAR(data_set.get_variable_name(1) == "y");
 
-    EXPECT_EQ((data(0,0) - 1.0 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,1) - 2.0 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,0) - 3.0 ) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,1) - 4.0 ) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(data(0,0), 1.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,1), 2.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,0), 3.0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,1), 4.0, NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -490,26 +432,26 @@ TEST(DataSetTest, ReadCSV)
 
     data_set.read_csv();
 
-    EXPECT_EQ(data_set.get_variables_number() == 7);
-    EXPECT_EQ(data_set.get_input_variables_number() == 4);
-    EXPECT_EQ(data_set.get_target_variables_number() == 3);
-    EXPECT_EQ(data_set.get_samples_number() == 4);
+    EXPECT_NEAR(data_set.get_variables_number() == 7);
+    EXPECT_NEAR(data_set.get_input_variables_number() == 4);
+    EXPECT_NEAR(data_set.get_target_variables_number() == 3);
+    EXPECT_NEAR(data_set.get_samples_number() == 4);
 
     data = data_set.get_data();
 
-    EXPECT_EQ((data(0,0) - type(5.1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,4) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,5)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(0,6)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,5) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(1,6)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(2,4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(2,5) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(2,6)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(3,4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(3,5)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((data(3,6) - type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(data(0,0), type(5.1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,4) - type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,5)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,6)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,5) - type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,6)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(Data(2,5) - type(1)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,6)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(3,4)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(3,5)) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(3,6) - type(1)) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -546,15 +488,15 @@ TEST(DataSetTest, ReadCSV)
 
     data = data_set.get_data();
 
-    EXPECT_EQ(data(0,4) - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(0,5) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(0,6) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(1,4) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(1,5) - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(1,6) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(2,4) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(2,5) - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(2,6) - type(0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(data(0,4) - type(1) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,5) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(0,6) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,4) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,5) - type(1) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,6) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,4) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,5) - type(1) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,6) - type(0) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -596,9 +538,9 @@ TEST(DataSetTest, ReadCSV)
 
     data = data_set.get_data();
 
-    EXPECT_EQ(data(0,1) - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(1,1) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data(2,1) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(data(0,1) - type(1) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(1,1) - type(0) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(data(2,1) - type(1) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -630,14 +572,13 @@ TEST(DataSetTest, ReadCSV)
 
     EXPECT_EQ(data.dimension(0) == 10);
     EXPECT_EQ(data.dimension(1) == 7);
-
+*/
 }
 
 
 TEST(DataSetTest, ReadAdultCSV)
 {
-    try
-    {
+/*
         data_set.set_missing_values_label("?");
         data_set.set_separator_string(",");
         data_set.set_data_source_path("../../datasets/adult.data");
@@ -650,18 +591,13 @@ TEST(DataSetTest, ReadAdultCSV)
         EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Categorical);
 
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadCarCSV)
 {
-    try
-    {
+/*
        
         data_set.set("../../datasets/car.data", ",");
         
@@ -673,38 +609,28 @@ TEST(DataSetTest, ReadCarCSV)
         EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Categorical);
         EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Categorical);
         EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Categorical);
-    }
-    catch(const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadEmptyCSV)
 {
+/*
     data_set.set();
 
-    try
-    {
         data_set.set("../../datasets/empty.csv", " ", false);
 
         //EXPECT_EQ(data_set.is_empty());
-        EXPECT_EQ(data_set.get_samples_number() == 0);
-        EXPECT_EQ(data_set.get_variables_number() == 2);
+        EXPECT_EQ(data_set.get_samples_number(), 0);
+        EXPECT_EQ(data_set.get_variables_number(), 2);
 
-    }
-    catch(const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadHeartCSV)
 {
-    try
-    {
+/*
         data_set.set("../../datasets/heart.csv", ",", true);
 
         EXPECT_EQ(data_set.get_samples_number() == 303);
@@ -723,18 +649,13 @@ TEST(DataSetTest, ReadHeartCSV)
         EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(13) == DataSet::RawVariableType::Binary);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }       
+*/
 }
 
 
 TEST(DataSetTest, ReadIrisCSV)
 {
-    try
-    {
+/*
         
         data_set.set("../../datasets/iris.data", ",", false);
         
@@ -745,35 +666,25 @@ TEST(DataSetTest, ReadIrisCSV)
         EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Categorical);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadOneVariableCSV)
 {
-    try
-    { 
+/*
         data_set.set("../../datasets/one_variable.csv", ",", false);
         
         EXPECT_EQ(data_set.get_samples_number() == 7);
         EXPECT_EQ(data_set.get_variables_number() == 1);
         EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadPollutionCSV)
 {
-    try
-    {
+/*
         
         data_set.set("../../datasets/pollution.csv", ",", true);
         
@@ -792,31 +703,24 @@ TEST(DataSetTest, ReadPollutionCSV)
         EXPECT_EQ(data_set.get_raw_variable_type(10) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
+*/
 }
 
 
 TEST(DataSetTest, ReadBankChurnCSV)
 {
+/*
     data_set.set_separator(DataSet::Separator::Semicolon);
     data_set.set_data_source_path("../../datasets/bankchurn.csv");
     data_set.set_has_header(true);
     
     data_set.read_csv();
-    
+*/    
 }
 
-
+/*
 void DataSetTest::test_read_urinary_inflammations_csv()
 {
-    cout << "test_read_urinary_inflammations_csv\n";
-
-    try
-    {
         data_set.set("../../datasets/urinary_inflammations.csv", ";", true);
 
         EXPECT_EQ(data_set.get_samples_number() == 120);
@@ -829,21 +733,11 @@ void DataSetTest::test_read_urinary_inflammations_csv()
         EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Binary);
         EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Binary);
         EXPECT_EQ(data_set.get_raw_variable_type(7) == DataSet::RawVariableType::Binary);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
-
 }
 
 
 void DataSetTest::test_read_wine_csv()
 {
-    cout << "test_read_wine_csv\n";
-
-    try
-    {        
         data_set.set("../../datasets/wine.data", ",", false);
         
         EXPECT_EQ(data_set.get_samples_number() == 178);
@@ -862,21 +756,11 @@ void DataSetTest::test_read_wine_csv()
         EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(13) == DataSet::RawVariableType::Numeric);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
 }
 
 
 void DataSetTest::test_read_binary_csv()
-{
-    cout << "test_read_binary_csv\n";
-
-    try
-    {
-        
+{        
         data_set.set("../../datasets/binary.csv", ",", false);
         
         EXPECT_EQ(data_set.get_samples_number() == 8);
@@ -884,18 +768,11 @@ void DataSetTest::test_read_binary_csv()
         EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Numeric);
         EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Binary);
-    }
-    catch (const exception&)
-    {
-        EXPECT_EQ(true,LOG);
-    }
 }
 
 
 void DataSetTest::test_scrub_missing_values()
 {
-    cout << "test_scrub_missing_values\n";
-
     const string data_path = "../../datasets/data.dat";
 
     Tensor<DataSet::SampleUse, 1> sample_uses;
@@ -948,8 +825,8 @@ void DataSetTest::test_scrub_missing_values()
 
     data = data_set.get_data();
 
-    EXPECT_EQ(abs(data(0,0) - type(2.0)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(data(1,1) - type(3.0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(data(0,0) - type(2.0)) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(abs(data(1,1) - type(3.0)) < NUMERIC_LIMITS_MIN);
     EXPECT_EQ(isnan(data(2,2)));
 
 }
@@ -957,8 +834,6 @@ void DataSetTest::test_scrub_missing_values()
 
 void DataSetTest::test_calculate_used_targets_mean()
 {
-    cout << "test_calculate_used_targets_mean\n";
-
     data.resize(3, 4);
 
     data.setValues({{type(1), type(NAN), type(1), type(1)},
@@ -974,15 +849,11 @@ void DataSetTest::test_calculate_used_targets_mean()
     training_indices.setValues({0});
 
     data_set.set_training(training_indices);
-
-
 }
 
 
 void DataSetTest::test_calculate_selection_targets_mean()
 {
-    cout << "test_calculate_selection_targets_mean\n";
-
     Tensor<Index, 1> target_indices;
     Tensor<Index, 1> selection_indices;
 
@@ -1016,14 +887,11 @@ void DataSetTest::test_calculate_selection_targets_mean()
 
     EXPECT_EQ(selection_targets_mean(0) == type(5.5));
     EXPECT_EQ(selection_targets_mean(1) == type(5));
-
 }
 
 
 void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 {
-    cout << "test_calculate_input_target_raw_variable_correlations\n";
-
     // Test 1 (numeric and numeric trivial case)
 
     data.resize(3, 4);
@@ -1279,8 +1147,6 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 
 void DataSetTest::test_calculate_input_raw_variable_correlations()
 {
-    cout << "test_calculate_input_raw_variable_correlations\n";
-
     // Test 1 (numeric and numeric trivial case)
 
     data.resize(3, 4);
@@ -1665,8 +1531,6 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 
 void DataSetTest::test_unuse_repeated_samples()
 {
-    cout << "test_unuse_repeated_samples\n";
-
     Tensor<Index, 1> indices;
 
     data_set.set();
@@ -1734,8 +1598,6 @@ void DataSetTest::test_unuse_repeated_samples()
 
 void DataSetTest::test_unuse_uncorrelated_raw_variables()
 {
-    cout << "test_unuse_uncorrelated_raw_variables\n";
-
     data.resize(3, 3);
     data.setValues({{type(1),type(0),type(0)},
                     {type(1),type(0),type(0)},
@@ -1745,8 +1607,6 @@ void DataSetTest::test_unuse_uncorrelated_raw_variables()
 
 void DataSetTest::test_calculate_training_negatives()
 {
-    cout << "test_calculate_training_negatives\n";
-
     Index training_negatives;
     Index target_index;
 
@@ -1783,8 +1643,6 @@ void DataSetTest::test_calculate_training_negatives()
 
 void DataSetTest::test_calculate_selection_negatives()
 {
-    cout << "test_calculate_selection_negatives\n";
-
     vector<Index> selection_indices;
     Tensor<Index, 1> input_variables_indices;
     Tensor<Index, 1> target_variables_indices;
@@ -1826,8 +1684,6 @@ void DataSetTest::test_calculate_selection_negatives()
 
 void DataSetTest::test_fill()
 {
-    cout << "test_fill\n";
-
     data.resize(3, 3);
     data.setValues({{1,4,7},{2,5,8},{3,6,9}});
     data_set.set_data(data);

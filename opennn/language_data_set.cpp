@@ -31,12 +31,6 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& data_path) : DataSet()
 
     completion_dimensions = {get_completion_length(), get_completion_vocabulary_size()};
     context_dimensions = {get_context_length(), get_context_vocabulary_size()};
-
-/*
-    save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/completion_vocabulary.txt",completion_vocabulary);
-    save_vocabulary("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/context_vocabulary.txt",context_vocabulary);
-    save_lengths("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/lengths.txt", completion_dimensions[0], context_dimensions[0]);
-*/
 }
 
 
@@ -2064,6 +2058,8 @@ void LanguageDataSet::read_txt()
 
         context_vocabulary = calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
         completion_vocabulary = calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+        // completion_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "Good", "Bad"};
+        // completion_vocabulary = {"[START]", "[END]", "Good", "Bad"};
     }
     else
     {

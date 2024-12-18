@@ -372,18 +372,17 @@ public:
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
-    Tensor<type, 1> calculate_used_targets_mean() const;
-    Tensor<type, 1> calculate_selection_targets_mean() const;
+    Tensor<type, 1> calculate_means(const SampleUse& , const VariableUse&) const;
 
     Index calculate_used_negatives(const Index&);
 
     // Distribution
 
-    Tensor<Histogram, 1> calculate_raw_variables_distribution(const Index& = 10) const;
+    vector<Histogram> calculate_raw_variable_distributions(const Index& = 10) const;
 
     // Box and whiskers
 
-    Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
+    vector<BoxPlot> calculate_raw_variables_box_plots() const;
     //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations

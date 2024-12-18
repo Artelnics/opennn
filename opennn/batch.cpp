@@ -313,9 +313,7 @@ pair<type*, dimensions> Batch::get_target_pair() const
     return { (type*)target_tensor.data() , target_dimensions};
 }
 
-}
-
-// namespace opennn
+} // namespace opennn
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.

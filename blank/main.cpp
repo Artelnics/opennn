@@ -6,10 +6,13 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
 
-
-// OpenNN includes
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cstring>
+#include <time.h>
 
 #include "../opennn/opennn.h"
 
@@ -23,9 +26,13 @@ int main()
 {
     try
     {
-
         cout << "OpenNN. ViT Example." << endl;
 
+        // Index a = 0;
+        // Index b = 0;
+        // Tensor<bool, 0> truefalse = a == b;
+        // cout<<truefalse<<endl;
+        // throw runtime_error("Stop");
         // srand(static_cast<unsigned>(time(nullptr)));
 
         // // Data set
@@ -110,6 +117,18 @@ int main()
         // // cout << "TESTING ANALYSIS:" << endl;
         // // cout << "Testing error: " << transformer_error_accuracy.first << endl;
         // // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+
+
+        // ForwardPropagation forward_propagation(samples_number, &neural_network);
+
+//        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
+
+        // Loss index
+
+//        NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+
+//        BackPropagation back_propagation(samples_number, &normalized_squared_error);
+//        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
         cout << "Bye!" << endl;
 

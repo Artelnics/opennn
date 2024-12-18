@@ -107,7 +107,7 @@ string UnscalingLayer::get_expression(const vector<string>& new_input_names,
 
         case Scaler::MinimumMaximum:
         
-            if(abs(descriptives[i].minimum - descriptives[i].maximum) < type(NUMERIC_LIMITS_MIN))
+            if(abs(descriptives[i].minimum - descriptives[i].maximum) < NUMERIC_LIMITS_MIN)
             {
                 buffer << output_names[i] << "=" << descriptives[i].minimum <<";\n";
             }
@@ -351,7 +351,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
 
-        if(abs(descriptives[i].standard_deviation) < type(NUMERIC_LIMITS_MIN))
+        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"

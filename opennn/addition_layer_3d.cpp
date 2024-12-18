@@ -65,7 +65,7 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         const bool&)
 {
     const TensorMap<Tensor<type, 3>> input_1 = tensor_map_3(input_pairs[0]);
-    
+
     const TensorMap<Tensor<type, 3>> input_2 = tensor_map_3(input_pairs[1]);
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
@@ -74,6 +74,7 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 3>& outputs = addition_layer_3d_forward_propagation->outputs;
 
     outputs.device(*thread_pool_device) = input_1 + input_2;
+
 }
 
 

@@ -368,7 +368,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             if(raw_variable_type == DataSet::RawVariableType::Numeric
             || raw_variable_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i, index++) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
+                inputs(i, index++) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
             else if(raw_variable_type == DataSet::RawVariableType::Binary)
@@ -404,7 +404,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             }
             else
             {
-                inputs(i, index) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
+                inputs(i, index) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
         }

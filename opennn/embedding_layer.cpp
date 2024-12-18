@@ -186,7 +186,7 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 
     #pragma omp parallel for
     for(Index i = 0; i < outputs.size(); i++)
-        outputs(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate)
+        outputs(i) = (get_random_type(type(0), type(1)) < dropout_rate)
             ? 0 
             : outputs(i) * scaling_factor;
 }
@@ -232,7 +232,6 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs);
-
 }
 
 

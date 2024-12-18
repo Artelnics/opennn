@@ -268,7 +268,10 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     model_type = new_model_type;
 
-    const Index inputs_number = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+    const Index inputs_number = accumulate(input_dimensions.begin(), 
+                                           input_dimensions.end(), 
+                                           1, 
+                                           multiplies<Index>());
 
     input_names.resize(inputs_number);
 
@@ -311,7 +314,11 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         break;
 
     }
-    const Index outputs_number = accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
+
+    const Index outputs_number = accumulate(output_dimensions.begin(), 
+                                            output_dimensions.end(), 
+                                            1, 
+                                            multiplies<Index>());
 
     output_names.resize(outputs_number);
 
@@ -343,7 +350,6 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     add_layer(make_unique<UnscalingLayer>(output_dimensions));
 
     add_layer(make_unique<BoundingLayer>(output_dimensions));
-
 }
 
 
@@ -424,6 +430,9 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                              const dimensions& complexity_dimensions, 
                                              const dimensions& output_dimensions)
 {
+    if (input_dimensions.size() != 3)
+        throw runtime_error("Input dimensions size is not 3.");
+
     const Index complexity_size = complexity_dimensions.size();
 
     add_layer(make_unique<ScalingLayer4D>(input_dimensions));
@@ -827,14 +836,14 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 {
     const Index layers_number = get_layers_number();
 
-    vector<Index> layers_parameters_number(layers_number);
+    vector<Index> layer_parameter_numbers(layers_number);
 
     #pragma omp parallel for 
 
     for(Index i = 0; i < layers_number; i++)
-        layers_parameters_number[i] = layers[i]->get_parameters_number();
+        layer_parameter_numbers[i] = layers[i]->get_parameters_number();
 
-    return layers_parameters_number;
+    return layer_parameter_numbers;
 }
 
 

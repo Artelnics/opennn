@@ -134,6 +134,9 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     TrainingResults results(maximum_epochs_number + 1);
     
     check();
@@ -141,9 +144,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-
-    if(!loss_index)
-        throw runtime_error("Loss index is null.");
 
     // Data set
 

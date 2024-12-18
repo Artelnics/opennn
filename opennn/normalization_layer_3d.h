@@ -37,8 +37,6 @@ public:
 
     dimensions get_output_dimensions() const override;
 
-    Index get_gammas_number() const;
-    Index get_betas_number() const;
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
@@ -81,8 +79,6 @@ public:
 private:
 
     Index inputs_number_xxx;
-
-    Index inputs_depth;
         
     Index neurons_number;
 

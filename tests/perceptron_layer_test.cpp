@@ -2,8 +2,8 @@
 
 #include <iostream>
 
+#include "../opennn/tensors.h"
 #include "../opennn/perceptron_layer.h"
-
 
 TEST(PerceptronLayerTest, DefaultConstructor)
 {
@@ -26,20 +26,23 @@ TEST(PerceptronLayerTest, GeneralConstructor)
 }
 
 
-TEST(PerceptronLayerTest, CombinationsZero)
+TEST(PerceptronLayerTest, Combinations)
 {
-    PerceptronLayer perceptron_layer({1}, {1});
+    const Index samples_number = get_random_index(1, 10);
+    const Index inputs_number = get_random_index(1, 10);
+    const Index outputs_number = get_random_index(1, 10);
+
+    PerceptronLayer perceptron_layer({inputs_number}, {outputs_number});
     perceptron_layer.set_parameters_constant(type(0));
 
-    Tensor<type, 2> inputs(1, 1);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setZero();
 
-    Tensor<type, 2> combinations(1, 1);
-    combinations.setConstant(type(1));
+    Tensor<type, 2> combinations(samples_number, outputs_number);
 
     perceptron_layer.calculate_combinations(inputs, combinations);
 
-    EXPECT_EQ(combinations(0,0), 0);
+    EXPECT_EQ(is_equal(combinations, type(0)), true);
 }
 
 
@@ -113,7 +116,6 @@ TEST(PerceptronLayerTest, Activations)
 
     EXPECT_NEAR(activations(0, 0), type(0.7), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.2), 0.001);
-
 }
 
 
@@ -128,12 +130,10 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
     Tensor<type, 2> inputs(1, 1);
     inputs.setConstant(type(0));
 
-/*
     perceptron_layer.forward_propagate({ make_pair(inputs.data(), dimensions{1, 1}) },
         perceptron_layer_forward_propagation,
         true);
 
-/*
     Tensor<type, 1> parameters;
 
     Tensor<type, 2> outputs;
@@ -143,7 +143,7 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
     pair<type*, dimensions> input_pairs;
 
     // Test
-
+/*
     bool is_training = true;
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
@@ -163,136 +163,10 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
 }
 
 
-/*
-
-void PerceptronLayerTest::test_calculate_combinations()
+TEST(PerceptronLayerTest, ForwardPropagate)
 {
+    /*
 
-    // Test
-
-    perceptron_layer->set_parameters_constant(1);
-
-    inputs.setConstant(type(3));
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
-
-    EXPECT_EQ(combinations.rank() == 2);
-    EXPECT_EQ(combinations.dimension(0) == 1);
-    EXPECT_EQ(abs(combinations(0,0) - type(7)) < type(1e-5));
-
-    // Test
-
-    inputs_number = 2;
-    neurons_number = 2;
-    samples_number = 1;
-
-    perceptron_layer->set(inputs_number, neurons_number);
-    perceptron_layer->set_parameters_constant(type(1));
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(type(1));
-
-    combinations.resize(samples_number, neurons_number);
-    combinations.setZero();
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
-
-    EXPECT_EQ(combinations.rank() == 2);
-    EXPECT_EQ(combinations.dimension(0) == samples_number);
-    EXPECT_EQ(combinations.dimension(1) == neurons_number);
-    EXPECT_EQ(abs(combinations(0,0) - type(3)) < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    combinations.resize(2, 4);
-    combinations.setZero();
-
-    perceptron_layer->set(3, 4);
-
-    perceptron_layer->set_parameters_constant(1);
-
-    inputs.resize(2,3);
-    inputs.setConstant(type(0.5));
-
-    perceptron_layer->set_parameters_constant(1);
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
-
-    EXPECT_EQ(combinations.rank() == 2);
-    EXPECT_EQ(combinations.dimension(0) == 2);
-    EXPECT_EQ(combinations.dimension(1) == 4);
-    EXPECT_EQ(abs(combinations(0,0) - type(3.5)) < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    inputs_number = 2;
-    neurons_number = 4;
-    samples_number = 1;
-
-    perceptron_layer->set(inputs_number, neurons_number);
-
-    perceptron_layer->set_parameters_constant(1);
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setValues({{type(0.5), type(0.5)}});
-
-    combinations.resize(samples_number, neurons_number);
-    combinations.setZero();
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
-
-    EXPECT_EQ(combinations.rank() == 2);
-    EXPECT_EQ(combinations.dimension(0) == samples_number);
-    EXPECT_EQ(combinations.dimension(1) == neurons_number);
-    EXPECT_EQ(Index(combinations(0,0)) == 2);
-
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    samples_number = 1;
-
-    perceptron_layer->set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-
-    perceptron_layer->set_parameters_constant(1);
-
-    parameters_number = perceptron_layer->get_parameters_number();
-
-    EXPECT_EQ(parameters_number == 2);
-
-    const Tensor<type, 1> parameters = perceptron_layer->get_parameters();
-
-    EXPECT_EQ(abs(parameters(0) - type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(parameters(1) - type(-0.5)) < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    samples_number = 1;
-
-    perceptron_layer->set(inputs_number, neurons_number);
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setZero();
-
-    perceptron_layer->set_parameters_constant(0);
-
-    combinations.resize(samples_number, neurons_number);
-
-    perceptron_layer->calculate_combinations(inputs, combinations);
-
-    EXPECT_EQ(combinations.rank() == 2);
-    EXPECT_EQ(combinations.dimension(0) == 1);
-    EXPECT_EQ(combinations.dimension(1) == 1);
-
-    EXPECT_EQ(abs(combinations(0,0)) < type(NUMERIC_LIMITS_MIN));
-
-}
-
-
-void PerceptronLayerTest::test_forward_propagate()
-{
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
@@ -307,7 +181,7 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs_number = 2;
     neurons_number = 2;
     bool is_training = true;
-    /*
+
     perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(1));
 
@@ -371,13 +245,6 @@ void PerceptronLayerTest::test_forward_propagate()
     outputs.resize(1, neurons_number);
 
     inputs.setConstant(type(1));
-    biases.setConstant(type(1));
-    synaptic_weights.setValues({{type(1),type(-1),type(0),type(1)},
-                                {type(2),type(-2),type(0),type(2)},
-                                {type(3),type(-3),type(0),type(3)}});
-
-    perceptron_layer.set_synaptic_weights(synaptic_weights);
-    perceptron_layer.set_biases(biases);
 
     perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
 
@@ -418,7 +285,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     EXPECT_EQ(outputs.dimension(0) == 1);
     EXPECT_EQ(outputs.dimension(1) == 2);
-    EXPECT_EQ(abs(outputs(0,0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0,0)) < NUMERIC_LIMITS_MIN);
 
     // Test
 
@@ -447,7 +314,7 @@ void PerceptronLayerTest::test_forward_propagate()
 
     EXPECT_EQ(outputs.dimension(0) == 1);
     EXPECT_EQ(outputs.dimension(1) == 2);
-    EXPECT_EQ(abs(outputs(0,0) + type(1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(abs(outputs(0,0) + type(1)) < NUMERIC_LIMITS_MIN);
 
     // Test 5
 
@@ -480,8 +347,5 @@ void PerceptronLayerTest::test_forward_propagate()
     inputs.setRandom();
 
     parameters = perceptron_layer.get_parameters();
-
-}
-
-}
 */
+}

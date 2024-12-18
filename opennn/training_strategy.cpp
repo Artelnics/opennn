@@ -463,18 +463,8 @@ void TrainingStrategy::set_default()
     optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 
     if(has_neural_network())
-    {
         if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
             loss_method = LossMethod::CROSS_ENTROPY_ERROR;
-
-        if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
-        {
-            loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
-            get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-            get_adaptive_moment_estimation()->set_display(true);
-            get_adaptive_moment_estimation()->set_display_period(1);
-        }
-    }
 }
 
 

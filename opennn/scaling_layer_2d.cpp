@@ -349,7 +349,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
-        if(abs(descriptives[i].standard_deviation) < type(NUMERIC_LIMITS_MIN))
+        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
@@ -625,11 +625,11 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
 {
     layer = new_layer;
 
-    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index outputs_number = layer->get_outputs_number();
 
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(batch_samples_number, outputs_number);
 }
 
 

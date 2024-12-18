@@ -42,11 +42,11 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& raw_variable_index,
                                    const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation) < type(NUMERIC_LIMITS_MIN)
+    const type slope = (column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(1)
             : type(1)/column_descriptives.standard_deviation;
 
-    const type intercept = (column_descriptives.standard_deviation) < type(NUMERIC_LIMITS_MIN)
+    const type intercept = (column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(0)
             : -type(1)*column_descriptives.mean/column_descriptives.standard_deviation;
 
@@ -61,7 +61,7 @@ void scale_standard_deviation(Tensor<type, 2>& matrix,
                               const Index& raw_variable_index,
                               const Descriptives& column_descriptives)
 {
-    const type slope = (column_descriptives.standard_deviation) < type(NUMERIC_LIMITS_MIN)
+    const type slope = (column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(1)
             : type(1)/column_descriptives.standard_deviation;
 
@@ -200,11 +200,11 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& raw_variable_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.standard_deviation) < type(NUMERIC_LIMITS_MIN)
+    const type slope = abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(0)
             : column_descriptives.standard_deviation;
 
-    const type intercept = abs(column_descriptives.mean) < type(NUMERIC_LIMITS_MIN)
+    const type intercept = abs(column_descriptives.mean) < NUMERIC_LIMITS_MIN
             ? type(0)
             : column_descriptives.mean;
 
@@ -219,7 +219,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& raw_v
 
 void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& raw_variable_index, const Descriptives& column_descriptives)
 {
-    const type slope = abs(column_descriptives.standard_deviation) < type(NUMERIC_LIMITS_MIN)
+    const type slope = abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
             ? type(0)
             : column_descriptives.standard_deviation;
 

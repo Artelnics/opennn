@@ -38,6 +38,7 @@ int main()
         // Data set
 
         LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
+        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_reduced.txt");
         // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
         // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
 
@@ -88,16 +89,17 @@ int main()
 
         training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.1);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1000);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.5);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
 
         TrainingResults training_results = training_strategy.perform_training();
 
+        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
 
         //Testing
 
@@ -108,38 +110,52 @@ int main()
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-
-        string prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features."},false);
+/*
+        string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
 
-        prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
+        prediction = testing_analysis.test_transformer({"So there is no way for me to plug it in here in the US unless I go by a converter."},false);
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
 
-        prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
+        prediction = testing_analysis.test_transformer({"Great for the jawbone."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
 
-        prediction = testing_analysis.test_transformer({"Buyer Beware, you could flush money right down the toilet."},false);
+        prediction = testing_analysis.test_transformer({"Tied to charger for conversations lasting more than 45 minutes.MAJOR PROBLEMS!!"},false);
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
 
-        prediction = testing_analysis.test_transformer({"Best I've found so far .... I've tried 2 other bluetooths and this one has the best quality (for both me and the listener) as well as ease of using."},false);
+        prediction = testing_analysis.test_transformer({"The mic is great."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
 
-        prediction = testing_analysis.test_transformer({"Arrived quickly and much less expensive than others being sold."},false);
+        prediction = testing_analysis.test_transformer({"I have to jiggle the plug to get it to line up right to get decent volume."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"If you have several dozen or several hundred contacts, then imagine the fun of sending each of them one by one."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+
+        prediction = testing_analysis.test_transformer({"If you are Razr owner...you must have this!"},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
 
+        prediction = testing_analysis.test_transformer({"Needless to say, I wasted my money."},false);
+        cout<<prediction<<endl;
+        cout<<"Target: bad"<<endl;
+        cout<<endl;
+*/
 
 //----------------------------------------------------------------------------------------------------------------------------------------------//
 
@@ -175,22 +191,15 @@ int main()
 
         const TestingAnalysis testing_analysis(&transformer, &language_data_set);
 
-        string prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features."},false);
+        string prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
         cout<<prediction<<endl;
-        cout<<"Target: good"<<endl;
+        cout<<"Target: bad"<<endl;
         cout<<endl;
 
 
         // cout << "Calculating confusion...." << endl;
         // const Tensor<Index, 2> confusion = testing_analysis.calculate_transformer_confusion();
         // cout << "\nConfusion matrix:\n" << confusion << endl;
-
-
-
-        prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
-        cout<<prediction<<endl;
-        cout<<"Target: bad"<<endl;
-        cout<<endl;
 
         prediction = testing_analysis.test_transformer({"I love this phone , It is very handy and has a lot of features ."},false);
         cout<<prediction<<endl;
@@ -231,6 +240,8 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
+
+
 
 
         // //only good reviews:
@@ -277,6 +288,53 @@ int main()
 
         // string translation = testing_analysis.test_transformer({"I like dogs."},true);
         // cout<<translation<<endl;
+
+
+
+
+
+        // //only bad reviews:
+        // string prediction = testing_analysis.test_transformer({"Tied to charger for conversations lasting more than 45 minutes.MAJOR PROBLEMS!!"},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"I have to jiggle the plug to get it to line up right to get decent volume."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"Not a good bargain."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"The construction of the headsets is poor."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"Could not get strong enough signal."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"it did not work in my cell phone plug i am very up set with the charger!."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"Basically the service was very bad."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"The majority of the Logitech earbud headsets failed."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"very disappointed."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+        // prediction = testing_analysis.test_transformer({"This is essentially a communications tool that does not communicate."},false);
+        // cout<<prediction<<endl;
+        // cout<<endl;
+
+
 */
         cout << "Bye!" << endl;
 

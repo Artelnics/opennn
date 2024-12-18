@@ -32,25 +32,15 @@ Index NormalizationLayer3D::get_inputs_number_xxx() const
 
 Index NormalizationLayer3D::get_inputs_depth() const
 {
-    return inputs_depth;
+    return gammas.size();
 }
 
 
 dimensions NormalizationLayer3D::get_output_dimensions() const
 {
+    const Index inputs_depth = get_inputs_depth();
+
     return { inputs_number_xxx, inputs_depth };
-}
-
-
-Index NormalizationLayer3D::get_gammas_number() const
-{
-    return gammas.size();
-}
-
-
-Index NormalizationLayer3D::get_betas_number() const
-{
-    return betas.size();
 }
 
 
@@ -76,12 +66,10 @@ void NormalizationLayer3D::set(const Index& new_inputs_number, const Index& new_
 {
     inputs_number_xxx = new_inputs_number;
 
-    inputs_depth = new_inputs_depth;
-
-    gammas.resize(inputs_depth);
+    gammas.resize(new_inputs_depth);
     gammas.setConstant(1);
 
-    betas.resize(inputs_depth);
+    betas.resize(new_inputs_depth);
     betas.setZero();
 
     name = "normalization_layer_3d";
@@ -98,10 +86,8 @@ void NormalizationLayer3D::set_inputs_number(const Index& new_inputs_number)
 
 void NormalizationLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 {
-    inputs_depth = new_inputs_depth;
-
-    gammas.resize(inputs_depth);
-    betas.resize(inputs_depth);
+    gammas.resize(new_inputs_depth);
+    betas.resize(new_inputs_depth);
 }
 
 
@@ -164,8 +150,8 @@ void NormalizationLayer3D::forward_propagate(const vector<pair<type*, dimensions
     means.device(*thread_pool_device) = inputs.mean(normalization_axis)
                                             .reshape(range_3).broadcast(expand_normalization_axis);
 
-    standard_deviations.device(*thread_pool_device) = (inputs - means).pow(2).mean(normalization_axis).sqrt()
-                                                          .reshape(range_3).broadcast(expand_normalization_axis);
+    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt()
+                                           .reshape(range_3).broadcast(expand_normalization_axis);
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 
@@ -181,7 +167,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 {
     const Index batch_samples_number = input_pairs[0].second[0];
 
-//    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const Index inputs_depth = get_inputs_depth();
 
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
@@ -229,7 +215,9 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * outputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
+    //aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * outputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
+
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(inputs_depth) * (standard_deviations_matrix + epsilon));
 
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
@@ -245,7 +233,7 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
 void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
 {
-    TensorMap<Tensor<type, 3>> deltas= tensor_map_3(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     for(Index i = 1; i < Index(delta_pairs.size()); i++)
         deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
@@ -256,8 +244,8 @@ void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
                                            const Index& index,
                                            Tensor<type, 1>& gradient) const
 {
-    const Index gammas_number = get_gammas_number();
-    const Index betas_number = get_betas_number();
+    const Index gammas_number = gammas.size();
+    const Index betas_number = betas.size();
 
     NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
         static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.get());

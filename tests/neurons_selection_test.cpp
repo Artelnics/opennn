@@ -3,12 +3,8 @@
 #include "../opennn/growing_neurons.h"
 
 /*
-namespace opennn
-{
 void NeuronsSelectionTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
     // Test
 
     GrowingNeurons growing_neurons_1(&training_strategy);

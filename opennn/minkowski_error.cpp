@@ -97,6 +97,19 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
 
 /*
+<<<<<<< HEAD
+=======
+    p_norm_derivative.device(*thread_pool_device) 
+        = ;
+
+    if(abs(p_norm_derivative()) < NUMERIC_LIMITS_MIN)
+    {
+        deltas.setZero();
+
+        return;
+    }
+
+>>>>>>> b823f7732a23e4c36fef9e94182e41a16191ce53
     const type coefficient = type(1.0 / (p_norm_derivative() * batch_samples_number));
 
     deltas.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter - 1)*(minkowski_parameter/(type)batch_samples_number);

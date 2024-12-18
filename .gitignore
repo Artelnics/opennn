@@ -6,6 +6,13 @@
 [Ii]nclude
 !googletest/include/
 
+x64
+Intel® VTune™ Profiler Results
+
+**/x64/
+**/Intel® VTune™ Profiler Results/
+
+
 [Ll]ib
 [Ss]cripts
 pyvenv.cfg

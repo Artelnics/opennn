@@ -25,9 +25,9 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-   ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
+    enum class ActivationFunction { Softmax, Competitive };
 
-   enum class ActivationFunction{Softmax, Competitive};
+   ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
@@ -161,11 +161,11 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 2> mask;
     bool built_mask = false;
 
-    Tensor<type, 3> combinations_derivatives;
+    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 };
 
 #ifdef OPENNN_CUDA

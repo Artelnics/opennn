@@ -17,6 +17,7 @@ namespace opennn
 ImageDataSet::ImageDataSet(const Index& new_samples_number,
                            const dimensions& new_input_dimensions,
                            const dimensions& new_target_dimensions)
+    : DataSet(new_samples_number, new_input_dimensions, new_target_dimensions)
 {
     if (new_input_dimensions.size() != 3)
         throw runtime_error("Input dimensions is not 3");
@@ -114,7 +115,7 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
 }
 
 
-void ImageDataSet::set_image_data_random()
+void ImageDataSet::set_data_random()
 {
     const Index height = input_dimensions[0];
     const Index width = input_dimensions[1];
@@ -169,9 +170,6 @@ void ImageDataSet::set_image_data_random()
             }
         }
     }
-
-    if (display)
-        cout << "\nRandom image data set generated." << endl;
 }
 
 

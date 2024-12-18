@@ -49,7 +49,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
         
     probabilistic_layer_3d_back_propagation->targets.device(*thread_pool_device) = targets;
-    
+
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;
     Tensor<bool, 2>& matches = back_propagation.matches;
@@ -68,7 +68,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2)
 
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
@@ -82,6 +82,15 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
+
+/*
+    cout<<"predictions: "<<endl;
+    cout<<predictions<<endl;
+    cout<<"targets: "<<endl;
+    cout<<targets<<endl;
+    cout<<"matches: "<<endl;
+    cout<<matches<<endl;
+*/
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 

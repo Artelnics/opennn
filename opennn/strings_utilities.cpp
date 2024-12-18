@@ -501,22 +501,11 @@ void trim(string& text)
 {
     // Prefixing spaces
 
-    text.erase(0, text.find_first_not_of(' '));
-    text.erase(0, text.find_first_not_of('\t'));
-    text.erase(0, text.find_first_not_of('\n'));
-    text.erase(0, text.find_first_not_of('\r'));
-    text.erase(0, text.find_first_not_of('\f'));
-    text.erase(0, text.find_first_not_of('\v'));
+    text.erase(0, text.find_first_not_of(" \t\n\r\f\v\b"));
 
     // Surfixing spaces
 
-    text.erase(text.find_last_not_of(' ') + 1);
-    text.erase(text.find_last_not_of('\t') + 1);
-    text.erase(text.find_last_not_of('\n') + 1);
-    text.erase(text.find_last_not_of('\r') + 1);
-    text.erase(text.find_last_not_of('\f') + 1);
-    text.erase(text.find_last_not_of('\v') + 1);
-    text.erase(text.find_last_not_of('\b') + 1);
+    text.erase(text.find_last_not_of(" \t\n\r\f\v\b") + 1);
 
     // Special character and string modifications
 
@@ -566,10 +555,16 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
+/*
     regex r("\"([^\"]*)\"");
-    smatch match;
+
     string result;
+    smatch match;
+
     string prefix = str;
+
+    string::const_iterator search_start(str.begin());
+
 
     while(regex_search(prefix, match, r))
     {
@@ -588,6 +583,31 @@ void replace_substring_within_quotes(string &str, const string &target, const st
     }
 
     result += prefix;
+    str = result;
+*/
+
+    regex r("\"([^\"]*)\"");
+    string result;
+    string::const_iterator search_start(str.begin());
+    smatch match;
+
+    while (regex_search(search_start, str.cend(), match, r))
+    {
+        result += string(search_start, match[0].first); // Append text before match
+        string quoted_content = match[1].str(); // Extract quoted content
+
+        size_t position = 0;
+        while ((position = quoted_content.find(target, position)) != string::npos)
+        {
+            quoted_content.replace(position, target.length(), replacement);
+            position += replacement.length();
+        }
+
+        result += "\"" + quoted_content + "\""; // Append updated quoted content
+        search_start = match[0].second; // Move search start past the current match
+    }
+
+    result += string(search_start, str.cend()); // Append remaining text
     str = result;
 }
 
