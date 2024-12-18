@@ -31,7 +31,7 @@ int main()
         Eigen::Tensor<float, 4> input(1, 1, 1, 1);
         input.setRandom();
 
-        Eigen::Tensor<float, 2> kernel(1, 1, 1, 1);
+        Eigen::Tensor<float, 2> kernel(1, 1);
         kernel.setRandom();
 
         Eigen::Tensor<float, 4> output(1, 1, 1, 1);
