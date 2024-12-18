@@ -31,7 +31,8 @@ public:
    PerceptronLayer3D(const Index& = 0,
                      const Index& = 0,
                      const Index& = 0,
-                     const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+                     const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
+                     const string& = "perceptron_layer_3d");
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
@@ -56,7 +57,8 @@ public:
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+            const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
+            const string & = "perceptron_layer_3d");
 
    void set_inputs_number(Index);
    void set_input_dimensions(const dimensions&) override;

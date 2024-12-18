@@ -1261,8 +1261,8 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
     const Index size = x.size();
 
-    Tensor<type, 0> minimum = x.minimum();
-    Tensor<type, 0> maximum = x.maximum();
+    const Tensor<type, 0> minimum = x.minimum();
+    const Tensor<type, 0> maximum = x.maximum();
 
     long double sum = 0.0;
     long double squared_sum = 0;

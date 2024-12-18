@@ -723,8 +723,8 @@ string get_expression_api(const NeuralNetwork& neural_network)
 
     string new_word;
 
-    vector<string> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
-    found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
+    vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
+    found_tokens_and_input_names = sort_string_vector(found_tokens_and_input_names);
 
     for(int i = 0; i < lines.size(); i++)
     {

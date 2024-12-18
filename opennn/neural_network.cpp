@@ -730,10 +730,10 @@ void NeuralNetwork::set_layer_inputs_indices(const Index& layer_index, const vec
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name,
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_name,
                                              const vector<string>& new_layer_input_names)
 {
-    const Index layer_index = get_layer_index(name);
+    const Index layer_index = get_layer_index(layer_name);
 
     const Index size = new_layer_input_names.size();
 
@@ -755,9 +755,9 @@ void NeuralNetwork::set_layer_inputs_indices(const string& layer_name,
 }
 
 
-void NeuralNetwork::set_layer_inputs_indices(const string& name, const string& new_layer_input_names)
+void NeuralNetwork::set_layer_inputs_indices(const string& layer_name, const string& new_layer_input_names)
 {
-    const Index layer_index = get_layer_index(name);
+    const Index layer_index = get_layer_index(layer_name);
 
     layer_input_indices[layer_index] = {get_layer_index(new_layer_input_names)};
 }
@@ -1515,9 +1515,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         const vector<Index> input_index = string_to_dimensions(string(text), " ");
 
         if (layer_index >= layer_input_indices.size())
-            layer_input_indices.resize(layer_index + 1);       
-
-        layer_input_indices[layer_index] = input_index;
+            layer_input_indices.push_back(input_index);
     }
 }
 
@@ -1674,7 +1672,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     {
         file << output_names[i];
 
-        if(i != Index(output_names.size()) - 1) 
+        if(i != output_names.size() - 1) 
             file << ";";
     }
 
@@ -1723,7 +1721,8 @@ vector<string> NeuralNetwork::get_layer_types_string() const
 }
 
 
-NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+NeuralNetworkBackPropagation::NeuralNetworkBackPropagation(const Index& new_batch_samples_number, 
+                                                           NeuralNetwork* new_neural_network)
 {
     set(new_batch_samples_number, new_neural_network);
 }

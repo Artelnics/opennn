@@ -24,25 +24,20 @@ class NormalizationLayer3D : public Layer
 
 public:
 
-    NormalizationLayer3D(const Index& = 0, const Index& = 0);
+    NormalizationLayer3D(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
-    Index get_inputs_number_xxx() const;
-    Index get_inputs_depth() const;
+    Index get_sequence_length() const;
+    Index get_embedding_dimension() const;
 
-    // @todo
-    dimensions get_input_dimensions() const override
-    {
-        throw runtime_error("XXX");
-    }
-
+    dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
-    void set(const Index& = 0, const Index& = 0);
+    void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
-    void set_inputs_number(const Index&);
+    void set_sequence_length(const Index&);
     void set_inputs_depth(const Index&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
@@ -71,17 +66,14 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-
     #ifdef OPENNN_CUDA
         #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_cuda.h"
     #endif
 
 private:
 
-    Index inputs_number_xxx;
+    Index sequence_length;
         
-    Index neurons_number;
-
     Tensor<type, 1> gammas;
 
     Tensor<type, 1> betas;

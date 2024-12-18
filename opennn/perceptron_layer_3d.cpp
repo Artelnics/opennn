@@ -16,13 +16,10 @@ namespace opennn
 PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
                                      const Index& new_inputs_depth,
                                      const Index& new_neurons_number,
-                                     const PerceptronLayer3D::ActivationFunction& new_activation_function) : Layer()
+                                     const PerceptronLayer3D::ActivationFunction& new_activation_function,
+                                     const string& new_name) : Layer()
 {
-    set(new_inputs_number, new_inputs_depth, new_neurons_number, new_activation_function);
-
-    layer_type = Type::Perceptron3D;
-
-    name = "perceptron_layer_3d";
+    set(new_inputs_number, new_inputs_depth, new_neurons_number, new_activation_function, new_name);
 }
 
 
@@ -106,7 +103,8 @@ string PerceptronLayer3D::get_activation_function_string() const
 void PerceptronLayer3D::set(const Index& new_inputs_number, 
                             const Index& new_inputs_depth, 
                             const Index& new_neurons_number,
-                            const PerceptronLayer3D::ActivationFunction& new_activation_function)
+                            const PerceptronLayer3D::ActivationFunction& new_activation_function,
+                            const string& new_name)
 {
     inputs_number_xxx = new_inputs_number;
 
@@ -118,7 +116,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     activation_function = new_activation_function;
 
-    name = "perceptron_layer_3d";
+    name = new_name;
 
     layer_type = Type::Perceptron3D;
 
@@ -126,12 +124,10 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 }
 
 
-
 void PerceptronLayer3D::set_inputs_number(Index new_input_number)
 {
     inputs_number_xxx = new_input_number;
 }
-
 
 
 void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)

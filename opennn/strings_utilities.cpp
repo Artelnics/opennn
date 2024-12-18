@@ -827,34 +827,28 @@ Tensor<string,2> round_to_precision_string_matrix(Tensor<type,2> matrix, const i
 }
 
 
-// @todo clean this method Clang-tidy gives warnings.
-
-vector<string> sort_string_tensor(vector<string>& tensor)
+vector<string> sort_string_vector(vector<string>& string_vector)
 {
     auto compare_string_length = [](const string& a, const string& b)
     {
         return a.length() > b.length();
     };
-
-    vector<string> tensor_as_vector(tensor.data(), tensor.data() + tensor.size());
     
-    sort(tensor_as_vector.begin(), tensor_as_vector.end(), compare_string_length);
+    sort(string_vector.begin(), string_vector.end(), compare_string_length);
 
-    for(int i = 0; i < tensor.size(); i++)
-        tensor[i] = tensor_as_vector[i];
-
-    return tensor;
+    return string_vector;
 }
 
 
-vector<string> concatenate_string_tensors(const vector<string>& tensor_1, const vector<string>& tensor_2)
+vector<string> concatenate_string_vectors(const vector<string>& string_vector_1, 
+                                          const vector<string>& string_vector_2)
 {
-    vector<string> tensor = tensor_2;
+    vector<string> string_vector = string_vector_2;
 
-    for(int i = 0; i < tensor_1.size(); i++)
-        tensor.push_back(tensor_1[i]);
+    for(size_t i = 0; i < string_vector_1.size(); i++)
+        string_vector.push_back(string_vector_1[i]);
 
-    return tensor;
+    return string_vector;
 }
 
 

@@ -24,24 +24,18 @@ class AdditionLayer3D : public Layer
 
 public:
 
-    AdditionLayer3D(const Index& = 0, const Index& = 0);
+    AdditionLayer3D(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
 
-    Index get_inputs_number_xxx() const;
-    Index get_inputs_depth() const;
+    Index get_sequence_length() const;
+    Index get_embedding_length() const;
 
-    // @todo
-
-    dimensions get_input_dimensions() const override
-    {
-        throw runtime_error("XXX");
-    }
-
+    dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void set(const Index& = 0, const Index& = 0);
+    void set(const Index& = 0, const Index& = 0, const string & = "addition_layer_3d");
 
-    void set_inputs_number(const Index&);
-    void set_inputs_depth(const Index&);
+    void set_sequence_length(const Index&);
+    void set_embedding_length(const Index&);
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -61,9 +55,9 @@ public:
 
 private:
 
-    Index inputs_number_xxx = 0;
+    Index sequence_length = 0;
 
-    Index inputs_depth = 0;
+    Index embedding_length = 0;
 };
 
 

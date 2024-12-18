@@ -24,13 +24,12 @@ class MultiheadAttentionLayer : public Layer
 
 public:
 
-    explicit MultiheadAttentionLayer(const Index& = 0,
-                                     const Index& = 0,
-                                     const Index& = 0,
-                                     const Index& = 0,
-                                     const bool & = false);
-
-    bool is_empty() const;
+    MultiheadAttentionLayer(const Index& = 0,
+                            const Index& = 0,
+                            const Index& = 0,
+                            const Index& = 0,
+                            const bool& = false,
+                            const string& = "multihead_attention_layer");
 
     Index get_input_size() const;
     Index get_context_size() const;
@@ -49,7 +48,11 @@ public:
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
-    void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
+    void set(const Index& = 0, 
+             const Index& = 0, 
+             const Index& = 0, 
+             const Index& = 0, 
+             const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
@@ -58,7 +61,6 @@ public:
     void set_depth(const Index&);
     void set_heads_number(const Index&);
 
-    void set_weights();
     void set_parameters_random() override;
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;

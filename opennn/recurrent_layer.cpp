@@ -277,7 +277,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index time_steps = input_pairs[0].second[1];
+    //const Index time_steps = input_pairs[0].second[1];
 
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
         static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
@@ -322,6 +322,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+/*
     const Index samples_number = input_pairs[0].second[0];
     const Index outputs_number = get_outputs_number();
     const Index inputs_number = get_inputs_number();
@@ -377,7 +378,7 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
         current_inputs = inputs.chip(time_step, 1);
-/*
+
     for(Index sample_index = 0; sample_index < samples_number; sample_index++)
     {
         current_inputs.device(*thread_pool_device) = inputs.chip(sample_index, 0);
@@ -456,11 +457,12 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
         recurrent_weights_derivatives.device(*thread_pool_device)
             += combinations_recurrent_weights_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
     }
-*/
+
     // Input derivatives
 
     if(!is_first_layer)
         input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(input_weights, A_BT);
+*/
 }
 
 

@@ -347,6 +347,7 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
 /*
     squared_errors.device(*thread_pool_device) = 0;
 */
+
 }
 
 }

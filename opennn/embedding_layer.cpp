@@ -16,9 +16,10 @@ namespace opennn
 EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
                                const Index& new_sequence_length,
                                const Index& new_embedding_size,
-                               const bool& new_positional_encoding) : Layer()
+                               const bool& new_positional_encoding,
+                               const string& new_name) : Layer()
 {
-    set(new_vocabulary_size, new_sequence_length, new_embedding_size, new_positional_encoding);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_size, new_positional_encoding, new_name);
 
     layer_type = Type::Embedding;
 
@@ -38,7 +39,7 @@ Index EmbeddingLayer::get_sequence_length() const
 }
 
 
-Index EmbeddingLayer::get_embedding_size() const
+Index EmbeddingLayer::get_embedding_dimension() const
 {
     return embedding_weights.dimension(1);
 }
@@ -58,9 +59,9 @@ dimensions EmbeddingLayer::get_input_dimensions() const
 
 dimensions EmbeddingLayer::get_output_dimensions() const
 {
-    const Index embedding_size = get_embedding_size();
+    const Index embedding_dimension = get_embedding_dimension();
 
-    return { sequence_length, embedding_size };
+    return { sequence_length, embedding_dimension };
 }
 
 
@@ -83,7 +84,8 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 void EmbeddingLayer::set(const Index& new_vocabulary_size,
                          const Index& new_sequence_length,
                          const Index& new_embedding_size,
-                         const bool& new_positional_encoding)
+                         const bool& new_positional_encoding,
+                         const string& new_name)
 {
     sequence_length = new_sequence_length;
 
@@ -101,9 +103,9 @@ void EmbeddingLayer::set(const Index& new_vocabulary_size,
 
 void EmbeddingLayer::set_vocabulary_size(const Index& new_vocabulary_size)
 {
-    const Index embedding_size = get_embedding_size();
+    const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(new_vocabulary_size, embedding_size);
+    embedding_weights.resize(new_vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -140,9 +142,9 @@ void EmbeddingLayer::set_dropout_rate(const type& new_dropout_rate)
 void EmbeddingLayer::set_embedding_weights()
 {
     const Index vocabulary_size = get_vocabulary_size();
-    const Index embedding_size = get_embedding_size();
+    const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(vocabulary_size, embedding_size);
+    embedding_weights.resize(vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -209,7 +211,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                        const bool& is_training)
 {
-    const Index embedding_size = get_embedding_size();
+    const Index embedding_dimension = get_embedding_dimension();
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -222,7 +224,7 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     if(positional_encoding)
     {
-        outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_size));
+        outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 
         const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
         
@@ -240,7 +242,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
                                     unique_ptr<LayerForwardPropagation>&,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index embedding_size = get_embedding_size();
+    const Index embedding_dimension = get_embedding_dimension();
 
     const Index batch_samples_number = input_pairs[0].second[0];
     const Index inputs_number = input_pairs[0].second[1];
@@ -265,7 +267,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     for(Index i = 0; i < batch_samples_number; i++)
     {
         positional_encoding
-            ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_size))
+            ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension))
             : sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
 
         for(Index j = 0; j < inputs_number; j++)
@@ -325,7 +327,7 @@ void EmbeddingLayer::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
-    add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_size()));
+    add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
     add_xml_element(printer, "PositionalEncoding", to_string(positional_encoding ? 1 : 0));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -346,7 +348,7 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index sequence_length = embedding_layer->get_sequence_length();
 
-    const Index embedding_size = embedding_layer->get_embedding_size();
+    const Index embedding_size = embedding_layer->get_embedding_dimension();
     
     return {(type*)outputs.data(), {batch_samples_number, sequence_length, embedding_size}};
 }
@@ -362,7 +364,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     const Index sequence_length = embedding_layer->get_sequence_length();
 
-    const Index embedding_size = embedding_layer->get_embedding_size();
+    const Index embedding_size = embedding_layer->get_embedding_dimension();
 
     // Outputs
 
@@ -391,7 +393,7 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
     const Index inputs_number = embedding_layer->get_sequence_length();
-    const Index embedding_size = embedding_layer->get_embedding_size();
+    const Index embedding_size = embedding_layer->get_embedding_dimension();
 
     positional_encoding.resize(inputs_number, embedding_size);
 
@@ -432,7 +434,7 @@ void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, L
     batch_samples_number = new_batch_samples_number;
 
     const Index sequence_length = embedding_layer->get_sequence_length();
-    const Index embedding_size = embedding_layer->get_embedding_size();
+    const Index embedding_size = embedding_layer->get_embedding_dimension();
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();
 
     sample_deltas.resize(sequence_length, embedding_size);

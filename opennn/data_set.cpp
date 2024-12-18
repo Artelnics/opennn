@@ -1704,7 +1704,7 @@ vector<vector<string>> DataSet::get_data_file_preview() const
 
 
 void DataSet::set(const filesystem::path& new_data_path,
-                  const string& separator,
+                  const string& new_separator,
                   const bool& new_has_header,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
@@ -1713,7 +1713,7 @@ void DataSet::set(const filesystem::path& new_data_path,
 
     set_data_path(new_data_path);
 
-    set_separator_string(separator);
+    set_separator_string(new_separator);
 
     set_has_header(new_has_header);
 
@@ -2088,7 +2088,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
     const Index used_samples_number = used_sample_indices.size();
 
     vector<Histogram> histograms(used_raw_variables_number);
-
+/*
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
 
@@ -2173,7 +2173,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
             throw runtime_error("Unknown raw variable type.");
         }
     }
-
+*/
     return histograms;
 }
 
@@ -2496,7 +2496,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
 
 void DataSet::print_missing_values_information() const
 {
-    const Index missing_values_number = count_nan();
+    //const Index missing_values_number = count_nan();
 
     const Tensor<Index, 0> raw_variables_with_missing_values = count_raw_variables_with_nan().sum();
 
@@ -4648,7 +4648,7 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 
     // Scrub missing values
 
-    const MissingValuesMethod missing_values_method = get_missing_values_method();
+    //const MissingValuesMethod missing_values_method = get_missing_values_method();
 
     const Index samples_number = input_data.dimension(0);
     const Index variables_number = input_data.dimension(1);
