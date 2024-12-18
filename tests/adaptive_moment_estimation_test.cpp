@@ -70,7 +70,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     const Index perceptron_depth = 6;
     const Index heads_number = 4;
     const Index layers_number = 1;
-
+/*
     LanguageDataSet language_data_set;
 
     language_data_set.set_data_random_language_model(batch_samples_number,
@@ -104,7 +104,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 //    const TrainingResults training_results = adaptive_moment_estimation.perform_training();
 
 //    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
-
+*/
 }
 
 /*

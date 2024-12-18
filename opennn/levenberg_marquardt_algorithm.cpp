@@ -445,7 +445,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     
     if(!success)
     {
-        const type epsilon = numeric_limits<type>::epsilon();
+        constexpr type epsilon = numeric_limits<type>::epsilon();
 
         #pragma omp parallel for
 

@@ -46,11 +46,10 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     data_set.set_data_random();
     data_set.set(DataSet::SampleUse::Training);
 
-<<<<<<< HEAD
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
 
     neural_network.set_parameters_constant(type(0)); 
-=======
+
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
         data_set.get_variable_indices(DataSet::VariableUse::Input),
@@ -62,8 +61,6 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
->>>>>>> b823f7732a23e4c36fef9e94182e41a16191ce53
-
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index

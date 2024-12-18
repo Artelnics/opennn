@@ -129,7 +129,7 @@ public:
     Tensor<Index, 1> get_sample_use_numbers() const;
     Tensor<type, 1> get_sample_use_percentages() const;
 
-    string get_sample_string(const Index&, const string& = ",") const;
+    string get_sample_string(const Index&) const;
 
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const VariableUse&) const;
@@ -184,7 +184,7 @@ public:
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
     Tensor<type, 2> get_raw_variable_data(const Index&, const vector<Index>&) const;
-    Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
+    //Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_raw_variable_data(const string&) const;
 
     string get_sample_category(const Index&, const Index&) const;
@@ -225,7 +225,7 @@ public:
         return data.size() == 0;
     }
 
-    bool get_augmentation() const;
+    //bool get_augmentation() const;
 
     // Set
 
@@ -307,8 +307,6 @@ public:
 
     void set_has_header(const bool&);
     void set_has_ids(const bool&);
-
-    void set_has_text_data(const bool&);
 
     void set_separator(const Separator&);
     void set_separator_string(const string&);
@@ -498,7 +496,7 @@ public:
     vector<vector<Index>> split_samples(const vector<Index>&, const Index&) const;
 
     bool get_has_rows_labels() const;
-    bool get_has_text_data() const;
+    //bool get_has_text_data() const;
 
     // Reader
 

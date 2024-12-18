@@ -347,7 +347,7 @@ void QuasiNewtonMethod::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = std::numeric_limits<type>::epsilon();
 
         const Index parameters_number = parameters.size();
 
