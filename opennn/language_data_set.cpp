@@ -12,7 +12,8 @@
 namespace opennn
 {
 
-LanguageDataSet::LanguageDataSet(const dimensions& context_dimensionms, const dimensions& completion_dimensionms)
+LanguageDataSet::LanguageDataSet(const dimensions& context_dimensionms, 
+                                 const dimensions& completion_dimensionms)
 {
     set_context_dimensions(context_dimensionms);
     set_completion_dimensions(completion_dimensionms);
@@ -231,9 +232,7 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
     // Data file name
     {
         file_stream.OpenElement("Path");
-
         file_stream.PushText(data_path.c_str());
-
         file_stream.CloseElement();
     }
 
@@ -283,8 +282,6 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
-
 
     // Close DataFile
 
@@ -437,15 +434,13 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("RawVariablesMissingValuesNumber");
 
-            const Index raw_variables_number = raw_variables_missing_values_number.size();
-
             buffer.str("");
 
             for(Index i = 0; i < raw_variables_number; i++)
             {
                 buffer << raw_variables_missing_values_number(i);
 
-                if(i != (raw_variables_number-1)) buffer << " ";
+                if(i != raw_variables_number - 1) buffer << " ";
             }
 
             file_stream.PushText(buffer.str().c_str());
@@ -823,6 +818,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     if(context_vocabulary_element)
     {
         context_vocabulary.clear();
+
         for (const XMLElement* word_element = context_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
             if (word_element->GetText())
@@ -1386,7 +1382,8 @@ void LanguageDataSet::load_documents(const string& path)
     Index tokens_number = 0;
 
     string delimiter;
-    const string separator = get_separator_string();
+
+    const string separator_string = get_separator_string();
 
     while(getline(file, line))
     {
@@ -1399,11 +1396,11 @@ void LanguageDataSet::load_documents(const string& path)
             delimiter = "\"\"";
         }
 
-        if(line.find("\"" + separator) != string::npos)
-            replace(line,"\"" + separator, "\"\"" + separator);
+        if(line.find("\"" + separator_string) != string::npos)
+            replace(line,"\"" + separator_string, "\"\"" + separator_string);
 
         //tokens_number = count_tokens(line,delimiter + separator);
-        const vector<string> tokens = get_tokens(line, delimiter + separator);
+        const vector<string> tokens = get_tokens(line, delimiter + separator_string);
 
         tokens_number = tokens.size();
 
@@ -1670,8 +1667,7 @@ void LanguageDataSet::read_csv_1()
                 lines_number++;
                 data_file_preview.resize(lines_number);
 
-                string line;
-                Index lines_count = 0;
+                lines_count = 0;
 
                 file.open(data_path.c_str());
 
@@ -2093,7 +2089,7 @@ void LanguageDataSet::read_txt()
 
     cout << "Writting data file..." << endl;
 
-    string transformed_data_path = data_path;
+    string transformed_data_path = data_path.string();
 
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
@@ -2208,7 +2204,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         for(Index j = 0; j < maximum_context_length + 1; j++)
         {
-            if(j < line_tokens.size() && token_counter < maximum_context_length + 1)
+            if(j < Index(line_tokens.size()) && token_counter < maximum_context_length + 1)
             {
                 word = line_tokens[j];
 
@@ -2255,6 +2251,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
+                // @todo max_context_length is not defined
+/*
                 if(token_counter > max_context_length + 1)    
                     break;
 
@@ -2267,12 +2265,12 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 {
                     context_row(token_counter++) = type(0); // padding
                 }
+*/
             }
         }
 
         for(Index j = 0; j < maximum_context_length + 2; j++)
             file << context_row(j) << ";";
-
 
         // Completion
 
@@ -2287,7 +2285,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         for(Index j = 0; j < maximum_completion_length + 1; j++)
         {
-            if(j < line_tokens.size() && token_counter < maximum_completion_length + 1)
+            if(j < Index(line_tokens.size()) && token_counter < maximum_completion_length + 1)
             {
                 word = line_tokens[j];
 
@@ -2337,9 +2335,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
                 if(token_counter > maximum_completion_length + 1)
                     break;
 
-                if(j == line_tokens.size()
-                || (token_counter == maximum_completion_length + 1
-                && !line_ended))
+                if(j == Index(line_tokens.size())
+                || (token_counter == maximum_completion_length + 1 && !line_ended))
                 {
                     completion_row(token_counter++) = 3; // end indicator
                     line_ended = true;
