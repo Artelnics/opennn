@@ -348,9 +348,9 @@ void Transformer::set(const Index& input_length,
     add_layer(std::move(final_layer));
     set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(layers_number));
 
-    for(Index i = 0; i < layer_input_indices.size(); i++){
+    for(size_t i = 0; i < layer_input_indices.size(); i++){
         cout<<layers[i]->get_name()<<endl;
-        for(Index j = 0; j < layer_input_indices[i].size(); j++){
+        for(size_t j = 0; j < layer_input_indices[i].size(); j++){
             if(layer_input_indices[i][j]>-1)
             cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<" -> "<<layers[layer_input_indices[i][j]]->get_name()<<endl;
             else{cout<<"layer_input_indices["<<i<<"]["<<j<<"] = "<<layer_input_indices[i][j]<<endl;}}
