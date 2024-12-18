@@ -11,7 +11,6 @@
 
 namespace opennn
 {
-
 // void scale_minimum_maximum_binary(Tensor<type, 2>& matrix,
 //                                   const type& value_1,
 //                                   const type& value_2,
@@ -39,7 +38,6 @@ namespace opennn
 //         matrix(i, raw_variable_index) = slope*matrix(i, raw_variable_index)+intercept;
 // }
 
-
 void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& raw_variable_index,
                                    const Descriptives& column_descriptives)
@@ -55,9 +53,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, raw_variable_index) = matrix(i, raw_variable_index) * slope + intercept;
-    }
 }
 
 

@@ -82,7 +82,9 @@ Index count_tokens(const string& text, const string& separator)
         tokens_number--;
 
     return tokens_number + 1;
- }
+
+
+}
 
 
 vector<string> get_tokens(const string& text, const string& separator)
@@ -1121,10 +1123,16 @@ vector<vector<string>> get_tokens(const vector<string>& documents, const string&
     const Index documents_number = documents.size();
 
     vector<vector<string>> tokens(documents_number);
-    //#pragma omp parallel for
 
-    for(Index i = 0; i < documents_number-1; i++)
-        tokens[i] = get_tokens(documents[i], separator);
+    // for(Index i = 0; i < documents_number-1; i++)
+    //     tokens[i] = get_tokens(documents[i], separator);
+
+    if(documents_number==1)
+        tokens[0] = get_tokens(documents[0], separator);
+    else
+        for(Index i = 0; i < documents_number; i++)  //documents_number-1
+            tokens[i] = get_tokens(documents[i], separator);
+
 
     return tokens;
 }
@@ -1190,6 +1198,7 @@ vector<vector<string>> preprocess_language_documents(const vector<string>& docum
     delete_non_alphanumeric(documents_copy);
 
     return get_tokens(documents_copy, " ");
+
 }
 
 

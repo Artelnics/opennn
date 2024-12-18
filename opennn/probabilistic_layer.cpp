@@ -472,18 +472,18 @@ string ProbabilisticLayer::write_activations(const vector<string>& output_names)
             {
                 buffer << "sum = ";
 
-                for (Index i = 0; i < outputs_number; i++)
+                for (Index j = 0; j < outputs_number; j++)
                 {
-                    buffer << "exp(probabilistic_layer_combinations_" << to_string(i) << ")";
+                    buffer << "exp(probabilistic_layer_combinations_" << to_string(j) << ")";
 
-                    if (i != outputs_number - 1)
+                    if (j != outputs_number - 1)
                         buffer << " + ";
                 }
 
                 buffer << ";\n" << endl;
 
-                for (Index i = 0; i < outputs_number; i++)
-                    buffer << output_names[i] << " = exp(probabilistic_layer_combinations_" << to_string(i) << ")/sum;\n";
+                for (Index j = 0; j < outputs_number; j++)
+                    buffer << output_names[j] << " = exp(probabilistic_layer_combinations_" << to_string(j) << ")/sum;\n";
             }
             break;
         default:

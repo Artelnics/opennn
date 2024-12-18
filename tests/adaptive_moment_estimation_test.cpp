@@ -13,7 +13,7 @@ TEST(AdaptiveMomentEstimationTest, DefaultConstructor)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    EXPECT_TRUE(!adaptive_moment_estimation.has_loss_index());
+    EXPECT_EQ(adaptive_moment_estimation.has_loss_index(), false);
 }
 
 
@@ -30,7 +30,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 {
     AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    //const TrainingResults training_results = adaptive_moment_estimation.perform_training();
+    const TrainingResults training_results = adaptive_moment_estimation.perform_training();
 
     //EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
 }
@@ -72,7 +72,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     const Index layers_number = 1;
 
     LanguageDataSet language_data_set;
-/*
+
     language_data_set.set_data_random_language_model(batch_samples_number,
         input_length,
         context_length,
@@ -94,18 +94,17 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 
     CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
 
-    adaptive_moment_estimation.set_loss_index(&cross_entropy_error_3d);
+    AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error_3d);
 
     adaptive_moment_estimation.set_display(true);
     adaptive_moment_estimation.set_display_period(100);
-
     adaptive_moment_estimation.set_loss_goal(training_loss_goal);
     adaptive_moment_estimation.set_maximum_epochs_number(1000);
     adaptive_moment_estimation.set_maximum_time(1000.0);
-    training_results = adaptive_moment_estimation.perform_training();
+//    const TrainingResults training_results = adaptive_moment_estimation.perform_training();
 
-    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
-*/
+//    EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);
+
 }
 
 /*
@@ -168,7 +167,7 @@ void AdaptiveMomentEstimationTest::test_perform_training()
         //{
             //data_set.set_data_random();
             //neural_network.set_parameters_random();
-        /*
+
         training_results = adaptive_moment_estimation.perform_training();
 
         //EXPECT_EQ(training_results.get_training_error() <= training_loss_goal);

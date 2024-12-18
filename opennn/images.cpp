@@ -133,14 +133,10 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type,2> rotation_matrix(3, 3);
 
-    rotation_matrix.setZero();
-    rotation_matrix(0, 0) = cos_angle;
-    rotation_matrix(0, 1) = -sin_angle;
-    rotation_matrix(1, 0) = sin_angle;
-    rotation_matrix(1, 1) = cos_angle;
-    rotation_matrix(0, 2) = rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y;
-    rotation_matrix(1, 2) = rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y;
-    rotation_matrix(2, 2) = type(1);
+    rotation_matrix.setValues({
+        {cos_angle, -sin_angle, rotation_center_x - cos_angle * rotation_center_x + sin_angle * rotation_center_y},
+        {sin_angle, cos_angle, rotation_center_y - sin_angle * rotation_center_x - cos_angle * rotation_center_y},
+        {type(0), type(0), type(1)}});
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);

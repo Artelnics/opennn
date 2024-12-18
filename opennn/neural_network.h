@@ -34,7 +34,8 @@ public:
                         Classification,
                         Forecasting,
                         ImageClassification,
-                        TextClassification};
+                        TextClassification,
+                        TextClassificationTransformer};
 
     enum class ProgrammingLanguage{C,
                                    Python,
@@ -47,6 +48,7 @@ public:
                  const dimensions& = {});
 
    NeuralNetwork(const filesystem::path&);
+
 
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
@@ -95,6 +97,7 @@ public:
    void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
+   void set_text_classification_transformer(const dimensions&, const dimensions&, const dimensions&);
 
    void set(const filesystem::path&);
 

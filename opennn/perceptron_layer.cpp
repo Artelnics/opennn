@@ -18,12 +18,10 @@ PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
                                  const ActivationFunction& new_activation_function,
                                  const string& new_layer_name) : Layer()
 {
-
     set(new_input_dimensions,
         new_output_dimensions,
         new_activation_function,
         new_layer_name);
-
 }
 
 
@@ -294,8 +292,8 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
                            outputs);
 
     // @todo
-    //if(is_training && dropout_rate > type(0))
-        //dropout(outputs);
+    // if(is_training && dropout_rate > type(0))
+    //     dropout(outputs);
 
     if(is_training)
     {

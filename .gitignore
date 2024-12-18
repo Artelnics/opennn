@@ -9,9 +9,12 @@
 x64
 Intel® VTune™ Profiler Results
 
+# Subdirectories wuth these names:
 **/x64/
 **/Intel® VTune™ Profiler Results/
+**/Debug/
 
+opennn/opennn.dir
 
 [Ll]ib
 [Ss]cripts

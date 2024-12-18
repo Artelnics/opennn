@@ -8,6 +8,7 @@
 
 #include "perceptron_layer_3d.h"
 #include "tensors.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -29,7 +30,6 @@ Index PerceptronLayer3D::get_inputs_number_xxx() const
 {
     return inputs_number_xxx;
 }
-
 
 Index PerceptronLayer3D::get_inputs_depth() const
 {
@@ -126,6 +126,14 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 }
 
 
+
+void PerceptronLayer3D::set_inputs_number(Index new_input_number)
+{
+    inputs_number_xxx = new_input_number;
+}
+
+
+
 void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
 {
 /*
@@ -153,6 +161,12 @@ void PerceptronLayer3D::set_output_dimensions(const dimensions& new_output_dimen
 
     synaptic_weights.resize(inputs_depth, new_neurons_number);
 */
+    const Index inputs_depth = get_inputs_depth();
+    const Index neurons_number = new_output_dimensions[0];
+
+    biases.resize(neurons_number);
+
+    synaptic_weights.resize(inputs_depth, neurons_number);
 }
 
 
@@ -395,14 +409,14 @@ void PerceptronLayer3D::from_XML(const XMLDocument& document)
 
     if(!perceptron_layer_element)
         throw runtime_error("Perceptron3D element is nullptr.\n");
-/*
+
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(perceptron_layer_element, "InputsDepth"));
-    set_output_dimensions(read_xml_index(perceptron_layer_element, "NeuronsNumber"));
+    set_output_dimensions({read_xml_index(perceptron_layer_element, "NeuronsNumber")});
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
-*/
+
 }
 
 

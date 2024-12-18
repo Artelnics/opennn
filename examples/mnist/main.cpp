@@ -45,6 +45,25 @@ int main()
 
         image_data_set.set(DataSet::SampleUse::Training);
 
+        //ImageDataSet image_data_set;
+
+        //image_data_set.set_data_source_path("data");
+        //image_data_set.set_data_source_path("C:/mnist/train");
+
+        //image_data_set.set_data_source_path("/home/artelnics/Documentos/binary_mnist");
+
+        //image_data_set.set_data_source_path("C:/binary_mnist");
+
+
+        // ImageDataSet image_data_set;
+
+        //ImageDataSet image_data_set(0,{0,0,0},{0});
+
+        //ImageDataSet image_data_set(0,{0,0,0},{0});
+
+        //ImageDataSet image_data_set(0,{0,0,0},{0});
+
+
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
         //image_data_set.set_data_path("C:/binary_mnist");

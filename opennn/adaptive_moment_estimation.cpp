@@ -153,18 +153,27 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         throw runtime_error("Data set is null.");
 
     const bool has_selection = data_set->has_selection();
+
+    const bool is_language_model = is_instance_of<LanguageDataSet>(data_set);
     
     const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
-                                                       ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
-                                                       : vector<Index>();
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    vector<Index> context_variable_indices;
+
+    if(is_language_model)
+    {
+        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
+    }
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+
+    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
+    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
 
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
@@ -173,16 +182,22 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     vector<Descriptives> target_variable_descriptives;
 
+    Index training_batch_samples_number = 0;
+    Index selection_batch_samples_number = 0;
+
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
+    training_samples_number < batch_samples_number
+        ? training_batch_samples_number = training_samples_number
+        : training_batch_samples_number = batch_samples_number;
 
-    const Index selection_batch_samples_number = (selection_samples_number > 0)
-           ? min(selection_samples_number, batch_samples_number)
-           : 0;
+    selection_samples_number < batch_samples_number && selection_samples_number != 0
+        ? selection_batch_samples_number = selection_samples_number
+        : selection_batch_samples_number = batch_samples_number;
 
     Batch training_batch(training_batch_samples_number, data_set);
+
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
@@ -213,7 +228,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -250,7 +265,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        const Index training_batches_number = training_batches.size();
+        //const Index training_batches_number = training_batches.size();
 
         training_error = type(0);
 
@@ -294,13 +309,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             // Optimization algorithm
-
             update_parameters(training_back_propagation, optimization_data);
 
             //if(display && epoch % display_period == 0)
             // display_progress_bar(iteration, training_batches_number - 1);
         }
-        
+
         // Loss
 
         training_error /= type(training_batches_number);
@@ -319,6 +333,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
+
                 // Data set
 
                 selection_batch.fill(selection_batches[iteration],
@@ -468,7 +483,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-    
+
     type effective_learning_rate = learning_rate * bias_correction;
 
     if(use_custom_learning_rate)
