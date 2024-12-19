@@ -359,7 +359,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
-
     }
 
     set_unscaling();
@@ -446,7 +445,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
     
     if(!success)
     {
-        const type epsilon = numeric_limits<type>::epsilon();
+        constexpr type epsilon = numeric_limits<type>::epsilon();
 
         #pragma omp parallel for
 

@@ -36,9 +36,9 @@ const Tensor<Index,1>& TextDataSet::get_words_frequencies() const
 }
 
 
-Tensor<string, 2> TextDataSet::get_text_data_file_preview() const
+Tensor<string, 2> TextDataSet::get_data_file_preview() const
 {
-    return text_data_file_preview;
+    return data_file_preview;
 }
 
 
@@ -330,31 +330,29 @@ void TextDataSet::to_XML(XMLPrinter& file_stream) const
 
     // Row and Targets
     {
-        buffer << text_data_file_preview.dimension(0);
+        buffer << data_file_preview.size();
 
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
 
-        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        for(Index i = 0; i < data_file_preview.size(); i++)
         {
             file_stream.OpenElement("Row");
-
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            file_stream.PushText(text_data_file_preview(i,0).c_str());
-
+/*
+            file_stream.PushText(data_file_preview[i][0].c_str());
+*/
             file_stream.CloseElement();
         }
 
-        for(Index i = 0; i < text_data_file_preview.dimension(0); i++)
+        for(Index i = 0; i < data_file_preview.size(); i++)
         {
             file_stream.OpenElement("Target");
-
             file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            file_stream.PushText(text_data_file_preview(i,1).c_str());
-
+/*
+            file_stream.PushText(data_file_preview[i][1].c_str());
+*/
             file_stream.CloseElement();
         }
     }
@@ -933,7 +931,7 @@ const XMLElement* start_element = raw_variables_number_element;
         new_preview_size = Index(atoi(preview_size_element->GetText()));
 
         if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
-        if(new_preview_size > 0) text_data_file_preview.resize(new_preview_size, 2);
+        if(new_preview_size > 0) data_file_preview.resize(new_preview_size, 2);
     }
 
     // Preview data
@@ -980,7 +978,7 @@ const XMLElement* start_element = raw_variables_number_element;
 
             if(row_element->GetText())
             {
-                text_data_file_preview(i,0) = row_element->GetText();
+                data_file_preview[i][0] = row_element->GetText();
             }
         }
 
@@ -1000,7 +998,7 @@ const XMLElement* start_element = raw_variables_number_element;
 
             if(row_element->GetText())
             {
-                text_data_file_preview(i,1) = row_element->GetText();
+                data_file_preview[i][1] = row_element->GetText();
             }
         }
     }
@@ -1735,7 +1733,7 @@ void TextDataSet::read_txt()
     ifstream file(data_path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open text file: " + data_path.string() + "\n");
+        throw runtime_error("Cannot open text file: " + data_path .string() + "\n");
 
     const string separator_string = get_separator_string();
 
@@ -1857,16 +1855,16 @@ void TextDataSet::read_txt()
 
 //    const Index preview_size = 4;
 
-//    text_data_file_preview.resize(preview_size, 2);
+//    data_file_preview.resize(preview_size, 2);
 
 //    for(Index i = 0; i < preview_size - 1; i++)
     {
-//        text_data_file_preview(i, 0) = documents(0)(i);
-//        text_data_file_preview(i, 1) = targets(0)(i);
+//        data_file_preview(i, 0) = documents(0)(i);
+//        data_file_preview(i, 1) = targets(0)(i);
     }
 
-//    text_data_file_preview(preview_size - 1, 0) = documents(0)(documents(0).size() - 1);
-//    text_data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size() - 1);
+//    data_file_preview(preview_size - 1, 0) = documents(0)(documents(0).size() - 1);
+//    data_file_preview(preview_size - 1, 1) = targets(0)(targets(0).size() - 1);
 
 //    row.setZero();
 

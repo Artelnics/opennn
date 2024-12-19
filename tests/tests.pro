@@ -23,6 +23,7 @@ SOURCES += $$GTEST_DIR/src/gtest-all.cc
 INCLUDEPATH += $$GTEST_DIR/include
 INCLUDEPATH += $$GTEST_DIR
 
+
 SOURCES += test.cpp \
            adaptive_moment_estimation_test.cpp \
            bounding_layer_test.cpp \
@@ -54,6 +55,7 @@ SOURCES += test.cpp \
 
 # Precompiled Header
 HEADERS += pch.h
+
 
 # Enable precompiled headers in Qt
 QMAKE_CXXFLAGS += -include pch.h

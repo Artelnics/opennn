@@ -347,7 +347,7 @@ void QuasiNewtonMethod::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = std::numeric_limits<type>::epsilon();
 
         const Index parameters_number = parameters.size();
 
@@ -476,7 +476,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
-        
+
         // Loss index
 
         loss_index->back_propagate(training_batch, 

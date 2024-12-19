@@ -24,11 +24,21 @@ public:
 
     // Constructors
 
+
+    // explicit Transformer(const Tensor<Index, 1>& = Tensor<Index, 1>());
+
     Transformer();
 
     Transformer(const Tensor<Index, 1>&);
 
     Transformer(const initializer_list<Index>&);
+
+    explicit Transformer(const dimensions&, const dimensions&, const vector <Index>&);
+
+    // Index get_input_length() const
+    // {
+    //     return 0;
+    // }
 
     void set(const Tensor<Index, 1>&);
 
@@ -47,13 +57,14 @@ public:
     void set_input_vocabulary(const vector<string>&);
     void set_context_vocabulary(const vector<string>&);
 
-    string calculate_outputs(const string&);
+    string calculate_outputs(const vector<string>&);
+
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 //    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
 
-//    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
+    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
     void load_transformer(const string&);
@@ -62,27 +73,26 @@ private:
 
     string name = "transformer";
 
-    Index input_length;
+    Index input_length = 0;
 
-    Index context_length;
+    Index context_length = 0;
 
-    Index input_dimensions_xxx;
+    Index input_dimensions_xxx = 0;
 
-    Index context_dimension_xxx;
+    Index context_dimension_xxx = 0;
 
-    Index embedding_depth;
+    Index embedding_depth = 0;
 
-    Index perceptron_depth;
+    Index perceptron_depth = 0;
 
-    Index heads_number;
+    Index heads_number = 0;
 
-    Index layers_number;
+    Index layers_number = 0;
 
     type dropout_rate = 0;
 
     vector<string> input_vocabulary;
     vector<string> context_vocabulary;
-
 };
 
 
@@ -108,19 +118,3 @@ private:
 };
 
 #endif // TRANSFORMER_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

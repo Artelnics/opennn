@@ -9,6 +9,8 @@
 #include "statistics.h"
 #include "tensors.h"
 
+using namespace std;
+
 namespace opennn
 {
 
@@ -513,8 +515,7 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
     {
         used_column_indices.resize(columns_number);
 
-        for(Index i = 0; i < columns_number; i++)
-            used_column_indices[i] = i;
+        iota(used_column_indices.begin(), used_column_indices.end(), 0);
     }
     else
     {
@@ -527,8 +528,7 @@ Tensor<type, 1> column_maximums(const Tensor<type, 2>& matrix,
     {
         used_row_indices.resize(rows_number);
 
-        for(Index i = 0; i < rows_number; i++)
-            used_row_indices[i] = i;
+        iota(used_row_indices.begin(), used_row_indices.end(), 0);
     }
     else
     {
@@ -905,8 +905,127 @@ BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
 }
 
 
+Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
+{
+    const Index size = vector.dimension(0);
+
+    Tensor<type, 1> minimums(bins_number);
+    Tensor<type, 1> maximums(bins_number);
+    Tensor<type, 1> centers(bins_number);
+    Tensor<Index, 1> frequencies(bins_number);
+    frequencies.setZero();
+
+    std::vector<type> unique_values;
+    unique_values.reserve(std::min<Index>(size, bins_number));
+    unique_values.push_back(vector(0));
+
+    for (Index i = 1; i < size; i++)
+    {
+        const type val = vector(i);
+        // Check if val is already in unique_values
+        if (std::find(unique_values.begin(), unique_values.end(), val) == unique_values.end())
+        {
+            unique_values.push_back(val);
+            if (static_cast<Index>(unique_values.size()) > bins_number)
+                break; // We don't need more unique values than bins
+        }
+    }
+
+    const Index unique_values_number = static_cast<Index>(unique_values.size());
+
+    if (unique_values_number <= bins_number)
+    {
+        // If we have fewer unique values than bins, use these unique values as bins
+        std::sort(unique_values.begin(), unique_values.end(), std::less<type>());
+
+        // Resize output tensors to the actual number of unique values
+        minimums.resize(unique_values_number);
+        maximums.resize(unique_values_number);
+        centers.resize(unique_values_number);
+        frequencies.resize(unique_values_number);
+        frequencies.setZero();
+
+        // Copy unique values into tensors
+        for (Index i = 0; i < unique_values_number; i++)
+        {
+            const type v = unique_values[i];
+            minimums(i) = v;
+            maximums(i) = v;
+            centers(i) = v;
+        }
+
+        // Count frequencies
+        for (Index i = 0; i < size; i++)
+        {
+            const type val = vector(i);
+            if (isnan(val)) continue;
+
+            // Find the first bin whose center is greater than val
+            // or handle them as if val matches the bin center.
+            for (Index j = 0; j < unique_values_number; j++)
+            {
+                // Using centers(j) - val instead of val - centers(j)
+                // to match the original code logic, if needed.
+                if (val - centers(j) < NUMERIC_LIMITS_MIN)
+                {
+                    frequencies(j)++;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        // If too many unique values, create equal-width bins
+        const type min_val = minimum(vector);
+        const type max_val = maximum(vector);
+        const type length = (max_val - min_val) / type(bins_number);
+
+        // Define bins
+        for (Index i = 0; i < bins_number; i++)
+        {
+            minimums(i) = min_val + length * i;
+            maximums(i) = minimums(i) + length;
+            centers(i) = (minimums(i) + maximums(i)) / type(2.0);
+        }
+
+        // Count frequencies
+        for (Index i = 0; i < size; i++)
+        {
+            const type val = vector(i);
+            if (isnan(val)) continue;
+
+            bool counted = false;
+            for (Index j = 0; j < bins_number - 1; j++)
+            {
+                if (val >= minimums(j) && val < maximums(j))
+                {
+                    frequencies(j)++;
+                    counted = true;
+                    break;
+                }
+            }
+
+            // If not counted yet, it belongs to the last bin (if val >= minimums(last))
+            if (!counted && val >= minimums(bins_number - 1))
+                frequencies(bins_number - 1)++;
+        }
+    }
+
+    // Construct final histogram
+    Histogram hist;
+    hist.centers = centers;
+    hist.minimums = minimums;
+    hist.maximums = maximums;
+    hist.frequencies = frequencies;
+
+    return hist;
+}
+
+
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
+    /*
     const Index size = vector.dimension(0);
 
     Tensor<type, 1> minimums(bins_number);
@@ -916,30 +1035,24 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    Index unique_values_number = 1;
-    Tensor<type, 1> old_unique_values(1);
-    Tensor<type, 1> unique_values(1);
-    unique_values(0) = vector(0);
-    old_unique_values = unique_values;
-
+    vector<type> unique_values;
+    unique_values.reserve(min<Index>(size, bins_number));
+    unique_values.push_back(vector(0));
+    
     for(Index i = 1; i < size; i++)
     {
-        if(find( unique_values.data(), unique_values.data() + unique_values.size(), vector(i))
-                == unique_values.data() + unique_values.size())
+        const type value = vector(i);
+
+        if (find(unique_values.begin(), unique_values.end(), value) == unique_values.end())
         {
-            unique_values_number++;
+            unique_values.push_back(value);
 
-            unique_values.resize(unique_values_number);
-
-            for(Index j = 0; j < unique_values_number-1; j++) unique_values(j) = old_unique_values(j);
-
-            unique_values(unique_values_number-1) = vector(i);
-
-            old_unique_values = unique_values;
+            if (static_cast<Index>(unique_values.size()) > bins_number)
+                break; 
         }
-
-        if(unique_values_number > bins_number) break;
     }
+
+    const Index unique_values_number = static_cast<Index>(unique_values.size());
 
     if(unique_values_number <= bins_number)
     {
@@ -1009,12 +1122,13 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         }
     }
 
-    Histogram histogram;
+    
     histogram.centers = centers;
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-
+    */
+    Histogram histogram;
     return histogram;
 }
 
@@ -1131,20 +1245,13 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
-    const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
     Tensor<Histogram, 1> histograms(columns_number);
-
-    Tensor<type, 1> column(rows_number);
-
+/*
     for(Index i = 0; i < columns_number; i++)
-    {
-        column = matrix.chip(i,1);
-
-        histograms(i) = histogram(column, bins_number);
-    }
-
+        histograms(i) = histogram(tensor_map(matrix, i), bins_number);
+*/
     return histograms;
 }
 
@@ -1155,8 +1262,8 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
     const Index size = x.size();
 
-    Tensor<type, 0> minimum = x.minimum();
-    Tensor<type, 0> maximum = x.maximum();
+    const Tensor<type, 0> minimum = x.minimum();
+    const Tensor<type, 0> maximum = x.maximum();
 
     long double sum = 0.0;
     long double squared_sum = 0;
@@ -1310,8 +1417,7 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
     {
         used_column_indices.resize(columns_number);
 
-        for(Index i = 0; i < columns_number; i++)
-            used_column_indices[i] = i;
+        iota(used_column_indices.begin(), used_column_indices.end(), 0);
     }
     else
     {
@@ -1324,8 +1430,7 @@ Tensor<type, 1> column_minimums(const Tensor<type, 2>& matrix,
     {
         used_row_indices.resize(rows_number);
 
-        for(Index i = 0; i < rows_number; i++)
-            used_row_indices[i] = i;
+        iota(used_row_indices.begin(), used_row_indices.end(), 0);
     }
     else
     {
@@ -1830,42 +1935,6 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>& matrix, const Index& maximum_number)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    Tensor<Index, 2> maximal_column_indices(maximum_number, columns_number);
-
-    Tensor<type, 1> column_minimums = opennn::column_minimums(matrix);
-
-    for(Index j = 0; j < columns_number; j++)
-    {
-        Tensor<type, 1> column = matrix.chip(j,1);
-
-        for(Index i = 0; i < maximum_number; i++)
-        {
-            Index maximal_index = 0;
-            type maximal = column(0);
-
-            for(Index k = 0; k < rows_number; k++)
-            {
-                if(column(k) > maximal && !isnan(column(k)))
-                {
-                    maximal_index = k;
-                    maximal = column(k);
-                }
-            }
-
-            column(maximal_index) = column_minimums(j)-type(1);
-            maximal_column_indices(i, j) = maximal_index;
-        }
-    }
-
-    return maximal_column_indices;
-}
-
-
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
@@ -1893,7 +1962,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     Tensor<type, 1> sorted_vector(new_vector);
 
-    std::sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
+    sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
     Tensor<type, 1> percentiles(10);
 

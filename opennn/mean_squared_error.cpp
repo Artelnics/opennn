@@ -48,10 +48,6 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     errors.device(*thread_pool_device) = outputs - targets;
     
-    Tensor<type, 0> sum_squared_error;
-
-    const type coefficient = type(1) ;
-
     error.device(*thread_pool_device) = errors.contract(errors, SSE) / type(batch_samples_number * outputs_number);
         
     if(isnan(error())) throw runtime_error("\nError is NAN.");

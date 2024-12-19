@@ -3,7 +3,7 @@
 #   OpenNN: Open Neural Networks Library                                                          #
 #   www.opennn.net                                                                                #
 #                                                                                                 #
-#   T R A N S L A T I O N   P R O J E C T                                                           #
+#   T R A N S L A T I O N  P R O J E C T                                                                    #
 #                                                                                                 #
 #   Artificial Intelligence Techniques SL (Artelnics)                                             #
 #   artelnics@artelnics.com                                                                       #
@@ -29,14 +29,6 @@ QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 
-win32:!win32-g++{
-#QMAKE_CXXFLAGS+= -arch:AVX
-#QMAKE_CFLAGS+= -arch:AVX
-}
-
-QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread -lgomp
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
 }
 
 # OpenNN library
@@ -53,6 +45,8 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../o
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/release/opennn.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
+
+INCLUDEPATH += D:/OpenNN/eigen
 
 # OpenMP library
 

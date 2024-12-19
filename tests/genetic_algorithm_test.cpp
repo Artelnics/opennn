@@ -123,19 +123,17 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     Tensor<type, 1> fitness;
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {3}, {2}, {1});
-/*
-    GeneticAlgorithm genetic_algorithm(&neural_network, &data_set);
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    GeneticAlgorithm genetic_algorithm;
 
     genetic_algorithm.set_individuals_number(4);
 
     selection_errors.resize(4);
+    selection_errors.setValues({type(1), type(2), type(3), type(4)});
 
-    selection_errors(0) = type(1);
-    selection_errors(1) = type(2);
-    selection_errors(2) = type(3);
-    selection_errors(3) = type(4);
-
-    genetic_algorithm.set_selection_errors(selection_errors);
+//    genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
 
@@ -156,7 +154,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     selection_errors(1) = type(3);
     selection_errors(2) = type(2);
     selection_errors(3) = type(1);
-
+/*
     genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();

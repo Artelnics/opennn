@@ -526,15 +526,15 @@ void ConjugateGradient::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = numeric_limits<type>::epsilon();
 
-        const Index parameters_number = back_propagation.parameters.size();
+        //const Index parameters_number = back_propagation.parameters.size();
 
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (std::abs(back_propagation.gradient(i)) < NUMERIC_LIMITS_MIN)
+            if (abs(back_propagation.gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 optimization_data.parameters_increment(i) = type(0);
             }

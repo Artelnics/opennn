@@ -30,7 +30,7 @@ TEST(StochasticGradientDescentTest, Train)
 
     type old_error = numeric_limits<float>::max();
 
-    type error;
+    type error = 0;
 
 /*
     samples_number = 1;
@@ -99,13 +99,13 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 {
     type old_error = numeric_limits<float>::max();
 
-    type error;
+    type error = 0;
 
-    Index context_length;
-    Index context_dimension;
-    Index input_dimensions;
-
-    LanguageDataSet data_set;
+    Index context_length = 0;
+    Index context_dimension = 0;
+    Index input_dimensions = 0;
+/*
+    LanguageDataSet language_data_set;
 
     Index depth;
     Index perceptron_depth;

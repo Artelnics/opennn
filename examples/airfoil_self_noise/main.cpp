@@ -24,7 +24,30 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
+
+        // DataSet data_set(1, { 1 }, { 1 });
+
+        // NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
+
+        // TrainingStrategy training_strategy(&neural_network, &data_set);
+
+
+        // NeuralNetwork neural_network;
+        // neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
+        // neural_network.set_parameters_constant(10);
+
+        // Tensor<type, 2> inputs(2,2);
+        // inputs.setConstant(0);
+
+//        neural_network.print();
+
+        // neural_network.calculate_outputs(inputs);
+
+
+        // Data set
+
         Tensor<type, 2> a(100, 100);
+
 
         // Data set
         
@@ -49,18 +72,24 @@ int main()
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-        
+
 //        training_strategy.set_display(false);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        //training_strategy.print();
+
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+       //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
+
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
 
         training_strategy.get_Levenberg_Marquardt_algorithm()->set_maximum_epochs_number(1);
 
@@ -86,18 +115,18 @@ int main()
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 //        neural_network.save_expression_c("../opennn/examples/airfoil_self_noise/data/airfoil_self_noise.c");
 
-        // Deploy
+        // // Deploy
 
-        NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        // NeuralNetwork new_neural_network("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
-        Tensor<type, 2> inputs(1, input_variables_number);
-        inputs.setRandom();
+        // Tensor<type, 2> inputs(1, input_variables_number);
+        // inputs.setRandom();
 
-        inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
+        // inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
 
-        cout << inputs << endl;
+        // cout << inputs << endl;
 
-        const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
+        // const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
 
 //        cout << outputs << endl;
 
@@ -113,6 +142,7 @@ int main()
 
         neural_network.print();
 */
+
         cout << "Good bye!" << endl;
 
         return 0;

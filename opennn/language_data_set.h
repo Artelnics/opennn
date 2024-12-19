@@ -14,12 +14,17 @@
 namespace opennn
 {
 
-class LanguageDataSet : public DataSet
+class  LanguageDataSet : public DataSet
 {
 
 public:
 
+    explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
+
+    explicit LanguageDataSet(const filesystem::path& = filesystem::path());
+
     LanguageDataSet();
+
 
     const vector<string>& get_context_vocabulary() const;
     const vector<string>& get_completion_vocabulary() const;
@@ -31,29 +36,36 @@ public:
     Index get_completion_length() const;
 
     const dimensions& get_context_dimensions() const;
+    const dimensions& get_completion_dimensions() const;
 
     const vector<vector<string>>& get_documents() const;
     const vector<vector<string>>& get_targets() const;
 
-    void set_default_raw_variables_uses();
-    void set_raw_variable_uses(const vector<string>& new_raw_variables_uses);
-    void set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses);
+    void set_default_raw_variables_uses() override;
+    void set_raw_variable_uses(const vector<string>&) override;
+    void set_raw_variable_uses(const vector<VariableUse>&) override;
 
-    void set_context_dimensions(const dimensions& new_context_dimensions);
+    void set_context_dimensions(const dimensions&);
+    void set_completion_dimensions(const dimensions&);
 
     void set_context_vocabulary_path(const string&);
     void set_completion_vocabulary_path(const string&);
 
-    void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
+    void set_context_vocabulary(const vector<string>&);
+    void set_completion_vocabulary(const vector<string>&);
 
-    void set_default();
+    void set_data_random() override;
 
-    Tensor<string, 2> get_text_data_file_preview() const;
+    void set_default() override;
 
-    void from_XML(const XMLDocument&);
-    void to_XML(XMLPrinter&) const;
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    void import_vocabulary(const string&, vector<string>&);
+    // void save_vocabulary(const filesystem::path&, const vector<string>&);
+    void import_vocabulary(const filesystem::path&, vector<string>&);
+
+    // void save_lengths(const filesystem::path&, const Index&, const Index&);
+    void import_lengths(const filesystem::path&, Index&, Index&);
 
     vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
                                         const Index& vocabulary_size,
@@ -68,7 +80,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents(const filesystem::path&);
+    void load_documents(const string&);
 
     void read_csv_1();
 
@@ -76,18 +88,17 @@ public:
 
     void read_csv_3_language_model();
 
-    void read_csv_language_model();
+    void read_csv() override;
 
-    void read_txt_language_model();
+    void read_txt();
 
 //    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
     void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
 
 private:
 
-    Tensor<string, 2> text_data_file_preview;
-
-    // LARGE LANGUAGE MODEL
+    dimensions completion_dimensions;
+    dimensions context_dimensions;
 
     vector<string> context_vocabulary;
 
@@ -97,15 +108,14 @@ private:
 
     string completion_vocabulary_path;
 
-    dimensions context_dimensions = dimensions{ 0 };
+    Index maximum_completion_length;
 
-    Index max_completion_length = 0;
-
-    Index max_context_length = 0;
+    Index maximum_context_length = 0;
 
     vector<vector<string>> documents;
 
     vector<vector<string>> targets;
+
 };
 
 }

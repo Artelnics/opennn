@@ -217,7 +217,7 @@ void GeneticAlgorithm::initialize_population_random()
     original_input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
     original_target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
+    //const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
     original_unused_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::None);
 
@@ -599,13 +599,13 @@ void GeneticAlgorithm::perform_crossover()
 
             if(is_equal(descendent_genes, false))
             {
-                const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
+                //const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
                 Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(descendent_genes);
 
-                for(Index j = 0; j < raw_variables_number; j++)
-                    if(original_input_raw_variables[j])
-                        individual_raw_variables_false(j) = true;
+                for(Index k = 0; k < raw_variables_number; k++)
+                    if(original_input_raw_variables[k])
+                        individual_raw_variables_false(k) = true;
 
                 descendent_genes = get_individual_variables(individual_raw_variables_false);
             }

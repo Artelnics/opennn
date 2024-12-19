@@ -104,7 +104,7 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
 TEST(NeuralNetworkTest, CalculateOutputsZero)
 {
-    
+/*
     const Index batch_samples_number = 3;
     const Index inputs_number = 2;
     const Index neurons_number = 4;

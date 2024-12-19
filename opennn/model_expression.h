@@ -723,8 +723,8 @@ string get_expression_api(const NeuralNetwork& neural_network)
 
     string new_word;
 
-    vector<string> found_tokens_and_input_names = concatenate_string_tensors(input_names, found_tokens);
-    found_tokens_and_input_names = sort_string_tensor(found_tokens_and_input_names);
+    vector<string> found_tokens_and_input_names = concatenate_string_vectors(input_names, found_tokens);
+    found_tokens_and_input_names = sort_string_vector(found_tokens_and_input_names);
 
     for(int i = 0; i < lines.size(); i++)
     {
@@ -1909,7 +1909,7 @@ return string();
 
 vector<string> fix_get_expression_outputs(const string& str,
                                           const vector<string>& outputs,
-                                          const string& programming_languaje)
+                                          const string& programming_Language)
 {
     vector<string> out;
     vector<string> tokens;
@@ -1925,13 +1925,13 @@ vector<string> fix_get_expression_outputs(const string& str,
 
     int option = 0;
 
-    if(programming_languaje == "javascript") 
+    if(programming_Language == "javascript") 
         option = 1;
-    else if(programming_languaje == "php")   
+    else if(programming_Language == "php")   
         option = 2;
-    else if(programming_languaje == "python")
+    else if(programming_Language == "python")
         option = 3;
-    else if(programming_languaje == "c")     
+    else if(programming_Language == "c")     
         option = 4;
 
     const Index outputs_number = outputs.size();

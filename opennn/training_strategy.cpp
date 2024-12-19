@@ -633,7 +633,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Cross entropy error
 
     const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
-    if (cross_entropy_element) {
+
+    if (cross_entropy_element)
+    {
         XMLDocument cross_entropy_document;
         XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
 
@@ -647,7 +649,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Weighted squared error
 
     const XMLElement* weighted_squared_error_element = loss_index_element->FirstChildElement("WeightedSquaredError");
-    if (weighted_squared_error_element) {
+
+    if (weighted_squared_error_element)
+    {
         XMLDocument weighted_squared_error_document;
         XMLElement* weighted_squared_error_element_copy = weighted_squared_error_document.NewElement("WeightedSquaredError");
 
@@ -661,7 +665,9 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Regularization
 
     const XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
-    if (regularization_element) {
+
+    if (regularization_element)
+    {
         XMLDocument regularization_document;
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         get_loss_index()->regularization_from_XML(regularization_document);

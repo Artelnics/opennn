@@ -27,7 +27,10 @@ public:
 
     enum class ActivationFunction { Softmax, Competitive };
 
-   ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
+   ProbabilisticLayer3D(const Index& = 0, 
+                        const Index& = 0, 
+                        const Index& = 0,
+                        const string& = "probabilistic_layer_3d");
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
@@ -48,9 +51,11 @@ public:
    string get_activation_function_string() const;
    string get_activation_function_string_text() const;
 
-   void set(const Index& = 0, const Index& = 0, const Index& = 0);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
 
+   void set_inputs_number(const Index);
    void set_input_dimensions(const dimensions&) override;
+
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
