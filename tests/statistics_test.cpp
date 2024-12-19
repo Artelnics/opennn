@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include "../opennn/config.h"
 #include "../opennn/statistics.h"
 #include "../opennn/histogram.h"
 #include "../opennn/tensors.h"
