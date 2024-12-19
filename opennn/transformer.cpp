@@ -22,7 +22,7 @@ namespace opennn
 
 Transformer::Transformer(const Tensor<Index, 1>& architecture)
 {
-    set(architecture);
+//    set(architecture);
 }
 
 
@@ -32,7 +32,9 @@ Transformer::Transformer(const initializer_list<Index>& architecture_list)
 }
 
 
-Transformer::Transformer(const dimensions& input_dimensions, const dimensions& context_dimensions, const vector <Index>& complexity)
+Transformer::Transformer(const dimensions& input_dimensions, 
+                         const dimensions& context_dimensions, 
+                         const vector <Index>& complexity)
 {
     if(input_dimensions.size() != 2)
         throw runtime_error("Input dimensions size must be 2.");
@@ -58,44 +60,6 @@ Transformer::Transformer(const dimensions& input_dimensions, const dimensions& c
         perceptron_depth,
         heads_number,
         layers_number);
-
-
-//    set({input_dimensions[0], context_dimensions[0], input_dimensions[1], context_dimensions[1], complexity[0], complexity[1], complexity[2], complexity[3]});
-}
-
-void Transformer::set(const Tensor<Index, 1>& architecture)
-{
-    if(architecture.size() != 8)
-        throw runtime_error("Architecture size must be 8.");
-
-    input_length = architecture(0);
-    context_length = architecture(1);
-    input_dimensions_xxx = architecture(2);
-    context_dimension_xxx = architecture(3);
-    embedding_depth = architecture(4);
-    perceptron_depth = architecture(5);
-    heads_number = architecture(6);
-    layers_number = architecture(7);
-
-    set(input_length,
-        context_length,
-        input_dimensions_xxx,
-        context_dimension_xxx,
-        embedding_depth,
-        perceptron_depth,
-        heads_number,
-        layers_number);
-
-/*
-    set(architecture(0),
-        architecture(1),
-        architecture(2),
-        architecture(3),
-        architecture(4),
-        architecture(5),
-        architecture(6),
-        architecture(7));
-*/
 }
 
 
@@ -104,7 +68,7 @@ void Transformer::set(const initializer_list<Index>& architecture_list)
     Tensor<Index, 1> architecture(architecture_list.size());
     architecture.setValues(architecture_list);
 
-    set(architecture);
+//    set(architecture);
 }
 
 
@@ -117,7 +81,7 @@ void Transformer::set(const Index& new_input_length,
                       const Index& new_heads_number,
                       const Index& new_layers_number)
 {
-    layers.resize(0);
+    layers.clear();
     
     input_names.resize(input_length + context_length);
 
@@ -130,7 +94,6 @@ void Transformer::set(const Index& new_input_length,
                                           "input_embedding"));
 
     set_layer_inputs_indices("input_embedding", "input");
-
     //input_embedding_layer->set_dropout_rate(dropout_rate);
 
     add_layer(make_unique<EmbeddingLayer>(new_context_dimension, 
@@ -140,7 +103,6 @@ void Transformer::set(const Index& new_input_length,
                                           "context_embedding"));
     
     set_layer_inputs_indices("context_embedding", "context");
-
     //context_embedding_layer->set_dropout_rate(dropout_rate);
 
     // Encoder
@@ -155,9 +117,11 @@ void Transformer::set(const Index& new_input_length,
                                                        "context_self_attention_" + to_string(i)));
 
         if(i == 0)
-            set_layer_inputs_indices("context_self_attention_1", {"context_embedding", "context_embedding"});
+            set_layer_inputs_indices("context_self_attention_1", 
+                                    {"context_embedding", "context_embedding"});
         else
-            set_layer_inputs_indices("context_self_attention_" + to_string(i), { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
+            set_layer_inputs_indices("context_self_attention_" + to_string(i), 
+                                    {"encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
 
         //context_self_attention_layer->set_dropout_rate(dropout_rate);
 
@@ -168,9 +132,11 @@ void Transformer::set(const Index& new_input_length,
                                                "context_self_attention_addition_" + to_string(i)));
 
         if(i == 0)
-            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i), { "context_embedding", "context_self_attention_" + to_string(i) });
+            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i), 
+                                    {"context_embedding", "context_self_attention_" + to_string(i) });
         else
-            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i), { "encoder_perceptron_normalization_" + to_string(i), "context_self_attention_" + to_string(i) });
+            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i), 
+                                    {"encoder_perceptron_normalization_" + to_string(i), "context_self_attention_" + to_string(i) });
 
         // Normalization
         
@@ -178,7 +144,8 @@ void Transformer::set(const Index& new_input_length,
                                                     embedding_depth, 
                                                     "context_self_attention_normalization_" + to_string(i)));
         
-        set_layer_inputs_indices("context_self_attention_normalization_" + to_string(i), "context_self_attention_addition_" + to_string(i));
+        set_layer_inputs_indices("context_self_attention_normalization_" + to_string(i), 
+                                 "context_self_attention_addition_" + to_string(i));
         
         add_layer(make_unique<PerceptronLayer3D>(context_length,
                                                  embedding_depth,
@@ -186,7 +153,8 @@ void Transformer::set(const Index& new_input_length,
                                                  PerceptronLayer3D::ActivationFunction::RectifiedLinear,
                                                  "encoder_internal_perceptron_" + to_string(i)));
         
-        set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i), "context_self_attention_normalization_" + to_string(i));
+        set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i), 
+                                 "context_self_attention_normalization_" + to_string(i));
 
         // Perceptron
         
@@ -196,7 +164,8 @@ void Transformer::set(const Index& new_input_length,
                                                  PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
                                                  "encoder_external_perceptron_" + to_string(i)));
         
-        set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i), "encoder_internal_perceptron_" + to_string(i));
+        set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i), 
+                                 "encoder_internal_perceptron_" + to_string(i));
 
 //        encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
                 
@@ -210,7 +179,8 @@ void Transformer::set(const Index& new_input_length,
                                                     embedding_depth, 
                                                     "encoder_perceptron_normalization_" + to_string(i)));
         
-        set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_addition_" + to_string(i));
+        set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i), 
+                                 "encoder_perceptron_addition_" + to_string(i));
     }
     
     // Decoder

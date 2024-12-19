@@ -122,7 +122,7 @@ namespace opennn
 
     vector<vector<string>> preprocess_language_documents(const vector<string>&);
 
-    vector<pair<string, int>> count_words(const vector<string>&);
+    vector<pair<string, Index>> count_words(const vector<string>&);
 
     enum Language {ENG, SPA};
 

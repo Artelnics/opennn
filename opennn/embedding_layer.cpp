@@ -188,7 +188,7 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 
     #pragma omp parallel for
     for(Index i = 0; i < outputs.size(); i++)
-        outputs(i) = (get_random_type(type(0), type(1)) < dropout_rate)
+        outputs(i) = get_random_type(type(0), type(1)) < dropout_rate
             ? 0 
             : outputs(i) * scaling_factor;
 }
