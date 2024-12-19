@@ -1023,9 +1023,9 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
 }
 
 
-/*
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
+    /*
     const Index size = vector.dimension(0);
 
     Tensor<type, 1> minimums(bins_number);
@@ -1122,15 +1122,16 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         }
     }
 
-    Histogram histogram;
+    
     histogram.centers = centers;
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-
+    */
+    Histogram histogram;
     return histogram;
 }
-*/
+
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
 {
@@ -1261,8 +1262,8 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
     const Index size = x.size();
 
-    Tensor<type, 0> minimum = x.minimum();
-    Tensor<type, 0> maximum = x.maximum();
+    const Tensor<type, 0> minimum = x.minimum();
+    const Tensor<type, 0> maximum = x.maximum();
 
     long double sum = 0.0;
     long double squared_sum = 0;

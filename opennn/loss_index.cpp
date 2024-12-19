@@ -164,17 +164,17 @@ void LossIndex::back_propagate(const Batch& batch,
     // Loss index
 
     calculate_error(batch, forward_propagation, back_propagation);
-    
+
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-    
+
     assemble_layers_error_gradient(back_propagation);
-    
+
     // Loss
 
     back_propagation.loss = back_propagation.error();
 
     // Regularization
-    
+
     add_regularization(back_propagation);
 
 }
@@ -416,8 +416,8 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
         layers[i]->back_propagate(layer_input_pairs[i],
-            layer_delta_pairs[i],
-            forward_propagation.layers[i],
+                                  layer_delta_pairs[i],
+                                  forward_propagation.layers[i],
                                   back_propagation.neural_network.layers[i]);
 }
 
