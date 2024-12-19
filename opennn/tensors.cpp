@@ -20,7 +20,27 @@ type bound(const type& value, const type& minimum, const type& maximum)
 }
 
 
-type calculate_random_uniform(const type& minimum, const type& maximum)
+Index get_random_index(const Index& min, const Index& max) 
+{
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(min, max);
+    return dis(gen);
+}
+
+
+type get_random_type(const type& minimum, const type& maximum) 
+{
+    random_device rd;
+    mt19937 gen(rd());
+
+    uniform_real_distribution<type> dis(minimum, maximum);
+
+    return dis(gen);
+}
+
+
+type get_random(const type& minimum, const type& maximum)
 {
     return minimum + (maximum - minimum) * type(rand() / (RAND_MAX + 1.0));
 }
@@ -54,7 +74,9 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
 
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type, 2>> matrix(tensor.data() + i * rows_number * columns_number, rows_number, columns_number);
+        TensorMap<Tensor<type, 2>> matrix(tensor.data() + i * rows_number * columns_number, 
+                                          rows_number, 
+                                          columns_number);
 
         matrix.device(*thread_pool_device) = matrix * vector(i);
     }
@@ -500,24 +522,6 @@ void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor
 }
 
 
-bool is_zero(const Tensor<type, 1>& tensor, const type& limit)
-{
-    const Index size = tensor.size();
-
-    for(Index i = 0; i < size; i++)
-        if(abs(tensor[i]) > type(limit)) 
-            return false;
-
-    return true;
-}
-
-
-bool is_false(const Tensor<bool, 1>& tensor)
-{
-    return all_of(tensor.data(), tensor.data() + tensor.size(), [](bool value) { return !value; });
-}
-
-
 Index count_true(const Tensor<bool, 1>& tensor)
 {
     return std::count(tensor.data(), tensor.data() + tensor.size(), true);
@@ -590,66 +594,6 @@ bool is_constant_matrix(const Tensor<type, 2>& matrix)
         for(Index j = 0; j < matrix.dimension(1); j++)
             if(matrix(i, j) != first_value)
                 return false;
-
-    return true;
-}
-
-
-//bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
-//{
-//    const Index size = matrix.size();
-
-//    for(Index i = 0; i < size; i++)
-//        if(abs(matrix[i] - value) > tolerance)
-//            return false;
-
-//    return true;
-//}
-
-
-bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
-{
-    const Index size = vector_1.size();
-
-    for(Index i = 0; i < size; i++)
-        if(abs(vector_1(i) - vector_2(i)) > tolerance) 
-            return false;
-
-    return true;
-}
-
-
-bool are_equal(const Tensor<bool, 1>& vector_1, const Tensor<bool, 1>& vector_2)
-{
-    const Index size = vector_1.size();
-
-    for(Index i = 0; i < size; i++)
-        if(vector_1(i) != vector_2(i)) 
-            return false;
-
-    return true;
-}
-
-
-bool are_equal(const Tensor<type, 2>& matrix_1, const Tensor<type, 2>& matrix_2, const type& tolerance)
-{
-    const Index size = matrix_1.size();
-
-    for(Index i = 0; i < size; i++)
-        if(abs(matrix_1(i) - matrix_2(i)) > tolerance) 
-            return false;
-
-    return true;
-}
-
-
-bool are_equal(const Tensor<bool, 2>& matrix_1, const Tensor<bool, 2>& matrix_2)
-{
-    const Index size = matrix_1.size();
-
-    for(Index i = 0; i < size; i++)
-        if(matrix_1(i) != matrix_2(i)) 
-            return false;
 
     return true;
 }
@@ -1069,7 +1013,7 @@ void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<t
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm < type(NUMERIC_LIMITS_MIN))
+    if(norm < NUMERIC_LIMITS_MIN)
     {
         gradient.setZero();
 
@@ -1084,7 +1028,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
 {
     const type norm = l2_norm(thread_pool_device, vector);
 
-    if(norm < type(NUMERIC_LIMITS_MIN))
+    if(norm < NUMERIC_LIMITS_MIN)
     {
         hessian.setZero();
 

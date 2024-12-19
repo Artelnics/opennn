@@ -8,7 +8,9 @@ namespace opennn
 
 const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
 
-type calculate_random_uniform(const type& = type(0), const type& = type(1));
+Index get_random_index(const Index&, const Index&);
+
+type get_random_type(const type& = type(-1), const type& = type(1));
 
 bool calculate_random_bool();
 
@@ -68,22 +70,11 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<typ
 //void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
-bool is_zero(const Tensor<type, 1>&, const type& = type(NUMERIC_LIMITS_MIN));
-
 bool is_binary_vector(const Tensor<type, 1>&);
 bool is_binary_matrix(const Tensor<type, 2>&);
 
 bool is_constant_vector(const Tensor<type, 1>&);
 bool is_constant_matrix(const Tensor<type, 2>&);
-
-bool is_false(const Tensor<bool, 1>&);
-
-//bool is_equal(const Tensor<type, 2>&, const type&, const type& = type(0));
-
-bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = type(0));
-bool are_equal(const Tensor<bool, 1>&, const Tensor<bool, 1>&);
-bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = type(0));
-bool are_equal(const Tensor<bool, 2>&, const Tensor<bool, 2>&);
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
@@ -225,6 +216,47 @@ Tensor<T, 1> tensor_wrapper(T obj)
     wrapper.setValues({obj});
 
     return wrapper;
+}
+
+
+template <typename TensorType, int Rank>
+bool is_equal(const Tensor<TensorType, Rank>& tensor, 
+              const TensorType& value,
+              const TensorType& tolerance = 0.001)
+{
+    const Index size = tensor.size();
+
+    for (Index i = 0; i < size; i++)
+        if constexpr (is_same_v<TensorType, bool>)
+            if (tensor(i) != value)
+                return false;
+            else
+                if (abs(tensor(i) - value) > tolerance)
+                    return false;
+
+    return true;
+}
+
+
+template <typename TensorType, int Rank>
+bool are_equal(const Tensor<TensorType, Rank>& tensor_1, 
+               const Tensor<TensorType, Rank>& tensor_2, 
+               const TensorType& tolerance = 0.001)
+{
+    if (tensor_1.size() != tensor_2.size())
+        throw runtime_error("Tensor sizes are different");
+
+    const Index size = tensor_1.size();
+
+    for (Index i = 0; i < size; i++) 
+        if constexpr (std::is_same_v<TensorType, bool>) 
+            if (tensor_1(i) != tensor_2(i))
+                return false;
+        else 
+            if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
+                return false;
+
+    return true;
 }
 
 }

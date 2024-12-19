@@ -535,27 +535,23 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(x_filtered.size(), {1}, {1});
-
     data_set.set_data(data);
-
     data_set.set(DataSet::SampleUse::Training);
-
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
-
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
-
-    scaling_layer_2d->set_display(false);
-
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
-
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
-
     neural_network.set_parameters_constant(type(0.001));
 
+//    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+
+//    scaling_layer_2d->set_display(false);
+
+//    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+//    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
     TrainingStrategy training_strategy(&neural_network, &data_set);
-    training_strategy.set_display(false);
+//    training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
@@ -564,8 +560,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.perform_training();
-
-    Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
+    
+    const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 

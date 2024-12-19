@@ -95,7 +95,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     p_norm_derivative.device(*thread_pool_device) 
         = ;
 
-    if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
+    if(abs(p_norm_derivative()) < NUMERIC_LIMITS_MIN)
     {
         deltas.setZero();
 

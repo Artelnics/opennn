@@ -217,7 +217,7 @@ void GeneticAlgorithm::initialize_population_random()
     original_input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
     original_target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<DataSet::RawVariable> raw_variables = data_set->get_raw_variables();
+    const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
     original_unused_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::None);
 
@@ -270,7 +270,7 @@ void GeneticAlgorithm::initialize_population_random()
 
         individual_variables = get_individual_variables(individual_raw_variables);
 
-        if(is_false(individual_variables))
+        if(is_equal(individual_variables, false))
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(individual_variables);
 
@@ -281,7 +281,7 @@ void GeneticAlgorithm::initialize_population_random()
             individual_variables = get_individual_variables(individual_raw_variables_false);
         }
 
-        if(is_false(individual_variables))
+        if(is_equal(individual_variables, false))
             individual_variables.setConstant(true);
 
         population.chip(i, 0) = individual_variables;
@@ -367,7 +367,7 @@ void GeneticAlgorithm::initialize_population_correlations() // outdated
                     individual_raw_variables(j) = true;
         }
 
-        if(is_false(individual_raw_variables))
+        if(is_equal(individual_raw_variables, false))
             individual_raw_variables(rand()%raw_variables_number) = true;
 
         individual_variables = get_individual_variables(individual_raw_variables);
@@ -597,9 +597,9 @@ void GeneticAlgorithm::perform_crossover()
 
             descendent_genes = get_individual_variables(descendent_raw_variables);
 
-            if(is_false(descendent_genes))
+            if(is_equal(descendent_genes, false))
             {
-                const vector<DataSet::RawVariable> raw_variables = data_set->get_raw_variables();
+                const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
                 Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(descendent_genes);
 
@@ -610,7 +610,7 @@ void GeneticAlgorithm::perform_crossover()
                 descendent_genes = get_individual_variables(individual_raw_variables_false);
             }
 
-            if(is_false(descendent_genes))
+            if(is_equal(descendent_genes, false))
                 descendent_genes.setConstant(true);
 
             new_population.chip(descendent_index++, 0) = descendent_genes;
@@ -648,7 +648,7 @@ void GeneticAlgorithm::perform_mutation()
 
         new_individual_variables = get_individual_variables(individual_raw_variables);
 
-        if(is_false(new_individual_variables))
+        if(is_equal(new_individual_variables, false))
         {
             Tensor<bool, 1> individual_raw_variables_false = get_individual_raw_variables(new_individual_variables);
 
@@ -659,7 +659,7 @@ void GeneticAlgorithm::perform_mutation()
             new_individual_variables = get_individual_variables(individual_raw_variables_false);
         }
 
-        if(is_false(new_individual_variables))
+        if(is_equal(new_individual_variables, false))
             new_individual_variables.setConstant(true);
 
         population.chip(i, 0) = new_individual_variables;
@@ -918,7 +918,7 @@ vector<Index> GeneticAlgorithm::get_individual_as_raw_variables_indexes_from_var
                                           inputs_pre_indexes.data() + inputs_pre_indexes.size(),
                                           true);
 
-    if(is_false(inputs_pre_indexes))
+    if(is_equal(inputs_pre_indexes, false))
     {
         cout << "/." << endl;
         inputs_pre_indexes(original_input_index) = true;
@@ -946,7 +946,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_variables(Tensor<bool, 1>& indi
     Tensor<bool, 1> individual_raw_variables_to_variables(genes_number);
     individual_raw_variables_to_variables.setConstant(false);
 
-    const vector<DataSet::RawVariable> raw_variables = data_set->get_raw_variables();
+    const vector<DataSet::RawVariable>& raw_variables = data_set->get_raw_variables();
 
     Index variable_index = 0;
 

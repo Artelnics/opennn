@@ -315,6 +315,9 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     cout << "Tiempo max pooling forward:" << endl;
     auto start = chrono::high_resolution_clock::now();
 
+    //cout << inputs << endl;
+    //system("pause");
+
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
 
@@ -345,49 +348,76 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     if (!is_training) return;
 
-    const Index pool_size = pool_height * pool_width;
-    const Index output_size = output_height * output_width * channels;
-    const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
-
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
+    //Eigen::array<Index, 3> new_shape = { batch_samples_number, output_height * output_width, image_patches.dimension(3) };
+    //Tensor<type, 3> patches_3d = image_patches.reshape(new_shape);
+    //Tensor<Index, 2> argmax_2d = patches_3d.argmax(2);
+    //Eigen::array<Index, 4> final_shape = { batch_samples_number, output_height, output_width, channels };
+    //Tensor<Index, 4> maximal_indices = argmax_2d.reshape(final_shape);
+
+    const Index pool_size = pool_height * pool_width;
+    const Index pool_number = batch_samples_number * output_height * output_width;
+    const Index output_size = output_height * output_width * channels;
+
+    const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
+    const Eigen::array<Index, 5> shuffle_dimensions = { 1, 2, 3, 0, 4 };
+    const Eigen::array<Index, 5> shuffle_dimensions_old = { 0, 1, 2, 3 };
 
     auto start_maximal_indices = chrono::high_resolution_clock::now();
-    /*
+
+    Tensor<type, 5> image_patches_shuffled = image_patches.shuffle(shuffle_dimensions);
+
+    TensorMap<Tensor<type, 3>> patches_flat(
+        image_patches_shuffled.data(),
+        batch_samples_number * pool_number,
+        pool_size,                      
+        channels                          
+    );
+
+    Tensor<Index, 1>maximal_indices_flat(pool_number);
+
     #pragma omp parallel for
-    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    for (Index pool_index = 0; pool_index < pool_number; pool_index++)
     {
-        const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0)
-            .shuffle(shuffle_dimensions)
-            .reshape(reshape_dimensions);
+        for (Index channel_index = 0; channel_index < channels; ++channel_index) {
 
-        maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
-    }*/
+            TensorMap<Tensor<type, 1>> patch(
+                patches_flat.data() + pool_index * pool_size * channels + channel_index * pool_size,
+                pool_size
+            );
 
-    #pragma omp parallel for
-    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
-    {
-        for (Index oh = 0; oh < output_height; oh++)
-        {
-            for (Index ow = 0; ow < output_width; ow++)
-            {
-                for (Index c = 0; c < channels; c++)
-                {
-                    Eigen::array<Index, 5> offsets = { batch_index, 0, oh, ow, c };
-                    Eigen::array<Index, 5> extents = { 1, pool_size, 1, 1, 1 };
+            Tensor<Index,0> max_idx = patch.argmax();
 
-                    Tensor<type, 5> patch_slice = image_patches.slice(offsets, extents);
+            maximal_indices_flat(pool_index) = max_idx();
 
-                    Tensor<Index, 4> argmax_tensor = patch_slice.argmax(1);
+            Index batch_index = pool_index / pool_number;
+            Index patch_index = pool_index % pool_number;
+            Index oh = patch_index / output_width;
+            Index ow = patch_index % output_width;
 
-                    Index max_idx = argmax_tensor(0, 0, 0, 0);
-
-                    maximal_indices(batch_index, oh, ow, c) = max_idx;
-                }
-            }
+            maximal_indices(batch_index, oh, ow, channel_index) = max_idx();
         }
     }
+
+    //Tensor<type, 4> maximal_indices_new = maximal_indices_flat.reshape(outputs_dimensions_array);
+    /*
+    cout << "maximal_indices_new: " << maximal_indices_flat << endl;
+    //#pragma omp parallel for
+    for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
+    {
+
+        const Tensor<type, 4> image = image_patches.chip(batch_index, 0);
+        const Tensor<type, 4> image_shuffle = image.shuffle(shuffle_dimensions_old);
+        const Tensor<type, 2> patches_flat = image_shuffle.reshape(reshape_dimensions);
+
+        maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
+    }
+
+    cout << "Maximal indices:\n" << maximal_indices << endl;
+    system("pause");
+    */
     auto end_maximal_indices = chrono::high_resolution_clock::now();
     auto duration_maximal_indices = chrono::duration_cast<chrono::milliseconds>(end_maximal_indices - start_maximal_indices);
     cout << "\tTiempo maximal_indices calculation: "

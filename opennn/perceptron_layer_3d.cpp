@@ -246,7 +246,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
         TensorMap<Tensor<type, 2>> matrix(outputs_data + neuron_index*batch_samples_number*inputs_number,
                                           batch_samples_number, inputs_number);
 
-        random = calculate_random_uniform(type(0), type(1));
+        random = get_random(type(0), type(1));
 
         if(random < dropout_rate)
             matrix.setZero();
@@ -259,7 +259,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
     #pragma omp parallel for
 
     for(Index i = 0; i < outputs.size(); i++)
-        outputs(i) = (calculate_random_uniform(type(0), type(1)) < dropout_rate) 
+        outputs(i) = (get_random_type(type(0), type(1)) < dropout_rate)
             ? 0 
             : outputs(i) * scaling_factor;
 }
@@ -334,24 +334,24 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
     PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
             static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 3>& combinations_derivatives = perceptron_layer_3d_back_propagation->combinations_derivatives;
+    Tensor<type, 3>& combination_derivatives = perceptron_layer_3d_back_propagation->combination_derivatives;
 
-    Tensor<type, 1>& biases_derivatives = perceptron_layer_3d_back_propagation->biases_derivatives;
-    Tensor<type, 2>& synaptic_weights_derivatives = perceptron_layer_3d_back_propagation->synaptic_weights_derivatives;
+    Tensor<type, 1>& bias_derivatives = perceptron_layer_3d_back_propagation->bias_derivatives;
+    Tensor<type, 2>& synaptic_weight_derivatives = perceptron_layer_3d_back_propagation->synaptic_weight_derivatives;
 
     Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
 
-    combinations_derivatives.device(*thread_pool_device) 
+    combination_derivatives.device(*thread_pool_device) 
         = deltas * activation_derivatives;
 
-    biases_derivatives.device(*thread_pool_device)
-        = combinations_derivatives.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device)
+        = combination_derivatives.sum(sum_dimensions);
 
-    synaptic_weights_derivatives.device(*thread_pool_device)
-        = inputs.contract(combinations_derivatives, double_contraction_indices);
+    synaptic_weight_derivatives.device(*thread_pool_device)
+        = inputs.contract(combination_derivatives, double_contraction_indices);
 
     input_derivatives.device(*thread_pool_device) 
-        = combinations_derivatives.contract(synaptic_weights, single_contraction_indices);
+        = combination_derivatives.contract(synaptic_weights, single_contraction_indices);
 }
 
 
@@ -374,8 +374,8 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
         static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
-    const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weights_derivatives.data();
-    const type* biases_derivatives_data = perceptron_layer_back_propagation->biases_derivatives.data();
+    const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weight_derivatives.data();
+    const type* biases_derivatives_data = perceptron_layer_back_propagation->bias_derivatives.data();
     type* gradient_data = gradient.data();
 
     #pragma omp parallel sections
@@ -479,11 +479,11 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
     const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
 
-    biases_derivatives.resize(neurons_number);
+    bias_derivatives.resize(neurons_number);
 
-    synaptic_weights_derivatives.resize(inputs_depth, neurons_number);
+    synaptic_weight_derivatives.resize(inputs_depth, neurons_number);
 
-    combinations_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    combination_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
 }
@@ -492,9 +492,9 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
 void PerceptronLayer3DBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
-         << biases_derivatives << endl
+         << bias_derivatives << endl
          << "Synaptic weights derivatives:" << endl
-         << synaptic_weights_derivatives << endl;
+         << synaptic_weight_derivatives << endl;
 }
 
 

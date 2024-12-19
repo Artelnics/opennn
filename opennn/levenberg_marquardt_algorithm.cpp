@@ -174,6 +174,8 @@ void LevenbergMarquardtAlgorithm::check() const
 
 TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
 
     if(loss_index->get_loss_method() == "MINKOWSKI_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with Minkowski error.");
@@ -242,11 +244,12 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     type elapsed_time = type(0);
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
-
+    
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         optimization_data.epoch = epoch;
@@ -256,18 +259,21 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation,
                                           is_training);
-        
+        cout << "Epoch " << epoch << endl;
+        training_forward_propagation.print();
+
         // Loss index
 
         loss_index->back_propagate_lm(training_batch,
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
-        results.training_error_history(epoch) = training_back_propagation_lm.error();
+        training_back_propagation_lm.print();
 
+        results.training_error_history(epoch) = training_back_propagation_lm.error();
+        
         if(has_selection)
         {
-/*
             neural_network->forward_propagate(selection_batch.get_input_pairs(),
                                               selection_forward_propagation,
                                               is_training);
@@ -288,7 +294,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
             if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) 
                 selection_failures++;
-*/
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
@@ -347,12 +352,14 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
             break;
         }
 
-        if(epoch != 0 && epoch%save_period == 0) neural_network->save(neural_network_file_name);
+        if(epoch != 0 && epoch%save_period == 0) 
+            neural_network->save(neural_network_file_name);
         
         update_parameters(training_batch,
                           training_forward_propagation,
                           training_back_propagation_lm,
                           optimization_data);
+
     }
 
     set_unscaling();
@@ -368,6 +375,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
                                                     BackPropagationLM& back_propagation_lm,
                                                     LevenbergMarquardtAlgorithmData& optimization_data)
 {
+
     const type regularization_weight = loss_index->get_regularization_weight();
     
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -392,19 +400,19 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
         sum_diagonal(hessian, damping_parameter);
 
         parameters_increment = perform_Householder_QR_decomposition(hessian, type(-1)*gradient);
-
+        
         potential_parameters.device(*thread_pool_device) = parameters + parameters_increment;
         
         neural_network->forward_propagate(batch.get_input_pairs(),
                                           potential_parameters,
                                           forward_propagation);
-
+        
         loss_index->calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-
+        
         loss_index->calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
-
+        
         loss_index->calculate_error_lm(batch, forward_propagation, back_propagation_lm);
-
+        
         type new_loss;
 
         try
@@ -434,9 +442,8 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
             set_damping_parameter(damping_parameter*damping_parameter_factor);
         }
-
     }while(damping_parameter < maximum_damping_parameter);
-
+    
     if(!success)
     {
         const type epsilon = numeric_limits<type>::epsilon();
@@ -445,13 +452,13 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 parameters_increment(i) = type(0);
             }
             else
             {
-                parameters_increment(i) = (gradient(i) > type(0))
+                parameters_increment(i) = gradient(i) > type(0)
                     ? -epsilon
                     : epsilon;
 
@@ -459,8 +466,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const Batch& batch,
             }
         }
     }
-
-    // Set parameters
 
     neural_network->set_parameters(parameters);
 }

@@ -17,18 +17,9 @@ namespace opennn
 NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
-}
+    set_normalization_coefficient();
 
-
-type NormalizedSquaredError::get_normalization_coefficient() const
-{
-    return normalization_coefficient;
-}
-
-
-type NormalizedSquaredError::get_selection_normalization_coefficient() const
-{
-    return selection_normalization_coefficient;
+    cout << normalization_coefficient << endl;
 }
 
 
@@ -40,18 +31,22 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
     || neural_network->has(Layer::Type::LongShortTermMemory))
         set_time_series_normalization_coefficient();
     else
-    {
         set_normalization_coefficient();
-    }
 }
 
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    const Tensor<type, 1> targets_mean = data_set->calculate_used_targets_mean(); 
-    const Tensor<type, 2> targets = data_set->get_data(DataSet::VariableUse::Target);
+    if (!has_data_set() || data_set->get_samples_number() == 0)
+    {
+        normalization_coefficient = type(1);
+        return;
+    }
 
-    normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
+    const Tensor<type, 1> training_target_means = data_set->calculate_means(DataSet::SampleUse::Training, DataSet::VariableUse::Target); 
+    const Tensor<type, 2> training_target_data = data_set->get_data(DataSet::SampleUse::Training, DataSet::VariableUse::Target);
+
+    normalization_coefficient = calculate_normalization_coefficient(training_target_data, training_target_means);
 }
 
 
@@ -97,50 +92,13 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 }
 
 
-// void NormalizedSquaredError::set_normalization_coefficient(const type& new_normalization_coefficient)
-// {
-//     normalization_coefficient = new_normalization_coefficient;
-// }
-
-
-void NormalizedSquaredError::set_selection_normalization_coefficient()
-{
-    // Data set
-
-    const vector<Index> selection_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
-
-    const Index selection_samples_number = selection_indices.size();
-
-    if(selection_samples_number == 0) return;
-
-    const Tensor<type, 1> selection_targets_mean = data_set->calculate_selection_targets_mean();
-
-    const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Selection, DataSet::VariableUse::Target);
-
-    // Normalization coefficient
-
-    selection_normalization_coefficient = calculate_normalization_coefficient(targets, selection_targets_mean);
-}
-
-
-// void NormalizedSquaredError::set_selection_normalization_coefficient(const type& new_selection_normalization_coefficient)
-// {
-//     selection_normalization_coefficient = new_selection_normalization_coefficient;
-// }
-
 
 void NormalizedSquaredError::set_default()
 {
     if(has_neural_network() && has_data_set() && data_set->get_samples_number() != 0)
-    {
         set_normalization_coefficient();
-        set_selection_normalization_coefficient();
-    }
     else
-    {
         normalization_coefficient = type(NAN);
-        selection_normalization_coefficient = type(NAN);
-    }
 }
 
 
@@ -152,12 +110,12 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     Tensor<type, 0> normalization_coefficient;
 
     for(Index i = 0; i < rows_number; i++)
-        normalization_coefficient.device(*thread_pool_device) += (targets.chip(i, 0) - targets_mean).square().sum();
-
-    if(normalization_coefficient() < type(NUMERIC_LIMITS_MIN))
-        normalization_coefficient() = type(1);
-
-    return normalization_coefficient();
+        normalization_coefficient.device(*thread_pool_device) 
+        += (targets.chip(i, 0) - targets_mean).square().sum();
+    
+    return normalization_coefficient() < NUMERIC_LIMITS_MIN
+        ? type(1)
+        : normalization_coefficient();
 }
 
 

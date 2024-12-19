@@ -1,17 +1,12 @@
 #include "pch.h"
 
-// Sample test case
-// TEST(SampleTest, SimpleTest) {
-//     EXPECT_EQ(1, 1); // This should pass
-// }
-
 int main(int argc, char **argv) {
 
     ::testing::InitGoogleTest(&argc, argv);
 
     //::testing::GTEST_FLAG(filter) = "FlattenLayerTest";
     //::testing::GTEST_FLAG(filter) = "PoolingLayerTests/*";
-    ::testing::GTEST_FLAG(filter) = "ConvolutionalLayerTests/*";
+    //::testing::GTEST_FLAG(filter) = "ConvolutionalLayerTests/*";
 
     return RUN_ALL_TESTS();
 }
