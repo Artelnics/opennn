@@ -17,15 +17,16 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
                                                  const Index& new_depth,
                                                  const Index& new_heads_number,
-                                                 const bool& use_causal_mask) : Layer()
+                                                 const bool& new_use_causal_mask,
+                                                 const string& new_name) : Layer()
 {
-    set(new_input_size, new_context_size, new_depth, new_heads_number);
+    set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
     set_causal_mask(use_causal_mask);
 
     layer_type = Type::MultiheadAttention;
 
-    name = "multihead_attention_layer";
+    name = new_name;
 }
 
 
@@ -118,7 +119,8 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
-                                  const Index& new_heads_number)
+                                  const Index& new_heads_number, 
+                                  const string& new_name)
 {
     input_size = new_input_size;
 
@@ -128,17 +130,33 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 
     heads_number = new_heads_number;
 
-    set_weights();
-    if(hidden_depth!=0)
-        scaling_factor = type(1) / type(sqrt(hidden_depth));
-    else
-        scaling_factor = 0.25;
+    scaling_factor = (hidden_depth == 0) 
+        ? 0.25 
+        : type(1) / type(sqrt(hidden_depth));
 
-    name = "multihead_attention_layer";
+    name = new_name;
 
     layer_type = Type::MultiheadAttention;
 
     dropout_rate = 0;
+
+    heads_number == 0
+        ? hidden_depth = 0    
+        : hidden_depth = Index(depth / heads_number); //depth;
+
+    query_weights.resize(depth, hidden_depth, heads_number);
+    query_biases.resize(hidden_depth, heads_number);
+
+    key_weights.resize(depth, hidden_depth, heads_number);
+    key_biases.resize(hidden_depth, heads_number);
+
+    value_weights.resize(depth, hidden_depth, heads_number);
+    value_biases.resize(hidden_depth, heads_number);
+
+    projection_weights.resize(hidden_depth, depth, heads_number);
+    projection_biases.resize(depth);
+
+    set_parameters_glorot();
 }
 
 
@@ -214,28 +232,7 @@ void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
 {
     heads_number = new_heads_number;
 
-    set_weights();
-}
-
-
-void MultiheadAttentionLayer::set_weights()
-{   if(heads_number != 0)
-        hidden_depth = Index(depth / heads_number); //depth;
-    else
-        hidden_depth = 0;
-    query_weights.resize(depth, hidden_depth, heads_number);
-    query_biases.resize(hidden_depth, heads_number);
-
-    key_weights.resize(depth, hidden_depth, heads_number);
-    key_biases.resize(hidden_depth, heads_number);
-
-    value_weights.resize(depth, hidden_depth, heads_number);
-    value_biases.resize(hidden_depth, heads_number);
-
-    projection_weights.resize(hidden_depth, depth, heads_number);
-    projection_biases.resize(depth);
-
-    set_parameters_glorot();
+    //set_weights();
 }
 
 
@@ -486,34 +483,8 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
 
 void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
-    // @todo there are two loops here. Are they the same?
-
-    const Index batch_samples_number = attention_scores.dimension(2);
-
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
-/*
-    #pragma omp parallel for
-    for(Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
-        {
-            for(Index position_index = 0; position_index < input_size; position_index++)
-            {
-                type* entry_data = attention_scores.data()
-                             + position_index * context_size
-                             + sample_index * input_size * context_size
-                             + head_index * batch_samples_number * input_size * context_size;
 
-                TensorMap<Tensor<type, 1>> entry(entry_data, context_size);
-
-                get_random(type(0), type(1)) < dropout_rate 
-
-                    ? entry.setZero()
-                    : entry *= scaling_factor;
-            }
-        }
-    }
-*/
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (get_random_type(type(0), type(1)) < dropout_rate)

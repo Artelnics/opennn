@@ -15,9 +15,10 @@ namespace opennn
 
 ProbabilisticLayer3D::ProbabilisticLayer3D(const Index& new_inputs_number, 
                                            const Index& new_inputs_depth, 
-                                           const Index& new_neurons_number)
+                                           const Index& new_neurons_number,
+                                           const string& new_name)
 {
-    set(new_inputs_number, new_inputs_depth, new_neurons_number);
+    set(new_inputs_number, new_inputs_depth, new_neurons_number, new_name);
 }
 
 
@@ -105,7 +106,8 @@ Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 
 void ProbabilisticLayer3D::set(const Index& new_inputs_number, 
                                const Index& new_inputs_depth, 
-                               const Index& new_neurons_number)
+                               const Index& new_neurons_number, 
+                               const string& new_name)
 {
     inputs_number_xxx = new_inputs_number;
 
@@ -115,7 +117,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
 
     set_parameters_glorot();
 
-    name = "probabilistic_layer_3d";
+    name = new_name;
 
     layer_type = Layer::Type::Probabilistic3D;
 

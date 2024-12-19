@@ -88,8 +88,8 @@ namespace opennn
 
     string round_to_precision_string(const type&, const int&);
 
-    vector<string> sort_string_tensor(vector<string>&);
-    vector<string> concatenate_string_tensors (const vector<string>&, const vector<string>&);
+    vector<string> sort_string_vector(vector<string>&);
+    vector<string> concatenate_string_vectors (const vector<string>&, const vector<string>&);
 
     void print();
 
@@ -122,7 +122,7 @@ namespace opennn
 
     vector<vector<string>> preprocess_language_documents(const vector<string>&);
 
-    vector<pair<string, int>> count_words(const vector<string>&);
+    vector<pair<string, Index>> count_words(const vector<string>&);
 
     enum Language {ENG, SPA};
 

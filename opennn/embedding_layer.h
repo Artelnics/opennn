@@ -24,26 +24,16 @@ class EmbeddingLayer : public Layer
 {
 
 public:
-/*
-    explicit EmbeddingLayer(const dimensions& = {0},
-                            const dimensions& = {0, 0});
-
-
-    explicit EmbeddingLayer(const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const bool& = false);
-*/
 
     EmbeddingLayer(const Index& = 0,
                    const Index& = 0,
                    const Index& = 0,
-                   const bool& = false);
-
+                   const bool& = false,
+                   const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
     Index get_sequence_length() const;
-    Index get_embedding_size() const;
+    Index get_embedding_dimension() const;
     bool get_positional_encoding() const;
 
     dimensions get_input_dimensions() const override;
@@ -52,7 +42,11 @@ public:
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
-    void set(const Index& = 0, const Index& = 0, const Index& = 0, const bool& = false);
+    void set(const Index& = 0, 
+             const Index& = 0, 
+             const Index& = 0, 
+             const bool& = false, 
+             const string & = "embedding_layer");
 
     void set_vocabulary_size(const Index&);
     void set_sequence_length(const Index&);
@@ -66,7 +60,6 @@ public:
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
     void set_parameters_random() override;
     void set_parameters_constant(const type&) override;
-
 
     void dropout(Tensor<type, 3>&) const;
 
