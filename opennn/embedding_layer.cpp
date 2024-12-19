@@ -23,7 +23,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
 
     layer_type = Type::Embedding;
 
-    name = "embedding_layer";
+    name = new_name;
 }
 
 
