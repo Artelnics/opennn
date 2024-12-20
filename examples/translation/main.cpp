@@ -15,8 +15,8 @@
 #include <cstring>
 #include <time.h>
 
-
 // OpenNN includes
+
 #include "../../opennn/opennn.h"
 
 using namespace std;

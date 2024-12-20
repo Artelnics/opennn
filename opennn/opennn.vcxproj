@@ -102,7 +102,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level1</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

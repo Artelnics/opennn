@@ -258,7 +258,6 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
 
-
     // Samples uses
 
     {
@@ -309,16 +308,7 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     // Missing values number
 
-    {
-        printer.OpenElement("MissingValuesNumber");
-
-        buffer.str("");
-        buffer << missing_values_number;
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-    }
+    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if(missing_values_number > 0)
     {
@@ -422,11 +412,9 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     // Completion Vocabulary
 
     printer.OpenElement("CompletionVocabulary");
-    for (const auto& word : completion_vocabulary) {
-        printer.OpenElement("Word");
-        printer.PushText(word.c_str());
-        printer.CloseElement();
-    }
+
+    for (const auto& word : completion_vocabulary) 
+        add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
 
@@ -434,25 +422,12 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     printer.OpenElement("ContextVocabulary");
 
     for (const auto& word : context_vocabulary) 
-    {
-        printer.OpenElement("Word");
-        printer.PushText(word.c_str());
-        printer.CloseElement();
-    }
+        add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
 
-    // Completion Dimensions
-    printer.OpenElement("CompletionDimensions");
-    printer.PushText(to_string(maximum_completion_length).c_str());
-    printer.CloseElement();
-
-    // Context Dimensions
-    printer.OpenElement("ContextDimensions");
-    printer.PushText(to_string(maximum_context_length).c_str());
-    printer.CloseElement();
-
-    // Close data set
+    add_xml_element(printer, "CompletionDimensions", to_string(maximum_completion_length));
+    add_xml_element(printer, "ContextDimensions", to_string(maximum_context_length));
 
     printer.CloseElement();
 
@@ -519,7 +494,6 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
         raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
-
 
         if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
             raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
@@ -826,15 +800,15 @@ void LanguageDataSet::import_lengths(const filesystem::path& path, Index& input_
 
 struct WordpieceAlgorithmParameters
 {
-    Index upper_threshold;
-    Index lower_threshold;
-    Index interations_number;
-    Index max_input_tokens;
-    Index max_token_length;
-    Index max_unique_characters;
-    Index vocabulary_size;
-    float slack_ratio;
-    bool include_joiner_token;
+    Index upper_threshold = 0;
+    Index lower_threshold = 0;
+    Index interations_number = 0;
+    Index max_input_tokens = 0;
+    Index max_token_length = 0;
+    Index max_unique_characters = 0;
+    Index vocabulary_size = 0;
+    float slack_ratio = 0;
+    bool include_joiner_token = false;
     string joiner;
     vector<string> reserved_tokens;
 };
@@ -877,7 +851,7 @@ map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
 
 vector<int> get_split_indices(const string& word,
                               const map<string, int>& current_tokens,
-                              bool include_joiner_token,
+                              const bool& include_joiner_token,
                               const string& joiner)
 {
     vector<int> indices;
@@ -892,7 +866,7 @@ vector<int> get_split_indices(const string& word,
             string subtoken = word.substr(start, end - start);
 
             if(include_joiner_token && start > 0)
-                subtoken = joiner + subtoken;
+                subtoken.insert(0, joiner);
 
             if(current_tokens.find(subtoken) != current_tokens.end())
             {
