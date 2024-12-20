@@ -12,11 +12,11 @@
 namespace opennn
 {
 
-LanguageDataSet::LanguageDataSet(const dimensions& context_dimensionms, 
-                                 const dimensions& completion_dimensionms)
+LanguageDataSet::LanguageDataSet(const dimensions& input_dimensionms, 
+                                 const dimensions& target_dimensionms)
 {
-    set_context_dimensions(context_dimensionms);
-    set_completion_dimensions(completion_dimensionms);
+    set_input_dimensions(input_dimensionms);
+    set_target_dimensions(target_dimensionms);
 }
 
 
@@ -27,72 +27,47 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& data_path) : DataSet()
     read_txt();
     set_raw_variable_scalers(Scaler::None);
 
-    completion_vocabulary = get_completion_vocabulary();
-    context_vocabulary = get_context_vocabulary();
+    target_vocabulary = get_target_vocabulary();
+    input_vocabulary = get_input_vocabulary();
 
-    completion_dimensions = {get_completion_length(), get_completion_vocabulary_size()};
-    context_dimensions = {get_context_length(), get_context_vocabulary_size()};
+    target_dimensions = {get_target_length(), get_target_vocabulary_size()};
+    input_dimensions = {get_input_length(), get_input_vocabulary_size()};
 }
 
 
-const vector<string>& LanguageDataSet::get_context_vocabulary() const
+const vector<string>& LanguageDataSet::get_input_vocabulary() const
 {
-    return context_vocabulary;
+    return input_vocabulary;
 }
 
 
-const vector<string>& LanguageDataSet::get_completion_vocabulary() const
+const vector<string>& LanguageDataSet::get_target_vocabulary() const
 {
-    return completion_vocabulary;
+    return target_vocabulary;
 }
 
 
-Index LanguageDataSet::get_context_vocabulary_size() const
+Index LanguageDataSet::get_input_vocabulary_size() const
 {
-    return context_vocabulary.size();
+    return input_vocabulary.size();
 }
 
-
-Index LanguageDataSet::get_completion_vocabulary_size() const
+Index LanguageDataSet::get_target_vocabulary_size() const
 {
-    return completion_vocabulary.size();
+    return target_vocabulary.size();
 }
 
 
-Index LanguageDataSet::get_context_length() const
+Index LanguageDataSet::get_input_length() const
 {
-    return maximum_context_length + 2;
+    return maximum_input_length + 2;
 }
 
 
-Index LanguageDataSet::get_completion_length() const
+Index LanguageDataSet::get_target_length() const
 {
     // return maximum_completion_length + 2;
-    return maximum_completion_length + 1;
-}
-
-
-const dimensions& LanguageDataSet::get_completion_dimensions() const
-{
-    return completion_dimensions;
-}
-
-
-const dimensions& LanguageDataSet::get_context_dimensions() const
-{
-    return context_dimensions;
-}
-
-
-const vector<vector<string>>& LanguageDataSet::get_documents() const
-{
-    return documents;
-}
-
-
-const vector<vector<string>>& LanguageDataSet::get_targets() const
-{
-    return targets;
+    return maximum_target_length + 1;
 }
 
 
@@ -101,7 +76,7 @@ void LanguageDataSet::set_default_raw_variables_uses()
     DataSet::set_default_raw_variables_uses();
 
     if(raw_variables.size() > 1)
-        context_dimensions.resize(1);
+        input_dimensions.resize(1);
 }
 
 
@@ -109,7 +84,7 @@ void LanguageDataSet::set_raw_variable_uses(const vector<string>& new_raw_variab
 {
     DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
-    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -117,43 +92,20 @@ void LanguageDataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_v
 {
     DataSet::set_raw_variable_uses(new_raw_variables_uses);
 
-    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
-void LanguageDataSet::set_context_dimensions(const dimensions& new_context_dimensions)
+
+void LanguageDataSet::set_input_vocabulary(const vector<string> & new_input_vocabulary)
 {
-    context_dimensions = new_context_dimensions;
+    input_vocabulary = new_input_vocabulary;
 }
 
 
-void LanguageDataSet::set_completion_dimensions(const dimensions& new_completion_dimensions)
+void LanguageDataSet::set_target_vocabulary(const vector<string> & new_target_vocabulary)
 {
-    completion_dimensions = new_completion_dimensions;
-}
-
-
-void LanguageDataSet::set_context_vocabulary_path(const string& new_context_vocabulary_path)
-{
-    context_vocabulary_path = new_context_vocabulary_path;
-}
-
-
-void LanguageDataSet::set_completion_vocabulary_path(const string& new_completion_vocabulary_path)
-{
-    completion_vocabulary_path = new_completion_vocabulary_path;
-}
-
-
-void LanguageDataSet::set_context_vocabulary(const vector<string> & new_context_vocabulary)
-{
-    context_vocabulary = new_context_vocabulary;
-}
-
-
-void LanguageDataSet::set_completion_vocabulary(const vector<string> & new_completion_vocabulary)
-{
-    completion_vocabulary = new_completion_vocabulary;
+    target_vocabulary = new_target_vocabulary;
 }
 
 
@@ -189,7 +141,7 @@ void LanguageDataSet::set_default()
 {
     DataSet::set_default();
 
-    context_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -411,9 +363,9 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     // Completion Vocabulary
 
-    printer.OpenElement("CompletionVocabulary");
+    printer.OpenElement("TargetVocabulary");
 
-    for (const auto& word : completion_vocabulary) 
+    for (const auto& word : target_vocabulary) 
         add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
@@ -421,13 +373,13 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     // Context Vocabulary
     printer.OpenElement("ContextVocabulary");
 
-    for (const auto& word : context_vocabulary) 
+    for (const auto& word : input_vocabulary) 
         add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
 
-    add_xml_element(printer, "CompletionDimensions", to_string(maximum_completion_length));
-    add_xml_element(printer, "ContextDimensions", to_string(maximum_context_length));
+    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_length));
+    add_xml_element(printer, "targetDimensions", to_string(maximum_input_length));
 
     printer.CloseElement();
 
@@ -671,11 +623,11 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     const XMLElement* completion_vocabulary_element = data_set_element->FirstChildElement("CompletionVocabulary");
     if(completion_vocabulary_element)
     {
-        completion_vocabulary.clear();
+        target_vocabulary.clear();
         for (const XMLElement* word_element = completion_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
             if (word_element->GetText())
-                completion_vocabulary.push_back(word_element->GetText());
+                target_vocabulary.push_back(word_element->GetText());
         }
     }
 
@@ -684,12 +636,12 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     const XMLElement* context_vocabulary_element = data_set_element->FirstChildElement("ContextVocabulary");
     if(context_vocabulary_element)
     {
-        context_vocabulary.clear();
+        input_vocabulary.clear();
 
         for (const XMLElement* word_element = context_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
             if (word_element->GetText())
-                context_vocabulary.push_back(word_element->GetText());
+                input_vocabulary.push_back(word_element->GetText());
         }
     }
 
@@ -697,13 +649,13 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
     if (completion_dimensions_element && completion_dimensions_element->GetText())
-        maximum_completion_length = atoi(completion_dimensions_element->GetText());
+        maximum_target_length = atoi(completion_dimensions_element->GetText());
 
     // Context Dimensions
 
     const XMLElement* context_dimensions_element = data_set_element->FirstChildElement("ContextDimensions");
     if (context_dimensions_element && context_dimensions_element->GetText()) {
-        maximum_context_length = atoi(context_dimensions_element->GetText());
+        maximum_input_length = atoi(context_dimensions_element->GetText());
     }
 
     // Display
@@ -1213,17 +1165,17 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
 }
 
 
-void LanguageDataSet::load_documents(const filesystem::path& path)
+void LanguageDataSet::load_documents()
 {
-    ifstream file(path);
+    ifstream file(data_path);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open document file: " + path.string() + "\n");
+        throw runtime_error("Cannot open document file: " + data_path.string() + "\n");
 
-    const Index original_size = documents.size();
+    const Index original_size = input_tokens.size();
 
-    documents.resize(original_size + 1);
-    targets.resize(original_size + 1);
+    input_tokens.resize(original_size + 1);
+    target_tokens.resize(original_size + 1);
 
     Index lines_count = 0;
     Index lines_number = 0;
@@ -1296,8 +1248,8 @@ void LanguageDataSet::load_documents(const filesystem::path& path)
     document.resize(lines_count);
     document_target.resize(lines_count);
 
-    documents[original_size] = move(document);
-    targets[original_size] = move(document_target);
+    input_tokens[original_size] = move(document);
+    target_tokens[original_size] = move(document_target);
 
     file.close();
 }
@@ -1867,52 +1819,54 @@ void LanguageDataSet::read_txt()
 {
     cout << "Reading .txt file..." << endl;
 
-    load_documents(data_path.string());
+    load_documents();
 
-    const size_t documents_number = documents.size();
+    const size_t documents_number = input_tokens.size();
 
-    const size_t entry_number = accumulate(documents.begin(), documents.end(), 0,
+    const size_t entry_number = accumulate(input_tokens.begin(), input_tokens.end(), 0,
                                 [](size_t sum, const vector<string>& doc) { return sum + doc.size(); });
 
-    const size_t completion_entry_number = accumulate(targets.begin(), targets.end(), 0,
+    const size_t completion_entry_number = accumulate(target_tokens.begin(), target_tokens.end(), 0,
                                            [](size_t sum, const vector<string>& target) { return sum + target.size(); });
 
     if(entry_number != completion_entry_number)
         throw runtime_error("Entry number (" + to_string(entry_number) + ") not equal to completion entry number (" + to_string(completion_entry_number) + ").\n");
 
-    vector<string> context(entry_number);
+    vector<string> input(entry_number);
 
     Index context_index = 0;
 
     for(size_t i = 0; i < documents_number; i++)
-        for(size_t j = 0; j < documents[i].size(); j++)
-            context[context_index++] = documents[i][j];
+        for(size_t j = 0; j < input_tokens[i].size(); j++)
+            input[context_index++] = input_tokens[i][j];
 
-    vector<string> completion(entry_number);
+    vector<string> target(entry_number);
 
     Index completion_index = 0;
 
-    for (size_t i = 0; i < targets.size(); i++)
-        for (size_t j = 0; j < targets[i].size(); j++)
-            completion[completion_index++] = targets[i][j];
+    for (size_t i = 0; i < target_tokens.size(); i++)
+        for (size_t j = 0; j < target_tokens[i].size(); j++)
+            target[completion_index++] = target_tokens[i][j];
 
     cout << "Processing documents..." << endl;
 
-    const vector<vector<string>> context_tokens = preprocess_language_documents(context);
-    const vector<vector<string>> completion_tokens = preprocess_language_documents(completion);
-
-    if (context_vocabulary_path.empty() || completion_vocabulary_path.empty())
+    const vector<vector<string>> input_tokens = preprocess_language_documents(input);
+    const vector<vector<string>> target_tokens = preprocess_language_documents(target);
+    /*
+    if (input_vocabulary_path.empty() || completion_vocabulary_path.empty())
     {
+    */
         cout << "Calculating vocabularies..." << endl;
 
         const Index target_vocabulary_size = 8000;
         const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
-        context_vocabulary = calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
-        completion_vocabulary = calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+        input_vocabulary = calculate_vocabulary(input_tokens, target_vocabulary_size, reserved_tokens);
+        target_vocabulary = calculate_vocabulary(target_tokens, target_vocabulary_size, reserved_tokens);
         // completion_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "Good", "Bad"};
         // completion_vocabulary = {"[START]", "[END]", "Good", "Bad"};
-    }
+/*
+}
     else
     {
         cout << "Importing vocabularies..." << endl;
@@ -1920,31 +1874,32 @@ void LanguageDataSet::read_txt()
         import_vocabulary(context_vocabulary_path, context_vocabulary);
         import_vocabulary(completion_vocabulary_path, completion_vocabulary);
     }
+*/
 
     const size_t LIMIT = 126;
 
-    size_t maximum_context_tokens = context_tokens[0].size();
+    size_t maximum_input_tokens = input_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
-        if(context_tokens[i].size() > maximum_context_tokens)
-            maximum_context_tokens = context_tokens[i].size();
+        if(input_tokens[i].size() > maximum_input_tokens)
+            maximum_input_tokens = input_tokens[i].size();
 
-    maximum_context_length = std::min(maximum_context_tokens, LIMIT);
+    maximum_input_length = std::min(maximum_input_tokens, LIMIT);
 
-    size_t maximum_completion_tokens = completion_tokens[0].size();
+    size_t maximum_target_tokens = target_tokens[0].size();
 
     for(size_t i = 0; i < entry_number; i++)
-        if(completion_tokens[i].size() > maximum_completion_tokens)
-            maximum_completion_tokens = completion_tokens[i].size();
+        if(target_tokens[i].size() > maximum_target_tokens)
+            maximum_target_tokens = target_tokens[i].size();
 
-    maximum_completion_length = std::min(maximum_completion_tokens, LIMIT + 1);
+    maximum_target_length = std::min(maximum_target_tokens, LIMIT + 1);
 
     // Output
 
     cout << "Writting data file..." << endl;
-
+    
     string transformed_data_path = data_path.string();
-
+    
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
@@ -1954,16 +1909,16 @@ void LanguageDataSet::read_txt()
 
     // there is start and end indicators
 
-    for(Index i  = 0; i < maximum_context_length + 2; i++) 
+    for(Index i  = 0; i < maximum_input_length + 2; i++) 
         file << "context_token_position_" << i << ";";
 
-    for(Index i = 0; i < maximum_completion_length + 1; i++)
+    for(Index i = 0; i < maximum_target_length + 1; i++)
         file << "input_token_position_" << i << ";";
 
-    for(Index i = 0; i < maximum_completion_length; i++)
+    for(Index i = 0; i < maximum_target_length; i++)
         file << "target_token_position_" << i << ";";
 
-    file << "target_token_position_" << maximum_completion_length << "\n";
+    file << "target_token_position_" << maximum_target_length << "\n";
 
     // Data file preview
 
@@ -1978,35 +1933,35 @@ void LanguageDataSet::read_txt()
     
     for(Index i = 0; i < preview_size - 1; i++)
     {
-        data_file_preview[i][0] = context[i];
-        data_file_preview[i][1] = completion[i];
+        data_file_preview[i][0] = input[i];
+        data_file_preview[i][1] = target[i];
     }
 
-    data_file_preview[preview_size - 1][0] = context[context.size()-1];
-    data_file_preview[preview_size - 1][1] = completion[completion.size()-1];
+    data_file_preview[preview_size - 1][0] = input[input.size()-1];
+    data_file_preview[preview_size - 1][1] = target[target.size()-1];
 
     //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     //else
     
-    write_data_file_wordpiece(file, context_tokens, completion_tokens);
-
+    write_data_file_wordpiece(file, input_tokens, target_tokens);
+    
     file.close();
 
     data_path = transformed_data_path;
     separator = Separator::Semicolon;
-
+    
     read_csv();
-
+    
     set_raw_variable_types(RawVariableType::Numeric);
 
-    for(Index i = 0; i < maximum_context_length + 2; i++)
+    for(Index i = 0; i < maximum_input_length + 2; i++)
         set_raw_variable_use(i, VariableUse::Context);
 
-    for (Index i = 0; i < maximum_completion_length + 1; i++)
-        set_raw_variable_use(i + maximum_context_length + 2, VariableUse::Input);
+    for (Index i = 0; i < maximum_target_length + 1; i++)
+        set_raw_variable_use(i + maximum_input_length + 2, VariableUse::Input);
 
-    for (Index i = 0; i < maximum_completion_length + 1; i++)
-        set_raw_variable_use(i + maximum_context_length + maximum_completion_length + 3, VariableUse::Target);
+    for (Index i = 0; i < maximum_target_length + 1; i++)
+        set_raw_variable_use(i + maximum_input_length + maximum_target_length + 3, VariableUse::Target);
 }
 
 
@@ -2020,18 +1975,18 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     //const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
 
     unordered_map<string, type> context_vocabulary_map;
-    for(size_t i = 0; i < context_vocabulary.size(); i++)
-         context_vocabulary_map[context_vocabulary[i]] = type(i);
+    for(size_t i = 0; i < input_vocabulary.size(); i++)
+         context_vocabulary_map[input_vocabulary[i]] = type(i);
 
-    unordered_map<string, type> completion_vocabulary_map;
-    for(size_t i = 0; i < completion_vocabulary.size(); i++)
-         completion_vocabulary_map[completion_vocabulary[i]] = type(i);
+    unordered_map<string, type> target_vocabulary_map;
+    for(size_t i = 0; i < target_vocabulary.size(); i++)
+         target_vocabulary_map[target_vocabulary[i]] = type(i);
 
     //    const Index context_vocabulary_size = context_vocabulary.size();
     //    const Index completion_vocabulary_size = completion_vocabulary.size();
 
-    Tensor<type, 1> context_row(maximum_context_length + 2);
-    Tensor<type, 1> completion_row(maximum_completion_length + 2);
+    Tensor<type, 1> context_row(maximum_input_length + 2);
+    Tensor<type, 1> completion_row(maximum_target_length + 2);
 
     vector<string> line_tokens;
     Index token_counter;
@@ -2044,7 +1999,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
     auto wordpiece_entry = context_vocabulary_map.find("");
 
     bool tokenized;
-
+    
     for(Index i = 0; i < entry_number; i++)
     {
         // Context
@@ -2058,9 +2013,9 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         line_tokens = context_tokens[i];
 
-        for(Index j = 0; j < maximum_context_length + 1; j++)
+        for(Index j = 0; j < maximum_input_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < maximum_context_length + 1)
+            if(j < Index(line_tokens.size()) && token_counter < maximum_input_length + 1)
             {
                 word = line_tokens[j];
 
@@ -2076,7 +2031,7 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
                 for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
                 {
-                    if(token_counter == maximum_context_length + 1)
+                    if(token_counter == maximum_input_length + 1)
                     {
                         tokenized = true;
                         break;
@@ -2124,8 +2079,8 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 */
             }
         }
-
-        for(Index j = 0; j < maximum_context_length + 2; j++)
+        
+        for(Index j = 0; j < maximum_input_length + 2; j++)
             file << context_row(j) << ";";
 
         // Completion
@@ -2139,15 +2094,15 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
         line_tokens = completion_tokens[i];
 
-        for(Index j = 0; j < maximum_completion_length + 1; j++)
+        for(Index j = 0; j < maximum_target_length + 1; j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < maximum_completion_length + 1)
+            if(j < Index(line_tokens.size()) && token_counter < maximum_target_length + 1)
             {
                 word = line_tokens[j];
 
-                wordpiece_entry = completion_vocabulary_map.find(word);
+                wordpiece_entry = target_vocabulary_map.find(word);
 
-                if(wordpiece_entry != completion_vocabulary_map.end())
+                if(wordpiece_entry != target_vocabulary_map.end())
                 {
                     completion_row(token_counter++) = wordpiece_entry->second;
                     continue;
@@ -2157,16 +2112,16 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
 
                 for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
                 {
-                    if(token_counter == maximum_completion_length + 1)
+                    if(token_counter == maximum_target_length + 1)
                     {
                         tokenized = true;
                         break;
                     }
 
                     wordpiece = word.substr(0, wordpiece_length);
-                    wordpiece_entry = completion_vocabulary_map.find(wordpiece);
+                    wordpiece_entry = target_vocabulary_map.find(wordpiece);
 
-                    if(wordpiece_entry != completion_vocabulary_map.end())
+                    if(wordpiece_entry != target_vocabulary_map.end())
                     {
                         completion_row(token_counter++) = wordpiece_entry->second;
 
@@ -2188,11 +2143,11 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
             else
             {
-                if(token_counter > maximum_completion_length + 1)
+                if(token_counter > maximum_target_length + 1)
                     break;
 
                 if(j == Index(line_tokens.size())
-                || (token_counter == maximum_completion_length + 1 && !line_ended))
+                || (token_counter == maximum_target_length + 1 && !line_ended))
                 {
                     completion_row(token_counter++) = 3; // end indicator
                     line_ended = true;
@@ -2204,13 +2159,13 @@ void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
             }
         }
 
-        for(Index j = 0; j < maximum_completion_length + 1; j++)
+        for(Index j = 0; j < maximum_target_length + 1; j++)
             file << completion_row(j) << ";";
 
-        for(Index j = 1; j < maximum_completion_length + 1; j++) // Target is input shifted 1 position to the left
+        for(Index j = 1; j < maximum_target_length + 1; j++) // Target is input shifted 1 position to the left
             file << completion_row(j) << ";";
 
-        file << completion_row(maximum_completion_length + 1) << "\n";
+        file << completion_row(maximum_target_length + 1) << "\n";
     }
 }
 
