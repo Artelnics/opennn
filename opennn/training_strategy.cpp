@@ -268,7 +268,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
 {
     neural_network = new_neural_network;
     data_set = new_data_set;
-
+    
     set_default();
 
     mean_squared_error.set(new_neural_network, new_data_set);
@@ -277,7 +277,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
     cross_entropy_error_3d.set(new_neural_network, new_data_set);
     weighted_squared_error.set(new_neural_network, new_data_set);
     Minkowski_error.set(new_neural_network, new_data_set);
-    
+
     LossIndex* new_loss_index = get_loss_index();
 
     conjugate_gradient.set_loss_index(new_loss_index);

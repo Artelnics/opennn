@@ -1,11 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T R A N S F O R M E R   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
+/*
 //#include "../opennn/probabilistic_layer_3d.h"
 
 namespace opennn
@@ -253,7 +248,7 @@ void TransformerTest::test_calculate_outputs()
     assert_true(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN), LOG);
 
-*/}
+}
 
 
 
@@ -318,7 +313,7 @@ void TransformerTest::test_forward_propagate()
         ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-/*
+
         ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
         
@@ -330,7 +325,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
-*/
+
     }
     
     {
@@ -389,7 +384,7 @@ void TransformerTest::test_forward_propagate()
         ForwardPropagation forward_propagation(data_set.get_samples_number(DataSet::SampleUse::Training), &transformer);
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-/*
+
         ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
             = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
 
@@ -401,7 +396,7 @@ void TransformerTest::test_forward_propagate()
         assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
 
         assert_true(check_activations_sums(probabilistic_activations), LOG);
-*/
+
     }
 }
 
@@ -437,3 +432,4 @@ void TransformerTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

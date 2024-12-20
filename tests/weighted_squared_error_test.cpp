@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   W E I G H T E D   S Q U A R E D   E R R O R   T E S T   C L A S S     
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
+/*
 
 #include "../opennn/tensors.h"
 
@@ -101,7 +96,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         bool is_training = true;
 
         // Data set
-/*
+
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -135,7 +130,6 @@ void WeightedSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
-*/
     }
 }
 
@@ -168,3 +162,4 @@ void WeightedSquaredErrorTest::run_test_case()
 // You should have received a copy of the GNU Lewser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

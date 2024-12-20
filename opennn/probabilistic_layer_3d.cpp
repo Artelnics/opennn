@@ -275,6 +275,8 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
     calculate_combinations(inputs, outputs);
 
     calculate_activations(outputs);
+    cout<<outputs.dimensions()<<endl;
+    cout<<outputs<<endl;
 }
 
 

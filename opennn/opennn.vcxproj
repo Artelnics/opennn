@@ -102,7 +102,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <WarningLevel>Level1</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -257,7 +257,6 @@
     <ClInclude Include="model_expression.h" />
     <ClInclude Include="normalization_layer_3d.h" />
     <ClInclude Include="normalized_squared_error.h" />
-    <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClCompile Include="conjugate_gradient.cpp" />
     <ClInclude Include="convolutional_layer.h" />
@@ -362,8 +361,6 @@
     <ClCompile Include="tensors.cpp" />
     <ClInclude Include="testing_analysis.h" />
     <ClCompile Include="testing_analysis.cpp" />
-    <ClInclude Include="text_data_set.h" />
-    <ClCompile Include="text_data_set.cpp" />
     <ClInclude Include="time_series_data_set.h" />
     <ClCompile Include="time_series_data_set.cpp" />
     <ClInclude Include="tinyxml2.h" />

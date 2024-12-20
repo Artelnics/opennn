@@ -1196,14 +1196,14 @@ vector<vector<string>> preprocess_language_documents(const vector<string>& docum
 }
 
 
-vector<pair<string, int>> count_words(const vector<string>& total_tokens)
+vector<pair<string, Index>> count_words(const vector<string>& total_tokens)
 {
-    unordered_map<string, int> count;
+    unordered_map<string, Index> count;
 
     for(size_t i = 0; i < total_tokens.size(); i++)
         count[total_tokens[i]]++;
 
-    vector<pair<string, int>> word_counts(count.begin(), count.end());
+    vector<pair<string, Index>> word_counts(count.begin(), count.end());
 
     sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
     {

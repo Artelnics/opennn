@@ -41,8 +41,8 @@ int main()
         ImageDataSet image_data_set(0,{0,0,0},{0});
 
         //image_data_set.set_data_path("data");
-        //image_data_set.set_data_path("C:/mnist/train");
-        image_data_set.set_data_path("C:/binary_mnist");
+        image_data_set.set_data_path("C:/mnist/train");
+        //image_data_set.set_data_path("C:/binary_mnist");
         //image_data_set.set_data_path("C:/Users/Roberto Lopez/Documents/opennn/examples/mnist/data");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp_small"); 
@@ -52,12 +52,12 @@ int main()
         image_data_set.read_bmp();
 
         // Neural network
-
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
             { 32 },
             image_data_set.get_target_dimensions());
-
+        
         //neural_network.print();
 
         // Training strategy
