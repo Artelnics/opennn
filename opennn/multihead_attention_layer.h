@@ -37,11 +37,7 @@ public:
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
-    // @todo
-    dimensions get_input_dimensions() const override
-    {
-        throw runtime_error("XXX");
-    }
+    dimensions get_input_dimensions() const override;
 
     dimensions get_output_dimensions() const override;
 
@@ -55,11 +51,6 @@ public:
              const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
-
-    void set_input_size(const Index&);
-    void set_context_size(const Index&);
-    void set_depth(const Index&);
-    void set_heads_number(const Index&);
 
     void set_parameters_random() override;
     void set_parameters_glorot();

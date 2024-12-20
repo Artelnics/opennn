@@ -30,7 +30,7 @@ int main()
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 1;
-        const Index targets = 2;
+        const Index targets = 3;
 
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
@@ -52,7 +52,6 @@ int main()
         //image_data_set.read_bmp();
 
         image_data_set.print_data();
-        system("pause");
 
         // Neural network
 
