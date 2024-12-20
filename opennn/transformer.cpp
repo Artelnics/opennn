@@ -285,19 +285,19 @@ void Transformer::set(const Index& new_input_length,
                                                  PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
                                                  "decoder_external_perceptron_" + to_string(i+1)));
 
-        set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i));
+        set_layer_inputs_indices("decoder_external_perceptron_" + to_string(i+1), "decoder_internal_perceptron_" + to_string(i+1));
 
         add_layer(make_unique<AdditionLayer3D>(input_length,
                                                embedding_depth,
-                                               "decoder_perceptron_addition_" + to_string(i)));
+                                               "decoder_perceptron_addition_" + to_string(i+1)));
 
-        set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i), { "cross_attention_normalization_" + to_string(i), "decoder_external_perceptron_" + to_string(i) });
+        set_layer_inputs_indices("decoder_perceptron_addition_" + to_string(i+1), { "cross_attention_normalization_" + to_string(i+1), "decoder_external_perceptron_" + to_string(i+1) });
 
         add_layer(make_unique<NormalizationLayer3D>(input_length,
                                                     embedding_depth,
-                                                    "decoder_perceptron_normalization_" + to_string(i)));
+                                                    "decoder_perceptron_normalization_" + to_string(i+1)));
 
-        set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_addition_" + to_string(i));
+        set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i+1), "decoder_perceptron_addition_" + to_string(i+1));
     }
     
     add_layer(make_unique<ProbabilisticLayer3D>(input_length,

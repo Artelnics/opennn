@@ -133,7 +133,6 @@ private:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
     const Eigen::array<ptrdiff_t, 2> pooling_dimensions = {1, 2};
-    const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
 

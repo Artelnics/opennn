@@ -92,7 +92,7 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.5);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
@@ -110,7 +110,7 @@ int main()
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-/*
+
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
@@ -155,7 +155,7 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
-*/
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------------//
 

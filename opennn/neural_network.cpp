@@ -216,7 +216,7 @@ vector<vector<Index>> NeuralNetwork::get_layer_output_indices() const
         {
             const Index input_index = layer_input_indices[i][j];
 
-            if (input_index != -1) 
+            if (input_index != -1 && input_index != -2)  //if (input_index != -1)
                 layer_output_indices[input_index].push_back(i);
         }
     }
@@ -443,12 +443,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         const dimensions convolution_stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                  kernel_dimensions,
-                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                  convolution_stride_dimensions,
-                                                  convolution_type,
-                                                  "convolutional_layer_" + to_string(i+1)));
+        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+        //                                          kernel_dimensions,
+        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+        //                                          convolution_stride_dimensions,
+        //                                          convolution_type,
+        //                                          "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };

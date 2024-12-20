@@ -1743,8 +1743,6 @@ void DataSet::set(const Index& new_samples_number,
 {
     input_dimensions = new_input_dimensions;
 
-    target_dimensions = new_target_dimensions;
-
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
     || new_target_dimensions.empty())
@@ -1759,8 +1757,12 @@ void DataSet::set(const Index& new_samples_number,
                                                 new_target_dimensions.end(),
                                                 1,
                                                 multiplies<Index>());
-    
-    const Index new_variables_number = new_inputs_number + new_targets_number;
+
+    const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+
+    target_dimensions = { targets_number };
+
+    const Index new_variables_number = new_inputs_number + targets_number;
 
     data.resize(new_samples_number, new_variables_number);
 
@@ -1780,7 +1782,7 @@ void DataSet::set(const Index& new_samples_number,
                 RawVariableType::Numeric,
                 Scaler::ImageMinMax);
         
-        if (new_targets_number == 1)
+        if (targets_number == 1)
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Binary,
@@ -3481,24 +3483,19 @@ void DataSet::set_data_classification()
 
     data.setConstant(0.0);
 
-    #pragma omp parallel for
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 1);
 
+    #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < input_variables_number; j++)
             data(i, j) = get_random_type(-1, 1);
 
-        if(target_variables_number == 1)
-        {
-            random_device rd;
-            mt19937 gen(rd());
-            uniform_int_distribution<int> dist(0, 1);
-            data(i, input_variables_number) = dist(gen);
-        }
-        else
-        {
-            data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
-        }
+        target_variables_number == 1
+            ? data(i, input_variables_number) = dist(gen)
+            : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
     }
 
 }

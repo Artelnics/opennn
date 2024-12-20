@@ -1023,7 +1023,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
 }
 
 
-
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {/*
     const Index size = vector.dimension(0);
@@ -1122,16 +1121,18 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         }
     }
 
-    Histogram histogram;
+    
     histogram.centers = centers;
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
+<<<<<<< HEAD
 
 */
     Histogram histogram;
     return histogram;
 }
+
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
 {
