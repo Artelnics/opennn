@@ -1126,7 +1126,6 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-<<<<<<< HEAD
 
 */
     Histogram histogram;

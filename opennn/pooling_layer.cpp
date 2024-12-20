@@ -312,12 +312,6 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                  const bool& is_training) const
 {
-    cout << "Tiempo max pooling forward:" << endl;
-    auto start = chrono::high_resolution_clock::now();
-
-    cout << "inputs:\n" << inputs << endl;
-    system("pause");
-
     PoolingLayerForwardPropagation* pooling_layer_forward_propagation =
         static_cast<PoolingLayerForwardPropagation*>(layer_forward_propagation.get());
 
@@ -348,90 +342,20 @@ void PoolingLayer::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     if (!is_training) return;
 
-    auto start_maximal_indices = chrono::high_resolution_clock::now();
-
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
     const Index pool_size = pool_height * pool_width;
-    const Index pool_number = batch_samples_number * output_height * output_width;
     const Index output_size = output_height * output_width * channels;
 
     const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
-    const Eigen::array<Index, 5> shuffle_dimensions = { 1, 2, 3, 0, 4 };
-    const Eigen::array<Index, 5> shuffle_dimensions_old = { 0, 1, 2, 3 };
-
-    cout << "image_patches: " << endl;
-    for (Index i = 0; i < image_patches.size(); i++)
-        cout << image_patches(i) << " ";
-    Tensor<type, 5> image_patches_shuffled = image_patches.shuffle(shuffle_dimensions);
-    cout << "\nimage_patches_shuffled: " << endl;
-    for (Index i = 0 ; i < image_patches_shuffled.size() ; i++)
-        cout << image_patches_shuffled(i) << " ";
-    cout << endl;
-
-    TensorMap<Tensor<type, 2>> patches_flat(
-        image_patches_shuffled.data(),
-        pool_number,
-        pool_size              
-    );
-    cout << "patches_flat: " << patches_flat << endl;
-
-    Tensor<Index, 1>maximal_indices_flat(pool_number);
-
-    //#pragma omp parallel for
-    for (Index pool_index = 0; pool_index < pool_number; pool_index++)
-    {
-        for (Index channel_index = 0; channel_index < channels; ++channel_index) 
-        {
-            TensorMap<Tensor<type, 1>> patch(
-                patches_flat.data() + pool_index * pool_size * channels + channel_index * pool_size,
-                pool_size
-            );
-
-            cout << "\tpatch: " << patch << endl;
-            Tensor<Index,0> max_idx = patch.argmax();
-
-            maximal_indices_flat(pool_index) = max_idx();
-
-            Index batch_index = pool_index / pool_number;
-            Index patch_index = pool_index % pool_number;
-            Index oh = patch_index / output_width;
-            Index ow = patch_index % output_width;
-
-            //maximal_indices(batch_index, oh, ow, channel_index) = max_idx();
-        }
-    }
     
-    /*
-    cout << "maximal_indices_new: " << maximal_indices_flat << endl;
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for (Index batch_index = 0; batch_index < batch_samples_number; batch_index++)
-    {
-
-        const Tensor<type, 4> image = image_patches.chip(batch_index, 0);
-        const Tensor<type, 4> image_shuffle = image.shuffle(shuffle_dimensions_old);
-        const Tensor<type, 2> patches_flat = image_shuffle.reshape(reshape_dimensions);
-
+    { 
+        const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0).reshape(reshape_dimensions);
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
-
-    cout << "Maximal indices:\n" << maximal_indices << endl;
-    system("pause");
-    */
-    auto end_maximal_indices = chrono::high_resolution_clock::now();
-    auto duration_maximal_indices = chrono::duration_cast<chrono::milliseconds>(end_maximal_indices - start_maximal_indices);
-    cout << "\tTiempo maximal_indices calculation: "
-        << duration_maximal_indices.count() / 1000 << "::"
-        << duration_maximal_indices.count() % 1000
-        << " segundos::milisegundos" << endl;
-    
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    cout << "Tiempo max pooling forward propagate: "
-        << duration.count() / 1000 << "::"
-        << duration.count() % 1000
-        << " segundos::milisegundos" << endl;
 }
 
 
@@ -440,7 +364,6 @@ void PoolingLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    cout << "pasa por aqui" << endl;
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
