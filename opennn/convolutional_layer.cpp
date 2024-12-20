@@ -253,7 +253,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    //auto start = chrono::high_resolution_clock::now();
+    auto start = chrono::high_resolution_clock::now();
     // Convolutional layer
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
@@ -386,12 +386,12 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    //auto end = chrono::high_resolution_clock::now();
-    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    //cout << "Tiempo convolution back propagate: "
-    //    << duration.count() / 1000 << "::"
-    //    << duration.count() % 1000
-    //    << " segundos::milisegundos" << endl;
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo convolution back propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
 }
 
 

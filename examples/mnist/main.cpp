@@ -32,27 +32,24 @@ int main()
         const Index channels = 1;
         const Index targets = 2;
 
-        ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
+        //ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
-        image_data_set.set_data_random();
+        //image_data_set.set_data_random();
+        
+        //image_data_set.set(DataSet::SampleUse::Training);
 
-        image_data_set.set(DataSet::SampleUse::Training);
-
-        //ImageDataSet image_data_set(0,{0,0,0},{0});
+        ImageDataSet image_data_set(0,{0,0,0},{0});
 
         //image_data_set.set_data_path("data");
         //image_data_set.set_data_path("C:/mnist/train");
-        //image_data_set.set_data_path("C:/binary_mnist");
+        image_data_set.set_data_path("C:/binary_mnist");
         //image_data_set.set_data_path("C:/Users/Roberto Lopez/Documents/opennn/examples/mnist/data");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp");
         //image_data_set.set_data_path("C:/melanoma_dataset_bmp_small"); 
         //image_data_set.set_data_path("C:/melanoma_supersmall");
         //image_data_set.set_input_dimensions({24,24,1});
 
-        //image_data_set.read_bmp();
-
-        image_data_set.print_data();
-        system("pause");
+        image_data_set.read_bmp();
 
         // Neural network
 
