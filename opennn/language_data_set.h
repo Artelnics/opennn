@@ -23,9 +23,6 @@ public:
 
     explicit LanguageDataSet(const filesystem::path& = filesystem::path());
 
-    LanguageDataSet();
-
-
     const vector<string>& get_context_vocabulary() const;
     const vector<string>& get_completion_vocabulary() const;
 
@@ -80,7 +77,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents(const string&);
+    void load_documents(const filesystem::path&);
 
     void read_csv_1();
 
@@ -108,14 +105,13 @@ private:
 
     string completion_vocabulary_path;
 
-    Index maximum_completion_length;
+    Index maximum_completion_length = 0;
 
     Index maximum_context_length = 0;
 
     vector<vector<string>> documents;
 
     vector<vector<string>> targets;
-
 };
 
 }

@@ -60,6 +60,14 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 }
 
 
+// @todo
+
+dimensions MultiheadAttentionLayer::get_input_dimensions() const
+{
+    throw runtime_error("XXX");
+}
+
+
 dimensions MultiheadAttentionLayer::get_output_dimensions() const
 {
     return { input_size, depth };
@@ -210,32 +218,6 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
 }
 
 
-void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
-{
-    input_size = new_input_size;
-}
-
-
-void MultiheadAttentionLayer::set_context_size(const Index& new_context_size)
-{
-    context_size = new_context_size;
-}
-
-
-void MultiheadAttentionLayer::set_depth(const Index& new_depth)
-{
-    depth = new_depth;
-}
-
-
-void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
-{
-    heads_number = new_heads_number;
-
-    //set_weights();
-}
-
-
 void MultiheadAttentionLayer::set_parameters_random()
 {
     const type minimum = type(-0.2);
@@ -366,26 +348,27 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
     const Index batch_size = input.dimension(0);
     const Index variables_number = input.dimension(1);
 
-    type* weights_data = (type*)weights.data();
-    type* biases_data = (type*)biases.data();
     type* transformed_input_data = transformed_input.data();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
-        type* head_weights_data = weights_data + head_index * depth * hidden_depth;
-        type* head_biases_data = biases_data + head_index * hidden_depth;
-        type* head_transformed_input_data = transformed_input_data + head_index * batch_size * variables_number * hidden_depth;
+        const TensorMap<Tensor<type, 2>> head_weights((type*)weights.data() + head_index * depth * hidden_depth,
+                                                      depth, 
+                                                      hidden_depth);
 
-        const TensorMap<Tensor<type, 2>> head_weights(head_weights_data, depth, hidden_depth);
-        const TensorMap<Tensor<type, 1>> head_biases(head_biases_data, hidden_depth);
+        const TensorMap<Tensor<type, 1>> head_biases((type*)biases.data() + head_index * hidden_depth, 
+                                                     hidden_depth);
+
+
+        type* head_transformed_input_data = transformed_input_data + head_index * batch_size * variables_number * hidden_depth;
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             sample_matrix = input.chip(sample_index, 0);
 
-            type* sample_transformed_input_data = head_transformed_input_data + sample_index * variables_number * hidden_depth;
-
-            TensorMap<Tensor<type, 2>> sample_transformed_input(sample_transformed_input_data, variables_number, hidden_depth);
+            TensorMap<Tensor<type, 2>> sample_transformed_input(head_transformed_input_data + sample_index * variables_number * hidden_depth,
+                                                                variables_number, 
+                                                                hidden_depth);
 
             sample_transformed_input.device(*thread_pool_device)
                 = sample_matrix.contract(head_weights, A_B);
@@ -788,11 +771,9 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         head_value_biases_derivatives.setZero();
 
     }
+
     value_weights_derivatives.setZero();
     projection_biases_derivatives.device(*thread_pool_device) = deltas.sum(projection_biases_derivatives_sum_indices);
-
-    // cout<<"next"<<endl;
-    // cout<<back_propagation<<endl;
 }
 
 
@@ -859,10 +840,10 @@ void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
         throw runtime_error("MultiheadAttention element is nullptr.\n");
 
     set_name(read_xml_string(multihead_attention_layer_element, "Name"));
-    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
-    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
-    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
-    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
+//    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
+//    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
+//    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
+//    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
     set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
     set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "));
 }

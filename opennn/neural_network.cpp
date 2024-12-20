@@ -484,7 +484,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
     // Embedding Layers
 
-    const Index embedding_depth = 32;
+    const Index embedding_dimension = 32;
     const Index perceptron_depth = 32;
     const Index heads_number = 2;
     const type dropout_rate = 0;
@@ -492,7 +492,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
     unique_ptr<EmbeddingLayer> embedding_layer
         = make_unique<EmbeddingLayer>(input_dimensions[0],
                                       input_dimensions[1],
-                                      embedding_depth,
+                                      embedding_dimension,
                                       true);
 
     embedding_layer->set_dropout_rate(dropout_rate);
@@ -513,7 +513,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         unique_ptr<MultiheadAttentionLayer> self_attention_layer =
             make_unique<MultiheadAttentionLayer>(input_dimensions[1],
                                                  input_dimensions[1],
-                                                 embedding_depth,
+                                                 embedding_dimension,
                                                  heads_number);
 
         self_attention_layer->set_dropout_rate(dropout_rate);
@@ -530,7 +530,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Addition
 
         unique_ptr<AdditionLayer3D> self_attention_addition_layer
-            = make_unique<AdditionLayer3D>(input_dimensions[1], embedding_depth);
+            = make_unique<AdditionLayer3D>(input_dimensions[1], embedding_dimension);
 
         self_attention_addition_layer->set_name("self_attention_addition_" + to_string(i+1));
         //name = self_attention_addition_layer->get_name();
@@ -545,7 +545,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Normalization
 
         unique_ptr<NormalizationLayer3D> self_attention_normalization_layer
-            = make_unique<NormalizationLayer3D>(input_dimensions[1], embedding_depth);
+            = make_unique<NormalizationLayer3D>(input_dimensions[1], embedding_dimension);
 
         self_attention_normalization_layer->set_name("self_attention_normalization_" + to_string(i+1));
         //name = self_attention_normalization_layer->get_name();
@@ -557,7 +557,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Perceptron
 
         unique_ptr<PerceptronLayer3D> encoder_internal_perceptron_layer
-            = make_unique<PerceptronLayer3D>(input_dimensions[1], embedding_depth, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
+            = make_unique<PerceptronLayer3D>(input_dimensions[1], embedding_dimension, perceptron_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         encoder_internal_perceptron_layer->set_name("encoder_internal_perceptron_" + to_string(i+1));
         //name = encoder_internal_perceptron_layer->get_name();
@@ -569,7 +569,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Perceptron
 
         unique_ptr<PerceptronLayer3D> encoder_external_perceptron_layer =
-            make_unique<PerceptronLayer3D>(input_dimensions[1], perceptron_depth, embedding_depth, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
+            make_unique<PerceptronLayer3D>(input_dimensions[1], perceptron_depth, embedding_dimension, PerceptronLayer3D::ActivationFunction::RectifiedLinear);
 
         encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
         encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
@@ -582,7 +582,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Addition
 
         unique_ptr<AdditionLayer3D> encoder_perceptron_addition_layer
-            = make_unique<AdditionLayer3D>(input_dimensions[1], embedding_depth);
+            = make_unique<AdditionLayer3D>(input_dimensions[1], embedding_dimension);
 
         encoder_perceptron_addition_layer->set_name("encoder_perceptron_addition_" + to_string(i+1));
         //name = encoder_perceptron_addition_layer->get_name();
@@ -594,7 +594,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         // Normalization
 
         unique_ptr<NormalizationLayer3D> encoder_perceptron_normalization_layer
-            = make_unique<NormalizationLayer3D>(input_dimensions[1], embedding_depth);
+            = make_unique<NormalizationLayer3D>(input_dimensions[1], embedding_dimension);
 
         encoder_perceptron_normalization_layer->set_name("encoder_perceptron_normalization_" + to_string(i+1));
         //name = encoder_perceptron_normalization_layer->get_name();

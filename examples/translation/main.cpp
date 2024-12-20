@@ -45,12 +45,12 @@ int main()
         // cout<<language_data_set.get_context_length()<<endl;
         // cout<<language_data_set.get_completion_length()<<endl;
 
-        const Index embedding_depth = 64;
+        const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
         const Index number_of_layers = 1;
 
-        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
 
         // Neural network
@@ -171,12 +171,12 @@ int main()
         const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
 
-        const Index embedding_depth = 64;
+        const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
         const Index number_of_layers = 1;
 
-        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
         const dimensions completion_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
 

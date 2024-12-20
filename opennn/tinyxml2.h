@@ -43,8 +43,7 @@
 
 #include "pch.h"
 
-#include "config.h"
-
+#include "tensors.h"
 
 using namespace opennn;
 

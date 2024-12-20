@@ -193,133 +193,42 @@ void LanguageDataSet::set_default()
 }
 
 
-void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
+void LanguageDataSet::to_XML(XMLPrinter& printer) const
 {
     ostringstream buffer;
 
     time_t start, finish;
     time(&start);
 
-    file_stream.OpenElement("DataSet");
+    printer.OpenElement("DataSet");
 
     // Data file
 
-    file_stream.OpenElement("DataSource");
+    printer.OpenElement("DataSource");
 
-    if(model_type != ModelType::ImageClassification)
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
-
-            file_stream.PushText("csv");
-
-            file_stream.CloseElement();
-        }
-    }
-    else
-    {
-        // File type
-        {
-            file_stream.OpenElement("FileType");
-
-            file_stream.PushText("bmp");
-
-            file_stream.CloseElement();
-        }
-    }
-
-    // Data file name
-    {
-        file_stream.OpenElement("Path");
-        file_stream.PushText(data_path.c_str());
-        file_stream.CloseElement();
-    }
-
-    // Separator
-    {
-        file_stream.OpenElement("Separator");
-        file_stream.PushText(get_separator_string().c_str());
-        file_stream.CloseElement();
-    }
-
-    // Raw variables names
-    {
-        file_stream.OpenElement("HasHeader");
-        file_stream.PushText(to_string(has_header).c_str());
-        file_stream.CloseElement();
-    }
-
-    // Samples id
-    {
-        file_stream.OpenElement("HasSamplesId");
-
-        buffer.str("");
-
-        buffer << has_sample_ids;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Missing values label
-    {
-        file_stream.OpenElement("MissingValuesLabel");
-
-        file_stream.PushText(missing_values_label.c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Codification
-
-    file_stream.OpenElement("Codification");
-
-    buffer.str("");
-    buffer << get_codification_string();
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Close DataFile
-
-    file_stream.CloseElement();
-
-    // Raw variables
-
-    file_stream.OpenElement("RawVariables");
-
-    // Raw variables number
-    {
-        file_stream.OpenElement("RawVariablesNumber");
-
-        buffer.str("");
-        buffer << get_raw_variables_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
-
-    // Raw variables items
+    add_xml_element(printer, "FileType", "csv");
+    add_xml_element(printer, "DataPath", data_path.string());
+    add_xml_element(printer, "Separator", get_separator_string());
+    add_xml_element(printer, "HasHeader", to_string(has_header));
+    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
+    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
+    add_xml_element(printer, "Codification", get_codification_string());
+    printer.CloseElement();
 
     const Index raw_variables_number = get_raw_variables_number();
 
+    printer.OpenElement("RawVariables");
+    add_xml_element(printer, "RawVariablesNumber", to_string(raw_variables_number));
+
+    for(Index i = 0; i < raw_variables_number; i++)
     {
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            file_stream.OpenElement("RawVariable");
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            raw_variables[i].to_XML(file_stream);
-            file_stream.CloseElement();
-        }
+        printer.OpenElement("RawVariable");
+        printer.PushAttribute("Item", to_string(i+1).c_str());
+        raw_variables[i].to_XML(printer);
+        printer.CloseElement();
     }
 
-    // Close raw_variables
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Samples id
 
@@ -327,7 +236,7 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
     {
         const Index rows_labels_number = sample_ids.size();
 
-        file_stream.OpenElement("HasSamplesId");
+        printer.OpenElement("HasSamplesId");
 
         buffer.str("");
 
@@ -338,31 +247,22 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
             if(i != rows_labels_number-1) buffer << ",";
         }
 
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     // Samples
 
-    file_stream.OpenElement("Samples");
+    printer.OpenElement("Samples");
 
-    // Samples number
-    {
-        file_stream.OpenElement("SamplesNumber");
+    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
 
-        buffer.str("");
-        buffer << get_samples_number();
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
 
     // Samples uses
 
     {
-        file_stream.OpenElement("SamplesUses");
+        printer.OpenElement("SamplesUses");
 
         buffer.str("");
 
@@ -377,62 +277,54 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
             if(i < (samples_number-1)) buffer << " ";
         }
 
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     // Close samples
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Missing values
 
-    file_stream.OpenElement("MissingValues");
+    printer.OpenElement("MissingValues");
 
     // Missing values method
 
     {
-        file_stream.OpenElement("MissingValuesMethod");
+        printer.OpenElement("MissingValuesMethod");
 
         if(missing_values_method == MissingValuesMethod::Mean)
-        {
-            file_stream.PushText("Mean");
-        }
+            printer.PushText("Mean");
         else if(missing_values_method == MissingValuesMethod::Median)
-        {
-            file_stream.PushText("Median");
-        }
+            printer.PushText("Median");
         else if(missing_values_method == MissingValuesMethod::Unuse)
-        {
-            file_stream.PushText("Unuse");
-        }
+            printer.PushText("Unuse");
         else if(missing_values_method == MissingValuesMethod::Interpolation)
-        {
-            file_stream.PushText("Interpolation");
-        }
+            printer.PushText("Interpolation");
 
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     // Missing values number
 
     {
-        file_stream.OpenElement("MissingValuesNumber");
+        printer.OpenElement("MissingValuesNumber");
 
         buffer.str("");
         buffer << missing_values_number;
 
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     if(missing_values_number > 0)
     {
         // Raw variables missing values number
         {
-            file_stream.OpenElement("RawVariablesMissingValuesNumber");
+            printer.OpenElement("RawVariablesMissingValuesNumber");
 
             buffer.str("");
 
@@ -443,33 +335,33 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
                 if(i != raw_variables_number - 1) buffer << " ";
             }
 
-            file_stream.PushText(buffer.str().c_str());
+            printer.PushText(buffer.str().c_str());
 
-            file_stream.CloseElement();
+            printer.CloseElement();
         }
 
         // Rows missing values number
         {
-            file_stream.OpenElement("RowsMissingValuesNumber");
+            printer.OpenElement("RowsMissingValuesNumber");
 
             buffer.str("");
             buffer << rows_missing_values_number;
 
-            file_stream.PushText(buffer.str().c_str());
+            printer.PushText(buffer.str().c_str());
 
-            file_stream.CloseElement();
+            printer.CloseElement();
         }
     }
 
     // Missing values
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Preview data
 
-    file_stream.OpenElement("PreviewData");
+    printer.OpenElement("PreviewData");
 
-    file_stream.OpenElement("PreviewSize");
+    printer.OpenElement("PreviewSize");
 
     buffer.str("");
 
@@ -477,91 +369,92 @@ void LanguageDataSet::to_XML(XMLPrinter& file_stream) const
     {
         buffer << data_file_preview.size();
 
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+        printer.CloseElement();
 
         for(size_t i = 0; i < data_file_preview.size(); i++)
         {
-            file_stream.OpenElement("Row");
+            printer.OpenElement("Row");
 
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
+            printer.PushAttribute("Item", to_string(i+1).c_str());
 
             for(size_t j = 0; j < data_file_preview[i].size(); j++)
             {
-                file_stream.PushText(data_file_preview[i][j].c_str());
+                printer.PushText(data_file_preview[i][j].c_str());
 
                 if(j != data_file_preview[i].size()-1)
-                {
-                    file_stream.PushText(",");
-                }
+                    printer.PushText(",");
             }
 
-            file_stream.CloseElement();
+            printer.CloseElement();
         }
     }
     else
     {
         buffer << data_file_preview.size();
 
-        file_stream.PushText(buffer.str().c_str());
+        printer.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
+        printer.CloseElement();
 
         for(size_t i = 0; i < data_file_preview.size(); i++)
         {
-            file_stream.OpenElement("Row");
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            file_stream.PushText(data_file_preview[i][0].c_str());
-            file_stream.CloseElement();
+            printer.OpenElement("Row");
+            printer.PushAttribute("Item", to_string(i+1).c_str());
+            printer.PushText(data_file_preview[i][0].c_str());
+            printer.CloseElement();
         }
 
         for(size_t i = 0; i < data_file_preview.size(); i++)
         {
-            file_stream.OpenElement("Target");
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            file_stream.PushText(data_file_preview[i][1].c_str());
-            file_stream.CloseElement();
+            printer.OpenElement("Target");
+            printer.PushAttribute("Item", to_string(i+1).c_str());
+            printer.PushText(data_file_preview[i][1].c_str());
+            printer.CloseElement();
         }
     }
 
     // Close preview data
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Completion Vocabulary
 
-    file_stream.OpenElement("CompletionVocabulary");
+    printer.OpenElement("CompletionVocabulary");
     for (const auto& word : completion_vocabulary) {
-        file_stream.OpenElement("Word");
-        file_stream.PushText(word.c_str());
-        file_stream.CloseElement();
+        printer.OpenElement("Word");
+        printer.PushText(word.c_str());
+        printer.CloseElement();
     }
-    file_stream.CloseElement();
 
+    printer.CloseElement();
 
     // Context Vocabulary
-    file_stream.OpenElement("ContextVocabulary");
-    for (const auto& word : context_vocabulary) {
-        file_stream.OpenElement("Word");
-        file_stream.PushText(word.c_str());
-        file_stream.CloseElement();
+    printer.OpenElement("ContextVocabulary");
+
+    for (const auto& word : context_vocabulary) 
+    {
+        printer.OpenElement("Word");
+        printer.PushText(word.c_str());
+        printer.CloseElement();
     }
-    file_stream.CloseElement();
+
+    printer.CloseElement();
 
     // Completion Dimensions
-    file_stream.OpenElement("CompletionDimensions");
-    file_stream.PushText(to_string(maximum_completion_length).c_str());
-    file_stream.CloseElement();
+    printer.OpenElement("CompletionDimensions");
+    printer.PushText(to_string(maximum_completion_length).c_str());
+    printer.CloseElement();
 
     // Context Dimensions
-    file_stream.OpenElement("ContextDimensions");
-    file_stream.PushText(to_string(maximum_context_length).c_str());
-    file_stream.CloseElement();
+    printer.OpenElement("ContextDimensions");
+    printer.PushText(to_string(maximum_context_length).c_str());
+    printer.CloseElement();
 
     // Close data set
 
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     time(&finish);
 }
@@ -862,12 +755,13 @@ void LanguageDataSet::save_vocabulary(const filesystem::path& path, const vector
 
 
 
-void LanguageDataSet::import_vocabulary(const filesystem::path& path, vector<string>& vocabulary)
+void LanguageDataSet::import_vocabulary(const filesystem::path& path, 
+                                        vector<string>& vocabulary)
 {
     ifstream file(path.c_str());
 
     if(!file.is_open())
-        throw runtime_error("Cannot open data file: " + path.string() + "\n");
+        throw runtime_error("Cannot open vocabulary file: " + path.string() + "\n");
 
     Index vocabulary_size = 0;
 
@@ -923,8 +817,8 @@ void LanguageDataSet::import_lengths(const filesystem::path& path, Index& input_
     if (!file.is_open())
         throw runtime_error("Cannot open file to import lengths: " + path.string() + "\n");
 
-    file >> input_length;
-    file >> context_length;
+    file >> input_length
+         >> context_length;
 
     file.close();
 }
@@ -946,7 +840,7 @@ struct WordpieceAlgorithmParameters
 };
 
 
-set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
+set<char> extract_character_tokens(const vector<pair<string, Index>>& word_counts)
 {
     set<char> seen_chars;
 
@@ -960,7 +854,7 @@ set<char> extract_character_tokens(const vector<pair<string, int>>& word_counts)
 
 map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
                                          map<string, int> output_tokens,
-                                         bool include_joiner_token,
+                                         const bool& include_joiner_token,
                                          const string& joiner)
 {
     for(const string& token : input_tokens)
@@ -1019,18 +913,25 @@ vector<int> get_split_indices(const string& word,
 }
 
 
-tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_counts, int upper_threshold, int lower_threshold)
+tuple<Index, Index> calculate_thresholds(const vector<pair<string, Index>>& word_counts, 
+                                         const Index& upper_threshold, 
+                                         const Index& lower_threshold)
 {
     vector<int> counts;
 
     for(const auto& [_, count] : word_counts)
         counts.push_back(count);
 
-    const int max_count = *max_element(counts.begin(), counts.end());
-    const int min_count = *min_element(counts.begin(), counts.end());
+    const Index max_count = *max_element(counts.begin(), counts.end());
+    const Index min_count = *min_element(counts.begin(), counts.end());
 
-    const int upper_search = upper_threshold == -1 ? max_count : min(upper_threshold, max_count);
-    const int lower_search = lower_threshold == -1 ? min_count : max(lower_threshold, min_count);
+    const Index upper_search = upper_threshold == -1 
+        ? max_count 
+        : min(upper_threshold, max_count);
+
+    const Index lower_search = lower_threshold == -1 
+        ? min_count 
+        : max(lower_threshold, min_count);
 
     return { upper_search, lower_search };
 }
@@ -1038,11 +939,11 @@ tuple<int, int> calculate_thresholds(const vector<pair<string, int>>& word_count
 
 // @todo move to strings utilities?
 
-vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_counts,
-                                      const vector<string>& reserved_tokens,
-                                      int max_token_length)
+vector<pair<string, Index>> trim_inputs(const vector<pair<string, Index>>& word_counts,
+                                        const vector<string>& reserved_tokens,
+                                        const Index& max_token_length)
 {
-    vector<pair<string, int>> trimmed_counts;
+    vector<pair<string, Index>> trimmed_counts;
 
     for(const auto& [word, count] : word_counts)
     {
@@ -1057,17 +958,18 @@ vector<pair<string, int>> trim_inputs(const vector<pair<string, int>>& word_coun
 }
 
 
-set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts, int max_unique_characters)
+set<char> get_allowed_characters(const vector<pair<string, Index>>& trimmed_counts, 
+                                 const Index& max_unique_characters)
 {
-    map<char, int> character_counts;
+    map<char, Index> character_counts;
 
     for(const auto& [word, count] : trimmed_counts)
         for(char c : word)
             character_counts[c] += count;
 
-    vector<pair<char, int>> sorted_counts(character_counts.begin(), character_counts.end());
+    vector<pair<char, Index>> sorted_counts(character_counts.begin(), character_counts.end());
 
-    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, int>& a, const pair<char, int>& b)
+    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, Index>& a, const pair<char, Index>& b)
     {
         if(a.second != b.second)
             return a.second > b.second;
@@ -1078,24 +980,26 @@ set<char> get_allowed_characters(const vector<pair<string, int>>& trimmed_counts
 
     set<char> allowed_characters;
 
-    for(int i = 0; i < min((int)sorted_counts.size(), max_unique_characters); i++)
+    for(int i = 0; i < min((Index)sorted_counts.size(), max_unique_characters); i++)
         allowed_characters.insert(sorted_counts[i].first);
 
     return allowed_characters;
 }
 
 
-vector<pair<string, int>> filter_inputs(const vector<pair<string, int>>& trimmed_counts, const set<char>& allowed_characters, int max_input_tokens)
+vector<pair<string, Index>> filter_inputs(const vector<pair<string, Index>>& trimmed_counts, 
+                                          const set<char>& allowed_characters, 
+                                          const Index& max_input_tokens)
 {
-    vector<pair<string, int>> sorted_counts = trimmed_counts;
+    vector<pair<string, Index>> sorted_counts = trimmed_counts;
 
-    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, int>& a, const pair<string, int>& b)
+    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, Index>& a, const pair<string, Index>& b)
     {
         return a.second > b.second;
     }
 );
 
-    vector<pair<string, int>> filtered_counts;
+    vector<pair<string, Index>> filtered_counts;
 
     for(const auto& [word, count] : sorted_counts)
     {
@@ -1162,8 +1066,8 @@ vector<string> generate_override_vocabulary(const vector<string>& reserved_token
 }
 
 
-vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int>>& word_counts,
-                                                   int threshold,
+vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, Index>>& word_counts,
+                                                   const Index& threshold,
                                                    const WordpieceAlgorithmParameters& parameters)
 {
     const set<char> character_tokens = extract_character_tokens(word_counts);
@@ -1186,22 +1090,25 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
             if(iteration == 0)
             {
                 split_indices = vector<int>(word.size());
+                
                 iota(split_indices.begin(), split_indices.end(), 1);
             }
             else
             {
                 split_indices = get_split_indices(word, current_tokens, parameters.include_joiner_token, parameters.joiner);
+                
                 if(split_indices.empty())
                     continue;
             }
 
             size_t start = 0;
+
             for(int split_index : split_indices)
             {
                 for(size_t end = start + 1; end <= word.size(); ++end)
                 {
                     string subtoken = word.substr(start, end - start);
-                    const int length = subtoken.size();
+                    const Index length = subtoken.size();
 
                     if(parameters.include_joiner_token && start > 0)
                         subtoken = parameters.joiner + subtoken;
@@ -1254,20 +1161,23 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, int
 }
 
 
-vector<string> calculate_vocabulary_binary_search(const vector<pair<string, int>>& word_counts,
-                                                  int lower_bound,
-                                                  int upper_bound,
+vector<string> calculate_vocabulary_binary_search(const vector<pair<string, Index>>& word_counts,
+                                                  const Index& lower_bound,
+                                                  const Index& upper_bound,
                                                   const WordpieceAlgorithmParameters& parameters)
 {
     const int threshold = (upper_bound + lower_bound) / 2;
 
-    const vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, threshold, parameters);
+    const vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, 
+                                                                                  threshold, 
+                                                                                  parameters);
 
-    const int current_vocabulary_size = current_vocabulary.size();
+    const Index current_vocabulary_size = current_vocabulary.size();
 
-    const int slack = max(0, int(parameters.slack_ratio * parameters.vocabulary_size));
+    const Index slack = max(0, int(parameters.slack_ratio * parameters.vocabulary_size));
 
-    const bool is_within_slack = (current_vocabulary_size <= parameters.vocabulary_size) && (parameters.vocabulary_size - current_vocabulary_size <= slack);
+    const bool is_within_slack = current_vocabulary_size <= parameters.vocabulary_size 
+                              && parameters.vocabulary_size - current_vocabulary_size <= slack;
 
     if(is_within_slack || lower_bound >= upper_bound || threshold <= 1)
         return current_vocabulary;
@@ -1295,7 +1205,7 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
 
     const vector<string> total_tokens = tokens_list(tokens);
 
-    const vector<pair<string, int>> word_counts = count_words(total_tokens);
+    const vector<pair<string, Index>> word_counts = count_words(total_tokens);
 
     const WordpieceAlgorithmParameters parameters = {upper_threshold,
                                                      lower_threshold,
@@ -1311,50 +1221,35 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
 
     const auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
 
-    const vector<pair<string, int>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
+    const vector<pair<string, Index>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
 
     const std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, parameters.max_unique_characters);
 
-    const vector<pair<string, int>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
+    const vector<pair<string, Index>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
 
     const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
 
-    vector<string> vocabulary_tensor(vocabulary.size());
+//    vector<string> vocabulary_tensor(vocabulary.size());
 
-    for(Index i = 0; i < Index(vocabulary.size()); i++)
-        vocabulary_tensor[i] = vocabulary[i];
+//    std::copy(vocabulary.begin(), vocabulary.end(), vocabulary_tensor.begin());
 
-    return vocabulary_tensor;
+//    return vocabulary_tensor;
 
-    return vector<string>();
+    return vocabulary;
 }
 
 
-void LanguageDataSet::load_documents(const string& path)
+void LanguageDataSet::load_documents(const filesystem::path& path)
 {
-    const Index original_size = documents.size();
-
-    if(path.empty())
-        throw runtime_error("Data file name is empty.\n");
-
-    ifstream file(path.c_str());
+    ifstream file(path);
 
     if(!file.is_open())
-        throw runtime_error("Cannot open data file: " + path + "\n");
+        throw runtime_error("Cannot open document file: " + path.string() + "\n");
 
-    vector<vector<string>> documents_copy(documents);
+    const Index original_size = documents.size();
 
     documents.resize(original_size + 1);
-
-    vector<vector<string>> targets_copy(targets);
-
     targets.resize(original_size + 1);
-
-    for(Index i = 0; i < original_size; i++)
-    {
-        documents[i] = documents_copy[i];
-        targets[i] = targets_copy[i];
-    }
 
     Index lines_count = 0;
     Index lines_number = 0;
@@ -1365,25 +1260,21 @@ void LanguageDataSet::load_documents(const string& path)
     {
         prepare_line(line);
 
-        if(line.empty()) continue;
-
-        lines_number++;
-
-        if(file.peek() == EOF) break;
+        if(!line.empty())
+            lines_number++;
     }
-
-    // file.close();
 
     vector<string> document(lines_number);
     vector<string> document_target(lines_number);
 
-    file.seekg (0, ios::beg);
+    file.clear();
+    file.seekg(0, ios::beg);
+
+    const string separator_string = get_separator_string();
 
     Index tokens_number = 0;
 
     string delimiter;
-
-    const string separator_string = get_separator_string();
 
     while(getline(file, line))
     {
@@ -1399,25 +1290,18 @@ void LanguageDataSet::load_documents(const string& path)
         if(line.find("\"" + separator_string) != string::npos)
             replace(line,"\"" + separator_string, "\"\"" + separator_string);
 
-        //tokens_number = count_tokens(line,delimiter + separator);
         const vector<string> tokens = get_tokens(line, delimiter + separator_string);
 
         tokens_number = tokens.size();
 
         if(tokens_number == 1)
         {
-            if(tokens[0].find(delimiter, 0) == 0)
-                document[lines_count] += tokens[0].substr(delimiter.length(), tokens[0].size());
-            else
-                document[lines_count] += " " + tokens[0];
-
-            lines_count++;
+            document[lines_count++] += tokens[0].find(delimiter) == 0
+                ? tokens[0].substr(delimiter.length())
+                : " " + tokens[0];
         }
-        else
+        else if(tokens_number == 2)
         {
-            if(tokens_number > 2)
-                throw runtime_error("Found more than one separator in line: " + line + "\n");
-
             if(tokens[0].empty() && tokens[1].empty())
                 continue;
 
@@ -1426,24 +1310,20 @@ void LanguageDataSet::load_documents(const string& path)
             delimiter.clear();
             lines_count++;
         }
+        else if (tokens_number > 2)
+        {
+            throw runtime_error("Found more than one separator in line: " + line + "\n");
+        }
 
         if(file.peek() == EOF)
             break;
     }
 
-    vector<string> document_copy(lines_count);
-    vector<string> document_target_copy(lines_count);
+    document.resize(lines_count);
+    document_target.resize(lines_count);
 
-    copy(document.data(),
-         document.data() + lines_count,
-         document_copy.data());
-
-    copy(document_target.data(),
-         document_target.data() + lines_count,
-         document_target_copy.data());
-
-    documents[original_size] = document_copy;
-    targets[original_size] = document_target_copy;
+    documents[original_size] = move(document);
+    targets[original_size] = move(document_target);
 
     file.close();
 }
@@ -2024,7 +1904,7 @@ void LanguageDataSet::read_txt()
                                            [](size_t sum, const vector<string>& target) { return sum + target.size(); });
 
     if(entry_number != completion_entry_number)
-        throw runtime_error("Context number of entries (" + to_string(entry_number) + ") not equal to completion number of entries (" + to_string(completion_entry_number) + ").\n");
+        throw runtime_error("Entry number (" + to_string(entry_number) + ") not equal to completion entry number (" + to_string(completion_entry_number) + ").\n");
 
     vector<string> context(entry_number);
 
@@ -2098,13 +1978,15 @@ void LanguageDataSet::read_txt()
 
     // @todo maybe context does NOT need start and end tokens
 
-    for(Index i  = type(0); i < maximum_context_length + 2; i++) /// there is start and end indicators
+    // there is start and end indicators
+
+    for(Index i  = 0; i < maximum_context_length + 2; i++) 
         file << "context_token_position_" << i << ";";
 
-    for(Index i  = type(0); i < maximum_completion_length + 1; i++)
+    for(Index i = 0; i < maximum_completion_length + 1; i++)
         file << "input_token_position_" << i << ";";
 
-    for(Index i  = type(0); i < maximum_completion_length; i++)
+    for(Index i = 0; i < maximum_completion_length; i++)
         file << "target_token_position_" << i << ";";
 
     file << "target_token_position_" << maximum_completion_length << "\n";
@@ -2117,10 +1999,9 @@ void LanguageDataSet::read_txt()
 
     data_file_preview.resize(preview_size);
 
-    for (Index i = 0; i < preview_size; ++i) {
+    for (Index i = 0; i < preview_size; ++i) 
         data_file_preview[i].resize(2);
-    }
-
+    
     for(Index i = 0; i < preview_size - 1; i++)
     {
         data_file_preview[i][0] = context[i];
@@ -2132,6 +2013,7 @@ void LanguageDataSet::read_txt()
 
     //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     //else
+    
     write_data_file_wordpiece(file, context_tokens, completion_tokens);
 
     file.close();
