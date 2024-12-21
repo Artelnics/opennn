@@ -105,7 +105,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
     throw runtime_error("Correlations Exception: Unknown case.");
 
-    return Correlation();
+//    return Correlation();
 }
 
 

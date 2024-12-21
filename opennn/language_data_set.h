@@ -23,33 +23,21 @@ public:
 
     explicit LanguageDataSet(const filesystem::path& = filesystem::path());
 
-    const vector<string>& get_context_vocabulary() const;
-    const vector<string>& get_completion_vocabulary() const;
+    const vector<string>& get_input_vocabulary() const;
+    const vector<string>& get_target_vocabulary() const;
 
-    Index get_context_vocabulary_size() const;
-    Index get_completion_vocabulary_size() const;
+    Index get_input_vocabulary_size() const;
+    Index get_target_vocabulary_size() const;
 
-    Index get_context_length() const;
-    Index get_completion_length() const;
-
-    const dimensions& get_context_dimensions() const;
-    const dimensions& get_completion_dimensions() const;
-
-    const vector<vector<string>>& get_documents() const;
-    const vector<vector<string>>& get_targets() const;
+    Index get_input_length() const;
+    Index get_target_length() const;
 
     void set_default_raw_variables_uses() override;
     void set_raw_variable_uses(const vector<string>&) override;
     void set_raw_variable_uses(const vector<VariableUse>&) override;
 
-    void set_context_dimensions(const dimensions&);
-    void set_completion_dimensions(const dimensions&);
-
-    void set_context_vocabulary_path(const string&);
-    void set_completion_vocabulary_path(const string&);
-
-    void set_context_vocabulary(const vector<string>&);
-    void set_completion_vocabulary(const vector<string>&);
+    void set_input_vocabulary(const vector<string>&);
+    void set_target_vocabulary(const vector<string>&);
 
     void set_data_random() override;
 
@@ -77,7 +65,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents(const filesystem::path&);
+    void load_documents();
 
     void read_csv_1();
 
@@ -87,6 +75,8 @@ public:
 
     void read_csv() override;
 
+    // Empieza por aquí. 
+
     void read_txt();
 
 //    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
@@ -94,24 +84,17 @@ public:
 
 private:
 
-    dimensions completion_dimensions;
-    dimensions context_dimensions;
+    vector<string> input_vocabulary;
 
-    vector<string> context_vocabulary;
+    vector<string> target_vocabulary;
 
-    string context_vocabulary_path;
+    Index maximum_input_length = 0;
 
-    vector<string> completion_vocabulary;
+    Index maximum_target_length = 0;
 
-    string completion_vocabulary_path;
+    vector<vector<string>> input_tokens;
 
-    Index maximum_completion_length = 0;
-
-    Index maximum_context_length = 0;
-
-    vector<vector<string>> documents;
-
-    vector<vector<string>> targets;
+    vector<vector<string>> target_tokens;
 };
 
 }

@@ -184,30 +184,30 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
 
         // const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
-        const dimensions data_set_context_dimensions = { language_data_set->get_context_length() };
+        const dimensions data_set_context_dimensions = { language_data_set->get_input_length() };
 
         if(data_set_context_dimensions.size() == 1)
         {
-            context_dimensions = {{batch_size, context_variables_number}};
+            input_dimensions = {{batch_size, context_variables_number}};
 
             context_tensor.resize(batch_size*context_variables_number);
         }
         else if(data_set_context_dimensions.size() == 2)
         {
-            const Index rows_number = context_dimensions[0];
-            const Index columns_number = context_dimensions[1];
+            const Index rows_number = input_dimensions[0];
+            const Index columns_number = input_dimensions[1];
 
-            context_dimensions = {{batch_size, rows_number, columns_number}};
+            input_dimensions = {{batch_size, rows_number, columns_number}};
 
             context_tensor.resize(batch_size*rows_number*columns_number);
         }
         else if(data_set_context_dimensions.size() == 3)
         {
-            const Index channels = context_dimensions[0];
-            const Index rows_number = context_dimensions[1];
-            const Index columns_number = context_dimensions[2];
+            const Index channels = input_dimensions[0];
+            const Index rows_number = input_dimensions[1];
+            const Index columns_number = input_dimensions[2];
 
-            context_dimensions = {{batch_size, channels, rows_number, columns_number}};
+            input_dimensions = {{batch_size, channels, rows_number, columns_number}};
 
             context_tensor.resize(batch_size*channels*rows_number*columns_number);
         }
@@ -279,11 +279,11 @@ vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 
 
 //     if (has_context)
-//         input_pairs[1] = { context_data, context_dimensions };
+//         input_pairs[1] = { context_data, input_dimensions };
 input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
 
     if (has_context())
-        input_pairs.push_back({(type*)context_tensor.data(), context_dimensions});
+        input_pairs.push_back({(type*)context_tensor.data(), input_dimensions});
 
     return input_pairs;
 */
@@ -294,11 +294,11 @@ input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
 
 
     //     if (has_context)
-    //         input_pairs[1] = { context_data, context_dimensions };
+    //         input_pairs[1] = { context_data, input_dimensions };
     input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
 
     if (has_context())
-        input_pairs[1] = { (type*)context_tensor.data(), context_dimensions};
+        input_pairs[1] = { (type*)context_tensor.data(), input_dimensions};
 
     return input_pairs;
 }

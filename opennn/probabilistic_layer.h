@@ -45,7 +45,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    //Tensor<type, 2> targets;
+    // Tensor<type, 2> targets;
 
     //Tensor<type, 1> deltas_row;
     //Tensor<type, 2> activations_derivatives;

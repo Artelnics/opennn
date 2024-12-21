@@ -28,26 +28,26 @@ int main()
     {
         cout << "OpenNN. ViT Example." << endl;
 
-        Eigen::Tensor<float, 4> input(1, 1, 1, 1);
-        input.setRandom();
+        // Eigen::Tensor<float, 4> input(1, 1, 1, 1);
+        // input.setRandom();
 
-        Eigen::Tensor<float, 2> kernel(1, 1);
-        kernel.setRandom();
+        // Eigen::Tensor<float, 2> kernel(1, 1, 1, 1);
+        // kernel.setRandom();
 
-        Eigen::Tensor<float, 4> output(1, 1, 1, 1);
+        // Eigen::Tensor<float, 4> output(1, 1, 1, 1);
 
-        Eigen::array<int, 3> dims;
-        output = input.convolve(kernel, dims);
+        // Eigen::array<int, 3> dims;
+        // output = input.convolve(kernel, dims);
 
-        std::cout << "input:\n\n" << input << "\n\n";
-        std::cout << "kernel:\n\n" << kernel << "\n\n";
-        std::cout << "output:\n\n" << output << "\n\n";
+        // std::cout << "input:\n\n" << input << "\n\n";
+        // std::cout << "kernel:\n\n" << kernel << "\n\n";
+        // std::cout << "output:\n\n" << output << "\n\n";
 
 
-        const Index samples_number = get_random_index(1, 10);
-        const Index inputs_number = get_random_index(1, 10);
-        const Index targets_number = get_random_index(1, 10);
-        const Index neurons_number = get_random_index(1, 10);
+        // const Index samples_number = get_random_index(1, 10);
+        // const Index inputs_number = get_random_index(1, 10);
+        // const Index targets_number = get_random_index(1, 10);
+        // const Index neurons_number = get_random_index(1, 10);
         // Index a = 0;
         // Index b = 0;
         // Tensor<bool, 0> truefalse = a == b;

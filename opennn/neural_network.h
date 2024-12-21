@@ -133,9 +133,6 @@ public:
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
-   // bool is_input_layer(const vector<Index>&) const;
-   // bool is_context_layer(const vector<Index>&) const;
-
    // Architecture
 
    Index get_inputs_number() const;
