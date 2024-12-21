@@ -82,6 +82,8 @@ public:
 //    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
     void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
 
+    Index count_non_empty_lines() const;
+
 private:
 
     vector<string> input_vocabulary;
@@ -92,9 +94,9 @@ private:
 
     Index maximum_target_length = 0;
 
-    vector<vector<string>> input_tokens;
+//    vector<vector<string>> input_tokens;
 
-    vector<vector<string>> target_tokens;
+//    vector<vector<string>> target_tokens;
 };
 
 }

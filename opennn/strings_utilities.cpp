@@ -1192,7 +1192,6 @@ vector<vector<string>> preprocess_language_documents(const vector<string>& docum
     delete_non_alphanumeric(documents_copy);
 
     return get_tokens(documents_copy, " ");
-
 }
 
 
