@@ -43,8 +43,6 @@ struct Batch
 
     Tensor<type, 1> target_tensor;
 
-    dimensions context_dimensions;
-
     Tensor<type, 1> context_tensor;
 
     unique_ptr<ThreadPool> thread_pool;

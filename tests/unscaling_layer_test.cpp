@@ -1,11 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   U N S C A L I N G   L A Y E R   T E S T   C L A S S                   
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
+/*
 #include <iostream>
 
 namespace opennn
@@ -64,3 +59,4 @@ void UnscalingLayerTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

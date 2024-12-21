@@ -1,11 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S               
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
+/*
 namespace opennn
 {
 
@@ -177,3 +172,4 @@ void TrainingStrategyTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/

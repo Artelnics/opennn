@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S               
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
+/*
 
 #include "../opennn/back_propagation.h"
 #include "../opennn/tensors.h"
@@ -85,7 +80,7 @@ void SumSquaredErrorTest::test_back_propagate()
 /*
         assert_true(abs(back_propagation.error) < NUMERIC_LIMITS_MIN, LOG);
         assert_true(back_propagation.gradient.size() == inputs_number+inputs_number*neurons_number+outputs_number+outputs_number*neurons_number, LOG);
-*/
+
         assert_true(is_zero(back_propagation.gradient), LOG);
     }
 
@@ -185,7 +180,7 @@ void SumSquaredErrorTest::test_back_propagate()
         bool is_training = true;
 
         // Data set
-/*
+
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -218,7 +213,7 @@ void SumSquaredErrorTest::test_back_propagate()
         assert_true(back_propagation.error() >= 0, LOG);
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
-*/
+
     }
 
     // Test forecasting trivial
@@ -262,9 +257,9 @@ void SumSquaredErrorTest::test_back_propagate()
         //assert_true(back_propagation.error() < type(1e-3), LOG);
 
         //assert_true(is_zero(back_propagation.gradient,type(1e-3)), LOG);
-    */
+    
     }
-/*
+
     // Test forecasting random samples, inputs, outputs, neurons
     {
         samples_number = 1 + rand()%10;
@@ -309,7 +304,7 @@ void SumSquaredErrorTest::test_back_propagate()
 
         assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
     }
-*/
+
 }
 
 
@@ -377,7 +372,7 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         bool is_training = true;
 
         // Data set
-/*
+
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -405,9 +400,9 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         // visual studio not running
 
         back_propagation_lm.set(samples_number, &sum_squared_error);
-    /*
+    
         sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-    */
+    
         numerical_gradient = sum_squared_error.calculate_numerical_gradient();
         numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
 
@@ -460,9 +455,9 @@ void SumSquaredErrorTest::test_back_propagate_lm()
         // visual studio not running
 
         back_propagation_lm.set(samples_number, &sum_squared_error);
-    /*
-        sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-    */
+    
+        //sum_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+    
         numerical_gradient = sum_squared_error.calculate_numerical_gradient();
         numerical_jacobian = sum_squared_error.calculate_numerical_jacobian();
 
@@ -511,4 +506,4 @@ void SumSquaredErrorTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
+*/

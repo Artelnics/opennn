@@ -2,6 +2,7 @@
 
 #include "../opennn/genetic_algorithm.h"
 
+using namespace opennn;
 
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {

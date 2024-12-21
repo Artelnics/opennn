@@ -15,8 +15,8 @@
 #include <cstring>
 #include <time.h>
 
-
 // OpenNN includes
+
 #include "../../opennn/opennn.h"
 
 using namespace std;
@@ -37,27 +37,29 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
+        LanguageDataSet language_data_set("C:/Users/Roberto Lopez/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
         // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_reduced.txt");
         // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
         // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
 
         // cout<<language_data_set.get_context_length()<<endl;
         // cout<<language_data_set.get_completion_length()<<endl;
-
-        const Index embedding_depth = 64;
+        cout << language_data_set.get_data().dimensions() << endl;
+        
+        /*
+        const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
         const Index number_of_layers = 1;
 
-        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
 
         // Neural network
-        const dimensions completion_dimensions = language_data_set.get_completion_dimensions();
-        const dimensions context_dimensions = language_data_set.get_context_dimensions();
-
-        Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        const dimensions target_dimensions = language_data_set.get_completion_dimensions();
+        const dimensions input_dimensions = language_data_set.get_context_dimensions();
+        
+        Transformer transformer(target_dimensions, input_dimensions, complexity);
         transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
         transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
         transformer.set_model_type_string("TextClassification");
@@ -92,7 +94,7 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.5);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
@@ -110,7 +112,7 @@ int main()
         cout << "Testing error: " << transformer_error_accuracy.first << endl;
         cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-/*
+
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
@@ -155,7 +157,7 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
-*/
+        */
 
 //----------------------------------------------------------------------------------------------------------------------------------------------//
 
@@ -171,18 +173,18 @@ int main()
         const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
         const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
 
-        const Index embedding_depth = 64;
+        const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
         const Index number_of_layers = 1;
 
-        const vector <Index> complexity = {embedding_depth, perceptron_depth, heads_number, number_of_layers};
+        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
-        const dimensions completion_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
+        const dimensions target_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
 
-        const dimensions context_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
+        const dimensions input_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
 
-        Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        Transformer transformer(target_dimensions, input_dimensions, complexity);
         transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
         transformer.set_model_type_string("TextClassification");
 

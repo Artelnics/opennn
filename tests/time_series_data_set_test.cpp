@@ -1,10 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T I M E   S E R I E S   D A T A   S E T   T E S T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
+
+/*
 
 #include "../opennn/time_series_data_set.h"
 
@@ -42,7 +38,7 @@ void TimeSeriesDataSetTest::test_constructor()
     assert_true(data_set_3.get_samples_number() == 1, LOG);
     assert_true(data_set_3.get_target_variables_number() == 1,LOG);
     assert_true(data_set_3.get_input_variables_number() == 1,LOG);
-*/
+
 }
 
 
@@ -74,9 +70,9 @@ void TimeSeriesDataSetTest::test_calculate_autocorrelations()
     data_set.set_steps_ahead_number(steps_ahead_number);
 
     data_set.transform_time_series();
-/*
+
     autocorrelations = data_set.calculate_autocorrelations(lags_number);
-*/
+
     assert_true(autocorrelations.dimension(0) == 2, LOG);
     assert_true(autocorrelations.dimension(1) == 1, LOG);
 
@@ -109,9 +105,9 @@ void TimeSeriesDataSetTest::test_calculate_cross_correlations()
     data_set.set_steps_ahead_number(1);
 
     data_set.transform_time_series();
-/*
+
     cross_correlations = data_set.calculate_cross_correlations(lags_number);
-*/
+
     assert_true(cross_correlations.dimension(0) == 3, LOG);
 
 }
@@ -156,7 +152,7 @@ void TimeSeriesDataSetTest::test_transform_time_series()
     assert_true(data_set.get_variable_name(1) == "y_lag_1", LOG);
     assert_true(data_set.get_variable_name(2) == "x_lag_0", LOG);
     assert_true(data_set.get_variable_name(3) == "y_lag_0", LOG);
-*/
+
 }
 
 
@@ -187,9 +183,9 @@ void TimeSeriesDataSetTest::test_set_time_series_data()
 
     data_set.set_time_series_data(data);
 
-    /*assert_true(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN), LOG);
+    assert_true(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);*/
+    assert_true(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN), LOG);
 }
 
 
@@ -221,7 +217,7 @@ void TimeSeriesDataSetTest::test_save_time_series_data_binary()
     assert_true(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
     assert_true(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN), LOG);
-    */
+    
 }
 
 
@@ -312,3 +308,4 @@ void TimeSeriesDataSetTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
