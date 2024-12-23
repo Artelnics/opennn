@@ -21,16 +21,12 @@ namespace opennn
     Tensor<type, 1> to_type_vector(const string&, const string&);
     Tensor<Index, 1> to_index_vector(const string&, const string&);
 
-    vector<string> get_unique_elements(const vector<string>&);
+    vector<string> get_unique(const vector<string>&);
     Tensor<Index, 1> count_unique(const vector<string>&);
 
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
     bool is_email(const string&);
-
-    bool starts_with(const string&, const string&);
-    bool ends_with(const string&, const string&);
-    bool ends_with(const string&, const vector<string>&);
 
     time_t date_to_timestamp(const string&, const Index& = 0);
 
@@ -51,8 +47,6 @@ namespace opennn
     void replace_first_and_last_char_with_missing_label(string&, char, const string&, const string&);
 
     string get_trimmed(const string&);
-
-    string prepend(const string&, const string&);
 
     bool has_numbers(const vector<string>&);
 
@@ -88,8 +82,6 @@ namespace opennn
     void delete_extra_spaces(vector<string>&);
     void delete_non_alphanumeric(vector<string>&);
     vector<vector<string>> get_tokens(const vector<string>&, const string&);
-    void delete_blanks(vector<string>&);
-    void delete_blanks(vector<vector<string>>&);
 
     vector<vector<string>> preprocess_language_documents(const vector<string>&);
 
@@ -99,21 +91,13 @@ namespace opennn
 
     Tensor<Index, 1> get_words_number(const vector<vector<string>>&);
 
-    Tensor<Index, 1> get_sentences_number(const vector<string>&);
-
     void set_language(const Language&);
 
     void set_language(const string&);
 
-    void set_stop_words(const Tensor<string ,1>&);
-
-    void set_separator(const string&);
-
     void append_document(const string&);
 
     void append_documents(const vector<string>&);
-
-    vector<string> join(const vector<vector<string>>&);
 
     // Preprocess
 
@@ -125,21 +109,7 @@ namespace opennn
 
     void delete_emails(vector<vector<string>>&);
 
-    void delete_blanks(vector<string>&);
-
-    void delete_blanks(vector<vector<string>>&);
-
-    void replace_accented_words(vector<vector<string>>&);
-
-    void replace_accented_words(string&);
-
     void delete_non_alphanumeric(vector<string>&);
-
-    vector<vector<string>> preprocess_language_model(const vector<string>&);
-
-    bool is_vowel(char);
-
-    bool ends_with(const string&, const string&);
 }
 
 #endif // OPENNNSTRINGS_H

@@ -183,7 +183,7 @@ Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
 }
 
 
-vector<string> get_unique_elements(const vector<string>& tokens)
+vector<string> get_unique(const vector<string>& tokens)
 {
     string result;
 
@@ -197,7 +197,7 @@ vector<string> get_unique_elements(const vector<string>& tokens)
 
 Tensor<Index, 1> count_unique(const vector<string>& tokens)
 {
-    const vector<string> unique_elements = get_unique_elements(tokens);
+    const vector<string> unique_elements = get_unique(tokens);
 
     const Index unique_size = unique_elements.size();
 
@@ -261,15 +261,6 @@ bool is_email(const string& word)
     const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
 
     return regex_match(word, pattern);
-}
-
-
-bool starts_with(const string& word, const string& starting)
-{
-    if(starting.length() > word.length() || starting.length() == 0)
-        return false;
-
-    return(word.substr(0,starting.length()) == starting);
 }
 
 
@@ -575,16 +566,6 @@ string get_trimmed(const string& text)
 }
 
 
-string prepend(const string& pre, const string& text)
-{
-    ostringstream buffer;
-
-    buffer << pre << text;
-
-    return buffer.str();
-}
-
-
 bool is_numeric_string_vector(const vector<string>& string_list)
 {
     for(size_t i = 0; i < string_list.size(); i++)
@@ -882,51 +863,6 @@ vector<vector<string>> get_tokens(const vector<string>& documents, const string&
 }
 
 
-void delete_blanks(vector<string>& words)
-{
-    const Index words_number = words.size();
-
-    const Index empty_number = count_empty(words);
-
-    vector<string> vector_copy(words);
-
-    words.resize(words_number - empty_number);
-
-    Index index = 0;
-
-    for(Index i = 0; i < words_number; i++)
-    {
-        trim(vector_copy[i]);
-
-        if(!vector_copy[i].empty())
-            words[index++] = vector_copy[i];
-    }
-}
-
-
-void delete_blanks(vector<vector<string>>& documents_tokens)
-{
-    const Index documents_number = documents_tokens.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        const Index new_size = count_not_empty(documents_tokens[i]);
-
-        vector<string> new_document_tokens(new_size);
-
-        Index index = 0;
-
-        for(size_t j = 0; j < documents_tokens[i].size(); j++)
-            if(!documents_tokens[i][j].empty())
-                new_document_tokens[index++] = documents_tokens[i][j];
-
-        documents_tokens[i] = new_document_tokens;
-    }
-}
-
-
 vector<vector<string>> preprocess_language_documents(const vector<string>& documents)
 {
     vector<string> documents_copy(documents);
@@ -1057,19 +993,6 @@ void delete_non_alphanumeric(vector<string>& documents)
 }
 
 
-string to_string(vector<string> token)
-{
-    string word;
-
-    for(size_t i = 0; i < token.size() - 1; i++)
-        word += token[i] + " ";
-
-    word += token[token.size() - 1];
-
-    return word;
-}
-
-
 void delete_emails(vector<vector<string>>& documents)
 {
     const Index documents_number = documents.size();
@@ -1104,82 +1027,6 @@ void delete_emails(vector<vector<string>>& documents)
 }
 
 
-void replace_accented_words(vector<vector<string>>& documents)
-{
-    const size_t documents_size = documents.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < Index(documents_size); i++)
-        for(size_t j = 0; j < documents[i].size(); j++)
-            replace_accented_words(documents[i][j]);
-}
-
-
-void replace_accented_words(string& word)
-{
-    replace(word, "á", "a");
-    replace(word, "é", "e");
-    replace(word, "í", "i");
-    replace(word, "ó", "o");
-    replace(word, "ú", "u");
-
-    replace(word, "Á", "A");
-    replace(word, "É", "E");
-    replace(word, "Í", "I");
-    replace(word, "Ó", "O");
-    replace(word, "Ú", "U");
-
-    replace(word, "ä", "a");
-    replace(word, "ë", "e");
-    replace(word, "ï", "i");
-    replace(word, "ö", "o");
-    replace(word, "ü", "u");
-
-    replace(word, "â", "a");
-    replace(word, "ê", "e");
-    replace(word, "î", "i");
-    replace(word, "ô", "o");
-    replace(word, "û", "u");
-
-    replace(word, "à", "a");
-    replace(word, "è", "e");
-    replace(word, "ì", "i");
-    replace(word, "ò", "o");
-    replace(word, "ù", "u");
-
-    replace(word, "ã", "a");
-    replace(word, "õ", "o");
-}
-
-
-vector<vector<string>> preprocess_language_model(const vector<string>& documents)
-{
-/*
-    vector<string> documents_copy(documents);
-
-    to_lower(documents_copy);
-
-    split_punctuation(documents_copy);
-
-    delete_non_printable_chars(documents_copy);
-
-    delete_extra_spaces(documents_copy);
-
-    delete_non_alphanumeric(documents_copy);
-
-    vector<vector<string>> tokens = get_tokens(documents_copy);
-
-    delete_emails(tokens);
-
-    delete_blanks(tokens);
-
-    return tokens;
-*/
-    return vector<vector<string>>();
-}
-
-
 Tensor<Index, 1> get_words_number(const vector<vector<string>>& tokens)
 {
     const Index documents_number = tokens.size();
@@ -1193,19 +1040,6 @@ Tensor<Index, 1> get_words_number(const vector<vector<string>>& tokens)
 }
 
 
-Tensor<Index, 1> get_sentences_number(const vector<string>& documents)
-{
-    const Index documents_number = documents.size();
-
-    Tensor<Index, 1> sentences_number(documents_number);
-
-    for(Index i = 0; i < documents_number; i++)
-        sentences_number(i) = count_tokens(documents[i], ".");
-
-    return sentences_number;
-}
-
-
 void print_tokens(const vector<vector<string>>& tokens)
 {
     for(size_t i = 0; i < tokens.size(); i++)
@@ -1215,18 +1049,6 @@ void print_tokens(const vector<vector<string>>& tokens)
 
         cout << endl;
     }
-}
-
-
-bool is_vowel(char ch)
-{
-    return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
-}
-
-
-bool ends_with(const string& word, const string& suffix)
-{
-    return word.length() >= suffix.length() && word.compare(word.length() - suffix.length(), suffix.length(), suffix) == 0;
 }
 
 }
