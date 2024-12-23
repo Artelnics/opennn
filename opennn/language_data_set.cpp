@@ -869,7 +869,7 @@ vector<pair<string, Index>> trim_inputs(const vector<pair<string, Index>>& word_
 
     for(const auto& [word, count] : word_counts)
     {
-        if(word.size() > max_token_length
+        if(Index(word.size()) > max_token_length
         || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
             continue;
 
@@ -923,7 +923,7 @@ vector<pair<string, Index>> filter_inputs(const vector<pair<string, Index>>& tri
 
     for(const auto& [word, count] : sorted_counts)
     {
-        if(max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    
+        if(max_input_tokens != -1 && Index(filtered_counts.size()) >= max_input_tokens)
             break;
 
         bool has_unallowed_characters = false;
