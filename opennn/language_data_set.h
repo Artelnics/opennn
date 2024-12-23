@@ -52,7 +52,7 @@ public:
     // void save_lengths(const filesystem::path&, const Index&, const Index&);
     void import_lengths(const filesystem::path&, Index&, Index&);
 
-    vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
+    vector<string> create_vocabulary(const vector<vector<string>>& tokens,
                                         const Index& vocabulary_size,
                                         const vector<string>& reserved_tokens,
                                         const Index& upper_threshold = 10000000,
@@ -94,9 +94,8 @@ private:
 
     Index maximum_target_length = 0;
 
-//    vector<vector<string>> input_tokens;
-
-//    vector<vector<string>> target_tokens;
+    const Index target_vocabulary_size = 8000;
+    const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 };
 
 }

@@ -1067,11 +1067,11 @@ Index count_tokens(const vector<vector<string>>& tokens)
 }
 
 
-vector<string> tokens_list(const vector<vector<string>>& documents_tokens)
+vector<string> tokens_list(const vector<vector<string>>& document_tokens)
 {
-    const Index documents_number = documents_tokens.size();
+    const Index documents_number = document_tokens.size();
 
-    const Index total_tokens_number = count_tokens(documents_tokens);
+    const Index total_tokens_number = count_tokens(document_tokens);
 
     vector<string> total_tokens(total_tokens_number);
 
@@ -1079,11 +1079,11 @@ vector<string> tokens_list(const vector<vector<string>>& documents_tokens)
 
     for(Index i = 0; i < documents_number; i++)
     {
-        copy(documents_tokens[i].data(),
-             documents_tokens[i].data() + documents_tokens[i].size(),
+        copy(document_tokens[i].data(),
+             document_tokens[i].data() + document_tokens[i].size(),
              total_tokens.data() + position);
 
-        position += documents_tokens[i].size();
+        position += document_tokens[i].size();
     }
 
     return total_tokens;
@@ -1195,12 +1195,12 @@ vector<vector<string>> preprocess_language_documents(const vector<string>& docum
 }
 
 
-vector<pair<string, Index>> count_words(const vector<string>& total_tokens)
+vector<pair<string, Index>> count_words(const vector<string>& words)
 {
     unordered_map<string, Index> count;
 
-    for(size_t i = 0; i < total_tokens.size(); i++)
-        count[total_tokens[i]]++;
+    for(size_t i = 0; i < words.size(); i++)
+        count[words[i]]++;
 
     vector<pair<string, Index>> word_counts(count.begin(), count.end());
 
@@ -1209,8 +1209,7 @@ vector<pair<string, Index>> count_words(const vector<string>& total_tokens)
         return (a.second != b.second) 
             ? a.second > b.second 
             : a.first < b.first;
-    }
-);
+    });
 
     return word_counts;
 }

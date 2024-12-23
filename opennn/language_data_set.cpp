@@ -698,8 +698,6 @@ void LanguageDataSet::import_vocabulary(const filesystem::path& path,
         if(line.empty()) continue;
 
         vocabulary_size++;
-
-        if(file.peek() == EOF) break;
     }
 
     file.clear();
@@ -714,8 +712,6 @@ void LanguageDataSet::import_vocabulary(const filesystem::path& path,
         if(line.empty()) continue;
 
         vocabulary[count++] = line;
-
-        if(file.peek() == EOF) break;
     }
 }
 
@@ -754,7 +750,7 @@ struct WordpieceAlgorithmParameters
 {
     Index upper_threshold = 0;
     Index lower_threshold = 0;
-    Index interations_number = 0;
+    Index iterations_number = 0;
     Index max_input_tokens = 0;
     Index max_token_length = 0;
     Index max_unique_characters = 0;
@@ -901,8 +897,7 @@ set<char> get_allowed_characters(const vector<pair<string, Index>>& trimmed_coun
             return a.second > b.second;
 
         return a.first < b.first;
-    }
-);
+    });
 
     set<char> allowed_characters;
 
@@ -922,14 +917,14 @@ vector<pair<string, Index>> filter_inputs(const vector<pair<string, Index>>& tri
     sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, Index>& a, const pair<string, Index>& b)
     {
         return a.second > b.second;
-    }
-);
+    });
 
     vector<pair<string, Index>> filtered_counts;
 
     for(const auto& [word, count] : sorted_counts)
     {
-        if(max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    break;
+        if(max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    
+            break;
 
         bool has_unallowed_characters = false;
         for(char c : word)
@@ -1005,7 +1000,7 @@ vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, Ind
 
     map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
 
-    for(int iteration = 0; iteration < parameters.interations_number; ++iteration)
+    for(int iteration = 0; iteration < parameters.iterations_number; ++iteration)
     {
         vector<map<string, int>> subtokens(parameters.max_token_length + 1);
 
@@ -1115,12 +1110,12 @@ vector<string> calculate_vocabulary_binary_search(const vector<pair<string, Inde
 }
 
 
-vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>>& tokens,
+vector<string> LanguageDataSet::create_vocabulary(const vector<vector<string>>& tokens,
                                                      const Index& vocabulary_size,
                                                      const vector<string>& reserved_tokens,
                                                      const Index& upper_threshold,
                                                      const Index& lower_threshold,
-                                                     const Index& interations_number,
+                                                     const Index& iterations_number,
                                                      const Index& max_input_tokens,
                                                      const Index& max_token_length,
                                                      const Index& max_unique_characters,
@@ -1128,36 +1123,29 @@ vector<string> LanguageDataSet::calculate_vocabulary(const vector<vector<string>
                                                      const bool& include_joiner_token,
                                                      const string& joiner)
 {
-/*
-    const Index target_vocabulary_size = 8000;
-    const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
-
-
     const vector<string> total_tokens = tokens_list(tokens);
 
     const vector<pair<string, Index>> word_counts = count_words(total_tokens);
 
-    const WordpieceAlgorithmParameters parameters = {upper_threshold,
-                                                     lower_threshold,
-                                                     interations_number,
-                                                     max_input_tokens,
-                                                     max_token_length,
-                                                     max_unique_characters,
-                                                     vocabulary_size,
-                                                     slack_ratio,
-                                                     include_joiner_token,
-                                                     joiner,
-                                                     reserved_tokens};
+    const auto [upper_search, lower_search] = calculate_thresholds(word_counts, 
+                                                                   upper_threshold, 
+                                                                   lower_threshold);
 
-    const auto [upper_search, lower_search] = calculate_thresholds(word_counts, parameters.upper_threshold, parameters.lower_threshold);
+    const vector<pair<string, Index>> trimmed_counts = trim_inputs(word_counts, 
+                                                                   reserved_tokens, 
+                                                                   max_token_length);
 
-    const vector<pair<string, Index>> trimmed_counts = trim_inputs(word_counts, parameters.reserved_tokens, parameters.max_token_length);
+    const std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, 
+                                                                     max_unique_characters);
 
-    const std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, parameters.max_unique_characters);
-
-    const vector<pair<string, Index>> filtered_counts = filter_inputs(trimmed_counts, allowed_characters, parameters.max_input_tokens);
-
-    const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, lower_search, upper_search, parameters);
+    const vector<pair<string, Index>> filtered_counts = filter_inputs(trimmed_counts, 
+                                                                      allowed_characters, 
+                                                                      max_input_tokens);
+/*
+    const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, 
+                                                                         lower_search, 
+                                                                         upper_search, 
+                                                                         parameters);
 
     return vocabulary;
 */
@@ -1637,8 +1625,8 @@ void LanguageDataSet::read_csv()
 
 //         vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
-//         context_vocabulary= calculate_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
-//         completion_vocabulary= calculate_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
+//         context_vocabulary= create_vocabulary(context_tokens, target_vocabulary_size, reserved_tokens);
+//         completion_vocabulary= create_vocabulary(completion_tokens, target_vocabulary_size, reserved_tokens);
 //     }
 //     else
 //     {
@@ -1770,114 +1758,46 @@ void LanguageDataSet::read_txt()
     string input_document;
     string target_document;
 
-    vector<string> input_tokens(samples_number);
-    vector<string> target_tokens(samples_number);
+    vector<vector<string>> input_tokens(samples_number);
+    vector<vector<string>> target_tokens(samples_number);
 
     const string separator_string = get_separator_string();
-
-    Index tokens_number = 0;
 
     Index sample_index = 0;
 
     while (getline(file, line))
     {
         if (line.empty()) continue;
-/*
-        if (line[0] == '"')
-        {
-            replace(line, "\"\"", "\"");
-            line.insert(0, "\"");
-            //delimiter = "\"\"";
-        }
 
-        if (line.find("\"" + separator_string) != string::npos)
-            replace(line, "\"" + separator_string, "\"\"" + separator_string);
+        const vector<string> tokens = get_tokens(line, separator_string);
 
-        const vector<string> tokens = get_tokens(line, delimiter + separator_string);
+        const Index tokens_number = tokens.size();
 
-        tokens_number = tokens.size();
+        if (tokens_number != 2)
+            throw runtime_error("Tokens number must be two.");
 
-        if (tokens_number == 1)
-        {
-            input_documents[sample_index++] += tokens[0].find(delimiter) == 0
-                ? tokens[0].substr(delimiter.length())
-                : " " + tokens[0];
-        }
-        else if (tokens_number == 2)
-        {
-            if (tokens[0].empty() && tokens[1].empty())
-                continue;
-
-            input_documents[lines_count].append(" ").append(tokens[0]);
-            target_documents[lines_count].append(tokens[1]);
-            delimiter.clear();
-            lines_count++;
-        }
-        else if (tokens_number > 2)
-        {
-            throw runtime_error("Found more than one separator in line: " + line + "\n");
-        }
-
-        if (file.peek() == EOF)
-            break;
-*/
-    }
-/*
-    const size_t entry_number = accumulate(input_tokens.begin(), input_tokens.end(), 0,
-                                [](size_t sum, const vector<string>& doc) { return sum + doc.size(); });
-
-    const size_t completion_entry_number = accumulate(target_tokens.begin(), target_tokens.end(), 0,
-                                           [](size_t sum, const vector<string>& target) { return sum + target.size(); });
-    
-    if(entry_number != completion_entry_number)
-        throw runtime_error("Entry number (" + to_string(entry_number) + ") not equal to completion entry number (" + to_string(completion_entry_number) + ").\n");
-
-    vector<string> input(entry_number);
-
-    Index context_index = 0;
-
-//    for(size_t i = 0; i < documents_number; i++)
-//        for(size_t j = 0; j < input_tokens[i].size(); j++)
-//            input[context_index++] = input_tokens[i][j];
-
-    vector<string> target(entry_number);
-
-    Index completion_index = 0;
-
-    for (size_t i = 0; i < target_tokens.size(); i++)
-        for (size_t j = 0; j < target_tokens[i].size(); j++)
-            target[completion_index++] = target_tokens[i][j];
-
-    cout << "Processing documents..." << endl;
+        input_tokens[sample_index] = get_tokens(tokens[0], " ");
+        target_tokens[sample_index] = get_tokens(tokens[0], " ");
 
 //    const vector<vector<string>> input_tokens = preprocess_language_documents(input);
 //    const vector<vector<string>> target_tokens = preprocess_language_documents(target);
+
+        sample_index++;
+    }
         
     cout << "Calculating vocabularies..." << endl;
 
-    input_vocabulary = calculate_vocabulary(input_tokens, target_vocabulary_size, reserved_tokens);
-    target_vocabulary = calculate_vocabulary(target_tokens, target_vocabulary_size, reserved_tokens);
+//    input_vocabulary = create_vocabulary(input_tokens);
+//    target_vocabulary = create_vocabulary(target_tokens);
     // completion_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "Good", "Bad"};
     // completion_vocabulary = {"[START]", "[END]", "Good", "Bad"};
    
-    const size_t LIMIT = 126;
+    constexpr size_t LIMIT = 126;
 
-    size_t maximum_input_tokens = input_tokens[0].size();
+    maximum_input_length = min(get_maximum_size(input_tokens), LIMIT);
 
-    for(size_t i = 0; i < entry_number; i++)
-        if(input_tokens[i].size() > maximum_input_tokens)
-            maximum_input_tokens = input_tokens[i].size();
-
-    maximum_input_length = std::min(maximum_input_tokens, LIMIT);
-
-    size_t maximum_target_tokens = target_tokens[0].size();
-
-    for(size_t i = 0; i < entry_number; i++)
-        if(target_tokens[i].size() > maximum_target_tokens)
-            maximum_target_tokens = target_tokens[i].size();
-
-    maximum_target_length = min(maximum_target_tokens, LIMIT + 1);
-
+    maximum_target_length = min(get_maximum_size(target_tokens), LIMIT + 1);
+/*
     // Output
 
     cout << "Writting data file..." << endl;
@@ -1887,42 +1807,6 @@ void LanguageDataSet::read_txt()
     replace(transformed_data_path,".txt","_data.txt");
     replace(transformed_data_path,".csv","_data.csv");
 
-    ofstream file(transformed_data_path);
-
-    // @todo maybe context does NOT need start and end tokens
-
-    // there is start and end indicators
-
-    for(Index i  = 0; i < maximum_input_length + 2; i++) 
-        file << "context_token_position_" << i << ";";
-
-    for(Index i = 0; i < maximum_target_length + 1; i++)
-        file << "input_token_position_" << i << ";";
-
-    for(Index i = 0; i < maximum_target_length; i++)
-        file << "target_token_position_" << i << ";";
-
-    file << "target_token_position_" << maximum_target_length << "\n";
-
-    // Data file preview
-
-    Index preview_size = 4;
-
-    // data_file_preview.resize(preview_size, 2);
-
-    data_file_preview.resize(preview_size);
-
-    for (Index i = 0; i < preview_size; ++i) 
-        data_file_preview[i].resize(2);
-    
-    for(Index i = 0; i < preview_size - 1; i++)
-    {
-        data_file_preview[i][0] = input[i];
-        data_file_preview[i][1] = target[i];
-    }
-
-    data_file_preview[preview_size - 1][0] = input[input.size()-1];
-    data_file_preview[preview_size - 1][1] = target[target.size()-1];
 
     //if (!imported_vocabulary)    write_data_file_whitespace(file, context_tokens, completion_tokens);
     //else
@@ -1933,9 +1817,7 @@ void LanguageDataSet::read_txt()
 
     data_path = transformed_data_path;
     separator = Separator::Semicolon;
-    
-    read_csv();
-    
+        
     set_raw_variable_types(RawVariableType::Numeric);
 
     for(Index i = 0; i < maximum_input_length + 2; i++)
@@ -1946,7 +1828,7 @@ void LanguageDataSet::read_txt()
 
     for (Index i = 0; i < maximum_target_length + 1; i++)
         set_raw_variable_use(i + maximum_input_length + maximum_target_length + 3, VariableUse::Target);
-*/
+
 }
 
 

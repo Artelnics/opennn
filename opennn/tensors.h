@@ -187,6 +187,20 @@ TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
 
+
+template <typename T>
+size_t get_maximum_size(const vector<vector<T>>& v)
+{
+    size_t maximum_size = 0;
+
+    for (size_t i = 0; i < v.size(); i++)
+        if (v[i].size() > maximum_size)
+            maximum_size = v[i].size();
+
+    return maximum_size;
+}
+
+
 template <typename T>
 void print_vector(const vector<T>& vec) 
 {
