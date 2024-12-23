@@ -593,7 +593,7 @@ void GeneticAlgorithm::perform_crossover()
 
             for(Index k = 0; k < raw_variables_number; k++)
                 if(parent_1_raw_variables(k) != parent_2_raw_variables(k))
-                    descendent_raw_variables(k) = calculate_random_bool();
+                    descendent_raw_variables(k) = get_random_bool();
 
             descendent_genes = get_individual_variables(descendent_raw_variables);
 

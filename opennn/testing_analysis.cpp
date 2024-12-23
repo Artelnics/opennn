@@ -1446,7 +1446,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
     // Subtracts calibration plot rows with value -1
 
     Index points_number_subtracted = 0;
-
+/*
     while(contains(calibration_plot.chip(0,1), type(-1)))
      {
          for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
@@ -1459,7 +1459,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
              }
          }
      }
-
+*/
     return calibration_plot;
 }
 

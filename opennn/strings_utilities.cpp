@@ -16,7 +16,7 @@ void fill_tokens(const string& text, const string& separator, vector<string>& to
 {
     fill(tokens.begin(), tokens.end(), "");
 
-    // Skip delimiters at beginning.
+    // Skip delimiters at beginning
 
     string::size_type last_position = text.find_first_not_of(separator, 0);
 
@@ -566,16 +566,6 @@ string get_trimmed(const string& text)
 }
 
 
-bool is_numeric_string_vector(const vector<string>& string_list)
-{
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(!is_numeric_string(string_list[i])) 
-            return false;
-
-    return true;
-}
-
-
 bool has_numbers(const vector<string>& string_list)
 {
     for(size_t i = 0; i < string_list.size(); i++)
@@ -593,20 +583,6 @@ bool is_not_numeric(const vector<string>& string_list)
             return false;
 
     return true;
-}
-
-
-bool is_mixed(const vector<string>& string_list)
-{
-    unsigned count_numeric = 0;
-    unsigned count_not_numeric = 0;
-
-    for(size_t i = 0; i < string_list.size(); i++)
-        is_numeric_string(string_list[i]) 
-            ? count_numeric++ 
-            : count_not_numeric++;
-
-    return count_numeric > 0 && count_not_numeric > 0;
 }
 
 
@@ -732,10 +708,11 @@ vector<string> sort_string_vector(vector<string>& string_vector)
 vector<string> concatenate_string_vectors(const vector<string>& string_vector_1, 
                                           const vector<string>& string_vector_2)
 {
-    vector<string> string_vector = string_vector_2;
+    vector<string> string_vector;
+    string_vector.reserve(string_vector_1.size() + string_vector_2.size());
 
-    for(size_t i = 0; i < string_vector_1.size(); i++)
-        string_vector.push_back(string_vector_1[i]);
+    string_vector.insert(string_vector.end(), string_vector_2.begin(), string_vector_2.end());
+    string_vector.insert(string_vector.end(), string_vector_1.begin(), string_vector_1.end());
 
     return string_vector;
 }
@@ -807,22 +784,15 @@ Index count_tokens(const vector<vector<string>>& tokens)
 
 vector<string> tokens_list(const vector<vector<string>>& document_tokens)
 {
-    const Index documents_number = document_tokens.size();
-
     const Index total_tokens_number = count_tokens(document_tokens);
 
     vector<string> total_tokens(total_tokens_number);
 
     Index position = 0;
 
-    for(Index i = 0; i < documents_number; i++)
-    {
-        copy(document_tokens[i].data(),
-             document_tokens[i].data() + document_tokens[i].size(),
-             total_tokens.data() + position);
-
-        position += document_tokens[i].size();
-    }
+    for (const auto& tokens : document_tokens)
+        for (const auto& token : tokens)
+            total_tokens[position++] = token;
 
     return total_tokens;
 }
@@ -836,16 +806,18 @@ void to_lower(string& text)
 
 void to_lower(vector<string>& documents)
 {
-    const Index documents_number = documents.size();
+    #pragma omp parallel for
 
-    for(Index i = 0; i < documents_number; i++)
+    for(Index i = 0; i < documents.size(); i++)
         to_lower(documents[i]);
 }
 
 
 void to_lower(vector<vector<string>>& text)
 {
-    for(size_t i = 0; i < text.size(); i++)
+    #pragma omp parallel for
+
+    for(Index i = 0; i < text.size(); i++)
         to_lower(text[i]);
 }
 
@@ -926,57 +898,21 @@ void delete_non_printable_chars(vector<string>& documents)
 
 void split_punctuation(vector<string>& documents)
 {
-    replace_substring(documents, "�", " � ");
-    replace_substring(documents, "\"", " \" ");
-    replace_substring(documents, ".", " . ");
-    replace_substring(documents, "!", " ! ");
-    replace_substring(documents, "#", " # ");
-    replace_substring(documents, "$", " $ ");
-    replace_substring(documents, "~", " ~ ");
-    replace_substring(documents, "%", " % ");
-    replace_substring(documents, "&", " & ");
-    replace_substring(documents, "/", " / ");
-    replace_substring(documents, "(", " ( ");
-    replace_substring(documents, ")", ") ");
-    replace_substring(documents, "\\", " \\ ");
-    replace_substring(documents, "=", " = ");
-    replace_substring(documents, "?", " ? ");
-    replace_substring(documents, "}", " } ");
-    replace_substring(documents, "^", " ^ ");
-    replace_substring(documents, "`", " ` ");
-    replace_substring(documents, "[", " [ ");
-    replace_substring(documents, "]", " ] ");
-    replace_substring(documents, "*", " * ");
-    replace_substring(documents, "+", " + ");
-    replace_substring(documents, ",", " , ");
-    replace_substring(documents, ";", " ; ");
-    replace_substring(documents, ":", " : ");
-    replace_substring(documents, "-", " - ");
-    replace_substring(documents, ">", " > ");
-    replace_substring(documents, "<", " < ");
-    replace_substring(documents, "|", " | ");
-    replace_substring(documents, "–", " – ");
-    replace_substring(documents, "Ø", " Ø ");
-    replace_substring(documents, "º", " º ");
-    replace_substring(documents, "°", " ° ");
-    replace_substring(documents, "'", " ' ");
-    replace_substring(documents, "ç", " ç ");
-    replace_substring(documents, "✓", " ✓ ");
-    replace_substring(documents, "|", " | ");
-    replace_substring(documents, "@", " @ ");
-    replace_substring(documents, "#", " # ");
-    replace_substring(documents, "^", " ^ ");
-    replace_substring(documents, "*", " * ");
-    replace_substring(documents, "€", " € ");
-    replace_substring(documents, "¬", " ¬ ");
-    replace_substring(documents, "•", " • ");
-    replace_substring(documents, "·", " · ");
-    replace_substring(documents, "”", " ” ");
-    replace_substring(documents, "“", " “ ");
-    replace_substring(documents, "´", " ´ ");
-    replace_substring(documents, "§", " § ");
-    replace_substring(documents, "_", " _ ");
-    replace_substring(documents, ".", " . ");
+    const vector<pair<string, string>> punctuations = {
+        {"�", " � "}, {"\"", " \" "}, {".", " . "}, {"!", " ! "}, {"#", " # "},
+        {"$", " $ "}, {"~", " ~ "}, {"%", " % "}, {"&", " & "}, {"/", " / "},
+        {"(", " ( "}, {")", " ) "}, {"\\", " \\ "}, {"=", " = "}, {"?", " ? "},
+        {"}", " } "}, {"^", " ^ "}, {"`", " ` "}, {"[", " [ "}, {"]", " ] "},
+        {"*", " * "}, {"+", " + "}, {",", " , "}, {";", " ; "}, {":", " : "},
+        {"-", " - "}, {">", " > "}, {"<", " < "}, {"|", " | "}, {"–", " – "},
+        {"Ø", " Ø "}, {"º", " º "}, {"°", " ° "}, {"'", " ' "}, {"ç", " ç "},
+        {"✓", " ✓ "}, {"@", " @ "}, {"€", " € "}, {"¬", " ¬ "}, {"•", " • "},
+        {"·", " · "}, {"”", " ” "}, {"“", " “ "}, {"´", " ´ "}, {"§", " § "},
+        {"_", " _ "}
+    };
+
+    for (const auto& [symbol, replacement] : punctuations)
+        replace_substring(documents, symbol, replacement);
 
     delete_extra_spaces(documents);
 }
@@ -1024,19 +960,6 @@ void delete_emails(vector<vector<string>>& documents)
 
         documents[i] = document;
     }
-}
-
-
-Tensor<Index, 1> get_words_number(const vector<vector<string>>& tokens)
-{
-    const Index documents_number = tokens.size();
-
-    Tensor<Index, 1> words_number(documents_number);
-
-    for(Index i = 0; i < documents_number; i++)
-        words_number(i) = tokens[i].size();
-
-    return words_number;
 }
 
 
