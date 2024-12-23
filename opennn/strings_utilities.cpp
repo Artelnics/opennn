@@ -835,24 +835,6 @@ vector<vector<string>> get_tokens(const vector<string>& documents, const string&
 }
 
 
-vector<vector<string>> preprocess_language_documents(const vector<string>& documents)
-{
-    vector<string> documents_copy(documents);
-
-    to_lower(documents_copy);
-
-    split_punctuation(documents_copy);
-
-    delete_non_printable_chars(documents_copy);
-
-    delete_extra_spaces(documents_copy);
-
-    delete_non_alphanumeric(documents_copy);
-
-    return get_tokens(documents_copy, " ");
-}
-
-
 vector<pair<string, Index>> count_words(const vector<string>& words)
 {
     unordered_map<string, Index> count;
@@ -913,8 +895,6 @@ void split_punctuation(vector<string>& documents)
 
     for (const auto& [symbol, replacement] : punctuations)
         replace_substring(documents, symbol, replacement);
-
-    delete_extra_spaces(documents);
 }
 
 

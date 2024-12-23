@@ -200,6 +200,9 @@ void print_vector(const vector<T>& vec)
     cout << "]\n";
 }
 
+void print_pairs(const vector<pair<string, Index>>&);
+
+
 template<class T, int n>
 Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
 {

@@ -1428,6 +1428,13 @@ TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
                                       x_pair.second[3]);
 }
 
+
+void print_pairs(const vector<pair<string, Index>>& pairs)
+{
+    for (size_t i = 0; i < pairs.size(); i++)
+        cout << pairs[i].first << ": " << pairs[i].second << endl;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
