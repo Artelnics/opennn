@@ -75,6 +75,7 @@ bool is_constant_vector(const Tensor<type, 1>&);
 bool is_constant_matrix(const Tensor<type, 2>&);
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
+void save_csv(const Tensor<type,2>&, const filesystem::path&);
 
 template<int rank>
 Index count_NAN(const Tensor<type, rank>& x)
@@ -82,18 +83,12 @@ Index count_NAN(const Tensor<type, rank>& x)
     return count_if(x.data(), x.data() + x.size(), [](type value) {return std::isnan(value); });
 }
 
-
-Index count_less_than(const Tensor<Index, 1>&, const Index&);
 Index count_between(Tensor<type, 1>&, const type&, const type&);
 
-Index count_less_than(const Tensor<double, 1>&, const double&);
 Index count_greater_than(const vector<Index>&, const Index&);
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
-
-vector<string> sort_by_rank(const vector<string>&, const Tensor<Index,1>&);
-Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&, const Tensor<Index,1>&);
 
 vector<Index> get_elements_greater_than(const vector<Index>&, const Index&);
 vector<Index> get_elements_greater_than(const vector<vector<Index>>&, const Index&);

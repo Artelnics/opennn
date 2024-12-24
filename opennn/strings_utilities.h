@@ -13,8 +13,6 @@
 
 namespace opennn
 {
-    void fill_tokens(const string&, const string&, vector<string>&);
-
     Index count_tokens(const string&, const string&);
 
     vector<string> get_tokens(const string&, const string&);

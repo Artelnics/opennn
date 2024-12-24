@@ -40,12 +40,6 @@ type get_random_type(const type& minimum, const type& maximum)
 }
 
 
-type get_random(const type& minimum, const type& maximum)
-{
-    return minimum + (maximum - minimum) * type(rand() / (RAND_MAX + 1.0));
-}
-
-
 bool get_random_bool()
 {
     return rand() % 2 == 1;
@@ -522,21 +516,6 @@ void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor
 }
 
 
-Index count_true(const Tensor<bool, 1>& tensor)
-{
-    return std::count(tensor.data(), tensor.data() + tensor.size(), true);
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-    for(int i = 0; i < tensor.size(); i++)
-        if(tensor(i))
-            count++;
-
-    return count;
-}
-
-
 bool is_binary_vector(const Tensor<type, 1>& vector)
 {
     const Index size = vector.size();
@@ -611,12 +590,12 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
 }
 
 
-void save_csv(const Tensor<type,2>& data, const filesystem::path& filename)
+void save_csv(const Tensor<type,2>& data, const filesystem::path& path)
 {
-    ofstream file(filename);
+    ofstream file(path);
 
     if(!file.is_open())
-      throw runtime_error("Cannot open matrix data file: " + filename.string() + "\n");
+      throw runtime_error("Cannot open matrix data file: " + path.string() + "\n");
 
     file.precision(20);
 
@@ -669,72 +648,6 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
          [&](Index i, Index j){return vector[i] < vector[j];});
 
     return rank;
-}
-
-
-void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
-{
-    replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
-}
-
-
-vector<string> sort_by_rank(const vector<string>& tokens, const Tensor<Index,1>& rank)
-{
-    const Index tokens_size = tokens.size();
-
-    if(tokens_size != rank.size())
-        throw runtime_error("Tokens and rank size must be the same.\n");
-
-    vector<string> sorted_tokens(tokens_size);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tokens_size; i++)
-        sorted_tokens[i] = tokens[rank(i)];
-
-    return sorted_tokens;
-}
-
-
-Tensor<Index, 1> sort_by_rank(const Tensor<Index,1>&tokens, const Tensor<Index,1>&rank)
-{
-    const Index tokens_size = tokens.size();
-
-    if(tokens_size != rank.size())
-        throw runtime_error("Tokens and rank size must be the same.\n");
-
-    Tensor<Index,1> sorted_tokens(tokens_size);
-
-    #pragma omp parallel for
-    for(Index i = 0; i < tokens_size; i++)
-        sorted_tokens[i] = tokens(rank(i));
-
-    return sorted_tokens;
-}
-
-
-Index count_less_than(const Tensor<Index,1>& vector, const Index& bound)
-{
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < vector.size(); i++)
-        if(vector(i) < bound)
-            count++;
-
-    return count;
-}
-
-
-Index count_less_than(const Tensor<double,1>& vector, const double& bound)
-{
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-    for(Index i = 0; i < vector.size(); i++)
-        if(vector(i) < bound)
-            count++;
-
-    return count;
 }
 
 

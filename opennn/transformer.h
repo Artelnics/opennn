@@ -47,8 +47,6 @@ public:
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
-    void load_transformer(const string&);
-
 private:
 
     Index input_length = 0;
