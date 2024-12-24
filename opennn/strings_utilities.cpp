@@ -808,7 +808,7 @@ void to_lower(vector<string>& documents)
 {
     #pragma omp parallel for
 
-    for(Index i = 0; i < documents.size(); i++)
+    for(size_t i = 0; i < documents.size(); i++)
         to_lower(documents[i]);
 }
 
@@ -817,7 +817,7 @@ void to_lower(vector<vector<string>>& text)
 {
     #pragma omp parallel for
 
-    for(Index i = 0; i < text.size(); i++)
+    for(size_t i = 0; i < text.size(); i++)
         to_lower(text[i]);
 }
 
