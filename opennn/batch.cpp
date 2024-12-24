@@ -123,9 +123,11 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     data_set = new_data_set;
 
     const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+    const Index decoder_variables_number = data_set->get_variables_number(DataSet::VariableUse::Decoder);
     const Index target_variables_number = data_set->get_variables_number(DataSet::VariableUse::Target);
 
     const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
+//    const dimensions& data_set_decoder_dimensions = data_set->get_decoder_dimensions();
     const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
 
     if(data_set_input_dimensions.size() == 1)
@@ -176,12 +178,12 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
     }
 
     // LanguageDataSet
-
+/*
     if(is_instance_of<LanguageDataSet>(data_set))
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
-        const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Context);
+        const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Decoder);
 
         // const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
         const dimensions data_set_context_dimensions = { language_data_set->get_input_length() };
@@ -212,6 +214,7 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
             context_tensor.resize(batch_size*channels*rows_number*columns_number);
         }
     }
+*/
 }
 
 

@@ -82,7 +82,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     // Back propagation
 
-    const Index layers_number = back_propagation.neural_network.layers.size();
+    //const Index layers_number = back_propagation.neural_network.layers.size();
 
     //ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
     //    static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());

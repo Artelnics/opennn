@@ -194,8 +194,8 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
         const Index raw_variable = i / channels;
 
         const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + raw_variable*height + channel*input_size,
-                                                           height,
-                                                          1);
+                                                                height,
+                                                                1);
 
         TensorMap<Tensor<type, 2>> output_column_map(output.data() + (raw_variable + shift)*height + channel*input_size,
                                                      height,

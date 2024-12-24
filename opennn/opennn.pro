@@ -61,7 +61,6 @@ HEADERS += \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
-    config.h \
     strings_utilities.h \
     images.h \
     statistics.h \
@@ -77,7 +76,6 @@ HEADERS += \
     time_series_data_set.h \
     auto_association_data_set.h \
     image_data_set.h \
-    text_data_set.h \
     language_data_set.h \
     layer.h \
     layer_forward_propagation.h \
@@ -154,7 +152,6 @@ SOURCES += \
     time_series_data_set.cpp \
     auto_association_data_set.cpp \
     image_data_set.cpp \
-    text_data_set.cpp \
     language_data_set.cpp \
     layer.cpp \
     scaling_layer_2d.cpp \

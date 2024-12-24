@@ -841,7 +841,7 @@ void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 
     set_name(read_xml_string(multihead_attention_layer_element, "Name"));
 //    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
-//    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
+//    set_context_size(read_xml_index(multihead_attention_layer_element, "DecoderSize"));
 //    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
 //    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
     set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
@@ -855,7 +855,7 @@ void MultiheadAttentionLayer::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputSize", to_string(get_input_size()));
-    add_xml_element(printer, "ContextSize", to_string(get_context_size()));
+    add_xml_element(printer, "DecoderSize", to_string(get_context_size()));
     add_xml_element(printer, "Depth", to_string(get_depth()));
     add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
     add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));

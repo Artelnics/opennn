@@ -47,7 +47,7 @@ public:
 
     enum class SampleUse{Training, Selection, Testing, None};
 
-    enum class VariableUse{Id, Input, Target, Time, None, Context};
+    enum class VariableUse{Id, Input, Target, Time, None, Decoder};
 
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
@@ -517,9 +517,6 @@ public:
 
     //Image Models
     virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
-
-    //Language Models
-    virtual void read_txt();
 
     //AutoAssociation Models
 

@@ -99,8 +99,8 @@ void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
-{   if(new_raw_variable_use == "Context")
-        set_use(VariableUse::Context);
+{   if(new_raw_variable_use == "Decoder")
+        set_use(VariableUse::Decoder);
     else if(new_raw_variable_use == "Input")
         set_use(VariableUse::Input);
     else if(new_raw_variable_use == "Target")
@@ -219,8 +219,8 @@ string DataSet::RawVariable::get_use_string() const
 {
     switch (use)
     {
-    case VariableUse::Context:
-        return "Context";
+    case VariableUse::Decoder:
+        return "Decoder";
 
     case VariableUse::Input:
         return "Input";
@@ -4682,9 +4682,6 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 
 // Image Models
 void DataSet::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
-
-// Language Models
-void DataSet::read_txt(){}
 
 // AutoAssociation Models
 void DataSet::transform_associative_dataset(){}

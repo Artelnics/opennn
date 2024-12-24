@@ -166,7 +166,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Context);
+        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Decoder);
     }
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);

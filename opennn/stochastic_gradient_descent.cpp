@@ -200,7 +200,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
-        ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
+        ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Decoder)
         : vector<Index>();
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);

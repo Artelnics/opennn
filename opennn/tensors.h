@@ -232,12 +232,13 @@ bool is_equal(const Tensor<TensorType, Rank>& tensor,
     const Index size = tensor.size();
 
     for (Index i = 0; i < size; i++)
+    {
         if constexpr (is_same_v<TensorType, bool>)
             if (tensor(i) != value)
                 return false;
-            else
-                if (abs(tensor(i) - value) > tolerance)
-                    return false;
+            else if (abs(tensor(i) - value) > tolerance)
+                return false;
+    }
 
     return true;
 }

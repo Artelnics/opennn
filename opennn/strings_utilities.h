@@ -16,7 +16,10 @@ namespace opennn
     void fill_tokens(const string&, const string&, vector<string>&);
 
     Index count_tokens(const string&, const string&);
+
     vector<string> get_tokens(const string&, const string&);
+
+    vector<vector<string>> get_tokens(const vector<string>&, const string&);
 
     Tensor<type, 1> to_type_vector(const string&, const string&);
     Tensor<Index, 1> to_index_vector(const string&, const string&);
@@ -69,17 +72,12 @@ namespace opennn
     vector<string> sort_string_vector(vector<string>&);
     vector<string> concatenate_string_vectors (const vector<string>&, const vector<string>&);
 
-    Index count_tokens(const vector<vector<string>>&);
-    vector<string> tokens_list(const vector<vector<string>>&);
     void to_lower(string&);
     void to_lower(vector<string>&);
     void split_punctuation(vector<string>&);
     void delete_non_printable_chars(vector<string>&);
     void delete_extra_spaces(vector<string>&);
     void delete_non_alphanumeric(vector<string>&);
-    vector<vector<string>> get_tokens(const vector<string>&, const string&);
-
-    vector<pair<string, Index>> count_words(const vector<string>&);
 
     enum Language {ENG, SPA};
 
@@ -101,6 +99,10 @@ namespace opennn
     void delete_non_alphanumeric(vector<string>&);
 
     void print_tokens(const vector<vector<string>>&);
+
+    void add_start_end_tokens(vector<vector<string>>&,
+                              const string& = "[START]",
+                              const string& = "[END]");
 }
 
 #endif // OPENNNSTRINGS_H

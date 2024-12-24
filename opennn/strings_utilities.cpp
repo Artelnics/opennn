@@ -769,35 +769,6 @@ void display_progress_bar(const int& completed, const int& total)
 }
 
 
-Index count_tokens(const vector<vector<string>>& tokens)
-{
-    const Index documents_number = tokens.size();
-
-    Index count = 0;
-
-    for(Index i = 0; i < documents_number; i++)
-        count += tokens[i].size();
-
-    return count;
-}
-
-
-vector<string> tokens_list(const vector<vector<string>>& document_tokens)
-{
-    const Index total_tokens_number = count_tokens(document_tokens);
-
-    vector<string> total_tokens(total_tokens_number);
-
-    Index position = 0;
-
-    for (const auto& tokens : document_tokens)
-        for (const auto& token : tokens)
-            total_tokens[position++] = token;
-
-    return total_tokens;
-}
-
-
 void to_lower(string& text)
 {
     transform(text.begin(), text.end(), text.begin(), ::tolower);
@@ -834,25 +805,6 @@ vector<vector<string>> get_tokens(const vector<string>& documents, const string&
     return tokens;
 }
 
-
-vector<pair<string, Index>> count_words(const vector<string>& words)
-{
-    unordered_map<string, Index> count;
-
-    for(size_t i = 0; i < words.size(); i++)
-        count[words[i]]++;
-
-    vector<pair<string, Index>> word_counts(count.begin(), count.end());
-
-    sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
-    {
-        return (a.second != b.second) 
-            ? a.second > b.second 
-            : a.first < b.first;
-    });
-
-    return word_counts;
-}
 
 
 void delete_extra_spaces(vector<string>& documents)
@@ -953,6 +905,19 @@ void print_tokens(const vector<vector<string>>& tokens)
         cout << endl;
     }
 }
+
+
+void add_start_end_tokens(vector<vector<string>>& documents_tokens,
+                          const string& start_token,
+                          const string& end_token)
+{
+    for (auto& document_tokens : documents_tokens)
+    {
+        document_tokens.insert(document_tokens.begin(), start_token);
+        document_tokens.push_back(end_token);
+    }
+}
+
 
 }
 
