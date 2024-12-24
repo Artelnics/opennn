@@ -21,7 +21,7 @@ public:
 
     explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
-    explicit LanguageDataSet(const filesystem::path& = filesystem::path());
+    explicit LanguageDataSet(const filesystem::path&);
 
     const vector<string>& get_input_vocabulary() const;
     const vector<string>& get_target_vocabulary() const;
@@ -53,8 +53,7 @@ public:
     void import_lengths(const filesystem::path&, Index&, Index&);
 
     vector<string> create_vocabulary(const vector<vector<string>>& tokens,
-                                        const Index& vocabulary_size,
-                                        const vector<string>& reserved_tokens,
+                                        const Index& vocabulary_size = 123,
                                         const Index& upper_threshold = 10000000,
                                         const Index& lower_threshold = 10,
                                         const Index& iterations_number = 4,
@@ -65,15 +64,7 @@ public:
                                         const bool& include_joiner_token = true,
                                         const string& joiner = "##");
 
-    void load_documents();
-
-    void read_csv_1();
-
-    void read_csv_2_simple();
-
     void read_csv_3_language_model();
-
-    void read_csv() override;
 
     // Empieza por aquí. 
 

@@ -271,9 +271,6 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 //     type end_indicator = 3;
 //     //}
 
-//     // @todo
-//     const vector<vector<string>> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
-
 //     const Index batch_samples_number = 1;
 
 //     Tensor<type, 2> context(batch_samples_number, context_length);
@@ -333,6 +330,7 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 
 string Transformer::calculate_outputs(const vector<string>& context_documents)
 {
+/*
     //type start_indicator = 1;
     //type end_indicator = 2;
 
@@ -341,10 +339,6 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     type start_indicator = 2;
     type end_indicator = 3;
     //}
-
-    // @todo
-
-    const vector<vector<string>> context_tokens = preprocess_language_documents(context_documents);
 
     const Index samples_number = 1;
 
@@ -384,9 +378,9 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     {
         forward_propagate(input_pairs, forward_propagation, false);
 
-        current_outputs/*.device(*thread_pool_device)*/ = outputs.chip(i - 1, 0);
+        current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 
-        prediction/*.device(*thread_pool_device)*/ = current_outputs.argmax();
+        prediction.device(*thread_pool_device) = current_outputs.argmax();
 
         input(i) = type(prediction(0));
 
@@ -403,6 +397,8 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     detokenize_wordpiece(input, output_buffer);
 
     return output_buffer.str();   
+*/
+    return string();
 }
 
 
