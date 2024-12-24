@@ -35,7 +35,6 @@ namespace opennn
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
 
-    vector<string> get_words_in_a_string(const string&);
     string replace_non_allowed_programming_expressions(string&);
 
     vector<string> fix_get_expression_outputs(const string&, const vector<string>&, const string&);
@@ -50,10 +49,7 @@ namespace opennn
 
     bool has_numbers(const vector<string>&);
 
-    bool is_numeric_string_vector(const vector<string>&);
-
     bool is_not_numeric(const vector<string>&);
-    bool is_mixed(const vector<string>&);
 
     void delete_non_printable_chars(string&);
 
@@ -83,33 +79,28 @@ namespace opennn
     void delete_non_alphanumeric(vector<string>&);
     vector<vector<string>> get_tokens(const vector<string>&, const string&);
 
-    vector<vector<string>> preprocess_language_documents(const vector<string>&);
-
     vector<pair<string, Index>> count_words(const vector<string>&);
 
     enum Language {ENG, SPA};
-
-    Tensor<Index, 1> get_words_number(const vector<vector<string>>&);
 
     void set_language(const Language&);
 
     void set_language(const string&);
 
-    void append_document(const string&);
-
     void append_documents(const vector<string>&);
-
-    // Preprocess
 
     void delete_extra_spaces(vector<string>&);
 
     void delete_non_printable_chars(vector<string>&);
 
+    void split_punctuation(string&);
     void split_punctuation(vector<string>&);
 
     void delete_emails(vector<vector<string>>&);
 
     void delete_non_alphanumeric(vector<string>&);
+
+    void print_tokens(const vector<vector<string>>&);
 }
 
 #endif // OPENNNSTRINGS_H

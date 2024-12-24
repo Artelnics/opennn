@@ -37,11 +37,8 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("C:/Users/Roberto Lopez/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_reduced.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
-
+        LanguageDataSet language_data_set("C:/translation.csv");
+/*
         // cout<<language_data_set.get_context_length()<<endl;
         // cout<<language_data_set.get_completion_length()<<endl;
         cout << language_data_set.get_data().dimensions() << endl;
