@@ -770,6 +770,12 @@ const dimensions& DataSet::get_input_dimensions() const
 }
 
 
+const dimensions& DataSet::get_decoder_dimensions() const
+{
+    return decoder_dimensions;
+}
+
+
 const dimensions& DataSet::get_target_dimensions() const
 {
     return target_dimensions;

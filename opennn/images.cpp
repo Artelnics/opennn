@@ -53,6 +53,8 @@ Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 
     const Index image_pixels = width * channels + padding;
 
+    #pragma omp parallel for
+
     for(Index i = 0; i < height; i++)
         for(Index j = 0; j < width; ++j)
             for(Index k = 0; k < channels; ++k)
@@ -170,10 +172,10 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-void translate_image(const ThreadPoolDevice* thread_pool_device,
-                     const Tensor<type, 3>& input,
-                     Tensor<type, 3>& output,
-                     const Index& shift)
+void translate_image_x(const ThreadPoolDevice* thread_pool_device,
+                       const Tensor<type, 3>& input,
+                       Tensor<type, 3>& output,
+                       const Index& shift)
 {
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
@@ -205,6 +207,15 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
     }
 }
 
+
+// @todo
+
+void translate_image_y(const ThreadPoolDevice* thread_pool_device,
+                       const Tensor<type, 3>& input,
+                       Tensor<type, 3>& output,
+                       const Index& shift)
+{
+}
 
 // Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
 //                                         const int& rows_number,

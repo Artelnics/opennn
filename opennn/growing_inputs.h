@@ -27,7 +27,7 @@ public:
 
     const Index& get_maximum_selection_failures() const;
 
-    virtual void set_default() override;
+    virtual void set_default();
 
     void set_maximum_inputs_number(const Index&);
 

@@ -24,7 +24,6 @@ int main()
 
         cout << "Airfoil self noise" << endl;
 
-
         // DataSet data_set(1, { 1 }, { 1 });
 
         // NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
@@ -42,12 +41,6 @@ int main()
 //        neural_network.print();
 
         // neural_network.calculate_outputs(inputs);
-
-
-        // Data set
-
-        Tensor<type, 2> a(100, 100);
-
 
         // Data set
         

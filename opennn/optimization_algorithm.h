@@ -50,8 +50,6 @@ public:
 
    void set(LossIndex* = nullptr);
 
-   virtual void set_default();
-
    virtual void set_threads_number(const int&);
 
    virtual void set_loss_index(LossIndex*);

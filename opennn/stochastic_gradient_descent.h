@@ -31,11 +31,11 @@ public:
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
 
-   void set_default() override;
+   void set_default();
 
    void set_batch_samples_number(const Index&);
 
-   Index get_batch_samples_number() const;
+   Index get_samples_number() const;
 
    void set_initial_learning_rate(const type&);
    void set_initial_decay(const type&);

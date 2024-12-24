@@ -165,6 +165,7 @@ public:
     vector<Index> get_used_variable_indices() const;
 
     const dimensions& get_input_dimensions() const;
+    const dimensions& get_decoder_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
     vector<Scaler> get_variable_scalers(const VariableUse&) const;
@@ -234,7 +235,7 @@ public:
 
     void set(const filesystem::path&);
 
-    virtual void set_default();
+    void set_default();
 
     void set_model_type_string(const string&);
     void set_model_type(const ModelType&);
@@ -258,7 +259,7 @@ public:
 
     void set_default_raw_variables_names();
 
-    virtual void set_default_raw_variables_uses();
+    void set_default_raw_variables_uses();
     virtual void set_raw_variable_uses(const vector<string>&);
     virtual void set_raw_variable_uses(const vector<VariableUse>&);
 
@@ -545,7 +546,7 @@ protected:
     vector<RawVariable> raw_variables;
 
     dimensions input_dimensions;
-
+    dimensions decoder_dimensions;
     dimensions target_dimensions;
 
     // DATA FILE

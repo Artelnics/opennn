@@ -277,7 +277,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     
     const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     Index index = 0;
     

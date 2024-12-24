@@ -635,7 +635,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
-    set_input_dimensions(new_input_dimensions);
+    input_dimensions = new_input_dimensions;
 
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];

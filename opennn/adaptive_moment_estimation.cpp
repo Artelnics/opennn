@@ -22,7 +22,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
 }
 
 
-Index AdaptiveMomentEstimation::get_batch_samples_number() const
+Index AdaptiveMomentEstimation::get_samples_number() const
 {
     return batch_samples_number;
 }

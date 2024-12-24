@@ -84,7 +84,7 @@ void StochasticGradientDescent::set_batch_samples_number(const Index& new_batch_
 }
 
 
-Index StochasticGradientDescent::get_batch_samples_number() const
+Index StochasticGradientDescent::get_samples_number() const
 {
     return batch_samples_number;
 }

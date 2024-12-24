@@ -27,7 +27,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 

@@ -142,7 +142,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

@@ -251,11 +251,15 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
 
     for (Index i = 0; i < size; i++) 
         if constexpr (std::is_same_v<Type, bool>)
+        {
             if (tensor_1(i) != tensor_2(i))
                 return false;
-        else 
+        }
+        else
+        {
             if (abs(tensor_1(i) - tensor_2(i)) > tolerance)
                 return false;
+        }
 
     return true;
 }

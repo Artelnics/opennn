@@ -127,7 +127,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -163,7 +163,7 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -188,7 +188,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -228,7 +228,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -250,7 +250,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 

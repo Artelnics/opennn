@@ -75,8 +75,6 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
-
-    set_default();
 }
 
 
@@ -142,18 +140,6 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 //     return box_plot(distances);
 // }
-
-
-void OptimizationAlgorithm::set_default()
-{
-    display = true;
-
-    display_period = 10;
-
-    save_period = UINT_MAX;
-
-    neural_network_file_name = "neural_network.xml";
-}
 
 
 void OptimizationAlgorithm::check() const
@@ -228,8 +214,6 @@ void OptimizationAlgorithm::save(const filesystem::path& file_name) const
 
 void OptimizationAlgorithm::load(const filesystem::path& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if (document.LoadFile(file_name.string().c_str()))
@@ -398,7 +382,9 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
 
     training_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
+    const Index copy_size = min(old_training_error_history.size(), new_size);
+
+    for(Index i = 0; i < copy_size; i++)
         training_error_history(i) = old_training_error_history(i);
 }
 

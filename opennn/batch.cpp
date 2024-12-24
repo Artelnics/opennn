@@ -17,8 +17,8 @@ namespace opennn
 
 void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& input_indices,
-                 const vector<Index>& target_indices,
-                 const vector<Index>& context_indices)
+                 const vector<Index>& decoder_indices,
+                 const vector<Index>& target_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
@@ -38,8 +38,7 @@ void Batch::fill(const vector<Index>& sample_indices,
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
 
-    if (has_context())
-        fill_tensor_data(data, sample_indices, context_indices, context_tensor.data());
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
     fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 }
@@ -56,7 +55,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
     const Index channels = input_dimensions[2];
 
     TensorMap<Tensor<type, 4>> inputs(input_tensor.data(),
-                                      batch_size,
+                                      samples_number,
                                       input_height,
                                       input_width,
                                       channels);
@@ -70,7 +69,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
     const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
     const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
 
-    for(Index batch_index = 0; batch_index < batch_size; batch_index++)
+    for(Index batch_index = 0; batch_index < samples_number; batch_index++)
     {
         Tensor<type, 3> image = inputs.chip(batch_index, 0);
 
@@ -95,12 +94,20 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                                    ? random_horizontal_translation_minimum + type(rand())
                                    : random_horizontal_translation_maximum;
 
-            translate_image(thread_pool_device.get(), image, image, translation);
+            translate_image_x(thread_pool_device.get(), image, image, translation);
+        }
+
+        if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
+        {
+            const type translation = random_vertical_translation_minimum < random_vertical_translation_maximum
+                                         ? random_vertical_translation_minimum + type(rand())
+                                         : random_vertical_translation_maximum;
+
+            translate_image_y(thread_pool_device.get(), image, image, translation);
         }
     } 
 
-    Tensor<type, 2> todo;
-    return todo;
+    return Tensor<type, 2>();
 }
 
 
@@ -119,29 +126,22 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
 {
     if (!new_data_set) return;
 
-    batch_size = new_batch_size;
+    samples_number = new_batch_size;
     data_set = new_data_set;
 
-    const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
-    const Index decoder_variables_number = data_set->get_variables_number(DataSet::VariableUse::Decoder);
-    const Index target_variables_number = data_set->get_variables_number(DataSet::VariableUse::Target);
-
     const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
-//    const dimensions& data_set_decoder_dimensions = data_set->get_decoder_dimensions();
+    const dimensions& data_set_decoder_dimensions = data_set->get_decoder_dimensions();
     const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
 
-    if(data_set_input_dimensions.size() == 1)
-    {
-        input_dimensions = {{batch_size, input_variables_number}};
-        input_tensor.resize(batch_size*input_variables_number);
-    }
-    else if(data_set_input_dimensions.size() == 2)
+    // Inputs
+
+    if(data_set_input_dimensions.size() == 2)
     {
         const Index rows_number = data_set_input_dimensions[0];
         const Index columns_number = data_set_input_dimensions[1];
 
-        input_dimensions = {{batch_size, rows_number, columns_number}};
-        input_tensor.resize(batch_size*rows_number* columns_number);
+        input_dimensions = {{samples_number, rows_number, columns_number}};
+        input_tensor.resize(samples_number*rows_number* columns_number);
     }
     else if(data_set_input_dimensions.size() == 3)
     {
@@ -149,22 +149,30 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index columns_number = data_set_input_dimensions[1];
         const Index channels = data_set_input_dimensions[2];
 
-        input_dimensions = {{batch_size, rows_number, columns_number, channels}};
-        input_tensor.resize(batch_size*channels*rows_number*columns_number);
+        input_dimensions = {{samples_number, rows_number, columns_number, channels}};
+        input_tensor.resize(samples_number*channels*rows_number*columns_number);
     }
 
-    if(data_set_target_dimensions.size() == 1)
+    // Decoder
+
+    if(data_set_decoder_dimensions.size() == 2)
     {
-        target_dimensions = {{batch_size, target_variables_number}};
-        target_tensor.resize(batch_size*target_variables_number);
+        const Index rows_number = data_set_input_dimensions[0];
+        const Index columns_number = data_set_input_dimensions[1];
+
+        decoder_dimensions = {{samples_number, rows_number, columns_number}};
+        decoder_tensor.resize(samples_number*rows_number* columns_number);
     }
-    else if(data_set_target_dimensions.size() == 2)
+
+    // Target
+
+    if(data_set_target_dimensions.size() == 2)
     {
         const Index rows_number = data_set_target_dimensions[0];
         const Index columns_number = data_set_target_dimensions[1];
 
-        target_dimensions = {{batch_size, rows_number, columns_number}};
-        target_tensor.resize(batch_size*rows_number*columns_number);
+        target_dimensions = {{samples_number, rows_number, columns_number}};
+        target_tensor.resize(samples_number*rows_number*columns_number);
     }
     else if(data_set_target_dimensions.size() == 3)
     {
@@ -172,55 +180,16 @@ void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
         const Index columns_number = data_set_target_dimensions[1];
         const Index channels = data_set_target_dimensions[2];
 
-        target_dimensions = {{batch_size, rows_number, columns_number, channels}};
+        target_dimensions = {{samples_number, rows_number, columns_number, channels}};
 
-        target_tensor.resize(batch_size*channels*rows_number*columns_number);
+        target_tensor.resize(samples_number*channels*rows_number*columns_number);
     }
-
-    // LanguageDataSet
-/*
-    if(is_instance_of<LanguageDataSet>(data_set))
-    {
-        LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-
-        const Index context_variables_number = language_data_set->get_variables_number(DataSet::VariableUse::Decoder);
-
-        // const dimensions data_set_context_dimensions = language_data_set->get_context_dimensions();
-        const dimensions data_set_context_dimensions = { language_data_set->get_input_length() };
-
-        if(data_set_context_dimensions.size() == 1)
-        {
-            input_dimensions = {{batch_size, context_variables_number}};
-
-            context_tensor.resize(batch_size*context_variables_number);
-        }
-        else if(data_set_context_dimensions.size() == 2)
-        {
-            const Index rows_number = input_dimensions[0];
-            const Index columns_number = input_dimensions[1];
-
-            input_dimensions = {{batch_size, rows_number, columns_number}};
-
-            context_tensor.resize(batch_size*rows_number*columns_number);
-        }
-        else if(data_set_context_dimensions.size() == 3)
-        {
-            const Index channels = input_dimensions[0];
-            const Index rows_number = input_dimensions[1];
-            const Index columns_number = input_dimensions[2];
-
-            input_dimensions = {{batch_size, channels, rows_number, columns_number}};
-
-            context_tensor.resize(batch_size*channels*rows_number*columns_number);
-        }
-    }
-*/
 }
 
 
-Index Batch::get_batch_samples_number() const
+Index Batch::get_samples_number() const
 {
-    return batch_size;
+    return samples_number;
 }
 
 
@@ -267,41 +236,12 @@ bool Batch::is_empty() const
 }
 
 
-bool Batch::has_context() const
-{
-    return context_tensor.size() != 0;
-}
-
-
 vector<pair<type*, dimensions>> Batch::get_input_pairs() const
 {
-/*
     vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
 
-//     input_pairs[0] = { input_data, input_dimensions };
-
-
-//     if (has_context)
-//         input_pairs[1] = { context_data, input_dimensions };
-input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
-
-    if (has_context())
-        input_pairs.push_back({(type*)context_tensor.data(), input_dimensions});
-
-    return input_pairs;
-*/
-
-    vector<pair<type*, dimensions>> input_pairs(has_context() ? 2 : 1);
-
-    //     input_pairs[0] = { input_data, input_dimensions };
-
-
-    //     if (has_context)
-    //         input_pairs[1] = { context_data, input_dimensions };
-    input_pairs[0] = { (type*)input_tensor.data(), input_dimensions};
-
-    if (has_context())
-        input_pairs[1] = { (type*)context_tensor.data(), input_dimensions};
+    if (!decoder_dimensions.empty())
+        input_pairs.push_back({(type*)decoder_tensor.data(), decoder_dimensions});
 
     return input_pairs;
 }

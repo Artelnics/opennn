@@ -32,17 +32,15 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
 }
 
 
-const string& TimeSeriesDataSet::get_time_raw_variable() const
+const Index& TimeSeriesDataSet::get_time_raw_variable_index() const
 {
-    //return time_column; @todo
-    return "";
+    return time_raw_variable_index;
 }
 
 
-const string& TimeSeriesDataSet::get_group_by_column() const
+const Index& TimeSeriesDataSet::get_group_raw_variable_index() const
 {
-    //return group_by_column; @todo
-    return string();
+    return group_raw_variable_index;
 }
 
 
