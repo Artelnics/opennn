@@ -164,7 +164,7 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Index calculate_image_output(const string&);
+   Index calculate_image_output(const filesystem::path&);
 
    // Serialization
 

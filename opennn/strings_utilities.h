@@ -17,13 +17,9 @@ namespace opennn
 
     vector<string> get_tokens(const string&, const string&);
 
-    vector<vector<string>> get_tokens(const vector<string>&, const string&);
-
     Tensor<type, 1> to_type_vector(const string&, const string&);
-    Tensor<Index, 1> to_index_vector(const string&, const string&);
 
     vector<string> get_unique(const vector<string>&);
-    Tensor<Index, 1> count_unique(const vector<string>&);
 
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
@@ -49,8 +45,6 @@ namespace opennn
     string get_trimmed(const string&);
 
     bool has_numbers(const vector<string>&);
-
-    bool is_not_numeric(const vector<string>&);
 
     void delete_non_printable_chars(string&);
 

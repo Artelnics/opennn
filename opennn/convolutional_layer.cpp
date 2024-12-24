@@ -232,7 +232,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 */
     }
 
-    auto start_activations = chrono::high_resolution_clock::now();
+    //auto start_activations = chrono::high_resolution_clock::now();
     if (is_training)
         calculate_activations(outputs, activation_derivatives);
     else

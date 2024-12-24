@@ -15,7 +15,6 @@
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
 #include "forward_propagation.h"
-#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -248,15 +247,15 @@ void Transformer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
+void Transformer::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void Transformer::set_context_vocabulary(const vector<string>& new_context_vocabulary)
+void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_output_vocabulary)
 {
-    context_vocabulary = new_context_vocabulary;
+    output_vocabulary = new_output_vocabulary;
 }
 
 
@@ -452,7 +451,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //     }
 // }
 
-
+/*
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
     unordered_map<string, type> context_vocabulary_map;
@@ -532,7 +531,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         }
     }
 }
-
+*/
 
 //void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 //{
@@ -546,7 +545,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 //    }
 //}
 
-
+/*
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
 {
     buffer << input_vocabulary[Index(predictions(1))];
@@ -565,60 +564,8 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
            : buffer << " " << current_prediction;
     }
 }
+*/
 
-// void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-// {
-//     Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-//     batch_samples_number = new_batch_samples;
-
-//     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
-
-//     const Index layers_number = layers.size();
-
-//     layers.resize(layers_number);
-
-//     for(Index i = 0; i < layers_number; i++)
-//     {
-//         switch (neural_network_layers[i]->get_type())
-//         {
-//         case Layer::Type::Embedding:
-//             layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::MultiheadAttention:
-//             layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::Perceptron3D:
-//             layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::Probabilistic3D:
-//             layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         default: break;
-//         }
-//     }
-// }
-
-
-// void TransformerForwardPropagation::print() const
-// {
-//     cout << "Transformer forward propagation" << endl;
-
-//     const Index layers_number = layers.size();
-
-//     cout << "Layers number: " << layers_number << endl;
-
-//     for(Index i = 0; i < layers_number; i++)
-//     {
-//         cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
-
-//         layers[i]->print();
-//     }
-// }
 };
 
 

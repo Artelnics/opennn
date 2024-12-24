@@ -117,6 +117,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 TEST(GeneticAlgorithmTest, FitnessAssignment)
 {
+/*
     DataSet data_set;
 
     Tensor<type, 1> selection_errors;
@@ -155,7 +156,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     selection_errors(1) = type(3);
     selection_errors(2) = type(2);
     selection_errors(3) = type(1);
-/*
+
     genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();

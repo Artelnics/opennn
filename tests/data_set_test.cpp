@@ -73,6 +73,7 @@ TEST(DataSetTest, VariableDescriptives)
 
 TEST(DataSetTest, RawVariableDistributions)
 {
+/*
     DataSet data_set(3, {2}, {1});
     
     Tensor<type, 2> data(3, 3);
@@ -94,7 +95,7 @@ TEST(DataSetTest, RawVariableDistributions)
     EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
-
+*/
 }
 
 

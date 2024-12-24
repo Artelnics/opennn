@@ -116,14 +116,14 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-void LossIndex::check() const
-{
-    if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+//void LossIndex::check() const
+//{
+//    if(!neural_network)
+//        throw runtime_error("Pointer to neural network is nullptr.\n");
 
-    if(!data_set)
-        throw runtime_error("Pointer to data set is nullptr.\n");
-}
+//    if(!data_set)
+//        throw runtime_error("Pointer to data set is nullptr.\n");
+//}
 
 
 void LossIndex::calculate_errors_lm(const Batch& batch,

@@ -8,7 +8,7 @@
 
 #include "../eigen/Eigen/Dense"
 
-#include "strings_utilities.h"
+//#include "strings_utilities.h"
 #include "tensors.h"
 
 namespace opennn
@@ -46,16 +46,16 @@ bool get_random_bool()
 }
 
 
-void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
+//void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
+//{
+//    const Index rows_number = matrix.dimension(0);
+//    const Index columns_number = matrix.dimension(1);
 
-    #pragma omp parallel for
-    for(Index i = 0; i < rows_number; i++)
-        for(Index j = 0; j < columns_number; j++)
-           matrix(i, j) *= vector(j);
-}
+//    #pragma omp parallel for
+//    for(Index i = 0; i < rows_number; i++)
+//        for(Index j = 0; j < columns_number; j++)
+//           matrix(i, j) *= vector(j);
+//}
 
 
 void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
@@ -452,51 +452,51 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
 }
 
 
-void sum_matrices(const ThreadPoolDevice* thread_pool_device, const TensorMap<Tensor<type, 1>>& vector, Tensor<type, 3>& tensor)
-{
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
-    const Index channels = tensor.dimension(2);
+//void sum_matrices(const ThreadPoolDevice* thread_pool_device, const TensorMap<Tensor<type, 1>>& vector, Tensor<type, 3>& tensor)
+//{
+//    const Index rows_number = tensor.dimension(0);
+//    const Index columns_number = tensor.dimension(1);
+//    const Index channels = tensor.dimension(2);
 
-    const Index slice_size = rows_number * columns_number;
+//    const Index slice_size = rows_number * columns_number;
 
-    for(Index i = 0; i < channels; i++)
-    {
-        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*slice_size, rows_number, columns_number);
+//    for(Index i = 0; i < channels; i++)
+//    {
+//        TensorMap<Tensor<type,2>> matrix(tensor.data() + i*slice_size, rows_number, columns_number);
 
-        matrix.device(*thread_pool_device) = matrix + vector(i);
-    }
-}
-
-
-void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
-{
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
-    const Index channels = tensor.dimension(2);
-
-    const Index slice_size = rows_number * columns_number;
-
-    for(Index i = 0; i < channels; i++)
-    {
-        TensorMap<Tensor<type,2>> submatrix(tensor.data() + i*slice_size, rows_number, columns_number);
-
-        submatrix.device(*thread_pool_device) += matrix;
-    }
-}
+//        matrix.device(*thread_pool_device) = matrix + vector(i);
+//    }
+//}
 
 
-void substract_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
-{
-    const Index columns_number = matrix.dimension(1);
+//void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
+//{
+//    const Index rows_number = tensor.dimension(0);
+//    const Index columns_number = tensor.dimension(1);
+//    const Index channels = tensor.dimension(2);
 
-    for(Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+//    const Index slice_size = rows_number * columns_number;
 
-        column.device(*thread_pool_device) = column - vector;
-    }
-}
+//    for(Index i = 0; i < channels; i++)
+//    {
+//        TensorMap<Tensor<type,2>> submatrix(tensor.data() + i*slice_size, rows_number, columns_number);
+
+//        submatrix.device(*thread_pool_device) += matrix;
+//    }
+//}
+
+
+//void substract_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
+//{
+//    const Index columns_number = matrix.dimension(1);
+
+//    for(Index i = 0; i < columns_number; i++)
+//    {
+//        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+
+//        column.device(*thread_pool_device) = column - vector;
+//    }
+//}
 
 
 void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
@@ -712,12 +712,12 @@ Index count_between(const Tensor<type, 1>& vector,const type& minimum, const typ
 }
 
 
-void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, const Index& row_index)
-{
-    const Index columns_number = row.dimension(0);
+//void get_row(Tensor<type, 1>& row, const Tensor<type, 2, RowMajor>& matrix, const Index& row_index)
+//{
+//    const Index columns_number = row.dimension(0);
 
-    memcpy(row.data(), matrix.data() + row_index * columns_number, columns_number*sizeof(type));
-}
+//    memcpy(row.data(), matrix.data() + row_index * columns_number, columns_number*sizeof(type));
+//}
 
 
 void set_row(Tensor<type,2>& matrix, const Tensor<type, 1>& new_row, const Index& row_index)
@@ -916,26 +916,26 @@ void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
 }
 
 
-void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
-{
-    const Index rows_number = matrix.dimension(0);
+//void sum_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
+//{
+//    const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
-    for(Index i = 0; i < rows_number; i++)
-        matrix(i, i) += values(i);
-}
+//    for(Index i = 0; i < rows_number; i++)
+//        matrix(i, i) += values(i);
+//}
 
 
-void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
-{
-    const Index rows_number = matrix.dimension(0);
+//void substract_diagonal(Tensor<type, 2>& matrix, const Tensor<type, 1>& values)
+//{
+//    const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
-    for(Index i = 0; i < rows_number; i++)
-        matrix(i, i) -= values(i);
-}
+//    for(Index i = 0; i < rows_number; i++)
+//        matrix(i, i) -= values(i);
+//}
 
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)

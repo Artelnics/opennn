@@ -199,7 +199,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
+    const vector<Index> decoder_variable_indices = is_instance_of<LanguageDataSet>(data_set)
         ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Decoder)
         : vector<Index>();
 
@@ -305,7 +305,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
-                                context_variable_indices);
+                                decoder_variable_indices);
 
             // Neural network
             

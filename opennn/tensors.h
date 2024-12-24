@@ -28,7 +28,7 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
-void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&);
+//void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&);
 
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
@@ -48,9 +48,9 @@ void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<
 void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
-void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
+//void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
-void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
+//void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void multiply_rows(const Tensor<type, 2>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);

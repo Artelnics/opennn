@@ -28,7 +28,7 @@ void Batch::fill(const vector<Index>& sample_indices,
     {
 /*
         // @TODO
-        Tensor<type, 2>& augmented_data = perform_augmentation(data);
+        Tensor<type, 2> augmented_data = perform_augmentation(data);
 
         fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
 */

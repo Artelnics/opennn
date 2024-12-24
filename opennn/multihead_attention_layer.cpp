@@ -415,27 +415,6 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 }
 
 
-// void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
-//                                                        const Tensor<type, 4>& key,
-//                                                        Tensor<type, 4>& attention_scores,
-//                                                        Tensor<type, 4>& attention_weights) const
-// {
-//     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
-
-//     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
-
-//     if(use_causal_mask)
-//         apply_causal_mask(attention_scores);
-// /*
-//  * // @todo make sure about this
-//     softmax(attention_scores, attention_weights);
-// */
-
-//     softmax(attention_scores);
-//     attention_weights = attention_scores;
-
-// }
-
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
                                                        const Tensor<type, 4>& key,
                                                        Tensor<type, 4>& attention_scores) const
@@ -446,14 +425,9 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     if(use_causal_mask)
         apply_causal_mask(attention_scores);
-    /*
- * // @todo make sure about this
-    softmax(attention_scores, attention_weights);
-*/
 
     softmax(attention_scores);
 }
-
 
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,

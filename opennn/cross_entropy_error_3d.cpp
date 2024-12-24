@@ -83,15 +83,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
-/*
-    cout<<"predictions: "<<endl;
-    cout<<predictions<<endl;
-    cout<<"targets: "<<endl;
-    cout<<targets<<endl;
-    cout<<"matches: "<<endl;
-    cout<<matches<<endl;
-*/
-
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
     if(isnan(error())) throw runtime_error("Error is NAN");

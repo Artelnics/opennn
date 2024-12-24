@@ -161,12 +161,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
 
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    vector<Index> context_variable_indices;
+    vector<Index> decoder_variable_indices;
 
     if(is_language_model)
     {
         LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
-        context_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Decoder);
+        decoder_variable_indices = language_data_set->get_variable_indices(DataSet::VariableUse::Decoder);
     }
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
@@ -281,7 +281,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_batch.fill(training_batches[iteration],
                 input_variable_indices,
                 target_variable_indices,
-                context_variable_indices);
+                decoder_variable_indices);
 
             // Neural network
 
@@ -339,7 +339,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
                                      target_variable_indices,
-                                     context_variable_indices);
+                                     decoder_variable_indices);
                 // Neural network
 
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),

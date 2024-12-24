@@ -1182,7 +1182,7 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     const Index pixels_number = height * width * image_channels;
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (Index j = 0; j < pixels_number; j++)
         input_data(j) = resized_image_data(j);
 

@@ -106,34 +106,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 }
 
 
-Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
-{
-    const vector<string> tokens = get_tokens(text, separator);
-
-    const Index tokens_size = tokens.size();
-
-    Tensor<Index, 1> index_vector(tokens_size);
-
-    for(Index i = 0; i < tokens_size; i++)
-    {
-        try
-        {
-            stringstream buffer;
-
-            buffer << tokens[i];
-
-            index_vector(i) = Index(stoi(buffer.str()));
-        }
-        catch(const exception&)
-        {
-            index_vector(i) = Index(-1);
-        }
-    }
-
-    return index_vector;
-}
-
-
 vector<string> get_unique(const vector<string>& tokens)
 {
     string result;
@@ -143,21 +115,6 @@ vector<string> get_unique(const vector<string>& tokens)
             result += tokens[i] + " ";
 
     return get_tokens(result, " ");
-}
-
-
-Tensor<Index, 1> count_unique(const vector<string>& tokens)
-{
-    const vector<string> unique_elements = get_unique(tokens);
-
-    const Index unique_size = unique_elements.size();
-
-    Tensor<Index, 1> unique_count(unique_size);
-
-    for(Index i = 0; i < unique_size; i++)
-        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements[i]));
-
-    return unique_count;
 }
 
 
@@ -527,16 +484,6 @@ bool has_numbers(const vector<string>& string_list)
 }
 
 
-bool is_not_numeric(const vector<string>& string_list)
-{
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(is_numeric_string(string_list[i])) 
-            return false;
-
-    return true;
-}
-
-
 void delete_non_printable_chars(string& text)
 {
     typedef ctype<wchar_t> ctype;
@@ -742,20 +689,6 @@ void to_lower(vector<vector<string>>& text)
     for(Index i = 0; i < text.size(); i++)
         to_lower(text[i]);
 }
-
-
-vector<vector<string>> get_tokens(const vector<string>& documents, const string& separator)
-{
-    const Index documents_number = documents.size();
-
-    vector<vector<string>> tokens(documents_number);
-
-    for(Index i = 0; i < documents_number-1; i++)
-        tokens[i] = get_tokens(documents[i], separator);
-
-    return tokens;
-}
-
 
 
 void delete_extra_spaces(vector<string>& documents)
