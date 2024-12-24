@@ -1155,7 +1155,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 }
 
 
-Index NeuralNetwork::calculate_image_output(const string& image_path)
+Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
     const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
 
@@ -1170,7 +1170,7 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
     const Index current_channels = image_data.dimension(2);
 
     if (current_channels != image_channels)
-        throw runtime_error("Error: Different channels number " + image_path + "\n");
+        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
     Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
 /*

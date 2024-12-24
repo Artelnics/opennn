@@ -1,0 +1,16 @@
+ # Push a nightly tag if the pipeline succeeded.
+deploy:tag:nightly:
+  stage: deploy
+  image: alpine:edge
+  dependencies: []
+  before_script:
+    - apk add git
+  script:
+    - git tag -f nightly $CI_COMMIT_SHORT_SHA
+    - git push -f $EIGEN_CI_GIT_PUSH_URL tag nightly
+  tags:
+    - linux
+    - eigen-runner
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"

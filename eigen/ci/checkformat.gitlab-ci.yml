@@ -1,12 +1,10 @@
 checkformat:clangformat:
   stage: checkformat
-  image: ubuntu:23.10
+  image: alpine:3.19
   only:
     - merge_requests
   allow_failure: true
   before_script:
-    - export DEBIAN_FRONTEND=noninteractive
-    - apt-get update -y
-    - apt-get install -y --no-install-recommends git clang-format clang-format-17
+    - apk add --no-cache git clang17-extra-tools python3
   script:
-    - git clang-format-17 --diff --commit ${CI_MERGE_REQUEST_DIFF_BASE_SHA}
+    - git clang-format --diff --commit ${CI_MERGE_REQUEST_DIFF_BASE_SHA}

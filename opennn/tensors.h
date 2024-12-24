@@ -219,16 +219,16 @@ Tensor<T, 1> tensor_wrapper(T obj)
 }
 
 
-template <typename TensorType, int Rank>
-bool is_equal(const Tensor<TensorType, Rank>& tensor, 
-              const TensorType& value,
-              const TensorType& tolerance = 0.001)
+template <typename Type, int Rank>
+bool is_equal(const Tensor<Type, Rank>& tensor,
+              const Type& value,
+              const Type& tolerance = 0.001)
 {
     const Index size = tensor.size();
 
     for (Index i = 0; i < size; i++)
     {
-        if constexpr (is_same_v<TensorType, bool>)
+        if constexpr (is_same_v<Type, bool>)
             if (tensor(i) != value)
                 return false;
             else if (abs(tensor(i) - value) > tolerance)
@@ -239,10 +239,10 @@ bool is_equal(const Tensor<TensorType, Rank>& tensor,
 }
 
 
-template <typename TensorType, int Rank>
-bool are_equal(const Tensor<TensorType, Rank>& tensor_1, 
-               const Tensor<TensorType, Rank>& tensor_2, 
-               const TensorType& tolerance = 0.001)
+template <typename Type, int Rank>
+bool are_equal(const Tensor<Type, Rank>& tensor_1,
+               const Tensor<Type, Rank>& tensor_2,
+               const Type& tolerance = 0.001)
 {
     if (tensor_1.size() != tensor_2.size())
         throw runtime_error("Tensor sizes are different");
@@ -250,7 +250,7 @@ bool are_equal(const Tensor<TensorType, Rank>& tensor_1,
     const Index size = tensor_1.size();
 
     for (Index i = 0; i < size; i++) 
-        if constexpr (std::is_same_v<TensorType, bool>) 
+        if constexpr (std::is_same_v<Type, bool>)
             if (tensor_1(i) != tensor_2(i))
                 return false;
         else 

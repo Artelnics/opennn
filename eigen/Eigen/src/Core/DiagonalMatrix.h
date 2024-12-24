@@ -256,10 +256,13 @@ class DiagonalMatrix : public DiagonalBase<DiagonalMatrix<Scalar_, SizeAtCompile
   typedef DiagonalWrapper<const CwiseNullaryOp<internal::scalar_constant_op<Scalar>, DiagonalVectorType>>
       InitializeReturnType;
 
+  typedef DiagonalWrapper<const CwiseNullaryOp<internal::scalar_zero_op<Scalar>, DiagonalVectorType>>
+      ZeroInitializeReturnType;
+
   /** Initializes a diagonal matrix of size SizeAtCompileTime with coefficients set to zero */
-  EIGEN_DEVICE_FUNC static const InitializeReturnType Zero() { return DiagonalVectorType::Zero().asDiagonal(); }
+  EIGEN_DEVICE_FUNC static const ZeroInitializeReturnType Zero() { return DiagonalVectorType::Zero().asDiagonal(); }
   /** Initializes a diagonal matrix of size dim with coefficients set to zero */
-  EIGEN_DEVICE_FUNC static const InitializeReturnType Zero(Index size) {
+  EIGEN_DEVICE_FUNC static const ZeroInitializeReturnType Zero(Index size) {
     return DiagonalVectorType::Zero(size).asDiagonal();
   }
   /** Initializes a identity matrix of size SizeAtCompileTime */

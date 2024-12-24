@@ -97,10 +97,6 @@ namespace opennn
     void delete_non_alphanumeric(vector<string>&);
 
     void print_tokens(const vector<vector<string>>&);
-
-    void add_start_end_tokens(vector<vector<string>>&,
-                              const string& = "[START]",
-                              const string& = "[END]");
 }
 
 #endif // OPENNNSTRINGS_H

@@ -207,7 +207,7 @@ build:linux:cuda-12.2:clang-12:
 # ROCm HIP
 build:linux:rocm-latest:gcc-10:
   extends: .build:linux:cross
-  image: rocm/dev-ubuntu-18.04:latest
+  image: rocm/dev-ubuntu-24.04:latest
   variables:
     EIGEN_CI_C_COMPILER: gcc-10
     EIGEN_CI_CXX_COMPILER: g++-10
@@ -218,7 +218,7 @@ build:linux:rocm-latest:gcc-10:
     - linux
     - x86-64
 
-######## arm ###################################################################
+######## Arm ###################################################################
 
 .build:linux:cross:arm:
   extends: .build:linux:cross
