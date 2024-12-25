@@ -49,7 +49,7 @@ public:
 
    const ActivationFunction& get_activation_function() const;
    string get_activation_function_string() const;
-   string get_activation_function_string_text() const;
+   string get_activation_function_text() const;
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
 

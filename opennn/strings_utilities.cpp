@@ -106,18 +106,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 }
 
 
-vector<string> get_unique(const vector<string>& tokens)
-{
-    string result;
-
-    for(size_t i = 0; i < tokens.size(); i++)
-        if(!contains_substring(result, " " + tokens[i] + " "))
-            result += tokens[i] + " ";
-
-    return get_tokens(result, " ");
-}
-
-
 bool is_numeric_string(const string& text)
 {
     try
@@ -484,19 +472,6 @@ bool has_numbers(const vector<string>& string_list)
 }
 
 
-void delete_non_printable_chars(string& text)
-{
-    typedef ctype<wchar_t> ctype;
-
-    const ctype& ct = use_facet<ctype>(locale());
-
-    text.erase(remove_if(text.begin(),
-                         text.end(),
-                         [&ct](wchar_t ch) {return !ct.is(ctype::print, ch);}),
-                         text.end());
-}
-
-
 void replace_substring(vector<string>& data, const string& find_what, const string& replace_with)
 {
     const Index size = data.size();
@@ -688,94 +663,6 @@ void to_lower(vector<vector<string>>& text)
 
     for(Index i = 0; i < text.size(); i++)
         to_lower(text[i]);
-}
-
-
-void delete_extra_spaces(vector<string>& documents)
-{
-    vector<string> new_documents(documents);
-
-    for(size_t i = 0; i < documents.size(); i++)
-    {
-        const string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
-            [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
-
-        new_documents[i].erase(new_end, new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-void delete_non_printable_chars(vector<string>& documents)
-{
-    for(size_t i = 0; i < documents.size(); i++)
-        delete_non_printable_chars(documents[i]);
-}
-
-
-void split_punctuation(vector<string>& documents)
-{
-    const vector<pair<string, string>> punctuations = {
-        {"�", " � "}, {"\"", " \" "}, {".", " . "}, {"!", " ! "}, {"#", " # "},
-        {"$", " $ "}, {"~", " ~ "}, {"%", " % "}, {"&", " & "}, {"/", " / "},
-        {"(", " ( "}, {")", " ) "}, {"\\", " \\ "}, {"=", " = "}, {"?", " ? "},
-        {"}", " } "}, {"^", " ^ "}, {"`", " ` "}, {"[", " [ "}, {"]", " ] "},
-        {"*", " * "}, {"+", " + "}, {",", " , "}, {";", " ; "}, {":", " : "},
-        {"-", " - "}, {">", " > "}, {"<", " < "}, {"|", " | "}, {"–", " – "},
-        {"Ø", " Ø "}, {"º", " º "}, {"°", " ° "}, {"'", " ' "}, {"ç", " ç "},
-        {"✓", " ✓ "}, {"@", " @ "}, {"€", " € "}, {"¬", " ¬ "}, {"•", " • "},
-        {"·", " · "}, {"”", " ” "}, {"“", " “ "}, {"´", " ´ "}, {"§", " § "},
-        {"_", " _ "}
-    };
-
-    for (const auto& [symbol, replacement] : punctuations)
-        replace_substring(documents, symbol, replacement);
-}
-
-
-void delete_non_alphanumeric(vector<string>& documents)
-{
-    vector<string> new_documents(documents);
-
-    for(size_t i = 0; i < documents.size(); i++)
-        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
-
-    documents = new_documents;
-}
-
-
-void delete_emails(vector<vector<string>>& documents)
-{
-    const Index documents_number = documents.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        const vector<string> document = documents[i];
-
-        for(size_t j = 0; j < document.size(); j++)
-        {
-            /*
-            vector<string> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
-            {
-                if(!is_email(tokens(k)))
-                {
-                    result += tokens(k) + " ";
-                }
-            }
-
-            document(j) = result;
-*/
-        }
-
-        documents[i] = document;
-    }
 }
 
 

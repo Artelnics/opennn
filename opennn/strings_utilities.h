@@ -19,8 +19,6 @@ namespace opennn
 
     Tensor<type, 1> to_type_vector(const string&, const string&);
 
-    vector<string> get_unique(const vector<string>&);
-
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
     bool is_email(const string&);
@@ -46,8 +44,6 @@ namespace opennn
 
     bool has_numbers(const vector<string>&);
 
-    void delete_non_printable_chars(string&);
-
     void replace(string&, const string&, const string&);
     void replace_substring(vector<string>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
@@ -66,29 +62,12 @@ namespace opennn
 
     void to_lower(string&);
     void to_lower(vector<string>&);
-    void split_punctuation(vector<string>&);
-    void delete_non_printable_chars(vector<string>&);
-    void delete_extra_spaces(vector<string>&);
-    void delete_non_alphanumeric(vector<string>&);
 
     enum Language {ENG, SPA};
 
     void set_language(const Language&);
 
     void set_language(const string&);
-
-    void append_documents(const vector<string>&);
-
-    void delete_extra_spaces(vector<string>&);
-
-    void delete_non_printable_chars(vector<string>&);
-
-    void split_punctuation(string&);
-    void split_punctuation(vector<string>&);
-
-    void delete_emails(vector<vector<string>>&);
-
-    void delete_non_alphanumeric(vector<string>&);
 
     void print_tokens(const vector<vector<string>>&);
 }
