@@ -9,6 +9,8 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include "pch.h"
+
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
@@ -190,9 +192,8 @@ public:
 
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
-    void add_sample(const Tensor<type, 1>&);
 
-    vector<vector<string>> get_data_file_preview() const;
+    const vector<vector<string>>& get_data_file_preview() const;
 
     // Members get
 
@@ -214,8 +215,6 @@ public:
     const string get_codification_string() const;
 
     const string& get_missing_values_label() const;
-
-    static vector<string> get_default_raw_variables_names(const Index&);
 
     Index get_gmt() const;
 

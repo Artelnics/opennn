@@ -1646,32 +1646,6 @@ Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 }
 
 
-void DataSet::add_sample(const Tensor<type, 1>& sample)
-{
-    const Index current_samples = data.dimension(0);
-
-    if(current_samples == 0)
-    {
-        Tensor<type, 2> new_data(1, sample.dimension(0));
-        new_data.chip(0, 0) = sample;
-        data = new_data;
-        return;
-    }
-
-    if(sample.dimension(0) != data.dimension(1))
-        throw runtime_error("Sample size doesn't match data raw_variable size.");
-
-    Tensor<type, 2> new_data(current_samples + 1, data.dimension(1));
-
-    for(Index i = 0; i < current_samples; i++)
-        new_data.chip(i, 0) = data.chip(i, 0);
-
-    new_data.chip(current_samples, 0) = sample;
-
-    data = new_data;
-}
-
-
 string DataSet::get_sample_category(const Index& sample_index, const Index& column_index_start) const
 {
     if(raw_variables[column_index_start].type != RawVariableType::Categorical)
@@ -1703,7 +1677,7 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
 }
 
 
-vector<vector<string>> DataSet::get_data_file_preview() const
+const vector<vector<string>>& DataSet::get_data_file_preview() const
 {
     return data_file_preview;
 }
@@ -4083,18 +4057,6 @@ void DataSet::read_csv()
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-
-}
-
-
-vector<string> DataSet::get_default_raw_variables_names(const Index& raw_variables_number)
-{
-    vector<string> raw_variable_names(raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        raw_variable_names[i] = "variable_" + to_string(i+1);
-
-    return raw_variable_names;
 }
 
 
@@ -4339,24 +4301,6 @@ Index DataSet::count_nan() const
 {
     return count_NAN(data);
 }
-
-
-// void DataSet::set_missing_values_number()
-// {
-//     missing_values_number = count_nan();
-// }
-
-
-// void DataSet::set_raw_variables_missing_values_number()
-// {
-//     raw_variables_missing_values_number = count_raw_variables_with_nan();
-// }
-
-
-// void DataSet::set_samples_missing_values_number()
-// {
-//     rows_missing_values_number = count_rows_with_nan();
-// }
 
 
 void DataSet::fix_repeated_names()
