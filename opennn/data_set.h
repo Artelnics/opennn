@@ -124,7 +124,7 @@ public:
     SampleUse get_sample_use(const Index&) const;
     const vector<SampleUse>& get_sample_uses() const;
 
-    Tensor<Index, 1> get_sample_uses_vector() const;
+    vector<Index> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
     Tensor<type, 1> get_sample_use_percentages() const;

@@ -136,181 +136,36 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     // Samples id
 
     if(has_sample_ids)
-    {
-        const Index rows_labels_number = sample_ids.size();
-
-        printer.OpenElement("HasSamplesId");
-
-        //string_vector_to_string(sample_ids)
-
-        buffer.str("");
-
-        for(Index i = 0; i < rows_labels_number; i++)
-        {
-            buffer << sample_ids[i];
-
-            if(i != rows_labels_number-1) buffer << ",";
-        }
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-    }
+        add_xml_element(printer, "SampleIds", vector_to_string(sample_ids));
 
     // Samples
 
     printer.OpenElement("Samples");
-
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-
-    // Samples uses
-
-    {
-        printer.OpenElement("SamplesUses");
-
-        buffer.str("");
-
-        const Index samples_number = get_samples_number();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            SampleUse sample_use = sample_uses[i];
-
-            buffer << Index(sample_use);
-
-            if(i < (samples_number-1)) buffer << " ";
-        }
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-    }
-
-    // Close samples
-
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();
-
-    // Missing values
 
     printer.OpenElement("MissingValues");
-
-    // Missing values method
-
-    {
-        printer.OpenElement("MissingValuesMethod");
-
-        if(missing_values_method == MissingValuesMethod::Mean)
-            printer.PushText("Mean");
-        else if(missing_values_method == MissingValuesMethod::Median)
-            printer.PushText("Median");
-        else if(missing_values_method == MissingValuesMethod::Unuse)
-            printer.PushText("Unuse");
-        else if(missing_values_method == MissingValuesMethod::Interpolation)
-            printer.PushText("Interpolation");
-
-        printer.CloseElement();
-    }
-
-    // Missing values number
-
+    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
-    if(missing_values_number > 0)
+    if (missing_values_number > 0)
     {
-        // Raw variables missing values number
-        {
-            printer.OpenElement("RawVariablesMissingValuesNumber");
-
-            buffer.str("");
-
-            for(Index i = 0; i < raw_variables_number; i++)
-            {
-                buffer << raw_variables_missing_values_number(i);
-
-                if(i != raw_variables_number - 1) buffer << " ";
-            }
-
-            printer.PushText(buffer.str().c_str());
-
-            printer.CloseElement();
-        }
-
-        // Rows missing values number
-        {
-            printer.OpenElement("RowsMissingValuesNumber");
-
-            buffer.str("");
-            buffer << rows_missing_values_number;
-
-            printer.PushText(buffer.str().c_str());
-
-            printer.CloseElement();
-        }
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
-
-    // Missing values
 
     printer.CloseElement();
 
-    // Preview data
+    printer.OpenElement("MissingValues");
+    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
+    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
-    printer.OpenElement("PreviewData");
-
-    printer.OpenElement("PreviewSize");
-
-    buffer.str("");
-
-    if(model_type != ModelType::TextClassification)
+    if (missing_values_number > 0)
     {
-        buffer << data_file_preview.size();
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Row");
-
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-
-            for(size_t j = 0; j < data_file_preview[i].size(); j++)
-            {
-                printer.PushText(data_file_preview[i][j].c_str());
-
-                if(j != data_file_preview[i].size()-1)
-                    printer.PushText(",");
-            }
-
-            printer.CloseElement();
-        }
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
-    else
-    {
-        buffer << data_file_preview.size();
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Row");
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-            printer.PushText(data_file_preview[i][0].c_str());
-            printer.CloseElement();
-        }
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Target");
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-            printer.PushText(data_file_preview[i][1].c_str());
-            printer.CloseElement();
-        }
-    }
-
-    // Close preview data
 
     printer.CloseElement();
 
@@ -436,7 +291,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Samples uses
 
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");
@@ -606,10 +461,9 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Decoder Dimensions
 
-    const XMLElement* context_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
-    if (context_dimensions_element && context_dimensions_element->GetText()) {
-        maximum_input_length = atoi(context_dimensions_element->GetText());
-    }
+    const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
+    if (decoder_dimensions_element && decoder_dimensions_element->GetText())
+        maximum_input_length = atoi(decoder_dimensions_element->GetText());
 
     // Display
 

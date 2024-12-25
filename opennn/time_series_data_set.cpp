@@ -265,7 +265,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 
     // Samples uses
 
-    file_stream.OpenElement("SamplesUses");
+    file_stream.OpenElement("SampleUses");
     file_stream.PushText(tensor_to_string(get_sample_uses_vector()).c_str());
     file_stream.CloseElement();
 
@@ -740,7 +740,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Samples uses
 
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");

@@ -412,18 +412,18 @@ const vector<DataSet::SampleUse>& DataSet::get_sample_uses() const
 }
 
 
-Tensor<Index, 1> DataSet::get_sample_uses_vector() const
+vector<Index> DataSet::get_sample_uses_vector() const
 {
     const Index samples_number = get_samples_number();
 
-    Tensor<Index, 1> samples_uses_tensor(samples_number);
+    vector<Index> sample_uses_vector(samples_number);
 
     #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
-        samples_uses_tensor(i) = Index(sample_uses[i]);
+        sample_uses_vector[i] = Index(sample_uses[i]);
 
-    return samples_uses_tensor;
+    return sample_uses_vector;
 }
 
 
@@ -2891,7 +2891,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
     if (has_sample_ids) 
         add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
     
-    add_xml_element(printer, "SamplesUses", tensor_to_string(get_sample_uses_vector()));
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();  
 
     printer.OpenElement("MissingValues");
@@ -2963,7 +2963,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Samples element is nullptr.\n");
 
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
+    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 
     // Missing values
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");

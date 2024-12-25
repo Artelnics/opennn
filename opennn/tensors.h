@@ -153,14 +153,13 @@ string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
 Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
+
 template <typename T>
 string vector_to_string(const vector<T>& x, const string& separator = " ")
 {
-    const Index size = x.size();
-
     ostringstream buffer;
 
-    for(Index i = 0; i < size; i++)
+    for(size_t i = 0; i < x.size(); i++)
         buffer << x[i] << separator;
 
     return buffer.str();
@@ -194,7 +193,6 @@ TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair);
-
 
 template <typename T>
 size_t get_maximum_size(const vector<vector<T>>& v)
@@ -254,10 +252,12 @@ bool is_equal(const Tensor<Type, Rank>& tensor,
     for (Index i = 0; i < size; i++)
     {
         if constexpr (is_same_v<Type, bool>)
+        {
             if (tensor(i) != value)
                 return false;
             else if (abs(tensor(i) - value) > tolerance)
                 return false;
+        }
     }
 
     return true;
