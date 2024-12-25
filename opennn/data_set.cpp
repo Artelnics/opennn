@@ -166,7 +166,7 @@ void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
         if(categories.size() == 0) 
             return;
 
-        add_xml_element(printer,"Categories", string_tensor_to_string(categories));
+        add_xml_element(printer,"Categories", vector_to_string(categories));
     }
 }
 
@@ -2889,7 +2889,7 @@ void DataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
     
     if (has_sample_ids) 
-        add_xml_element(printer, "SamplesId", string_tensor_to_string(sample_ids));
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
     
     add_xml_element(printer, "SamplesUses", tensor_to_string(get_sample_uses_vector()));
     printer.CloseElement();  

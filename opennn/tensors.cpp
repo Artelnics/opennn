@@ -1207,48 +1207,6 @@ string tensor_to_string(const Tensor<type, 1>& x, const string& separator)
 }
 
 
-string tensor_to_string(const Tensor<Index, 1>& x, const string& separator)
-{
-    const Index size = x.size();
-
-    ostringstream buffer;
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
-
-    return buffer.str();
-}
-
-
-string vector_to_string(const vector<Index>& x, const string& separator)
-{
-    const Index size = x.size();
-
-    ostringstream buffer;
-
-    for(Index i = 0; i < size; i++)
-        buffer << x[i] << separator;
-
-    return buffer.str();
-}
-
-
-string string_tensor_to_string(const vector<string>& x, const string& separator)
-{
-    const Index size = x.size();
-
-    if(x.size() == 0)
-       throw runtime_error("Input vector must have dimension greater than 0.\n");
-
-    string line = x[0];
-
-    for(Index i = 1; i < size; i++)
-        line = line + separator + x[i];
-
-    return line;
-}
-
-
 Tensor<type, 2> delete_row(const Tensor<type, 2>& tensor, const Index& row_index)
 {
     const Index rows_number = tensor.dimension(0);

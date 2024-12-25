@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class  LanguageDataSet : public DataSet
+class LanguageDataSet : public DataSet
 {
 
 public:

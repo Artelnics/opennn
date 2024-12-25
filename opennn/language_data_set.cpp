@@ -141,6 +141,8 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
         printer.OpenElement("HasSamplesId");
 
+        //string_vector_to_string(sample_ids)
+
         buffer.str("");
 
         for(Index i = 0; i < rows_labels_number; i++)

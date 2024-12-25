@@ -306,7 +306,7 @@ void ImageDataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     if(has_sample_ids)
-        add_xml_element(printer, "Ids", string_tensor_to_string(sample_ids));
+        add_xml_element(printer, "Ids", vector_to_string(sample_ids));
 
     printer.OpenElement("Samples");
 

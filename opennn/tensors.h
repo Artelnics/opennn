@@ -153,11 +153,36 @@ string dimensions_to_string(const dimensions&, const string& = " ");
 dimensions string_to_dimensions(const string&, const string& = " ");
 Tensor<type, 1> string_to_tensor(const string&, const string & = " ");
 
-string vector_to_string(const vector<Index>&, const string& = " ");
+template <typename T>
+string vector_to_string(const vector<T>& x, const string& separator = " ")
+{
+    const Index size = x.size();
 
-string tensor_to_string(const Tensor<type, 1>&, const string& = " ");
-string tensor_to_string(const Tensor<Index, 1>&, const string& = " ");
-string string_tensor_to_string(const vector<string>&, const string& = " ");
+    ostringstream buffer;
+
+    for(Index i = 0; i < size; i++)
+        buffer << x[i] << separator;
+
+    return buffer.str();
+}
+
+
+template <typename T>
+string tensor_to_string(const Tensor<T, 1>& x, const string& separator = " ")
+{
+    const Index size = x.size();
+
+    ostringstream buffer;
+
+    if(x.size() == 0)
+        throw runtime_error("Error: Dimensions size must be greater than 0.\n");
+
+    for(Index i = 0; i < size; i++)
+        buffer << x[i] << separator;
+
+    return buffer.str();
+}
+
 
 type round_to_precision(type, const int&);
 //Tensor<type,2> round_to_precision_matrix(Tensor<type,2>, const int&);
