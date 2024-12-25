@@ -152,14 +152,6 @@ bool is_date_time_string(const string& text)
 }
 
 
-bool is_email(const string& word)
-{
-    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
-
-    return regex_match(word, pattern);
-}
-
-
 time_t date_to_timestamp(const string& date, const Index& gmt)
 {
     struct tm time_structure = {};
@@ -211,12 +203,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
 
     throw runtime_error("Date format (" + date + ") is not implemented.");
-}
-
-
-bool contains_substring(const string& text, const string& sub_string)
-{
-    return text.find(sub_string) != string::npos;
 }
 
 
@@ -469,24 +455,6 @@ bool has_numbers(const vector<string>& string_list)
             return true;
 
     return false;
-}
-
-
-void replace_substring(vector<string>& data, const string& find_what, const string& replace_with)
-{
-    const Index size = data.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        size_t position = 0;
-
-        while((position = data[i].find(find_what, position)) != string::npos)
-        {
-            data[i].replace(position, find_what.length(), replace_with);
-
-            position += replace_with.length();
-        }
-    }
 }
 
 

@@ -21,11 +21,8 @@ namespace opennn
 
     bool is_numeric_string(const string&);
     bool is_date_time_string(const string&);
-    bool is_email(const string&);
 
     time_t date_to_timestamp(const string&, const Index& = 0);
-
-    bool contains_substring(const string&, const string&);
 
     void replace_all_appearances(string&, const string&, const string&);
     void replace_all_word_appearances(string&, const string&, const string&);
@@ -45,7 +42,6 @@ namespace opennn
     bool has_numbers(const vector<string>&);
 
     void replace(string&, const string&, const string&);
-    void replace_substring(vector<string>&, const string& , const string&);
     void replace_double_char_with_label(string&, const string&, const string&);
     void replace_substring_within_quotes(string&, const string&, const string&);
     void replace_substring_in_string (vector<string>&, string&, const string&);
