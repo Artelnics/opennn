@@ -62,7 +62,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
     const Index batch_samples_number = 1;
 
     const Index input_length = 2;
-    const Index context_length = 3;
+    const Index decoder_length = 3;
     const Index input_dimensions = 5;
     const Index context_dimension = 6;
 
@@ -75,14 +75,14 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 
     language_data_set.set_data_random_language_model(batch_samples_number,
         input_length,
-        context_length,
+        decoder_length,
         input_dimensions,
         context_dimension);
 
     language_data_set.set(DataSet::SampleUse::Training);
 
     Transformer transformer({ input_length,
-                             context_length,
+                             decoder_length,
                              input_dimensions,
                              context_dimension,
                              depth,

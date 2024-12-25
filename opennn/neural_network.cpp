@@ -478,7 +478,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
     layers.resize(0);
 
-    // input_names.resize(input_length + context_length);
+    // input_names.resize(input_length + decoder_length);
 
     const Index complexity_size = complexity_dimensions.size();
 

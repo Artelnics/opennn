@@ -81,7 +81,7 @@ int main()
 
 
 
-        // Transformer transformer({ input_length, context_length, inputs_dimension, context_dimension,
+        // Transformer transformer({ input_length, decoder_length, inputs_dimension, context_dimension,
         //                          depth, perceptron_depth, heads_number, number_of_layers });
 
         // transformer.set_model_type_string("TextClassification");

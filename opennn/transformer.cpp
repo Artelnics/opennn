@@ -20,7 +20,7 @@ namespace opennn
 {
 
 Transformer::Transformer(const Index& input_length,
-    const Index& context_length,
+    const Index& decoder_length,
     const Index& input_dimensions_xxx,
     const Index& context_dimension_xxx,
     const Index& embedding_dimension,
@@ -29,7 +29,7 @@ Transformer::Transformer(const Index& input_length,
     const Index& layers_number)
 {
     set(input_length,
-        context_length,
+        decoder_length,
         input_dimensions_xxx,
         context_dimension_xxx,
         embedding_dimension,
@@ -52,7 +52,7 @@ void Transformer::set(const Index& new_input_length,
 
     layers.clear();
     
-    input_names.resize(input_length + context_length);
+    input_names.resize(input_length + decoder_length);
 
     // Embedding Layers
 
@@ -272,7 +272,7 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
 
 //     const Index batch_samples_number = 1;
 
-//     Tensor<type, 2> context(batch_samples_number, context_length);
+//     Tensor<type, 2> context(batch_samples_number, decoder_length);
 //     context.setZero();
 //     context(0) = start_indicator;
 
@@ -286,7 +286,7 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
 
 //     ForwardPropagation forward_propagation(batch_samples_number, this);
 
-//     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
+//     const pair<type*, dimensions> context_pair(context.data(), { 1, decoder_length });
 //     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
 //     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
@@ -341,7 +341,7 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
 
     const Index samples_number = 1;
 
-    Tensor<type, 2> context(samples_number, context_length);
+    Tensor<type, 2> context(samples_number, decoder_length);
     context.setZero();
 
     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
@@ -355,7 +355,7 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const pair<type*, dimensions> context_pair(context.data(), { samples_number, context_length });
+    const pair<type*, dimensions> context_pair(context.data(), { samples_number, decoder_length });
     const pair<type*, dimensions> input_pair(input.data(), { samples_number, input_length });
 
     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
@@ -426,7 +426,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
 //     bool line_ended = false;
 
-//     for(Index j = 0; j < context_length - 1; j++)
+//     for(Index j = 0; j < decoder_length - 1; j++)
 //     {
 //         if(j < context_tokens.size())
 //         {
@@ -438,7 +438,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //         }
 //         else
 //         {
-//             if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
+//             if(j == context_tokens.size() || (j == decoder_length - 2 && !line_ended))
 //             {
 //                 context(j + 1) = 2; // end indicator
 //                 line_ended = true;
@@ -469,9 +469,9 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     auto wordpiece_entry = context_vocabulary_map.find("");
     bool tokenized;
 
-    for(Index j = 0; j < context_length - 1; j++)
+    for(Index j = 0; j < decoder_length - 1; j++)
     {
-        if(j < Index(context_tokens.size()) && token_counter < context_length - 1)
+        if(j < Index(context_tokens.size()) && token_counter < decoder_length - 1)
         {
             word = context_tokens[j];
 
@@ -487,7 +487,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
             for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
             {
-                if(token_counter == context_length - 1)
+                if(token_counter == decoder_length - 1)
                 {
                     tokenized = true;
                     break;
@@ -519,7 +519,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         else
         {
             if(j == Index(context_tokens.size())
-            || (token_counter == context_length - 1 && !line_ended))
+            || (token_counter == decoder_length - 1 && !line_ended))
             {
                 context(token_counter++) = 3; // end indicator
                 line_ended = true;

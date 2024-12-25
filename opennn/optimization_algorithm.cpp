@@ -10,6 +10,8 @@
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
 #include "unscaling_layer.h"
+#include "language_data_set.h"
+#include "transformer.h"
 
 namespace opennn
 {
@@ -306,6 +308,30 @@ void OptimizationAlgorithm::set_unscaling()
     // if(neural_network->has(Layer::Type::Unscaling))
     //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
+}
+
+
+void OptimizationAlgorithm::set_vocabularies()
+{
+    DataSet* data_set = loss_index->get_data_set();
+
+    if(!is_instance_of<LanguageDataSet>(data_set))
+        return;
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(!is_instance_of<Transformer>(neural_network))
+        return;
+
+    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+    const unordered_map<string, Index>& input_vocabulary = language_data_set->get_input_vocabulary();
+    const unordered_map<string, Index>& target_vocabulary = language_data_set->get_target_vocabulary();
+
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+
+    transformer->set_input_vocabulary(input_vocabulary);
+    transformer->set_output_vocabulary(target_vocabulary);
 }
 
 

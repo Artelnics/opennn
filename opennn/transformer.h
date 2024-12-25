@@ -19,7 +19,7 @@ class Transformer : public NeuralNetwork
 public:
 
     Transformer(const Index& input_length = 0,
-                const Index& context_length = 0,
+                const Index& decoder_length = 0,
                 const Index& input_dimensions = 0,
                 const Index& context_dimension = 0,
                 const Index& embedding_dimension = 0,
@@ -28,7 +28,7 @@ public:
                 const Index& layers_number = 0);
 
     void set(const Index& input_length = 0,
-             const Index& context_length = 0,
+             const Index& decoder_length = 0,
              const Index& input_dimensions = 0,
              const Index& context_dimension = 0,
              const Index& embedding_dimension = 0,
@@ -51,7 +51,7 @@ private:
 
     Index input_length = 0;
 
-    Index context_length = 0;
+    Index decoder_length = 0;
 
     type dropout_rate = 0;
 

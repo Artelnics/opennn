@@ -73,25 +73,25 @@ void LanguageDataSet::set_data_random()
 /*
     data_path.clear();
 
-    set(batch_samples_number, context_length + 2 * completion_length);
+    set(batch_samples_number, decoder_length + 2 * completion_length);
 
     for(Index i = 0; i < batch_samples_number; i++)
     {
-        for(Index j = 0; j < context_length; j++)
+        for(Index j = 0; j < decoder_length; j++)
             data(i, j) = type(rand() % context_dimension);
 
         for(Index j = 0; j < 2 * completion_length; j++)
-            data(i, j + context_length) = type(rand() % completion_dimension);
+            data(i, j + decoder_length) = type(rand() % completion_dimension);
     }
 
-    for(Index i = 0; i < context_length; i++)
+    for(Index i = 0; i < decoder_length; i++)
         set_raw_variable_use(i, DataSet::VariableUse::Decoder);
 
     for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+        set_raw_variable_use(i + decoder_length, DataSet::VariableUse::Input);
 
     for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + context_length + completion_length, DataSet::VariableUse::Target);
+        set_raw_variable_use(i + decoder_length + completion_length, DataSet::VariableUse::Target);
 */
 }
 
