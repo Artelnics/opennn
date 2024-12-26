@@ -45,39 +45,6 @@ void Descriptives::set(const type& new_minimum, const type& new_maximum,
 }
 
 
-void Descriptives::set_minimum(const type& new_minimum)
-{
-    minimum = new_minimum;
-}
-
-
-void Descriptives::set_maximum(const type& new_maximum)
-{
-    maximum = new_maximum;
-}
-
-
-void Descriptives::set_mean(const type& new_mean)
-{
-    mean = new_mean;
-}
-
-
-void Descriptives::set_standard_deviation(const type& new_standard_deviation)
-{
-    standard_deviation = new_standard_deviation;
-}
-
-
-// Tensor<type, 1> Descriptives::to_vector() const
-// {
-//     Tensor<type, 1> statistics_vector(4);
-//     statistics_vector.setValues({ minimum, maximum, mean, standard_deviation });
-
-//     return statistics_vector;
-// }
-
-
 void Descriptives::print(const string& title) const
 {
     cout << title << endl
@@ -1230,17 +1197,17 @@ Histogram histogram(const Tensor<bool, 1>& v)
 }
 
 
-Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
-{
-    const Index histograms_number = histograms.size();
+//Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
+//{
+//    const Index histograms_number = histograms.size();
 
-    Tensor<Index, 1> total_frequencies(histograms_number);
+//    Tensor<Index, 1> total_frequencies(histograms_number);
 
-    for(Index i = 0; i < histograms_number; i++)
-        total_frequencies(i) = histograms(i).frequencies(i);
+//    for(Index i = 0; i < histograms_number; i++)
+//        total_frequencies(i) = histograms(i).frequencies(i);
 
-    return total_frequencies;
-}
+//    return total_frequencies;
+//}
 
 
 Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)

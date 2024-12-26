@@ -25,7 +25,7 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
     data_path = new_data_path;
     separator = DataSet::Separator::Tab;
 
-    read_txt();
+    read_csv();
 //    set_raw_variable_scalers(Scaler::None);
 
 //    target_dimensions = {get_target_length(), get_target_vocabulary_size()};
@@ -33,13 +33,13 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
 }
 
 
-const vector<string>& LanguageDataSet::get_input_vocabulary() const
+const unordered_map<string, Index>& LanguageDataSet::get_input_vocabulary() const
 {
     return input_vocabulary;
 }
 
 
-const vector<string>& LanguageDataSet::get_target_vocabulary() const
+const unordered_map<string, Index>& LanguageDataSet::get_target_vocabulary() const
 {
     return target_vocabulary;
 }
@@ -56,52 +56,13 @@ Index LanguageDataSet::get_target_vocabulary_size() const
 }
 
 
-Index LanguageDataSet::get_input_length() const
-{
-    return maximum_input_length + 2;
-}
-
-
-Index LanguageDataSet::get_target_length() const
-{
-    // return maximum_completion_length + 2;
-    return maximum_target_length + 1;
-}
-
-
-void LanguageDataSet::set_default_raw_variables_uses()
-{
-    DataSet::set_default_raw_variables_uses();
-
-    if(raw_variables.size() > 1)
-        input_dimensions.resize(1);
-}
-
-
-void LanguageDataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses)
-{
-    DataSet::set_raw_variable_uses(new_raw_variables_uses);
-
-    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
-}
-
-
-void LanguageDataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses)
-{
-    DataSet::set_raw_variable_uses(new_raw_variables_uses);
-
-    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
-}
-
-
-
-void LanguageDataSet::set_input_vocabulary(const vector<string> & new_input_vocabulary)
+void LanguageDataSet::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void LanguageDataSet::set_target_vocabulary(const vector<string> & new_target_vocabulary)
+void LanguageDataSet::set_target_vocabulary(const unordered_map<string, Index>& new_target_vocabulary)
 {
     target_vocabulary = new_target_vocabulary;
 }
@@ -112,34 +73,26 @@ void LanguageDataSet::set_data_random()
 /*
     data_path.clear();
 
-    set(batch_samples_number, context_length + 2 * completion_length);
+    set(batch_samples_number, decoder_length + 2 * completion_length);
 
     for(Index i = 0; i < batch_samples_number; i++)
     {
-        for(Index j = 0; j < context_length; j++)
+        for(Index j = 0; j < decoder_length; j++)
             data(i, j) = type(rand() % context_dimension);
 
         for(Index j = 0; j < 2 * completion_length; j++)
-            data(i, j + context_length) = type(rand() % completion_dimension);
+            data(i, j + decoder_length) = type(rand() % completion_dimension);
     }
 
-    for(Index i = 0; i < context_length; i++)
-        set_raw_variable_use(i, DataSet::VariableUse::Context);
+    for(Index i = 0; i < decoder_length; i++)
+        set_raw_variable_use(i, DataSet::VariableUse::Decoder);
 
     for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + context_length, DataSet::VariableUse::Input);
+        set_raw_variable_use(i + decoder_length, DataSet::VariableUse::Input);
 
     for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + context_length + completion_length, DataSet::VariableUse::Target);
+        set_raw_variable_use(i + decoder_length + completion_length, DataSet::VariableUse::Target);
 */
-}
-
-
-void LanguageDataSet::set_default()
-{
-    DataSet::set_default();
-
-    input_dimensions = { get_variables_number(DataSet::VariableUse::Context) };
 }
 
 
@@ -183,179 +136,36 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     // Samples id
 
     if(has_sample_ids)
-    {
-        const Index rows_labels_number = sample_ids.size();
-
-        printer.OpenElement("HasSamplesId");
-
-        buffer.str("");
-
-        for(Index i = 0; i < rows_labels_number; i++)
-        {
-            buffer << sample_ids[i];
-
-            if(i != rows_labels_number-1) buffer << ",";
-        }
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-    }
+        add_xml_element(printer, "SampleIds", vector_to_string(sample_ids));
 
     // Samples
 
     printer.OpenElement("Samples");
-
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-
-    // Samples uses
-
-    {
-        printer.OpenElement("SamplesUses");
-
-        buffer.str("");
-
-        const Index samples_number = get_samples_number();
-
-        for(Index i = 0; i < samples_number; i++)
-        {
-            SampleUse sample_use = sample_uses[i];
-
-            buffer << Index(sample_use);
-
-            if(i < (samples_number-1)) buffer << " ";
-        }
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-    }
-
-    // Close samples
-
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();
-
-    // Missing values
 
     printer.OpenElement("MissingValues");
-
-    // Missing values method
-
-    {
-        printer.OpenElement("MissingValuesMethod");
-
-        if(missing_values_method == MissingValuesMethod::Mean)
-            printer.PushText("Mean");
-        else if(missing_values_method == MissingValuesMethod::Median)
-            printer.PushText("Median");
-        else if(missing_values_method == MissingValuesMethod::Unuse)
-            printer.PushText("Unuse");
-        else if(missing_values_method == MissingValuesMethod::Interpolation)
-            printer.PushText("Interpolation");
-
-        printer.CloseElement();
-    }
-
-    // Missing values number
-
+    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
-    if(missing_values_number > 0)
+    if (missing_values_number > 0)
     {
-        // Raw variables missing values number
-        {
-            printer.OpenElement("RawVariablesMissingValuesNumber");
-
-            buffer.str("");
-
-            for(Index i = 0; i < raw_variables_number; i++)
-            {
-                buffer << raw_variables_missing_values_number(i);
-
-                if(i != raw_variables_number - 1) buffer << " ";
-            }
-
-            printer.PushText(buffer.str().c_str());
-
-            printer.CloseElement();
-        }
-
-        // Rows missing values number
-        {
-            printer.OpenElement("RowsMissingValuesNumber");
-
-            buffer.str("");
-            buffer << rows_missing_values_number;
-
-            printer.PushText(buffer.str().c_str());
-
-            printer.CloseElement();
-        }
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
-
-    // Missing values
 
     printer.CloseElement();
 
-    // Preview data
+    printer.OpenElement("MissingValues");
+    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
+    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
-    printer.OpenElement("PreviewData");
-
-    printer.OpenElement("PreviewSize");
-
-    buffer.str("");
-
-    if(model_type != ModelType::TextClassification)
+    if (missing_values_number > 0)
     {
-        buffer << data_file_preview.size();
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Row");
-
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-
-            for(size_t j = 0; j < data_file_preview[i].size(); j++)
-            {
-                printer.PushText(data_file_preview[i][j].c_str());
-
-                if(j != data_file_preview[i].size()-1)
-                    printer.PushText(",");
-            }
-
-            printer.CloseElement();
-        }
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
-    else
-    {
-        buffer << data_file_preview.size();
-
-        printer.PushText(buffer.str().c_str());
-
-        printer.CloseElement();
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Row");
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-            printer.PushText(data_file_preview[i][0].c_str());
-            printer.CloseElement();
-        }
-
-        for(size_t i = 0; i < data_file_preview.size(); i++)
-        {
-            printer.OpenElement("Target");
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-            printer.PushText(data_file_preview[i][1].c_str());
-            printer.CloseElement();
-        }
-    }
-
-    // Close preview data
 
     printer.CloseElement();
 
@@ -363,16 +173,16 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("TargetVocabulary");
 
-    for (const auto& word : target_vocabulary) 
-        add_xml_element(printer, "Word", word);
+//    for (const auto& word : target_vocabulary)
+//        add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
 
-    // Context Vocabulary
-    printer.OpenElement("ContextVocabulary");
+    // Decoder Vocabulary
+    printer.OpenElement("DecoderVocabulary");
 
-    for (const auto& word : input_vocabulary) 
-        add_xml_element(printer, "Word", word);
+//    for (const auto& word : input_vocabulary)
+//        add_xml_element(printer, "Word", word);
 
     printer.CloseElement();
 
@@ -481,7 +291,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Samples uses
 
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");
@@ -624,531 +434,40 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
         target_vocabulary.clear();
         for (const XMLElement* word_element = completion_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
-            if (word_element->GetText())
-                target_vocabulary.push_back(word_element->GetText());
+//            if (word_element->GetText())
+//                target_vocabulary.push_back(word_element->GetText());
         }
     }
 
-    // Context Vocabulary
+    // Decoder Vocabulary
 
-    const XMLElement* context_vocabulary_element = data_set_element->FirstChildElement("ContextVocabulary");
+    const XMLElement* context_vocabulary_element = data_set_element->FirstChildElement("DecoderVocabulary");
     if(context_vocabulary_element)
     {
         input_vocabulary.clear();
 
         for (const XMLElement* word_element = context_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
-            if (word_element->GetText())
-                input_vocabulary.push_back(word_element->GetText());
+//            if (word_element->GetText())
+//                input_vocabulary.push_back(word_element->GetText());
         }
     }
 
-    // Context Dimensions
+    // Decoder Dimensions
 
     const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
     if (completion_dimensions_element && completion_dimensions_element->GetText())
         maximum_target_length = atoi(completion_dimensions_element->GetText());
 
-    // Context Dimensions
+    // Decoder Dimensions
 
-    const XMLElement* context_dimensions_element = data_set_element->FirstChildElement("ContextDimensions");
-    if (context_dimensions_element && context_dimensions_element->GetText()) {
-        maximum_input_length = atoi(context_dimensions_element->GetText());
-    }
+    const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
+    if (decoder_dimensions_element && decoder_dimensions_element->GetText())
+        maximum_input_length = atoi(decoder_dimensions_element->GetText());
 
     // Display
 
     // set_display(read_xml_bool(data_set_element, "Display"));
-}
-
-
-/*
-void LanguageDataSet::save_vocabulary(const filesystem::path& path, const vector<string>& vocabulary)
-{
-    ofstream file(path.c_str());
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file to save vocabulary: " + path.string() + "\n");
-
-    for (const auto& word : vocabulary)
-        file << word << '\n';
-
-    file.close();
-}
-*/
-
-
-
-void LanguageDataSet::import_vocabulary(const filesystem::path& path, 
-                                        vector<string>& vocabulary)
-{
-    ifstream file(path.c_str());
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open vocabulary file: " + path.string() + "\n");
-
-    Index vocabulary_size = 0;
-
-    string line;
-
-    while(getline(file, line))
-    {
-        if(line.empty()) continue;
-
-        vocabulary_size++;
-    }
-
-    file.clear();
-    file.seekg(0, ios::beg);
-
-    vocabulary.resize(vocabulary_size);
-
-    Index count = 0;
-
-    while(getline(file, line))
-    {
-        if(line.empty()) continue;
-
-        vocabulary[count++] = line;
-    }
-}
-
-
-/*
-void LanguageDataSet::save_lengths(const filesystem::path& path, const Index& input_length, const Index& context_length)
-{
-    ofstream file(path.c_str());
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file to export lengths: " + path.string() + "\n");
-
-    file << input_length << '\n';
-    file << context_length << '\n';
-
-    file.close();
-}
-*/
-
-
-void LanguageDataSet::import_lengths(const filesystem::path& path, Index& input_length, Index& context_length)
-{
-    ifstream file(path.c_str());
-
-    if (!file.is_open())
-        throw runtime_error("Cannot open file to import lengths: " + path.string() + "\n");
-
-    file >> input_length
-         >> context_length;
-
-    file.close();
-}
-
-
-struct WordpieceAlgorithmParameters
-{
-    Index upper_threshold = 0;
-    Index lower_threshold = 0;
-    Index iterations_number = 0;
-    Index max_input_tokens = 0;
-    Index max_token_length = 0;
-    Index max_unique_characters = 0;
-    Index vocabulary_size = 0;
-    float slack_ratio = 0;
-    bool include_joiner_token = false;
-    string joiner;
-    vector<string> reserved_tokens;
-};
-
-
-set<char> extract_character_tokens(const vector<pair<string, Index>>& word_counts)
-{
-    set<char> seen_chars;
-
-    for(const auto& [word, _] : word_counts)
-        for(char c : word)
-            seen_chars.insert(c);
-
-    return seen_chars;
-}
-
-
-map<string, int> ensure_all_tokens_exist(const set<string>& input_tokens,
-                                         map<string, int> output_tokens,
-                                         const bool& include_joiner_token,
-                                         const string& joiner)
-{
-    for(const string& token : input_tokens)
-    {
-        if(output_tokens.find(token) == output_tokens.end())
-            output_tokens[token] = 1;
-
-        if(include_joiner_token)
-        {
-            const string joined_token = joiner + token;
-
-            if(output_tokens.find(joined_token) == output_tokens.end())
-                output_tokens[joined_token] = 1;
-        }
-    }
-
-    return output_tokens;
-}
-
-
-vector<int> get_split_indices(const string& word,
-                              const map<string, int>& current_tokens,
-                              const bool& include_joiner_token,
-                              const string& joiner)
-{
-    vector<int> indices;
-    size_t start = 0;
-
-    while(start < word.size())
-    {
-        size_t end = word.size();
-
-        while(end > start)
-        {
-            string subtoken = word.substr(start, end - start);
-
-            if(include_joiner_token && start > 0)
-                subtoken.insert(0, joiner);
-
-            if(current_tokens.find(subtoken) != current_tokens.end())
-            {
-                indices.push_back(end);
-                break;
-            }
-
-            end--;
-        }
-
-        if(end == start)
-            return {};
-
-        start = end;
-    }
-
-    return indices;
-}
-
-
-tuple<Index, Index> calculate_thresholds(const vector<pair<string, Index>>& word_counts, 
-                                         const Index& upper_threshold, 
-                                         const Index& lower_threshold)
-{
-    vector<int> counts;
-
-    for(const auto& [_, count] : word_counts)
-        counts.push_back(count);
-
-    const Index max_count = *max_element(counts.begin(), counts.end());
-    const Index min_count = *min_element(counts.begin(), counts.end());
-
-    const Index upper_search = upper_threshold == -1 
-        ? max_count 
-        : min(upper_threshold, max_count);
-
-    const Index lower_search = lower_threshold == -1 
-        ? min_count 
-        : max(lower_threshold, min_count);
-
-    return { upper_search, lower_search };
-}
-
-
-// @todo move to strings utilities?
-
-vector<pair<string, Index>> trim_inputs(const vector<pair<string, Index>>& word_counts,
-                                        const vector<string>& reserved_tokens,
-                                        const Index& max_token_length)
-{
-    vector<pair<string, Index>> trimmed_counts;
-
-    for(const auto& [word, count] : word_counts)
-    {
-        if(word.size() > max_token_length
-        || find(reserved_tokens.begin(), reserved_tokens.end(), word) != reserved_tokens.end())
-            continue;
-
-        trimmed_counts.push_back({ word, count });
-    }
-
-    return trimmed_counts;
-}
-
-
-set<char> get_allowed_characters(const vector<pair<string, Index>>& trimmed_counts, 
-                                 const Index& max_unique_characters)
-{
-    map<char, Index> character_counts;
-
-    for(const auto& [word, count] : trimmed_counts)
-        for(char c : word)
-            character_counts[c] += count;
-
-    vector<pair<char, Index>> sorted_counts(character_counts.begin(), character_counts.end());
-
-    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<char, Index>& a, const pair<char, Index>& b)
-    {
-        if(a.second != b.second)
-            return a.second > b.second;
-
-        return a.first < b.first;
-    });
-
-    set<char> allowed_characters;
-
-    for(int i = 0; i < min((Index)sorted_counts.size(), max_unique_characters); i++)
-        allowed_characters.insert(sorted_counts[i].first);
-
-    return allowed_characters;
-}
-
-
-vector<pair<string, Index>> filter_inputs(const vector<pair<string, Index>>& trimmed_counts, 
-                                          const set<char>& allowed_characters, 
-                                          const Index& max_input_tokens)
-{
-    vector<pair<string, Index>> sorted_counts = trimmed_counts;
-
-    sort(sorted_counts.begin(), sorted_counts.end(), [](const pair<string, Index>& a, const pair<string, Index>& b)
-    {
-        return a.second > b.second;
-    });
-
-    vector<pair<string, Index>> filtered_counts;
-
-    for(const auto& [word, count] : sorted_counts)
-    {
-        if(max_input_tokens != -1 && filtered_counts.size() >= max_input_tokens)    
-            break;
-
-        bool has_unallowed_characters = false;
-        for(char c : word)
-        {
-            if(allowed_characters.find(c) == allowed_characters.end())
-            {
-                has_unallowed_characters = true;
-                break;
-            }
-        }
-
-        if(has_unallowed_characters)
-            continue;
-
-        filtered_counts.push_back({ word, count });
-    }
-
-    return filtered_counts;
-}
-
-
-vector<string> generate_override_vocabulary(const vector<string>& reserved_tokens,
-                                            const set<char>& character_tokens,
-                                            const map<string, int>& current_tokens)
-{
-    vector<string> vocabulary;
-    vocabulary.insert(vocabulary.end(), reserved_tokens.begin(), reserved_tokens.end());
-
-    vector<string> sorted_character_tokens;
-    for(const char ch : character_tokens)
-        sorted_character_tokens.push_back(string(1, ch));
-
-    sort(sorted_character_tokens.begin(), sorted_character_tokens.end());
-    vocabulary.insert(vocabulary.end(), sorted_character_tokens.begin(), sorted_character_tokens.end());
-
-    vector<pair<string, int>> sorted_tokens(current_tokens.begin(), current_tokens.end());
-    sort(sorted_tokens.begin(), sorted_tokens.end(), [](const pair<string, int>& a, const pair<string, int>& b)
-         {
-             if(a.second != b.second)    return a.second > b.second;
-             return a.first < b.first;
-         }
-         );
-
-    for(const auto& [token, _] : sorted_tokens)
-        vocabulary.push_back(token);
-
-    set<string> seen_tokens;
-    vector<string> override_vocabulary;
-
-    for(const string& word : vocabulary)
-    {
-        if(seen_tokens.find(word) == seen_tokens.end())
-        {
-            seen_tokens.insert(word);
-            override_vocabulary.push_back(word);
-        }
-    }
-
-    return override_vocabulary;
-}
-
-
-vector<string> calculate_vocabulary_with_threshold(const vector<pair<string, Index>>& word_counts,
-                                                   const Index& threshold,
-                                                   const WordpieceAlgorithmParameters& parameters)
-{
-    const set<char> character_tokens = extract_character_tokens(word_counts);
-
-    set<string> string_tokens;
-
-    for(const char ch : character_tokens)
-        string_tokens.insert(string(1, ch));
-
-    map<string, int> current_tokens = ensure_all_tokens_exist(string_tokens, map<string, int>(), parameters.include_joiner_token, parameters.joiner);
-
-    for(int iteration = 0; iteration < parameters.iterations_number; ++iteration)
-    {
-        vector<map<string, int>> subtokens(parameters.max_token_length + 1);
-
-        for(const auto& [word, count] : word_counts)
-        {
-            vector<int> split_indices;
-
-            if(iteration == 0)
-            {
-                split_indices = vector<int>(word.size());
-                
-                iota(split_indices.begin(), split_indices.end(), 1);
-            }
-            else
-            {
-                split_indices = get_split_indices(word, current_tokens, parameters.include_joiner_token, parameters.joiner);
-                
-                if(split_indices.empty())
-                    continue;
-            }
-
-            size_t start = 0;
-
-            for(int split_index : split_indices)
-            {
-                for(size_t end = start + 1; end <= word.size(); ++end)
-                {
-                    string subtoken = word.substr(start, end - start);
-                    const Index length = subtoken.size();
-
-                    if(parameters.include_joiner_token && start > 0)
-                        subtoken = parameters.joiner + subtoken;
-
-                    subtokens[length][subtoken] += count;
-                }
-
-                start = split_index;
-            }
-        }
-
-        map<string, int> next_tokens;
-
-        for(size_t length = parameters.max_token_length; length > 0; --length)
-        {
-            for(const auto& [token, count] : subtokens[length])
-            {
-                if(count >= threshold)
-                    next_tokens[token] = count;
-
-                if(token.size() > length)
-                {
-                    const size_t joiner_length = parameters.joiner.size();
-
-                    for(size_t i = 1 + joiner_length; i <= length + joiner_length; i++)
-                    {
-                        const string prefix = token.substr(0, i);
-
-                        if(subtokens[i - joiner_length].find(prefix) != subtokens[i - joiner_length].end())
-                            subtokens[i - joiner_length][prefix] -= count;
-                    }
-                }
-                else
-                {
-                    for(size_t i = 1; i < length; i++)
-                    {
-                        const string prefix = token.substr(0, i);
-
-                        if(subtokens[i].find(prefix) != subtokens[i].end())
-                            subtokens[i][prefix] -= count;
-                    }
-                }
-            }
-        }
-
-        current_tokens = ensure_all_tokens_exist(string_tokens, next_tokens, parameters.include_joiner_token, parameters.joiner);
-    }
-
-    return generate_override_vocabulary(parameters.reserved_tokens, character_tokens, current_tokens);
-}
-
-
-vector<string> calculate_vocabulary_binary_search(const vector<pair<string, Index>>& word_counts,
-                                                  const Index& lower_bound,
-                                                  const Index& upper_bound,
-                                                  const WordpieceAlgorithmParameters& parameters)
-{
-    const int threshold = (upper_bound + lower_bound) / 2;
-
-    const vector<string> current_vocabulary = calculate_vocabulary_with_threshold(word_counts, 
-                                                                                  threshold, 
-                                                                                  parameters);
-
-    const Index current_vocabulary_size = current_vocabulary.size();
-
-    const Index slack = max(0, int(parameters.slack_ratio * parameters.vocabulary_size));
-
-    const bool is_within_slack = current_vocabulary_size <= parameters.vocabulary_size 
-                              && parameters.vocabulary_size - current_vocabulary_size <= slack;
-
-    if(is_within_slack || lower_bound >= upper_bound || threshold <= 1)
-        return current_vocabulary;
-
-    if(current_vocabulary_size > parameters.vocabulary_size)
-        return calculate_vocabulary_binary_search(word_counts, threshold + 1, upper_bound, parameters);
-    else
-        return calculate_vocabulary_binary_search(word_counts, lower_bound, threshold - 1, parameters);
-}
-
-
-vector<string> LanguageDataSet::create_vocabulary(const vector<vector<string>>& tokens,
-                                                  const Index& vocabulary_size,
-                                                  const Index& upper_threshold,
-                                                  const Index& lower_threshold,
-                                                  const Index& iterations_number,
-                                                  const Index& max_input_tokens,
-                                                  const Index& max_token_length,
-                                                  const Index& max_unique_characters,
-                                                  const float& slack_ratio,
-                                                  const bool& include_joiner_token,
-                                                  const string& joiner)
-{
-    
-    const vector<string> total_tokens = tokens_list(tokens);
-    
-    const vector<pair<string, Index>> word_counts = count_words(total_tokens);
-    
-    const auto [upper_search, lower_search] = calculate_thresholds(word_counts, 
-                                                                   upper_threshold, 
-                                                                   lower_threshold);
-
-    const vector<pair<string, Index>> trimmed_counts = trim_inputs(word_counts, 
-                                                                   reserved_tokens, 
-                                                                   max_token_length);
-
-    const std::set<char> allowed_characters = get_allowed_characters(trimmed_counts, 
-                                                                     max_unique_characters);
-
-    const vector<pair<string, Index>> filtered_counts = filter_inputs(trimmed_counts, 
-                                                                      allowed_characters, 
-                                                                      max_input_tokens);
-
-/*
-    const vector<string> vocabulary = calculate_vocabulary_binary_search(filtered_counts, 
-                                                                         lower_search, 
-                                                                         upper_search, 
-                                                                         parameters);
-
-    return vocabulary;
-*/
-    return vector<string>();
 }
 
 
@@ -1175,7 +494,7 @@ Index LanguageDataSet::count_non_empty_lines() const
 }
 
 
-void LanguageDataSet::read_txt()
+void LanguageDataSet::read_csv()
 {
     cout << "Reading .txt file..." << endl;
 
@@ -1188,11 +507,10 @@ void LanguageDataSet::read_txt()
 
     string line;
 
-    string input_document;
-    string target_document;
+    vector<string> tokens;
 
-    vector<vector<string>> input_tokens(samples_number);
-    vector<vector<string>> target_tokens(samples_number);
+    vector<vector<string>> input_documents_tokens(samples_number);
+    vector<vector<string>> target_documents_tokens(samples_number);
 
     const string separator_string = get_separator_string();
 
@@ -1202,262 +520,85 @@ void LanguageDataSet::read_txt()
     {
         if (line.empty()) continue;
 
-        vector<string> tokens = get_tokens(line, separator_string);
+        tokens = get_tokens(line, separator_string);
 
-        const Index tokens_number = tokens.size();
-
-        if (tokens_number != 2)
+        if (tokens.size() != 2)
             throw runtime_error("Tokens number must be two.");
 
-        to_lower(tokens);
-        split_punctuation(tokens);
-        delete_extra_spaces(tokens);
-        delete_non_printable_chars(tokens);
-        delete_non_alphanumeric(tokens);
-
-        input_tokens[sample_index] = get_tokens(tokens[0], " ");
-        target_tokens[sample_index] = get_tokens(tokens[1], " ");
+        input_documents_tokens[sample_index] = tokenize(tokens[0]);
+        target_documents_tokens[sample_index] = tokenize(tokens[1]);
 
         sample_index++;
     }
 
-    cout << "Calculating vocabularies..." << endl;
+    maximum_input_length = get_maximum_size(input_documents_tokens);
+    maximum_target_length = get_maximum_size(target_documents_tokens);
 
-    input_vocabulary = create_vocabulary(input_tokens);
-    target_vocabulary = create_vocabulary(target_tokens);
-    // completion_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "Good", "Bad"};
-    // completion_vocabulary = {"[START]", "[END]", "Good", "Bad"};
+    input_vocabulary = create_vocabulary(input_documents_tokens);
+    target_vocabulary = create_vocabulary(target_documents_tokens);
 
-    constexpr size_t LIMIT = 126;
+    input_documents_tokens.clear();
+    target_documents_tokens.clear();
 
-    maximum_input_length = min(get_maximum_size(input_tokens), LIMIT);
-    maximum_target_length = min(get_maximum_size(target_tokens), LIMIT + 1);
+    const Index input_variables_number = maximum_input_length;
+    const Index decoder_variables_number = maximum_target_length - 1;
+    const Index target_variables_number = maximum_target_length - 1;
+    const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
-    // Output
-    
- /*
-    write_data_file_wordpiece(file, input_tokens, target_tokens);
-    
-    file.close();
+    data.resize(samples_number, variables_number);
+    data.setZero();
 
-    data_path = transformed_data_path;
-        
-    set_raw_variable_types(RawVariableType::Numeric);
+    for(Index i = 0; i < input_variables_number; i++)
+        set_raw_variable_use(i, VariableUse::Input);
 
-    for(Index i = 0; i < maximum_input_length + 2; i++)
-        set_raw_variable_use(i, VariableUse::Context);
+    for (Index i = input_variables_number; i < input_variables_number + decoder_variables_number; i++)
+        set_raw_variable_use(i, VariableUse::Decoder);
 
-    for (Index i = 0; i < maximum_target_length + 1; i++)
-        set_raw_variable_use(i + maximum_input_length + 2, VariableUse::Input);
+    for (Index i = input_variables_number + decoder_variables_number; i < variables_number; i++)
+        set_raw_variable_use(i, VariableUse::Target);
 
-    for (Index i = 0; i < maximum_target_length + 1; i++)
-        set_raw_variable_use(i + maximum_input_length + maximum_target_length + 3, VariableUse::Target);
-*/
-}
+    Index column_index = 0;
 
-
-void LanguageDataSet::write_data_file_wordpiece(ofstream& file,
-                                                const vector<vector<string>>& context_tokens,
-                                                const vector<vector<string>>& completion_tokens)
-{
-    const Index entry_number = context_tokens.size();
-/*
-    //const unordered_map<string, type> context_vocabulary_map(context_vocabulary.begin(), context_vocabulary.end());
-    //const unordered_map<string, type> completion_vocabulary_map(completion_vocabulary.begin(), completion_vocabulary.end());
-
-    unordered_map<string, type> context_vocabulary_map;
-    for(size_t i = 0; i < input_vocabulary.size(); i++)
-         context_vocabulary_map[input_vocabulary[i]] = type(i);
-
-    unordered_map<string, type> target_vocabulary_map;
-    for(size_t i = 0; i < target_vocabulary.size(); i++)
-         target_vocabulary_map[target_vocabulary[i]] = type(i);
-
-    //    const Index context_vocabulary_size = context_vocabulary.size();
-    //    const Index completion_vocabulary_size = completion_vocabulary.size();
-
-    Tensor<type, 1> context_row(maximum_input_length + 2);
-    Tensor<type, 1> completion_row(maximum_target_length + 2);
-
-    vector<string> line_tokens;
-    Index token_counter;
-    bool line_ended;
-
-    string word;
-    string wordpiece;
-    string rest;
-
-    auto wordpiece_entry = context_vocabulary_map.find("");
-
-    bool tokenized;
-    
-    for(Index i = 0; i < entry_number; i++)
+    for (Index i = 0; i < samples_number; i++)
     {
-        // Context
+        column_index = 0;
 
-        context_row.setZero();
-        context_row(0) = 2; // start indicator
+        const vector<string>& input_document_tokens = input_documents_tokens[i];
+        const vector<string>& target_document_tokens = target_documents_tokens[i];
 
-        token_counter = 1;
+        // Input data
 
-        line_ended = false;
-
-        line_tokens = context_tokens[i];
-
-        for(Index j = 0; j < maximum_input_length + 1; j++)
+        for (Index j = 0; j < Index(input_document_tokens[i].size()); j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < maximum_input_length + 1)
-            {
-                word = line_tokens[j];
+            const auto iterator = input_vocabulary.find(input_document_tokens[j]);
 
-                wordpiece_entry = context_vocabulary_map.find(word);
-
-                if(wordpiece_entry != context_vocabulary_map.end())
-                {
-                    context_row(token_counter++) = wordpiece_entry->second;
-                    continue;
-                }
-
-                tokenized = false;
-
-                for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
-                {
-                    if(token_counter == maximum_input_length + 1)
-                    {
-                        tokenized = true;
-                        break;
-                    }
-
-                    wordpiece = word.substr(0, wordpiece_length);
-                    wordpiece_entry = context_vocabulary_map.find(wordpiece);
-
-                    if(wordpiece_entry != context_vocabulary_map.end())
-                    {
-                        context_row(token_counter++) = wordpiece_entry->second;
-
-                        rest = word.substr(wordpiece_length);
-
-                        if(rest.empty())
-                        {
-                            tokenized = true;
-                            break;
-                        }
-
-                        word = "##" + rest;
-                        wordpiece_length = word.length() + 1;
-                    }
-                }
-
-                if(!tokenized)
-                    context_row(token_counter++) = 1; // unknown indicator
-            }
-            else
-            {
-                // @todo max_context_length is not defined
-
-                if(token_counter > max_context_length + 1)    
-                    break;
-
-                if(j == line_tokens.size() || (token_counter == max_context_length + 1 && !line_ended))
-                {
-                    context_row(token_counter++) = 3; // end indicator
-                    line_ended = true;
-                }
-                else
-                {
-                    context_row(token_counter++) = type(0); // padding
-                }
-            }
+            iterator != input_vocabulary.end()
+                ? data(i, column_index++) = iterator->second
+                : data(i, column_index++) = 1;
         }
 
-        for(Index j = 0; j < maximum_input_length + 2; j++)
-            file << context_row(j) << ";";
+        // Decoder data
 
-        // Completion
-
-        completion_row.setZero();
-        completion_row(0) = 2; // start indicator
-
-        token_counter = 1;
-
-        line_ended = false;
-
-        line_tokens = completion_tokens[i];
-
-        for(Index j = 0; j < maximum_target_length + 1; j++)
+        for (Index j = 0; j < Index(target_document_tokens[i].size()); j++)
         {
-            if(j < Index(line_tokens.size()) && token_counter < maximum_target_length + 1)
-            {
-                word = line_tokens[j];
+            const auto iterator = input_vocabulary.find(target_document_tokens[j]);
 
-                wordpiece_entry = target_vocabulary_map.find(word);
-
-                if(wordpiece_entry != target_vocabulary_map.end())
-                {
-                    completion_row(token_counter++) = wordpiece_entry->second;
-                    continue;
-                }
-
-                tokenized = false;
-
-                for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
-                {
-                    if(token_counter == maximum_target_length + 1)
-                    {
-                        tokenized = true;
-                        break;
-                    }
-
-                    wordpiece = word.substr(0, wordpiece_length);
-                    wordpiece_entry = target_vocabulary_map.find(wordpiece);
-
-                    if(wordpiece_entry != target_vocabulary_map.end())
-                    {
-                        completion_row(token_counter++) = wordpiece_entry->second;
-
-                        rest = word.substr(wordpiece_length);
-
-                        if(rest.empty())
-                        {
-                            tokenized = true;
-                            break;
-                        }
-
-                        word = "##" + rest;
-                        wordpiece_length = word.length() + 1;
-                    }
-                }
-
-                if(!tokenized)
-                    completion_row(token_counter++) = 1; // unknown indicator
-            }
-            else
-            {
-                if(token_counter > maximum_target_length + 1)
-                    break;
-
-                if(j == Index(line_tokens.size())
-                || (token_counter == maximum_target_length + 1 && !line_ended))
-                {
-                    completion_row(token_counter++) = 3; // end indicator
-                    line_ended = true;
-                }
-                else
-                {
-                    completion_row(token_counter++) = 0; // padding
-                }
-            }
+            iterator != target_vocabulary.end() && iterator->second != 3 // [END]
+                ? data(i, column_index++) = iterator->second
+                : data(i,column_index++) = 1;
         }
 
-        for(Index j = 0; j < maximum_target_length + 1; j++)
-            file << completion_row(j) << ";";
+        // Target data
 
-        for(Index j = 1; j < maximum_target_length + 1; j++) // Target is input shifted 1 position to the left
-            file << completion_row(j) << ";";
+        for (Index j = 0; j < Index(target_document_tokens[i].size()); j++)
+        {
+            const auto iterator = input_vocabulary.find(target_document_tokens[j]);
 
-        file << completion_row(maximum_target_length + 1) << "\n";
+            iterator != target_vocabulary.end() && iterator->second != 2 // [START]
+                ? data(i, column_index++) = iterator->second
+                : data(i,column_index++) = 1;
+        }
     }
-*/
 }
 
 }

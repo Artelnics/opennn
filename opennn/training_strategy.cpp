@@ -519,9 +519,9 @@ void TrainingStrategy::fix_forecasting()
     Index batch_samples_number = 0;
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        batch_samples_number = adaptive_moment_estimation.get_batch_samples_number();
+        batch_samples_number = adaptive_moment_estimation.get_samples_number();
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        batch_samples_number = stochastic_gradient_descent.get_batch_samples_number();
+        batch_samples_number = stochastic_gradient_descent.get_samples_number();
     else
         return;
 

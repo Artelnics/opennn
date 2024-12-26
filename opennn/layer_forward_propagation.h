@@ -16,8 +16,6 @@ struct LayerForwardPropagation
 
     virtual ~LayerForwardPropagation() {}
 
-    virtual void set(const Index&, Layer*) = 0;
-
     virtual void print() const {}
 
     Index batch_samples_number = type(0);

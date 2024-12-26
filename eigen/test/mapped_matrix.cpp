@@ -75,8 +75,23 @@ void map_class_matrix(const MatrixType& m) {
   Map<MatrixType> map4(array4, rows, cols);
 
   VERIFY_IS_EQUAL(map1, MatrixType::Ones(rows, cols));
+  map1.setConstant(s1);
+  VERIFY_IS_EQUAL(map1, MatrixType::Constant(rows, cols, s1));
+  map1.setZero();
+  VERIFY_IS_EQUAL(map1, MatrixType::Zero(rows, cols));
+
   VERIFY_IS_EQUAL(map2, MatrixType::Ones(rows, cols));
+  map2.setConstant(s1);
+  VERIFY_IS_EQUAL(map2, MatrixType::Constant(rows, cols, s1));
+  map2.setZero();
+  VERIFY_IS_EQUAL(map2, MatrixType::Zero(rows, cols));
+
   VERIFY_IS_EQUAL(map3, MatrixType::Ones(rows, cols));
+  map3.setConstant(s1);
+  VERIFY_IS_EQUAL(map3, MatrixType::Constant(rows, cols, s1));
+  map3.setZero();
+  VERIFY_IS_EQUAL(map3, MatrixType::Zero(rows, cols));
+
   map1 = MatrixType::Random(rows, cols);
   map2 = map1;
   map3 = map1;

@@ -7,59 +7,10 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
-#include "tensors.h"
+//#include "tensors.h"
 
 namespace opennn
 {
-
-void fill_tokens(const string& text, const string& separator, vector<string>& tokens)
-{
-    fill(tokens.begin(), tokens.end(), "");
-
-    // Skip delimiters at beginning
-
-    string::size_type last_position = text.find_first_not_of(separator, 0);
-
-    string::size_type position = text.find_first_of(separator, last_position);
-
-    // Find first "non-delimiter"
-
-    Index index = 0;
-
-    Index old_position = last_position;
-
-    while(string::npos != position || string::npos != last_position)
-    {
-        // Found a token, add it to the vector
-
-        if(last_position - old_position != 1 && index != 0)
-        {
-            tokens[index++].clear();
-            index++;
-            old_position++;
-            continue;
-        }
-        else
-        {
-            // Found a token, add it to the vector
-
-            tokens[index] = text.substr(last_position, position - last_position);
-        }
-
-        old_position = position;
-
-        // Skip delimiters. Note the "not_of"
-
-        last_position = text.find_first_not_of(separator, position);
-
-        // Find next "non-delimiter"
-
-        position = text.find_first_of(separator, last_position);
-
-        index++;
-    }
-}
-
 
 Index count_tokens(const string& text, const string& separator)
 {
@@ -155,61 +106,6 @@ Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 }
 
 
-Tensor<Index, 1> to_index_vector(const string& text, const string& separator)
-{
-    const vector<string> tokens = get_tokens(text, separator);
-
-    const Index tokens_size = tokens.size();
-
-    Tensor<Index, 1> index_vector(tokens_size);
-
-    for(Index i = 0; i < tokens_size; i++)
-    {
-        try
-        {
-            stringstream buffer;
-
-            buffer << tokens[i];
-
-            index_vector(i) = Index(stoi(buffer.str()));
-        }
-        catch(const exception&)
-        {
-            index_vector(i) = Index(-1);
-        }
-    }
-
-    return index_vector;
-}
-
-
-vector<string> get_unique(const vector<string>& tokens)
-{
-    string result;
-
-    for(size_t i = 0; i < tokens.size(); i++)
-        if(!contains_substring(result, " " + tokens[i] + " "))
-            result += tokens[i] + " ";
-
-    return get_tokens(result, " ");
-}
-
-
-Tensor<Index, 1> count_unique(const vector<string>& tokens)
-{
-    const vector<string> unique_elements = get_unique(tokens);
-
-    const Index unique_size = unique_elements.size();
-
-    Tensor<Index, 1> unique_count(unique_size);
-
-    for(Index i = 0; i < unique_size; i++)
-        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements[i]));
-
-    return unique_count;
-}
-
-
 bool is_numeric_string(const string& text)
 {
     try
@@ -253,14 +149,6 @@ bool is_date_time_string(const string& text)
         + "^" + hour + ":" + minute + ":" + second + "$");
 
     return regex_match(text, regular_expression);
-}
-
-
-bool is_email(const string& word)
-{
-    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
-
-    return regex_match(word, pattern);
 }
 
 
@@ -315,12 +203,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     }
 
     throw runtime_error("Date format (" + date + ") is not implemented.");
-}
-
-
-bool contains_substring(const string& text, const string& sub_string)
-{
-    return text.find(sub_string) != string::npos;
 }
 
 
@@ -535,29 +417,6 @@ void erase(string& text, const char& character)
 
 string get_trimmed(const string& text)
 {
-//    string output(text);
-
-    //prefixing spaces
-
-//    output.erase(0, output.find_first_not_of(' '));
-//    output.erase(0, output.find_first_not_of('\t'));
-//    output.erase(0, output.find_first_not_of('\n'));
-//    output.erase(0, output.find_first_not_of('\r'));
-//    output.erase(0, output.find_first_not_of('\f'));
-//    output.erase(0, output.find_first_not_of('\v'));
-
-    //surfixing spaces
-
-//    output.erase(output.find_last_not_of(' ') + 1);
-//    output.erase(output.find_last_not_of('\t') + 1);
-//    output.erase(output.find_last_not_of('\n') + 1);
-//    output.erase(output.find_last_not_of('\r') + 1);
-//    output.erase(output.find_last_not_of('\f') + 1);
-//    output.erase(output.find_last_not_of('\v') + 1);
-//    output.erase(output.find_last_not_of('\b') + 1);
-
- //   return output;
-
     auto start = find_if_not(text.begin(), text.end(), ::isspace);
 
     auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
@@ -576,47 +435,6 @@ bool has_numbers(const vector<string>& string_list)
 }
 
 
-bool is_not_numeric(const vector<string>& string_list)
-{
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(is_numeric_string(string_list[i])) 
-            return false;
-
-    return true;
-}
-
-
-void delete_non_printable_chars(string& text)
-{
-    typedef ctype<wchar_t> ctype;
-
-    const ctype& ct = use_facet<ctype>(locale());
-
-    text.erase(remove_if(text.begin(),
-                         text.end(),
-                         [&ct](wchar_t ch) {return !ct.is(ctype::print, ch);}),
-                         text.end());
-}
-
-
-void replace_substring(vector<string>& data, const string& find_what, const string& replace_with)
-{
-    const Index size = data.size();
-
-    for(Index i = 0; i < size; i++)
-    {
-        size_t position = 0;
-
-        while((position = data[i].find(find_what, position)) != string::npos)
-        {
-            data[i].replace(position, find_what.length(), replace_with);
-
-            position += replace_with.length();
-        }
-    }
-}
-
-
 void replace(string& source, const string& find_what, const string& replace_with)
 {
     size_t position = 0;
@@ -627,12 +445,6 @@ void replace(string& source, const string& find_what, const string& replace_with
 
         position += replace_with.length();
     }
-}
-
-
-bool is_not_alnum(char &c)
-{
-    return (c < ' ' || c > '~');
 }
 
 
@@ -766,180 +578,6 @@ void display_progress_bar(const int& completed, const int& total)
     cout << "] " << int(progress * 100.0) << " %\r";
 
     cout.flush();
-}
-
-
-Index count_tokens(const vector<vector<string>>& tokens)
-{
-    const Index documents_number = tokens.size();
-
-    Index count = 0;
-
-    for(Index i = 0; i < documents_number; i++)
-        count += tokens[i].size();
-
-    return count;
-}
-
-
-vector<string> tokens_list(const vector<vector<string>>& document_tokens)
-{
-    const Index total_tokens_number = count_tokens(document_tokens);
-
-    vector<string> total_tokens(total_tokens_number);
-
-    Index position = 0;
-
-    for (const auto& tokens : document_tokens)
-        for (const auto& token : tokens)
-            total_tokens[position++] = token;
-
-    return total_tokens;
-}
-
-
-void to_lower(string& text)
-{
-    transform(text.begin(), text.end(), text.begin(), ::tolower);
-}
-
-
-void to_lower(vector<string>& documents)
-{
-    #pragma omp parallel for
-
-    for(Index i = 0; i < documents.size(); i++)
-        to_lower(documents[i]);
-}
-
-
-void to_lower(vector<vector<string>>& text)
-{
-    #pragma omp parallel for
-
-    for(Index i = 0; i < text.size(); i++)
-        to_lower(text[i]);
-}
-
-
-vector<vector<string>> get_tokens(const vector<string>& documents, const string& separator)
-{
-    const Index documents_number = documents.size();
-
-    vector<vector<string>> tokens(documents_number);
-
-    for(Index i = 0; i < documents_number-1; i++)
-        tokens[i] = get_tokens(documents[i], separator);
-
-    return tokens;
-}
-
-
-vector<pair<string, Index>> count_words(const vector<string>& words)
-{
-    unordered_map<string, Index> count;
-
-    for(size_t i = 0; i < words.size(); i++)
-        count[words[i]]++;
-
-    vector<pair<string, Index>> word_counts(count.begin(), count.end());
-
-    sort(word_counts.begin(), word_counts.end(), [](const auto& a, const auto& b)
-    {
-        return (a.second != b.second) 
-            ? a.second > b.second 
-            : a.first < b.first;
-    });
-
-    return word_counts;
-}
-
-
-void delete_extra_spaces(vector<string>& documents)
-{
-    vector<string> new_documents(documents);
-
-    for(size_t i = 0; i < documents.size(); i++)
-    {
-        const string::iterator new_end = unique(new_documents[i].begin(), new_documents[i].end(),
-            [](char lhs, char rhs) { return(lhs == rhs) && (lhs == ' '); });
-
-        new_documents[i].erase(new_end, new_documents[i].end());
-    }
-
-    documents = new_documents;
-}
-
-
-void delete_non_printable_chars(vector<string>& documents)
-{
-    for(size_t i = 0; i < documents.size(); i++)
-        delete_non_printable_chars(documents[i]);
-}
-
-
-void split_punctuation(vector<string>& documents)
-{
-    const vector<pair<string, string>> punctuations = {
-        {"�", " � "}, {"\"", " \" "}, {".", " . "}, {"!", " ! "}, {"#", " # "},
-        {"$", " $ "}, {"~", " ~ "}, {"%", " % "}, {"&", " & "}, {"/", " / "},
-        {"(", " ( "}, {")", " ) "}, {"\\", " \\ "}, {"=", " = "}, {"?", " ? "},
-        {"}", " } "}, {"^", " ^ "}, {"`", " ` "}, {"[", " [ "}, {"]", " ] "},
-        {"*", " * "}, {"+", " + "}, {",", " , "}, {";", " ; "}, {":", " : "},
-        {"-", " - "}, {">", " > "}, {"<", " < "}, {"|", " | "}, {"–", " – "},
-        {"Ø", " Ø "}, {"º", " º "}, {"°", " ° "}, {"'", " ' "}, {"ç", " ç "},
-        {"✓", " ✓ "}, {"@", " @ "}, {"€", " € "}, {"¬", " ¬ "}, {"•", " • "},
-        {"·", " · "}, {"”", " ” "}, {"“", " “ "}, {"´", " ´ "}, {"§", " § "},
-        {"_", " _ "}
-    };
-
-    for (const auto& [symbol, replacement] : punctuations)
-        replace_substring(documents, symbol, replacement);
-}
-
-
-void delete_non_alphanumeric(vector<string>& documents)
-{
-    vector<string> new_documents(documents);
-
-    for(size_t i = 0; i < documents.size(); i++)
-        new_documents[i].erase(remove_if(new_documents[i].begin(), new_documents[i].end(), is_not_alnum), new_documents[i].end());
-
-    documents = new_documents;
-}
-
-
-void delete_emails(vector<vector<string>>& documents)
-{
-    const Index documents_number = documents.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < documents_number; i++)
-    {
-        const vector<string> document = documents[i];
-
-        for(size_t j = 0; j < document.size(); j++)
-        {
-            /*
-            vector<string> tokens = get_tokens(document(j));
-
-            string result;
-
-            for(Index k = 0; k < tokens.size(); k++)
-            {
-                if(!is_email(tokens(k)))
-                {
-                    result += tokens(k) + " ";
-                }
-            }
-
-            document(j) = result;
-*/
-        }
-
-        documents[i] = document;
-    }
 }
 
 

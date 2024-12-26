@@ -243,6 +243,8 @@ class DenseBase
 #ifndef EIGEN_PARSED_BY_DOXYGEN
   /** \internal Represents a matrix with all coefficients equal to one another*/
   typedef CwiseNullaryOp<internal::scalar_constant_op<Scalar>, PlainObject> ConstantReturnType;
+  /** \internal Represents a matrix with all coefficients equal to zero*/
+  typedef CwiseNullaryOp<internal::scalar_zero_op<Scalar>, PlainObject> ZeroReturnType;
   /** \internal \deprecated Represents a vector with linearly spaced coefficients that allows sequential access only. */
   EIGEN_DEPRECATED typedef CwiseNullaryOp<internal::linspaced_op<Scalar>, PlainObject> SequentialLinSpacedReturnType;
   /** \internal Represents a vector with linearly spaced coefficients that allows random access. */
@@ -328,9 +330,9 @@ class DenseBase
   template <typename CustomNullaryOp>
   EIGEN_DEVICE_FUNC static const CwiseNullaryOp<CustomNullaryOp, PlainObject> NullaryExpr(const CustomNullaryOp& func);
 
-  EIGEN_DEVICE_FUNC static const ConstantReturnType Zero(Index rows, Index cols);
-  EIGEN_DEVICE_FUNC static const ConstantReturnType Zero(Index size);
-  EIGEN_DEVICE_FUNC static const ConstantReturnType Zero();
+  EIGEN_DEVICE_FUNC static const ZeroReturnType Zero(Index rows, Index cols);
+  EIGEN_DEVICE_FUNC static const ZeroReturnType Zero(Index size);
+  EIGEN_DEVICE_FUNC static const ZeroReturnType Zero();
   EIGEN_DEVICE_FUNC static const ConstantReturnType Ones(Index rows, Index cols);
   EIGEN_DEVICE_FUNC static const ConstantReturnType Ones(Index size);
   EIGEN_DEVICE_FUNC static const ConstantReturnType Ones();
@@ -573,12 +575,12 @@ class DenseBase
 #else
   typedef std::conditional_t<(Flags & DirectAccessBit) == DirectAccessBit,
                              internal::pointer_based_stl_iterator<Derived>,
-                             internal::generic_randaccess_stl_iterator<Derived>>
+                             internal::generic_randaccess_stl_iterator<Derived> >
       iterator_type;
 
   typedef std::conditional_t<(Flags & DirectAccessBit) == DirectAccessBit,
                              internal::pointer_based_stl_iterator<const Derived>,
-                             internal::generic_randaccess_stl_iterator<const Derived>>
+                             internal::generic_randaccess_stl_iterator<const Derived> >
       const_iterator_type;
 
   // Stl-style iterators are supported only for vectors.
@@ -619,9 +621,8 @@ class DenseBase
   }
 
  protected:
+  EIGEN_DEFAULT_COPY_CONSTRUCTOR(DenseBase)
   /** Default constructor. Do nothing. */
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr DenseBase(const DenseBase&) = default;
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr DenseBase& operator=(DenseBase&&) = default;
 #ifdef EIGEN_INTERNAL_DEBUGGING
   EIGEN_DEVICE_FUNC constexpr DenseBase() {
     /* Just checks for self-consistency of the flags.

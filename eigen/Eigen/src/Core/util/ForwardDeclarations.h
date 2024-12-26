@@ -505,6 +505,17 @@ struct stem_function {
 template <typename XprType, typename Device>
 struct DeviceWrapper;
 
+namespace internal {
+template <typename Xpr>
+struct eigen_fill_helper;
+template <typename Xpr, bool use_fill = eigen_fill_helper<Xpr>::value>
+struct eigen_fill_impl;
+template <typename Xpr>
+struct eigen_memset_helper;
+template <typename Xpr, bool use_memset = eigen_memset_helper<Xpr>::value>
+struct eigen_zero_impl;
+}  // namespace internal
+
 }  // end namespace Eigen
 
 #endif  // EIGEN_FORWARDDECLARATIONS_H

@@ -73,6 +73,21 @@ void block(const MatrixType& m) {
 
   block_real_only(m1, r1, r2, c1, c1, s1);
 
+  // test fill logic with innerpanel and non-innerpanel blocks
+  m1.row(r1).setConstant(s1);
+  VERIFY_IS_CWISE_EQUAL(m1.row(r1), DynamicVectorType::Constant(cols, s1).transpose());
+  m1 = m1_copy;
+  m1.col(c1).setConstant(s1);
+  VERIFY_IS_CWISE_EQUAL(m1.col(c1), DynamicVectorType::Constant(rows, s1));
+  m1 = m1_copy;
+  // test setZero logic with innerpanel and non-innerpanel blocks
+  m1.row(r1).setZero();
+  VERIFY_IS_CWISE_EQUAL(m1.row(r1), DynamicVectorType::Zero(cols).transpose());
+  m1 = m1_copy;
+  m1.col(c1).setZero();
+  VERIFY_IS_CWISE_EQUAL(m1.col(c1), DynamicVectorType::Zero(rows));
+  m1 = m1_copy;
+
   // check row() and col()
   VERIFY_IS_EQUAL(m1.col(c1).transpose(), m1.transpose().row(c1));
   // check operator(), both constant and non-constant, on row() and col()

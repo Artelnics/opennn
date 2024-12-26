@@ -148,7 +148,7 @@ public:
 
    // Checking
 
-   void check() const;
+//   void check() const;
 
    // Numerical differentiation
 

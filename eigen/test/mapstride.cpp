@@ -94,6 +94,8 @@ void map_class_matrix(const MatrixType& _m) {
     VERIFY_IS_APPROX(s1 * map, s1 * m);
     map *= s1;
     VERIFY_IS_APPROX(map, s1 * m);
+    map.setZero();
+    VERIFY_IS_CWISE_EQUAL(map, MatrixType::Zero(rows, cols));
   }
 
   // test no inner stride and an outer stride of +4. This is quite important as for fixed-size matrices,
@@ -118,6 +120,8 @@ void map_class_matrix(const MatrixType& _m) {
     VERIFY_IS_APPROX(s1 * map, s1 * m);
     map *= s1;
     VERIFY_IS_APPROX(map, s1 * m);
+    map.setZero();
+    VERIFY_IS_CWISE_EQUAL(map, MatrixType::Zero(rows, cols));
   }
 
   // test both inner stride and outer stride
@@ -138,6 +142,8 @@ void map_class_matrix(const MatrixType& _m) {
     VERIFY_IS_APPROX(s1 * map, s1 * m);
     map *= s1;
     VERIFY_IS_APPROX(map, s1 * m);
+    map.setZero();
+    VERIFY_IS_CWISE_EQUAL(map, MatrixType::Zero(rows, cols));
   }
 
   // test inner stride and no outer stride
@@ -156,6 +162,8 @@ void map_class_matrix(const MatrixType& _m) {
     VERIFY_IS_APPROX(s1 * map, s1 * m);
     map *= s1;
     VERIFY_IS_APPROX(map, s1 * m);
+    map.setZero();
+    VERIFY_IS_CWISE_EQUAL(map, MatrixType::Zero(rows, cols));
   }
 
   // test negative strides

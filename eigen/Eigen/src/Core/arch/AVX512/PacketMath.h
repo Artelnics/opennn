@@ -133,6 +133,7 @@ struct packet_traits<float> : default_packet_traits {
     HasReciprocal = EIGEN_FAST_MATH,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
+    HasErfc = EIGEN_FAST_MATH,
     HasCmp = 1,
     HasDiv = 1
   };
@@ -154,6 +155,8 @@ struct packet_traits<double> : default_packet_traits {
     HasExp = 1,
     HasATan = 1,
     HasTanh = EIGEN_FAST_MATH,
+    HasErf = EIGEN_FAST_MATH,
+    HasErfc = EIGEN_FAST_MATH,
     HasATanh = 1,
     HasCmp = 1,
     HasDiv = 1
@@ -1640,16 +1643,23 @@ EIGEN_STRONG_INLINE int64_t predux_max<Packet8l>(const Packet8l& a) {
 }
 
 template <>
-EIGEN_STRONG_INLINE bool predux_any(const Packet16f& x) {
-  Packet16i xi = _mm512_castps_si512(x);
-  __mmask16 tmp = _mm512_test_epi32_mask(xi, xi);
-  return !_mm512_kortestz(tmp, tmp);
+EIGEN_STRONG_INLINE bool predux_any(const Packet16f& a) {
+  return _mm512_reduce_or_epi32(_mm512_castps_si512(a)) != 0;
 }
 
 template <>
-EIGEN_STRONG_INLINE bool predux_any(const Packet16i& x) {
-  __mmask16 tmp = _mm512_test_epi32_mask(x, x);
-  return !_mm512_kortestz(tmp, tmp);
+EIGEN_STRONG_INLINE bool predux_any(const Packet16i& a) {
+  return _mm512_reduce_or_epi32(a) != 0;
+}
+
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet8d& a) {
+  return _mm512_reduce_or_epi64(_mm512_castpd_si512(a)) != 0;
+}
+
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet8l& a) {
+  return _mm512_reduce_or_epi64(a) != 0;
 }
 
 #define PACK_OUTPUT(OUTPUT, INPUT, INDEX, STRIDE) \

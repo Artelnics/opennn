@@ -51,8 +51,6 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
     type* synaptic_weights_data = (type*)synaptic_weights.data();
 
-    // Convolutional layer
-
     const Index kernels_number = get_kernels_number();
     const Index kernel_height = get_kernel_height();
     const Index kernel_width = get_kernel_width();
@@ -178,23 +176,14 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
     switch(activation_function)
     {
     case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
-
     case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
-
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
     case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
     case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-
     case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
-
     case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
-
     case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-
     case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-
     default: return;
     }
 }
@@ -212,9 +201,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
         static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
-
     Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
+
+    Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
 
     Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
@@ -232,7 +221,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 */
     }
 
-    auto start_activations = chrono::high_resolution_clock::now();
+    //auto start_activations = chrono::high_resolution_clock::now();
     if (is_training)
         calculate_activations(outputs, activation_derivatives);
     else
@@ -334,8 +323,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             output_height,
             output_width);
 
-        // Synaptic weights derivatives
-
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
             synaptic_weights_derivatives_data + kernel_index * kernel_size,
             1, 
@@ -433,32 +420,15 @@ string ConvolutionalLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic:
-        return "Logistic";
-
-    case ActivationFunction::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case ActivationFunction::Linear:
-        return "Linear";
-
-    case ActivationFunction::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
+    case ActivationFunction::Logistic: return "Logistic";
+    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
+    case ActivationFunction::Linear: return "Linear";
+    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
+    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case ActivationFunction::SoftPlus: return "SoftPlus";
+    case ActivationFunction::SoftSign: return "SoftSign";
+    case ActivationFunction::HardSigmoid: return "HardSigmoid";
+    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
@@ -515,11 +485,8 @@ string ConvolutionalLayer::write_convolution_type() const
 {
     switch(convolution_type)
     {
-    case ConvolutionType::Valid:
-        return "Valid";
-
-    case ConvolutionType::Same:
-        return "Same";
+    case ConvolutionType::Valid: return "Valid";
+    case ConvolutionType::Same: return "Same";
     }
 
     return string();
@@ -635,7 +602,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
-    set_input_dimensions(new_input_dimensions);
+    input_dimensions = new_input_dimensions;
 
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];

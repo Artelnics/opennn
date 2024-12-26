@@ -9,6 +9,8 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include "pch.h"
+
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
@@ -47,7 +49,7 @@ public:
 
     enum class SampleUse{Training, Selection, Testing, None};
 
-    enum class VariableUse{Id, Input, Target, Time, None, Context};
+    enum class VariableUse{Id, Input, Target, Time, None, Decoder};
 
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
@@ -124,7 +126,7 @@ public:
     SampleUse get_sample_use(const Index&) const;
     const vector<SampleUse>& get_sample_uses() const;
 
-    Tensor<Index, 1> get_sample_uses_vector() const;
+    vector<Index> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
     Tensor<type, 1> get_sample_use_percentages() const;
@@ -165,6 +167,7 @@ public:
     vector<Index> get_used_variable_indices() const;
 
     const dimensions& get_input_dimensions() const;
+    const dimensions& get_decoder_dimensions() const;
     const dimensions& get_target_dimensions() const;
 
     vector<Scaler> get_variable_scalers(const VariableUse&) const;
@@ -189,9 +192,8 @@ public:
 
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
-    void add_sample(const Tensor<type, 1>&);
 
-    vector<vector<string>> get_data_file_preview() const;
+    const vector<vector<string>>& get_data_file_preview() const;
 
     // Members get
 
@@ -214,8 +216,6 @@ public:
 
     const string& get_missing_values_label() const;
 
-    static vector<string> get_default_raw_variables_names(const Index&);
-
     Index get_gmt() const;
 
     const bool& get_display() const;
@@ -234,7 +234,7 @@ public:
 
     void set(const filesystem::path&);
 
-    virtual void set_default();
+    void set_default();
 
     void set_model_type_string(const string&);
     void set_model_type(const ModelType&);
@@ -258,7 +258,7 @@ public:
 
     void set_default_raw_variables_names();
 
-    virtual void set_default_raw_variables_uses();
+    void set_default_raw_variables_uses();
     virtual void set_raw_variable_uses(const vector<string>&);
     virtual void set_raw_variable_uses(const vector<VariableUse>&);
 
@@ -518,9 +518,6 @@ public:
     //Image Models
     virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
 
-    //Language Models
-    virtual void read_txt();
-
     //AutoAssociation Models
 
     virtual void transform_associative_dataset();
@@ -548,7 +545,7 @@ protected:
     vector<RawVariable> raw_variables;
 
     dimensions input_dimensions;
-
+    dimensions decoder_dimensions;
     dimensions target_dimensions;
 
     // DATA FILE

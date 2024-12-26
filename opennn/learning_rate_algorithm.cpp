@@ -79,7 +79,6 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_default()
 {
-
 /*
     delete thread_pool;
     delete thread_pool_device;

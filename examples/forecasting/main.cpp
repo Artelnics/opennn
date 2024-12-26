@@ -27,8 +27,6 @@ int main()
     {
         cout << "OpenNN. Forecasting Example." << endl;
 
-        //srand(unsigned(time(nullptr)));
-
         // Data set
 
         TimeSeriesDataSet time_series_data_set("../data/load.csv", ",", true, false);

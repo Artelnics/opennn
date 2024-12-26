@@ -138,8 +138,6 @@ class MatrixBase : public DenseBase<Derived> {
    */
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& operator=(const MatrixBase& other);
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr MatrixBase& operator=(MatrixBase&&) = default;
-
   // We cannot inherit here via Base::operator= since it is causing
   // trouble with MSVC.
 
@@ -282,7 +280,7 @@ class MatrixBase : public DenseBase<Derived> {
    * \sa isApprox(), operator!= */
   template <typename OtherDerived>
   EIGEN_DEVICE_FUNC inline bool operator==(const MatrixBase<OtherDerived>& other) const {
-    return cwiseEqual(other).all();
+    return (this->rows() == other.rows()) && (this->cols() == other.cols()) && cwiseEqual(other).all();
   }
 
   /** \returns true if at least one pair of coefficients of \c *this and \a other are not exactly equal to each other.
@@ -291,7 +289,7 @@ class MatrixBase : public DenseBase<Derived> {
    * \sa isApprox(), operator== */
   template <typename OtherDerived>
   EIGEN_DEVICE_FUNC inline bool operator!=(const MatrixBase<OtherDerived>& other) const {
-    return cwiseNotEqual(other).any();
+    return !(*this == other);
   }
 
   NoAlias<Derived, Eigen::MatrixBase> EIGEN_DEVICE_FUNC noalias();

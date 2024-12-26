@@ -921,7 +921,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     const Tensor<type, 2> inputs = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> targets = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const dimensions& input_dimensions = data_set->get_input_dimensions();
@@ -2041,7 +2041,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
