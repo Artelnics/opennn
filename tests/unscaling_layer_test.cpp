@@ -1,22 +1,24 @@
 #include "pch.h"
 
-/*
+#include "../opennn/unscaling_layer.h"
 
-void UnscalingLayerTest::test_constructor()
+
+TEST(UnscalingLayerTest, DefaultConstructor)
 {
-    UnscalingLayer unscaling_layer_1;
+    UnscalingLayer unscaling_layer;
 
-    EXPECT_EQ(unscaling_layer_1.get_type() == Layer::Type::Unscaling);
-    EXPECT_EQ(unscaling_layer_1.get_descriptives().size() == 0);
-
-    // Test
-
-    UnscalingLayer unscaling_layer_2({3});
-
-    EXPECT_EQ(unscaling_layer_2.get_descriptives().size() == 3);
-
+    EXPECT_EQ(unscaling_layer.get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 0);
 }
-*/
+
+
+TEST(UnscalingLayerTest, GeneralConstructor)
+{
+    UnscalingLayer unscaling_layer({ 3 });
+
+    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 3);
+}
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

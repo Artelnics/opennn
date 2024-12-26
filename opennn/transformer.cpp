@@ -52,6 +52,9 @@ void Transformer::set(const Index& new_input_length,
 
     layers.clear();
     
+    if (input_length == 0 || decoder_length == 0)
+        return;
+
     input_names.resize(input_length + decoder_length);
 
     // Embedding Layers

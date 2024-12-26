@@ -1,6 +1,33 @@
 #include "pch.h"
 
-//#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/transformer.h"
+
+TEST(TransformerTest, DefaultConstructor)
+{
+    Transformer transformer;
+
+    EXPECT_EQ(transformer.is_empty(), true);
+    EXPECT_EQ(transformer.get_layers_number(), 0);
+
+}
+
+
+TEST(TransformerTest, GeneralConstructor)
+{
+    const Index input_length = 1;
+    const Index context_length = 1;
+    const Index input_dimensions = 1;
+    const Index context_dimension = 1;
+    const Index embedding_depth = 1;
+    const Index perceptron_depth = 1;
+    const Index heads_number = 1;
+    const Index layers_number = 1;
+
+//    Transformer transformer(architecture);
+
+//    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
+}
+
 
 /*
 
@@ -15,22 +42,6 @@ void TransformerTest::test_constructor()
     
     // Tensor constructor test
 
-    input_length = 1;
-    context_length = 1;
-    input_dimensions = 1;
-    context_dimension = 1;
-    embedding_depth = 1;
-    perceptron_depth = 1;
-    heads_number = 1;
-    layers_number = 1;
-
-    Tensor<Index, 1> architecture(8);
-    architecture.setValues({ input_length, context_length, input_dimensions, context_dimension,
-                             embedding_depth, perceptron_depth, heads_number, layers_number });
-    
-    Transformer transformer_1(architecture);
-    
-    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
     
     // List constructor test
 
