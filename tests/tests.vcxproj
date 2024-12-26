@@ -133,12 +133,14 @@
     <ClCompile Include="pooling_layer_test.cpp" />
     <ClCompile Include="probabilistic_layer_3d_test.cpp" />
     <ClCompile Include="probabilistic_layer_test.cpp" />
+    <ClCompile Include="quasi_newton_method_test.cpp" />
+    <ClCompile Include="recurrent_layer_test.cpp" />
+    <ClCompile Include="response_optimization_test.cpp" />
     <ClCompile Include="scaling_layer_test.cpp" />
     <ClCompile Include="scaling_test.cpp" />
     <ClCompile Include="statistics_test.cpp" />
     <ClCompile Include="stochastic_gradient_descent_test.cpp" />
-    <ClCompile Include="sum_squared_error_test.cpp" />
-    <ClCompile Include="tensor_utilities_test.cpp" />
+    <ClCompile Include="tensors_test.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

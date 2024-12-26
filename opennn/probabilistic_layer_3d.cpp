@@ -46,12 +46,6 @@ dimensions ProbabilisticLayer3D::get_output_dimensions() const
 }
 
 
-const type& ProbabilisticLayer3D::get_decision_threshold() const
-{
-    return decision_threshold;
-}
-
-
 const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activation_function() const
 {
     return activation_function;
@@ -122,8 +116,6 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
     layer_type = Layer::Type::Probabilistic3D;
 
     activation_function = ActivationFunction::Softmax;
-
-    decision_threshold = type(0.5);
 }
 
 
@@ -182,12 +174,6 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
         #pragma omp section
         memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
     }
-}
-
-
-void ProbabilisticLayer3D::set_decision_threshold(const type& new_decision_threshold)
-{
-    decision_threshold = new_decision_threshold;
 }
 
 
@@ -275,8 +261,6 @@ void ProbabilisticLayer3D::forward_propagate(const vector<pair<type*, dimensions
     calculate_combinations(inputs, outputs);
 
     calculate_activations(outputs);
-    cout<<outputs.dimensions()<<endl;
-    cout<<outputs<<endl;
 }
 
 
@@ -391,7 +375,6 @@ void ProbabilisticLayer3D::from_XML(const XMLDocument& document)
     set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
     set_inputs_depth(read_xml_index(probabilistic_layer_element, "InputsDepth"));
     set_output_dimensions({read_xml_index(probabilistic_layer_element, "NeuronsNumber")});
-    set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
 
@@ -406,7 +389,6 @@ void ProbabilisticLayer3D::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
-    add_xml_element(printer, "DecisionThreshold", to_string(get_decision_threshold()));
     add_xml_element(printer, "ActivationFunction", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 

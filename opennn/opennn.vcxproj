@@ -243,10 +243,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClInclude Include="addition_layer_3d.h" />
-    <ClInclude Include="auto_association_data_set.h" />
     <ClCompile Include="addition_layer_3d.cpp" />
-    <ClCompile Include="auto_association_data_set.cpp" />
+    <ClInclude Include="auto_associative_data_set.h" />
     <ClInclude Include="auto_associative_neural_network.h" />
+    <ClCompile Include="auto_associative_data_set.cpp" />
     <ClCompile Include="auto_associative_neural_network.cpp" />
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />

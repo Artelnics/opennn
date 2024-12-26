@@ -1,47 +1,22 @@
 #include "pch.h"
 
 /*
-#include <iostream>
-
-namespace opennn
-{
-
-
-UnscalingLayerTest::UnscalingLayerTest() : UnitTesting()
-{
-}
-
 
 void UnscalingLayerTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
-    // Test
-
     UnscalingLayer unscaling_layer_1;
 
-    assert_true(unscaling_layer_1.get_type() == Layer::Type::Unscaling, LOG);
-    assert_true(unscaling_layer_1.get_descriptives().size() == 0, LOG);
+    EXPECT_EQ(unscaling_layer_1.get_type() == Layer::Type::Unscaling);
+    EXPECT_EQ(unscaling_layer_1.get_descriptives().size() == 0);
 
     // Test
 
     UnscalingLayer unscaling_layer_2({3});
 
-    assert_true(unscaling_layer_2.get_descriptives().size() == 3, LOG);
+    EXPECT_EQ(unscaling_layer_2.get_descriptives().size() == 3);
 
 }
-
-
-void UnscalingLayerTest::run_test_case()
-{
-    cout << "Running unscaling layer test case...\n";
-
-    test_constructor();
-
-    cout << "End of unscaling layer test case.\n\n";
-}
-
-}
+*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
@@ -59,4 +34,3 @@ void UnscalingLayerTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/

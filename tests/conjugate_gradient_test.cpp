@@ -8,7 +8,7 @@ TEST(ConjugateGradientTest, DefaultConstructor)
     ConjugateGradient conjugate_gradient_1;
 //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
-//    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+//    ConjugateGradient conjugate_gradient_2(&mean_squared_error);
 //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 }
 
@@ -18,7 +18,7 @@ TEST(ConjugateGradientTest, GeneralConstructor)
     ConjugateGradient conjugate_gradient_1;
     //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
-    //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+    //    ConjugateGradient conjugate_gradient_2(&mean_squared_error);
     //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 
 }
@@ -57,7 +57,7 @@ TEST(ConjugateGradientTest, FrParameter)
     ConjugateGradient conjugate_gradient;
     //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
-    //    ConjugateGradient conjugate_gradient_2(&sum_squared_error);
+    //    ConjugateGradient conjugate_gradient_2(&mean_squared_error);
     //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());
 
 }

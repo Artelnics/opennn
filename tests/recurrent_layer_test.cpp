@@ -6,26 +6,26 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include "pch.h"
+#include "../opennn/recurrent_layer.h"
 
-#include "../opennn/tensors.h"
-
-namespace opennn
+TEST(RecurrentLayerTest, DefaultConstructor)
 {
+    RecurrentLayer recurrent_layer;
 
-RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
-{
+//    EXPECT_EQ(quasi_newton_method.has_loss_index(), false);
 }
 
 
-void RecurrentLayerTest::test_constructor()
+TEST(RecurrentLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+
+    RecurrentLayer recurrent_layer;
 
     Index inputs_number;
     Index neurons_number;
     Index time_steps;
-
+/*
     // Test
 
     inputs_number = 1;
@@ -34,7 +34,7 @@ void RecurrentLayerTest::test_constructor()
 
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
-    assert_true(recurrent_layer.get_parameters_number() == 3, LOG);
+    EXPECT_EQ(recurrent_layer.get_parameters_number() == 3);
 
     // Test
 
@@ -43,32 +43,20 @@ void RecurrentLayerTest::test_constructor()
 
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
-    assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
+    EXPECT_EQ(recurrent_layer.get_parameters_number() == 18);
+
+    EXPECT_EQ(quasi_newton_method.has_loss_index(), true);
+*/
 }
 
 
-void RecurrentLayerTest::test_calculate_activations()
+TEST(RecurrentLayerTest, ForwardPropagate)
 {
-    cout << "test_calculate_activations\n";
 
-    Tensor<type, 1> combinations;
-    Tensor<type, 1> activations;
-    Tensor<type, 1> activation_derivatives;
-
-    Tensor<type, 1> numerical_activation_derivative;
-    Tensor<type, 0> maximum_difference;
-
-}
-
-
-void RecurrentLayerTest::test_forward_propagate()
-{
-    cout << "test_forward_propagate\n";
-    
-    neurons_number = 4;
-    samples_number = 2;
-    inputs_number = 3;
-    time_steps = 1;
+    const Index neurons_number = 4;
+    const Index samples_number = 2;
+    const Index inputs_number = 3;
+    const Index time_steps = 1;
     bool is_training = false;
 
     Tensor<type, 2> outputs;
@@ -79,7 +67,7 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type, 1> new_biases;
 
     pair<type*, dimensions> input_pairs;
-
+    /*
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
@@ -94,12 +82,12 @@ void RecurrentLayerTest::test_forward_propagate()
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
-    recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
+    input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
+
+    recurrent_layer.forward_propagate({ input_pairs }, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
-    
+
     // Test
 
     samples_number = 3;
@@ -109,15 +97,15 @@ void RecurrentLayerTest::test_forward_propagate()
 
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
-    inputs.resize(samples_number,inputs_number);
+    inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
     recurrent_layer.set_activation_function("SoftPlus");
     recurrent_layer.set_timesteps(3);
 
-    new_weights.resize(2,2);
+    new_weights.resize(2, 2);
     new_weights.setConstant(type(1));
-    new_recurrent_weights.resize(2,2);
+    new_recurrent_weights.resize(2, 2);
     new_recurrent_weights.setConstant(type(1));
     new_biases.resize(2);
     new_biases.setConstant(type(1));
@@ -128,29 +116,29 @@ void RecurrentLayerTest::test_forward_propagate()
 
     parameters = recurrent_layer.get_parameters();
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+    input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
 
-    recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
+    recurrent_layer.forward_propagate({ input_pairs }, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
 */
 }
 
+/*
 
-void RecurrentLayerTest::run_test_case()
+void RecurrentLayerTest::test_calculate_activations()
 {
-    cout << "Running recurrent layer test case...\n";
+    Tensor<type, 1> combinations;
+    Tensor<type, 1> activations;
+    Tensor<type, 1> activation_derivatives;
 
-    test_constructor();
-
-    test_calculate_activations();
-
-    test_forward_propagate();
-
-    cout << "End of recurrent layer test case.\n\n";
-}
+    Tensor<type, 1> numerical_activation_derivative;
+    Tensor<type, 0> maximum_difference;
 
 }
+
+*/
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

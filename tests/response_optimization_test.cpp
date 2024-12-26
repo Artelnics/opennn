@@ -6,29 +6,21 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-namespace opennn
-{
+#include "pch.h"
 
-ResponseOptimizationTest::ResponseOptimizationTest() : UnitTesting()
-{
-    generate_neural_networks();
-}
-
-
+/*
 void ResponseOptimizationTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
     ResponseOptimization response_optimization_1(&neural_network);
 
-    assert_true(response_optimization_1.get_inputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
-    assert_true(response_optimization_1.get_outputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
+    EXPECT_EQ(response_optimization_1.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
+    EXPECT_EQ(response_optimization_1.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
 
     ResponseOptimization response_optimization_2(&neural_network_2);
-    assert_true(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
-    assert_true(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::None, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::None, LOG);
-    assert_true(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::None, LOG);
+    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
+    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::None);
+    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
+    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::None);
 
     ResponseOptimization response_optimization_3;
 }
@@ -36,26 +28,22 @@ void ResponseOptimizationTest::test_constructor()
 
 void ResponseOptimizationTest::test_calculate_inputs()
 {
-    cout << "test_calculate_inputs\n";
-
     ResponseOptimization response_optimization(&neural_network, &data_set);
 
     Tensor<type,2> inputs = response_optimization.calculate_inputs();
 
-    assert_true(inputs.dimension(0) == response_optimization.get_evaluations_number(), LOG);
-    assert_true(inputs.dimension(1) == neural_network.get_inputs_number(), LOG);
+    EXPECT_EQ(inputs.dimension(0) == response_optimization.get_evaluations_number());
+    EXPECT_EQ(inputs.dimension(1) == neural_network.get_inputs_number());
 
-    assert_true(inputs(0) <= response_optimization.get_inputs_maximums()(1), LOG);
-    assert_true(inputs(1) <= response_optimization.get_inputs_maximums()(1), LOG);
-    assert_true(inputs(0) >= response_optimization.get_inputs_minimums()(1), LOG);
-    assert_true(inputs(1) >= response_optimization.get_inputs_minimums()(1), LOG);
+    EXPECT_EQ(inputs(0) <= response_optimization.get_inputs_maximums()(1));
+    EXPECT_EQ(inputs(1) <= response_optimization.get_inputs_maximums()(1));
+    EXPECT_EQ(inputs(0) >= response_optimization.get_inputs_minimums()(1));
+    EXPECT_EQ(inputs(1) >= response_optimization.get_inputs_minimums()(1));
 }
 
 
 void ResponseOptimizationTest::test_perform_optimization()
 {
-    cout << "test_perform_optimization\n";
-
     ResponseOptimization response_optimization(&neural_network,&data_set);
 
     // Empty results
@@ -65,7 +53,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_output_condition(0,ResponseOptimization::Condition::GreaterEqualTo,conditions_values);
 
     ResponseOptimizationResults* results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables.size() == 0, LOG);
+    EXPECT_EQ(results->optimal_variables.size() == 0);
 
     // Trivial case 1
 
@@ -76,9 +64,9 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_output_condition(0,ResponseOptimization::Condition::GreaterEqualTo,conditions_values);
 
     results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables(0) = 1, LOG);
-    assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true(results->optimal_variables(2) >= 1, LOG);
+    EXPECT_EQ(results->optimal_variables(0) = 1);
+    EXPECT_EQ(results->optimal_variables(1) <= 1);
+    EXPECT_EQ(results->optimal_variables(2) >= 1);
 
     // Trivial case 2
 
@@ -93,9 +81,9 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_output_condition(0,ResponseOptimization::Condition::Between,conditions_values);
 
     results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables(0) = 1, LOG);
-    assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 2.5), LOG);
+    EXPECT_EQ(results->optimal_variables(0) = 1);
+    EXPECT_EQ(results->optimal_variables(1) <= 1);
+    EXPECT_EQ(1 <= results->optimal_variables(2) <= 2.5);
 
     // Multiple outputs case 1
 
@@ -107,10 +95,10 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_input_condition(1,ResponseOptimization::Condition::LessEqualTo,conditions_values);
 
     results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables(0) = 1, LOG);
-    assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 3.0), LOG);
-    assert_true((-1 <= results->optimal_variables(3)) && (results->optimal_variables(3) <= type(1)), LOG);
+    EXPECT_EQ(results->optimal_variables(0) = 1);
+    EXPECT_EQ(results->optimal_variables(1) <= 1);
+    EXPECT_EQ(1 <= results->optimal_variables(2) <= 3.0);
+    EXPECT_EQ(-1 <= results->optimal_variables(3) <= type(1));
 
     // Multiple outputs case 2
 
@@ -127,11 +115,11 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_output_condition(1,ResponseOptimization::Condition::Between,conditions_values);
 
     results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables(0) = 1, LOG);
-    assert_true(results->optimal_variables(1) <= 1, LOG);
-    assert_true((1 <= results->optimal_variables(2)) && (results->optimal_variables(2) <= 2.0), LOG);
-    assert_true(type(-1) <= results->optimal_variables(3), LOG);
-    assert_true(results->optimal_variables(3) <= type(0), LOG);
+    EXPECT_EQ(results->optimal_variables(0) = 1);
+    EXPECT_EQ(results->optimal_variables(1) <= 1);
+    EXPECT_EQ(1 <= results->optimal_variables(2) <= 2.0);
+    EXPECT_EQ(type(-1) <= results->optimal_variables(3));
+    EXPECT_EQ(results->optimal_variables(3) <= type(0));
 
     // Multiple outputs case 2
 
@@ -149,32 +137,17 @@ void ResponseOptimizationTest::test_perform_optimization()
     response_optimization.set_output_condition(1,ResponseOptimization::Condition::Between,conditions_values);
 
     results = response_optimization.perform_optimization();
-    assert_true(results->optimal_variables(0) >= 0.5, LOG);
+    EXPECT_EQ(results->optimal_variables(0) >= 0.5);
 
-    assert_true(results->optimal_variables(1) >= 0.5, LOG);
-    assert_true(results->optimal_variables(2) >= 0.0, LOG);
-    assert_true(results->optimal_variables(2) <= 3.0, LOG);
-    assert_true(results->optimal_variables(3) >= type(-1), LOG);
-    assert_true(results->optimal_variables(3) <= 0.0, LOG);
+    EXPECT_EQ(results->optimal_variables(1) >= 0.5);
+    EXPECT_EQ(results->optimal_variables(2) >= 0.0);
+    EXPECT_EQ(results->optimal_variables(2) <= 3.0);
+    EXPECT_EQ(results->optimal_variables(3) >= type(-1));
+    EXPECT_EQ(results->optimal_variables(3) <= 0.0);
 }
 
+*/
 
-void ResponseOptimizationTest::run_test_case()
-{
-    cout << "Running response optimization test case...\n";
-
-    test_constructor();
-
-    // Performance
-
-    test_calculate_inputs();
-
-    test_perform_optimization();
-
-    cout << "End of response optimization test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
