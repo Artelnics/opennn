@@ -1,41 +1,51 @@
 #include "pch.h"
 
-/*
-void ResponseOptimizationTest::test_constructor()
+#include "../opennn/response_optimization.h"
+
+TEST(ResponseOptimization, DefaultConstructor)
 {
-    ResponseOptimization response_optimization_1(&neural_network);
+    ResponseOptimization response_optimization;
 
-    EXPECT_EQ(response_optimization_1.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_1.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
-
-    ResponseOptimization response_optimization_2(&neural_network_2);
-    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::None);
-
-    ResponseOptimization response_optimization_3;
+//    EXPECT_EQ(response_optimization.has_, 0);
 }
 
 
-void ResponseOptimizationTest::test_calculate_inputs()
+TEST(ResponseOptimization, GeneralConstructor)
 {
+    NeuralNetwork neural_network;
+
+    //    EXPECT_EQ(response_optimization.has_, 0);
+
+    ResponseOptimization response_optimization(&neural_network);
+
+//    EXPECT_EQ(response_optimization.get_inputs_conditions()(0), ResponseOptimization::Condition::None);
+//    EXPECT_EQ(response_optimization.get_outputs_conditions()(0), ResponseOptimization::Condition::None);
+}
+
+
+TEST(ResponseOptimization, Inputs)
+{
+    NeuralNetwork neural_network;
+    DataSet data_set;
+
     ResponseOptimization response_optimization(&neural_network, &data_set);
 
-    Tensor<type,2> inputs = response_optimization.calculate_inputs();
-
-    EXPECT_EQ(inputs.dimension(0) == response_optimization.get_evaluations_number());
-    EXPECT_EQ(inputs.dimension(1) == neural_network.get_inputs_number());
+    Tensor<type, 2> inputs = response_optimization.calculate_inputs();
+/*
+    EXPECT_EQ(inputs.dimension(0), response_optimization.get_evaluations_number());
+    EXPECT_EQ(inputs.dimension(1), neural_network.get_inputs_number());
 
     EXPECT_EQ(inputs(0) <= response_optimization.get_inputs_maximums()(1));
     EXPECT_EQ(inputs(1) <= response_optimization.get_inputs_maximums()(1));
     EXPECT_EQ(inputs(0) >= response_optimization.get_inputs_minimums()(1));
     EXPECT_EQ(inputs(1) >= response_optimization.get_inputs_minimums()(1));
+*/
 }
 
 
-void ResponseOptimizationTest::test_perform_optimization()
+TEST(ResponseOptimization, Optimize)
 {
+/*
     ResponseOptimization response_optimization(&neural_network,&data_set);
 
     // Empty results
@@ -136,6 +146,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     EXPECT_EQ(results->optimal_variables(2) <= 3.0);
     EXPECT_EQ(results->optimal_variables(3) >= type(-1));
     EXPECT_EQ(results->optimal_variables(3) <= 0.0);
+    */ 
 }
 
-*/
+

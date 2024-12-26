@@ -171,15 +171,13 @@ TEST(ProbabilisticLayer3DTest, Activations)
 */
 }
 
+
+TEST(ProbabilisticLayer3DTest, SoftmaxDerivatives)
+{
 /*
+    Tensor<type, 3>& activations;
+    Tensor<type, 4>& activation_derivatives;
 
-void ProbabilisticLayer3DTest::test_calculate_activations()
-{
-
-}
-
-bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activation_derivatives) const
-{
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < inputs_number; j++)
@@ -202,13 +200,13 @@ bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activa
             }
         }
     }
-
-    return true;
+*/
 }
 
 
-void ProbabilisticLayer3DTest::test_forward_propagate()
+TEST(ProbabilisticLayer3DTest, ForwardPropagate)
 {
+/*
     bool is_training = true;
 
     {
@@ -295,7 +293,5 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         EXPECT_EQ(correct_outputs);
 
     }
-}
-
-}
 */
+}

@@ -22,14 +22,14 @@ TEST(ModelSelectionTest, GeneralConstructor)
 
 TEST(ModelSelectionTest, NeuronsSelection)
 {
+
+//    data_set.generate_sum_data(20, 2);
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
 /*
-    data_set.generate_sum_data(20, 2);
+    //training_strategy.set_display(false);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
-
-    training_strategy.set_display(false);
-
-    model_selection.set_display(false);
+    //model_selection.set_display(false);
 
     GrowingNeurons* incremental_neurons = model_selection.get_growing_neurons();
 

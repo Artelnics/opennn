@@ -34,13 +34,16 @@ TEST(QuasiNewtonMethodTest, DFP)
     data_set.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
-
     neural_network.set_parameters_constant(type(1));
-/*
-    quasi_newton_method_data.set(&quasi_newton_method);
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
+
+    QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
 
     quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
-
+/*
     EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
@@ -55,11 +58,17 @@ TEST(QuasiNewtonMethodTest, BGFS)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(type(1));
-/*
+
+    MeanSquaredError mean_squared_error(&neural_network);
+
     mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
 
-    quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
+    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 
+    QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
+
+    quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
+/*
     EXPECT_EQ(are_equal(BFGS_inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }

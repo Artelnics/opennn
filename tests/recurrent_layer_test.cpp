@@ -1,44 +1,24 @@
 #include "pch.h"
+
 #include "../opennn/recurrent_layer.h"
 
 TEST(RecurrentLayerTest, DefaultConstructor)
 {
     RecurrentLayer recurrent_layer;
 
-//    EXPECT_EQ(quasi_newton_method.has_loss_index(), false);
+    EXPECT_EQ(recurrent_layer.get_inputs_number(), 0);
 }
 
 
 TEST(RecurrentLayerTest, GeneralConstructor)
 {
+    const Index inputs_number = get_random_index(1, 10);
+    const Index neurons_number = get_random_index(1, 10);
+    const Index time_steps = get_random_index(1, 10);
 
-    RecurrentLayer recurrent_layer;
+    RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
 
-    Index inputs_number;
-    Index neurons_number;
-    Index time_steps;
-/*
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    time_steps = 1;
-
-    recurrent_layer.set(inputs_number, neurons_number, time_steps);
-
-    EXPECT_EQ(recurrent_layer.get_parameters_number() == 3);
-
-    // Test
-
-    inputs_number = 2;
-    neurons_number = 3;
-
-    recurrent_layer.set(inputs_number, neurons_number, time_steps);
-
-    EXPECT_EQ(recurrent_layer.get_parameters_number() == 18);
-
-    EXPECT_EQ(quasi_newton_method.has_loss_index(), true);
-*/
+//    EXPECT_EQ(recurrent_layer.get_parameters_number(), 3);
 }
 
 
@@ -59,8 +39,8 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     Tensor<type, 1> new_biases;
 
     pair<type*, dimensions> input_pairs;
-    /*
-    recurrent_layer.set(inputs_number, neurons_number, time_steps);
+    
+    RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
 
     recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
 
@@ -69,8 +49,8 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     recurrent_layer.set_parameters_constant(type(1));
     inputs.setConstant(type(1));
 
-    recurrent_layer_forward_propagation.set(samples_number, &recurrent_layer);
-
+    RecurrentLayerForwardPropagation recurrent_layer_forward_propagation(samples_number, &recurrent_layer);
+/*
     Tensor<type*, 1> input_data(1);
     input_data(0) = inputs.data();
 
