@@ -1,32 +1,20 @@
 #include "pch.h"
 
 /*
-namespace opennn
-{
-
-TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
-{
-    training_strategy.set(&neural_network, &data_set);
-}
-
 
 void TrainingStrategyTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
     // Test
 
     TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    assert_true(training_strategy.get_neural_network(), LOG);
-    assert_true(training_strategy.get_data_set(), LOG);
+    EXPECT_EQ(training_strategy.get_neural_network());
+    EXPECT_EQ(training_strategy.get_data_set());
 }
 
 
 void TrainingStrategyTest::test_perform_training()
 {
-    cout << "test_perform_training\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -69,8 +57,6 @@ void TrainingStrategyTest::test_perform_training()
 
 void TrainingStrategyTest::test_to_XML()
 {
-    cout << "test_to_XML\n";
-
     string file_name = "../data/training_strategy.xml";
 
     ofstream file(file_name);
@@ -91,8 +77,6 @@ void TrainingStrategyTest::test_to_XML()
 
 void TrainingStrategyTest::test_from_XML()
 {
-    cout << "test_from_XML\n";
-
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
     training_strategy.set_default();
@@ -110,8 +94,6 @@ void TrainingStrategyTest::test_from_XML()
 
 void TrainingStrategyTest::test_save()
 {
-    cout << "test_save\n";
-
     string file_name = "../data/training_strategy.xml";
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
@@ -122,8 +104,6 @@ void TrainingStrategyTest::test_save()
 
 void TrainingStrategyTest::test_load()
 {
-    cout << "test_load\n";
-
     string file_name = "../data/training_strategy.xml";
 
     // Test
@@ -131,30 +111,8 @@ void TrainingStrategyTest::test_load()
     training_strategy.save(file_name);
     training_strategy.load(file_name);
 }
+*/
 
-
-void TrainingStrategyTest::run_test_case()
-{
-    cout << "Running training strategy test case...\n";
-
-    test_constructor();
-
-    // Training
-
-    test_perform_training();
-
-    // Serialization
-
-    test_to_XML();
-    test_from_XML();
-
-    test_save();
-    test_load();
-
-    cout << "End of training strategy test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
@@ -172,4 +130,3 @@ void TrainingStrategyTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/

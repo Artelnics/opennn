@@ -4,14 +4,13 @@
 
 TEST(ProbabilisticLayer3DTest, DefaultConstructor)
 {
-/*
+
     ProbabilisticLayer3D probabilistic_layer_3d;
 
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_number(), 0);
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_depth(), 0);
 //    EXPECT_EQ(probabilistic_layer_3d.get_neurons_number(), 0);
-    EXPECT_EQ(probabilistic_layer_3d.get_parameters_number(), 0);
-*/
+//    EXPECT_EQ(probabilistic_layer_3d.get_parameters_number(), 0);
 }
 
 

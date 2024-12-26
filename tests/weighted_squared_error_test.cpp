@@ -1,43 +1,31 @@
 #include "pch.h"
+
+#include "../opennn/weighted_squared_error.h"
+
+TEST(WeightedSquaredErrorTest, DefaultConstructor)
+{
+    WeightedSquaredError weighted_squared_error;
+
+    EXPECT_EQ(weighted_squared_error.has_neural_network(), false);
+    EXPECT_EQ(weighted_squared_error.has_data_set(), false);
+}
+
+
+TEST(WeightedSquaredErrorTest, GeneralConstructor)
+{
+    NeuralNetwork neural_network;
+    DataSet data_set;
+
+    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+
+    EXPECT_EQ(weighted_squared_error.has_neural_network(), true);
+    EXPECT_EQ(weighted_squared_error.has_data_set(), true);
+}
+
 /*
-
-#include "../opennn/tensors.h"
-
-namespace opennn
-{
-
-WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
-{
-    weighted_squared_error.set(&neural_network, &data_set);
-
-    weighted_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-}
-
-
-void WeightedSquaredErrorTest::test_constructor()
-{
-    cout << "test_constructor\n";
-
-    // Default
-
-    WeightedSquaredError weighted_squared_error_1;
-
-    assert_true(!weighted_squared_error_1.has_neural_network(), LOG);
-    assert_true(!weighted_squared_error_1.has_data_set(), LOG);
-
-    // Neural network and data set
-
-    WeightedSquaredError weighted_squared_error_2(&neural_network, &data_set);
-
-    assert_true(weighted_squared_error_2.has_neural_network(), LOG);
-    assert_true(weighted_squared_error_2.has_data_set(), LOG);
-}
-
 
 void WeightedSquaredErrorTest::test_back_propagate()
 {
-    cout << "test_back_propagate\n";
-
     weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test binary classification trivial
@@ -77,14 +65,14 @@ void WeightedSquaredErrorTest::test_back_propagate()
         numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
+        EXPECT_EQ(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN));
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -126,26 +114,15 @@ void WeightedSquaredErrorTest::test_back_propagate()
         numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
     }
 }
 
-void WeightedSquaredErrorTest::run_test_case()
-{
-    cout << "Running weighted squared error test case...\n";
-
-    test_constructor();
-
-    test_back_propagate();
-
-    cout << "End of weighted squared error test case.\n\n";
 }
-
-}
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //
@@ -162,4 +139,3 @@ void WeightedSquaredErrorTest::run_test_case()
 // You should have received a copy of the GNU Lewser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
