@@ -20,9 +20,12 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const bool& new_use_causal_mask,
                                                  const string& new_name) : Layer()
 {
+    if (new_input_size == 0 || new_context_size == 0 || new_depth == 0 || new_heads_number == 0)
+        return;
+
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
-    set_causal_mask(use_causal_mask);
+    set_causal_mask(new_use_causal_mask);
 
     layer_type = Type::MultiheadAttention;
 
@@ -130,6 +133,9 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_heads_number, 
                                   const string& new_name)
 {
+    if (new_input_size == 0 || new_context_size == 0 || new_depth == 0 || new_heads_number == 0)
+        return;
+
     input_size = new_input_size;
 
     context_size = new_context_size;
@@ -224,19 +230,12 @@ void MultiheadAttentionLayer::set_parameters_random()
     const type maximum = type(0.2);
 
     set_random(query_weights, minimum, maximum);
-
     set_random(query_biases, minimum, maximum);
-
     set_random(key_weights, minimum, maximum);
-
     set_random(key_biases, minimum, maximum);
-
     set_random(value_weights, minimum, maximum);
-
     set_random(value_biases, minimum, maximum);
-
     set_random(projection_weights, minimum, maximum);
-
     set_random(projection_biases, minimum, maximum);
 }
 
@@ -254,11 +253,8 @@ void MultiheadAttentionLayer::set_parameters_glorot()
     const type maximum = limit;
 
     set_random(query_weights, minimum, maximum);
-
     set_random(key_weights, minimum, maximum);
-
     set_random(value_weights, minimum, maximum);
-
     set_random(projection_weights, minimum, maximum);
 }
 

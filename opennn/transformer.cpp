@@ -46,7 +46,7 @@ void Transformer::set(const Index& new_input_length,
                       const Index& new_embedding_dimension,
                       const Index& new_perceptron_depth,
                       const Index& new_heads_number,
-                      const Index& new_layers_number)
+                      const Index& new_blocks_number)
 {
     name = "transformer";
 
@@ -79,7 +79,7 @@ void Transformer::set(const Index& new_input_length,
 
     // Encoder
 
-    for(Index i = 0; i < new_layers_number; i++)
+    for(Index i = 0; i < new_blocks_number; i++)
     {
         add_layer(make_unique<MultiheadAttentionLayer>(new_context_length,
                                                        new_context_length,
@@ -92,8 +92,8 @@ void Transformer::set(const Index& new_input_length,
             set_layer_inputs_indices("context_self_attention_1", 
                                     {"context_embedding", "context_embedding"});
         else
-
-            set_layer_inputs_indices("context_self_attention_" + to_string(i+1), { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
+            set_layer_inputs_indices("context_self_attention_" + to_string(i+1), 
+                { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
 
         //context_self_attention_layer->set_dropout_rate(dropout_rate);
 
@@ -153,7 +153,7 @@ void Transformer::set(const Index& new_input_length,
     
     // Decoder
 
-    for(Index i = 0; i < new_layers_number; i++)
+    for(Index i = 0; i < new_blocks_number; i++)
     {
         add_layer(make_unique<MultiheadAttentionLayer>(new_input_length,
                                                        new_input_length,
@@ -190,7 +190,7 @@ void Transformer::set(const Index& new_input_length,
                                                        false, 
                                                        "cross_attention_" + to_string(i+1)));
 
-        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(new_layers_number)});
+        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(new_blocks_number)});
 
         //cross_attention_layer->set_dropout_rate(dropout_rate);
 
@@ -240,7 +240,7 @@ void Transformer::set(const Index& new_input_length,
                                                 new_input_dimensions,
                                                 "probabilistic"));
 
-    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(new_layers_number));
+    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(new_blocks_number));
 }
 
 

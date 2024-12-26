@@ -23,7 +23,7 @@ TEST(TransformerTest, GeneralConstructor)
     const Index heads_number = 1;
     const Index layers_number = 1;
 
-//    Transformer transformer(architecture);
+    Transformer transformer(1,1,1,1,1,1,1,1);
 
 //    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
 }
