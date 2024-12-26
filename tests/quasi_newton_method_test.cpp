@@ -49,7 +49,7 @@ TEST(QuasiNewtonMethodTest, DFP)
 
     quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
 
-    assert_true(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)), LOG);
+    EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
 
@@ -68,7 +68,7 @@ TEST(QuasiNewtonMethodTest, BGFS)
 
     quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
 
-    assert_true(are_equal(BFGS_inverse_hessian, inverse_hessian, type(1e-4)), LOG);
+    EXPECT_EQ(are_equal(BFGS_inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
 
@@ -95,7 +95,7 @@ TEST(QuasiNewtonMethodTest, Train)
     quasi_newton_method.set_display(false);
     training_results = quasi_newton_method.perform_training();
 
-    assert_true(training_results.get_epochs_number() <= 1, LOG);
+    EXPECT_EQ(training_results.get_epochs_number() <= 1);
 
     // Test
 
@@ -110,7 +110,7 @@ TEST(QuasiNewtonMethodTest, Train)
     training_results = quasi_newton_method.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error < old_error, LOG);
+    EXPECT_EQ(error < old_error);
 
     // Test
 
@@ -122,7 +122,7 @@ TEST(QuasiNewtonMethodTest, Train)
     training_results = quasi_newton_method.perform_training();
     error = training_results.get_training_error();
 
-    assert_true(error <= old_error, LOG);
+    EXPECT_EQ(error <= old_error);
 
     // Loss goal
 
@@ -137,7 +137,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     training_results = quasi_newton_method.perform_training();
 
-    //assert_true(training_results.get_loss() <= training_loss_goal, LOG);
+    //EXPECT_EQ(training_results.get_loss() <= training_loss_goal);
 
     // Minimum loss decrease
 
@@ -152,7 +152,7 @@ TEST(QuasiNewtonMethodTest, Train)
 
     training_results = quasi_newton_method.perform_training();
 
-    //assert_true(training_results.get_loss_decrease() <= minimum_loss_decrease, LOG);
+    //EXPECT_EQ(training_results.get_loss_decrease() <= minimum_loss_decrease);
 */
 }
 
@@ -161,8 +161,6 @@ TEST(QuasiNewtonMethodTest, Train)
 
 void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
-    cout << "test_calculate_inverse_hessian_approximation\n";
-
     Tensor<type, 1> old_parameters;
     Tensor<type, 1> old_gradient;
     Tensor<type, 2> old_inverse_hessian;
@@ -190,7 +188,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
     quasi_newton_method.calculate_inverse_hessian_approximation(quasi_newton_method_data);
 
-    assert_true(inverse_hessian_approximation == inverse_hessian, LOG);
+    EXPECT_EQ(inverse_hessian_approximation == inverse_hessian);
 
     quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::InverseHessianApproximationMethod::DFP);
 
@@ -200,7 +198,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
     quasi_newton_method.calculate_inverse_hessian_approximation(quasi_newton_method_data);
 
-    assert_true(inverse_hessian_approximation == inverse_hessian, LOG);
+    EXPECT_EQ(inverse_hessian_approximation == inverse_hessian);
 
     // Test
 

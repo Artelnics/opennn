@@ -417,8 +417,6 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
-    cout << "test_calculate_normalization_coefficient\n";
-
     Index samples_number;
     Index inputs_number;
     Index outputs_number;

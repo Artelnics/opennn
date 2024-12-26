@@ -1,34 +1,22 @@
 #include "pch.h"
+
+
 /*
-
-namespace opennn
-{
-
-TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
-{
-    testing_analysis.set_neural_network(&neural_network);
-    testing_analysis.set_data_set(&data_set);
-}
-
 
 void TestingAnalysisTest::test_constructor()
 {
-    cout << "test_constructor\n";
-
     // Neural network and data set constructor
 
     TestingAnalysis testing_analysis(&neural_network,&data_set);
 
-    assert_true(testing_analysis.get_neural_network(), LOG);
+    EXPECT_EQ(testing_analysis.get_neural_network());
 
-    assert_true(testing_analysis.get_data_set(), LOG);
+    EXPECT_EQ(testing_analysis.get_data_set());
 }
 
 
 void TestingAnalysisTest::test_calculate_error_data()
 {
-    cout << "test_calculate_error_data\n";
-
     Tensor<type, 3> error_data;
 
     // Test
@@ -46,17 +34,15 @@ void TestingAnalysisTest::test_calculate_error_data()
 
     error_data = testing_analysis.calculate_error_data();
 
-    assert_true(error_data.size() == 3, LOG);
-    assert_true(error_data.dimension(0) == 1, LOG);
-    assert_true(error_data.dimension(1) == 3, LOG);
-    assert_true(static_cast<double>(error_data(0,0,0)) == 0.0, LOG);
+    EXPECT_EQ(error_data.size() == 3);
+    EXPECT_EQ(error_data.dimension(0) == 1);
+    EXPECT_EQ(error_data.dimension(1) == 3);
+    EXPECT_EQ(static_cast<double>(error_data(0,0,0)) == 0.0);
 }
 
 
 void TestingAnalysisTest::test_calculate_percentage_error_data()
 {
-    cout << "test_calculate_percentage_error_data\n";
-
     Tensor<type, 2> error_data;
 
     // Test
@@ -74,16 +60,14 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
 
     error_data = testing_analysis.calculate_percentage_error_data();
 
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(error_data.dimension(1) == 1, LOG);
-    assert_true(static_cast<double>(error_data(0,0)) == 0.0, LOG);
+    EXPECT_EQ(error_data.size() == 1);
+    EXPECT_EQ(error_data.dimension(1) == 1);
+    EXPECT_EQ(static_cast<double>(error_data(0,0)) == 0.0);
 }
 
 
 void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 {
-    cout << "test_calculate_absolute_errors_descriptives\n";
-
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -101,18 +85,16 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
 
     error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(static_cast<double>(error_data[0].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
+    EXPECT_EQ(error_data.size() == 1);
+    EXPECT_EQ(static_cast<double>(error_data[0].minimum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data[0].maximum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data[0].mean) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation) == 0.0);
 }
 
 
 void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 {
-    cout << "test_calculate_percentage_error_descriptives\n";
-
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -130,15 +112,13 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     error_data = testing_analysis.calculate_percentage_errors_descriptives();
 
-    assert_true(error_data.size() == 1, LOG);
-    assert_true(static_cast<double>(error_data[0].standard_deviation) == 0.0, LOG);
+    EXPECT_EQ(error_data.size() == 1);
+    EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation) == 0.0);
 }
 
 
 void TestingAnalysisTest::test_calculate_error_data_descriptives()
 {
-    cout << "test_calculate_error_data_descriptives\n";
-
     Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics;
 
     // Test
@@ -156,23 +136,21 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
 
     error_data_statistics = testing_analysis.calculate_error_data_descriptives();
 
-    assert_true(error_data_statistics.size() == 1, LOG);
-    assert_true(error_data_statistics[0].size() == 3, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][0].standard_deviation) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].minimum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].mean) == 0.0, LOG);
-    assert_true(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0, LOG);
+    EXPECT_EQ(error_data_statistics.size() == 1);
+    EXPECT_EQ(error_data_statistics[0].size() == 3);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].minimum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].maximum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].mean) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].standard_deviation) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].minimum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].mean) == 0.0);
+    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0);
 }
 
 
 void TestingAnalysisTest::test_calculate_error_data_histograms()
 {
-    cout << "test_calculate_error_data_histograms\n";
-
     Tensor<Histogram, 1> error_data_histograms;
 
     // Test
@@ -190,18 +168,14 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
-    assert_true(error_data_histograms.size() == 1, LOG);
-    assert_true(error_data_histograms[0].get_bins_number() == 10, LOG);
+    EXPECT_EQ(error_data_histograms.size() == 1);
+    EXPECT_EQ(error_data_histograms[0].get_bins_number() == 10);
 }
 
 
 void TestingAnalysisTest::test_calculate_maximal_errors()
 {
-    cout << "test_calculate_maximal_errors\n";
-
     Tensor<Tensor<Index, 1>, 1> maximal_errors;
-
-    // Test
 
     samples_number = 4;
     inputs_number = 1;
@@ -216,15 +190,13 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     maximal_errors = testing_analysis.calculate_maximal_errors(2);
 
-    assert_true(maximal_errors.rank() == 1, LOG);
-    assert_true(maximal_errors[0](0) == 0 , LOG);
+    EXPECT_EQ(maximal_errors.rank() == 1);
+    EXPECT_EQ(maximal_errors[0](0) == 0 );
 }
 
 
 void TestingAnalysisTest::test_linear_regression()
 {
-    cout << "test_linear_regression\n";
-
     Index neurons_number;
 
     Tensor<Correlation, 1> linear_correlation;
@@ -245,17 +217,15 @@ void TestingAnalysisTest::test_linear_regression()
 
     linear_correlation = testing_analysis.linear_correlation();
 
-    assert_true(linear_correlation.size() == 1, LOG);
-    assert_true(isnan(linear_correlation(0).a), LOG);
-    assert_true(isnan(linear_correlation(0).b), LOG);
-    assert_true(isnan(linear_correlation(0).r), LOG);
+    EXPECT_EQ(linear_correlation.size() == 1);
+    EXPECT_EQ(isnan(linear_correlation(0).a));
+    EXPECT_EQ(isnan(linear_correlation(0).b));
+    EXPECT_EQ(isnan(linear_correlation(0).r));
 }
 
 
 void TestingAnalysisTest::test_save()
 {
-    cout << "test_save\n";
-
     string file_name = "../data/linear_correlation.dat";
 
     testing_analysis.save(file_name);
@@ -264,8 +234,6 @@ void TestingAnalysisTest::test_save()
 
 void TestingAnalysisTest::test_perform_linear_regression()
 {
-    cout << "test_perform_linear_regression\n";
-
     // DataSet
 
     samples_number = 1;
@@ -288,16 +256,14 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
-    assert_true(goodness_of_fit_analysis.size() == 1 , LOG);
-    assert_true(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(goodness_of_fit_analysis.size() == 1 );
+    EXPECT_EQ(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN));
 
 }
 
 
 void TestingAnalysisTest::test_calculate_confusion()
 {
-    cout << "test_calculate_confusion\n";
-
     // Samples* i;
 
     Tensor<type, 2> actual;
@@ -322,30 +288,28 @@ void TestingAnalysisTest::test_calculate_confusion()
 
     Tensor<Index, 0> sum = confusion.sum();
 
-    assert_true(sum(0) == 4 + 12, LOG);
+    EXPECT_EQ(sum(0) == 4 + 12);
 
-    assert_true(confusion.dimension(0) == 4, LOG);
-    assert_true(confusion.dimension(1) == 4, LOG);
-    assert_true(confusion(0,0) == 1, LOG);
-    assert_true(confusion(1,1) == 2, LOG);
-    assert_true(confusion(2,2) == 1, LOG);
+    EXPECT_EQ(confusion.dimension(0) == 4);
+    EXPECT_EQ(confusion.dimension(1) == 4);
+    EXPECT_EQ(confusion(0,0) == 1);
+    EXPECT_EQ(confusion(1,1) == 2);
+    EXPECT_EQ(confusion(2,2) == 1);
 
-    assert_true(confusion(0,3) == confusion(0,0) + confusion(0,1) + confusion(0,2), LOG);
-    assert_true(confusion(1,3) == confusion(1,0) + confusion(1,1) + confusion(1,2), LOG);
-    assert_true(confusion(2,3) == confusion(2,0) + confusion(2,1) + confusion(2,2), LOG);
+    EXPECT_EQ(confusion(0,3) == confusion(0,0) + confusion(0,1) + confusion(0,2));
+    EXPECT_EQ(confusion(1,3) == confusion(1,0) + confusion(1,1) + confusion(1,2));
+    EXPECT_EQ(confusion(2,3) == confusion(2,0) + confusion(2,1) + confusion(2,2));
 
-    assert_true(confusion(3,0) == confusion(0,0) + confusion(1,0) + confusion(2,0), LOG);
-    assert_true(confusion(3,1) == confusion(0,1) + confusion(1,1) + confusion(2,1), LOG);
-    assert_true(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2), LOG);
+    EXPECT_EQ(confusion(3,0) == confusion(0,0) + confusion(1,0) + confusion(2,0));
+    EXPECT_EQ(confusion(3,1) == confusion(0,1) + confusion(1,1) + confusion(2,1));
+    EXPECT_EQ(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2));
 
-    assert_true(confusion(3,3) == 4, LOG);
+    EXPECT_EQ(confusion(3,3) == 4);
 }
 
 
 void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
-    cout << "test_calculate_binary_classification_test\n";
-
     // DataSet
 
     data_set.set(samples_number, inputs_number, targets_number);
@@ -363,30 +327,28 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
 
    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
-   assert_true(binary.size() == 15 , LOG);
+   EXPECT_EQ(binary.size() == 15 );
 
-   assert_true(binary[0] == 0 , LOG);
-   assert_true(binary[1] == 1 , LOG);
-   assert_true(binary[2] == 0 , LOG);
-   assert_true(binary[3] == 0 , LOG);
-   assert_true(binary[4] == 0 , LOG);
-   assert_true(binary[5] == 0 , LOG);
-   assert_true(binary[6] == 0 , LOG);
-   assert_true(binary[7] == 0 , LOG);
-   assert_true(binary[8] == 1 , LOG);
-   assert_true(binary[9] == 1 , LOG);
-   assert_true(binary[10] == 0 , LOG);
-   assert_true(binary[11] == 0 , LOG);
-   assert_true(binary[12] == 0 , LOG);
-   assert_true(binary[13] == -1 , LOG);
-   assert_true(binary[14] == -1 , LOG);
+   EXPECT_EQ(binary[0] == 0 );
+   EXPECT_EQ(binary[1] == 1 );
+   EXPECT_EQ(binary[2] == 0 );
+   EXPECT_EQ(binary[3] == 0 );
+   EXPECT_EQ(binary[4] == 0 );
+   EXPECT_EQ(binary[5] == 0 );
+   EXPECT_EQ(binary[6] == 0 );
+   EXPECT_EQ(binary[7] == 0 );
+   EXPECT_EQ(binary[8] == 1 );
+   EXPECT_EQ(binary[9] == 1 );
+   EXPECT_EQ(binary[10] == 0 );
+   EXPECT_EQ(binary[11] == 0 );
+   EXPECT_EQ(binary[12] == 0 );
+   EXPECT_EQ(binary[13] == -1 );
+   EXPECT_EQ(binary[14] == -1 );
 }
 
 
 void TestingAnalysisTest::test_calculate_roc_curve()
 {
-    cout << "test_calculate_roc_curve\n";
-
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -410,19 +372,19 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    assert_true(roc_curve.dimension(1) == 3, LOG);
-    assert_true(roc_curve.dimension(0) == 201, LOG);
+    EXPECT_EQ(roc_curve.dimension(1) == 3);
+    EXPECT_EQ(roc_curve.dimension(0) == 201);
 
-    assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(1, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(2, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(2, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(1, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(2, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(2, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(3, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(3, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -442,26 +404,24 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
 
-    assert_true(roc_curve.dimension(1) == 3, LOG);
-    assert_true(roc_curve.dimension(0) == 201, LOG);
+    EXPECT_EQ(roc_curve.dimension(1) == 3);
+    EXPECT_EQ(roc_curve.dimension(0) == 201);
 
-    assert_true(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(1, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(2, 0) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(2, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(3, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(roc_curve(0, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(0, 1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(1, 0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(1, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(2, 0) - type(0.5) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(2, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(3, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(3, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
 }
 
 
 void TestingAnalysisTest::test_calculate_area_under_curve()
 {
-    cout << "test_calculate_area_under_curve\n";
-
     Tensor<type, 2> roc_curve;
 
     type area_under_curve;
@@ -486,7 +446,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    assert_true(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(area_under_curve - type(1) < type(NUMERIC_LIMITS_MIN));
 
     targets.resize(4,1);
 
@@ -506,7 +466,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -528,7 +488,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    assert_true(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(area_under_curve - type(0.5) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -550,14 +510,12 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
-    assert_true(area_under_curve < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(area_under_curve < type(NUMERIC_LIMITS_MIN));
 }
 
 
 void TestingAnalysisTest::test_calculate_optimal_threshold()
 {
-    cout << "test_calculate_optimal_threshold\n";
-
     type optimal_threshold;
 
     Tensor<type, 2> roc_curve;
@@ -582,7 +540,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    assert_true(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -604,7 +562,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    assert_true(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(optimal_threshold - type(1) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -628,15 +586,12 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
-    assert_true(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN));
 }
 
 
 void TestingAnalysisTest::test_calculate_cumulative_gain()
 {
-    cout << "test_calculate_cumulative_chart\n";
-
-    // Test
 
     targets.resize(4,1);
 
@@ -654,19 +609,17 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     Tensor<type, 2> cumulative_gain = testing_analysis.calculate_cumulative_gain(targets, outputs);
 
-    assert_true(cumulative_gain.dimension(1) == 2, LOG);
-    assert_true(cumulative_gain.dimension(0) == 21, LOG);
-    assert_true(cumulative_gain(0, 0) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(0, 1) - type(0) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(20, 0) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(cumulative_gain(20, 1) - type(1) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(cumulative_gain.dimension(1) == 2);
+    EXPECT_EQ(cumulative_gain.dimension(0) == 21);
+    EXPECT_EQ(cumulative_gain(0, 0) - type(0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(cumulative_gain(0, 1) - type(0) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(cumulative_gain(20, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(cumulative_gain(20, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
 }
 
 
 void TestingAnalysisTest::test_calculate_lift_chart()
 {
-    cout << "test_calculate_lift_chart\n";
-
     Tensor<type, 2> cumulative_gain;
 
     Tensor<type, 2> lift_chart;
@@ -691,15 +644,13 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     lift_chart = testing_analysis.calculate_lift_chart(cumulative_gain);
 
-    assert_true(lift_chart.dimension(1) == cumulative_gain.dimension(1), LOG);
-    assert_true(lift_chart.dimension(0) == cumulative_gain.dimension(0), LOG);
+    EXPECT_EQ(lift_chart.dimension(1) == cumulative_gain.dimension(1));
+    EXPECT_EQ(lift_chart.dimension(0) == cumulative_gain.dimension(0));
 }
 
 
 void TestingAnalysisTest::test_calculate_calibration_plot()
 {
-    cout << "test_calculate_calibration_plot\n";
-
     Tensor<type, 2> calibration_plot;
 
     // Test
@@ -732,15 +683,13 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     calibration_plot = testing_analysis.calculate_calibration_plot(targets, outputs);
 
-    assert_true(calibration_plot.dimension(1) == 2, LOG);
-    assert_true(calibration_plot.dimension(0) == 11, LOG);
+    EXPECT_EQ(calibration_plot.dimension(1) == 2);
+    EXPECT_EQ(calibration_plot.dimension(0) == 11);
 }
 
 
 void TestingAnalysisTest::test_calculate_true_positive_samples()
 {
-    cout << "test_calculate_true_positive_samples\n";
-
     Tensor<Index, 1> true_positives_indices;
 
     // Test
@@ -766,8 +715,8 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_positives_indices.size() == 1, LOG);
-    assert_true(true_positives_indices[0] == 1, LOG);
+    EXPECT_EQ(true_positives_indices.size() == 1);
+    EXPECT_EQ(true_positives_indices[0] == 1);
 
     // Test
 
@@ -789,7 +738,7 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     const Tensor<bool, 0> not_empty = true_positives_indices.any();
 
-    assert_true(!not_empty(0), LOG);
+    EXPECT_EQ(!not_empty(0));
 
     // Test
 
@@ -809,18 +758,16 @@ void TestingAnalysisTest::test_calculate_true_positive_samples()
 
     true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_positives_indices.size() == 4, LOG);
-    assert_true(true_positives_indices[0] == 0, LOG);
-    assert_true(true_positives_indices[1] == 1, LOG);
-    assert_true(true_positives_indices[2] == 2, LOG);
-    assert_true(true_positives_indices[3] == 3, LOG);
+    EXPECT_EQ(true_positives_indices.size() == 4);
+    EXPECT_EQ(true_positives_indices[0] == 0);
+    EXPECT_EQ(true_positives_indices[1] == 1);
+    EXPECT_EQ(true_positives_indices[2] == 2);
+    EXPECT_EQ(true_positives_indices[3] == 3);
 }
 
 
 void TestingAnalysisTest::test_calculate_false_positive_samples()
 {
-    cout << "test_calculate_false_positive_samples\n";
-
     Tensor<Index, 1> false_positives_indices;
 
     // Test
@@ -845,8 +792,8 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
-    assert_true(false_positives_indices.size() == 1, LOG);
-    assert_true(false_positives_indices[0] == 2, LOG);
+    EXPECT_EQ(false_positives_indices.size() == 1);
+    EXPECT_EQ(false_positives_indices[0] == 2);
 
     // Test
 
@@ -866,11 +813,11 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(false_positives_indices.size() == 4, LOG);
-    assert_true(false_positives_indices[0] == 0, LOG);
-    assert_true(false_positives_indices[1] == 1, LOG);
-    assert_true(false_positives_indices[2] == 2, LOG);
-    assert_true(false_positives_indices[3] == 3, LOG);
+    EXPECT_EQ(false_positives_indices.size() == 4);
+    EXPECT_EQ(false_positives_indices[0] == 0);
+    EXPECT_EQ(false_positives_indices[1] == 1);
+    EXPECT_EQ(false_positives_indices[2] == 2);
+    EXPECT_EQ(false_positives_indices[3] == 3);
 
     // Test
 
@@ -892,19 +839,15 @@ void TestingAnalysisTest::test_calculate_false_positive_samples()
 
     const Tensor<bool, 0> not_empty = false_positives_indices.any();
 
-    assert_true(!not_empty(0), LOG);
+    EXPECT_EQ(!not_empty(0));
 
-    assert_true(false_positives_indices.size() == 0, LOG);
+    EXPECT_EQ(false_positives_indices.size() == 0);
 }
 
 
 void TestingAnalysisTest::test_calculate_false_negative_samples()
 {
-    cout << "test_calculate_false_negative_samples\n";
-
     Tensor<Index, 1> false_negatives_indices;
-
-    // Test
 
     targets.resize(4, 1);
 
@@ -926,8 +869,8 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(false_negatives_indices.size() == 1, LOG);
-    assert_true(false_negatives_indices[0] == 3, LOG);
+    EXPECT_EQ(false_negatives_indices.size() == 1);
+    EXPECT_EQ(false_negatives_indices[0] == 3);
 
     // Test
 
@@ -947,11 +890,11 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(false_negatives_indices.size() == 0, LOG);
+    EXPECT_EQ(false_negatives_indices.size() == 0);
 
     const Tensor<bool, 0> not_empty = false_negatives_indices.any();
 
-    assert_true(!not_empty(0), LOG);
+    EXPECT_EQ(!not_empty(0));
 
     // Test
 
@@ -971,18 +914,16 @@ void TestingAnalysisTest::test_calculate_false_negative_samples()
 
     false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(false_negatives_indices.size() == 4, LOG);
-    assert_true(false_negatives_indices[0] == 0, LOG);
-    assert_true(false_negatives_indices[1] == 1, LOG);
-    assert_true(false_negatives_indices[2] == 2, LOG);
-    assert_true(false_negatives_indices[3] == 3, LOG);
+    EXPECT_EQ(false_negatives_indices.size() == 4);
+    EXPECT_EQ(false_negatives_indices[0] == 0);
+    EXPECT_EQ(false_negatives_indices[1] == 1);
+    EXPECT_EQ(false_negatives_indices[2] == 2);
+    EXPECT_EQ(false_negatives_indices[3] == 3);
 }
 
 
 void TestingAnalysisTest::test_calculate_true_negative_samples()
 {
-    cout << "test_calculate_true_negative_samples\n";
-
     Tensor<Index, 1> true_negatives_indices;
 
     // Test
@@ -1007,11 +948,11 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_negatives_indices.size() == 4, LOG);
-    assert_true(true_negatives_indices[0] == 0, LOG);
-    assert_true(true_negatives_indices[1] == 1, LOG);
-    assert_true(true_negatives_indices[2] == 2, LOG);
-    assert_true(true_negatives_indices[3] == 3, LOG);
+    EXPECT_EQ(true_negatives_indices.size() == 4);
+    EXPECT_EQ(true_negatives_indices[0] == 0);
+    EXPECT_EQ(true_negatives_indices[1] == 1);
+    EXPECT_EQ(true_negatives_indices[2] == 2);
+    EXPECT_EQ(true_negatives_indices[3] == 3);
 
     // Test
 
@@ -1033,7 +974,7 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     const Tensor<bool, 0> not_empty = true_negatives_indices.any();
 
-    assert_true(!not_empty(0), LOG);
+    EXPECT_EQ(!not_empty(0));
 
     // Test
 
@@ -1053,15 +994,13 @@ void TestingAnalysisTest::test_calculate_true_negative_samples()
 
     true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
-    assert_true(true_negatives_indices.size() == 1, LOG);
-    assert_true(true_negatives_indices[0] == 0, LOG);
+    EXPECT_EQ(true_negatives_indices.size() == 1);
+    EXPECT_EQ(true_negatives_indices[0] == 0);
 }
 
 
 void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
-    cout << "test_calculate_multiple_classification_rates\n";
-
     Tensor<Index, 1> testing_indices;
 
     Tensor<Tensor<Index,1>, 2> multiple_classification_rates;
@@ -1097,81 +1036,23 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     multiple_classification_rates = testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
-    assert_true(multiple_classification_rates.size() == 9, LOG);
+    EXPECT_EQ(multiple_classification_rates.size() == 9);
 
-    assert_true(multiple_classification_rates(0,0)(0) == 0, LOG);
-    assert_true(multiple_classification_rates(0,1)(0) == 3, LOG);
-    assert_true(multiple_classification_rates(0,2)(0) == 6, LOG);
-    assert_true(multiple_classification_rates(1,0)(0) == 4, LOG);
-    assert_true(multiple_classification_rates(1,1)(0) == 1, LOG);
-    assert_true(multiple_classification_rates(1,2)(0) == 7, LOG);
-    assert_true(multiple_classification_rates(2,0)(0) == 8, LOG);
-    assert_true(multiple_classification_rates(2,1)(0) == 5, LOG);
-    assert_true(multiple_classification_rates(2,2)(0) == 2, LOG);
+    EXPECT_EQ(multiple_classification_rates(0,0)(0) == 0);
+    EXPECT_EQ(multiple_classification_rates(0,1)(0) == 3);
+    EXPECT_EQ(multiple_classification_rates(0,2)(0) == 6);
+    EXPECT_EQ(multiple_classification_rates(1,0)(0) == 4);
+    EXPECT_EQ(multiple_classification_rates(1,1)(0) == 1);
+    EXPECT_EQ(multiple_classification_rates(1,2)(0) == 7);
+    EXPECT_EQ(multiple_classification_rates(2,0)(0) == 8);
+    EXPECT_EQ(multiple_classification_rates(2,1)(0) == 5);
+    EXPECT_EQ(multiple_classification_rates(2,2)(0) == 2);
+
+}
 
 }
 
-
-void TestingAnalysisTest::run_test_case()
-{
-    cout << "Running testing analysis test case...\n";
-
-    test_constructor();
-
-    // Error data
-
-    test_calculate_error_data();
-    test_calculate_percentage_error_data();
-    test_calculate_error_data_descriptives();
-    test_calculate_absolute_errors_descriptives();
-    test_calculate_percentage_errors_descriptives();
-    test_calculate_error_data_histograms();
-    test_calculate_maximal_errors();
-
-    // Linear regression analysista
-
-    test_linear_regression();
-    test_save();
-    test_perform_linear_regression();
-
-    // Binary classification test
-
-    test_calculate_binary_classification_test();
-
-    // Confusion matrix
-
-    test_calculate_confusion();
-
-    // ROC curve
-
-    test_calculate_roc_curve();
-    test_calculate_area_under_curve();
-    test_calculate_optimal_threshold();
-
-    // Lift chart
-
-    test_calculate_cumulative_gain();
-    test_calculate_lift_chart();
-
-    // Calibration plot
-
-    test_calculate_calibration_plot();
-
-    // Binary classification rates
-
-    test_calculate_true_positive_samples();
-    test_calculate_false_positive_samples();
-    test_calculate_false_negative_samples();
-    test_calculate_true_negative_samples();
-
-    // Multiple classification rates
-
-    test_calculate_multiple_classification_rates();
-
-    cout << "End of testing analysis test case.\n\n";
-}
-
-}
+*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
@@ -1189,4 +1070,3 @@ void TestingAnalysisTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/

@@ -1,20 +1,11 @@
 #include "pch.h"
-/*
 
 #include "../opennn/tensors.h"
 
-namespace opennn
-{
-
-TensorsTest::TensorsTest() : UnitTesting()
-{
-}
-
+/*
 
 void TensorsTest::test_fill_tensor_data()
 {
-    cout << "test_fill_tensor_data\n";
-
     Tensor<type, 2> submatrix;
 
     Tensor<Index, 1> rows_indices;
@@ -35,14 +26,12 @@ void TensorsTest::test_fill_tensor_data()
 
     fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
-    assert_true(is_equal(submatrix, type(3.1416)), LOG);
+    EXPECT_EQ(is_equal(submatrix, type(3.1416)));
 }
 
 
 void TensorsTest::test_calculate_rank()
 {
-    cout << "test_calculate_rank\n";
-
     Tensor<Index, 1> rank_greater;
     Tensor<Index, 1> rank_less;
 
@@ -53,18 +42,6 @@ void TensorsTest::test_calculate_rank()
 
     rank_greater = calculate_rank_greater(vector);
     rank_less = calculate_rank_less(vector);
-}
-
-
-void TensorsTest::run_test_case()
-{
-    cout << "Running tensors test case...\n";
-
-    test_fill_tensor_data();
-
-    test_calculate_rank();
-
-    cout << "End of tensors test case.\n\n";
 }
 
 }
