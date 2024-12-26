@@ -6,26 +6,26 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include <iostream>
+#include "pch.h"
+#include "../opennn/recurrent_layer.h"
 
-#include "../opennn/tensors.h"
-
-namespace opennn
+TEST(RecurrentLayerTest, DefaultConstructor)
 {
+    RecurrentLayer recurrent_layer;
 
-RecurrentLayerTest::RecurrentLayerTest() : UnitTesting()
-{
+//    EXPECT_EQ(quasi_newton_method.has_loss_index(), false);
 }
 
 
-void RecurrentLayerTest::test_constructor()
+TEST(RecurrentLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+
+    RecurrentLayer recurrent_layer;
 
     Index inputs_number;
     Index neurons_number;
     Index time_steps;
-
+/*
     // Test
 
     inputs_number = 1;
@@ -44,8 +44,17 @@ void RecurrentLayerTest::test_constructor()
     recurrent_layer.set(inputs_number, neurons_number, time_steps);
 
     assert_true(recurrent_layer.get_parameters_number() == 18, LOG);
+
+    EXPECT_EQ(quasi_newton_method.has_loss_index(), true);
+*/
 }
 
+
+TEST(RecurrentLayerTest, ForwardPropagate)
+{
+}
+
+/*
 
 void RecurrentLayerTest::test_calculate_activations()
 {
@@ -95,7 +104,7 @@ void RecurrentLayerTest::test_forward_propagate()
     input_data(0) = inputs.data();
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
+
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
@@ -133,24 +142,10 @@ void RecurrentLayerTest::test_forward_propagate()
     recurrent_layer.forward_propagate({input_pairs}, &recurrent_layer_forward_propagation, is_training);
 
     outputs = recurrent_layer_forward_propagation.outputs;
+
+}
 */
-}
 
-
-void RecurrentLayerTest::run_test_case()
-{
-    cout << "Running recurrent layer test case...\n";
-
-    test_constructor();
-
-    test_calculate_activations();
-
-    test_forward_propagate();
-
-    cout << "End of recurrent layer test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

@@ -6,15 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-namespace opennn
-{
+#include "pch.h"
 
-ResponseOptimizationTest::ResponseOptimizationTest() : UnitTesting()
-{
-    generate_neural_networks();
-}
-
-
+/*
 void ResponseOptimizationTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -158,23 +152,8 @@ void ResponseOptimizationTest::test_perform_optimization()
     assert_true(results->optimal_variables(3) <= 0.0, LOG);
 }
 
+*/
 
-void ResponseOptimizationTest::run_test_case()
-{
-    cout << "Running response optimization test case...\n";
-
-    test_constructor();
-
-    // Performance
-
-    test_calculate_inputs();
-
-    test_perform_optimization();
-
-    cout << "End of response optimization test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

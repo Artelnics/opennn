@@ -492,10 +492,10 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 
     Tensor<type, 1> errors(4);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    errors.setValues({sum_squared_error(0),
+    errors.setValues({mean_squared_error(0),
                       errors(0) / type(samples_number),
                       sqrt(errors(1)),
                       calculate_normalized_squared_error(targets, outputs)});;
@@ -534,10 +534,10 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const Da
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -566,10 +566,10 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -585,8 +585,8 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
     type normalization_coefficient = type(0);
 
@@ -599,7 +599,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
         normalization_coefficient += norm(0);
     }
 
-    return sum_squared_error()/normalization_coefficient;
+    return mean_squared_error()/normalization_coefficient;
 }
 
 
@@ -703,8 +703,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     f_3.device(*thread_pool_device) = targets.constant(type(0));
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     Index negatives = 0;
 
@@ -716,7 +716,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
 
-    return sum_squared_error(0)/normalization_coefficient;
+    return mean_squared_error(0)/normalization_coefficient;
 }
 
 
