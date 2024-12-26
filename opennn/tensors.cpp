@@ -957,12 +957,16 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
 
 
 void fill_tensor_data(const Tensor<type, 2>& matrix,
-                      const vector<Index>& rows_indices,
-                      const vector<Index>& columns_indices,
+                      const vector<Index>& row_indices,
+                      const vector<Index>& column_indices,
                       type* tensor_data)
 {
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
+
+    if(row_indices.empty() || column_indices.empty())
+        return;
+
+    const Index rows_number = row_indices.size();
+    const Index columns_number = column_indices.size();
 
     const type* matrix_data = matrix.data();
 
@@ -970,13 +974,13 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
 
     for (Index j = 0; j < columns_number; j++)
     {
-        const type* matrix_column = matrix_data + matrix.dimension(0) * columns_indices[j];
+        const type* matrix_column = matrix_data + matrix.dimension(0) * column_indices[j];
 
         type* tensor_value = tensor_data + rows_number * j;
 
         const type* matrix_value = nullptr;
 
-        const Index* rows_indices_data = rows_indices.data();
+        const Index* rows_indices_data = row_indices.data();
 
         for (Index i = 0; i < rows_number; i++)
         {

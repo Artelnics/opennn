@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "auto_association_data_set.h"
+#include "auto_associative_data_set.h"
 
 namespace opennn
 {
@@ -65,20 +65,17 @@ void AutoAssociativeDataSet::transform_associative_raw_variables()
         raw_variable_index = i%raw_variables_number;
 
         if(i < raw_variables_number)
-        {
-            new_raw_variables[index].name = raw_variables[raw_variable_index].name;
-
-            new_raw_variables[index].set_use(DataSet::VariableUse::Input);
-            new_raw_variables[index].type = raw_variables[raw_variable_index].type;
-            new_raw_variables[index].categories = raw_variables[raw_variable_index].categories;
-        }
+            new_raw_variables[index].set(raw_variables[raw_variable_index].name,
+                                         DataSet::VariableUse::Input,
+                                         raw_variables[raw_variable_index].type,
+                                         raw_variables[raw_variable_index].scaler,
+                                         raw_variables[raw_variable_index].categories);
         else
-        {
-            new_raw_variables[index].name = raw_variables[raw_variable_index].name + "_output";
-            new_raw_variables[index].set_use(DataSet::VariableUse::Target);
-            new_raw_variables[index].type = raw_variables[raw_variable_index].type;
-            new_raw_variables[index].categories = raw_variables[raw_variable_index].categories;
-        }
+            new_raw_variables[index].set(raw_variables[raw_variable_index].name + "_output",
+                                         DataSet::VariableUse::Target,
+                                         raw_variables[raw_variable_index].type,
+                                         raw_variables[raw_variable_index].scaler,
+                                         raw_variables[raw_variable_index].categories);
 
         index++;
     }

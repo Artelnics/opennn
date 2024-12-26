@@ -55,6 +55,7 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
+    auto_associative_data_set.h \
     pch.h \
     codification.h \
     cross_entropy_error_3d.h \
@@ -74,7 +75,6 @@ HEADERS += \
     data_set.h \
     batch.h \
     time_series_data_set.h \
-    auto_association_data_set.h \
     image_data_set.h \
     language_data_set.h \
     layer.h \
@@ -135,6 +135,7 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
+    auto_associative_data_set.cpp \
     pch.cpp \
     cross_entropy_error_3d.cpp \
     embedding_layer.cpp \
@@ -150,7 +151,6 @@ SOURCES += \
     data_set.cpp \
     batch.cpp \
     time_series_data_set.cpp \
-    auto_association_data_set.cpp \
     image_data_set.cpp \
     language_data_set.cpp \
     layer.cpp \

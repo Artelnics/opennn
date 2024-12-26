@@ -1659,11 +1659,11 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const vector<Index>& rows_indices) const
+Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const vector<Index>& row_indices) const
 {
-    Tensor<type, 2> raw_variable_data(rows_indices.size(), get_variable_indices(raw_variable_index).size());
+    Tensor<type, 2> raw_variable_data(row_indices.size(), get_variable_indices(raw_variable_index).size());
 
-    fill_tensor_data(data, rows_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
+    fill_tensor_data(data, row_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
 
     return raw_variable_data;
 }
@@ -2070,7 +2070,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
     const Index used_samples_number = used_sample_indices.size();
 
     vector<Histogram> histograms(used_raw_variables_number);
-/*
+
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
 
@@ -2155,7 +2155,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
             throw runtime_error("Unknown raw variable type.");
         }
     }
-*/
+
     return histograms;
 }
 

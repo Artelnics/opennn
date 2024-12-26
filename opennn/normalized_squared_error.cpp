@@ -18,8 +18,6 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
     : LossIndex(new_neural_network, new_data_set)
 {
     set_normalization_coefficient();
-
-    cout << normalization_coefficient << endl;
 }
 
 

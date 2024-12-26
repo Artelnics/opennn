@@ -14,9 +14,11 @@
 namespace opennn
 {
 
-    Tensor<unsigned char, 3> read_bmp_image(const filesystem::path&);
+    Tensor<type, 3> read_bmp_image(const filesystem::path&);
     
-    void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>&, Tensor<unsigned char, 3>&, Index, Index);
+    Tensor<type, 3> resize_image(const Tensor<type, 3>&,
+                                 const Index&,
+                                 const Index&);
 
     void reflect_image_x(const ThreadPoolDevice*, Tensor<type, 3>&);
     void reflect_image_y(const ThreadPoolDevice*, Tensor<type, 3>&);

@@ -10,7 +10,7 @@
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
-#include "language_data_set.h"
+//#include "language_data_set.h"
 
 namespace opennn
 {
@@ -22,25 +22,26 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
-    ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
-
-    if(image_data_set && image_data_set->get_augmentation())
+    if(is_instance_of<ImageDataSet>(data_set))
     {
-/*
-        // @TODO
-        Tensor<type, 2> augmented_data = perform_augmentation(data);
+        // @todo
+        //ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
-        fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
-*/
+        //image_data_set && image_data_set->get_augmentation())
+
+        //Tensor<type, 2> augmented_data = perform_augmentation(data);
+
+        //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
+
     }
     else
     {
-        fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+        //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
 
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    //fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
-    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    //fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 }
 
 
@@ -118,7 +119,6 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
-
 }
 
 

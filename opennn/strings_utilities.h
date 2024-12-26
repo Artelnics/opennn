@@ -48,16 +48,11 @@ namespace opennn
 
     void display_progress_bar(const int&, const int&);
 
-    bool is_not_alnum(char &c);
-
     bool contains(vector<string>&, const string&);
     string get_first_word(string&);
 
     vector<string> sort_string_vector(vector<string>&);
     vector<string> concatenate_string_vectors (const vector<string>&, const vector<string>&);
-
-    void to_lower(string&);
-    void to_lower(vector<string>&);
 
     enum Language {ENG, SPA};
 

@@ -20,27 +20,7 @@ int main()
 {
     try
     {
-        srand(unsigned(time(nullptr)));
-
         cout << "Airfoil self noise" << endl;
-
-        // DataSet data_set(1, { 1 }, { 1 });
-
-        // NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
-
-        // TrainingStrategy training_strategy(&neural_network, &data_set);
-
-
-        // NeuralNetwork neural_network;
-        // neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{2}, dimensions{2}, PerceptronLayer::ActivationFunction::HyperbolicTangent));
-        // neural_network.set_parameters_constant(10);
-
-        // Tensor<type, 2> inputs(2,2);
-        // inputs.setConstant(0);
-
-//        neural_network.print();
-
-        // neural_network.calculate_outputs(inputs);
 
         // Data set
         
@@ -50,7 +30,6 @@ int main()
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         data_set.set(DataSet::SampleUse::Training);
-        
 
         // Neural network
 
@@ -66,25 +45,24 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        training_strategy.set_display(false);
 
+//        training_strategy.set_display(false);
 
         //training_strategy.print();
 
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-
-        training_strategy.get_Levenberg_Marquardt_algorithm()->set_maximum_epochs_number(1);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1);
 
         //training_strategy.set_maximum_epochs_number(10000);
 
@@ -92,7 +70,7 @@ int main()
         //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
-        /*
+/*
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_inputs_selection();

@@ -461,7 +461,7 @@ void ImageDataSet::read_bmp()
     }
     else
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]);
+        const Tensor<float, 3> image_data = read_bmp_image(image_path[0]);
 
         height = image_data.dimension(0);
         width = image_data.dimension(1);
@@ -491,25 +491,21 @@ void ImageDataSet::read_bmp()
     #pragma omp parallel for
     for (Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]);
+        Tensor<type, 3> image = read_bmp_image(image_path[i]);
 
-        const Index current_height = image_data.dimension(0);
-        const Index current_width = image_data.dimension(1);
-        const Index current_channels = image_data.dimension(2);
+        const Index current_height = image.dimension(0);
+        const Index current_width = image.dimension(1);
+        const Index current_channels = image.dimension(2);
 
         if (current_channels != image_channels)
             throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
 
-        Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-
         if (current_height != height || current_width != width)
-            bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-        else
-            resized_image_data = image_data;
+            image = resize_image(image, height, width);
 
         #pragma omp parallel for
         for (Index j = 0; j < pixels_number; j++)
-            data(i, j) = resized_image_data(j);
+            data(i, j) = image(j);
 
         if (targets_number == 1)
         {

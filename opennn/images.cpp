@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
+Tensor<type, 3> read_bmp_image(const filesystem::path& filename)
 {
     ifstream file(filename, std::ios::binary);
 
@@ -49,7 +49,7 @@ Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 
     file.close();
 
-    Tensor<unsigned char, 3> image(height, width, channels);
+    Tensor<type, 3> image(height, width, channels);
 
     const Index image_pixels = width * channels + padding;
 
@@ -64,14 +64,20 @@ Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 }
 
 
-void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_image, Tensor<unsigned char, 3>& output_image, Index output_height, Index output_width)
+Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
+                             const Index& output_height,
+                             const Index& output_width)
 {
     const Index input_height = input_image.dimension(0);
     const Index input_width = input_image.dimension(1);
     const Index channels = input_image.dimension(2);
 
+    Tensor<type, 3> output_image(output_height, output_width, channels);
+
     const type scale_y = static_cast<float>(input_height) / output_height;
     const type scale_x = static_cast<float>(input_width) / output_width;
+
+    #pragma omp parallel for collapse(2)
 
     for (Index c = 0; c < channels; ++c)
     {
@@ -89,13 +95,13 @@ void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_i
                 const type x_weight = in_x - x0;
                 const Index x1 = min(x0 + 1, input_width - 1);
 
-                const type value = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
+                output_image(y, x, c) = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
                     y_weight * ((1 - x_weight) * input_image(y1, x0, c) + x_weight * input_image(y1, x1, c));
-
-                output_image(y, x, c) = static_cast<unsigned char>(value);
             }
         }
     }
+
+    return output_image;
 }
 
 

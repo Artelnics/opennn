@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
-#include "tensors.h"
+//#include "tensors.h"
 
 namespace opennn
 {
@@ -417,29 +417,6 @@ void erase(string& text, const char& character)
 
 string get_trimmed(const string& text)
 {
-//    string output(text);
-
-    //prefixing spaces
-
-//    output.erase(0, output.find_first_not_of(' '));
-//    output.erase(0, output.find_first_not_of('\t'));
-//    output.erase(0, output.find_first_not_of('\n'));
-//    output.erase(0, output.find_first_not_of('\r'));
-//    output.erase(0, output.find_first_not_of('\f'));
-//    output.erase(0, output.find_first_not_of('\v'));
-
-    //surfixing spaces
-
-//    output.erase(output.find_last_not_of(' ') + 1);
-//    output.erase(output.find_last_not_of('\t') + 1);
-//    output.erase(output.find_last_not_of('\n') + 1);
-//    output.erase(output.find_last_not_of('\r') + 1);
-//    output.erase(output.find_last_not_of('\f') + 1);
-//    output.erase(output.find_last_not_of('\v') + 1);
-//    output.erase(output.find_last_not_of('\b') + 1);
-
- //   return output;
-
     auto start = find_if_not(text.begin(), text.end(), ::isspace);
 
     auto end = find_if_not(text.rbegin(), text.rend(), ::isspace).base();
@@ -468,12 +445,6 @@ void replace(string& source, const string& find_what, const string& replace_with
 
         position += replace_with.length();
     }
-}
-
-
-bool is_not_alnum(char &c)
-{
-    return (c < ' ' || c > '~');
 }
 
 
@@ -610,30 +581,6 @@ void display_progress_bar(const int& completed, const int& total)
 }
 
 
-void to_lower(string& text)
-{
-    transform(text.begin(), text.end(), text.begin(), ::tolower);
-}
-
-
-void to_lower(vector<string>& documents)
-{
-    #pragma omp parallel for
-
-    for(Index i = 0; i < documents.size(); i++)
-        to_lower(documents[i]);
-}
-
-
-void to_lower(vector<vector<string>>& text)
-{
-    #pragma omp parallel for
-
-    for(Index i = 0; i < text.size(); i++)
-        to_lower(text[i]);
-}
-
-
 void print_tokens(const vector<vector<string>>& tokens)
 {
     for(size_t i = 0; i < tokens.size(); i++)
@@ -644,19 +591,6 @@ void print_tokens(const vector<vector<string>>& tokens)
         cout << endl;
     }
 }
-
-
-void add_start_end_tokens(vector<vector<string>>& documents_tokens,
-                          const string& start_token,
-                          const string& end_token)
-{
-    for (auto& document_tokens : documents_tokens)
-    {
-        document_tokens.insert(document_tokens.begin(), start_token);
-        document_tokens.push_back(end_token);
-    }
-}
-
 
 }
 
