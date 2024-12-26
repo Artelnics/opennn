@@ -5,15 +5,15 @@
 
 
 Tensor<type, 4> generate_input_tensor_convolution(const Tensor<type, 2>& data,
-    const vector<Index>& rows_indices,
-    const vector<Index>& columns_indices,
+    const vector<Index>& row_indices,
+    const vector<Index>& column_indices,
     const dimensions& input_dimensions) {
-    Tensor<type, 4> input_tensor(rows_indices.size(),
+    Tensor<type, 4> input_tensor(row_indices.size(),
         input_dimensions[0],
         input_dimensions[1],
         input_dimensions[2]);
     type* tensor_data = input_tensor.data();
-    fill_tensor_data(data, rows_indices, columns_indices, tensor_data);
+    fill_tensor_data(data, row_indices, column_indices, tensor_data);
     return input_tensor;
 }
 

@@ -478,7 +478,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
     layers.resize(0);
 
-    // input_names.resize(input_length + context_length);
+    // input_names.resize(input_length + decoder_length);
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -1155,36 +1155,33 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 }
 
 
-Index NeuralNetwork::calculate_image_output(const string& image_path)
+Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
+    Tensor<float, 3> image = read_bmp_image(image_path);
 
     ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Scaling4D));
 
     const Index height = scaling_layer_4d->get_input_dimensions()[0];
     const Index width = scaling_layer_4d->get_input_dimensions()[1];
-    const Index image_channels = scaling_layer_4d->get_input_dimensions()[2];
+    const Index channels = scaling_layer_4d->get_input_dimensions()[2];
 
-    const Index current_height = image_data.dimension(0);
-    const Index current_width = image_data.dimension(1);
-    const Index current_channels = image_data.dimension(2);
+    const Index current_height = image.dimension(0);
+    const Index current_width = image.dimension(1);
+    const Index current_channels = image.dimension(2);
 
-    if (current_channels != image_channels)
-        throw runtime_error("Error: Different channels number " + image_path + "\n");
+    if (current_channels != channels)
+        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-/*
-    (current_height != height || current_width != width)
-        ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
-        : resized_image_data = image_data;
-*/
-    Tensor<type, 4> input_data(1, height, width, image_channels);
+    if(current_height != height || current_width != width)
+        image = resize_image(image, height, width);
 
-    const Index pixels_number = height * width * image_channels;
+    Tensor<type, 4> input_data(1, height, width, channels);
 
-#pragma omp parallel for
+    const Index pixels_number = height * width * channels;
+
+    #pragma omp parallel for
     for (Index j = 0; j < pixels_number; j++)
-        input_data(j) = resized_image_data(j);
+        input_data(j) = image(j);
 
     const Tensor<type, 2> outputs = calculate_outputs(input_data);
 
@@ -1193,8 +1190,11 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
     if (outputs.size() > 1)
     {
         type max_value = outputs(0);
-        for (Index i = 1; i < outputs.dimension(1); ++i) {
-            if (outputs(i) > max_value) {
+
+        for (Index i = 1; i < outputs.dimension(1); ++i)
+        {
+            if (outputs(i) > max_value)
+            {
                 max_value = outputs(i);
                 predicted_index = i;
             }

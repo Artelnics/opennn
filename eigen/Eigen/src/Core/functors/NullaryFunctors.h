@@ -19,7 +19,6 @@ namespace internal {
 
 template <typename Scalar>
 struct scalar_constant_op {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE scalar_constant_op(const scalar_constant_op& other) : m_other(other.m_other) {}
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE scalar_constant_op(const Scalar& other) : m_other(other) {}
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator()() const { return m_other; }
   template <typename PacketType>
@@ -36,6 +35,18 @@ struct functor_traits<scalar_constant_op<Scalar> > {
     IsRepeatable = true
   };
 };
+
+template <typename Scalar>
+struct scalar_zero_op {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE scalar_zero_op() = default;
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator()() const { return Scalar(0); }
+  template <typename PacketType>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const PacketType packetOp() const {
+    return internal::pzero<PacketType>(PacketType());
+  }
+};
+template <typename Scalar>
+struct functor_traits<scalar_zero_op<Scalar>> : functor_traits<scalar_constant_op<Scalar>> {};
 
 template <typename Scalar>
 struct scalar_identity_op {
@@ -131,8 +142,7 @@ template <typename Scalar>
 struct functor_traits<linspaced_op<Scalar> > {
   enum {
     Cost = 1,
-    PacketAccess =
-        (!NumTraits<Scalar>::IsInteger) && packet_traits<Scalar>::HasSetLinear && packet_traits<Scalar>::HasBlend,
+    PacketAccess = (!NumTraits<Scalar>::IsInteger) && packet_traits<Scalar>::HasSetLinear,
     /*&& ((!NumTraits<Scalar>::IsInteger) || packet_traits<Scalar>::HasDiv),*/  // <- vectorization for integer is
                                                                                 // currently disabled
     IsRepeatable = true

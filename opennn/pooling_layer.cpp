@@ -179,7 +179,7 @@ void PoolingLayer::set(const dimensions& new_input_dimensions,
     if (new_padding_dimensions[0] < 0 || new_padding_dimensions[1] < 0)
         throw runtime_error("Padding dimensions cannot be lower than 0");
 
-    set_input_dimensions(new_input_dimensions);
+    input_dimensions = new_input_dimensions;
 
     set_pool_size(new_pool_dimensions[0], new_pool_dimensions[1]);
     

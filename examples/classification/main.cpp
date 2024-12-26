@@ -26,9 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Classification Example." << endl;
-
-        //        srand(unsigned(time(nullptr)));
-
+/*
         // Data set
 
         DataSet data_set; //("../data/1000_classification_problem.csv", ',', false);
@@ -56,7 +54,7 @@ int main()
             else
                 target_columns_indices(i-variables_number) = i;
         }
-/*
+
         data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
         data_set.set(DataSet::SampleUse::Training);
 

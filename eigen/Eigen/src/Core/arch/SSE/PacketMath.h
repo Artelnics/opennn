@@ -197,6 +197,7 @@ struct packet_traits<float> : default_packet_traits {
     HasRsqrt = 1,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
+    HasErfc = EIGEN_FAST_MATH,
     HasBlend = 1,
     HasSign = 0  // The manually vectorized version is slightly slower for SSE.
   };
@@ -216,6 +217,8 @@ struct packet_traits<double> : default_packet_traits {
     HasCos = EIGEN_FAST_MATH,
     HasTanh = EIGEN_FAST_MATH,
     HasLog = 1,
+    HasErf = EIGEN_FAST_MATH,
+    HasErfc = EIGEN_FAST_MATH,
     HasExp = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
@@ -1764,7 +1767,6 @@ EIGEN_STRONG_INLINE Packet4f pldexp<Packet4f>(const Packet4f& a, const Packet4f&
 
 // We specialize pldexp here, since the generic implementation uses Packet2l, which is not well
 // supported by SSE, and has more range than is needed for exponents.
-// TODO(rmlarsen): Remove this specialization once Packet2l has support or casting.
 template <>
 EIGEN_STRONG_INLINE Packet2d pldexp<Packet2d>(const Packet2d& a, const Packet2d& exponent) {
   // Clamp exponent to [-2099, 2099]
@@ -1783,6 +1785,24 @@ EIGEN_STRONG_INLINE Packet2d pldexp<Packet2d>(const Packet2d& a, const Packet2d&
   c = _mm_castsi128_pd(_mm_slli_epi64(padd(b, bias), 52));           // 2^(e - 3b)
   out = pmul(out, c);                                                // a * 2^e
   return out;
+}
+
+// We specialize pldexp here, since the generic implementation uses Packet2l, which is not well
+// supported by SSE, and has more range than is needed for exponents.
+template <>
+EIGEN_STRONG_INLINE Packet2d pldexp_fast<Packet2d>(const Packet2d& a, const Packet2d& exponent) {
+  // Clamp exponent to [-1023, 1024]
+  const Packet2d min_exponent = pset1<Packet2d>(-1023.0);
+  const Packet2d max_exponent = pset1<Packet2d>(1024.0);
+  const Packet2d e = pmin(pmax(exponent, min_exponent), max_exponent);
+
+  // Convert e to integer and swizzle to low-order bits.
+  const Packet4i ei = vec4i_swizzle1(_mm_cvtpd_epi32(e), 0, 3, 1, 3);
+
+  // Compute 2^e multiply:
+  const Packet4i bias = _mm_set_epi32(0, 1023, 0, 1023);
+  const Packet2d c = _mm_castsi128_pd(_mm_slli_epi64(padd(ei, bias), 52));  // 2^e
+  return pmul(a, c);
 }
 
 // with AVX, the default implementations based on pload1 are faster

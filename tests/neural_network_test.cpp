@@ -4,7 +4,6 @@
 #include "../opennn/neural_network.h"
 #include "../opennn/perceptron_layer.h"
 
-
 TEST(NeuralNetworkTest, DefaultConstructor)
 {
     NeuralNetwork neural_network;
@@ -104,7 +103,7 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
 TEST(NeuralNetworkTest, CalculateOutputsZero)
 {
-/*
+
     const Index batch_samples_number = 3;
     const Index inputs_number = 2;
     const Index neurons_number = 4;
@@ -116,7 +115,7 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
     Tensor<type, 2> inputs(batch_samples_number, inputs_number);
     inputs.setConstant(type(0));  
 
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+//    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
 //    EXPECT_EQ(outputs.size(), batch_samples_number * outputs_number);
 //    EXPECT_NEAR(outputs(0,0), 0, NUMERIC_LIMITS_MIN);

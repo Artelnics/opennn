@@ -116,14 +116,14 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-void LossIndex::check() const
-{
-    if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+//void LossIndex::check() const
+//{
+//    if(!neural_network)
+//        throw runtime_error("Pointer to neural network is nullptr.\n");
 
-    if(!data_set)
-        throw runtime_error("Pointer to data set is nullptr.\n");
-}
+//    if(!data_set)
+//        throw runtime_error("Pointer to data set is nullptr.\n");
+//}
 
 
 void LossIndex::calculate_errors_lm(const Batch& batch,
@@ -277,7 +277,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     
     const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     Index index = 0;
     

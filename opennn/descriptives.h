@@ -14,20 +14,6 @@ struct Descriptives
 
   void set(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
 
-  void set_minimum(const type&);
-
-  void set_maximum(const type&);
-
-  void set_mean(const type&);
-
-  void set_standard_deviation(const type&);
-
-  // Tensor<type, 1> to_vector() const;
-
-//  bool has_minimum_minus_one_maximum_one();
-
-//  bool has_mean_zero_standard_deviation_one();
-
   void save(const filesystem::path&) const;
 
   void print(const string& = "Descriptives:") const;

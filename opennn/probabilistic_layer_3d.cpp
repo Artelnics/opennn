@@ -72,7 +72,7 @@ string ProbabilisticLayer3D::get_activation_function_string() const
 }
 
 
-string ProbabilisticLayer3D::get_activation_function_string_text() const
+string ProbabilisticLayer3D::get_activation_function_text() const
 {
     switch (activation_function)
     {

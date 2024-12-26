@@ -219,30 +219,6 @@ void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& i
 }
 
 
-void ScalingLayer2D::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives[i].set_minimum(new_minimum);
-}
-
-
-void ScalingLayer2D::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives[i].set_maximum(new_maximum);
-}
-
-
-void ScalingLayer2D::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives[i].set_mean(new_mean);
-}
-
-
-void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives[i].set_standard_deviation(new_standard_deviation);
-}
-
-
 void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
 {
     scalers = new_scaling_methods;

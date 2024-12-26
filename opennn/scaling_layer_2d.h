@@ -46,11 +46,6 @@ public:
    void set_descriptives(const vector<Descriptives>&);
    void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const Index&, const type&);
-   void set_maximum(const Index&, const type&);
-   void set_mean(const Index&, const type&);
-   void set_standard_deviation(const Index&, const type&);
-
    void set_min_max_range(const type& min, const type& max);
 
    void set_scalers(const vector<Scaler>&);
@@ -99,7 +94,7 @@ struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
        
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

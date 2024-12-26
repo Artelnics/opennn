@@ -10,6 +10,8 @@
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
 #include "unscaling_layer.h"
+#include "language_data_set.h"
+#include "transformer.h"
 
 namespace opennn
 {
@@ -75,8 +77,6 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
-
-    set_default();
 }
 
 
@@ -142,18 +142,6 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 //     return box_plot(distances);
 // }
-
-
-void OptimizationAlgorithm::set_default()
-{
-    display = true;
-
-    display_period = 10;
-
-    save_period = UINT_MAX;
-
-    neural_network_file_name = "neural_network.xml";
-}
 
 
 void OptimizationAlgorithm::check() const
@@ -228,8 +216,6 @@ void OptimizationAlgorithm::save(const filesystem::path& file_name) const
 
 void OptimizationAlgorithm::load(const filesystem::path& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if (document.LoadFile(file_name.string().c_str()))
@@ -325,6 +311,30 @@ void OptimizationAlgorithm::set_unscaling()
 }
 
 
+void OptimizationAlgorithm::set_vocabularies()
+{
+    DataSet* data_set = loss_index->get_data_set();
+
+    if(!is_instance_of<LanguageDataSet>(data_set))
+        return;
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(!is_instance_of<Transformer>(neural_network))
+        return;
+
+    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+    const unordered_map<string, Index>& input_vocabulary = language_data_set->get_input_vocabulary();
+    const unordered_map<string, Index>& target_vocabulary = language_data_set->get_target_vocabulary();
+
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+
+    transformer->set_input_vocabulary(input_vocabulary);
+    transformer->set_output_vocabulary(target_vocabulary);
+}
+
+
 TrainingResults::TrainingResults(const Index& epochs_number)
 {
     training_error_history.resize(1 + epochs_number);
@@ -398,7 +408,9 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
 
     training_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
+    const Index copy_size = min(old_training_error_history.size(), new_size);
+
+    for(Index i = 0; i < copy_size; i++)
         training_error_history(i) = old_training_error_history(i);
 }
 

@@ -28,7 +28,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -61,7 +61,7 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
 
     const Index outputs_number = neural_network->get_outputs_number();
     
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
@@ -82,7 +82,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
      // Batch
 
-     const Index batch_samples_number = batch.get_batch_samples_number();
+     const Index batch_samples_number = batch.get_samples_number();
 
      // Back propagation
 
@@ -118,7 +118,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index batch_samples_number = outputs_number * batch.get_batch_samples_number();
+    const Index batch_samples_number = outputs_number * batch.get_samples_number();
 
     const type coefficient = type(2)/type(batch_samples_number);
 
@@ -137,7 +137,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const type coefficient = type(2.0)/type(outputs_number*batch_samples_number);
 

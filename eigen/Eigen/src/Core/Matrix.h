@@ -255,8 +255,16 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
 #else
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix() = default;
 #endif
+  /** \brief Move constructor */
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix(Matrix&&) = default;
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix& operator=(Matrix&&) = default;
+  /** \brief Moves the matrix into the other one.
+   *
+   */
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Matrix& operator=(Matrix&& other)
+      EIGEN_NOEXCEPT_IF(std::is_nothrow_move_assignable<Scalar>::value) {
+    Base::operator=(std::move(other));
+    return *this;
+  }
 
   /** \copydoc PlainObjectBase(const Scalar&, const Scalar&, const Scalar&,  const Scalar&, const ArgTypes&... args)
    *

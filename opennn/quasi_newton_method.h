@@ -53,7 +53,7 @@ public:
 
    void set_display(const bool&) override;
 
-   void set_default() override;
+   void set_default();
 
    // Stopping criteria
 

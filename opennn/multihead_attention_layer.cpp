@@ -415,27 +415,6 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 }
 
 
-// void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
-//                                                        const Tensor<type, 4>& key,
-//                                                        Tensor<type, 4>& attention_scores,
-//                                                        Tensor<type, 4>& attention_weights) const
-// {
-//     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
-
-//     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
-
-//     if(use_causal_mask)
-//         apply_causal_mask(attention_scores);
-// /*
-//  * // @todo make sure about this
-//     softmax(attention_scores, attention_weights);
-// */
-
-//     softmax(attention_scores);
-//     attention_weights = attention_scores;
-
-// }
-
 void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
                                                        const Tensor<type, 4>& key,
                                                        Tensor<type, 4>& attention_scores) const
@@ -446,14 +425,9 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
     if(use_causal_mask)
         apply_causal_mask(attention_scores);
-    /*
- * // @todo make sure about this
-    softmax(attention_scores, attention_weights);
-*/
 
     softmax(attention_scores);
 }
-
 
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,
@@ -841,7 +815,7 @@ void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 
     set_name(read_xml_string(multihead_attention_layer_element, "Name"));
 //    set_input_size(read_xml_index(multihead_attention_layer_element, "InputSize"));
-//    set_context_size(read_xml_index(multihead_attention_layer_element, "ContextSize"));
+//    set_context_size(read_xml_index(multihead_attention_layer_element, "DecoderSize"));
 //    set_depth(read_xml_index(multihead_attention_layer_element, "Depth"));
 //    set_heads_number(read_xml_index(multihead_attention_layer_element, "HeadsNumber"));
     set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
@@ -855,7 +829,7 @@ void MultiheadAttentionLayer::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputSize", to_string(get_input_size()));
-    add_xml_element(printer, "ContextSize", to_string(get_context_size()));
+    add_xml_element(printer, "DecoderSize", to_string(get_context_size()));
     add_xml_element(printer, "Depth", to_string(get_depth()));
     add_xml_element(printer, "HeadsNumber", to_string(get_heads_number()));
     add_xml_element(printer, "CausalMask", to_string(use_causal_mask ? 1 : 0));

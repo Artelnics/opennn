@@ -159,7 +159,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -198,7 +198,7 @@ void WeightedSquaredError::calculate_error_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back-propagation
 
@@ -249,7 +249,7 @@ void WeightedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -273,7 +273,7 @@ void WeightedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -344,10 +344,8 @@ void WeightedSquaredError::calculate_squared_errors_lm(const Batch& batch,
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
     // @todo
-/*
-    squared_errors.device(*thread_pool_device) = 0;
-*/
 
+    squared_errors.device(*thread_pool_device) = outputs - targets;
 }
 
 }

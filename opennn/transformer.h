@@ -19,7 +19,7 @@ class Transformer : public NeuralNetwork
 public:
 
     Transformer(const Index& input_length = 0,
-                const Index& context_length = 0,
+                const Index& decoder_length = 0,
                 const Index& input_dimensions = 0,
                 const Index& context_dimension = 0,
                 const Index& embedding_dimension = 0,
@@ -28,7 +28,7 @@ public:
                 const Index& layers_number = 0);
 
     void set(const Index& input_length = 0,
-             const Index& context_length = 0,
+             const Index& decoder_length = 0,
              const Index& input_dimensions = 0,
              const Index& context_dimension = 0,
              const Index& embedding_dimension = 0,
@@ -37,8 +37,8 @@ public:
              const Index& layers_number = 0);
 
     void set_dropout_rate(const type&);
-    void set_input_vocabulary(const vector<string>&);
-    void set_context_vocabulary(const vector<string>&);
+    void set_input_vocabulary(const unordered_map<string, Index>&);
+    void set_output_vocabulary(const unordered_map<string, Index>&);
 
     string calculate_outputs(const vector<string>&);
 
@@ -47,20 +47,16 @@ public:
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
-    void load_transformer(const string&);
-
 private:
 
     Index input_length = 0;
 
-    Index context_length = 0;
-
-//    Index layers_number = 0;
+    Index decoder_length = 0;
 
     type dropout_rate = 0;
 
-    vector<string> input_vocabulary;
-    vector<string> context_vocabulary;
+    unordered_map<string, Index> input_vocabulary;
+    unordered_map<string, Index> output_vocabulary;
 };
 
 };

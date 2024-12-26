@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
+Tensor<type, 3> read_bmp_image(const filesystem::path& filename)
 {
     ifstream file(filename, std::ios::binary);
 
@@ -49,9 +49,11 @@ Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 
     file.close();
 
-    Tensor<unsigned char, 3> image(height, width, channels);
+    Tensor<type, 3> image(height, width, channels);
 
     const Index image_pixels = width * channels + padding;
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < height; i++)
         for(Index j = 0; j < width; ++j)
@@ -62,14 +64,20 @@ Tensor<unsigned char, 3> read_bmp_image(const filesystem::path& filename)
 }
 
 
-void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_image, Tensor<unsigned char, 3>& output_image, Index output_height, Index output_width)
+Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
+                             const Index& output_height,
+                             const Index& output_width)
 {
     const Index input_height = input_image.dimension(0);
     const Index input_width = input_image.dimension(1);
     const Index channels = input_image.dimension(2);
 
+    Tensor<type, 3> output_image(output_height, output_width, channels);
+
     const type scale_y = static_cast<float>(input_height) / output_height;
     const type scale_x = static_cast<float>(input_width) / output_width;
+
+    #pragma omp parallel for collapse(2)
 
     for (Index c = 0; c < channels; ++c)
     {
@@ -87,13 +95,13 @@ void bilinear_interpolation_resize_image(const Tensor<unsigned char, 3>& input_i
                 const type x_weight = in_x - x0;
                 const Index x1 = min(x0 + 1, input_width - 1);
 
-                const type value = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
+                output_image(y, x, c) = (1 - y_weight) * ((1 - x_weight) * input_image(y0, x0, c) + x_weight * input_image(y0, x1, c)) +
                     y_weight * ((1 - x_weight) * input_image(y1, x0, c) + x_weight * input_image(y1, x1, c));
-
-                output_image(y, x, c) = static_cast<unsigned char>(value);
             }
         }
     }
+
+    return output_image;
 }
 
 
@@ -170,10 +178,10 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-void translate_image(const ThreadPoolDevice* thread_pool_device,
-                     const Tensor<type, 3>& input,
-                     Tensor<type, 3>& output,
-                     const Index& shift)
+void translate_image_x(const ThreadPoolDevice* thread_pool_device,
+                       const Tensor<type, 3>& input,
+                       Tensor<type, 3>& output,
+                       const Index& shift)
 {
     assert(input.dimension(0) == output.dimension(0));
     assert(input.dimension(1) == output.dimension(1));
@@ -194,8 +202,8 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
         const Index raw_variable = i / channels;
 
         const TensorMap<const Tensor<type, 2>> input_column_map(input.data() + raw_variable*height + channel*input_size,
-                                                           height,
-                                                          1);
+                                                                height,
+                                                                1);
 
         TensorMap<Tensor<type, 2>> output_column_map(output.data() + (raw_variable + shift)*height + channel*input_size,
                                                      height,
@@ -205,6 +213,15 @@ void translate_image(const ThreadPoolDevice* thread_pool_device,
     }
 }
 
+
+// @todo
+
+void translate_image_y(const ThreadPoolDevice* thread_pool_device,
+                       const Tensor<type, 3>& input,
+                       Tensor<type, 3>& output,
+                       const Index& shift)
+{
+}
 
 // Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
 //                                         const int& rows_number,

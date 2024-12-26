@@ -39,7 +39,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -68,7 +68,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -82,7 +82,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     // Back propagation
 
-    const Index layers_number = back_propagation.neural_network.layers.size();
+    //const Index layers_number = back_propagation.neural_network.layers.size();
 
     //ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
     //    static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
@@ -119,7 +119,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -147,7 +147,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 

@@ -99,8 +99,8 @@ void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
-{   if(new_raw_variable_use == "Context")
-        set_use(VariableUse::Context);
+{   if(new_raw_variable_use == "Decoder")
+        set_use(VariableUse::Decoder);
     else if(new_raw_variable_use == "Input")
         set_use(VariableUse::Input);
     else if(new_raw_variable_use == "Target")
@@ -166,7 +166,7 @@ void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
         if(categories.size() == 0) 
             return;
 
-        add_xml_element(printer,"Categories", string_tensor_to_string(categories));
+        add_xml_element(printer,"Categories", vector_to_string(categories));
     }
 }
 
@@ -219,8 +219,8 @@ string DataSet::RawVariable::get_use_string() const
 {
     switch (use)
     {
-    case VariableUse::Context:
-        return "Context";
+    case VariableUse::Decoder:
+        return "Decoder";
 
     case VariableUse::Input:
         return "Input";
@@ -412,18 +412,18 @@ const vector<DataSet::SampleUse>& DataSet::get_sample_uses() const
 }
 
 
-Tensor<Index, 1> DataSet::get_sample_uses_vector() const
+vector<Index> DataSet::get_sample_uses_vector() const
 {
     const Index samples_number = get_samples_number();
 
-    Tensor<Index, 1> samples_uses_tensor(samples_number);
+    vector<Index> sample_uses_vector(samples_number);
 
     #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
-        samples_uses_tensor(i) = Index(sample_uses[i]);
+        sample_uses_vector[i] = Index(sample_uses[i]);
 
-    return samples_uses_tensor;
+    return sample_uses_vector;
 }
 
 
@@ -767,6 +767,12 @@ vector<string> DataSet::get_variable_names(const VariableUse& variable_use) cons
 const dimensions& DataSet::get_input_dimensions() const
 {
     return input_dimensions;
+}
+
+
+const dimensions& DataSet::get_decoder_dimensions() const
+{
+    return decoder_dimensions;
 }
 
 
@@ -1640,32 +1646,6 @@ Tensor<type, 1> DataSet::get_sample(const Index& sample_index) const
 }
 
 
-void DataSet::add_sample(const Tensor<type, 1>& sample)
-{
-    const Index current_samples = data.dimension(0);
-
-    if(current_samples == 0)
-    {
-        Tensor<type, 2> new_data(1, sample.dimension(0));
-        new_data.chip(0, 0) = sample;
-        data = new_data;
-        return;
-    }
-
-    if(sample.dimension(0) != data.dimension(1))
-        throw runtime_error("Sample size doesn't match data raw_variable size.");
-
-    Tensor<type, 2> new_data(current_samples + 1, data.dimension(1));
-
-    for(Index i = 0; i < current_samples; i++)
-        new_data.chip(i, 0) = data.chip(i, 0);
-
-    new_data.chip(current_samples, 0) = sample;
-
-    data = new_data;
-}
-
-
 string DataSet::get_sample_category(const Index& sample_index, const Index& column_index_start) const
 {
     if(raw_variables[column_index_start].type != RawVariableType::Categorical)
@@ -1679,11 +1659,11 @@ string DataSet::get_sample_category(const Index& sample_index, const Index& colu
 }
 
 
-Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const vector<Index>& rows_indices) const
+Tensor<type, 2> DataSet::get_raw_variable_data(const Index& raw_variable_index, const vector<Index>& row_indices) const
 {
-    Tensor<type, 2> raw_variable_data(rows_indices.size(), get_variable_indices(raw_variable_index).size());
+    Tensor<type, 2> raw_variable_data(row_indices.size(), get_variable_indices(raw_variable_index).size());
 
-    fill_tensor_data(data, rows_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
+    fill_tensor_data(data, row_indices, get_variable_indices(raw_variable_index), raw_variable_data.data());
 
     return raw_variable_data;
 }
@@ -1697,7 +1677,7 @@ Tensor<type, 2> DataSet::get_raw_variable_data(const string& column_name) const
 }
 
 
-vector<vector<string>> DataSet::get_data_file_preview() const
+const vector<vector<string>>& DataSet::get_data_file_preview() const
 {
     return data_file_preview;
 }
@@ -2090,7 +2070,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
     const Index used_samples_number = used_sample_indices.size();
 
     vector<Histogram> histograms(used_raw_variables_number);
-/*
+
     Index variable_index = 0;
     Index used_raw_variable_index = 0;
 
@@ -2175,7 +2155,7 @@ vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bin
             throw runtime_error("Unknown raw variable type.");
         }
     }
-*/
+
     return histograms;
 }
 
@@ -2883,9 +2863,9 @@ void DataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
     
     if (has_sample_ids) 
-        add_xml_element(printer, "SamplesId", string_tensor_to_string(sample_ids));
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
     
-    add_xml_element(printer, "SamplesUses", tensor_to_string(get_sample_uses_vector()));
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
     printer.CloseElement();  
 
     printer.OpenElement("MissingValues");
@@ -2957,7 +2937,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Samples element is nullptr.\n");
 
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
+    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 
     // Missing values
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
@@ -4077,18 +4057,6 @@ void DataSet::read_csv()
     unuse_constant_raw_variables();
     set_binary_raw_variables();
     split_samples_random();
-
-}
-
-
-vector<string> DataSet::get_default_raw_variables_names(const Index& raw_variables_number)
-{
-    vector<string> raw_variable_names(raw_variables_number);
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        raw_variable_names[i] = "variable_" + to_string(i+1);
-
-    return raw_variable_names;
 }
 
 
@@ -4333,24 +4301,6 @@ Index DataSet::count_nan() const
 {
     return count_NAN(data);
 }
-
-
-// void DataSet::set_missing_values_number()
-// {
-//     missing_values_number = count_nan();
-// }
-
-
-// void DataSet::set_raw_variables_missing_values_number()
-// {
-//     raw_variables_missing_values_number = count_raw_variables_with_nan();
-// }
-
-
-// void DataSet::set_samples_missing_values_number()
-// {
-//     rows_missing_values_number = count_rows_with_nan();
-// }
 
 
 void DataSet::fix_repeated_names()
@@ -4682,9 +4632,6 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 
 // Image Models
 void DataSet::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
-
-// Language Models
-void DataSet::read_txt(){}
 
 // AutoAssociation Models
 void DataSet::transform_associative_dataset(){}

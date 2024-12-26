@@ -538,8 +538,7 @@ vector<Index> GeneticAlgorithm::get_selected_individuals_indices()
 
 void GeneticAlgorithm::perform_crossover()
 {
-
-    DataSet* data_set = training_strategy->get_data_set();
+    //DataSet* data_set = training_strategy->get_data_set();
 
     const Index individuals_number = get_individuals_number();
 
