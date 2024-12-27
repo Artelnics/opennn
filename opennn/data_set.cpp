@@ -1258,12 +1258,11 @@ void DataSet::set_binary_raw_variables()
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
-/* // @todo tensor map does not work
-            const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
+            const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
             if(is_binary(data_column))
                 raw_variable.type = RawVariableType::Binary;
-*/
+
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::Categorical)
@@ -1292,12 +1291,11 @@ void DataSet::unuse_constant_raw_variables()
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
-/* // @todo
-            const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
+            const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
             if(is_constant(data_column))
                 raw_variable.set(raw_variable.name, VariableUse::None, RawVariableType::Constant);
-*/
+
             variable_index++;
         }
         else if(raw_variable.type == RawVariableType::DateTime || raw_variable.type == RawVariableType::Constant)
