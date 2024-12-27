@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-struct QuasiNewtonMehtodData;
+struct QuasiNewtonMethodData;
 
 class QuasiNewtonMethod : public OptimizationAlgorithm
 {
@@ -67,13 +67,13 @@ public:
 
    // Training
 
-   void calculate_DFP_inverse_hessian(QuasiNewtonMehtodData&) const;
+   void calculate_DFP_inverse_hessian(QuasiNewtonMethodData&) const;
 
-   void calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData&) const;
+   void calculate_BFGS_inverse_hessian(QuasiNewtonMethodData&) const;
 
-   void calculate_inverse_hessian_approximation(QuasiNewtonMehtodData&) const;
+   void calculate_inverse_hessian_approximation(QuasiNewtonMethodData&) const;
 
-   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMehtodData&) const;
+   void update_parameters(const Batch& , ForwardPropagation& , BackPropagation& , QuasiNewtonMethodData&) const;
 
    TrainingResults perform_training() override;
 
@@ -109,10 +109,10 @@ private:
 };
 
 
-struct QuasiNewtonMehtodData : public OptimizationAlgorithmData
+struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 {
 
-    QuasiNewtonMehtodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr)
+    QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method = nullptr)
     {
         set(new_quasi_newton_method);
     }

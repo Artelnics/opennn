@@ -91,12 +91,9 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
     //Forward propagate
 
     ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
+
+    const vector<pair<type*, dimensions>> input_pairs;// = { inputs.data(), {{samples_number, inputs_number}} };
 /*
-    input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
-
-    input_pairs.first = inputs.data();
-    input_pairs.second = { {samples_number, inputs_number} };
-
     probabilistic_layer.forward_propagate({ input_pairs },
         &probabilistic_layer_forward_propagation,
         is_training);
@@ -237,8 +234,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(0) == 1);
     EXPECT_EQ(outputs.dimension(1) == 2);
     EXPECT_NEAR(abs(outputs(0,0) - type(0.5)) < NUMERIC_LIMITS_MIN);
-
-}
 
 }
 */

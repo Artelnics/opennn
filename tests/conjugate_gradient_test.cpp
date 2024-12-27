@@ -5,7 +5,7 @@
 
 TEST(ConjugateGradientTest, DefaultConstructor) 
 {
-    ConjugateGradient conjugate_gradient_1;
+    ConjugateGradient conjugate_gradient;
 //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
 
 //    ConjugateGradient conjugate_gradient_2(&mean_squared_error);
@@ -15,8 +15,7 @@ TEST(ConjugateGradientTest, DefaultConstructor)
 
 TEST(ConjugateGradientTest, GeneralConstructor)
 {
-    ConjugateGradient conjugate_gradient_1;
-    //    EXPECT_EQ(!conjugate_gradient_1.has_loss_index());
+    ConjugateGradient conjugate_gradient;
 
     //    ConjugateGradient conjugate_gradient_2(&mean_squared_error);
     //    EXPECT_EQ(conjugate_gradient_2.has_loss_index());

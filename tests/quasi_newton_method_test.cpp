@@ -1,11 +1,3 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   Q U A S I - N E W T O N   M E T H O D   T E S T   C L A S S           
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 #include "pch.h"
 
 #include "../opennn/mean_squared_error.h"
@@ -42,13 +34,16 @@ TEST(QuasiNewtonMethodTest, DFP)
     data_set.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
-
     neural_network.set_parameters_constant(type(1));
-/*
-    quasi_newton_method_data.set(&quasi_newton_method);
+
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
+
+    QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
 
     quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
-
+/*
     EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
@@ -63,11 +58,17 @@ TEST(QuasiNewtonMethodTest, BGFS)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(type(1));
-/*
+
+    MeanSquaredError mean_squared_error(&neural_network);
+
     mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
 
-    quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
+    QuasiNewtonMethod quasi_newton_method(&mean_squared_error);
 
+    QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
+
+    quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
+/*
     EXPECT_EQ(are_equal(BFGS_inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
@@ -204,22 +205,4 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 
     quasi_newton_method.calculate_inverse_hessian_approximation(quasi_newton_method_data);
 }
-
 */
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

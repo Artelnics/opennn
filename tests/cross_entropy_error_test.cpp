@@ -8,18 +8,18 @@
 
 TEST(CrossEntropyErrorTest, DefaultConstructor)
 {
-/*
+
     CrossEntropyError cross_entropy_error;
 
     EXPECT_TRUE(!cross_entropy_error.has_data_set());
     EXPECT_TRUE(!cross_entropy_error.has_neural_network());
-*/
+
 }
 
 
 TEST(CrossEntropyErrorTest, BackPropagateEmpty)
 {
-/*
+
     DataSet data_set;
 
     Batch batch;
@@ -32,19 +32,20 @@ TEST(CrossEntropyErrorTest, BackPropagateEmpty)
     BackPropagation back_propagation;
 
     cross_entropy_error.back_propagate(batch, forward_propagation, back_propagation);
-*/
+
 }
 
 
 TEST(CrossEntropyErrorTest, BackPropagate)
 {
-/*
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
     DataSet data_set(samples_number, { inputs_number }, { targets_number });
+/*
     data_set.set_data_classification();
 
     data_set.set(DataSet::SampleUse::Training);

@@ -177,7 +177,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 }
 
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMethodData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
     {
@@ -195,7 +195,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
@@ -234,7 +234,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 }
 
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
@@ -283,7 +283,7 @@ void QuasiNewtonMethod::update_parameters(
         const Batch& batch,
         ForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
-        QuasiNewtonMehtodData& optimization_data) const
+        QuasiNewtonMethodData& optimization_data) const
 {
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
@@ -461,7 +461,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     time(&beginning_time);
     type elapsed_time;
 
-    QuasiNewtonMehtodData optimization_data(this);
+    QuasiNewtonMethodData optimization_data(this);
 
     // Main loop
 
@@ -652,7 +652,7 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 }
 
 
-void QuasiNewtonMehtodData::set(QuasiNewtonMethod* new_quasi_newton_method)
+void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 {
     quasi_newton_method = new_quasi_newton_method;
 

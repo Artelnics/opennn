@@ -1,49 +1,51 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M O D E L   S E L E C T I O N   T E S T   C L A S S                   
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 #include "pch.h"
 
-/*
-void ResponseOptimizationTest::test_constructor()
+#include "../opennn/response_optimization.h"
+
+TEST(ResponseOptimization, DefaultConstructor)
 {
-    ResponseOptimization response_optimization_1(&neural_network);
+    ResponseOptimization response_optimization;
 
-    EXPECT_EQ(response_optimization_1.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_1.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
-
-    ResponseOptimization response_optimization_2(&neural_network_2);
-    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_inputs_conditions()(1) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(0) == ResponseOptimization::Condition::None);
-    EXPECT_EQ(response_optimization_2.get_outputs_conditions()(1) == ResponseOptimization::Condition::None);
-
-    ResponseOptimization response_optimization_3;
+//    EXPECT_EQ(response_optimization.has_, 0);
 }
 
 
-void ResponseOptimizationTest::test_calculate_inputs()
+TEST(ResponseOptimization, GeneralConstructor)
 {
+    NeuralNetwork neural_network;
+
+    //    EXPECT_EQ(response_optimization.has_, 0);
+
+    ResponseOptimization response_optimization(&neural_network);
+
+//    EXPECT_EQ(response_optimization.get_inputs_conditions()(0), ResponseOptimization::Condition::None);
+//    EXPECT_EQ(response_optimization.get_outputs_conditions()(0), ResponseOptimization::Condition::None);
+}
+
+
+TEST(ResponseOptimization, Inputs)
+{
+    NeuralNetwork neural_network;
+    DataSet data_set;
+
     ResponseOptimization response_optimization(&neural_network, &data_set);
 
-    Tensor<type,2> inputs = response_optimization.calculate_inputs();
-
-    EXPECT_EQ(inputs.dimension(0) == response_optimization.get_evaluations_number());
-    EXPECT_EQ(inputs.dimension(1) == neural_network.get_inputs_number());
+    Tensor<type, 2> inputs = response_optimization.calculate_inputs();
+/*
+    EXPECT_EQ(inputs.dimension(0), response_optimization.get_evaluations_number());
+    EXPECT_EQ(inputs.dimension(1), neural_network.get_inputs_number());
 
     EXPECT_EQ(inputs(0) <= response_optimization.get_inputs_maximums()(1));
     EXPECT_EQ(inputs(1) <= response_optimization.get_inputs_maximums()(1));
     EXPECT_EQ(inputs(0) >= response_optimization.get_inputs_minimums()(1));
     EXPECT_EQ(inputs(1) >= response_optimization.get_inputs_minimums()(1));
+*/
 }
 
 
-void ResponseOptimizationTest::test_perform_optimization()
+TEST(ResponseOptimization, Optimize)
 {
+/*
     ResponseOptimization response_optimization(&neural_network,&data_set);
 
     // Empty results
@@ -144,24 +146,7 @@ void ResponseOptimizationTest::test_perform_optimization()
     EXPECT_EQ(results->optimal_variables(2) <= 3.0);
     EXPECT_EQ(results->optimal_variables(3) >= type(-1));
     EXPECT_EQ(results->optimal_variables(3) <= 0.0);
+    */ 
 }
 
-*/
 
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
