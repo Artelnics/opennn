@@ -1021,7 +1021,9 @@ TEST(StatisticsTest, MaximalIndices)
 
 TEST(StatisticsTest, BoxPlot)
 {
-    Tensor<type, 1> vector;
+    const Index size = get_random_index(1, 10);
+
+    Tensor<type, 1> vector(size);
 
     BoxPlot box_plot;
     BoxPlot solution;

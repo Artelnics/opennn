@@ -47,15 +47,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
 {
-    if(is_constant_matrix(x) || is_constant_matrix(y))
+    if(is_constant(x) || is_constant(y))
         return Correlation();
 
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
 
-    const bool x_binary = is_binary_matrix(x);
-    const bool y_binary = is_binary_matrix(y);
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -117,8 +117,8 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
 
-    const bool x_binary = is_binary_matrix(x);
-    const bool y_binary = is_binary_matrix(y);
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -361,7 +361,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-    if(is_constant_vector(x) || is_constant_vector(y))
+    if(is_constant(x) || is_constant(y))
         return Correlation();
     
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
@@ -524,8 +524,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
     if (x_filtered.size() == 0
-    || is_constant_vector(x_filtered)
-    || is_constant_vector(y_filtered))
+    || is_constant(x_filtered)
+    || is_constant(y_filtered))
     {
         correlation.r = type(NAN);
         correlation.form = Correlation::Form::Logistic;

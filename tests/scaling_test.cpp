@@ -184,13 +184,13 @@ TEST(ScalingTest, UnscaleDataNoScaling)
 
 TEST(ScalingTest, UnscaleDataStandardDeviation)
 {
-/*
+
     Tensor<type, 2> matrix(1 + rand()%10, 1 + rand()%10);
     Tensor<type, 2> unscaled_matrix;
 
     matrix.setRandom();
-
-    data_set.set(matrix);
+/*
+    DataSet data_set;
     data_set.set_raw_variable_scalers(Scaler::StandardDeviation);
 
     variable_descriptives = data_set.calculate_variable_descriptives();

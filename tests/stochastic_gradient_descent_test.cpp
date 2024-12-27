@@ -32,14 +32,14 @@ TEST(StochasticGradientDescentTest, Train)
 
     type error = 0;
 
-/*
-    samples_number = 1;
-    inputs_number = 1;
-    outputs_number = 1;
 
-    data_set.set(1, 1, 1);
+    const Index samples_number = 1;
+    const Index inputs_number = 1;
+    const Index outputs_number = 1;
+
+    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
     data_set.set_data_constant(type(1));
-
+    /*
     neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
     neural_network.set_parameters_constant(type(1));
 
@@ -104,7 +104,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
     Index context_length = 0;
     Index context_dimension = 0;
     Index input_dimensions = 0;
-/*
+
     LanguageDataSet language_data_set;
 
     Index depth;
@@ -114,7 +114,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     Transformer transformer;
 
-    CrossEntropyError3D cross_entropy_error_3d(&transformer, &data_set);
+    CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
 /*
     stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
 

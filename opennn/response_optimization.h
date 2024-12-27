@@ -66,7 +66,7 @@ private:
 
     Tensor<Condition, 1> input_conditions;
     Tensor<Condition, 1> output_conditions;
-    Tensor<Condition, 1> conditions;
+    //Tensor<Condition, 1> conditions;
 
     Tensor<type, 1> input_minimums;
     Tensor<type, 1> input_maximums;

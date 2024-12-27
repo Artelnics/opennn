@@ -5,6 +5,7 @@
 class FlattenLayerTest : public ::testing::Test 
 {
 public:
+
     const Index batch_samples_number = 2;
     const Index height = 4;
     const Index width = 4;

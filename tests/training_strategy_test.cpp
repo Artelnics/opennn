@@ -1,35 +1,36 @@
 #include "pch.h"
 
-/*
+#include "../opennn/training_strategy.h"
 
-void TrainingStrategyTest::test_constructor()
+
+TEST(TrainingStrategy, DefaultConstructor)
 {
-    // Test
+    TrainingStrategy training_strategy;
 
-    TrainingStrategy training_strategy_1(&neural_network, &data_set);
-
-    EXPECT_EQ(training_strategy.get_neural_network());
-    EXPECT_EQ(training_strategy.get_data_set());
+    EXPECT_EQ(training_strategy.has_neural_network(), false);
+    EXPECT_EQ(training_strategy.has_data_set(), false);
 }
 
 
-void TrainingStrategyTest::test_perform_training()
+TEST(TrainingStrategy, GeneralConstructor)
 {
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    //    TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    Index neurons_number;
+    //    EXPECT_EQ(training_strategy.get_neural_network());
+    //    EXPECT_EQ(training_strategy.get_data_set());
+}
 
-    Tensor<type, 2> data;
 
-    // Test
+TEST(TrainingStrategy, Train)
+{
 
-    samples_number = 5;
-    inputs_number = 2;
-    targets_number = 1;
-    neurons_number = 4;
+    Index samples_number = get_random_index(1, 5);
+    Index inputs_number = get_random_index(1, 5);
+    Index targets_number = get_random_index(1, 5);
 
+    Index neurons_number = get_random_index(1, 5);
+
+    /*
     data.resize(samples_number, inputs_number+targets_number);
 
     data.setValues({{type(0),type(1), type(2)},
@@ -51,9 +52,10 @@ void TrainingStrategyTest::test_perform_training()
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
-
+*/
 }
 
+/*
 
 void TrainingStrategyTest::test_to_XML()
 {

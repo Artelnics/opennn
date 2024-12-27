@@ -2,7 +2,7 @@
 
 #include "../opennn/transformer.h"
 
-TEST(TransformerTest, DefaultConstructor)
+TEST(Transformer, DefaultConstructor)
 {
     Transformer transformer;
 
@@ -12,43 +12,34 @@ TEST(TransformerTest, DefaultConstructor)
 }
 
 
-TEST(TransformerTest, GeneralConstructor)
+TEST(Transformer, GeneralConstructor)
 {
-    const Index input_length = 1;
-    const Index context_length = 1;
-    const Index input_dimensions = 1;
-    const Index context_dimension = 1;
-    const Index embedding_depth = 1;
-    const Index perceptron_depth = 1;
-    const Index heads_number = 1;
-    const Index layers_number = 1;
+    const Index input_length = get_random_index(1, 10);
+    const Index context_length = get_random_index(1, 10);
+    const Index input_dimensions = get_random_index(1, 10);
+    const Index context_dimension = get_random_index(1, 10);
+    const Index embedding_depth = get_random_index(1, 10);
+    const Index perceptron_depth = get_random_index(1, 10);
+    const Index heads_number = get_random_index(1, 10);
+    const Index layers_number = get_random_index(1, 10);
 
-    Transformer transformer(1,1,1,1,1,1,1,1);
+    Transformer transformer(input_length, 
+                            context_length, 
+                            input_dimensions, 
+                            context_dimension, 
+                            embedding_depth, 
+                            perceptron_depth, 
+                            heads_number, 
+                            layers_number);
 
 //    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
-}
-
-
 /*
-
-void TransformerTest::test_constructor()
-{
     Tensor<unique_ptr<Layer>, 1> layers;
 
     Transformer transformer_0;
 
     EXPECT_EQ(transformer_0.is_empty());
     EXPECT_EQ(transformer_0.get_layers_number() == 0);
-    
-    // Tensor constructor test
-
-    
-    // List constructor test
-
-    Transformer transformer_2({ input_length, context_length, input_dimensions, context_dimension,
-                                embedding_depth, perceptron_depth, heads_number, layers_number });
-
-    EXPECT_EQ(transformer_2.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
 
     // Test 3
 
@@ -74,11 +65,15 @@ void TransformerTest::test_constructor()
                                 embedding_depth, perceptron_depth, heads_number, layers_number });
 
     EXPECT_EQ(transformer_4.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
+*/
 }
 
 
-void TransformerTest::test_calculate_outputs()
+
+
+TEST(Transformer, Outputs)
 {
+    /*
     Tensor<type, 2> inputs;
     Tensor<type, 2> context;
     Tensor<type, 2> outputs;
@@ -247,12 +242,13 @@ void TransformerTest::test_calculate_outputs()
     EXPECT_EQ(outputs.dimension(1) == outputs_number);
     EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN));
-
+    */
 }
 
 
-void TransformerTest::test_forward_propagate()
+TEST(Transformer, ForwardPropagate)
 {
+/*
     {
         // Test
 
@@ -393,9 +389,9 @@ void TransformerTest::test_forward_propagate()
 
         EXPECT_EQ(check_activations_sums(probabilistic_activations));
     }
+*/
 }
 
-*/
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

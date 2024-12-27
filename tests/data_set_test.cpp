@@ -3,7 +3,7 @@
 #include "../opennn/data_set.h"
 
 
-TEST(DataSetTest, DefaultConstructor)
+TEST(DataSet, DefaultConstructor)
 {
     DataSet data_set;
 
@@ -12,7 +12,7 @@ TEST(DataSetTest, DefaultConstructor)
 }
 
 
-TEST(DataSetTest, DimensionsConstructor)
+TEST(DataSet, DimensionsConstructor)
 {
 
     DataSet data_set(1, {1}, {1});
@@ -25,7 +25,7 @@ TEST(DataSetTest, DimensionsConstructor)
 }
 
 
-TEST(DataSetTest, VariableDescriptivesZero)
+TEST(DataSet, VariableDescriptivesZero)
 {
 
     DataSet data_set(1, { 1 }, { 1 });
@@ -42,7 +42,7 @@ TEST(DataSetTest, VariableDescriptivesZero)
 }
 
 
-TEST(DataSetTest, VariableDescriptives)
+TEST(DataSet, VariableDescriptives)
 {
     
     const Index samples_number = 3;
@@ -71,9 +71,9 @@ TEST(DataSetTest, VariableDescriptives)
 }
 
 
-TEST(DataSetTest, RawVariableDistributions)
+TEST(DataSet, RawVariableDistributions)
 {
-/*
+
     DataSet data_set(3, {2}, {1});
     
     Tensor<type, 2> data(3, 3);
@@ -83,11 +83,11 @@ TEST(DataSetTest, RawVariableDistributions)
                     {type(1),type(2),type(2)}});
 
     data_set.set_data(data);
-
+    
     const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
-
+    
     EXPECT_EQ(histograms.size(), 3);
-
+/*
     EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
@@ -99,7 +99,7 @@ TEST(DataSetTest, RawVariableDistributions)
 }
 
 
-TEST(DataSetTest, FilterData)
+TEST(DataSet, FilterData)
 {
     DataSet data_set(2, {1}, {1});
     data_set.set_data_constant(type(1));
@@ -118,7 +118,7 @@ TEST(DataSetTest, FilterData)
 }
 
 
-TEST(DataSetTest, ScaleData)
+TEST(DataSet, ScaleData)
 {
     DataSet data_set(2, {1}, {1});
 
@@ -148,11 +148,10 @@ TEST(DataSetTest, ScaleData)
     EXPECT_NEAR(scaled_data(1), type(1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(scaled_data(2), type(-1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(scaled_data(3), type(1), NUMERIC_LIMITS_MIN);
-
 }
 
 
-TEST(DataSetTest, UnuseConstantRawVariables)
+TEST(DataSet, UnuseConstantRawVariables)
 {
     DataSet data_set(3, { 2 }, { 1 });
 
@@ -172,7 +171,7 @@ TEST(DataSetTest, UnuseConstantRawVariables)
 }
 
 
-TEST(DataSetTest, CalculateTargetDistribution)
+TEST(DataSet, CalculateTargetDistribution)
 {
     DataSet data_set(5, { 3 }, { 2 });
     
@@ -235,7 +234,7 @@ TEST(DataSetTest, CalculateTargetDistribution)
 }
 
 
-TEST(DataSetTest, TukeyOutliers)
+TEST(DataSet, TukeyOutliers)
 {
     DataSet data_set(100, { 5 }, { 1 });
     data_set.set_data_random();
@@ -247,7 +246,7 @@ TEST(DataSetTest, TukeyOutliers)
 }
 
 
-TEST(DataSetTest, ReadCSV)
+TEST(DataSet, ReadCSV)
 {
     // Test
 /*
@@ -577,7 +576,7 @@ TEST(DataSetTest, ReadCSV)
 }
 
 
-TEST(DataSetTest, ReadAdultCSV)
+TEST(DataSet, ReadAdultCSV)
 {
 /*
         data_set.set_missing_values_label("?");
@@ -596,7 +595,7 @@ TEST(DataSetTest, ReadAdultCSV)
 }
 
 
-TEST(DataSetTest, ReadCarCSV)
+TEST(DataSet, ReadCarCSV)
 {
 /*
        
@@ -614,7 +613,7 @@ TEST(DataSetTest, ReadCarCSV)
 }
 
 
-TEST(DataSetTest, ReadEmptyCSV)
+TEST(DataSet, ReadEmptyCSV)
 {
 /*
     data_set.set();
@@ -629,7 +628,7 @@ TEST(DataSetTest, ReadEmptyCSV)
 }
 
 
-TEST(DataSetTest, ReadHeartCSV)
+TEST(DataSet, ReadHeartCSV)
 {
 /*
         data_set.set("../../datasets/heart.csv", ",", true);
@@ -654,7 +653,7 @@ TEST(DataSetTest, ReadHeartCSV)
 }
 
 
-TEST(DataSetTest, ReadIrisCSV)
+TEST(DataSet, ReadIrisCSV)
 {
 /*
         
@@ -671,7 +670,7 @@ TEST(DataSetTest, ReadIrisCSV)
 }
 
 
-TEST(DataSetTest, ReadOneVariableCSV)
+TEST(DataSet, ReadOneVariableCSV)
 {
 /*
         data_set.set("../../datasets/one_variable.csv", ",", false);
@@ -683,7 +682,7 @@ TEST(DataSetTest, ReadOneVariableCSV)
 }
 
 
-TEST(DataSetTest, ReadPollutionCSV)
+TEST(DataSet, ReadPollutionCSV)
 {
 /*
         
@@ -708,7 +707,7 @@ TEST(DataSetTest, ReadPollutionCSV)
 }
 
 
-TEST(DataSetTest, ReadBankChurnCSV)
+TEST(DataSet, ReadBankChurnCSV)
 {
 /*
     data_set.set_separator(DataSet::Separator::Semicolon);
@@ -720,7 +719,7 @@ TEST(DataSetTest, ReadBankChurnCSV)
 }
 
 /*
-void DataSetTest::test_read_urinary_inflammations_csv()
+void DataSet::test_read_urinary_inflammations_csv()
 {
         data_set.set("../../datasets/urinary_inflammations.csv", ";", true);
 
@@ -737,7 +736,7 @@ void DataSetTest::test_read_urinary_inflammations_csv()
 }
 
 
-void DataSetTest::test_read_wine_csv()
+void DataSet::test_read_wine_csv()
 {
         data_set.set("../../datasets/wine.data", ",", false);
         
@@ -760,7 +759,7 @@ void DataSetTest::test_read_wine_csv()
 }
 
 
-void DataSetTest::test_read_binary_csv()
+void DataSet::test_read_binary_csv()
 {        
         data_set.set("../../datasets/binary.csv", ",", false);
         
@@ -772,7 +771,7 @@ void DataSetTest::test_read_binary_csv()
 }
 
 
-void DataSetTest::test_scrub_missing_values()
+void DataSet::test_scrub_missing_values()
 {
     const string data_path = "../../datasets/data.dat";
 
@@ -833,7 +832,7 @@ void DataSetTest::test_scrub_missing_values()
 }
 
 
-void DataSetTest::test_calculate_used_targets_mean()
+void DataSet::test_calculate_used_targets_mean()
 {
     data.resize(3, 4);
 
@@ -853,7 +852,7 @@ void DataSetTest::test_calculate_used_targets_mean()
 }
 
 
-void DataSetTest::test_calculate_selection_targets_mean()
+void DataSet::test_calculate_selection_targets_mean()
 {
     Tensor<Index, 1> target_indices;
     Tensor<Index, 1> selection_indices;
@@ -891,7 +890,7 @@ void DataSetTest::test_calculate_selection_targets_mean()
 }
 
 
-void DataSetTest::test_calculate_input_target_raw_variable_correlations()
+void DataSet::test_calculate_input_target_raw_variable_correlations()
 {
     // Test 1 (numeric and numeric trivial case)
 
@@ -1146,7 +1145,7 @@ void DataSetTest::test_calculate_input_target_raw_variable_correlations()
 }
 
 
-void DataSetTest::test_calculate_input_raw_variable_correlations()
+void DataSet::test_calculate_input_raw_variable_correlations()
 {
     // Test 1 (numeric and numeric trivial case)
 
@@ -1530,7 +1529,7 @@ void DataSetTest::test_calculate_input_raw_variable_correlations()
 }
 
 
-void DataSetTest::test_unuse_repeated_samples()
+void DataSet::test_unuse_repeated_samples()
 {
     Tensor<Index, 1> indices;
 
@@ -1597,7 +1596,7 @@ void DataSetTest::test_unuse_repeated_samples()
 }
 
 
-void DataSetTest::test_unuse_uncorrelated_raw_variables()
+void DataSet::test_unuse_uncorrelated_raw_variables()
 {
     data.resize(3, 3);
     data.setValues({{type(1),type(0),type(0)},
@@ -1606,7 +1605,7 @@ void DataSetTest::test_unuse_uncorrelated_raw_variables()
 }
 
 
-void DataSetTest::test_calculate_training_negatives()
+void DataSet::test_calculate_training_negatives()
 {
     Index training_negatives;
     Index target_index;
@@ -1642,7 +1641,7 @@ void DataSetTest::test_calculate_training_negatives()
 }
 
 
-void DataSetTest::test_calculate_selection_negatives()
+void DataSet::test_calculate_selection_negatives()
 {
     vector<Index> selection_indices;
     Tensor<Index, 1> input_variables_indices;
@@ -1683,7 +1682,7 @@ void DataSetTest::test_calculate_selection_negatives()
 }
 
 
-void DataSetTest::test_fill()
+void DataSet::test_fill()
 {
     data.resize(3, 3);
     data.setValues({{1,4,7},{2,5,8},{3,6,9}});

@@ -2,55 +2,41 @@
 
 #include "../opennn/time_series_data_set.h"
 
-/*
-
-void TimeSeriesDataSetTest::test_constructor()
+TEST(TimeSeriesDataSet, DefaultConstructor)
 {
-    TimeSeriesDataSet data_set_1;
 
-    EXPECT_EQ(data_set_1.get_variables_number() == 0);
-    EXPECT_EQ(data_set_1.get_samples_number() == 0);
+    TimeSeriesDataSet time_series_data_set;
 
-    /*
-    // Samples and variables number constructor
-
-    TimeSeriesDataSet data_set_2(1, 2);
-
-    EXPECT_EQ(data_set_2.get_samples_number() == 1);
-    EXPECT_EQ(data_set_2.get_variables_number() == 2);
-
-    // Inputs, targets and samples numbers constructor
-
-    TimeSeriesDataSet data_set_3(1, 1, 1);
-
-    EXPECT_EQ(data_set_3.get_variables_number() == 2);
-    EXPECT_EQ(data_set_3.get_samples_number() == 1);
-    EXPECT_EQ(data_set_3.get_target_variables_number() == 1,LOG);
-    EXPECT_EQ(data_set_3.get_input_variables_number() == 1,LOG);
-
+    EXPECT_EQ(time_series_data_set.get_variables_number(), 0);
+    EXPECT_EQ(time_series_data_set.get_samples_number(), 0);
 }
 
 
-void TimeSeriesDataSetTest::test_calculate_autocorrelations()
+TEST(TimeSeriesDataSet, GeneralConstructor)
 {
+/*
+    TimeSeriesDataSet time_series_data_set_3(1, 1, 1);
+
+    EXPECT_EQ(time_series_data_set.get_variables_number(), 2);
+    EXPECT_EQ(time_series_data_set.get_samples_number(), 1);
+    EXPECT_EQ(time_series_data_set.get_target_variables_number(), 1);
+    EXPECT_EQ(time_series_data_set.get_input_variables_number(), 1);
+*/
+}
+
+
+TEST(TimeSeriesDataSet, Autocorrelations)
+{
+
     Tensor<type, 2> autocorrelations;
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    Index samples_number = 1;
+    Index inputs_number = 1;
+    Index targets_number = 1;
 
-    Index lags_number;
-    Index steps_ahead_number;
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-
-    lags_number = 1;
-    steps_ahead_number = 1;
-
+    Index lags_number = 1;
+    Index steps_ahead_number = 1;
+/*
     data_set.set(samples_number, inputs_number, targets_number);
 
     data_set.set_lags_number(lags_number);
@@ -60,14 +46,15 @@ void TimeSeriesDataSetTest::test_calculate_autocorrelations()
 
     autocorrelations = data_set.calculate_autocorrelations(lags_number);
 
-    EXPECT_EQ(autocorrelations.dimension(0) == 2);
-    EXPECT_EQ(autocorrelations.dimension(1) == 1);
-
+    EXPECT_EQ(autocorrelations.dimension(0), 2);
+    EXPECT_EQ(autocorrelations.dimension(1), 1);
+*/
 }
 
 
-void TimeSeriesDataSetTest::test_calculate_cross_correlations()
+TEST(TimeSeriesDataSet, CrossCorrelations)
 {
+/*
     Index lags_number;
 
     Tensor<type, 3> cross_correlations;
@@ -93,12 +80,12 @@ void TimeSeriesDataSetTest::test_calculate_cross_correlations()
 
     cross_correlations = data_set.calculate_cross_correlations(lags_number);
 
-    EXPECT_EQ(cross_correlations.dimension(0) == 3);
-
+    EXPECT_EQ(cross_correlations.dimension(0), 3);
+*/
 }
 
-
-void TimeSeriesDataSetTest::test_transform_time_series()
+/*
+void TimeSeriesDataSet::test_transform_time_series()
 {
     data.resize(9, 2);
 
@@ -139,68 +126,7 @@ void TimeSeriesDataSetTest::test_transform_time_series()
 }
 
 
-void TimeSeriesDataSetTest::test_set_time_series_data()
-{
-    data.resize(4,2);
-
-    data.setValues({{type(0),type(0)},
-                    {type(1),type(10)},
-                    {type(2),type(20)},
-                    {type(3),type(30)}});
-
-    data_set.set_data(data);
-
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-
-    data_set.transform_time_series();
-
-    data.resize(5,3);
-    data.setValues({{type(15),type(14),type(13)},
-                    {type(12),type(11),type(10)},
-                    {type(9),type(8),type(7)},
-                    {type(6),type(5),type(4)},
-                    {type(3),type(2),type(1)}});
-
-    data_set.set_time_series_data(data);
-
-    EXPECT_EQ(data_set.get_time_series_data()(0) - type(15) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data_set.get_time_series_data()(1) - type(12) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data_set.get_time_series_data()(2) - type(9) < type(NUMERIC_LIMITS_MIN));
-}
-
-
-void TimeSeriesDataSetTest::test_save_time_series_data_binary()
-{
-    const string data_path = "../data/test";
-
-    // Test
-
-    data.resize(4,2);
-    data.setValues({{type(0),type(0)},
-                    {type(1),type(10)},
-                    {type(2),type(20)},
-                    {type(3),type(30)}});
-
-    data_set.set_data(data);
-
-    data_set.set_lags_number(2);
-    data_set.set_steps_ahead_number(2);
-    data_set.transform_time_series();
-    
-    data_set.set_data_source_path(data_path);
-    /*
-    data_set.save_time_series_data_binary(data_path);
-    data_set.load_time_series_data_binary(data_path);
-    
-    EXPECT_EQ(data_set.get_time_series_data()(0) - type(0) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data_set.get_time_series_data()(1) - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(data_set.get_time_series_data()(2) - type(2) < type(NUMERIC_LIMITS_MIN));
-    
-}
-
-
-void TimeSeriesDataSetTest::test_set_steps_ahead_number()
+void TimeSeriesDataSet::test_set_steps_ahead_number()
 {
     data.resize(4,2);
     data.setValues({{type(0),type(0)},
@@ -213,11 +139,11 @@ void TimeSeriesDataSetTest::test_set_steps_ahead_number()
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
 
-    EXPECT_EQ(data_set.get_lags_number() == 2);
+    EXPECT_EQ(data_set.get_lags_number(), 2);
 }
 
 
-void TimeSeriesDataSetTest::test_set_lags_number()
+void TimeSeriesDataSet::test_set_lags_number()
 {
     // Test
 
@@ -232,7 +158,7 @@ void TimeSeriesDataSetTest::test_set_lags_number()
     data_set.set_steps_ahead_number(2);
     data_set.transform_time_series();
 
-    EXPECT_EQ(data_set.get_steps_ahead() == 2);
+    EXPECT_EQ(data_set.get_steps_ahead(), 2);
 }
 */
 

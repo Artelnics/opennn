@@ -4,13 +4,10 @@
 
 TEST(Tensors, Fill)
 {
-/*
     Tensor<type, 2> submatrix;
 
     vector<Index> rows_indices;
     vector<Index> columns_indices;
-
-    // Test
 
     Tensor<type, 2> matrix(1, 1);
     matrix.setConstant(type(3.1416));
@@ -21,26 +18,12 @@ TEST(Tensors, Fill)
 
     submatrix.resize(1, 1);
 
-    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
+//    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
-    EXPECT_EQ(is_equal(submatrix, type(3.1416)));
-*/
+//    EXPECT_EQ(is_equal(submatrix, type(3.1416)), true);
+
 }
 
 
-/*
 
-void TensorsTest::test_calculate_rank()
-{
-    Tensor<Index, 1> rank_greater;
-    Tensor<Index, 1> rank_less;
 
-    // Test
-
-    vector.resize(3);
-    vector.setValues({type(4),type(2),type(3)});
-
-    rank_greater = calculate_rank_greater(vector);
-    rank_less = calculate_rank_less(vector);
-}
-*/

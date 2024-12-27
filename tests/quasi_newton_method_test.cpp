@@ -56,7 +56,9 @@ TEST(QuasiNewtonMethodTest, BGFS)
     const Index outputs_number = 1;
     const Index neurons_number = 1;
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { outputs_number });
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, 
+                                { inputs_number }, {}, { outputs_number });
+    
     neural_network.set_parameters_constant(type(1));
 
     MeanSquaredError mean_squared_error(&neural_network);

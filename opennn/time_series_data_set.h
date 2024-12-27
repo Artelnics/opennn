@@ -20,14 +20,14 @@ class TimeSeriesDataSet : public DataSet
 public:
 
     TimeSeriesDataSet(const Index& = 0,
-                               const dimensions& = {},
-                               const dimensions& = {});
+                      const dimensions& = {},
+                      const dimensions& = {});
 
     TimeSeriesDataSet(const filesystem::path&,
-                               const string&,
-                               const bool& = true,
-                               const bool& = false,
-                               const Codification& = Codification::UTF8);
+                      const string&,
+                      const bool& = true,
+                      const bool& = false,
+                      const Codification& = Codification::UTF8);
 
     void fill_gaps();
 

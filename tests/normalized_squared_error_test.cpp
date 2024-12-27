@@ -32,7 +32,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
-/*
+
     DataSet data_set(samples_number, { inputs_number }, { targets_number });
     data_set.set_data_random();
     data_set.set(DataSet::SampleUse::Training);
@@ -48,7 +48,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
-
+    /*
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index

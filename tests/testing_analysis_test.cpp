@@ -1,48 +1,44 @@
 #include "pch.h"
+#include "../opennn/testing_analysis.h"
 
-
-/*
-
-void TestingAnalysisTest::test_constructor()
+TEST(TestingAnalysis, DefaultConstructor)
 {
-    // Neural network and data set constructor
+//    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-    TestingAnalysis testing_analysis(&neural_network,&data_set);
+//    EXPECT_EQ(testing_analysis.get_neural_network());
 
-    EXPECT_EQ(testing_analysis.get_neural_network());
-
-    EXPECT_EQ(testing_analysis.get_data_set());
+//    EXPECT_EQ(testing_analysis.get_data_set());
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data()
+TEST(TestingAnalysis, ErrorData)
 {
-    Tensor<type, 3> error_data;
+    const Index samples_number = 1;
+    const Index inputs_number = 1;
+    const Index targets_number = 1;
 
-    // Test
-
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-
-    data_set.set(samples_number, inputs_number, targets_number);
+    DataSet data_set(samples_number, { inputs_number }, { targets_number });
     data_set.set_data_constant(type(0));
     data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {}, {targets_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { targets_number });
     neural_network.set_parameters_constant(type(0));
 
-    error_data = testing_analysis.calculate_error_data();
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
+/*
+    Tensor<type, 3> error_data = testing_analysis.calculate_error_data();
 
-    EXPECT_EQ(error_data.size() == 3);
-    EXPECT_EQ(error_data.dimension(0) == 1);
-    EXPECT_EQ(error_data.dimension(1) == 3);
-    EXPECT_EQ(static_cast<double>(error_data(0,0,0)) == 0.0);
+    EXPECT_EQ(error_data.size(), 3);
+    EXPECT_EQ(error_data.dimension(0), 1);
+    EXPECT_EQ(error_data.dimension(1), 3);
+    //EXPECT_EQ(static_cast<double>(error_data(0, 0, 0)), 0.0);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_percentage_error_data()
+TEST(TestingAnalysis, PercentageErrorData)
 {
+/*
     Tensor<type, 2> error_data;
 
     // Test
@@ -63,11 +59,13 @@ void TestingAnalysisTest::test_calculate_percentage_error_data()
     EXPECT_EQ(error_data.size() == 1);
     EXPECT_EQ(error_data.dimension(1) == 1);
     EXPECT_EQ(static_cast<double>(error_data(0,0)) == 0.0);
+    */
 }
 
 
-void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
+TEST(TestingAnalysis, AbsoluteErrorDescriptives)
 {
+/*
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -90,11 +88,13 @@ void TestingAnalysisTest::test_calculate_absolute_errors_descriptives()
     EXPECT_EQ(static_cast<double>(error_data[0].maximum) == 0.0);
     EXPECT_EQ(static_cast<double>(error_data[0].mean) == 0.0);
     EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation) == 0.0);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
+TEST(TestingAnalysis, PercentageErrorDescriptives)
 {
+/*
     Tensor<Descriptives, 1> error_data;
 
     // Test
@@ -114,11 +114,13 @@ void TestingAnalysisTest::test_calculate_percentage_errors_descriptives()
 
     EXPECT_EQ(error_data.size() == 1);
     EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation) == 0.0);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data_descriptives()
+TEST(TestingAnalysis, ErrorDataDescriptives)
 {
+/*
     Tensor<Tensor<Descriptives, 1>, 1> error_data_statistics;
 
     // Test
@@ -146,11 +148,13 @@ void TestingAnalysisTest::test_calculate_error_data_descriptives()
     EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].maximum) == 0.0);
     EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].mean) == 0.0);
     EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].standard_deviation) == 0.0);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data_histograms()
+TEST(TestingAnalysis, ErrorDataHistograms)
 {
+/*
     Tensor<Histogram, 1> error_data_histograms;
 
     // Test
@@ -170,11 +174,13 @@ void TestingAnalysisTest::test_calculate_error_data_histograms()
 
     EXPECT_EQ(error_data_histograms.size() == 1);
     EXPECT_EQ(error_data_histograms[0].get_bins_number() == 10);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_maximal_errors()
+TEST(TestingAnalysis, MaximalErrors)
 {
+/*
     Tensor<Tensor<Index, 1>, 1> maximal_errors;
 
     samples_number = 4;
@@ -192,11 +198,13 @@ void TestingAnalysisTest::test_calculate_maximal_errors()
 
     EXPECT_EQ(maximal_errors.rank() == 1);
     EXPECT_EQ(maximal_errors[0](0) == 0 );
+*/
 }
 
 
-void TestingAnalysisTest::test_linear_regression()
+TEST(TestingAnalysis, LinearRegression)
 {
+/*
     Index neurons_number;
 
     Tensor<Correlation, 1> linear_correlation;
@@ -221,19 +229,7 @@ void TestingAnalysisTest::test_linear_regression()
     EXPECT_EQ(isnan(linear_correlation(0).a));
     EXPECT_EQ(isnan(linear_correlation(0).b));
     EXPECT_EQ(isnan(linear_correlation(0).r));
-}
 
-
-void TestingAnalysisTest::test_save()
-{
-    string file_name = "../data/linear_correlation.dat";
-
-    testing_analysis.save(file_name);
-}
-
-
-void TestingAnalysisTest::test_perform_linear_regression()
-{
     // DataSet
 
     samples_number = 1;
@@ -258,12 +254,13 @@ void TestingAnalysisTest::test_perform_linear_regression()
 
     EXPECT_EQ(goodness_of_fit_analysis.size() == 1 );
     EXPECT_EQ(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN));
-
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_confusion()
+TEST(TestingAnalysis, Confusion)
 {
+/*
     // Samples* i;
 
     Tensor<type, 2> actual;
@@ -305,11 +302,13 @@ void TestingAnalysisTest::test_calculate_confusion()
     EXPECT_EQ(confusion(3,2) == confusion(0,2) + confusion(1,2) + confusion(2,2));
 
     EXPECT_EQ(confusion(3,3) == 4);
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_binary_classification_test()
+TEST(TestingAnalysis, BinaryClassificationTests)
 {
+/*
     // DataSet
 
     data_set.set(samples_number, inputs_number, targets_number);
@@ -344,11 +343,13 @@ void TestingAnalysisTest::test_calculate_binary_classification_test()
    EXPECT_EQ(binary[12] == 0 );
    EXPECT_EQ(binary[13] == -1 );
    EXPECT_EQ(binary[14] == -1 );
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_roc_curve()
+TEST(TestingAnalysis, RocCurve)
 {
+/*
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
 
@@ -417,11 +418,13 @@ void TestingAnalysisTest::test_calculate_roc_curve()
     EXPECT_EQ(roc_curve(3, 1) - type(0.5) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(roc_curve(4, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(roc_curve(4, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_area_under_curve()
+TEST(TestingAnalysis, AreaUnderCurve)
 {
+/*
     Tensor<type, 2> roc_curve;
 
     type area_under_curve;
@@ -511,11 +514,13 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
     area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
 
     EXPECT_EQ(area_under_curve < type(NUMERIC_LIMITS_MIN));
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_optimal_threshold()
+TEST(TestingAnalysis, OptimalThreshold)
 {
+/*
     type optimal_threshold;
 
     Tensor<type, 2> roc_curve;
@@ -587,12 +592,13 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
     optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
 
     EXPECT_EQ(optimal_threshold - type(0.62) < type(NUMERIC_LIMITS_MIN));
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_cumulative_gain()
+TEST(TestingAnalysis, CumulativeGain)
 {
-
+/*
     targets.resize(4,1);
 
     targets(0,0) = type(1);
@@ -615,11 +621,13 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
     EXPECT_EQ(cumulative_gain(0, 1) - type(0) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(cumulative_gain(20, 0) - type(1) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(cumulative_gain(20, 1) - type(1) < type(NUMERIC_LIMITS_MIN));
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_lift_chart()
+TEST(TestingAnalysis, LiftChart)
 {
+/*
     Tensor<type, 2> cumulative_gain;
 
     Tensor<type, 2> lift_chart;
@@ -646,11 +654,13 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     EXPECT_EQ(lift_chart.dimension(1) == cumulative_gain.dimension(1));
     EXPECT_EQ(lift_chart.dimension(0) == cumulative_gain.dimension(0));
+*/
 }
 
 
-void TestingAnalysisTest::test_calculate_calibration_plot()
+TEST(TestingAnalysis, CalibrationPlot)
 {
+/*
     Tensor<type, 2> calibration_plot;
 
     // Test
@@ -685,9 +695,10 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     EXPECT_EQ(calibration_plot.dimension(1) == 2);
     EXPECT_EQ(calibration_plot.dimension(0) == 11);
+*/
 }
 
-
+/*
 void TestingAnalysisTest::test_calculate_true_positive_samples()
 {
     Tensor<Index, 1> true_positives_indices;

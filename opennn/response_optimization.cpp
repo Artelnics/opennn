@@ -280,7 +280,8 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
 }
 
 
-Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, const Tensor<type, 1>& values) const
+Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, 
+                                                                       const Tensor<type, 1>& values) const
 {
     const Index conditions_size = conditions.size();
 

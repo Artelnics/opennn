@@ -48,5 +48,4 @@ TEST(EmbeddingLayer, ForwardPropagate)
     EXPECT_EQ(embedding_layer_forward_propagation->get_outputs_pair().second[1], sequence_length);
     EXPECT_EQ(embedding_layer_forward_propagation->get_outputs_pair().second[2], embedding_dimension);
 
-
 }

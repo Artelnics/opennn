@@ -21,7 +21,7 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
-/*
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
@@ -46,7 +46,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 //    neural_network.add_layer(probabilistic_layer_3d);
 
     neural_network.set_parameters_constant(type(0));
-
+/*
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
