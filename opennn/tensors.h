@@ -68,13 +68,46 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<typ
 //void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
-bool is_binary_vector(const Tensor<type, 1>&);
-bool is_binary_matrix(const Tensor<type, 2>&);
 
-bool is_constant_vector(const Tensor<type, 1>&);
-bool is_constant_matrix(const Tensor<type, 2>&);
+template <Index Rank>
+bool is_binary(const Tensor<type, Rank>& tensor)
+{
+    const Index size = tensor.size();
+
+    for (Index i = 0; i < size; i++)
+        if (tensor(i) != type(0) && tensor(i) != type(1) && !isnan(tensor(i)))
+            return false;
+
+    return true;
+}
+
+
+template <Index Rank>
+bool is_constant(const Tensor<type, Rank>& tensor)
+{
+
+    const Index size = tensor.size();
+
+    Index first_non_nan_index = 0;
+
+    while (first_non_nan_index < size && isnan(tensor(first_non_nan_index)))
+        first_non_nan_index++;
+    
+    if (first_non_nan_index == size)
+        return true;
+
+    const type first_not_nan_element = tensor(first_non_nan_index);
+
+    for (Index i = first_non_nan_index + 1; i < size; ++i)
+        if (!isnan(tensor(i)) && abs(first_not_nan_element - tensor(i)) > numeric_limits<float>::min())
+            return false;
+
+    return true;
+}
+
 
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&);
+
 void save_csv(const Tensor<type,2>&, const filesystem::path&);
 
 template<int rank>

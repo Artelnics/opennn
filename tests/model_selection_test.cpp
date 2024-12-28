@@ -20,16 +20,19 @@ TEST(ModelSelectionTest, GeneralConstructor)
     EXPECT_EQ(model_selection.has_training_strategy(), true);
 }
 
+
 TEST(ModelSelectionTest, NeuronsSelection)
 {
 
 //    data_set.generate_sum_data(20, 2);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
-/*
-    //training_strategy.set_display(false);
 
-    //model_selection.set_display(false);
+    TrainingStrategy training_strategy;
+    training_strategy.set_display(false);
+
+    ModelSelection model_selection(&training_strategy);
+    model_selection.set_display(false);
 
     GrowingNeurons* incremental_neurons = model_selection.get_growing_neurons();
 
@@ -37,13 +40,10 @@ TEST(ModelSelectionTest, NeuronsSelection)
 
     incremental_neurons->set_display(false);
 
-    NeuronsSelectionResults results;
+//    NeuronsSelectionResults results = model_selection.perform_neurons_selection();
 
-    results = model_selection.perform_neurons_selection();
-
-    EXPECT_EQ(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
-    EXPECT_EQ(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
-    EXPECT_EQ(results.optimum_selection_error != 0.0);
-    EXPECT_EQ(results.optimal_neurons_number >= 1);
-*/
+    EXPECT_EQ(model_selection.get_inputs_selection_method(), ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+    EXPECT_EQ(model_selection.get_neurons_selection_method(), ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
+//    EXPECT_EQ(results.optimum_selection_error != 0.0);
+//    EXPECT_EQ(results.optimal_neurons_number >= 1);
 }

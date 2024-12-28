@@ -24,7 +24,6 @@ TEST(RecurrentLayerTest, GeneralConstructor)
 
 TEST(RecurrentLayerTest, ForwardPropagate)
 {
-
     const Index neurons_number = 4;
     const Index samples_number = 2;
     const Index inputs_number = 3;

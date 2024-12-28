@@ -86,7 +86,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
     if(isnan(error())) throw runtime_error("Error is NAN");
-
 }
 
 
@@ -94,7 +93,8 @@ void CrossEntropyError3D::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
-    // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
+    // ProbabilisticLayer3D does not have deltas. 
+    // Error combinations derivatives are calculated directly.
 }
 
 

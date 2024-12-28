@@ -1258,9 +1258,9 @@ void DataSet::set_binary_raw_variables()
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
-            const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
+            const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
-            if(is_binary_vector(data_column))
+            if(is_binary(data_column))
                 raw_variable.type = RawVariableType::Binary;
 
             variable_index++;
@@ -1291,9 +1291,9 @@ void DataSet::unuse_constant_raw_variables()
 
         if(raw_variable.type == RawVariableType::Numeric)
         {
-            const TensorMap<Tensor<type, 1>> data_column = tensor_map(data, variable_index);
+            const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
-            if(is_constant_vector(data_column))
+            if(is_constant(data_column))
                 raw_variable.set(raw_variable.name, VariableUse::None, RawVariableType::Constant);
 
             variable_index++;
@@ -2553,7 +2553,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_pearson_correlation
 
         //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
-        if (is_constant_matrix(input_i)) continue;
+        if (is_constant(input_i)) continue;
 
         correlations_pearson(i, i).set_perfect();
         correlations_pearson(i, i).method = Correlation::Method::Pearson;
@@ -2592,7 +2592,7 @@ Tensor<Correlation, 2> DataSet::calculate_input_raw_variable_spearman_correlatio
 
         //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
 
-        if (is_constant_matrix(input_i)) continue;
+        if (is_constant(input_i)) continue;
 
         correlations_spearman(i, i).set_perfect();
         correlations_spearman(i, i).method = Correlation::Method::Spearman;
@@ -3454,19 +3454,20 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-/*
+
 void DataSet::set_data_classification()
 {
+    
     const Index samples_number = get_samples_number();
     const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index target_variables_number = get_variables_number(VariableUse::Target);
 
     data.setConstant(0.0);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(0, 1);
-
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dist(0, 1);
+    /*
     #pragma omp parallel for
     for(Index i = 0; i < samples_number; i++)
     {
@@ -3477,9 +3478,9 @@ void DataSet::set_data_classification()
             ? data(i, input_variables_number) = dist(gen)
             : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
     }
-
-}
 */
+}
+
 
 
 void DataSet::set_data_sum()

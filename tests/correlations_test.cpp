@@ -7,7 +7,8 @@
 
 using namespace opennn;
 
-class CorrelationsTest : public ::testing::Test {
+class CorrelationsTest : public ::testing::Test 
+{
 protected:
 
     unique_ptr<ThreadPool> thread_pool;
@@ -22,6 +23,7 @@ protected:
     void TearDown() override {
     }
 };
+
 
 TEST_F(CorrelationsTest, SpearmanCorrelation)
 {

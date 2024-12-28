@@ -227,7 +227,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     else
         calculate_activations(outputs, empty);
     
-    /*auto end = chrono::high_resolution_clock::now();
+    /*
+    auto end = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
     cout << "Tiempo convolution forward propagate: "
         << duration.count() / 1000 << "::"

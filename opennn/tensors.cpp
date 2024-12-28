@@ -516,68 +516,6 @@ void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor
 }
 
 
-bool is_binary_vector(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.size();
-
-    for(Index i = 0; i < size; i++)
-        if(vector(i) != type(0) && vector(i) != type(1) && !isnan(vector(i))) 
-            return false;
-
-    return true;
-}
-
-
-bool is_binary_matrix(const Tensor<type, 2>& matrix)
-{
-    const Index size = matrix.size();
-
-    for(Index i = 0; i < size; i++)
-        if(matrix(i) != type(0) && matrix(i) != type(1) && !isnan(matrix(i))) 
-            return false;
-
-    return true;
-}
-
-
-bool is_constant_vector(const Tensor<type, 1>& vector)
-{
-    const Index size = vector.size();
-
-    Index first_non_nan_index = 0;
-
-    while (first_non_nan_index < size && isnan(vector[first_non_nan_index])) 
-        first_non_nan_index++;
-   
-    if (first_non_nan_index == size) 
-        return true;
-
-    type first_not_nan_element = vector[first_non_nan_index];
-
-    for (Index i = first_non_nan_index + 1; i < size; ++i)
-        if (!isnan(vector[i]) && abs(first_not_nan_element - vector[i]) > std::numeric_limits<float>::min())
-            return false;
-
-    return true;
-}
-
-
-bool is_constant_matrix(const Tensor<type, 2>& matrix)
-{
-    if(matrix.size() == 0)
-        return true;
-
-    type first_value = matrix(0,0);
-
-    for(Index i = 0; i < matrix.dimension(0); i++)
-        for(Index j = 0; j < matrix.dimension(1); j++)
-            if(matrix(i, j) != first_value)
-                return false;
-
-    return true;
-}
-
-
 Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
