@@ -12,11 +12,9 @@
 namespace opennn
 {
 
-LanguageDataSet::LanguageDataSet(const dimensions& input_dimensionms, 
-                                 const dimensions& target_dimensionms)
+LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms, 
+                                 const dimensions& new_target_dimensionms)
 {
-    set_input_dimensions(input_dimensionms);
-    set_target_dimensions(target_dimensionms);
 }
 
 

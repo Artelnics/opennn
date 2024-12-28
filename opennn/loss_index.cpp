@@ -733,7 +733,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 {
 
     const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
-    const dimensions inputs_dimensions = data_set->get_input_dimensions();
+    const dimensions inputs_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
 

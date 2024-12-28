@@ -48,7 +48,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
     ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
 
-    const dimensions& input_dimensions = data_set->get_input_dimensions();
+    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
 
     const Index input_height = input_dimensions[0];
     const Index input_width = input_dimensions[1];
@@ -128,9 +128,9 @@ void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
     samples_number = new_samples_number;
     data_set = new_data_set;
 
-    const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
-    const dimensions& data_set_decoder_dimensions = data_set->get_decoder_dimensions();
-    const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
+    const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
+    const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
+    const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {

@@ -249,6 +249,7 @@ void print_vector(const vector<T>& vec)
     cout << "]\n";
 }
 
+
 void print_pairs(const vector<pair<string, Index>>&);
 
 

@@ -96,11 +96,11 @@ void TimeSeriesDataSet::print() const
          << "Number of targets: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_vector(input_dimensions);
+    print_vector(get_dimensions(DataSet::VariableUse::Input));
 
     cout << "Target variables dimensions: ";
 
-    print_vector(target_dimensions);
+    print_vector(get_dimensions(DataSet::VariableUse::Target));
 }
 
 
