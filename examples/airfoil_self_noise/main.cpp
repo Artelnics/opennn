@@ -25,11 +25,16 @@ int main()
         // Data set
         
         DataSet data_set("C:/airfoil_self_noise.csv", ";", true);
-
+        
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         data_set.set(DataSet::SampleUse::Training);
+        
+        //data_set.print_input_target_raw_variables_correlations();
+
+        //data_set.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        //data_set.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
 
         // Neural network
 
@@ -44,7 +49,6 @@ int main()
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
-
 
 //        training_strategy.set_display(false);
 

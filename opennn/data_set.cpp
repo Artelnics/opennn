@@ -1689,6 +1689,7 @@ void DataSet::set(const filesystem::path& new_data_path,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
 {
+
     set_default();
 
     set_data_path(new_data_path);
@@ -1700,9 +1701,9 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_has_ids(new_has_ids);
 
     set_codification(new_codification);
-
+    
     read_csv();
-
+    
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
@@ -2980,11 +2981,11 @@ void DataSet::print() const
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
          << "Number of target variables: " << target_variables_bumber << "\n"
-         << "Input variables dimensions: ";
+         << "Input dimensions: ";
    
     print_vector(get_input_dimensions());
          
-    cout << "Target variables dimensions: ";
+    cout << "Target dimensions: ";
     
     print_vector(get_target_dimensions());
     
@@ -3866,7 +3867,7 @@ void DataSet::read_csv()
 
         if(columns_number != 0) break;
     }
-
+    
     const Index raw_variables_number = has_sample_ids
             ? columns_number - 1
             : columns_number;
@@ -3891,7 +3892,7 @@ void DataSet::read_csv()
         samples_number++;
         set_default_raw_variables_names();
     }
-
+    
     // Rest of lines
 
     while(getline(file, line))
@@ -3912,7 +3913,7 @@ void DataSet::read_csv()
 
         samples_number++;
     }
-
+    
     for(Index i = 0; i < raw_variables_number; i++)
         if(raw_variables[i].type == RawVariableType::Categorical
         && raw_variables[i].get_categories_number() == 2)
@@ -3921,24 +3922,24 @@ void DataSet::read_csv()
     sample_uses.resize(samples_number);
 
     sample_ids.resize(samples_number);
-
+    
     // const Index variables_number = get_variables_number();
     const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
-
+    
     data.resize(samples_number, variables_number);
     data.setZero();
 
     rows_missing_values_number = 0;
 
     missing_values_number = 0;
-
+    
     raw_variables_missing_values_number.resize(raw_variables_number);
     raw_variables_missing_values_number.setZero();
 
     // Fill data
-
+    
     file.clear();
     file.seekg(0);
 
@@ -4050,7 +4051,6 @@ void DataSet::read_csv()
         }
 
         sample_index++;
-
     }
 
     file.close();
@@ -4377,11 +4377,11 @@ void DataSet::fix_repeated_names()
 }
 
 
-vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
+vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_samples_number) const
 {
     const Index samples_number = sample_indices.size();
 
-    Index batch_size = new_batch_size;
+    Index batch_size = new_samples_number;
 
     Index batches_number;
 
@@ -4395,7 +4395,7 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
         batches_number = samples_number / batch_size;
     }
 
-//    const Index batches_number = (samples_number + new_batch_size - 1) / new_batch_size; // Round up division
+//    const Index batches_number = (samples_number + new_samples_number - 1) / new_samples_number; // Round up division
 
     vector<vector<Index>> batches(batches_number);
 
