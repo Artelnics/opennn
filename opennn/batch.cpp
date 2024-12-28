@@ -10,7 +10,6 @@
 #include "tensors.h"
 #include "image_data_set.h"
 #include "images.h"
-//#include "language_data_set.h"
 
 namespace opennn
 {
@@ -36,12 +35,12 @@ void Batch::fill(const vector<Index>& sample_indices,
     }
     else
     {
-        //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+        fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
 
-    //fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
-    //fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 }
 
 
@@ -122,67 +121,42 @@ Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
 }
 
 
-void Batch::set(const Index& new_batch_size, DataSet* new_data_set)
+void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
 {
     if (!new_data_set) return;
 
-    samples_number = new_batch_size;
+    samples_number = new_samples_number;
     data_set = new_data_set;
 
     const dimensions& data_set_input_dimensions = data_set->get_input_dimensions();
     const dimensions& data_set_decoder_dimensions = data_set->get_decoder_dimensions();
     const dimensions& data_set_target_dimensions = data_set->get_target_dimensions();
 
-    // Inputs
-
-    if(data_set_input_dimensions.size() == 2)
+    if (!data_set_input_dimensions.empty())
     {
-        const Index rows_number = data_set_input_dimensions[0];
-        const Index columns_number = data_set_input_dimensions[1];
+        input_dimensions = { samples_number };
+        input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
 
-        input_dimensions = {{samples_number, rows_number, columns_number}};
-        input_tensor.resize(samples_number*rows_number* columns_number);
-    }
-    else if(data_set_input_dimensions.size() == 3)
-    {
-        const Index rows_number = data_set_input_dimensions[0];
-        const Index columns_number = data_set_input_dimensions[1];
-        const Index channels = data_set_input_dimensions[2];
-
-        input_dimensions = {{samples_number, rows_number, columns_number, channels}};
-        input_tensor.resize(samples_number*channels*rows_number*columns_number);
+        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+        input_tensor.resize(input_size);
     }
 
-    // Decoder
-
-    if(data_set_decoder_dimensions.size() == 2)
+    if (!data_set_decoder_dimensions.empty())
     {
-        const Index rows_number = data_set_input_dimensions[0];
-        const Index columns_number = data_set_input_dimensions[1];
+        decoder_dimensions = { samples_number };
+        decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
 
-        decoder_dimensions = {{samples_number, rows_number, columns_number}};
-        decoder_tensor.resize(samples_number*rows_number* columns_number);
+        const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
+        decoder_tensor.resize(decoder_size);
     }
 
-    // Target
-
-    if(data_set_target_dimensions.size() == 2)
+    if (!data_set_target_dimensions.empty())
     {
-        const Index rows_number = data_set_target_dimensions[0];
-        const Index columns_number = data_set_target_dimensions[1];
+        target_dimensions = { samples_number };
+        target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
 
-        target_dimensions = {{samples_number, rows_number, columns_number}};
-        target_tensor.resize(samples_number*rows_number*columns_number);
-    }
-    else if(data_set_target_dimensions.size() == 3)
-    {
-        const Index rows_number = data_set_target_dimensions[0];
-        const Index columns_number = data_set_target_dimensions[1];
-        const Index channels = data_set_target_dimensions[2];
-
-        target_dimensions = {{samples_number, rows_number, columns_number, channels}};
-
-        target_tensor.resize(samples_number*channels*rows_number*columns_number);
+        const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
+        target_tensor.resize(target_size);
     }
 }
 
@@ -195,17 +169,15 @@ Index Batch::get_samples_number() const
 
 void Batch::print() const
 {
-    const Index inputs_rank = input_dimensions.size();
-    const Index targets_rank = target_dimensions.size();
-
     cout << "Batch" << endl
          << "Inputs:" << endl
-         << "Inputs dimensions:" << endl;
+         << "Input dimensions:" << endl;
 
-    for(Index i = 0; i < inputs_rank; i++)
-        cout << input_dimensions[i] << endl;
+    print_vector(input_dimensions);
 
-    if(inputs_rank == 4)
+
+    /*
+    if(input_dimensions.size() == 4)
     {
         const TensorMap<Tensor<type, 4>> inputs((type*)input_tensor.data(),
                                                 input_dimensions[0],
@@ -215,18 +187,24 @@ void Batch::print() const
 
         cout << inputs << endl;
     }
+    */
+
+    cout << "Decoder:" << endl
+         << "Decoder dimensions:" << endl;
+
+    print_vector(decoder_dimensions);
 
     cout << "Targets:" << endl
-         << "Targets dimensions:" << endl;
+         << "Target dimensions:" << endl;
 
-    for(Index i = 0; i < targets_rank; i++)
-        cout << target_dimensions[i] << endl;
+    print_vector(target_dimensions);
 
-    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
-                                             target_dimensions[0],
-                                             target_dimensions[1]);
+//    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
+//                                             target_dimensions[0],
+//                                             target_dimensions[1]);
 
-    cout << targets << endl;
+//    cout << targets << endl;
+
 }
 
 

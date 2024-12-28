@@ -230,7 +230,12 @@ public:
     // Set
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
-    void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
+
+    void set(const filesystem::path&, 
+             const string&, 
+             const bool& = true, 
+             const bool& = false, 
+             const DataSet::Codification& = Codification::UTF8);
 
     void set(const filesystem::path&);
 

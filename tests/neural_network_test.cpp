@@ -57,25 +57,27 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
 
 TEST(NeuralNetworkTest, ImageClassificationConstructor)
 {
-/*
-    Inputs variables dimension = (channels, width, height)
-    Tensor<Index, 1> inputs_variables_dimension(3);
-    inputs_variables_dimension.setValues({ 1,28,28 });
-    
-    Index blocks_number = 0;
-    Index outputs_number = 10;
-    Tensor<Index, 1> filters_dimensions(3);
-    filters_dimensions.setValues({ 1,2,2 });
-    NeuralNetwork neural_network_4(inputs_variables_dimension, blocks_number, filters_dimensions, outputs_number);
+    // Input dimensions {height, width, channels}
 
-    EXPECT_EQ(neural_network_4.get_layers_number(), 6); // Scaling, 1Bloque (Conv, Pool), Flatten, 1 Perceptron, Probabilistic.
-    EXPECT_EQ(neural_network_4.get_layer(0)->get_type(), Layer::Type::Scaling2D);
-    EXPECT_EQ(neural_network_4.get_layer(1)->get_type(), Layer::Type::Convolutional);
-    EXPECT_EQ(neural_network_4.get_layer(2)->get_type(), Layer::Type::Pooling);
-    EXPECT_EQ(neural_network_4.get_layer(3)->get_type(), Layer::Type::Flatten);
-    EXPECT_EQ(neural_network_4.get_layer(4)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network_4.get_layer(5)->get_type(), Layer::Type::Probabilistic);
-*/
+    const Index height = 3;
+    const Index width = 3;
+    const Index channels = 1;
+
+    const Index blocks = 1;
+
+    const Index outputs_number = 1;
+
+    //NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+    //    {height, width, channels}, {blocks}, { outputs_number });
+ 
+    //EXPECT_EQ(neural_network.get_layers_number(), 5); 
+    //EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling4D);
+    //EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Convolutional);
+    //EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Pooling);
+    //EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Flatten);
+    //EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Perceptron);
+    //EXPECT_EQ(neural_network.get_layer(5)->get_type(), Layer::Type::Probabilistic);
+
 }
 
 
@@ -103,27 +105,27 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 
 TEST(NeuralNetworkTest, CalculateOutputsZero)
 {
+    const Index samples_number = get_random_index(1, 5);
+    const Index inputs_number = get_random_index(1, 5);
+    const Index neurons_number = get_random_index(1, 5);
+    const Index outputs_number = get_random_index(1, 5);
 
-    const Index batch_samples_number = 3;
-    const Index inputs_number = 2;
-    const Index neurons_number = 4;
-    const Index outputs_number = 5;
-
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, 
+        {inputs_number}, {neurons_number}, {outputs_number});
     neural_network.set_parameters_constant(type(0));
 
-    Tensor<type, 2> inputs(batch_samples_number, inputs_number);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setConstant(type(0));  
 
-//    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    /*
 //    EXPECT_EQ(outputs.size(), batch_samples_number * outputs_number);
 //    EXPECT_NEAR(outputs(0,0), 0, NUMERIC_LIMITS_MIN);
 //    EXPECT_NEAR(outputs(0,1), 0, NUMERIC_LIMITS_MIN);
 //    EXPECT_NEAR(outputs(0,2), 0, NUMERIC_LIMITS_MIN);
 //    EXPECT_NEAR(outputs(0,3), 0, NUMERIC_LIMITS_MIN);
 //    EXPECT_NEAR(outputs(0,4), 0, NUMERIC_LIMITS_MIN);
-/*
+
     // Test
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 2});

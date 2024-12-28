@@ -42,7 +42,6 @@ struct Batch
     dimensions target_dimensions;
     Tensor<type, 1> target_tensor;
 
-
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 };

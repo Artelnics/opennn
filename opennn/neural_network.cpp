@@ -433,20 +433,20 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     if (input_dimensions.size() != 3)
         throw runtime_error("Input dimensions size is not 3.");
 
-    const Index complexity_size = complexity_dimensions.size();
-
     add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+
+    const Index complexity_size = complexity_dimensions.size();
 
     for (Index i = 0; i < complexity_size; i++)
     {
         const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
-        const dimensions convolution_stride_dimensions = { 1, 1 };
+        const dimensions stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
         add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                   kernel_dimensions,
                                                   ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                  convolution_stride_dimensions,
+                                                  stride_dimensions,
                                                   convolution_type,
                                                   "convolutional_layer_" + to_string(i+1)));
 
