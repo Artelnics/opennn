@@ -157,156 +157,161 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     time(&beginning_time);
 
     bool stop = false;
-/*
+
     for(Index i = 0; i < maximum_epochs_number; i++)
     {
+        
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
 
         Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
         Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
-        if(input_raw_variables_number >= minimum_inputs_number)
+        if (input_raw_variables_number < minimum_inputs_number)
         {
-            Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
-            neural_network->set_input_dimensions({ input_variables_number });
+            // @todo
 
-            if(display)
-            {
-                cout << endl
-                     << "Epoch: " << epoch << endl
-                     << "Input raw_variables number: " << input_raw_variables_number << endl
-                     << "Inputs: " << endl;
+            continue;
+        }
+            
+        Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
+        neural_network->set_input_dimensions({ input_variables_number });
 
-                input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+        if(display)
+        {
+            cout << endl
+                    << "Epoch: " << epoch << endl
+                    << "Input raw_variables number: " << input_raw_variables_number << endl
+                    << "Inputs: " << endl;
 
-                print_vector(input_raw_variables_names);
-            }
+            input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
-            type minimum_training_error = numeric_limits<type>::max();
-            type minimum_selection_error = numeric_limits<type>::max();
-
-            for(Index j = 0; j < trials_number; j++)
-            {
-                neural_network->set_parameters_random();
-
-                if(data_set->has_nan())
-                    data_set->scrub_missing_values();
-
-                training_results = training_strategy->perform_training();
-
-                if(training_results.get_selection_error() < minimum_selection_error)
-                {
-                    minimum_training_error = training_results.get_training_error();
-                    minimum_selection_error = training_results.get_selection_error();
-
-                    input_selection_results.training_error_history(input_raw_variables_number-1) = minimum_training_error;
-                    input_selection_results.selection_error_history(input_raw_variables_number-1) = minimum_selection_error;
-                }
-
-                if(training_results.get_selection_error() < input_selection_results.optimum_selection_error)
-                {
-                    // Neural network
-
-                    input_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-                    input_selection_results.optimal_input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
-
-                    input_selection_results.optimal_parameters = neural_network->get_parameters();
-
-                    // Loss index
-
-                    input_selection_results.optimum_training_error = training_results.get_training_error();
-                    input_selection_results.optimum_selection_error = training_results.get_selection_error();
-                }
-
-                if(display)
-                    cout << "Trial number: " << j+1 << endl
-                         << "   Training error: " << training_results.get_training_error() << endl
-                         << "   Selection error: " << training_results.get_selection_error() << endl;
-            }
-
-            if(previus_training_error < minimum_training_error)
-            {
-                cout << "Selection failure" << endl;
-
-                selection_failures++;
-
-                data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::None);
-
-                input_raw_variables_number += -1;
-            }
-            else
-            {
-                previus_training_error = minimum_training_error;
-//                previus_selection_error = minimum_selection_error;
-
-                input_selection_results.training_error_history(input_raw_variables_number) = minimum_training_error;
-                input_selection_results.selection_error_history(input_raw_variables_number) = minimum_selection_error;
-            }
-
-            time(&current_time);
-
-            elapsed_time = type(difftime(current_time,beginning_time));
-
-            // Stopping criteria
-
-            stop = true;
-
-            if(elapsed_time >= maximum_time)
-            {
-                if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
-            }
-            else if(input_selection_results.optimum_selection_error <= selection_error_goal)
-            {
-                if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_selection_error << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
-            }
-            else if(epoch >= maximum_epochs_number)
-            {
-                if(display) cout << "\nMaximum number of epochs reached." << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
-            }
-            else if(selection_failures >= maximum_selection_failures)
-            {
-                if(display) cout << "\nMaximum selection failures ("<<selection_failures<<") reached." << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
-            }
-            else if(input_raw_variables_number >= maximum_inputs_number || input_raw_variables_number >= original_input_raw_variables_number)
-            {
-                if(display) cout << "\nMaximum inputs (" << input_raw_variables_number << ") reached." << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-            }
-            else if(raw_variable_index >= correlations_rank_descending.size() - 1 )
-            {
-                if(display) cout << "\nAll the raw_variables has been used." << endl;
-                input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
-            }
-            else
-            {
-                stop = false;
-            }
-
-
-            if(stop)
-            {
-                input_selection_results.elapsed_time = write_time(elapsed_time);
-
-                input_selection_results.resize_history(input_raw_variables_number);
-
-                break;
-            }
+            print_vector(input_raw_variables_names);
         }
 
-        raw_variable_index++;
+        type minimum_training_error = numeric_limits<type>::max();
+        type minimum_selection_error = numeric_limits<type>::max();
+
+        for(Index j = 0; j < trials_number; j++)
+        {
+            neural_network->set_parameters_random();
+
+            if(data_set->has_nan())
+                data_set->scrub_missing_values();
+
+            training_results = training_strategy->perform_training();
+
+            if(training_results.get_selection_error() < minimum_selection_error)
+            {
+                minimum_training_error = training_results.get_training_error();
+                minimum_selection_error = training_results.get_selection_error();
+
+                input_selection_results.training_error_history(input_raw_variables_number-1) = minimum_training_error;
+                input_selection_results.selection_error_history(input_raw_variables_number-1) = minimum_selection_error;
+            }
+
+            if(training_results.get_selection_error() < input_selection_results.optimum_selection_error)
+            {
+                // Neural network
+
+                input_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+                input_selection_results.optimal_input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+
+                input_selection_results.optimal_parameters = neural_network->get_parameters();
+
+                // Loss index
+
+                input_selection_results.optimum_training_error = training_results.get_training_error();
+                input_selection_results.optimum_selection_error = training_results.get_selection_error();
+            }
+
+            if(display)
+                cout << "Trial number: " << j+1 << endl
+                        << "   Training error: " << training_results.get_training_error() << endl
+                        << "   Selection error: " << training_results.get_selection_error() << endl;           
+        }
+
+        if(previus_training_error < minimum_training_error)
+        {
+            cout << "Selection failure" << endl;
+
+            selection_failures++;
+
+            data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::None);
+
+            input_raw_variables_number += -1;
+        }
+        else
+        {
+            previus_training_error = minimum_training_error;
+//                previus_selection_error = minimum_selection_error;
+
+            input_selection_results.training_error_history(input_raw_variables_number) = minimum_training_error;
+            input_selection_results.selection_error_history(input_raw_variables_number) = minimum_selection_error;
+        }
+
+        time(&current_time);
+
+        elapsed_time = type(difftime(current_time,beginning_time));
+
+        // Stopping criteria
+
+        stop = true;
+
+        if(elapsed_time >= maximum_time)
+        {
+            if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+        }
+        else if(input_selection_results.optimum_selection_error <= selection_error_goal)
+        {
+            if(display) cout << "\nSelection error reached: " << input_selection_results.optimum_selection_error << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
+        }
+        else if(epoch >= maximum_epochs_number)
+        {
+            if(display) cout << "\nMaximum number of epochs reached." << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
+        }
+        else if(selection_failures >= maximum_selection_failures)
+        {
+            if(display) cout << "\nMaximum selection failures ("<<selection_failures<<") reached." << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
+        }
+        else if(input_raw_variables_number >= maximum_inputs_number || input_raw_variables_number >= original_input_raw_variables_number)
+        {
+            if(display) cout << "\nMaximum inputs (" << input_raw_variables_number << ") reached." << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+        }
+        else if(raw_variable_index >= correlations_rank_descending.size() - 1 )
+        {
+            if(display) cout << "\nAll the raw_variables has been used." << endl;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+        }
+        else
+        {
+            stop = false;
+        }
+
+        if(stop)
+        {
+            input_selection_results.elapsed_time = write_time(elapsed_time);
+
+            input_selection_results.resize_history(input_raw_variables_number);
+
+            break;
+        }
+            
+
+        raw_variable_index++;        
     }
-*/
+
     // Set data set stuff
 
     data_set->set_input_target_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices, 
                                                     target_raw_variable_indices);
 
     data_set->print();
-    /*
+    
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
 
     const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
@@ -325,11 +330,11 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }
-
+/*
     neural_network->set_parameters(input_selection_results.optimal_parameters);
-
-    if(display) input_selection_results.print();
 */
+    if(display) input_selection_results.print();
+
     return input_selection_results;
 }
 
