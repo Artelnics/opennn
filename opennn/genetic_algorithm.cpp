@@ -674,7 +674,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Selection algorithm
 
-    InputsSelectionResults inputs_selection_results(maximum_epochs_number);
+    InputsSelectionResults input_selection_results(maximum_epochs_number);
 
     // Training strategy
 
@@ -710,7 +710,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     std::time(&beginning_time);
 
-    inputs_selection_results.optimum_selection_error = numeric_limits<type>::max();
+    input_selection_results.optimum_selection_error = numeric_limits<type>::max();
 
     training_strategy->get_optimization_algorithm()->set_display(false);
 
@@ -720,7 +720,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     {
         if(display) cout << "Generation: " << epoch + 1 << endl;
 
-        inputs_selection_results.resize_history(inputs_selection_results.mean_training_error_history.size() + 1);
+        input_selection_results.resize_history(input_selection_results.mean_training_error_history.size() + 1);
 
         evaluate_population();
 
@@ -732,17 +732,17 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
         // Store optimal training and selection error in the history
 
-        inputs_selection_results.training_error_history(epoch) = training_errors(optimal_individual_training_index);
+        input_selection_results.training_error_history(epoch) = training_errors(optimal_individual_training_index);
 
-        inputs_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
+        input_selection_results.selection_error_history(epoch) = selection_errors(optimal_individual_index);
 
         // Store mean errors histories
 
-        inputs_selection_results.mean_selection_error_history(epoch) = mean_selection_error;
+        input_selection_results.mean_selection_error_history(epoch) = mean_selection_error;
 
-        inputs_selection_results.mean_training_error_history(epoch)= mean_training_error;
+        input_selection_results.mean_training_error_history(epoch)= mean_training_error;
 
-        if(selection_errors(optimal_individual_index) < inputs_selection_results.optimum_selection_error)
+        if(selection_errors(optimal_individual_index) < input_selection_results.optimum_selection_error)
         {
             generation_selected = epoch;
 
@@ -750,22 +750,22 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             // Neural network
 
-            inputs_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
+            input_selection_results.optimal_inputs = population.chip(optimal_individual_index, 0);
 
-            optimal_inputs_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
+            optimal_inputs_raw_variables_indices = get_individual_as_raw_variables_indexes_from_variables(input_selection_results.optimal_inputs);
 
             data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variable_indices);
 
-            inputs_selection_results.optimal_input_raw_variables_names 
+            input_selection_results.optimal_input_raw_variables_names 
                 = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
-            inputs_selection_results.optimal_parameters = parameters(optimal_individual_index);
+            input_selection_results.optimal_parameters = parameters(optimal_individual_index);
 
             // Loss index
 
-            inputs_selection_results.optimum_training_error = training_errors(optimal_individual_training_index);
+            input_selection_results.optimum_training_error = training_errors(optimal_individual_training_index);
 
-            inputs_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
+            input_selection_results.optimum_selection_error = selection_errors(optimal_individual_index);
         }
         else
         {
@@ -782,12 +782,12 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << endl
                  << "Epoch number: " << epoch << endl
                  << "Generation mean training error: " << training_errors.mean() << endl
-                 << "Generation mean selection error: " << inputs_selection_results.mean_selection_error_history(epoch) << endl
+                 << "Generation mean selection error: " << input_selection_results.mean_selection_error_history(epoch) << endl
                  << "Mean inputs number  " << mean_inputs_number << endl
                  << "Generation minimum training error: " << training_errors(optimal_individual_training_index) << endl
                  << "Generation minimum selection error: " << selection_errors(optimal_individual_index) << endl
-                 << "Best ever training error: " << inputs_selection_results.optimum_training_error << endl
-                 << "Best ever selection error: " << inputs_selection_results.optimum_selection_error << endl
+                 << "Best ever training error: " << input_selection_results.optimum_training_error << endl
+                 << "Best ever selection error: " << input_selection_results.optimum_selection_error << endl
                  << "Elapsed time: " << write_time(elapsed_time) << endl
                  << "Best selection error in generation: " << generation_selected << endl;
 
@@ -799,7 +799,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             if(display) cout << "Epoch " << epoch << "\nMaximum time reached: " << write_time(elapsed_time) << endl;
 
-            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
 
         if(epoch >= maximum_epochs_number - 1)
@@ -808,14 +808,14 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             if(display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
 
-            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
+            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
 
         if(stop)
         {
-            inputs_selection_results.elapsed_time = write_time(elapsed_time);
+            input_selection_results.elapsed_time = write_time(elapsed_time);
 
-            inputs_selection_results.resize_history(epoch + 1);
+            input_selection_results.resize_history(epoch + 1);
 
             break;
         }
@@ -832,7 +832,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     // Set data set stuff
 
-    vector<Index> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(inputs_selection_results.optimal_inputs);
+    vector<Index> optimal_raw_variables = get_individual_as_raw_variables_indexes_from_variables(input_selection_results.optimal_inputs);
 
     data_set->set_input_target_raw_variable_indices(optimal_raw_variables, original_target_raw_variable_indices);
 
@@ -853,11 +853,11 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }
 
-    neural_network->set_parameters(inputs_selection_results.optimal_parameters);
+    neural_network->set_parameters(input_selection_results.optimal_parameters);
 
-    if(display) inputs_selection_results.print();
+    if(display) input_selection_results.print();
 
-    return inputs_selection_results;
+    return input_selection_results;
 }
 
 

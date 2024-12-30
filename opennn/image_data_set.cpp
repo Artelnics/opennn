@@ -32,25 +32,25 @@ ImageDataSet::ImageDataSet(const Index& new_samples_number,
 
 Index ImageDataSet::get_channels_number() const
 {
-    return input_dimensions[2];
+    return 0;// input_dimensions[2];
 }
 
 
 Index ImageDataSet::get_image_width() const
 {
-    return input_dimensions[1];
+    return 0;//input_dimensions[1];
 }
 
 
 Index ImageDataSet::get_image_height() const
 {
-    return input_dimensions[0];
+    return 0;//input_dimensions[0];
 }
 
 
 Index ImageDataSet::get_image_size() const
 {
-    return input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
+    return 0;//input_dimensions[0] * input_dimensions[1] * input_dimensions[2];
 }
 
 
@@ -116,11 +116,12 @@ type ImageDataSet::get_random_vertical_translation_minimum() const
 
 void ImageDataSet::set_data_random()
 {
+/*
     const Index height = input_dimensions[0];
     const Index width = input_dimensions[1];
     const Index channels = input_dimensions[2];
 
-    const Index targets_number = target_dimensions[0];
+    const Index targets_number = get_variables_number(VariableUse::Target);
     const Index inputs_number = height * width * channels;
     const Index samples_number = data.dimension(0);
 
@@ -169,36 +170,25 @@ void ImageDataSet::set_data_random()
             }
         }
     }
-}
-
-
-void ImageDataSet::set_input_dimensions(const dimensions& new_input_dimensions)
-{
-    if (new_input_dimensions.size() != 3)
-        throw runtime_error("Dimensions size error: input_dimensions must have 3 dimensions {input_height, input_width, input_channels}");
-
-    if (new_input_dimensions[2] != 1 && new_input_dimensions[2] != 3)
-        throw runtime_error("input_dimensions[2] error: input_channels must have 1 or 3 channels {input_height, input_width, input_channels}");
-
-    input_dimensions = new_input_dimensions;
+*/
 }
 
 
 void ImageDataSet::set_channels_number(const int& new_channels)
 {
-    input_dimensions[2] = new_channels;
+    //input_dimensions[2] = new_channels;
 }
 
 
 void ImageDataSet::set_image_width(const int& new_width)
 {
-    input_dimensions[1] = new_width;
+    //input_dimensions[1] = new_width;
 }
 
 
 void ImageDataSet::set_image_height(const int& new_height)
 {
-    input_dimensions[0] = new_height;
+    //input_dimensions[0] = new_height;
 }
 
 
@@ -336,9 +326,9 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    set_input_dimensions({ read_xml_index(data_source_element, "Height"),
-                           read_xml_index(data_source_element, "Width"),
-                           read_xml_index(data_source_element, "Channels") });
+//    set_input_dimensions({ read_xml_index(data_source_element, "Height"),
+//                           read_xml_index(data_source_element, "Width"),
+//                           read_xml_index(data_source_element, "Channels") });
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -386,7 +376,6 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     }
 
     const Index targets_number = (target_count == 2) ? 1 : target_count;
-    set_target_dimensions({ targets_number });
 
     // Samples
 
@@ -405,6 +394,8 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 
 vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
 {
+    // @todo
+/*
     TensorMap<Tensor<type, 4>> inputs_data(data.data(),
                                            get_samples_number(),
                                            input_dimensions[0],
@@ -412,7 +403,7 @@ vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
                                            input_dimensions[2]);
 
     inputs_data.device(*thread_pool_device) = inputs_data / type(255);
-
+*/
     return vector<Descriptives>();
 }
 
@@ -453,6 +444,8 @@ void ImageDataSet::read_bmp()
     
     Index height, width, image_channels;
 
+    // @todo
+/*
     if (input_dimensions[0] > 0 && input_dimensions[1] > 0 && input_dimensions[2] > 0)
     {
         height = input_dimensions[0];
@@ -467,7 +460,7 @@ void ImageDataSet::read_bmp()
         width = image_data.dimension(1);
         image_channels = image_data.dimension(2);
     }
-    
+ */   
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;
 

@@ -166,9 +166,7 @@ public:
     vector<Index> get_variable_indices(const VariableUse&) const;
     vector<Index> get_used_variable_indices() const;
 
-    const dimensions& get_input_dimensions() const;
-    const dimensions& get_decoder_dimensions() const;
-    const dimensions& get_target_dimensions() const;
+    dimensions get_dimensions(const VariableUse&) const;
 
     vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
@@ -298,9 +296,6 @@ public:
     void set_variable_names(const vector<string>&);
 
     void set(const VariableUse&);
-
-    void set_input_dimensions(const dimensions&);
-    void set_target_dimensions(const dimensions&);
 
     // Data set
 
@@ -548,10 +543,6 @@ protected:
     // Raw variables
 
     vector<RawVariable> raw_variables;
-
-    dimensions input_dimensions;
-    dimensions decoder_dimensions;
-    dimensions target_dimensions;
 
     // DATA FILE
 

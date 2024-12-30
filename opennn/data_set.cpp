@@ -701,9 +701,6 @@ void DataSet::set_default_raw_variables_uses()
                 continue;
             }
         }
-
-        input_dimensions.resize(1);
-        target_dimensions.resize(1);
     }
 }
 
@@ -764,21 +761,9 @@ vector<string> DataSet::get_variable_names(const VariableUse& variable_use) cons
 }
 
 
-const dimensions& DataSet::get_input_dimensions() const
-{
-    return input_dimensions;
-}
-
-
-const dimensions& DataSet::get_decoder_dimensions() const
-{
-    return decoder_dimensions;
-}
-
-
-const dimensions& DataSet::get_target_dimensions() const
-{
-    return target_dimensions;
+dimensions DataSet::get_dimensions(const DataSet::VariableUse& variable_use) const
+{   
+    return dimensions({ get_variables_number(variable_use) });
 }
 
 
@@ -1071,10 +1056,6 @@ void DataSet::set_raw_variable_uses(const vector<string>& new_raw_variables_uses
 
     for(size_t i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables[i].set_use(new_raw_variables_uses[i]);
-
-    input_dimensions = {get_variables_number(VariableUse::Input)};
-
-    target_dimensions = {get_variables_number(VariableUse::Target)};
 }
 
 
@@ -1088,10 +1069,6 @@ void DataSet::set_raw_variable_uses(const vector<VariableUse>& new_raw_variables
 
     for(size_t i = 0; i < new_raw_variables_uses.size(); i++)
         raw_variables[i].set_use(new_raw_variables_uses[i]);
-
-    input_dimensions = {get_variables_number(VariableUse::Input)};
-
-    target_dimensions = {get_variables_number(VariableUse::Target)};
 }
 
 
@@ -1317,18 +1294,6 @@ void DataSet::unuse_constant_raw_variables()
             variable_index += raw_variable.get_categories_number();        
         }
     }
-}
-
-
-void DataSet::set_input_dimensions(const dimensions& new_input_dimensions)
-{
-    input_dimensions = new_input_dimensions;
-}
-
-
-void DataSet::set_target_dimensions(const dimensions& new_targets_dimensions)
-{
-    target_dimensions = new_targets_dimensions;
 }
 
 
@@ -1707,14 +1672,6 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
-
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
-
-    input_dimensions = {input_variables_number};
-
-    target_dimensions = {target_variables_number};
-
 }
 
 
@@ -1722,8 +1679,6 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
-    input_dimensions = new_input_dimensions;
-
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
     || new_target_dimensions.empty())
@@ -1740,8 +1695,6 @@ void DataSet::set(const Index& new_samples_number,
                                                 multiplies<Index>());
 
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
-
-    target_dimensions = { targets_number };
 
     const Index new_variables_number = new_inputs_number + targets_number;
 
@@ -2983,11 +2936,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input dimensions: ";
    
-    print_vector(get_input_dimensions());
+    //print_vector(get_input_dimensions());
          
     cout << "Target dimensions: ";
     
-    print_vector(get_target_dimensions());
+    //print_vector(get_target_dimensions());
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl

@@ -677,20 +677,21 @@ void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
 
 void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-/*
-    input_names.resize(new_inputs_number);
+    input_names.resize(new_input_dimensions[0]);
 
     if(has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d = get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer = static_cast<ScalingLayer2D*>(get_first(Layer::Type::Scaling2D));
 
-        scaling_layer_2d->set_inputs_number(new_inputs_number);
+        scaling_layer->set_input_dimensions(new_input_dimensions);
     }
 
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
+    if (has(Layer::Type::Perceptron))
+    {
+        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
 
-    layers[first_trainable_layer_index]->set_inputs_number(new_inputs_number);
-*/
+        perceptron_layer->set_input_dimensions(new_input_dimensions);
+    }
 }
 
 
@@ -698,7 +699,7 @@ void NeuralNetwork::set_default()
 {
     display = true;
 
-    layer_input_indices = vector<vector<Index>>();
+    layer_input_indices.clear();
 }
 
 
@@ -849,6 +850,9 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
 void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 {
+    if (new_parameters.size() != get_parameters_number())
+        throw runtime_error("New parameters size is not equal to parameters size.");
+
     const Index layers_number = get_layers_number();
 
     const vector<Index> layer_parameter_numbers = get_layer_parameter_numbers();

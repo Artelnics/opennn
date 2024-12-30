@@ -66,19 +66,19 @@ int main()
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1000);
 
         //training_strategy.set_maximum_epochs_number(10000);
 
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
 
-        training_strategy.perform_training();
-/*
+//        training_strategy.perform_training();
+
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_inputs_selection();
-
+/*
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
