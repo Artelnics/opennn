@@ -663,9 +663,9 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 }
 
 
-void NeuralNetwork::set_input_names(const vector<string>& new_input_namess)
+void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
-    input_names = new_input_namess;
+    input_names = new_input_names;
 }
 
 
