@@ -82,7 +82,7 @@ protected:
     Tensor<type, 4> tensor_targets;
     Tensor<type, 4> tensor_images;
 
-    // int yolo_scale = 416;
+    // Index yolo_scale = 416;
 };
 
 Tensor<type, 2> read_bounding_boxes(const string&);

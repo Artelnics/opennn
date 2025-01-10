@@ -269,19 +269,52 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            
             // Data set
 
             cout<<"=========training========="<<endl;
 
             training_batch.fill(training_batches[iteration],
-                                input_variable_indices,
-                                target_variable_indices,
-                                context_variable_indices);
+                input_variable_indices,
+                target_variable_indices,
+                context_variable_indices);
 
             cout<<"=========batch========="<<endl;
 
+            const vector<vector<pair<type*, dimensions>>> layer_input_pairs = training_forward_propagation.get_layer_input_pairs(training_batch.get_input_pairs());
+            // if(epoch == 1)
+            //     cout << "Inputs of epoch 1:\n" << tensor_map_4(layer_input_pairs[7][0]) << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+            // if(epoch == 1)
+            // {
+            //     for(Index i = 0; i < tensor_map_4(layer_input_pairs[9][0]).size(); i++)
+            //     {
+            //         if(isnan(tensor_map_4(layer_input_pairs[9][0])(i)))
+            //         {
+            //             cout << "Convolutional inputs:\n"<<tensor_map_4(layer_input_pairs[8][0])<<endl;
+            //             break;
+            //         }
+            //         else
+            //         {
+            //             if(isnan(tensor_map_4(layer_input_pairs[10][0])(i)))
+            //             {
+            //                 cout << "Convolutional inputs:\n"<<tensor_map_4(layer_input_pairs[9][0])<<endl;
+            //                 break;
+            //             }
+            //             else
+            //             {
+            //                 if(isnan(tensor_map_4(layer_input_pairs[11][0])(i)))
+            //                 {
+            //                     cout << "Convolutional inputs:\n"<<tensor_map_4(layer_input_pairs[10][0])<<endl;
+            //                     break;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
             // Neural network
+
+
 
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
@@ -299,16 +332,28 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 
 
+            //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+
+
             // TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(training_back_propagation.get_output_deltas_pair());
 
-            // Tensor<type, 4> numerical_output_deltas = loss_index->calculate_yolo_numerical_output_delta();
 
-            // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+            for(Index i = 0; i < training_back_propagation.gradient.size(); i++)
+            {
+                if(isnan(training_back_propagation.gradient(i)))
+                {
+                    cerr << "THERE IS A NAN TERM IN THE GRADIENT" << endl;
 
-            // cout<<"Numerical output deltas:\n" << numerical_output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+                    // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
-            // cout<<"Output deltas - numerical output deltas:\n" << output_deltas - numerical_output_deltas <<endl<<endl<<endl<<endl<<endl<<endl;
-
+                    throw runtime_error("Yep");
+                }
+                if (isinf(training_back_propagation.gradient(i)))
+                {
+                    cerr << "THERE IS AN INF TERM IN THE GRADIENT" << endl;
+                    throw runtime_error("Nope");
+                }
+            }
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
 
@@ -331,7 +376,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // throw runtime_error("Stop here");
 
 
-            // system("pause");
+            // TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(training_back_propagation.get_output_deltas_pair());
+
+            // Tensor<type, 4> numerical_output_deltas = loss_index->calculate_yolo_numerical_output_delta();
+
+            // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+
+            // cout<<"Numerical output deltas:\n" << numerical_output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+
+            // cout<<"Output deltas - numerical output deltas:\n" << output_deltas - numerical_output_deltas <<endl<<endl<<endl<<endl<<endl<<endl;
+
+            // throw runtime_error("ya");
 
 
             training_error += training_back_propagation.error();

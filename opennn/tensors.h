@@ -13,7 +13,7 @@ type calculate_random_uniform(const type& = type(0), const type& = type(1));
 bool calculate_random_bool();
 
 template<int rank>
-void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const type& maximum = 0.1)
+void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.01, const type& maximum = 0.01)
 {
     random_device rd;
     mt19937 gen(rd());

@@ -38,7 +38,7 @@ int main()
 
         ImageDataSet image_data_set;
 
-        image_data_set.set(DataSet::SampleUse::Training);
+        //image_data_set.set(DataSet::SampleUse::Training);
 
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
@@ -48,6 +48,7 @@ int main()
 
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small");
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
+
         //image_data_set.set_input_dimensions({24,24,1});
 
         image_data_set.read_bmp();
@@ -56,7 +57,7 @@ int main()
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
-            { 8 },
+            { 32 },
             image_data_set.get_target_dimensions());
 
         //neural_network.print();

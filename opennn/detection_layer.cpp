@@ -55,7 +55,7 @@ void DetectionLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 4>& outputs = detection_layer_forward_propagation->outputs;
 
-    cout<<"Inputs:\n"<<inputs<<endl;
+    // cout<<"Inputs:\n"<<inputs<<endl;
 
     apply_detection(inputs, outputs, batch_size);
 }
@@ -159,6 +159,9 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
 
 
         // Exponential
+
+        cout << "Width and height before the exponential:\n" << inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
+                             Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}) << endl;
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})

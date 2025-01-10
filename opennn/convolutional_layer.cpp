@@ -162,6 +162,8 @@ void ConvolutionalLayer::shift(ConvolutionalLayerForwardPropagation* convolution
                                                  output_width,
                                                  1);
 
+        // cout<<"scales " + to_string(kernel_index) + ": "<<scales(kernel_index)<<endl;
+
         kernel_output.device(*thread_pool_device) 
             = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
@@ -201,6 +203,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
+    //auto start = chrono::high_resolution_clock::now();
+
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
@@ -239,8 +243,15 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
         calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
-
-    // cout<<"======conv======"<<endl;
+    
+    /*
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo convolution forward propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
+    */
 }
 
 
@@ -249,6 +260,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    //auto start = chrono::high_resolution_clock::now();
     // Convolutional layer
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
@@ -294,6 +306,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
+    input_derivatives.setZero();
+
     const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
 
     Tensor<type, 0> biases_derivatives_sum;
@@ -314,6 +328,22 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
     // Convolutions derivatives
+
+    // for (Index i = 0; i < activation_derivatives.size(); ++i) {
+    //     if (isnan(activation_derivatives(i))) {
+    //         cerr << "NaN detected in activation derivatives at index " << i << endl;
+    //         throw runtime_error("ya");
+    //     }
+    // }
+
+    // for (Index i = 0; i < deltas.size(); ++i) {
+    //     if (isnan(deltas(i))) {
+    //         cerr << "NaN detected in deltas at index " << i << endl;
+    //         throw runtime_error("ya");
+    //     }
+    // }
+
+    cout << "KERNEL WIDTH AND HEIGHT: " << kernel_width << ", " << kernel_height << endl;
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
@@ -339,9 +369,37 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
         biases_derivatives(kernel_index) = biases_derivatives_sum();
 
+        for (Index i = 0; i < biases_derivatives.size(); ++i) {
+            if (isnan(biases_derivatives(i))) {
+                cerr << "NaN detected in biases derivatives at index " << i << endl;
+                throw runtime_error("ya");
+            }
+        }
+
         // Synaptic weights derivatives
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+
+        cout<<"kernel synaptic weights derivatives dimensions: "<<kernel_synaptic_weights_derivatives.dimensions()<<endl;
+
+        // cout << "INPUT DIMENSIONS: " << inputs.dimensions() << endl;
+
+        cout << "KERNEL SYNAPTIC WEIGHTS NUMBER: " << kernel_synaptic_weights_number << endl;
+
+        if(kernel_synaptic_weights_derivatives.size() < kernel_synaptic_weights_number){
+            cerr << "WRONG SYNAPTIC WEIGHTS DIMENSIONS <" << endl;
+            // throw runtime_error("ya");
+        }
+
+
+        for (Index i = 0; i < kernel_synaptic_weights_derivatives.size(); ++i) {
+            if (isnan(kernel_synaptic_weights_derivatives(i)))
+            {
+                cerr << "NaN detected in kernel_synaptic_weights_derivatives at index " << i << endl;
+                throw runtime_error("ya");
+            }
+        }
+
 
         memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
                kernel_synaptic_weights_derivatives.data(),
@@ -370,6 +428,29 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             }
         }
     }
+
+    for (Index i = 0; i < input_derivatives.size(); ++i) {
+        if (isnan(input_derivatives(i))) {
+            cerr << "NAN DETECTED IN Input derivatives " << i << endl;
+            throw runtime_error("ya");
+        }
+    }
+
+    cerr << "EVERYTHING GOOD IN BACK PROPAGATION" << endl;
+
+    // cout<< "Convolutions derivatives:\n" << convolutions_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+    // cout<< "Biases derivatives:\n" << biases_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+    // cout<< "Input derivatives:\n" << input_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+
+
+    /*
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "Tiempo convolution back propagate: "
+        << duration.count() / 1000 << "::"
+        << duration.count() % 1000
+        << " segundos::milisegundos" << endl;
+    */
 }
 
 
@@ -389,6 +470,19 @@ void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
 
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
+
+    cout << "SYNAPTIC WEIGHTS NUMBER: " << synaptic_weights_number << endl;
+    cerr << "BIASES NUMBER: " << biases_number << endl;
+
+    for (Index i = 0; i < synaptic_weights_number; ++i) {
+        if (isnan(convolutional_layer_back_propagation->synaptic_weights_derivatives(i))) {
+            cerr << "NAN DETECTED IN SYNAPTIC WEIGHTS derivatives " << i << endl;
+            throw runtime_error("ya");
+        }
+    }
+
+    // cout<< "Synaptic weights derivatives:\n" << convolutional_layer_back_propagation->synaptic_weights_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+    // cout<< "Biases derivatives:\n" << convolutional_layer_back_propagation->biases_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
     #pragma omp parallel sections
     {
@@ -580,7 +674,12 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
+    if(batch_normalization)
+    {
+        memcpy(parameters.data() + synaptic_weights.size() + biases.size(), scales.data(), scales.size()*sizeof(type));
 
+        memcpy(parameters.data() + synaptic_weights.size() + biases.size() + scales.size(), offsets.data(), offsets.size()*sizeof(type));
+    }
 // @todo add scales and offsets
 
     return parameters;
@@ -589,7 +688,10 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 
 Index ConvolutionalLayer::get_parameters_number() const
 {
-    return synaptic_weights.size() + biases.size();
+    if(batch_normalization)
+        return synaptic_weights.size() + biases.size() + scales.size() + offsets.size();
+    else
+        return synaptic_weights.size() + biases.size();
 }
 
 
@@ -644,7 +746,10 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     moving_standard_deviations.resize(kernels_number);
 
     scales.resize(kernels_number);
+    set_random(scales);
+
     offsets.resize(kernels_number);
+    set_random(offsets);
 
     set_name(new_name);
 }
