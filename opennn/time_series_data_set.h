@@ -20,23 +20,23 @@ class TimeSeriesDataSet : public DataSet
 public:
 
     TimeSeriesDataSet(const Index& = 0,
-                               const dimensions& = {},
-                               const dimensions& = {});
+                      const dimensions& = {},
+                      const dimensions& = {});
 
     TimeSeriesDataSet(const filesystem::path&,
-                               const string&,
-                               const bool& = true,
-                               const bool& = false,
-                               const Codification& = Codification::UTF8);
+                      const string&,
+                      const bool& = true,
+                      const bool& = false,
+                      const Codification& = Codification::UTF8);
 
     void fill_gaps();
 
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
 
-    const string& get_time_raw_variable() const;
+    const Index& get_time_raw_variable_index() const;
 
-    const string& get_group_by_column() const;
+    const Index& get_group_raw_variable_index() const;
 
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
@@ -63,6 +63,9 @@ private:
     Index steps_ahead = 0;
 
     Index time_raw_variable_index = 0;
+
+    Index group_raw_variable_index = 0;
+
 };
 
 }

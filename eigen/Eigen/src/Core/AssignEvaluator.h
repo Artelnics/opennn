@@ -737,18 +737,6 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_dense_assignment
   dense_assignment_loop<Kernel>::run(kernel);
 }
 
-// Specialization for filling the destination with a constant value.
-#ifndef EIGEN_GPU_COMPILE_PHASE
-template <typename DstXprType>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(
-    DstXprType& dst,
-    const Eigen::CwiseNullaryOp<Eigen::internal::scalar_constant_op<typename DstXprType::Scalar>, DstXprType>& src,
-    const internal::assign_op<typename DstXprType::Scalar, typename DstXprType::Scalar>& func) {
-  resize_if_allowed(dst, src, func);
-  std::fill_n(dst.data(), dst.size(), src.functor()());
-}
-#endif
-
 template <typename DstXprType, typename SrcXprType>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src) {
   call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>());
@@ -897,6 +885,32 @@ struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Weak> {
 #endif
 
     call_dense_assignment_loop(dst, src, func);
+  }
+};
+
+template <typename DstXprType, typename SrcPlainObject, typename Weak>
+struct Assignment<DstXprType, CwiseNullaryOp<scalar_constant_op<typename DstXprType::Scalar>, SrcPlainObject>,
+                  assign_op<typename DstXprType::Scalar, typename DstXprType::Scalar>, Dense2Dense, Weak> {
+  using Scalar = typename DstXprType::Scalar;
+  using NullaryOp = scalar_constant_op<Scalar>;
+  using SrcXprType = CwiseNullaryOp<NullaryOp, SrcPlainObject>;
+  using Functor = assign_op<Scalar, Scalar>;
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+                                                        const Functor& /*func*/) {
+    eigen_fill_impl<DstXprType>::run(dst, src);
+  }
+};
+
+template <typename DstXprType, typename SrcPlainObject, typename Weak>
+struct Assignment<DstXprType, CwiseNullaryOp<scalar_zero_op<typename DstXprType::Scalar>, SrcPlainObject>,
+                  assign_op<typename DstXprType::Scalar, typename DstXprType::Scalar>, Dense2Dense, Weak> {
+  using Scalar = typename DstXprType::Scalar;
+  using NullaryOp = scalar_zero_op<Scalar>;
+  using SrcXprType = CwiseNullaryOp<NullaryOp, SrcPlainObject>;
+  using Functor = assign_op<Scalar, Scalar>;
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+                                                        const Functor& /*func*/) {
+    eigen_zero_impl<DstXprType>::run(dst, src);
   }
 };
 

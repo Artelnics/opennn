@@ -43,7 +43,7 @@ public:
 
     const InitializationMethod& get_initialization_method() const;
 
-    virtual void set_default() override;
+    virtual void set_default();
 
     void set_population(const Tensor<bool, 2>&);
 

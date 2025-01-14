@@ -492,10 +492,10 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 
     Tensor<type, 1> errors(4);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    errors.setValues({sum_squared_error(0),
+    errors.setValues({mean_squared_error(0),
                       errors(0) / type(samples_number),
                       sqrt(errors(1)),
                       calculate_normalized_squared_error(targets, outputs)});;
@@ -534,10 +534,10 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const Da
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -566,10 +566,10 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -585,8 +585,8 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
     type normalization_coefficient = type(0);
 
@@ -599,7 +599,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
         normalization_coefficient += norm(0);
     }
 
-    return sum_squared_error()/normalization_coefficient;
+    return mean_squared_error()/normalization_coefficient;
 }
 
 
@@ -703,8 +703,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     f_3.device(*thread_pool_device) = targets.constant(type(0));
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     Index negatives = 0;
 
@@ -716,7 +716,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
 
-    return sum_squared_error(0)/normalization_coefficient;
+    return mean_squared_error(0)/normalization_coefficient;
 }
 
 
@@ -887,7 +887,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     const Index samples_number = targets.dimension(0);
 
-    const dimensions& input_dimensions = data_set->get_input_dimensions();
+    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
 
     if(input_dimensions.size() == 1)
     {
@@ -921,10 +921,10 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     const Tensor<type, 2> inputs = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> targets = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
-    const dimensions& input_dimensions = data_set->get_input_dimensions();
+    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
 
     const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
 
@@ -1446,7 +1446,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
     // Subtracts calibration plot rows with value -1
 
     Index points_number_subtracted = 0;
-
+/*
     while(contains(calibration_plot.chip(0,1), type(-1)))
      {
          for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
@@ -1459,7 +1459,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
              }
          }
      }
-
+*/
     return calibration_plot;
 }
 
@@ -2041,7 +2041,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);

@@ -30,21 +30,19 @@ int main()
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        /*
-        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-        */
+
+//        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+//        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+
 
         // Data set
 
-        LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_labelled.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/amazon_cells_reduced.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/ENtoES_dataset50000.txt");
-        // LanguageDataSet language_data_set("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/dataset_ingles_espanol.txt");
-
+        LanguageDataSet language_data_set("C:/translation.csv");
+/*
         // cout<<language_data_set.get_context_length()<<endl;
         // cout<<language_data_set.get_completion_length()<<endl;
-
+        cout << language_data_set.get_data().dimensions() << endl;
+                
         const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;
@@ -52,12 +50,11 @@ int main()
 
         const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
-
         // Neural network
-        const dimensions completion_dimensions = language_data_set.get_completion_dimensions();
-        const dimensions context_dimensions = language_data_set.get_context_dimensions();
-
-        Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        const dimensions target_dimensions = language_data_set.get_completion_dimensions();
+        const dimensions input_dimensions = language_data_set.get_context_dimensions();
+        
+        Transformer transformer(target_dimensions, input_dimensions, complexity);
         transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
         transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
         transformer.set_model_type_string("TextClassification");
@@ -156,13 +153,8 @@ int main()
         cout<<"Target: bad"<<endl;
         cout<<endl;
 
-
-//----------------------------------------------------------------------------------------------------------------------------------------------//
-
         // Data Set
 
-
-/*
         LanguageDataSet language_data_set({0},{0});
 
         language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
@@ -178,11 +170,11 @@ int main()
 
         const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
-        const dimensions completion_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
+        const dimensions target_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
 
-        const dimensions context_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
+        const dimensions input_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
 
-        Transformer transformer(completion_dimensions, context_dimensions, complexity);
+        Transformer transformer(target_dimensions, input_dimensions, complexity);
         transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
         transformer.set_model_type_string("TextClassification");
 
@@ -195,7 +187,6 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
-
 
         // cout << "Calculating confusion...." << endl;
         // const Tensor<Index, 2> confusion = testing_analysis.calculate_transformer_confusion();
@@ -240,9 +231,6 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
         cout<<endl;
-
-
-
 
         // //only good reviews:
 
@@ -289,10 +277,6 @@ int main()
         // string translation = testing_analysis.test_transformer({"I like dogs."},true);
         // cout<<translation<<endl;
 
-
-
-
-
         // //only bad reviews:
         // string prediction = testing_analysis.test_transformer({"Tied to charger for conversations lasting more than 45 minutes.MAJOR PROBLEMS!!"},false);
         // cout<<prediction<<endl;
@@ -333,8 +317,6 @@ int main()
         // prediction = testing_analysis.test_transformer({"This is essentially a communications tool that does not communicate."},false);
         // cout<<prediction<<endl;
         // cout<<endl;
-
-
 */
         cout << "Bye!" << endl;
 

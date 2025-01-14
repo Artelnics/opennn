@@ -92,9 +92,9 @@ struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = 0) override;
+    void set(const Index& = 0, Layer* = 0);
 
-    void print() const;
+    void print() const override;
 
     Tensor<type, 3> outputs;
 

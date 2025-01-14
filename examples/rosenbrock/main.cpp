@@ -23,8 +23,6 @@ int main()
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 /*
-//        srand(unsigned(time(nullptr)));
-
         // Data Set
 
         const Index samples_number = 1000000;

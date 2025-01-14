@@ -10,7 +10,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 
 #include <algorithm>
-
+#include <string>
 #include <cassert>
 #include <cmath>
 #include <ctime>

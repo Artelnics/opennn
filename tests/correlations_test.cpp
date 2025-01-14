@@ -7,7 +7,8 @@
 
 using namespace opennn;
 
-class CorrelationsTest : public ::testing::Test {
+class CorrelationsTest : public ::testing::Test 
+{
 protected:
 
     unique_ptr<ThreadPool> thread_pool;
@@ -23,8 +24,10 @@ protected:
     }
 };
 
+
 TEST_F(CorrelationsTest, SpearmanCorrelation)
 {
+
     Tensor<type, 1> x(10);
     x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
     

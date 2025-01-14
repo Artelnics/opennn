@@ -30,18 +30,19 @@ TEST(ProbabilisticLayerTest, CalculateCombinations)
     EXPECT_EQ(probabilistic_layer.get_parameters_number(), 4);
 
     Tensor<type, 2> inputs(1, 1);
-    inputs.setConstant(type(3));
-/*
+    inputs.setConstant(type(1));
+
     Tensor<type, 2> combinations(1, 1);
-    probabilistic_layer.set(1, 1);
+    probabilistic_layer.set({ 1 }, { 1 });
+    probabilistic_layer.set_parameters_constant(type(1));
 
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
     EXPECT_EQ(combinations.rank(), 2);
     EXPECT_EQ(combinations.dimension(0), 1);
     EXPECT_EQ(combinations.dimension(1), 1);
-
-    EXPECT_EQ(abs(combinations(0, 0) - type(7)) < type(1e-5));
+/*
+    EXPECT_EQ(combinations(0, 0),  type(1), NUMERIC_LIMITS_MIN);
 */
 }
 
@@ -55,11 +56,10 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
 
     Tensor<type, 2> activations(1, 1);
     Tensor<type, 2> activation_derivatives(1, 1);
-/*
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
-    probabilistic_layer.calculate_activations(combinations,
-        activation_derivatives);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    /*
+    probabilistic_layer.calculate_activations(combinations, activation_derivatives);
 
     EXPECT_EQ(abs(activations(0, 0) - type(0.175)) < type(1e-2));
 
@@ -73,53 +73,44 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
 }
 
 
-
-/*
-void ProbabilisticLayerTest::test_calculate_activations()
+TEST(ProbabilisticLayerTest, ForwardPropagate)
 {
-    // Test
+    const Index inputs_number = 2;
+    const Index neurons_number = 2;
+    const Index samples_number = 5;
 
-    samples_number = 1;
-    inputs_number = 1;
-    neurons_number = 1;
-
-}
-
-
-void ProbabilisticLayerTest::test_forward_propagate()
-{
-    inputs_number = 2;
-    neurons_number = 2;
-    samples_number = 5;
-
-    probabilistic_layer.set(inputs_number, neurons_number);
+    ProbabilisticLayer probabilistic_layer({ inputs_number }, { neurons_number });
 
     probabilistic_layer.set_parameters_constant(type(1));
 
-    inputs.resize(samples_number, inputs_number);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     //Forward propagate
 
-    probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
-
-    probabilistic_layer.forward_propagate({input_pairs},
-                                          &probabilistic_layer_forward_propagation,
-                                          is_training);
+    const vector<pair<type*, dimensions>> input_pairs;// = { inputs.data(), {{samples_number, inputs_number}} };
+/*
+    probabilistic_layer.forward_propagate({ input_pairs },
+        &probabilistic_layer_forward_propagation,
+        is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == neurons_number );
-    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,1) - type(0.5)) < type(1e-3));
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), neurons_number);
+    EXPECT_EQ(abs(outputs(0, 0) - type(0.5)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0, 1) - type(0.5)) < type(1e-3));
+*/
+}
+
+/*
+
+void ProbabilisticLayerTest::test_forward_propagate()
+{
     
     // Test 1
 
@@ -243,8 +234,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
     EXPECT_EQ(outputs.dimension(0) == 1);
     EXPECT_EQ(outputs.dimension(1) == 2);
     EXPECT_NEAR(abs(outputs(0,0) - type(0.5)) < NUMERIC_LIMITS_MIN);
-
-}
 
 }
 */

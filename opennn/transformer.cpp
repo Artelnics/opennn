@@ -15,13 +15,12 @@
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
 #include "forward_propagation.h"
-#include "strings_utilities.h"
 
 namespace opennn
 {
 
 Transformer::Transformer(const Index& input_length,
-    const Index& context_length,
+    const Index& decoder_length,
     const Index& input_dimensions_xxx,
     const Index& context_dimension_xxx,
     const Index& embedding_dimension,
@@ -30,7 +29,7 @@ Transformer::Transformer(const Index& input_length,
     const Index& layers_number)
 {
     set(input_length,
-        context_length,
+        decoder_length,
         input_dimensions_xxx,
         context_dimension_xxx,
         embedding_dimension,
@@ -47,13 +46,16 @@ void Transformer::set(const Index& new_input_length,
                       const Index& new_embedding_dimension,
                       const Index& new_perceptron_depth,
                       const Index& new_heads_number,
-                      const Index& new_layers_number)
+                      const Index& new_blocks_number)
 {
     name = "transformer";
 
     layers.clear();
     
-    input_names.resize(input_length + context_length);
+    if (input_length == 0 || decoder_length == 0)
+        return;
+
+    input_names.resize(input_length + decoder_length);
 
     // Embedding Layers
 
@@ -77,7 +79,7 @@ void Transformer::set(const Index& new_input_length,
 
     // Encoder
 
-    for(Index i = 0; i < new_layers_number; i++)
+    for(Index i = 0; i < new_blocks_number; i++)
     {
         add_layer(make_unique<MultiheadAttentionLayer>(new_context_length,
                                                        new_context_length,
@@ -90,8 +92,8 @@ void Transformer::set(const Index& new_input_length,
             set_layer_inputs_indices("context_self_attention_1", 
                                     {"context_embedding", "context_embedding"});
         else
-
-            set_layer_inputs_indices("context_self_attention_" + to_string(i+1), { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
+            set_layer_inputs_indices("context_self_attention_" + to_string(i+1), 
+                { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
 
         //context_self_attention_layer->set_dropout_rate(dropout_rate);
 
@@ -151,7 +153,7 @@ void Transformer::set(const Index& new_input_length,
     
     // Decoder
 
-    for(Index i = 0; i < new_layers_number; i++)
+    for(Index i = 0; i < new_blocks_number; i++)
     {
         add_layer(make_unique<MultiheadAttentionLayer>(new_input_length,
                                                        new_input_length,
@@ -188,7 +190,7 @@ void Transformer::set(const Index& new_input_length,
                                                        false, 
                                                        "cross_attention_" + to_string(i+1)));
 
-        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(new_layers_number)});
+        set_layer_inputs_indices("cross_attention_" + to_string(i+1), {"input_self_attention_normalization_" + to_string(i+1), "encoder_perceptron_normalization_" + to_string(new_blocks_number)});
 
         //cross_attention_layer->set_dropout_rate(dropout_rate);
 
@@ -238,7 +240,7 @@ void Transformer::set(const Index& new_input_length,
                                                 new_input_dimensions,
                                                 "probabilistic"));
 
-    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(new_layers_number));
+    set_layer_inputs_indices("probabilistic", "decoder_perceptron_normalization_" + to_string(new_blocks_number));
 }
 
 
@@ -248,15 +250,15 @@ void Transformer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void Transformer::set_input_vocabulary(const vector<string>& new_input_vocabulary)
+void Transformer::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void Transformer::set_context_vocabulary(const vector<string>& new_context_vocabulary)
+void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_output_vocabulary)
 {
-    context_vocabulary = new_context_vocabulary;
+    output_vocabulary = new_output_vocabulary;
 }
 
 
@@ -271,12 +273,9 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 //     type end_indicator = 3;
 //     //}
 
-//     // @todo
-//     const vector<vector<string>> context_tokens = preprocess_language_documents(tensor_wrapper(context_string));
-
 //     const Index batch_samples_number = 1;
 
-//     Tensor<type, 2> context(batch_samples_number, context_length);
+//     Tensor<type, 2> context(batch_samples_number, decoder_length);
 //     context.setZero();
 //     context(0) = start_indicator;
 
@@ -290,7 +289,7 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 
 //     ForwardPropagation forward_propagation(batch_samples_number, this);
 
-//     const pair<type*, dimensions> context_pair(context.data(), { 1, context_length });
+//     const pair<type*, dimensions> context_pair(context.data(), { 1, decoder_length });
 //     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
 
 //     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
@@ -333,6 +332,7 @@ void Transformer::set_context_vocabulary(const vector<string>& new_context_vocab
 
 string Transformer::calculate_outputs(const vector<string>& context_documents)
 {
+/*
     //type start_indicator = 1;
     //type end_indicator = 2;
 
@@ -342,13 +342,9 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     type end_indicator = 3;
     //}
 
-    // @todo
-
-    const vector<vector<string>> context_tokens = preprocess_language_documents(context_documents);
-
     const Index samples_number = 1;
 
-    Tensor<type, 2> context(samples_number, context_length);
+    Tensor<type, 2> context(samples_number, decoder_length);
     context.setZero();
 
     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
@@ -362,7 +358,7 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const pair<type*, dimensions> context_pair(context.data(), { samples_number, context_length });
+    const pair<type*, dimensions> context_pair(context.data(), { samples_number, decoder_length });
     const pair<type*, dimensions> input_pair(input.data(), { samples_number, input_length });
 
     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
@@ -384,9 +380,9 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     {
         forward_propagate(input_pairs, forward_propagation, false);
 
-        current_outputs/*.device(*thread_pool_device)*/ = outputs.chip(i - 1, 0);
+        current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
 
-        prediction/*.device(*thread_pool_device)*/ = current_outputs.argmax();
+        prediction.device(*thread_pool_device) = current_outputs.argmax();
 
         input(i) = type(prediction(0));
 
@@ -403,6 +399,8 @@ string Transformer::calculate_outputs(const vector<string>& context_documents)
     detokenize_wordpiece(input, output_buffer);
 
     return output_buffer.str();   
+*/
+    return string();
 }
 
 
@@ -431,7 +429,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
 //     bool line_ended = false;
 
-//     for(Index j = 0; j < context_length - 1; j++)
+//     for(Index j = 0; j < decoder_length - 1; j++)
 //     {
 //         if(j < context_tokens.size())
 //         {
@@ -443,7 +441,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //         }
 //         else
 //         {
-//             if(j == context_tokens.size() || (j == context_length - 2 && !line_ended))
+//             if(j == context_tokens.size() || (j == decoder_length - 2 && !line_ended))
 //             {
 //                 context(j + 1) = 2; // end indicator
 //                 line_ended = true;
@@ -456,7 +454,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //     }
 // }
 
-
+/*
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
     unordered_map<string, type> context_vocabulary_map;
@@ -474,9 +472,9 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     auto wordpiece_entry = context_vocabulary_map.find("");
     bool tokenized;
 
-    for(Index j = 0; j < context_length - 1; j++)
+    for(Index j = 0; j < decoder_length - 1; j++)
     {
-        if(j < Index(context_tokens.size()) && token_counter < context_length - 1)
+        if(j < Index(context_tokens.size()) && token_counter < decoder_length - 1)
         {
             word = context_tokens[j];
 
@@ -492,7 +490,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
             for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
             {
-                if(token_counter == context_length - 1)
+                if(token_counter == decoder_length - 1)
                 {
                     tokenized = true;
                     break;
@@ -524,7 +522,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         else
         {
             if(j == Index(context_tokens.size())
-            || (token_counter == context_length - 1 && !line_ended))
+            || (token_counter == decoder_length - 1 && !line_ended))
             {
                 context(token_counter++) = 3; // end indicator
                 line_ended = true;
@@ -536,7 +534,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         }
     }
 }
-
+*/
 
 //void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 //{
@@ -550,7 +548,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 //    }
 //}
 
-
+/*
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
 {
     buffer << input_vocabulary[Index(predictions(1))];
@@ -569,69 +567,8 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
            : buffer << " " << current_prediction;
     }
 }
+*/
 
-
-void Transformer::load_transformer(const string& path)
-{
-    cout << "Loading transformer model..." << endl;
-
-    load(path);
-}
-
-
-// void TransformerForwardPropagation::set(const Index& new_batch_samples, NeuralNetwork* new_neural_network)
-// {
-//     Transformer* neural_network = static_cast<Transformer*>(new_neural_network);
-
-//     batch_samples_number = new_batch_samples;
-
-//     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
-
-//     const Index layers_number = layers.size();
-
-//     layers.resize(layers_number);
-
-//     for(Index i = 0; i < layers_number; i++)
-//     {
-//         switch (neural_network_layers[i]->get_type())
-//         {
-//         case Layer::Type::Embedding:
-//             layers[i] = make_unique<EmbeddingLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::MultiheadAttention:
-//             layers[i] = make_unique < MultiheadAttentionLayerForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::Perceptron3D:
-//             layers[i] = make_unique < PerceptronLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         case Layer::Type::Probabilistic3D:
-//             layers[i] = make_unique < ProbabilisticLayer3DForwardPropagation>(batch_samples_number, neural_network_layers[i].get());
-//         break;
-
-//         default: break;
-//         }
-//     }
-// }
-
-
-// void TransformerForwardPropagation::print() const
-// {
-//     cout << "Transformer forward propagation" << endl;
-
-//     const Index layers_number = layers.size();
-
-//     cout << "Layers number: " << layers_number << endl;
-
-//     for(Index i = 0; i < layers_number; i++)
-//     {
-//         cout << "Layer " << i + 1 << ": " << layers[i]->layer->get_name() << endl;
-
-//         layers[i]->print();
-//     }
-// }
 };
 
 

@@ -1,52 +1,45 @@
 #include "pch.h"
 
-/*
-//#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/transformer.h"
 
-namespace opennn
+TEST(Transformer, DefaultConstructor)
 {
+    Transformer transformer;
 
-TransformerTest::TransformerTest() : UnitTesting()
-{
+    EXPECT_EQ(transformer.is_empty(), true);
+    EXPECT_EQ(transformer.get_layers_number(), 0);
+
 }
 
 
-void TransformerTest::test_constructor()
+TEST(Transformer, GeneralConstructor)
 {
-    cout << "test_constructor\n";
-    
+    const Index input_length = get_random_index(1, 10);
+    const Index context_length = get_random_index(1, 10);
+    const Index input_dimensions = get_random_index(1, 10);
+    const Index context_dimension = get_random_index(1, 10);
+    const Index embedding_depth = get_random_index(1, 10);
+    const Index perceptron_depth = get_random_index(1, 10);
+    const Index heads_number = get_random_index(1, 10);
+    const Index layers_number = get_random_index(1, 10);
+
+    Transformer transformer(input_length, 
+                            context_length, 
+                            input_dimensions, 
+                            context_dimension, 
+                            embedding_depth, 
+                            perceptron_depth, 
+                            heads_number, 
+                            layers_number);
+
+//    EXPECT_EQ(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
+/*
     Tensor<unique_ptr<Layer>, 1> layers;
 
     Transformer transformer_0;
 
-    assert_true(transformer_0.is_empty(), LOG);
-    assert_true(transformer_0.get_layers_number() == 0, LOG);
-    
-    // Tensor constructor test
-
-    input_length = 1;
-    context_length = 1;
-    input_dimensions = 1;
-    context_dimension = 1;
-    embedding_depth = 1;
-    perceptron_depth = 1;
-    heads_number = 1;
-    layers_number = 1;
-
-    Tensor<Index, 1> architecture(8);
-    architecture.setValues({ input_length, context_length, input_dimensions, context_dimension,
-                             embedding_depth, perceptron_depth, heads_number, layers_number });
-    
-    Transformer transformer_1(architecture);
-    
-    assert_true(transformer_1.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1, LOG);
-    
-    // List constructor test
-
-    Transformer transformer_2({ input_length, context_length, input_dimensions, context_dimension,
-                                embedding_depth, perceptron_depth, heads_number, layers_number });
-
-    assert_true(transformer_2.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1, LOG);
+    EXPECT_EQ(transformer_0.is_empty());
+    EXPECT_EQ(transformer_0.get_layers_number() == 0);
 
     // Test 3
 
@@ -62,7 +55,7 @@ void TransformerTest::test_constructor()
     Transformer transformer_3({ input_length, context_length, input_dimensions, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, layers_number });
 
-    assert_true(transformer_3.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1, LOG);
+    EXPECT_EQ(transformer_3.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
 
     // Test 4
 
@@ -71,14 +64,16 @@ void TransformerTest::test_constructor()
     Transformer transformer_4({ input_length, context_length, input_dimensions, context_dimension,
                                 embedding_depth, perceptron_depth, heads_number, layers_number });
 
-    assert_true(transformer_4.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1, LOG);
+    EXPECT_EQ(transformer_4.get_layers_number() == 2 + 7 * layers_number + 10 * layers_number + 1);
+*/
 }
 
 
-void TransformerTest::test_calculate_outputs()
-{
-    cout << "test_calculate_outputs\n";
 
+
+TEST(Transformer, Outputs)
+{
+    /*
     Tensor<type, 2> inputs;
     Tensor<type, 2> context;
     Tensor<type, 2> outputs;
@@ -110,11 +105,11 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs, context);
 
-    assert_true(outputs.dimension(0) == batch_samples_number, LOG);
-    assert_true(outputs.dimension(1) == input_length, LOG);
-    assert_true(outputs.dimension(2) == input_dimensions, LOG);
+    EXPECT_EQ(outputs.dimension(0) == batch_samples_number);
+    EXPECT_EQ(outputs.dimension(1) == input_length);
+    EXPECT_EQ(outputs.dimension(2) == input_dimensions);
 
-    //assert_true(outputs.abs() < type(NUMERIC_LIMITS_MIN), LOG);
+    //EXPECT_EQ(outputs.abs() < type(NUMERIC_LIMITS_MIN));
     
     // Test
 
@@ -132,12 +127,12 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == batch_samples_number * outputs_number, LOG);
-    assert_true(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0, 1)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0, 2)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0, 3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0, 4)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.size() == batch_samples_number * outputs_number);
+    EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 1)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 2)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 4)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -150,9 +145,9 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 2, LOG);
-    assert_true(abs(outputs(0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN), LOG);
+    EXPECT_EQ(outputs.size() == 2);
+    EXPECT_EQ(abs(outputs(0, 0) - type(3)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(0, 1) - type(3)) < type(NUMERIC_LIMITS_MIN));
 
     // Test
 
@@ -165,11 +160,11 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 3, LOG);
+    EXPECT_EQ(outputs.size() == 3);
 
-    assert_true(abs(outputs(0, 0) - 3.2847) < type(1e-3), LOG);
-    assert_true(abs(outputs(0, 1) - 3.2847) < type(1e-3), LOG);
-    assert_true(abs(outputs(0, 2) - 3.2847) < type(1e-3), LOG);
+    EXPECT_EQ(abs(outputs(0, 0) - 3.2847) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0, 1) - 3.2847) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0, 2) - 3.2847) < type(1e-3));
 
     // Test
 
@@ -189,9 +184,9 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == outputs_number, LOG);
-    assert_true(abs(outputs(0, 0) - 0) < type(1e-3), LOG);
-    assert_true(abs(outputs(0, 1) - 0) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == outputs_number);
+    EXPECT_EQ(abs(outputs(0, 0) - 0) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0, 1) - 0) < type(1e-3));
 
     // Test
 
@@ -208,8 +203,8 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 1, LOG);
-    assert_true(abs(outputs(0, 0) - 0) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == 1);
+    EXPECT_EQ(abs(outputs(0, 0) - 0) < type(1e-3));
 
     // Test
 
@@ -222,8 +217,8 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.size() == 1, LOG);
-    assert_true(abs(outputs(0, 0) - type(0.5)) < type(1e-3), LOG);
+    EXPECT_EQ(outputs.size() == 1);
+    EXPECT_EQ(abs(outputs(0, 0) - type(0.5)) < type(1e-3));
 
     // Test 7
 
@@ -244,19 +239,16 @@ void TransformerTest::test_calculate_outputs()
 
     outputs = transformer.calculate_outputs(inputs);
 
-    assert_true(outputs.dimension(1) == outputs_number, LOG);
-    assert_true(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN), LOG);
-    assert_true(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN), LOG);
-
+    EXPECT_EQ(outputs.dimension(1) == outputs_number);
+    EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_EQ(abs(outputs(1, 0)) < type(NUMERIC_LIMITS_MIN));
+    */
 }
 
 
-
-void TransformerTest::test_forward_propagate()
+TEST(Transformer, ForwardPropagate)
 {
-
-    cout << "test_forward_propagate\n";
-
+/*
     {
         // Test
 
@@ -319,12 +311,12 @@ void TransformerTest::test_forward_propagate()
         
         Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
         
-        assert_true(probabilistic_activations.rank() == 3, LOG);
-        assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
-        assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
+        EXPECT_EQ(probabilistic_activations.rank() == 3);
+        EXPECT_EQ(probabilistic_activations.dimension(0) == batch_samples_number);
+        EXPECT_EQ(probabilistic_activations.dimension(1) == input_length);
+        EXPECT_EQ(probabilistic_activations.dimension(2) == input_dimensions + 1);
 
-        assert_true(check_activations_sums(probabilistic_activations), LOG);
+        EXPECT_EQ(check_activations_sums(probabilistic_activations));
 
     }
     
@@ -390,31 +382,16 @@ void TransformerTest::test_forward_propagate()
 
         Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 
-        assert_true(probabilistic_activations.rank() == 3, LOG);
-        assert_true(probabilistic_activations.dimension(0) == batch_samples_number, LOG);
-        assert_true(probabilistic_activations.dimension(1) == input_length, LOG);
-        assert_true(probabilistic_activations.dimension(2) == input_dimensions + 1, LOG);
+        EXPECT_EQ(probabilistic_activations.rank() == 3);
+        EXPECT_EQ(probabilistic_activations.dimension(0) == batch_samples_number);
+        EXPECT_EQ(probabilistic_activations.dimension(1) == input_length);
+        EXPECT_EQ(probabilistic_activations.dimension(2) == input_dimensions + 1);
 
-        assert_true(check_activations_sums(probabilistic_activations), LOG);
-
+        EXPECT_EQ(check_activations_sums(probabilistic_activations));
     }
+*/
 }
 
-
-void TransformerTest::run_test_case()
-{
-    cout << "Running transformer test case...\n";
-
-    test_constructor();
-
-    test_forward_propagate();
-
-    test_calculate_outputs();
-
-    cout << "End of transformer test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
@@ -432,4 +409,3 @@ void TransformerTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/

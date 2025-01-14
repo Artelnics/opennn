@@ -1292,7 +1292,7 @@ struct scalar_logistic_op<float> {
     p = pmadd(r2, p, p_low);
 
     // 4. Undo subtractive range reduction exp(m*ln(2) + r) = 2^m * exp(r).
-    Packet e = pldexp_fast_impl<Packet>::run(p, m);
+    Packet e = pldexp_fast(p, m);
 
     // 5. Undo multiplicative range reduction by using exp(r) = exp(r/2)^2.
     e = pmul(e, e);

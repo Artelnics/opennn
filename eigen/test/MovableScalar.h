@@ -10,24 +10,42 @@
 #ifndef EIGEN_MISC_MOVABLE_SCALAR_H
 #define EIGEN_MISC_MOVABLE_SCALAR_H
 
-#include <vector>
-
 namespace Eigen {
-template <typename Scalar, typename Base = std::vector<Scalar>>
-struct MovableScalar : public Base {
-  MovableScalar() = default;
-  ~MovableScalar() = default;
-  MovableScalar(const MovableScalar&) = default;
-  MovableScalar(MovableScalar&& other) = default;
-  MovableScalar& operator=(const MovableScalar&) = default;
-  MovableScalar& operator=(MovableScalar&& other) = default;
-  MovableScalar(Scalar scalar) : Base(100, scalar) {}
+template <typename Scalar>
+struct MovableScalar {
+  MovableScalar() : m_data(new Scalar) {}
+  ~MovableScalar() { delete m_data; }
+  MovableScalar(const MovableScalar& other) : m_data(new Scalar) { set(other.get()); }
+  MovableScalar(MovableScalar&& other) noexcept : m_data(other.m_data) { other.m_data = nullptr; }
+  MovableScalar& operator=(const MovableScalar& other) {
+    set(other.get());
+    return *this;
+  }
+  MovableScalar& operator=(MovableScalar&& other) noexcept {
+    m_data = other.m_data;
+    other.m_data = nullptr;
+    return *this;
+  }
+  MovableScalar(const Scalar& scalar) : m_data(new Scalar) { set(scalar); }
 
-  operator Scalar() const { return this->size() > 0 ? this->back() : Scalar(); }
+  operator Scalar() const { return get(); }
+
+ private:
+  void set(const Scalar& value) {
+    eigen_assert(m_data != nullptr);
+    // suppress compiler warnings
+    if (m_data != nullptr) *m_data = value;
+  }
+  Scalar get() const {
+    eigen_assert(m_data != nullptr);
+    // suppress compiler warnings
+    return m_data == nullptr ? Scalar() : *m_data;
+  }
+  Scalar* m_data = nullptr;
 };
 
 template <typename Scalar>
-struct NumTraits<MovableScalar<Scalar>> : GenericNumTraits<Scalar> {
+struct NumTraits<MovableScalar<Scalar>> : NumTraits<Scalar> {
   enum { RequireInitialization = 1 };
 };
 

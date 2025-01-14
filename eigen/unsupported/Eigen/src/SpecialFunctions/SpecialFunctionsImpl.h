@@ -269,9 +269,204 @@ struct digamma_impl {
   }
 };
 
-/****************************************************************************
- * Implementation of erf, requires C++11/C99                                *
+/***************************************************************************
+ * Implementation of erfc.
  ****************************************************************************/
+template <typename Scalar>
+struct generic_fast_erfc {
+  template <typename T>
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T run(const T& x_in);
+};
+
+template <>
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erfc<float>::run(const T& x_in) {
+  constexpr float kClamp = 11.0f;
+  const T x = pmin(pmax(x_in, pset1<T>(-kClamp)), pset1<T>(kClamp));
+
+  // erfc(x) = 1 + x * S(x^2), |x| <= 1.
+  //
+  // Coefficients for S and T generated with Rminimax command:
+  // ./ratapprox --function="erfc(x)-1" --dom='[-1,1]' --type=[11,0] --num="odd"
+  //   --numF="[SG]" --denF="[SG]" --log --dispCoeff="dec"
+  constexpr float alpha[] = {5.61802298761904239654541015625e-04, -4.91381669417023658752441406250e-03,
+                             2.67075151205062866210937500000e-02, -1.12800106406211853027343750000e-01,
+                             3.76122951507568359375000000000e-01, -1.12837910652160644531250000000e+00};
+  const T x2 = pmul(x, x);
+  const T one = pset1<T>(1.0f);
+  const T erfc_small = pmadd(x, ppolevl<T, 5>::run(x2, alpha), one);
+
+  // Return early if we don't need the more expensive approximation for any
+  // entry in a.
+  const T x_abs_gt_one_mask = pcmp_lt(one, x2);
+  if (!predux_any(x_abs_gt_one_mask)) return erfc_small;
+
+  // erfc(x) = exp(-x^2) * 1/x * P(1/x^2) / Q(1/x^2), 1 < x < 9.
+  //
+  // Coefficients for P and Q generated with Rminimax command:
+  //   ./ratapprox --function="erfc(1/sqrt(x))*exp(1/x)/sqrt(x)"
+  //     --dom='[0.01,1]' --type=[3,4] --numF="[SG]" --denF="[SG]" --log
+  //     --dispCoeff="dec"
+  constexpr float gamma[] = {1.0208116471767425537109375e-01f, 4.2920666933059692382812500e-01f,
+                             3.2379078865051269531250000e-01f, 5.3971976041793823242187500e-02f};
+  constexpr float delta[] = {1.7251677811145782470703125e-02f, 3.9137163758277893066406250e-01f,
+                             1.0000000000000000000000000e+00f, 6.2173241376876831054687500e-01f,
+                             9.5662862062454223632812500e-02f};
+  const T x2_lo = twoprod_low(x, x, x2);
+  // Here we use that
+  //   exp(-x^2) = exp(-(x2+x2_lo)^2) ~= exp(-x2)*exp(-x2_lo) ~= exp(-x2)*(1-x2_lo)
+  // since x2_lo < kClamp * eps << 1 in the region we care about. This trick reduces the max error
+  // from 34 ulps to below 5 ulps.
+  const T exp2_hi = pexp(pnegate(x2));
+  const T z = pnmadd(exp2_hi, x2_lo, exp2_hi);
+  const T q2 = preciprocal(x2);
+  const T num = ppolevl<T, 3>::run(q2, gamma);
+  const T denom = pmul(x, ppolevl<T, 4>::run(q2, delta));
+  const T r = pdiv(num, denom);
+  const T maybe_two = pand(pcmp_lt(x, pset1<T>(0.0)), pset1<T>(2.0));
+  const T erfc_large = pmadd(z, r, maybe_two);
+  return pselect(x_abs_gt_one_mask, erfc_large, erfc_small);
+}
+
+// Computes erf(x)/x for |x| <= 1. Used by both erf and erfc implementations.
+// Takes x2 = x^2 as input.
+//
+// PRECONDITION: x2 <= 1.
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T erf_over_x_double_small(const T& x2) {
+  // erf(x)/x =  S(x^2) / T(x^2), x^2 <= 1.
+  //
+  // Coefficients for S and T generated with Rminimax command:
+  //  ./ratapprox --function="erf(x)" --dom='[-1,1]' --type=[9,10]
+  //  --num="odd" --numF="[D]" --den="even" --denF="[D]" --log --dispCoeff="dec"
+  constexpr double alpha[] = {1.9493725660006057018823477644531294572516344487667083740234375e-04,
+                              1.8272566210022942682217328425053892715368419885635375976562500e-03,
+                              4.5303363351690106863856044583371840417385101318359375000000000e-02,
+                              1.4215015503619179981775744181504705920815467834472656250000000e-01,
+                              1.1283791670955125585606992899556644260883331298828125000000000e+00};
+  constexpr double beta[] = {2.0294484101083099089526257108317963684385176748037338256835938e-05,
+                             6.8117805899186819641732970609382391558028757572174072265625000e-04,
+                             1.0582026056098614921752165685120417037978768348693847656250000e-02,
+                             9.3252603143757495374188692949246615171432495117187500000000000e-02,
+                             4.5931062818368939559832142549566924571990966796875000000000000e-01,
+                             1.0};
+  const T num_small = ppolevl<T, 4>::run(x2, alpha);
+  const T denom_small = ppolevl<T, 5>::run(x2, beta);
+  return pdiv(num_small, denom_small);
+}
+
+// erfc(x) = exp(-x^2) * 1/x * P(1/x^2) / Q(1/x^2), 1 < x < 28.
+//
+// Coefficients for P and Q generated with Rminimax command:
+//  ./ratapprox --function="erfc(1/sqrt(x))*exp(1/x)/sqrt(x)"  --dom='[0.0013717,1]' --type=[9,9] --numF="[D]"
+//  --denF="[D]" --log --dispCoeff="dec"
+//
+// PRECONDITION: 1 < x < 28.
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T erfc_double_large(const T& x, const T& x2) {
+  constexpr double gamma[] = {1.5252844933226974316088642158462107545346952974796295166015625e-04,
+                              1.0909912393738931124520519233556115068495273590087890625000000e-02,
+                              1.0628604636755033252537572252549580298364162445068359375000000e-01,
+                              3.3492472973137982217295416376146022230386734008789062500000000e-01,
+                              4.5065776215933289750026347064704168587923049926757812500000000e-01,
+                              2.9433039130294824659017649537418037652969360351562500000000000e-01,
+                              9.8792676360600226170838311645638896152377128601074218750000000e-02,
+                              1.7095935395503719655962981960328761488199234008789062500000000e-02,
+                              1.4249109729504577659398023570247460156679153442382812500000000e-03,
+                              4.4567378313647954771875570045835956989321857690811157226562500e-05};
+  constexpr double delta[] = {2.041985103115789845773520028160419315099716186523437500000000e-03,
+                              5.316030659946043707142493417450168635696172714233398437500000e-02,
+                              3.426242193784684864077405563875799998641014099121093750000000e-01,
+                              8.565637124308049799026321124983951449394226074218750000000000e-01,
+                              1.000000000000000000000000000000000000000000000000000000000000e+00,
+                              5.968805280570776972126623149961233139038085937500000000000000e-01,
+                              1.890922854723317836356244470152887515723705291748046875000000e-01,
+                              3.152505418656005586885981983868987299501895904541015625000000e-02,
+                              2.565085751861882583380047861965067568235099315643310546875000e-03,
+                              7.899362131678837697403017248376499992446042597293853759765625e-05};
+  // Compute exp(-x^2).
+  const T x2_lo = twoprod_low(x, x, x2);
+  // Here we use that
+  //   exp(-x^2) = exp(-(x2+x2_lo)^2) ~= exp(-x2)*exp(-x2_lo) ~= exp(-x2)*(1-x2_lo)
+  // since x2_lo < kClamp *eps << 1 in the region we care about. This trick reduces the max error
+  // from 258 ulps to below 7 ulps.
+  const T exp2_hi = pexp(pnegate(x2));
+  const T z = pnmadd(exp2_hi, x2_lo, exp2_hi);
+  // Compute r = P / Q.
+  const T q2 = preciprocal(x2);
+  const T num_large = ppolevl<T, 9>::run(q2, gamma);
+  const T denom_large = pmul(x, ppolevl<T, 9>::run(q2, delta));
+  const T r = pdiv(num_large, denom_large);
+  const T maybe_two = pand(pcmp_lt(x, pset1<T>(0.0)), pset1<T>(2.0));
+  return pmadd(z, r, maybe_two);
+}
+
+template <>
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erfc<double>::run(const T& x_in) {
+  // Clamp x to [-28:28] beyond which erfc(x) is either two or zero (below the underflow threshold).
+  // This avoids having to deal with twoprod(x,x) producing NaN for sufficiently large x.
+  constexpr double kClamp = 28.0;
+  const T x = pmin(pmax(x_in, pset1<T>(-kClamp)), pset1<T>(kClamp));
+
+  // For |x| < 1, we use erfc(x) = 1 - erf(x).
+  const T x2 = pmul(x, x);
+  const T one = pset1<T>(1.0);
+  const T erfc_small = pnmadd(x, erf_over_x_double_small(x2), one);
+
+  // Return early if we don't need the more expensive approximation for any
+  // entry in a.
+  const T x_abs_gt_one_mask = pcmp_lt(one, x2);
+  if (!predux_any(x_abs_gt_one_mask)) return erfc_small;
+
+  const T erfc_large = erfc_double_large(x, x2);
+  return pselect(x_abs_gt_one_mask, erfc_large, erfc_small);
+}
+
+template <typename T>
+struct erfc_impl {
+  typedef typename unpacket_traits<T>::type Scalar;
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T run(const T& x) { return generic_fast_erfc<Scalar>::run(x); }
+};
+
+template <typename Scalar>
+struct erfc_retval {
+  typedef Scalar type;
+};
+
+#if EIGEN_HAS_C99_MATH
+template <>
+struct erfc_impl<float> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE float run(const float x) {
+#if defined(SYCL_DEVICE_ONLY)
+    return cl::sycl::erfc(x);
+#else
+    return generic_fast_erfc<float>::run(x);
+#endif
+  }
+};
+
+template <>
+struct erfc_impl<double> {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE double run(const double x) {
+#if defined(SYCL_DEVICE_ONLY)
+    return cl::sycl::erfc(x);
+#else
+    return generic_fast_erfc<double>::run(x);
+#endif
+  }
+};
+#endif  // EIGEN_HAS_C99_MATH
+
+/****************************************************************************
+ * Implementation of erf.
+ ****************************************************************************/
+
+template <typename Scalar>
+struct generic_fast_erf {
+  template <typename T>
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T run(const T& x_in);
+};
 
 /** \internal \returns the error function of \a a (coeff-wise)
     This uses a 11/10-degree rational interpolantand is accurate to 3 ulp for
@@ -279,8 +474,9 @@ struct digamma_impl {
 
     This implementation works on both scalars and SIMD "packets".
 */
+template <>
 template <typename T>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf_float(const T& x) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf<float>::run(const T& x) {
   // The monomial coefficients of the numerator polynomial (odd).
   constexpr float alpha[] = {2.123732201653183437883853912353515625e-06f, 2.861979592125862836837768554687500000e-04f,
                              3.658048342913389205932617187500000000e-03f, 5.243302136659622192382812500000000000e-02f,
@@ -308,9 +504,27 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf_float(const T& x) {
   return pmax(pmin(r, pset1<T>(1.0f)), pset1<T>(-1.0f));
 }
 
+template <>
+template <typename T>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erf<double>::run(const T& x) {
+  T x2 = pmul(x, x);
+  T erf_small = pmul(x, erf_over_x_double_small(x2));
+
+  // Return early if we don't need the more expensive approximation for any
+  // entry in a.
+  const T one = pset1<T>(1.0);
+  const T x_abs_gt_one_mask = pcmp_lt(one, x2);
+  if (!predux_any(x_abs_gt_one_mask)) return erf_small;
+
+  // For |x| > 1, use erf(x) = 1 - erfc(x).
+  const T erf_large = psub(one, erfc_double_large(x, x2));
+  return pselect(x_abs_gt_one_mask, erf_large, erf_small);
+}
+
 template <typename T>
 struct erf_impl {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T run(const T& x) { return generic_fast_erf_float(x); }
+  typedef typename unpacket_traits<T>::type Scalar;
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T run(const T& x) { return generic_fast_erf<Scalar>::run(x); }
 };
 
 template <typename Scalar>
@@ -321,105 +535,22 @@ struct erf_retval {
 #if EIGEN_HAS_C99_MATH
 template <>
 struct erf_impl<float> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE float run(float x) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE float run(const float x) {
 #if defined(SYCL_DEVICE_ONLY)
     return cl::sycl::erf(x);
 #else
-    return generic_fast_erf_float(x);
+    return generic_fast_erf<float>::run(x);
 #endif
   }
 };
 
 template <>
 struct erf_impl<double> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE double run(double x) {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE double run(const double x) {
 #if defined(SYCL_DEVICE_ONLY)
     return cl::sycl::erf(x);
 #else
-    return ::erf(x);
-#endif
-  }
-};
-#endif  // EIGEN_HAS_C99_MATH
-
-/***************************************************************************
- * Implementation of erfc, requires C++11/C99                               *
- ****************************************************************************/
-template <typename T>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T generic_fast_erfc_float(const T& x) {
-  const T x_abs = pmin(pabs(x), pset1<T>(10.0f));
-  const T one = pset1<T>(1.0f);
-  const T x_abs_gt_one_mask = pcmp_lt(one, x_abs);
-
-  // erfc(x) = 1 + x * S(x^2), |x| <= 1.
-  //
-  // Coefficients for S and T generated with Rminimax command:
-  // ./ratapprox --function="erfc(x)-1" --dom='[-1,1]' --type=[11,0] --num="odd"
-  //   --numF="[SG]" --denF="[SG]" --log --dispCoeff="dec"
-  constexpr float alpha[] = {5.61802298761904239654541015625e-04, -4.91381669417023658752441406250e-03,
-                             2.67075151205062866210937500000e-02, -1.12800106406211853027343750000e-01,
-                             3.76122951507568359375000000000e-01, -1.12837910652160644531250000000e+00};
-  const T x2 = pmul(x, x);
-  const T erfc_small = pmadd(x, ppolevl<T, 5>::run(x2, alpha), one);
-
-  // Return early if we don't need the more expensive approximation for any
-  // entry in a.
-  if (!predux_any(x_abs_gt_one_mask)) return erfc_small;
-
-  // erfc(x) = exp(-x^2) * 1/x * P(1/x^2) / Q(1/x^2), 1 < x < 9.
-  //
-  // Coefficients for P and Q generated with Rminimax command:
-  //   ./ratapprox --function="erfc(1/sqrt(x))*exp(1/x)/sqrt(x)"
-  //     --dom='[0.01,1]' --type=[3,4] --numF="[SG]" --denF="[SG]" --log
-  //     --dispCoeff="dec"
-  constexpr float gamma[] = {1.0208116471767425537109375e-01f, 4.2920666933059692382812500e-01f,
-                             3.2379078865051269531250000e-01f, 5.3971976041793823242187500e-02f};
-  constexpr float delta[] = {1.7251677811145782470703125e-02f, 3.9137163758277893066406250e-01f,
-                             1.0000000000000000000000000e+00f, 6.2173241376876831054687500e-01f,
-                             9.5662862062454223632812500e-02f};
-  const T z = pexp(pnegate(x2));
-  const T q2 = preciprocal(x2);
-  const T num = ppolevl<T, 3>::run(q2, gamma);
-  const T denom = pmul(x_abs, ppolevl<T, 4>::run(q2, delta));
-  const T r = pdiv(num, denom);
-  // If x < -1 then use erfc(x) = 2 - erfc(|x|).
-  const T x_negative = pcmp_lt(x, pset1<T>(0.0f));
-  const T erfc_large = pselect(x_negative, pnmadd(z, r, pset1<T>(2.0f)), pmul(z, r));
-
-  return pselect(x_abs_gt_one_mask, erfc_large, erfc_small);
-}
-
-template <typename Scalar>
-struct erfc_impl {
-  EIGEN_STATIC_ASSERT((internal::is_same<Scalar, Scalar>::value == false), THIS_TYPE_IS_NOT_SUPPORTED)
-
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE Scalar run(const Scalar) { return Scalar(0); }
-};
-
-template <typename Scalar>
-struct erfc_retval {
-  typedef Scalar type;
-};
-
-#if EIGEN_HAS_C99_MATH
-template <>
-struct erfc_impl<float> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE float run(const float x) {
-#if defined(SYCL_DEVICE_ONLY)
-    return cl::sycl::erfc(x);
-#else
-    return generic_fast_erfc_float(x);
-#endif
-  }
-};
-
-template <>
-struct erfc_impl<double> {
-  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE double run(const double x) {
-#if defined(SYCL_DEVICE_ONLY)
-    return cl::sycl::erfc(x);
-#else
-    return ::erfc(x);
+    return generic_fast_erf<double>::run(x);
 #endif
   }
 };

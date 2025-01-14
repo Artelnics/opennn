@@ -25,7 +25,7 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-    enum class ActivationFunction { Softmax, Competitive };
+   enum class ActivationFunction { Softmax, Competitive };
 
    ProbabilisticLayer3D(const Index& = 0, 
                         const Index& = 0, 
@@ -37,6 +37,7 @@ public:
    Index get_neurons_number() const;
 
    // @todo
+
    dimensions get_input_dimensions() const override
    {
        throw runtime_error("XXX");
@@ -45,11 +46,9 @@ public:
 
    dimensions get_output_dimensions() const override;
 
-   const type& get_decision_threshold() const;
-
    const ActivationFunction& get_activation_function() const;
    string get_activation_function_string() const;
-   string get_activation_function_string_text() const;
+   string get_activation_function_text() const;
 
    void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
 
@@ -60,7 +59,6 @@ public:
    void set_output_dimensions(const dimensions&) override;
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
-   void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
@@ -124,8 +122,6 @@ private:
 
    ActivationFunction activation_function = ActivationFunction::Softmax;
 
-   type decision_threshold;
-
    Tensor<type, 3> empty;
 
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
@@ -142,7 +138,7 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

@@ -11,6 +11,7 @@ stages:
   - checkformat
   - build
   - test
+  - deploy
 
 variables:
   # CMake build directory.
@@ -29,3 +30,4 @@ include:
   - "/ci/build.windows.gitlab-ci.yml"
   - "/ci/test.linux.gitlab-ci.yml"
   - "/ci/test.windows.gitlab-ci.yml"
+  - "/ci/deploy.gitlab-ci.yml"

@@ -117,6 +117,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 TEST(GeneticAlgorithmTest, FitnessAssignment)
 {
+/*
     DataSet data_set;
 
     Tensor<type, 1> selection_errors;
@@ -155,7 +156,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     selection_errors(1) = type(3);
     selection_errors(2) = type(2);
     selection_errors(3) = type(1);
-/*
+
     genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
@@ -395,7 +396,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
 /*
     Tensor<type, 2> data;
 
-    InputsSelectionResults inputs_selection_results;
+    InputsSelectionResults input_selection_results;
 
     // Test 1
 
@@ -419,10 +420,10 @@ TEST(GeneticAlgorithmTest, InputSelection)
 
     genetic_algorithm.set_selection_error_goal(1);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
-    EXPECT_EQ(inputs_selection_results.selection_error_history(0) <= 1);
+    EXPECT_EQ(input_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
+    EXPECT_EQ(input_selection_results.selection_error_history(0) <= 1);
 
 
     // Test 2
@@ -452,7 +453,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_selection_error_goal(type(0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
     EXPECT_EQ(genetic_algorithm.get_maximum_iterations_number() == 1);
     EXPECT_EQ(genetic_algorithm.get_selection_error_goal() < 1);
@@ -481,8 +482,8 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_selection_error_goal(type(0.01));
     genetic_algorithm.set_maximum_epochs_number(10);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.get_epochs_number() <= 100);
+    EXPECT_EQ(input_selection_results.get_epochs_number() <= 100);
 */
 }

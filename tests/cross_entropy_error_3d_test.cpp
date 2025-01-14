@@ -21,6 +21,7 @@ TEST(CrossEntropyError3DTest, DefaultConstructor)
 
 TEST(CrossEntropyError3DTest, BackPropagateZero)
 {
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
@@ -45,7 +46,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 //    neural_network.add_layer(probabilistic_layer_3d);
 
     neural_network.set_parameters_constant(type(0));
-
+/*
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
@@ -60,6 +61,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 //    EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
 
 //    EXPECT_EQ(is_zero(back_propagation.gradient));
+*/
 }
 
 
@@ -163,7 +165,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
+        context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Decoder);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
         

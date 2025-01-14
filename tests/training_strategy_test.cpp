@@ -1,47 +1,36 @@
 #include "pch.h"
 
-/*
-namespace opennn
-{
+#include "../opennn/training_strategy.h"
 
-TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
+
+TEST(TrainingStrategy, DefaultConstructor)
 {
-    training_strategy.set(&neural_network, &data_set);
+    TrainingStrategy training_strategy;
+
+    EXPECT_EQ(training_strategy.has_neural_network(), false);
+    EXPECT_EQ(training_strategy.has_data_set(), false);
 }
 
 
-void TrainingStrategyTest::test_constructor()
+TEST(TrainingStrategy, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    //    TrainingStrategy training_strategy_1(&neural_network, &data_set);
 
-    // Test
-
-    TrainingStrategy training_strategy_1(&neural_network, &data_set);
-
-    assert_true(training_strategy.get_neural_network(), LOG);
-    assert_true(training_strategy.get_data_set(), LOG);
+    //    EXPECT_EQ(training_strategy.get_neural_network());
+    //    EXPECT_EQ(training_strategy.get_data_set());
 }
 
 
-void TrainingStrategyTest::test_perform_training()
+TEST(TrainingStrategy, Train)
 {
-    cout << "test_perform_training\n";
 
-    Index samples_number;
-    Index inputs_number;
-    Index targets_number;
+    Index samples_number = get_random_index(1, 5);
+    Index inputs_number = get_random_index(1, 5);
+    Index targets_number = get_random_index(1, 5);
 
-    Index neurons_number;
+    Index neurons_number = get_random_index(1, 5);
 
-    Tensor<type, 2> data;
-
-    // Test
-
-    samples_number = 5;
-    inputs_number = 2;
-    targets_number = 1;
-    neurons_number = 4;
-
+    /*
     data.resize(samples_number, inputs_number+targets_number);
 
     data.setValues({{type(0),type(1), type(2)},
@@ -63,14 +52,13 @@ void TrainingStrategyTest::test_perform_training()
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
-
+*/
 }
 
+/*
 
 void TrainingStrategyTest::test_to_XML()
 {
-    cout << "test_to_XML\n";
-
     string file_name = "../data/training_strategy.xml";
 
     ofstream file(file_name);
@@ -91,8 +79,6 @@ void TrainingStrategyTest::test_to_XML()
 
 void TrainingStrategyTest::test_from_XML()
 {
-    cout << "test_from_XML\n";
-
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
 
     training_strategy.set_default();
@@ -110,8 +96,6 @@ void TrainingStrategyTest::test_from_XML()
 
 void TrainingStrategyTest::test_save()
 {
-    cout << "test_save\n";
-
     string file_name = "../data/training_strategy.xml";
 
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::GRADIENT_DESCENT);
@@ -122,8 +106,6 @@ void TrainingStrategyTest::test_save()
 
 void TrainingStrategyTest::test_load()
 {
-    cout << "test_load\n";
-
     string file_name = "../data/training_strategy.xml";
 
     // Test
@@ -131,30 +113,8 @@ void TrainingStrategyTest::test_load()
     training_strategy.save(file_name);
     training_strategy.load(file_name);
 }
+*/
 
-
-void TrainingStrategyTest::run_test_case()
-{
-    cout << "Running training strategy test case...\n";
-
-    test_constructor();
-
-    // Training
-
-    test_perform_training();
-
-    // Serialization
-
-    test_to_XML();
-    test_from_XML();
-
-    test_save();
-    test_load();
-
-    cout << "End of training strategy test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
@@ -172,4 +132,3 @@ void TrainingStrategyTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/

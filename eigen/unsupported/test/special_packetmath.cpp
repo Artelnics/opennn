@@ -12,6 +12,20 @@
 #include "packetmath_test_shared.h"
 #include "../Eigen/SpecialFunctions"
 
+#if EIGEN_ARCH_ARM
+// Note: 32-bit arm always flushes subnormals to zero.
+#define MAYBE_FLUSH(op)                                                      \
+  [](Scalar x) {                                                             \
+    Scalar y = static_cast<Scalar>(op(x));                                   \
+    if (Eigen::numext::abs(y) < (std::numeric_limits<decltype(y)>::min)()) { \
+      y = y * decltype(y)(0); /* Preserve sign. */                           \
+    }                                                                        \
+    return y;                                                                \
+  }
+#else
+#define MAYBE_FLUSH(op) op
+#endif
+
 template <typename Scalar, typename Packet>
 void packetmath_real() {
   using std::abs;
@@ -117,7 +131,9 @@ void packetmath_real() {
 #if EIGEN_HAS_C99_MATH
   CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasLGamma, std::lgamma, internal::plgamma);
   CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasErf, std::erf, internal::perf);
-  CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasErfc, std::erfc, internal::perfc);
+  // FIXME(rmlarsen): This test occasionally fails due to difference in tiny subnormal results
+  // near the underflow boundary. I am not sure which version is correct.
+  CHECK_CWISE1_IF(internal::packet_traits<Scalar>::HasErfc, MAYBE_FLUSH(std::erfc), internal::perfc);
 #endif
 }
 

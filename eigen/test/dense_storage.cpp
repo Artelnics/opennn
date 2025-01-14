@@ -11,31 +11,45 @@
 
 #include "main.h"
 #include "AnnoyingScalar.h"
+#include "MovableScalar.h"
 #include "SafeScalar.h"
 
 #include <Eigen/Core>
 
 using DenseStorageD3x3 = Eigen::DenseStorage<double, 9, 3, 3, 0>;
-static_assert(std::is_trivially_move_constructible<DenseStorageD3x3>::value,
-              "DenseStorage not trivially_move_constructible");
-static_assert(std::is_trivially_move_assignable<DenseStorageD3x3>::value, "DenseStorage not trivially_move_assignable");
 #if !defined(EIGEN_DENSE_STORAGE_CTOR_PLUGIN)
 static_assert(std::is_trivially_copy_constructible<DenseStorageD3x3>::value,
               "DenseStorage not trivially_copy_constructible");
+static_assert(std::is_trivially_move_constructible<DenseStorageD3x3>::value,
+              "DenseStorage not trivially_move_constructible");
 static_assert(std::is_trivially_copy_assignable<DenseStorageD3x3>::value, "DenseStorage not trivially_copy_assignable");
-static_assert(std::is_trivially_copyable<DenseStorageD3x3>::value, "DenseStorage not trivially_copyable");
+static_assert(std::is_trivially_move_assignable<DenseStorageD3x3>::value, "DenseStorage not trivially_move_assignable");
 #endif
-
+// all plain object types conform to standard layout
+static_assert(std::is_standard_layout<Matrix4f>::value, "Matrix4f not standard_layout");
+static_assert(std::is_standard_layout<Array4f>::value, "Array4f not standard_layout");
+static_assert(std::is_standard_layout<VectorXf>::value, "VectorXf not standard_layout");
+static_assert(std::is_standard_layout<ArrayXf>::value, "ArrayXf not standard_layout");
+static_assert(std::is_standard_layout<MatrixXf>::value, "MatrixXf not standard_layout");
+static_assert(std::is_standard_layout<ArrayXXf>::value, "ArrayXXf not standard_layout");
+// all fixed-size, fixed-dimension plain object types are trivially default constructible
+static_assert(std::is_trivially_default_constructible<Matrix4f>::value, "Matrix4f not trivially_default_constructible");
+static_assert(std::is_trivially_default_constructible<Array4f>::value, "Array4f not trivially_default_constructible");
+// all fixed-size, fixed-dimension plain object types are trivially move constructible
 static_assert(std::is_trivially_move_constructible<Matrix4f>::value, "Matrix4f not trivially_move_constructible");
-static_assert(std::is_trivially_move_assignable<Matrix4f>::value, "Matrix4f not trivially_move_assignable");
 static_assert(std::is_trivially_move_constructible<Array4f>::value, "Array4f not trivially_move_constructible");
-static_assert(std::is_trivially_move_assignable<Array4f>::value, "Array4f not trivially_move_assignable");
+// all statically-allocated plain object types are trivially destructible
+static_assert(std::is_trivially_destructible<Matrix4f>::value, "Matrix4f not trivially_destructible");
+static_assert(std::is_trivially_destructible<Array4f>::value, "Array4f not trivially_destructible");
+static_assert(std::is_trivially_destructible<Matrix<float, 4, Dynamic, 0, 4, 4>>::value,
+              "Matrix4X44 not trivially_destructible");
+static_assert(std::is_trivially_destructible<Array<float, 4, Dynamic, 0, 4, 4>>::value,
+              "Array4X44 not trivially_destructible");
 #if !defined(EIGEN_DENSE_STORAGE_CTOR_PLUGIN)
+// all fixed-size, fixed-dimension plain object types are trivially copy constructible
 static_assert(std::is_trivially_copy_constructible<Matrix4f>::value, "Matrix4f not trivially_copy_constructible");
 static_assert(std::is_trivially_copy_constructible<Array4f>::value, "Array4f not trivially_copy_constructible");
 #endif
-static_assert(std::is_trivially_default_constructible<Matrix4f>::value, "Matrix4f not trivially_default_constructible");
-static_assert(std::is_trivially_default_constructible<Array4f>::value, "Array4f not trivially_default_constructible");
 
 template <typename T, int Size, int Rows, int Cols>
 void dense_storage_copy(int rows, int cols) {
@@ -44,7 +58,7 @@ void dense_storage_copy(int rows, int cols) {
   const int size = rows * cols;
   DenseStorageType reference(size, rows, cols);
   T* raw_reference = reference.data();
-  for (int i = 0; i < size; ++i) raw_reference[i] = static_cast<T>(i);
+  for (int i = 0; i < size; ++i) raw_reference[i] = internal::random<T>();
 
   DenseStorageType copied_reference(reference);
   const T* raw_copied_reference = copied_reference.data();
@@ -58,7 +72,7 @@ void dense_storage_assignment(int rows, int cols) {
   const int size = rows * cols;
   DenseStorageType reference(size, rows, cols);
   T* raw_reference = reference.data();
-  for (int i = 0; i < size; ++i) raw_reference[i] = static_cast<T>(i);
+  for (int i = 0; i < size; ++i) raw_reference[i] = internal::random<T>();
 
   DenseStorageType copied_reference;
   copied_reference = reference;
@@ -67,30 +81,25 @@ void dense_storage_assignment(int rows, int cols) {
 }
 
 template <typename T, int Size, int Rows, int Cols>
-void dense_storage_swap(int rows0, int cols0, int rows1, int cols1) {
+void dense_storage_swap(int rowsa, int colsa, int rowsb, int colsb) {
   typedef DenseStorage<T, Size, Rows, Cols, 0> DenseStorageType;
 
-  const int size0 = rows0 * cols0;
-  DenseStorageType a(size0, rows0, cols0);
-  for (int i = 0; i < size0; ++i) {
-    a.data()[i] = static_cast<T>(i);
-  }
+  const int sizea = rowsa * colsa;
+  ArrayX<T> referencea(sizea);
+  referencea.setRandom();
+  DenseStorageType a(sizea, rowsa, colsa);
+  for (int i = 0; i < sizea; ++i) a.data()[i] = referencea(i);
 
-  const int size1 = rows1 * cols1;
-  DenseStorageType b(size1, rows1, cols1);
-  for (int i = 0; i < size1; ++i) {
-    b.data()[i] = static_cast<T>(-i);
-  }
+  const int sizeb = rowsb * colsb;
+  ArrayX<T> referenceb(sizeb);
+  referenceb.setRandom();
+  DenseStorageType b(sizeb, rowsb, colsb);
+  for (int i = 0; i < sizeb; ++i) b.data()[i] = referenceb(i);
 
   a.swap(b);
 
-  for (int i = 0; i < size0; ++i) {
-    VERIFY_IS_EQUAL(b.data()[i], static_cast<T>(i));
-  }
-
-  for (int i = 0; i < size1; ++i) {
-    VERIFY_IS_EQUAL(a.data()[i], static_cast<T>(-i));
-  }
+  for (int i = 0; i < sizea; i++) VERIFY_IS_EQUAL(b.data()[i], referencea(i));
+  for (int i = 0; i < sizeb; i++) VERIFY_IS_EQUAL(a.data()[i], referenceb(i));
 }
 
 template <typename T, int Size, std::size_t Alignment>
@@ -106,12 +115,12 @@ void dense_storage_alignment() {
   };
   VERIFY_IS_EQUAL(std::alignment_of<Nested1>::value, Alignment);
 
-  VERIFY_IS_EQUAL((std::alignment_of<internal::plain_array<T, Size, AutoAlign, Alignment> >::value), Alignment);
+  VERIFY_IS_EQUAL((std::alignment_of<internal::plain_array<T, Size, AutoAlign, Alignment>>::value), Alignment);
 
   const std::size_t default_alignment = internal::compute_default_alignment<T, Size>::value;
   if (default_alignment > 0) {
-    VERIFY_IS_EQUAL((std::alignment_of<DenseStorage<T, Size, 1, 1, AutoAlign> >::value), default_alignment);
-    VERIFY_IS_EQUAL((std::alignment_of<Matrix<T, Size, 1, AutoAlign> >::value), default_alignment);
+    VERIFY_IS_EQUAL((std::alignment_of<DenseStorage<T, Size, 1, 1, AutoAlign>>::value), default_alignment);
+    VERIFY_IS_EQUAL((std::alignment_of<Matrix<T, Size, 1, AutoAlign>>::value), default_alignment);
     struct Nested2 {
       Matrix<T, Size, 1, AutoAlign> mat;
     };
@@ -187,11 +196,90 @@ void dense_storage_tests() {
   dense_storage_alignment<T, 16, 64>();
 }
 
+template <typename PlainType>
+void plaintype_tests() {
+  constexpr int RowsAtCompileTime = PlainType::RowsAtCompileTime;
+  constexpr int ColsAtCompileTime = PlainType::ColsAtCompileTime;
+  constexpr int MaxRowsAtCompileTime = PlainType::MaxRowsAtCompileTime;
+  constexpr int MaxColsAtCompileTime = PlainType::MaxColsAtCompileTime;
+  const Index expectedDefaultRows = RowsAtCompileTime == Dynamic ? 0 : RowsAtCompileTime;
+  const Index expectedDefaultCols = ColsAtCompileTime == Dynamic ? 0 : ColsAtCompileTime;
+  const Index minRows = RowsAtCompileTime == Dynamic ? 0 : RowsAtCompileTime;
+  const Index minCols = ColsAtCompileTime == Dynamic ? 0 : ColsAtCompileTime;
+  const Index maxRows = MaxRowsAtCompileTime == Dynamic ? 100 : MaxRowsAtCompileTime;
+  const Index maxCols = MaxColsAtCompileTime == Dynamic ? 100 : MaxColsAtCompileTime;
+  const Index rows = internal::random<Index>(minRows, maxRows);
+  const Index cols = internal::random<Index>(minCols, maxCols);
+  // default construction
+  PlainType m0;
+  VERIFY_IS_EQUAL(m0.rows(), expectedDefaultRows);
+  VERIFY_IS_EQUAL(m0.cols(), expectedDefaultCols);
+  m0.resize(rows, cols);
+  m0.setRandom();
+  // copy construction
+  PlainType m1(m0);
+  VERIFY_IS_EQUAL(m1.rows(), m0.rows());
+  VERIFY_IS_EQUAL(m1.cols(), m0.cols());
+  VERIFY_IS_CWISE_EQUAL(m1, m0);
+  // move construction
+  PlainType m2(std::move(m1));
+  VERIFY_IS_EQUAL(m2.rows(), m0.rows());
+  VERIFY_IS_EQUAL(m2.cols(), m0.cols());
+  VERIFY_IS_CWISE_EQUAL(m2, m0);
+  // check that object is usable after move construction
+  m1.resize(minRows, minCols);
+  m1.setRandom();
+  // copy assignment
+  m1 = m0;
+  VERIFY_IS_EQUAL(m1.rows(), m0.rows());
+  VERIFY_IS_EQUAL(m1.cols(), m0.cols());
+  VERIFY_IS_CWISE_EQUAL(m1, m0);
+  // move assignment
+  m2.resize(minRows, minCols);
+  m2.setRandom();
+  m2 = std::move(m1);
+  VERIFY_IS_EQUAL(m2.rows(), m0.rows());
+  VERIFY_IS_EQUAL(m2.cols(), m0.cols());
+  VERIFY_IS_CWISE_EQUAL(m2, m0);
+  // check that object is usable after move assignment
+  m1.resize(minRows, minCols);
+  m1.setRandom();
+  m1 = m2;
+  VERIFY_IS_EQUAL(m1.rows(), m0.rows());
+  VERIFY_IS_EQUAL(m1.cols(), m0.cols());
+  VERIFY_IS_CWISE_EQUAL(m1, m0);
+}
+
 EIGEN_DECLARE_TEST(dense_storage) {
   dense_storage_tests<int>();
   dense_storage_tests<float>();
-  dense_storage_tests<SafeScalar<float> >();
+  dense_storage_tests<SafeScalar<float>>();
+  dense_storage_tests<MovableScalar<float>>();
   dense_storage_tests<AnnoyingScalar>();
+  for (int i = 0; i < g_repeat; i++) {
+    plaintype_tests<Matrix<float, 0, 0, ColMajor>>();
+    plaintype_tests<Matrix<float, Dynamic, Dynamic, ColMajor, 0, 0>>();
+
+    plaintype_tests<Matrix<float, 16, 16, ColMajor>>();
+    plaintype_tests<Matrix<float, 16, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<float, Dynamic, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<float, Dynamic, Dynamic, ColMajor, 16, 16>>();
+
+    plaintype_tests<Matrix<SafeScalar<float>, 16, 16, ColMajor>>();
+    plaintype_tests<Matrix<SafeScalar<float>, 16, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<SafeScalar<float>, Dynamic, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<SafeScalar<float>, Dynamic, Dynamic, ColMajor, 16, 16>>();
+
+    plaintype_tests<Matrix<MovableScalar<float>, 16, 16, ColMajor>>();
+    plaintype_tests<Matrix<MovableScalar<float>, 16, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<MovableScalar<float>, Dynamic, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<MovableScalar<float>, Dynamic, Dynamic, ColMajor, 16, 16>>();
+
+    plaintype_tests<Matrix<AnnoyingScalar, 16, 16, ColMajor>>();
+    plaintype_tests<Matrix<AnnoyingScalar, 16, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<AnnoyingScalar, Dynamic, Dynamic, ColMajor>>();
+    plaintype_tests<Matrix<AnnoyingScalar, Dynamic, Dynamic, ColMajor, 16, 16>>();
+  }
 }
 
 #undef EIGEN_TESTING_PLAINOBJECT_CTOR

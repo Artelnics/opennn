@@ -4,18 +4,18 @@
 #include "../opennn/tensors.h"
 
 Tensor<type, 4> generate_input_tensor_pooling(const Tensor<type, 2>& data,
-                                              const vector<Index>& rows_indices,
-                                              const vector<Index>& columns_indices,
+                                              const vector<Index>& row_indices,
+                                              const vector<Index>& column_indices,
                                               const dimensions& input_dimensions)
 { 
-    Tensor<type, 4> input_tensor(rows_indices.size(),
+    Tensor<type, 4> input_tensor(row_indices.size(),
                                  input_dimensions[0],
                                  input_dimensions[1],
                                  input_dimensions[2]);
 
     type* tensor_data = input_tensor.data();
 
-    fill_tensor_data(data, rows_indices, columns_indices, tensor_data);
+    fill_tensor_data(data, row_indices, column_indices, tensor_data);
     
     return input_tensor;
 }
@@ -49,10 +49,10 @@ INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
             {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
         });
 
-        const vector<Index> rows_indices = {0, 1, 2, 3};
-        const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+        const vector<Index> row_indices = {0, 1, 2, 3};
+        const vector<Index> column_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
-        return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
+        return generate_input_tensor_pooling(data, row_indices, column_indices, {4, 4, 1});
         })(),
         ([] {
             Tensor<type, 4> expected_output(4, 2, 2, 1);
@@ -84,10 +84,10 @@ INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
             {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}
         });
 
-        const vector<Index> rows_indices = {0, 1, 2, 3};
-        const vector<Index> columns_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+        const vector<Index> row_indices = {0, 1, 2, 3};
+        const vector<Index> column_indices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
-        return generate_input_tensor_pooling(data, rows_indices, columns_indices, {4, 4, 1});
+        return generate_input_tensor_pooling(data, row_indices, column_indices, {4, 4, 1});
         })(),
         ([] {
             Tensor<type, 4> expected_output(4, 2, 2, 1);

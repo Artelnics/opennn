@@ -49,7 +49,6 @@ public:
 
    NeuralNetwork(const filesystem::path&);
 
-
    void add_layer(unique_ptr<Layer>, 
                   const vector<Index>& = vector<Index>());
 
@@ -164,7 +163,7 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Index calculate_image_output(const string&);
+   Index calculate_image_output(const filesystem::path&);
 
    // Serialization
 
@@ -178,7 +177,7 @@ public:
 
    void to_XML(XMLPrinter&) const;
 
-   void print() const;
+   virtual void print() const;
    void save(const filesystem::path&) const;
    void save_parameters(const filesystem::path&) const;
 

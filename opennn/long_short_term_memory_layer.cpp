@@ -679,7 +679,6 @@ void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimension
                                             long_short_term_memory_layer_forward_propagation,
                                             long_short_term_memory_layer_back_propagation);
 */
-    // @todo Calculate inputs derivatives
 }
 
 

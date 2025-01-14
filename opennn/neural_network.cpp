@@ -433,20 +433,20 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     if (input_dimensions.size() != 3)
         throw runtime_error("Input dimensions size is not 3.");
 
-    const Index complexity_size = complexity_dimensions.size();
-
     add_layer(make_unique<ScalingLayer4D>(input_dimensions));
+
+    const Index complexity_size = complexity_dimensions.size();
 
     for (Index i = 0; i < complexity_size; i++)
     {
         const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
-        const dimensions convolution_stride_dimensions = { 1, 1 };
+        const dimensions stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
         add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                   kernel_dimensions,
                                                   ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                  convolution_stride_dimensions,
+                                                  stride_dimensions,
                                                   convolution_type,
                                                   "convolutional_layer_" + to_string(i+1)));
 
@@ -478,7 +478,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
     layers.resize(0);
 
-    // input_names.resize(input_length + context_length);
+    // input_names.resize(input_length + decoder_length);
 
     const Index complexity_size = complexity_dimensions.size();
 
@@ -663,9 +663,9 @@ void NeuralNetwork::set_model_type_string(const string& new_model_type)
 }
 
 
-void NeuralNetwork::set_input_names(const vector<string>& new_input_namess)
+void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 {
-    input_names = new_input_namess;
+    input_names = new_input_names;
 }
 
 
@@ -677,20 +677,21 @@ void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
 
 void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-/*
-    input_names.resize(new_inputs_number);
+    input_names.resize(new_input_dimensions[0]);
 
     if(has(Layer::Type::Scaling2D))
     {
-        ScalingLayer2D* scaling_layer_2d = get_scaling_layer_2d();
+        ScalingLayer2D* scaling_layer = static_cast<ScalingLayer2D*>(get_first(Layer::Type::Scaling2D));
 
-        scaling_layer_2d->set_inputs_number(new_inputs_number);
+        scaling_layer->set_input_dimensions(new_input_dimensions);
     }
 
-    const Index first_trainable_layer_index = get_first_trainable_layer_index();
+    if (has(Layer::Type::Perceptron))
+    {
+        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
 
-    layers[first_trainable_layer_index]->set_inputs_number(new_inputs_number);
-*/
+        perceptron_layer->set_input_dimensions(new_input_dimensions);
+    }
 }
 
 
@@ -698,7 +699,7 @@ void NeuralNetwork::set_default()
 {
     display = true;
 
-    layer_input_indices = vector<vector<Index>>();
+    layer_input_indices.clear();
 }
 
 
@@ -849,6 +850,9 @@ vector<Index> NeuralNetwork::get_layer_parameter_numbers() const
 
 void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 {
+    if (new_parameters.size() != get_parameters_number())
+        throw runtime_error("New parameters size is not equal to parameters size.");
+
     const Index layers_number = get_layers_number();
 
     const vector<Index> layer_parameter_numbers = get_layer_parameter_numbers();
@@ -1152,36 +1156,33 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 }
 
 
-Index NeuralNetwork::calculate_image_output(const string& image_path)
+Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path);
+    Tensor<float, 3> image = read_bmp_image(image_path);
 
     ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Scaling4D));
 
     const Index height = scaling_layer_4d->get_input_dimensions()[0];
     const Index width = scaling_layer_4d->get_input_dimensions()[1];
-    const Index image_channels = scaling_layer_4d->get_input_dimensions()[2];
+    const Index channels = scaling_layer_4d->get_input_dimensions()[2];
 
-    const Index current_height = image_data.dimension(0);
-    const Index current_width = image_data.dimension(1);
-    const Index current_channels = image_data.dimension(2);
+    const Index current_height = image.dimension(0);
+    const Index current_width = image.dimension(1);
+    const Index current_channels = image.dimension(2);
 
-    if (current_channels != image_channels)
-        throw runtime_error("Error: Different channels number " + image_path + "\n");
+    if (current_channels != channels)
+        throw runtime_error("Error: Different channels number " + image_path.string() + "\n");
 
-    Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-/*
-    (current_height != height || current_width != width)
-        ? bilinear_interpolation_resize_image(image_data, resized_image_data, height, width)
-        : resized_image_data = image_data;
-*/
-    Tensor<type, 4> input_data(1, height, width, image_channels);
+    if(current_height != height || current_width != width)
+        image = resize_image(image, height, width);
 
-    const Index pixels_number = height * width * image_channels;
+    Tensor<type, 4> input_data(1, height, width, channels);
 
-#pragma omp parallel for
+    const Index pixels_number = height * width * channels;
+
+    #pragma omp parallel for
     for (Index j = 0; j < pixels_number; j++)
-        input_data(j) = resized_image_data(j);
+        input_data(j) = image(j);
 
     const Tensor<type, 2> outputs = calculate_outputs(input_data);
 
@@ -1190,8 +1191,11 @@ Index NeuralNetwork::calculate_image_output(const string& image_path)
     if (outputs.size() > 1)
     {
         type max_value = outputs(0);
-        for (Index i = 1; i < outputs.dimension(1); ++i) {
-            if (outputs(i) > max_value) {
+
+        for (Index i = 1; i < outputs.dimension(1); ++i)
+        {
+            if (outputs(i) > max_value)
+            {
                 max_value = outputs(i);
                 predicted_index = i;
             }

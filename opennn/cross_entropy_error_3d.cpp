@@ -27,7 +27,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -83,19 +83,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
-/*
-    cout<<"predictions: "<<endl;
-    cout<<predictions<<endl;
-    cout<<"targets: "<<endl;
-    cout<<targets<<endl;
-    cout<<"matches: "<<endl;
-    cout<<matches<<endl;
-*/
-
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
 
     if(isnan(error())) throw runtime_error("Error is NAN");
-
 }
 
 
@@ -103,7 +93,8 @@ void CrossEntropyError3D::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
-    // ProbabilisticLayer3D does not have deltas. Error combinations derivatives are calculated directly.
+    // ProbabilisticLayer3D does not have deltas. 
+    // Error combinations derivatives are calculated directly.
 }
 
 

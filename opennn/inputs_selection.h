@@ -49,8 +49,6 @@ public:
 
     void set(TrainingStrategy* = nullptr);
 
-    virtual void set_default();
-
     void set_trials_number(const Index&);
 
     void set_display(const bool&);

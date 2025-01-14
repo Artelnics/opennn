@@ -3,7 +3,7 @@
 #include "../opennn/image_data_set.h"
 
 
-TEST(ImageDataSetTest, DefaultConstructor)
+TEST(ImageDataSet, DefaultConstructor)
 {
     ImageDataSet image_data_set;
 
@@ -12,7 +12,7 @@ TEST(ImageDataSetTest, DefaultConstructor)
 }
 
 
-TEST(ImageDataSetTest, GeneralConstructor)
+TEST(ImageDataSet, GeneralConstructor)
 {
     ImageDataSet image_data_set(5, { 4, 3, 2 }, { 1 });
 

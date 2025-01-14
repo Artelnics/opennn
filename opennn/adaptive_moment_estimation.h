@@ -41,11 +41,11 @@ public:
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
 
-   void set_default() override;
+   void set_default();
 
    // Get
 
-   Index get_batch_samples_number() const;
+   Index get_samples_number() const;
 
    // Training operators
 

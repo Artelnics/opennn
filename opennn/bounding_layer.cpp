@@ -174,7 +174,7 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
         const type& upper_bound = upper_bounds(j);
 
         for (Index i = 0; i < rows_number; i++)
-            outputs(i, j) = min(max(inputs(i, j), lower_bound), upper_bound);
+            outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
     }
 }
 

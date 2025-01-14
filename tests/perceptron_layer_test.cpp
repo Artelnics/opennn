@@ -165,7 +165,6 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
 
 TEST(PerceptronLayerTest, ForwardPropagate)
 {
-    /*
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
@@ -173,25 +172,25 @@ TEST(PerceptronLayerTest, ForwardPropagate)
 
     Tensor<type, 1> potential_parameters;
 
-    pair<type*, dimensions> input_pairs;
+    ;
 
-    // Test
-
-    samples_number = 2;
-    inputs_number = 2;
-    neurons_number = 2;
+    const Index samples_number = 2;
+    const Index inputs_number = 2;
+    const Index neurons_number = 2;
     bool is_training = true;
 
-    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::Linear);
+    PerceptronLayer perceptron_layer({ inputs_number }, 
+                                     { neurons_number }, 
+                                     PerceptronLayer::ActivationFunction::Linear);
     perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
-    perceptron_layer_forward_propagation->set(samples_number, perceptron_layer.get());
+    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation(samples_number, &perceptron_layer);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
+    const pair<type*, dimensions> input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+/*
     perceptron_layer->forward_propagate({input_pairs},
                                         perceptron_layer_forward_propagation,
                                         is_training);
@@ -204,148 +203,5 @@ TEST(PerceptronLayerTest, ForwardPropagate)
     EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3));
     EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3));
 
-    // Test
-
-    samples_number = 2;
-    inputs_number = 2;
-    neurons_number = 2;
-
-    perceptron_layer.set(inputs_number, neurons_number, PerceptronLayer::ActivationFunction::HyperbolicTangent);
-    perceptron_layer.set_parameters_constant(type(1));
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(type(1));    
-
-    potential_parameters = perceptron_layer.get_parameters();
-
-    perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
-
-    outputs = perceptron_layer_forward_propagation.outputs;
-
-    EXPECT_EQ(abs(outputs(0,0) - type(0.99505)) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,1) - type(0.99505)) < type(1e-3));
-    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(0.00986)) < type(1e-3));
-    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(0.00986)) < type(1e-3));
-
-    // Test
-
-    samples_number = 1;
-    inputs_number = 3;
-    neurons_number = 4;
-
-    perceptron_layer.set(inputs_number, neurons_number);
-
-    synaptic_weights.resize(inputs_number, neurons_number);
-    biases.resize( neurons_number);
-    inputs.resize(samples_number, inputs_number);
-    outputs.resize(1, neurons_number);
-
-    inputs.setConstant(type(1));
-
-    perceptron_layer.set_activation_function(PerceptronLayer::ActivationFunction::Linear);
-
-    perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
-
-    outputs = perceptron_layer_forward_propagation.outputs;
-
-    EXPECT_EQ(outputs.dimension(0) == 1);
-    EXPECT_EQ(outputs.dimension(1) == 4);
-    EXPECT_EQ(Index(outputs(0,0)) == 7);
-    EXPECT_EQ(Index(outputs(1,0)) == -5);
-    EXPECT_EQ(Index(outputs(2,0)) == 1);
-
-    // Test
-
-    inputs_number = 3;
-    neurons_number = 2;
-
-    perceptron_layer.set(inputs_number, neurons_number);
-    perceptron_layer.set_parameters_constant(type(0));
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(type(0));
-
-    outputs.resize(1, neurons_number);
-
-    perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
-
-    outputs = perceptron_layer_forward_propagation.outputs;
-
-    EXPECT_EQ(outputs.dimension(0) == 1);
-    EXPECT_EQ(outputs.dimension(1) == 2);
-    EXPECT_NEAR(abs(outputs(0,0)) < NUMERIC_LIMITS_MIN);
-
-    // Test
-
-    inputs_number = 4;
-    neurons_number = 2;
-
-    perceptron_layer.set(4, 2);
-    parameters.resize(10);
-
-    parameters.setValues({type(-1),type(2),type(-3),type(4),type(-5),type(6),type(-7),type(8),type(-9),type(10) });
-
-    perceptron_layer.set_parameters(parameters);
-
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(4),type(-3),type(2),type(-1)}});
-
-    outputs.resize(1, neurons_number);
-
-    perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
-
-    outputs = perceptron_layer_forward_propagation.outputs;
-
-    EXPECT_EQ(outputs.dimension(0) == 1);
-    EXPECT_EQ(outputs.dimension(1) == 2);
-    EXPECT_NEAR(abs(outputs(0,0) + type(1)) < NUMERIC_LIMITS_MIN);
-
-    // Test 5
-
-    inputs_number = 1;
-    neurons_number = 2;
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setConstant(type(3.0));
-
-    perceptron_layer.set(inputs_number, neurons_number);
-    perceptron_layer.set_parameters_constant(type(-2.0));
-
-    outputs.resize(1, neurons_number); 
-
-    perceptron_layer_forward_propagation.set(samples_number, &perceptron_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    perceptron_layer.forward_propagate({input_pairs}, &perceptron_layer_forward_propagation, is_training);
-
-    outputs = perceptron_layer_forward_propagation.outputs;
-    parameters.resize(2);
-    parameters.setConstant(type(1));
-
-    // Test
-
-    perceptron_layer.set(1, 1);
-
-    inputs.resize(1,1);
-    inputs.setRandom();
-
-    parameters = perceptron_layer.get_parameters();
 */
 }

@@ -116,14 +116,14 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-void LossIndex::check() const
-{
-    if(!neural_network)
-        throw runtime_error("Pointer to neural network is nullptr.\n");
+//void LossIndex::check() const
+//{
+//    if(!neural_network)
+//        throw runtime_error("Pointer to neural network is nullptr.\n");
 
-    if(!data_set)
-        throw runtime_error("Pointer to data set is nullptr.\n");
-}
+//    if(!data_set)
+//        throw runtime_error("Pointer to data set is nullptr.\n");
+//}
 
 
 void LossIndex::calculate_errors_lm(const Batch& batch,
@@ -277,7 +277,7 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     
     const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     Index index = 0;
     
@@ -733,7 +733,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 {
 
     const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
-    const dimensions inputs_dimensions = data_set->get_input_dimensions();
+    const dimensions inputs_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
 
@@ -858,9 +858,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         parameters_forward(j) -= h;
 
         for(Index i = 0; i < samples_number; i++)
-        {
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
-        }
     }
 
     return jacobian;
@@ -871,7 +869,100 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
-    return Tensor<type, 2>();
+    const Tensor<type, 1> parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+//    type y = (t.*f)(x);
+
+    Tensor<type, 2> H(parameters_number, parameters_number);
+
+    type h_i;
+    type h_j;
+
+    Tensor<type, 1> x_backward_2i(parameters);
+    Tensor<type, 1> x_backward_i(parameters);
+
+    Tensor<type, 1> x_forward_i(parameters);
+    Tensor<type, 1> x_forward_2i(parameters);
+
+    Tensor<type, 1> x_backward_ij(parameters);
+    Tensor<type, 1> x_forward_ij(parameters);
+
+    Tensor<type, 1> x_backward_i_forward_j(parameters);
+    Tensor<type, 1> x_forward_i_backward_j(parameters);
+
+    type y_backward_2i;
+    type y_backward_i;
+
+    type y_forward_i;
+    type y_forward_2i;
+
+    type y_backward_ij;
+    type y_forward_ij;
+
+    type y_backward_i_forward_j;
+    type y_forward_i_backward_j;
+
+    for (Index i = 0; i < parameters_number; i++)
+    {
+        h_i = calculate_h(parameters(i));
+
+        x_backward_2i(i) -= static_cast<type>(2.0) * h_i;
+        //y_backward_2i = (t.*f)(x_backward_2i);
+        x_backward_2i(i) += static_cast<type>(2.0) * h_i;
+
+        x_backward_i(i) -= h_i;
+        //y_backward_i = (t.*f)(x_backward_i);
+        x_backward_i(i) += h_i;
+
+        x_forward_i(i) += h_i;
+        //y_forward_i = (t.*f)(x_forward_i);
+        x_forward_i(i) -= h_i;
+
+        x_forward_2i(i) += static_cast<type>(2.0) * h_i;
+        //y_forward_2i = (t.*f)(x_forward_2i);
+        x_forward_2i(i) -= static_cast<type>(2.0) * h_i;
+
+        //H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * pow(h_i, type(2)));
+
+        for (Index j = i; j < parameters_number; j++)
+        {
+            h_j = calculate_h(parameters(j));
+
+            x_backward_ij(i) -= h_i;
+            x_backward_ij(j) -= h_j;
+            //y_backward_ij = (t.*f)(x_backward_ij);
+            x_backward_ij(i) += h_i;
+            x_backward_ij(j) += h_j;
+
+            x_forward_ij(i) += h_i;
+            x_forward_ij(j) += h_j;
+            //y_forward_ij = (t.*f)(x_forward_ij);
+            x_forward_ij(i) -= h_i;
+            x_forward_ij(j) -= h_j;
+
+            x_backward_i_forward_j(i) -= h_i;
+            x_backward_i_forward_j(j) += h_j;
+            //y_backward_i_forward_j = (t.*f)(x_backward_i_forward_j);
+            x_backward_i_forward_j(i) += h_i;
+            x_backward_i_forward_j(j) -= h_j;
+
+            x_forward_i_backward_j(i) += h_i;
+            x_forward_i_backward_j(j) -= h_j;
+            //y_forward_i_backward_j = (t.*f)(x_forward_i_backward_j);
+            x_forward_i_backward_j(i) -= h_i;
+            x_forward_i_backward_j(j) += h_j;
+
+            H(i, j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij) / (type(4.0) * h_i * h_j);
+        }
+    }
+
+    for (Index i = 0; i < parameters_number; i++)
+        for (Index j = 0; j < i; j++)
+            H(i, j) = H(j, i);
+
+    return H;
 }
 
 

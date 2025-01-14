@@ -172,18 +172,6 @@ void ImageDataSet::set_data_random()
 }
 
 
-void ImageDataSet::set_input_dimensions(const dimensions& new_input_dimensions)
-{
-    if (new_input_dimensions.size() != 3)
-        throw runtime_error("Dimensions size error: input_dimensions must have 3 dimensions {input_height, input_width, input_channels}");
-
-    if (new_input_dimensions[2] != 1 && new_input_dimensions[2] != 3)
-        throw runtime_error("input_dimensions[2] error: input_channels must have 1 or 3 channels {input_height, input_width, input_channels}");
-
-    input_dimensions = new_input_dimensions;
-}
-
-
 void ImageDataSet::set_channels_number(const int& new_channels)
 {
     input_dimensions[2] = new_channels;
@@ -306,12 +294,12 @@ void ImageDataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     if(has_sample_ids)
-        add_xml_element(printer, "Ids", string_tensor_to_string(sample_ids));
+        add_xml_element(printer, "Ids", vector_to_string(sample_ids));
 
     printer.OpenElement("Samples");
 
     add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
-    add_xml_element(printer, "SamplesUses", tensor_to_string(get_sample_uses_vector()));
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
 
     printer.CloseElement();
 
@@ -336,9 +324,9 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    set_input_dimensions({ read_xml_index(data_source_element, "Height"),
-                           read_xml_index(data_source_element, "Width"),
-                           read_xml_index(data_source_element, "Channels") });
+    set_dimensions(DataSet::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
+                                                  read_xml_index(data_source_element, "Width"),
+                                                  read_xml_index(data_source_element, "Channels") });
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -386,7 +374,6 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     }
 
     const Index targets_number = (target_count == 2) ? 1 : target_count;
-    set_target_dimensions({ targets_number });
 
     // Samples
 
@@ -399,7 +386,7 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Samples element is nullptr.\n");
 
     sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SamplesUses"), " "));
+    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 }
 
 
@@ -450,24 +437,15 @@ void ImageDataSet::read_bmp()
 
         images_number[i+1] = samples_number;
     }
-    
+
     Index height, width, image_channels;
 
-    if (input_dimensions[0] > 0 && input_dimensions[1] > 0 && input_dimensions[2] > 0)
-    {
-        height = input_dimensions[0];
-        width = input_dimensions[1];
-        image_channels = input_dimensions[2];
-    }
-    else
-    {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[0]);
+    const Tensor<type, 3> image_data = read_bmp_image(image_path[0]);
 
-        height = image_data.dimension(0);
-        width = image_data.dimension(1);
-        image_channels = image_data.dimension(2);
-    }
-    
+    height = image_data.dimension(0);
+    width = image_data.dimension(1);
+    image_channels = image_data.dimension(2);
+
     const Index inputs_number = height * width * image_channels;
     const Index raw_variables_number = inputs_number + 1;
 
@@ -476,7 +454,7 @@ void ImageDataSet::read_bmp()
     const Index targets_number = (folders_number == 2) 
         ? folders_number -1 
         : folders_number;
-    
+
     set(samples_number, { height, width, image_channels }, { targets_number });
 
     vector<string> categories(targets_number);
@@ -491,25 +469,21 @@ void ImageDataSet::read_bmp()
     #pragma omp parallel for
     for (Index i = 0; i < samples_number; i++)
     {
-        const Tensor<unsigned char, 3> image_data = read_bmp_image(image_path[i]);
+        Tensor<type, 3> image = read_bmp_image(image_path[i]);
 
-        const Index current_height = image_data.dimension(0);
-        const Index current_width = image_data.dimension(1);
-        const Index current_channels = image_data.dimension(2);
+        const Index current_height = image.dimension(0);
+        const Index current_width = image.dimension(1);
+        const Index current_channels = image.dimension(2);
 
         if (current_channels != image_channels)
             throw runtime_error("Different number of channels in image: " + image_path[i] + "\n");
 
-        Tensor<unsigned char, 3> resized_image_data(height, width, image_channels);
-
         if (current_height != height || current_width != width)
-            bilinear_interpolation_resize_image(image_data, resized_image_data, height, width);
-        else
-            resized_image_data = image_data;
+            image = resize_image(image, height, width);
 
         #pragma omp parallel for
         for (Index j = 0; j < pixels_number; j++)
-            data(i, j) = resized_image_data(j);
+            data(i, j) = image(j);
 
         if (targets_number == 1)
         {
