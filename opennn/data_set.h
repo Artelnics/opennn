@@ -297,6 +297,8 @@ public:
 
     void set(const VariableUse&);
 
+    void set_dimensions(const VariableUse&, const dimensions&);
+
     // Data set
 
     void set_data(const Tensor<type, 2>&);
@@ -533,6 +535,12 @@ protected:
     // DATA
 
     Tensor<type, 2> data;
+
+    // Dimensions
+
+    dimensions input_dimensions;
+    dimensions target_dimensions;
+    dimensions decoder_dimensions;
 
     // Samples
 
