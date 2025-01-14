@@ -2,7 +2,8 @@
 
 #include "../opennn/normalized_squared_error.h"
 #include "../opennn/forward_propagation.h"
-
+#include "../opennn/back_propagation.h"
+#include "../opennn/tensors.h"
 
 TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 {
@@ -25,100 +26,48 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 }
 
 
-TEST(NormalizedSquaredErrorTest, BackPropagate)
+TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
 {
-    /*
-    DataSet data_set(1, {1}, {1});
-    data_set.set_data_constant(type(0));
+    const Index samples_number = get_random_index(1, 10);
+    const Index inputs_number = get_random_index(1, 10);
+    const Index targets_number = get_random_index(1, 10);
+    const Index neurons_number = get_random_index(1, 10);
 
+    DataSet data_set(samples_number, { inputs_number }, { targets_number });
+    data_set.set_data_random();
     data_set.set(DataSet::SampleUse::Training);
 
-    Batch batch(1, &data_set);
-    batch.fill({0}, {0}, {1});
+    Batch batch(samples_number, &data_set);
+    batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
+        data_set.get_variable_indices(DataSet::VariableUse::Input),
+        data_set.get_variable_indices(DataSet::VariableUse::Target));
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-    neural_network.set_parameters_constant(type(0));
-    
-    ForwardPropagation forward_propagation(1, &neural_network);
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+        { inputs_number }, { neurons_number }, { targets_number });
 
+    neural_network.set_parameters_random();
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    /*
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
 
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
     normalized_squared_error.set_normalization_coefficient();
-
-    back_propagation.set(samples_number, &normalized_squared_error);
+    BackPropagation back_propagation(samples_number, &normalized_squared_error);
     normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    
+    const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-    EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-    EXPECT_EQ(abs(back_propagation.error()) < NUMERIC_LIMITS_MIN);
-    EXPECT_EQ(back_propagation.gradient.size() == inputs_number + inputs_number * neurons_number + outputs_number + outputs_number * neurons_number);
-
-    EXPECT_EQ(is_zero(back_propagation.gradient));
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
 */
-
-    EXPECT_EQ(1, 1);
 }
 
 
 /*
-namespace opennn
-{
 void NormalizedSquaredErrorTest::test_back_propagate()
 {
-    cout << "test_back_propagate\n";
-
-    // Test approximation trivial
-    {
-    }
-
-    // Test approximation all random
-    {
-        samples_number = 1 + rand()%5;
-        inputs_number = 1 + rand()%5;
-        outputs_number = 1 + rand()%5;
-        neurons_number = 1 + rand()%5;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        normalized_squared_error.set_normalization_coefficient();
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
-
-    }
 
     // Test binary classification trivial
     {
@@ -161,7 +110,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
         EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
         EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
-        EXPECT_EQ(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN));
+        EXPECT_NEAR(back_propagation.error() - type(0.25) < NUMERIC_LIMITS_MIN);
 
         EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
 
@@ -306,8 +255,6 @@ void NormalizedSquaredErrorTest::test_back_propagate()
 
 void NormalizedSquaredErrorTest::test_back_propagate_lm()
 {
-    cout << "test_back_propagate_lm\n";
-
     normalized_squared_error.set_normalization_coefficient();
 
     // Test approximation random samples, inputs, outputs, neurons
@@ -470,8 +417,6 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
 
 void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
-    cout << "test_calculate_normalization_coefficient\n";
-
     Index samples_number;
     Index inputs_number;
     Index outputs_number;
@@ -492,7 +437,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
     uses.resize(8);
     uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
 
-    data_set.set_raw_variables_uses(uses);
+    data_set.set_raw_variable_uses(uses);
 
     target_data = data_set.get_data(DataSet::VariableUse::Target);
 

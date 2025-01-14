@@ -81,6 +81,21 @@ void LearningRateAlgorithm::set(LossIndex* new_loss_index)
 
 void LearningRateAlgorithm::set_default()
 {
+/*
+    delete thread_pool;
+    delete thread_pool_device;
+
+    const unsigned int threads_number = thread::hardware_concurrency();
+    thread_pool = new ThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(thread_pool, n);
+
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    thread_pool = make_unique<ThreadPool>(threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+*/
+    // TRAINING OPERATORS
+
     learning_rate_method = LearningRateMethod::BrentMethod;
 
     learning_rate_tolerance = numeric_limits<type>::epsilon();
@@ -277,6 +292,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         potential_parameters.device(*thread_pool_device)
                 = parameters + training_direction * triplet.B.first;
+
 
         neural_network->forward_propagate(batch.get_input_pairs(),
             potential_parameters, forward_propagation);

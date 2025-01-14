@@ -27,7 +27,7 @@ struct ConvolutionalLayerForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -61,6 +61,8 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 4> synaptic_weights_derivatives;
+
+    Tensor<type, 4> rotated_synaptic_weights;
 
 };
 class ConvolutionalLayer : public Layer
@@ -217,7 +219,7 @@ private:
    const Eigen::array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
    const Eigen::array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
 
-   const Eigen::array<ptrdiff_t, 3> reverse_dimensions = {1, 1, 0};
+   const Eigen::array<ptrdiff_t, 4> reverse_dimensions = {1, 1, 0, 0};
 
    const Eigen::array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
 
@@ -238,14 +240,14 @@ private:
 };
 
 
-
+};
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"
     #include "../../opennn_cuda/opennn_cuda/convolutional_layer_back_propagation_cuda.h"
 #endif
 
-}
+
 
 #endif
 

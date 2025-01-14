@@ -15,7 +15,7 @@ struct Batch
 
     pair<type*, dimensions> get_target_pair() const;
 
-    Index get_batch_samples_number() const;
+    Index get_samples_number() const;
 
     void set(const Index& = 0, DataSet* = nullptr);
 
@@ -30,23 +30,18 @@ struct Batch
 
     bool is_empty() const;
 
-    bool has_context() const;
-
-    Index batch_size = 0;
+    Index samples_number = 0;
 
     DataSet* data_set = nullptr;
 
     dimensions input_dimensions;
-
     Tensor<type, 1> input_tensor;
 
+    dimensions decoder_dimensions;
+    Tensor<type, 1> decoder_tensor;
+
     dimensions target_dimensions;
-
     Tensor<type, 1> target_tensor;
-
-    dimensions context_dimensions;
-
-    Tensor<type, 1> context_tensor;
 
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;

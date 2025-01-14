@@ -88,7 +88,7 @@ namespace opennn
  Histogram histogram(const Tensor<bool, 1>&);
  Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
  Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
- Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
+ //Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
 
 
  // Minimal indices
@@ -100,8 +100,7 @@ namespace opennn
  Index maximal_index(const Tensor<type, 1>&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index&);
  Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
- Tensor<Index, 2> maximal_column_indices(const Tensor<type, 2>&, const Index&);
- 
+
  // Percentiles
  Tensor<type, 1> percentiles(const Tensor<type, 1>&);
 }

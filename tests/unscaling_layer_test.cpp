@@ -1,52 +1,24 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   U N S C A L I N G   L A Y E R   T E S T   C L A S S                   
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include <iostream>
+#include "../opennn/unscaling_layer.h"
 
-namespace opennn
+
+TEST(UnscalingLayerTest, DefaultConstructor)
 {
+    UnscalingLayer unscaling_layer;
 
-
-UnscalingLayerTest::UnscalingLayerTest() : UnitTesting()
-{
+    EXPECT_EQ(unscaling_layer.get_type(), Layer::Type::Unscaling);
+    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 0);
 }
 
 
-void UnscalingLayerTest::test_constructor()
+TEST(UnscalingLayerTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    UnscalingLayer unscaling_layer({ 3 });
 
-    // Test
-
-    UnscalingLayer unscaling_layer_1;
-
-    assert_true(unscaling_layer_1.get_type() == Layer::Type::Unscaling, LOG);
-    assert_true(unscaling_layer_1.get_descriptives().size() == 0, LOG);
-
-    // Test
-
-    UnscalingLayer unscaling_layer_2({3});
-
-    assert_true(unscaling_layer_2.get_descriptives().size() == 3, LOG);
-
+    EXPECT_EQ(unscaling_layer.get_descriptives().size(), 3);
 }
 
-
-void UnscalingLayerTest::run_test_case()
-{
-    cout << "Running unscaling layer test case...\n";
-
-    test_constructor();
-
-    cout << "End of unscaling layer test case.\n\n";
-}
-
-}
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.

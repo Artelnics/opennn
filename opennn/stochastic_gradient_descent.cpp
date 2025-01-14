@@ -11,7 +11,6 @@
 #include "stochastic_gradient_descent.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
-#include "language_data_set.h"
 
 namespace opennn
 {
@@ -86,7 +85,7 @@ void StochasticGradientDescent::set_batch_samples_number(const Index& new_batch_
 }
 
 
-Index StochasticGradientDescent::get_batch_samples_number() const
+Index StochasticGradientDescent::get_samples_number() const
 {
     return batch_samples_number;
 }
@@ -181,6 +180,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
 TrainingResults StochasticGradientDescent::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     TrainingResults results(maximum_epochs_number+1);
     
     check();
@@ -197,10 +199,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-
-    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
-        ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
-        : vector<Index>();
+    const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
@@ -210,23 +209,20 @@ TrainingResults StochasticGradientDescent::perform_training()
         
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
-    const Index selection_batch_samples_number = (selection_samples_number > 0)
+    const Index selection_batch_samples_number = (selection_samples_number != 0)
          ? min(selection_samples_number, batch_samples_number)
          : 0;
-
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-
-    vector<Descriptives> input_variable_descriptives;
-    vector<Descriptives> target_variable_descriptives;
-    if(!is_instance_of<LanguageDataSet>(data_set))
-        input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
 
-    const Index training_batches_number = training_samples_number/training_batch_samples_number;
-    const Index selection_batches_number = selection_samples_number/selection_batch_samples_number;
+    const Index training_batches_number = (training_batch_samples_number != 0)
+                                              ? training_samples_number / training_batch_samples_number
+                                              : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+                                               ? selection_samples_number / selection_batch_samples_number
+                                               : 0;
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
@@ -241,6 +237,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     set_names();
 
     set_scaling();
+
+    set_vocabularies();
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
@@ -299,7 +297,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 target_variable_indices,
-                                context_variable_indices);
+                                decoder_variable_indices);
 
             // Neural network
             

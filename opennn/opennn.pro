@@ -56,6 +56,7 @@ INCLUDEPATH += ../eigen
 
 HEADERS += \
     ../blank/yolo_dataset.h \
+    auto_associative_data_set.h \
     pch.h \
     codification.h \
     cross_entropy_error_3d.h \
@@ -63,7 +64,6 @@ HEADERS += \
     embedding_layer.h \
     multihead_attention_layer.h \
     kmeans.h \
-    config.h \
     strings_utilities.h \
     images.h \
     statistics.h \
@@ -77,9 +77,7 @@ HEADERS += \
     data_set.h \
     batch.h \
     time_series_data_set.h \
-    auto_association_data_set.h \
     image_data_set.h \
-    text_data_set.h \
     language_data_set.h \
     layer.h \
     layer_forward_propagation.h \
@@ -141,9 +139,10 @@ HEADERS += \
     yolo_dataset.h \
     yolo_error.h \
     yolo_network.h \
-    forward_propagation.h \
+    forward_propagation.h
 
 SOURCES += \
+    auto_associative_data_set.cpp \
     pch.cpp \
     cross_entropy_error_3d.cpp \
     detection_layer.cpp \
@@ -160,9 +159,7 @@ SOURCES += \
     data_set.cpp \
     batch.cpp \
     time_series_data_set.cpp \
-    auto_association_data_set.cpp \
     image_data_set.cpp \
-    text_data_set.cpp \
     language_data_set.cpp \
     layer.cpp \
     scaling_layer_2d.cpp \

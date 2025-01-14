@@ -61,7 +61,7 @@ public:
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, const Index&) override;
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
@@ -132,7 +132,7 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -152,11 +152,11 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> combination_derivatives;
     Tensor<type, 2> input_derivatives;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 };
 
 
@@ -166,11 +166,11 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
-    Tensor<type, 2> combinations_derivatives;
+    Tensor<type, 2> combination_derivatives;
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;

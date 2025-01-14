@@ -9,6 +9,8 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include "pch.h"
+
 #include "tinyxml2.h"
 #include "histogram.h"
 #include "box_plot.h"
@@ -48,7 +50,7 @@ public:
 
     enum class SampleUse{Training, Selection, Testing, None};
 
-    enum class VariableUse{Id, Input, Target, Time, None, Context};
+    enum class VariableUse{Id, Input, Target, Time, None, Decoder};
 
     enum class RawVariableType{None, Numeric, Binary, Categorical, DateTime, Constant};
 
@@ -125,12 +127,12 @@ public:
     SampleUse get_sample_use(const Index&) const;
     const vector<SampleUse>& get_sample_uses() const;
 
-    Tensor<Index, 1> get_sample_uses_vector() const;
+    vector<Index> get_sample_uses_vector() const;
 
     Tensor<Index, 1> get_sample_use_numbers() const;
     Tensor<type, 1> get_sample_use_percentages() const;
 
-    string get_sample_string(const Index&, const string& = ",") const;
+    string get_sample_string(const Index&) const;
 
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const VariableUse&) const;
@@ -165,8 +167,7 @@ public:
     vector<Index> get_variable_indices(const VariableUse&) const;
     vector<Index> get_used_variable_indices() const;
 
-    const dimensions& get_input_dimensions() const;
-    const dimensions& get_target_dimensions() const;
+    dimensions get_dimensions(const VariableUse&) const;
 
     vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
@@ -185,14 +186,13 @@ public:
 
     Tensor<type, 2> get_raw_variable_data(const Index&) const;
     Tensor<type, 2> get_raw_variable_data(const Index&, const vector<Index>&) const;
-    Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
+    //Tensor<type, 2> get_raw_variable_data(const Tensor<Index, 1>&) const;
     Tensor<type, 2> get_raw_variable_data(const string&) const;
 
     string get_sample_category(const Index&, const Index&) const;
     Tensor<type, 1> get_sample(const Index&) const;
-    void add_sample(const Tensor<type, 1>&);
 
-    vector<vector<string>> get_data_file_preview() const;
+    const vector<vector<string>>& get_data_file_preview() const;
 
     // Members get
 
@@ -210,12 +210,10 @@ public:
     string get_separator_string() const;
     string get_separator_name() const;
 
-    const Codification get_codification() const;
+    const Codification& get_codification() const;
     const string get_codification_string() const;
 
     const string& get_missing_values_label() const;
-
-    static vector<string> get_default_raw_variables_names(const Index&);
 
     Index get_gmt() const;
 
@@ -226,12 +224,18 @@ public:
         return data.size() == 0;
     }
 
-    bool get_augmentation() const;
+    //bool get_augmentation() const;
 
     // Set
 
     void set(const Index& = 0, const dimensions& = {}, const dimensions& = {});
-    void set(const filesystem::path&, const string&, const bool& = true, const bool& = false, const DataSet::Codification& = Codification::UTF8);
+
+    void set(const filesystem::path&, 
+             const string&, 
+             const bool& = true, 
+             const bool& = false, 
+             const DataSet::Codification& = Codification::UTF8);
+
     void set(const filesystem::path&);
 
     void set_default();
@@ -255,12 +259,13 @@ public:
     // Raw variables set
 
     void set_raw_variables(const vector<RawVariable>&);
-    void set_default_raw_variables_uses();
 
     void set_default_raw_variables_names();
 
-    void set_raw_variable_uses(const vector<string>&);
-    void set_raw_variable_uses(const vector<VariableUse>&);
+    void set_default_raw_variables_uses();
+    virtual void set_raw_variable_uses(const vector<string>&);
+    virtual void set_raw_variable_uses(const vector<VariableUse>&);
+
     void set_raw_variables(const VariableUse&);
     void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     //void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
@@ -293,9 +298,6 @@ public:
 
     void set(const VariableUse&);
 
-    void set_input_dimensions(const dimensions&);
-    void set_target_dimensions(const dimensions&);
-
     // Data set
 
     void set_data(const Tensor<type, 2>&);
@@ -306,8 +308,6 @@ public:
 
     void set_has_header(const bool&);
     void set_has_ids(const bool&);
-
-    void set_has_text_data(const bool&);
 
     void set_separator(const Separator&);
     void set_separator_string(const string&);
@@ -371,18 +371,17 @@ public:
 
     Tensor<type, 1> calculate_used_variables_minimums() const;
 
-    Tensor<type, 1> calculate_used_targets_mean() const;
-    Tensor<type, 1> calculate_selection_targets_mean() const;
+    Tensor<type, 1> calculate_means(const SampleUse& , const VariableUse&) const;
 
     Index calculate_used_negatives(const Index&);
 
     // Distribution
 
-    Tensor<Histogram, 1> calculate_raw_variables_distribution(const Index& = 10) const;
+    vector<Histogram> calculate_raw_variable_distributions(const Index& = 10) const;
 
     // Box and whiskers
 
-    Tensor<BoxPlot, 1> calculate_raw_variables_box_plots() const;
+    vector<BoxPlot> calculate_raw_variables_box_plots() const;
     //Tensor<BoxPlot, 1> calculate_data_raw_variables_box_plot(Tensor<type,2>&) const;
 
     // Inputs correlations
@@ -436,7 +435,7 @@ public:
 
     // Data generation
 
-    void set_data_random();
+    virtual void set_data_random();
     void set_data_rosenbrock();
     void set_data_sum();
     void set_data_classification();
@@ -498,13 +497,13 @@ public:
     vector<vector<Index>> split_samples(const vector<Index>&, const Index&) const;
 
     bool get_has_rows_labels() const;
-    bool get_has_text_data() const;
+    //bool get_has_text_data() const;
 
     // Reader
 
     void decode(string&) const;
 
-    void read_csv();
+    virtual void read_csv();
 
     void prepare_line(string&) const;
     void process_tokens(vector<string>&);
@@ -519,9 +518,6 @@ public:
 
     //Image Models
     virtual void fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&);
-
-    //Languaje Models
-    virtual void read_txt_language_model();
 
     //AutoAssociation Models
 
@@ -539,6 +535,10 @@ protected:
 
     Tensor<type, 2> data;
 
+    dimensions input_dimensions;
+
+    dimensions target_dimensions;
+
     // Samples
 
     vector<SampleUse> sample_uses;
@@ -548,10 +548,6 @@ protected:
     // Raw variables
 
     vector<RawVariable> raw_variables;
-
-    dimensions input_dimensions;
-
-    dimensions target_dimensions;
 
     // DATA FILE
 

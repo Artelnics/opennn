@@ -165,6 +165,15 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     descriptives.resize(new_inputs_number);
 
+    //new:
+    // for(Index i = 0; i < new_inputs_number; i++){
+    //     set_minimum(i,type(-1.0));
+    //     set_maximum(i,type(1));
+    //     set_mean(i,type(0));
+    //     set_standard_deviation(i,type(1));
+    // }
+    //end new
+
     scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 
     name = "scaling_layer";
@@ -208,30 +217,6 @@ void ScalingLayer2D::set_descriptives(const vector<Descriptives>& new_descriptiv
 void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives[i] = item_descriptives;
-}
-
-
-void ScalingLayer2D::set_minimum(const Index& i, const type& new_minimum)
-{
-    descriptives[i].set_minimum(new_minimum);
-}
-
-
-void ScalingLayer2D::set_maximum(const Index& i, const type& new_maximum)
-{
-    descriptives[i].set_maximum(new_maximum);
-}
-
-
-void ScalingLayer2D::set_mean(const Index& i, const type& new_mean)
-{
-    descriptives[i].set_mean(new_mean);
-}
-
-
-void ScalingLayer2D::set_standard_deviation(const Index& i, const type& new_standard_deviation)
-{
-    descriptives[i].set_standard_deviation(new_standard_deviation);
 }
 
 
@@ -317,7 +302,7 @@ bool ScalingLayer2D::is_empty() const
 
 void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
+                                       const bool&)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -341,7 +326,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
         
-        if(abs(descriptives[i].standard_deviation) < type(NUMERIC_LIMITS_MIN))
+        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
         {
             if(display)
                 cout << "OpenNN Warning: ScalingLayer2D class.\n"
@@ -390,6 +375,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
 }
 
 
@@ -616,11 +602,11 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number
 {
     layer = new_layer;
 
-    const Index neurons_number = layer->get_output_dimensions()[0];
+    const Index outputs_number = layer->get_outputs_number();
 
     batch_samples_number = new_batch_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(batch_samples_number, outputs_number);
 }
 
 

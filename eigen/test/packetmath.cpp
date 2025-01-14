@@ -199,6 +199,12 @@ struct test_cast_helper<SrcPacket, TgtPacket, SrcCoeffRatio, TgtCoeffRatio, true
     pcast_array<SrcPacket, TgtPacket, SrcCoeffRatio, TgtCoeffRatio>::cast(data1, DataSize, data2);
 
     VERIFY(test::areApprox(ref, data2, DataSize) && "internal::pcast<>");
+
+    // Test that pcast<SrcScalar, TgtScalar> generates the same result.
+    for (int i = 0; i < DataSize; ++i) {
+      data2[i] = internal::pcast<SrcScalar, TgtScalar>(data1[i]);
+    }
+    VERIFY(test::areApprox(ref, data2, DataSize) && "internal::pcast<>");
   }
 };
 
@@ -1496,7 +1502,7 @@ struct exp_complex_test_impl {
 template <typename Scalar, typename Packet>
 struct exp_complex_test_impl<Scalar, Packet, false> {
   typedef typename Scalar::value_type RealScalar;
-  static void run(Scalar*, Scalar*, Scalar*, int){};
+  static void run(Scalar*, Scalar*, Scalar*, int) {};
 };
 
 template <typename Scalar, typename Packet>

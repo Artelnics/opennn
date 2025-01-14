@@ -29,20 +29,22 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
     data_set.set_data_random();
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
-/*
+
     Batch batch(1, &data_set);
-/*
+
     ForwardPropagation forward_propagation(1, &neural_network);
 
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-//    BackPropagation back_propagation(1, &mean_squared_error);
+    BackPropagation back_propagation(1, &mean_squared_error);
+
+    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
     //LearningRateAlgorithm::Triplet triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 /*
     Tensor<Index, 3> sample_indices(0, 1, samples_number);
 
-    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
     type loss = 0.0;
     Tensor<type, 1> training_direction;
@@ -59,16 +61,12 @@ TEST(LearningRateAlgorithmTest, BracketingTriplet)
 
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
-    cout << "test_calculate_bracketing_triplet\n";
-
-    // Test
-
-    sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
+    mean_squared_error.set_regularization_method(LossIndex::RegularizationMethod::L2);
 
     neural_network.set_parameters_random();
 
-    //loss = sum_squared_error.calculate_training_loss();
-    //training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+    //loss = mean_squared_error.calculate_training_loss();
+    //training_direction = mean_squared_error.calculate_training_loss_gradient()*(-1.0);
 
     initial_learning_rate = 0.01;
 
@@ -133,8 +131,6 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point()
 {
-    cout << "test_calculate_golden_section_directional_point\n";
-
     Index samples_number;
     Index inputs_number;
     Index targets_number;
@@ -147,7 +143,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {1, 1});
 
-    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
+    LearningRateAlgorithm learning_rate_algorithm(&mean_squared_error);
 
     neural_network.set_parameters_constant(type(1));
 
@@ -168,8 +164,6 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 
 void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
-    cout << "test_calculate_Brent_method_directional_point\n";
-
     Index samples_number = 1;
     Index inputs_number = 1;
     Index targets_number = 1;
@@ -187,7 +181,7 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 
     // @todo loss_index.calculate_training_loss not available
 
-    Tensor<type, 1> gradient = sum_squared_error.calculate_numerical_gradient();
+    Tensor<type, 1> gradient = mean_squared_error.calculate_numerical_gradient();
 
     Tensor<type, 1> training_direction = gradient*(type(-1.0));
 

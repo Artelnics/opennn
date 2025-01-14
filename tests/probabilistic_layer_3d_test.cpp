@@ -1,57 +1,34 @@
 #include "pch.h"
 
-/*
+#include "../opennn/probabilistic_layer_3d.h"
 
-void ProbabilisticLayer3DTest::test_constructor()
+TEST(ProbabilisticLayer3DTest, DefaultConstructor)
 {
-    cout << "test_constructor\n";
 
-    ProbabilisticLayer3D probabilistic_layer_3d_1;
+    ProbabilisticLayer3D probabilistic_layer_3d;
 
-    EXPECT_EQ(
-        probabilistic_layer_3d_1.get_inputs_number() == 0 &&
-        probabilistic_layer_3d_1.get_inputs_depth() == 0 &&
-        probabilistic_layer_3d_1.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_1.get_parameters_number() == 0);
-
-    // Probabilistic neurons number constructor
-
-    ProbabilisticLayer3D probabilistic_layer_3d_2;
-
-    probabilistic_layer_3d_2.set_output_dimensions(0);
-
-    EXPECT_EQ(
-        probabilistic_layer_3d_2.get_inputs_number() == 0 &&
-        probabilistic_layer_3d_2.get_inputs_depth() == 0 &&
-        probabilistic_layer_3d_2.get_neurons_number() == 0 &&
-        probabilistic_layer_3d_2.get_parameters_number() == 0);
-
-    ProbabilisticLayer3D probabilistic_layer_3d_3;
-
-    probabilistic_layer_3d_3.set_output_dimensions(3);
-
-    EXPECT_EQ(
-        probabilistic_layer_3d_3.get_inputs_number() == 0 &&
-        probabilistic_layer_3d_3.get_inputs_depth() == 0 &&
-        probabilistic_layer_3d_3.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_3.get_parameters_number() == 3);
-
-
-    ProbabilisticLayer3D probabilistic_layer_3d_4(1, 2, 3);
-
-    EXPECT_EQ(
-        probabilistic_layer_3d_4.get_inputs_number() == 1 &&
-        probabilistic_layer_3d_4.get_inputs_depth() == 2 &&
-        probabilistic_layer_3d_4.get_neurons_number() == 3 &&
-        probabilistic_layer_3d_4.get_parameters_number() == 9);
-
+//    EXPECT_EQ(probabilistic_layer_3d.get_inputs_number(), 0);
+//    EXPECT_EQ(probabilistic_layer_3d.get_inputs_depth(), 0);
+//    EXPECT_EQ(probabilistic_layer_3d.get_neurons_number(), 0);
+//    EXPECT_EQ(probabilistic_layer_3d.get_parameters_number(), 0);
 }
 
 
-void ProbabilisticLayer3DTest::test_calculate_combinations()
+TEST(ProbabilisticLayer3DTest, GeneralConstructor)
 {
-    cout << "test_calculate_combinations\n";
 
+    ProbabilisticLayer3D probabilistic_layer_3d(1, 2, 3);
+
+//    EXPECT_EQ(probabilistic_layer_3d.get_inputs_number(), 1);
+//    EXPECT_EQ(probabilistic_layer_3d.get_inputs_depth(), 2);
+//    EXPECT_EQ(probabilistic_layer_3d.get_neurons_number(), 3);
+//    EXPECT_EQ(probabilistic_layer_3d.get_parameters_number(), 9);
+}
+
+
+TEST(ProbabilisticLayer3DTest, Combinations)
+{
+/*
     Tensor<type, 1> biases(1);
     Tensor<type, 2> synaptic_weights(1, 1);
     biases.setConstant(type(1));
@@ -64,9 +41,6 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
 
     probabilistic_layer_3d.set(1, 1, 1);
 
-    probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer_3d.set_biases(biases);
-
     probabilistic_layer_3d.calculate_combinations(inputs, combinations);
 
     EXPECT_EQ(
@@ -75,17 +49,16 @@ void ProbabilisticLayer3DTest::test_calculate_combinations()
         combinations.dimension(1) == 1 &&
         combinations.dimension(2) == 1);
     EXPECT_EQ(abs(combinations(0, 0, 0) - type(7)) < type(1e-5));
+*/
 }
 
 
-void ProbabilisticLayer3DTest::test_calculate_activations()
+TEST(ProbabilisticLayer3DTest, Activations)
 {
-    cout << "test_calculate_activations\n";
-
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
     Tensor<type, 4> activation_derivatives;
-
+/*
     {
         // Test 1
 
@@ -106,8 +79,8 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activation_derivatives.setConstant(type(0));
 
         probabilistic_layer_3d.calculate_activations_derivatives(combinations,
-                                                                 activations,
-                                                                 activation_derivatives);
+            activations,
+            activation_derivatives);
 
         EXPECT_EQ(
             activation_derivatives.rank() == 4 &&
@@ -118,7 +91,6 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
 
         EXPECT_EQ(activation_derivatives(0, 0, 0, 0) == type(0));
     }
-
 
     {
         // Test 2
@@ -131,7 +103,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
 
         combinations.resize(samples_number, inputs_number, neurons_number);
-        combinations.setValues({{{1}, {2}, {3}}});
+        combinations.setValues({ {{1}, {2}, {3}} });
 
         activations.resize(samples_number, inputs_number, neurons_number);
         activations.setConstant(type(0));
@@ -140,8 +112,8 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
         activation_derivatives.setConstant(type(0));
 
         probabilistic_layer_3d.calculate_activations_derivatives(combinations,
-                                                                 activations,
-                                                                 activation_derivatives);
+            activations,
+            activation_derivatives);
 
         EXPECT_EQ(
             activation_derivatives.rank() == 4 &&
@@ -151,8 +123,7 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
             activation_derivatives.dimension(3) == neurons_number);
 
         EXPECT_EQ(check_softmax_derivatives(activations, activation_derivatives));
-        
-        /*
+
         EXPECT_EQ(
             abs(activation_derivatives(0, 0, 0, 0) - (activations(0, 0, 0) - activations(0, 0, 0) * activations(0, 0, 0))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 0, 1) - (-activations(0, 0, 0) * activations(0, 0, 1))) < type(1e-3) &&
@@ -163,7 +134,6 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
             abs(activation_derivatives(0, 0, 2, 0) - (-activations(0, 0, 2) * activations(0, 0, 0))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 2, 1) - (-activations(0, 0, 2) * activations(0, 0, 1))) < type(1e-3) &&
             abs(activation_derivatives(0, 0, 2, 2) - (activations(0, 0, 2) - activations(0, 0, 2) * activations(0, 0, 2))) < type(1e-3));
-        
     }
 
     {
@@ -198,10 +168,16 @@ void ProbabilisticLayer3DTest::test_calculate_activations()
 
         EXPECT_EQ(check_softmax_derivatives(activations, activation_derivatives));
     }
+*/
 }
 
-bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activations, Tensor<type, 4>& activation_derivatives) const
+
+TEST(ProbabilisticLayer3DTest, SoftmaxDerivatives)
 {
+/*
+    Tensor<type, 3>& activations;
+    Tensor<type, 4>& activation_derivatives;
+
     for(Index i = 0; i < samples_number; i++)
     {
         for(Index j = 0; j < inputs_number; j++)
@@ -224,15 +200,13 @@ bool ProbabilisticLayer3DTest::check_softmax_derivatives(Tensor<type, 3>& activa
             }
         }
     }
-
-    return true;
+*/
 }
 
 
-void ProbabilisticLayer3DTest::test_forward_propagate()
+TEST(ProbabilisticLayer3DTest, ForwardPropagate)
 {
-    cout << "test_forward_propagate\n";
-
+/*
     bool is_training = true;
 
     {
@@ -287,15 +261,6 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         Tensor<type, 1> biases(neurons_number);
         Tensor<type, 2> synaptic_weights(inputs_depth, neurons_number);
 
-        biases.setConstant(type(1));
-
-        synaptic_weights.setValues({ {type(1),type(-1),type(0),type(1)},
-                                    {type(2),type(-2),type(0),type(2)},
-                                    {type(3),type(-3),type(0),type(3)}});
-
-        probabilistic_layer_3d.set_synaptic_weights(synaptic_weights);
-        probabilistic_layer_3d.set_biases(biases);
-
         Tensor<type, 3> inputs(samples_number, inputs_number, inputs_depth);
         inputs.setConstant(type(1));
         
@@ -328,7 +293,5 @@ void ProbabilisticLayer3DTest::test_forward_propagate()
         EXPECT_EQ(correct_outputs);
 
     }
-}
-
-}
 */
+}

@@ -34,17 +34,15 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
 }
 
 
-const string& TimeSeriesDataSet::get_time_raw_variable() const
+const Index& TimeSeriesDataSet::get_time_raw_variable_index() const
 {
-    //return time_column; @todo
-    return "";
+    return time_raw_variable_index;
 }
 
 
-const string& TimeSeriesDataSet::get_group_by_column() const
+const Index& TimeSeriesDataSet::get_group_raw_variable_index() const
 {
-    //return group_by_column; @todo
-    return string();
+    return group_raw_variable_index;
 }
 
 
@@ -100,11 +98,11 @@ void TimeSeriesDataSet::print() const
          << "Number of targets: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_vector(input_dimensions);
+    print_vector(get_dimensions(DataSet::VariableUse::Input));
 
     cout << "Target variables dimensions: ";
 
-    print_vector(target_dimensions);
+    print_vector(get_dimensions(DataSet::VariableUse::Target));
 }
 
 
@@ -269,7 +267,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 
     // Samples uses
 
-    file_stream.OpenElement("SamplesUses");
+    file_stream.OpenElement("SampleUses");
     file_stream.PushText(tensor_to_string(get_sample_uses_vector()).c_str());
     file_stream.CloseElement();
 
@@ -744,7 +742,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Samples uses
 
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SamplesUses");
+    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
 
     if(!samples_uses_element)
         throw runtime_error("Samples uses element is nullptr.\n");

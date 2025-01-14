@@ -48,15 +48,15 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
                         const Tensor<type, 2>& x,
                         const Tensor<type, 2>& y)
 {
-    if(is_constant_matrix(x) || is_constant_matrix(y))
+    if(is_constant(x) || is_constant(y))
         return Correlation();
 
     const Index x_rows = x.dimension(0);
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
 
-    const bool x_binary = is_binary_matrix(x);
-    const bool y_binary = is_binary_matrix(y);
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -106,7 +106,7 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
 
     throw runtime_error("Correlations Exception: Unknown case.");
 
-    return Correlation();
+//    return Correlation();
 }
 
 
@@ -118,8 +118,8 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     const Index x_columns = x.dimension(1);
     const Index y_columns = y.dimension(1);
 
-    const bool x_binary = is_binary_matrix(x);
-    const bool y_binary = is_binary_matrix(y);
+    const bool x_binary = is_binary(x);
+    const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
 
@@ -362,7 +362,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(x.size() != y.size())
         throw runtime_error("Y size must be equal to X size.\n");
 
-    if(is_constant_vector(x) || is_constant_vector(y))
+    if(is_constant(x) || is_constant(y))
         return Correlation();
     
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
@@ -525,8 +525,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 1> y_filtered = filtered_elements.second;
 
     if (x_filtered.size() == 0
-    || is_constant_vector(x_filtered)
-    || is_constant_vector(y_filtered))
+    || is_constant(x_filtered)
+    || is_constant(y_filtered))
     {
         correlation.r = type(NAN);
         correlation.form = Correlation::Form::Logistic;
@@ -536,27 +536,23 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(x_filtered.size(), {1}, {1});
-
     data_set.set_data(data);
-
     data_set.set(DataSet::SampleUse::Training);
-
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
-
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
-
-    scaling_layer_2d->set_display(false);
-
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
-
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
-
     neural_network.set_parameters_constant(type(0.001));
 
+//    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+
+//    scaling_layer_2d->set_display(false);
+
+//    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+
+//    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+
     TrainingStrategy training_strategy(&neural_network, &data_set);
-    training_strategy.set_display(false);
+//    training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
@@ -565,8 +561,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
     training_strategy.perform_training();
-
-    Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
+    
+    const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
@@ -835,8 +831,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     vector<Index> input_columns_indices(x_filtered.dimension(1));
 
-    for(Index i = 0; i < x_filtered.dimension(1); i++)
-        input_columns_indices[i] = i;
+    iota(input_columns_indices.begin(), input_columns_indices.end(), 0);
 
     vector<Index> target_columns_indices(y_filtered.dimension(1));
 

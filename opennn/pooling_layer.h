@@ -134,7 +134,6 @@ private:
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
 
     const Eigen::array<ptrdiff_t, 2> pooling_dimensions = {1, 2};
-    const Eigen::array<Index, 4> shuffle_dimensions = {0, 1, 2, 3};
 };
 
 
@@ -144,7 +143,7 @@ struct PoolingLayerForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

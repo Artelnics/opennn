@@ -46,7 +46,7 @@ public:
 
    // Set
 
-   void set_default() override;
+   void set_default();
 
    void set_loss_index(LossIndex*) override;
 

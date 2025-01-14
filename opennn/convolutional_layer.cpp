@@ -52,8 +52,6 @@ void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs,
 
     type* synaptic_weights_data = (type*)synaptic_weights.data();
 
-    // Convolutional layer
-
     const Index kernels_number = get_kernels_number();
     const Index kernel_height = get_kernel_height();
     const Index kernel_width = get_kernel_width();
@@ -175,25 +173,15 @@ void ConvolutionalLayer::calculate_activations(Tensor<type, 4>& activations, Ten
     switch(activation_function)
     {
     case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
-
     case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
-
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
     case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
     case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-
     case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
-
     case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
-
     case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-
     case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-
     case ActivationFunction::LeakyRectifiedLinear: leaky_rectified_linear(activations, activation_derivatives, 0.1); return;
-
     default: return;
     }
 }
@@ -203,6 +191,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
 {
+    //cout << "Calculando tiempo convolution forward..." << endl;
     //auto start = chrono::high_resolution_clock::now();
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
@@ -210,14 +199,14 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
         static_cast<ConvolutionalLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
-
     Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
+
+    Tensor<type, 4>& outputs = convolutional_layer_forward_propagation->outputs;
 
     Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
-    preprocess_inputs(inputs, preprocessed_inputs); 
-    
+    preprocess_inputs(inputs, preprocessed_inputs);
+
     calculate_convolutions(preprocessed_inputs, outputs);
 
     // cout<<outputs.chip(0,0).chip(0,0).chip(0,0)<<endl<<endl;
@@ -239,7 +228,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     }
 
-    if(is_training)
+    //auto start_activations = chrono::high_resolution_clock::now();
+    if (is_training)
         calculate_activations(outputs, activation_derivatives);
     else
         calculate_activations(outputs, empty);
@@ -278,7 +268,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index output_width = get_output_width();
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-
+    
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     // Forward propagation
@@ -296,24 +286,19 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 4>& convolutions_derivatives =
         convolutional_layer_back_propagation->convolutions_derivatives;
 
-    Tensor<type, 1>& biases_derivatives = convolutional_layer_back_propagation->biases_derivatives;
+    Tensor<type, 1>& bias_derivatives = convolutional_layer_back_propagation->biases_derivatives;
 
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
 
-    type* synaptic_weights_data = (type*)synaptic_weights.data();
+    //type* synaptic_weights_data = (type*)synaptic_weights.data();
 
-    Tensor<type, 4>& kernel_synaptic_weights_derivatives = convolutional_layer_back_propagation->kernel_synaptic_weights_derivatives;
+    Tensor<type, 4>& rotated_synaptic_weights = convolutional_layer_back_propagation->rotated_synaptic_weights;
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
 
-    input_derivatives.setZero();
+    const Index kernel_size = kernel_height*kernel_width*kernel_channels;
 
-    const Index kernel_synaptic_weights_number = kernel_channels*kernel_height*kernel_width;
-
-    Tensor<type, 0> biases_derivatives_sum;
-
-    Tensor<type, 3> rotated_kernel_synaptic_weights;
-    Tensor<type, 2> rotated_kernel_slice;
+    vector<Tensor<type, 2>> rotated_slices(input_channels);
     Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
     Tensor<type, 2> channel_convolution(input_height, input_width);
 
@@ -345,86 +330,93 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     cout << "KERNEL WIDTH AND HEIGHT: " << kernel_width << ", " << kernel_height << endl;
 
+    cerr << deltas.dimensions() << ", " << activation_derivatives.dimensions() << endl;
+
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
-    // Biases synaptic weights and input derivatives
+    // Biases derivatives
 
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {       
-        TensorMap<Tensor<type, 3>> kernel_synaptic_weights(
-                                   synaptic_weights_data + kernel_index * kernel_synaptic_weights_number,
-                                   kernel_height,
-                                   kernel_width,
-                                   kernel_channels);
+    bias_derivatives.device(*thread_pool_device) = convolutions_derivatives.sum(convolutions_dimensions_3d);
 
-        TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
-                                   convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
-                                   batch_samples_number,
-                                   output_height,
-                                   output_width);
-        
-        // Biases derivatives
+    // Synaptic weigth derivatives
+    
+    #pragma omp parallel for
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+            batch_samples_number,
+            output_height,
+            output_width);
 
-        biases_derivatives_sum.device(*thread_pool_device) = kernel_convolutions_derivatives.sum();
-
-        biases_derivatives(kernel_index) = biases_derivatives_sum();
-
-        for (Index i = 0; i < biases_derivatives.size(); ++i) {
-            if (isnan(biases_derivatives(i))) {
-                cerr << "NaN detected in biases derivatives at index " << i << endl;
-                throw runtime_error("ya");
-            }
-        }
-
-        // Synaptic weights derivatives
+        TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
+            synaptic_weights_derivatives_data + kernel_index * kernel_size,
+            1, 
+            kernel_height, 
+            kernel_width, 
+            kernel_channels);
 
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
 
-        cout<<"kernel synaptic weights derivatives dimensions: "<<kernel_synaptic_weights_derivatives.dimensions()<<endl;
+        // cout<<"kernel synaptic weights derivatives dimensions: "<<kernel_synaptic_weights_derivatives.dimensions()<<endl;
 
-        // cout << "INPUT DIMENSIONS: " << inputs.dimensions() << endl;
+        // // cout << "INPUT DIMENSIONS: " << inputs.dimensions() << endl;
 
-        cout << "KERNEL SYNAPTIC WEIGHTS NUMBER: " << kernel_synaptic_weights_number << endl;
+        // cout << "KERNEL SYNAPTIC WEIGHTS NUMBER: " << kernel_size << endl;
 
-        if(kernel_synaptic_weights_derivatives.size() < kernel_synaptic_weights_number){
-            cerr << "WRONG SYNAPTIC WEIGHTS DIMENSIONS <" << endl;
-            // throw runtime_error("ya");
-        }
-
-
-        for (Index i = 0; i < kernel_synaptic_weights_derivatives.size(); ++i) {
-            if (isnan(kernel_synaptic_weights_derivatives(i)))
-            {
-                cerr << "NaN detected in kernel_synaptic_weights_derivatives at index " << i << endl;
-                throw runtime_error("ya");
-            }
-        }
+        // if(kernel_synaptic_weights_derivatives.size() < kernel_size){
+        //     cerr << "WRONG SYNAPTIC WEIGHTS DIMENSIONS <" << endl;
+        //     // throw runtime_error("ya");
+        // }
 
 
-        memcpy(synaptic_weights_derivatives_data + kernel_synaptic_weights_number * kernel_index,
-               kernel_synaptic_weights_derivatives.data(),
-               kernel_synaptic_weights_number * sizeof(type));
+        // for (Index i = 0; i < kernel_synaptic_weights_derivatives.size(); ++i) {
+        //     if (isnan(kernel_synaptic_weights_derivatives(i)))
+        //     {
+        //         cerr << "NaN detected in kernel_synaptic_weights_derivatives at index " << i << endl;
+        //         throw runtime_error("ya");
+        //     }
+        // }
+    }
 
-        // Input derivatives
+    // Input derivatives
 
-        rotated_kernel_synaptic_weights = kernel_synaptic_weights.reverse(reverse_dimensions);
+    rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
+    
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+            batch_samples_number,
+            output_height,
+            output_width);
+
+        const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
+            rotated_synaptic_weights.data() + kernel_index * kernel_size,
+            kernel_height,
+            kernel_width,
+            kernel_channels);
+
+
+
+        #pragma omp parallel for
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+            rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
         
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
         {
-            image_kernel_convolutions_derivatives_padded 
+            image_kernel_convolutions_derivatives_padded
                 = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
-                rotated_kernel_slice = rotated_kernel_synaptic_weights.chip(channel_index, 2);
-
-                channel_convolution.device(*thread_pool_device) 
-                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_kernel_slice, convolution_dimensions_2d);
+                channel_convolution.device(*thread_pool_device)
+                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
 
                 #pragma omp parallel for
-                for(Index x = 0; x < input_height; ++x)
-                    for(Index y = 0; y < input_width; ++y)
-                        input_derivatives(image_index, x, y, channel_index) += channel_convolution(x, y);
+                for (Index height = 0; height < input_height; ++height)
+                    for (Index width = 0; width < input_width; ++width)
+                        input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
             }
         }
     }
@@ -505,35 +497,16 @@ string ConvolutionalLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic:
-        return "Logistic";
-
-    case ActivationFunction::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case ActivationFunction::Linear:
-        return "Linear";
-
-    case ActivationFunction::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case ActivationFunction::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case ActivationFunction::SoftPlus:
-        return "SoftPlus";
-
-    case ActivationFunction::SoftSign:
-        return "SoftSign";
-
-    case ActivationFunction::HardSigmoid:
-        return "HardSigmoid";
-
-    case ActivationFunction::ExponentialLinear:
-        return "ExponentialLinear";
-
-    case ActivationFunction::LeakyRectifiedLinear:
-        return "LeakyRectifiedLinear";
+    case ActivationFunction::Logistic: return "Logistic";
+    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
+    case ActivationFunction::Linear: return "Linear";
+    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
+    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case ActivationFunction::SoftPlus: return "SoftPlus";
+    case ActivationFunction::SoftSign: return "SoftSign";
+    case ActivationFunction::HardSigmoid: return "HardSigmoid";
+    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
+    case ActivationFunction::LeakyRectifiedLinear: return "LeakyRectifiedLinear";
     }
 
     return string();
@@ -590,11 +563,8 @@ string ConvolutionalLayer::write_convolution_type() const
 {
     switch(convolution_type)
     {
-    case ConvolutionType::Valid:
-        return "Valid";
-
-    case ConvolutionType::Same:
-        return "Same";
+    case ConvolutionType::Valid: return "Valid";
+    case ConvolutionType::Same: return "Same";
     }
 
     return string();
@@ -718,7 +688,7 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
-    set_input_dimensions(new_input_dimensions);
+    input_dimensions = new_input_dimensions;
 
     const Index kernel_height = new_kernel_dimensions[0];
     const Index kernel_width = new_kernel_dimensions[1];
@@ -883,7 +853,7 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index kernel_width = get_kernel_width();
 
         const Index row_stride = get_row_stride();
-        const Index column_stride = get_column_stride();
+        //const Index column_stride = get_column_stride();
 
         const Index pad_rows = std::max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
         const Index pad_columns = std::max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
@@ -1110,10 +1080,10 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                         kernel_width,
                                         kernel_channels);
 
-    kernel_synaptic_weights_derivatives.resize(1,
-                                               kernel_height,
-                                               kernel_width,
-                                               kernel_channels);
+    rotated_synaptic_weights.resize(kernel_height,
+                                    kernel_width,
+                                    kernel_channels,
+                                    kernels_number);
 
     input_derivatives.resize(batch_samples_number,
                              input_height,

@@ -20,18 +20,18 @@ TEST(ModelSelectionTest, GeneralConstructor)
     EXPECT_EQ(model_selection.has_training_strategy(), true);
 }
 
-/*
-namespace opennn
+
+TEST(ModelSelectionTest, NeuronsSelection)
 {
 
-void ModelSelectionTest::test_perform_neurons_selection()
-{
-    data_set.generate_sum_data(20,2);
+//    data_set.generate_sum_data(20, 2);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {1}, {2}, {1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
 
+    TrainingStrategy training_strategy;
     training_strategy.set_display(false);
 
+    ModelSelection model_selection(&training_strategy);
     model_selection.set_display(false);
 
     GrowingNeurons* incremental_neurons = model_selection.get_growing_neurons();
@@ -40,43 +40,10 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     incremental_neurons->set_display(false);
 
-    NeuronsSelectionResults results;
+//    NeuronsSelectionResults results = model_selection.perform_neurons_selection();
 
-    results = model_selection.perform_neurons_selection();
-
-    EXPECT_EQ(model_selection.get_inputs_selection_method() == ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
-    EXPECT_EQ(model_selection.get_neurons_selection_method() == ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
-    EXPECT_EQ(results.optimum_selection_error != 0.0);
-    EXPECT_EQ(results.optimal_neurons_number >= 1 );
+    EXPECT_EQ(model_selection.get_inputs_selection_method(), ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+    EXPECT_EQ(model_selection.get_neurons_selection_method(), ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
+//    EXPECT_EQ(results.optimum_selection_error != 0.0);
+//    EXPECT_EQ(results.optimal_neurons_number >= 1);
 }
-
-
-void ModelSelectionTest::test_save()
-{
-    cout << "test_save\n";
-
-    string file_name = "../data/model_selection1.xml";
-
-    model_selection.save(file_name);
-}
-
-
-void ModelSelectionTest::test_load()
-{
-    cout << "test_load\n";
-
-    string file_name = "../data/model_selection.xml";
-    string file_name2 = "../data/model_selection2.xml";
-
-    model_selection.set_neurons_selection_method(ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
-
-    // Test
-
-    model_selection.save(file_name);
-    model_selection.load(file_name);
-    model_selection.save(file_name2);
-
-}
-
-}
-*/

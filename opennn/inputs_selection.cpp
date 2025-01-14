@@ -78,23 +78,6 @@ void InputsSelection::set(TrainingStrategy* new_training_strategy)
 }
 
 
-void InputsSelection::set_default()
-{
-    trials_number = 1;
-
-    // Stopping criteria
-
-    selection_error_goal = type(0);
-
-    maximum_epochs_number = 1000;
-
-    maximum_correlation = type(1);
-    minimum_correlation = type(0);
-
-    maximum_time = type(36000.0);
-}
-
-
 void InputsSelection::set_trials_number(const Index& new_trials_number)
 {
     trials_number = new_trials_number;

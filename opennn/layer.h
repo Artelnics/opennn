@@ -52,6 +52,8 @@ public:
 
     Layer();
 
+    virtual ~Layer() {}
+
     string get_name() const;
 
     const bool& get_display() const;

@@ -20,8 +20,6 @@ int main()
     {
         cout << "OpenNN. Iris Plant Example." << endl;
 
-        srand(unsigned(time(nullptr)));
-
         // Data set
 
         DataSet data_set("/Users/artelnics/Documents/opennn/examples/iris_plant/data/iris_plant_original.csv", ";", true);

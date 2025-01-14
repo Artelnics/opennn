@@ -89,7 +89,7 @@ class vml_assign_traits {
     static void run(DstXprType &dst, const SrcXprType &src, const assign_op<EIGENTYPE, EIGENTYPE> &func) { \
       resize_if_allowed(dst, src, func);                                                                   \
       eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());                                  \
-      if (vml_assign_traits<DstXprType, SrcXprNested>::Traversal == LinearTraversal) {                     \
+      if (vml_assign_traits<DstXprType, SrcXprNested>::Traversal == (int)LinearTraversal) {                \
         VMLOP(dst.size(), (const VMLTYPE *)src.nestedExpression().data(),                                  \
               (VMLTYPE *)dst.data() EIGEN_PP_EXPAND(EIGEN_VMLMODE_EXPAND_x##VMLMODE));                     \
       } else {                                                                                             \

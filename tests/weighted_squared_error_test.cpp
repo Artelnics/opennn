@@ -1,48 +1,31 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   W E I G H T E D   S Q U A R E D   E R R O R   T E S T   C L A S S     
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+#include "pch.h"
 
-#include "../opennn/tensors.h"
+#include "../opennn/weighted_squared_error.h"
 
-namespace opennn
+TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
+    WeightedSquaredError weighted_squared_error;
 
-WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
-{
-    weighted_squared_error.set(&neural_network, &data_set);
-
-    weighted_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+    EXPECT_EQ(weighted_squared_error.has_neural_network(), false);
+    EXPECT_EQ(weighted_squared_error.has_data_set(), false);
 }
 
 
-void WeightedSquaredErrorTest::test_constructor()
+TEST(WeightedSquaredErrorTest, GeneralConstructor)
 {
-    cout << "test_constructor\n";
+    NeuralNetwork neural_network;
+    DataSet data_set;
 
-    // Default
+    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
 
-    WeightedSquaredError weighted_squared_error_1;
-
-    assert_true(!weighted_squared_error_1.has_neural_network(), LOG);
-    assert_true(!weighted_squared_error_1.has_data_set(), LOG);
-
-    // Neural network and data set
-
-    WeightedSquaredError weighted_squared_error_2(&neural_network, &data_set);
-
-    assert_true(weighted_squared_error_2.has_neural_network(), LOG);
-    assert_true(weighted_squared_error_2.has_data_set(), LOG);
+    EXPECT_EQ(weighted_squared_error.has_neural_network(), true);
+    EXPECT_EQ(weighted_squared_error.has_data_set(), true);
 }
 
+/*
 
 void WeightedSquaredErrorTest::test_back_propagate()
 {
-    cout << "test_back_propagate\n";
-
     weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     // Test binary classification trivial
@@ -82,14 +65,14 @@ void WeightedSquaredErrorTest::test_back_propagate()
         numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(back_propagation.errors.dimension(0) == 1, LOG);
-        assert_true(back_propagation.errors.dimension(1) == 1, LOG);
-        assert_true(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN), LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
+        EXPECT_EQ(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN));
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), LOG);
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
     }
 
     // Test binary classification random samples, inputs, outputs, neurons
@@ -101,7 +84,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         bool is_training = true;
 
         // Data set
-/*
+
         data_set.set(samples_number, inputs_number, outputs_number);
         data_set.set_data_binary_random();
         data_set.set(DataSet::SampleUse::Training);
@@ -131,27 +114,15 @@ void WeightedSquaredErrorTest::test_back_propagate()
         numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
 
-        assert_true(back_propagation.errors.dimension(0) == samples_number, LOG);
-        assert_true(back_propagation.errors.dimension(1) == outputs_number, LOG);
+        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
+        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
 
-        assert_true(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), LOG);
-*/
+        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
     }
 }
 
-void WeightedSquaredErrorTest::run_test_case()
-{
-    cout << "Running weighted squared error test case...\n";
-
-    test_constructor();
-
-    test_back_propagate();
-
-    cout << "End of weighted squared error test case.\n\n";
 }
-
-}
-
+*/
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
 //

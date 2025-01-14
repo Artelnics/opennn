@@ -6,10 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "pch.h"
-#include "language_data_set.h"
-#include "tensors.h"
-#include "yolo_dataset.h"
+
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
 #include "forward_propagation.h"
@@ -26,7 +23,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
 }
 
 
-Index AdaptiveMomentEstimation::get_batch_samples_number() const
+Index AdaptiveMomentEstimation::get_samples_number() const
 {
     return batch_samples_number;
 }
@@ -138,16 +135,16 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     TrainingResults results(maximum_epochs_number + 1);
-    
+
     check();
 
     // Start training
 
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
-
-    if(!loss_index)
-        throw runtime_error("Loss index is null.");
 
     // Data set
 
@@ -162,31 +159,22 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-
-    const vector<Index> context_variable_indices = is_instance_of<LanguageDataSet>(data_set)
-                                                       ? static_cast<LanguageDataSet*>(data_set)->get_variable_indices(DataSet::VariableUse::Context)
-                                                       : vector<Index>();
+    const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
-
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-
-    const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-
-    vector<Descriptives> target_variable_descriptives;
 
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
-    const Index selection_batch_samples_number = (selection_samples_number > 0)
-           ? min(selection_samples_number, batch_samples_number)
-           : 0;
+    const Index selection_batch_samples_number = (selection_samples_number != 0)
+                                                 ? min(selection_samples_number, batch_samples_number)
+                                                 : 0;
 
     Batch training_batch(training_batch_samples_number, data_set);
+
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
@@ -209,6 +197,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     set_scaling();
 
+    set_vocabularies();
+
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
 
@@ -218,7 +208,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     BackPropagation training_back_propagation(training_batch_samples_number, loss_index);
     BackPropagation selection_back_propagation(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -250,12 +240,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     optimization_data.iteration = 1;
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {
+    {  
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        const Index training_batches_number = training_batches.size();
+        //const Index training_batches_number = training_batches.size();
 
         // cout<<training_batches_number<<endl<<endl<<endl;
 
@@ -264,20 +254,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
-        //optimization_data.iteration = 1;
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
-            
-            // Data set
 
             cout<<"=========training========="<<endl;
 
+            // Data set
             training_batch.fill(training_batches[iteration],
                 input_variable_indices,
-                target_variable_indices,
-                context_variable_indices);
+                decoder_variable_indices,
+                target_variable_indices);
+            
+            
 
             cout<<"=========batch========="<<endl;
 
@@ -335,6 +325,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
 
+
             // TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(training_back_propagation.get_output_deltas_pair());
 
 
@@ -354,6 +345,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                     throw runtime_error("Nope");
                 }
             }
+
+
+            // NUMERICAL GRADIENT
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
 
@@ -394,13 +388,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
             // Optimization algorithm
-
             update_parameters(training_back_propagation, optimization_data);
 
             //if(display && epoch % display_period == 0)
             // display_progress_bar(iteration, training_batches_number - 1);
         }
-        
+
         // Loss
 
         training_error /= type(training_batches_number);
@@ -419,12 +412,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
+
                 // Data set
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
                                      target_variable_indices,
-                                     context_variable_indices);
+                                     decoder_variable_indices);
                 // Neural network
 
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),
@@ -514,7 +508,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         }
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
-
     }
 
     set_unscaling();
@@ -568,7 +561,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
-    
+
     type effective_learning_rate = learning_rate * bias_correction;
 
     if(use_custom_learning_rate)

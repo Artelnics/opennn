@@ -2,6 +2,7 @@
 
 #include "../opennn/genetic_algorithm.h"
 
+using namespace opennn;
 
 TEST(GeneticAlgorithmTest, DefaultConstructor)
 {
@@ -23,7 +24,6 @@ TEST(GeneticAlgorithmTest, GeneralConstructor)
 
 TEST(GeneticAlgorithmTest, InitializePopulation)
 {
-
     DataSet data_set(1, { 1 }, { 1 });
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 1 }, { 1 });
@@ -35,22 +35,18 @@ TEST(GeneticAlgorithmTest, InitializePopulation)
 //    genetic_algorithm.set_individuals_number(10);
 //    genetic_algorithm.initialize_population();
 
-//    const Tensor<bool, 2>& population = genetic_algorithm.get_population();
+    const Tensor<bool, 2>& population = genetic_algorithm.get_population();
 //    const Tensor<bool, 1> gene = population.chip(0, 1);
 //    const Tensor<bool, 1> individual = population.chip(1, 0);
 
-//    EXPECT_EQ(population.dimension(0) == individuals_number);
-//    EXPECT_EQ(population.dimension(1) == inputs_number);
-//    EXPECT_EQ(gene.size() == individuals_number);
-//    EXPECT_EQ(individual.size() == inputs_number);
-
-
+//    EXPECT_EQ(population.dimension(0), individuals_number);
+//    EXPECT_EQ(population.dimension(1), inputs_number);
+//    EXPECT_EQ(gene.size(), individuals_number);
+//    EXPECT_EQ(individual.size(), inputs_number);
 }
 
 
 /*
-namespace opennn
-{
 void GeneticAlgorithmTest::test_initialize_population()
 {
     Tensor<bool, 2> population;
@@ -68,7 +64,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     Tensor<type,2> data(samples_number, inputs_number + outputs_number);
     data.setRandom();
-    data_set.set(data);
+    data_set.set_data(data);
 
     genetic_algorithm.set_individuals_number(individuals_number);
 
@@ -78,10 +74,10 @@ void GeneticAlgorithmTest::test_initialize_population()
     gene = population.chip(0,1);
     individual = population.chip(1,0);
 
-    EXPECT_EQ(population.dimension(0) == individuals_number);
-    EXPECT_EQ(population.dimension(1) == inputs_number);
-    EXPECT_EQ(gene.size() == individuals_number);
-    EXPECT_EQ(individual.size() == inputs_number);
+    EXPECT_EQ(population.dimension(0), individuals_number);
+    EXPECT_EQ(population.dimension(1), inputs_number);
+    EXPECT_EQ(gene.size(), individuals_number);
+    EXPECT_EQ(individual.size(), inputs_number);
 
     // Test
 
@@ -92,7 +88,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     data.resize(samples_number, inputs_number + outputs_number);
     data.setRandom();
-    data_set.set(data);
+    data_set.set_data(data);
 
     Tensor<Index, 1> input_variables_indices(inputs_number);
     Tensor<Index, 1> target_variables_indices(outputs_number);
@@ -110,44 +106,43 @@ void GeneticAlgorithmTest::test_initialize_population()
     gene = population.chip(0,1);
     individual = population.chip(1,0);
 
-    EXPECT_EQ(population.dimension(0) == individuals_number);
-    EXPECT_EQ(population.dimension(1) == inputs_number);
+    EXPECT_EQ(population.dimension(0), individuals_number);
+    EXPECT_EQ(population.dimension(1), inputs_number);
 
-    EXPECT_EQ(gene.size() == individuals_number);
-    EXPECT_EQ(individual.size() == inputs_number);
-
+    EXPECT_EQ(gene.size(), individuals_number);
+    EXPECT_EQ(individual.size(), inputs_number);
 }
+*/
 
 
-void GeneticAlgorithmTest::test_perform_fitness_assignment()
+TEST(GeneticAlgorithmTest, FitnessAssignment)
 {
-    cout << "test_calculate_fitness\n";
+/*
+    DataSet data_set;
 
     Tensor<type, 1> selection_errors;
 
     Tensor<type, 1> fitness;
 
-    // Test
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {3}, {2}, {1});
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {3}, {2}, {1});
+    MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+    GeneticAlgorithm genetic_algorithm;
 
     genetic_algorithm.set_individuals_number(4);
 
     selection_errors.resize(4);
+    selection_errors.setValues({type(1), type(2), type(3), type(4)});
 
-    selection_errors(0) = type(1);
-    selection_errors(1) = type(2);
-    selection_errors(2) = type(3);
-    selection_errors(3) = type(4);
-
-    genetic_algorithm.set_selection_errors(selection_errors);
+//    genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
 
     fitness = genetic_algorithm.get_fitness();
 
-    EXPECT_EQ(maximal_index(fitness) == 3);
-    EXPECT_EQ(minimal_index(fitness) == 0);
+    EXPECT_EQ(maximal_index(fitness), 3);
+    EXPECT_EQ(minimal_index(fitness), 0);
 
     // Test
 
@@ -168,16 +163,15 @@ void GeneticAlgorithmTest::test_perform_fitness_assignment()
 
     fitness = genetic_algorithm.get_fitness();
 
-    EXPECT_EQ(maximal_index(fitness) == 0);
-    EXPECT_EQ(minimal_index(fitness) == 3);
-
+    EXPECT_EQ(maximal_index(fitness), 0);
+    EXPECT_EQ(minimal_index(fitness), 3);
+*/
 }
 
 
-void GeneticAlgorithmTest::test_perform_selection()
+TEST(GeneticAlgorithmTest, Selection)
 {
-    cout << "test_perform_selection\n";
-
+/*
     Tensor<bool, 2> population;
 
     Tensor<bool, 1> selection;
@@ -277,16 +271,16 @@ void GeneticAlgorithmTest::test_perform_selection()
 
         EXPECT_EQ( count(selection.data(), selection.data() + selection.size(), 1)  == 4);
     }
+*/
 }
 
 
-void GeneticAlgorithmTest::test_perform_crossover()
+TEST(GeneticAlgorithmTest, Crossover)
 {
-    cout << "test_perform_crossover\n";
-
+/*
     Tensor<type, 2> data(10,5);
     data.setRandom();
-    data_set.set(data);
+    data_set.set_data(data);
 
     Tensor<bool, 2> population;
     Tensor<bool, 2> crossover_population;
@@ -326,17 +320,16 @@ void GeneticAlgorithmTest::test_perform_crossover()
        EXPECT_EQ(crossover_population(i,0) == 1);
        EXPECT_EQ(crossover_population(i,1) == 0);
     }
-
+*/
 }
 
 
-void GeneticAlgorithmTest::test_perform_mutation()
+TEST(GeneticAlgorithmTest, Mutation)
 {
-    cout << "test_perform_mutation\n";
-
+/*
     Tensor<type, 2> data(10,5);
     data.setRandom();
-    data_set.set(data);
+    data_set.set_data(data);
 
     Tensor<bool, 2> population;
     Tensor<bool, 1> individual;
@@ -394,16 +387,16 @@ void GeneticAlgorithmTest::test_perform_mutation()
     }
 
     EXPECT_EQ( mutated_genes >= 25);
+*/
 }
 
 
-void GeneticAlgorithmTest::test_perform_inputs_selection()
+TEST(GeneticAlgorithmTest, InputSelection)
 {
-    cout << "test_perform_inputs_selection\n";
-
+/*
     Tensor<type, 2> data;
 
-    InputsSelectionResults inputs_selection_results;
+    InputsSelectionResults input_selection_results;
 
     // Test 1
 
@@ -417,7 +410,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
         data(i,3) = type(i);
     }
 
-    data_set.set(data);
+    data_set.set_data(data);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2}, {6}, {1});
 
@@ -427,10 +420,10 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
 
     genetic_algorithm.set_selection_error_goal(1);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
-    EXPECT_EQ(inputs_selection_results.selection_error_history(0) <= 1);
+    EXPECT_EQ(input_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
+    EXPECT_EQ(input_selection_results.selection_error_history(0) <= 1);
 
 
     // Test 2
@@ -444,6 +437,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
         data(i,2) = type(1);
         j++;
     }
+
     for(Index i = 10; i < 20; i++)
     {
         data(i,0) = type(i);
@@ -451,7 +445,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
         data(i,2) = type(0);
     }
 
-    data_set.set(data);
+    data_set.set_data(data);
     data_set.set_default_raw_variables_uses();
 
     genetic_algorithm.set_display(false);
@@ -459,7 +453,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     genetic_algorithm.set_selection_error_goal(type(0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
     EXPECT_EQ(genetic_algorithm.get_maximum_iterations_number() == 1);
     EXPECT_EQ(genetic_algorithm.get_selection_error_goal() < 1);
@@ -488,11 +482,8 @@ void GeneticAlgorithmTest::test_perform_inputs_selection()
     genetic_algorithm.set_selection_error_goal(type(0.01));
     genetic_algorithm.set_maximum_epochs_number(10);
 
-    inputs_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.get_epochs_number() <= 100);
-
-}
-
-}
+    EXPECT_EQ(input_selection_results.get_epochs_number() <= 100);
 */
+}

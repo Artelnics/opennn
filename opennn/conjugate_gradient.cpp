@@ -56,7 +56,7 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     numerator.device(*thread_pool_device) = gradient.contract(gradient, AT_B);
     denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
-    FR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
+    FR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
         : numerator(0) / denominator(0);
 
@@ -93,7 +93,7 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
 
     denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
 
-    PR_parameter = (abs(denominator(0)) < type(NUMERIC_LIMITS_MIN))
+    PR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
         : numerator(0) / denominator(0);
 
@@ -237,7 +237,8 @@ void ConjugateGradient::set_minimum_loss_decrease(const type& new_minimum_loss_d
 
 TrainingResults ConjugateGradient::perform_training()
 {
-    check();
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
 
     // Start training
 
@@ -526,15 +527,15 @@ void ConjugateGradient::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = numeric_limits<type>::epsilon();
 
-        const Index parameters_number = back_propagation.parameters.size();
+        //const Index parameters_number = back_propagation.parameters.size();
 
         #pragma omp parallel for
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (std::abs(back_propagation.gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(back_propagation.gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 optimization_data.parameters_increment(i) = type(0);
             }

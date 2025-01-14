@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// System includes
 
 //#include <stdio.h>
 //#include <cstring>
@@ -22,8 +21,6 @@
 #include <cstdlib>
 
 
-// OpenNN includes
-
 #include "../opennn/opennn.h"
 #include "../opennn/data_set.h"
 #include "yolo_dataset.h"
@@ -31,6 +28,7 @@
 #include "yolo_network.h"
 #include "layer.h"
 #include "detection_layer.h"
+
 
 
 using namespace std;

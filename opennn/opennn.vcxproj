@@ -79,17 +79,26 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">opennn</TargetName>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Async</ExceptionHandling>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
+<<<<<<< HEAD
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>Use</PrecompiledHeader>
+=======
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+>>>>>>> 08452c0ce191902775a780b10aa6b3b629f3e28d
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);__Cpp11__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
@@ -98,6 +107,9 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level4</WarningLevel>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;__Cpp11__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
@@ -236,10 +248,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClInclude Include="addition_layer_3d.h" />
-    <ClInclude Include="auto_association_data_set.h" />
     <ClCompile Include="addition_layer_3d.cpp" />
-    <ClCompile Include="auto_association_data_set.cpp" />
+    <ClInclude Include="auto_associative_data_set.h" />
     <ClInclude Include="auto_associative_neural_network.h" />
+    <ClCompile Include="auto_associative_data_set.cpp" />
     <ClCompile Include="auto_associative_neural_network.cpp" />
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
@@ -250,7 +262,6 @@
     <ClInclude Include="model_expression.h" />
     <ClInclude Include="normalization_layer_3d.h" />
     <ClInclude Include="normalized_squared_error.h" />
-    <ClInclude Include="config.h" />
     <ClInclude Include="conjugate_gradient.h" />
     <ClCompile Include="conjugate_gradient.cpp" />
     <ClInclude Include="convolutional_layer.h" />
@@ -355,8 +366,6 @@
     <ClCompile Include="tensors.cpp" />
     <ClInclude Include="testing_analysis.h" />
     <ClCompile Include="testing_analysis.cpp" />
-    <ClInclude Include="text_data_set.h" />
-    <ClCompile Include="text_data_set.cpp" />
     <ClInclude Include="time_series_data_set.h" />
     <ClCompile Include="time_series_data_set.cpp" />
     <ClInclude Include="tinyxml2.h" />
@@ -374,7 +383,6 @@
     <ClCompile Include="unscaling_layer.cpp" />
     <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="weighted_squared_error.cpp" />
-    <ClInclude Include="word_bag.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

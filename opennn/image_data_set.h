@@ -21,6 +21,9 @@ public:
 
     ImageDataSet(const Index& = 0, const dimensions& = {0, 0, 0}, const dimensions& = {0});
 
+    dimensions get_input_dimensions() const;
+    dimensions get_target_dimensions() const;
+
     Index get_channels_number() const;
     Index get_image_width() const;
     Index get_image_height() const;
@@ -37,7 +40,7 @@ public:
     type get_random_vertical_translation_minimum() const;
     type get_random_vertical_translation_maximum() const;
 
-    void set_image_data_random();
+    void set_data_random() override;
 
     void set_input_dimensions(const dimensions&);
     void set_channels_number(const int&);

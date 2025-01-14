@@ -20,7 +20,6 @@
 
 // OpenNN includes
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
 //#include "opennn_images.h"
@@ -85,7 +84,7 @@ struct NonMaxSuppressionLayerForwardPropagation : LayerForwardPropagation
     explicit NonMaxSuppressionLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
 
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
     pair<type *, dimensions> get_outputs_pair() const final;
 

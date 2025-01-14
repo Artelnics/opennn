@@ -25,15 +25,19 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-   ProbabilisticLayer3D(const Index& = 0, const Index& = 0, const Index& = 0);
+   enum class ActivationFunction { Softmax, Competitive };
 
-   enum class ActivationFunction{Softmax, Competitive};
+   ProbabilisticLayer3D(const Index& = 0, 
+                        const Index& = 0, 
+                        const Index& = 0,
+                        const string& = "probabilistic_layer_3d");
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
    Index get_neurons_number() const;
 
    // @todo
+
    dimensions get_input_dimensions() const override
    {
        throw runtime_error("XXX");
@@ -42,20 +46,19 @@ public:
 
    dimensions get_output_dimensions() const override;
 
-   const type& get_decision_threshold() const;
-
    const ActivationFunction& get_activation_function() const;
    string get_activation_function_string() const;
-   string get_activation_function_string_text() const;
+   string get_activation_function_text() const;
 
-   void set(const Index& = 0, const Index& = 0, const Index& = 0);
+   void set(const Index& = 0, const Index& = 0, const Index& = 0, const string& = "probabilistic_layer_3d");
 
+   void set_inputs_number(const Index);
    void set_input_dimensions(const dimensions&) override;
+
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
-   void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
@@ -119,8 +122,6 @@ private:
 
    ActivationFunction activation_function = ActivationFunction::Softmax;
 
-   type decision_threshold;
-
    Tensor<type, 3> empty;
 
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
@@ -137,7 +138,7 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
     
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -159,11 +160,11 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 2> mask;
     bool built_mask = false;
 
-    Tensor<type, 3> combinations_derivatives;
+    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 };
 
 #ifdef OPENNN_CUDA

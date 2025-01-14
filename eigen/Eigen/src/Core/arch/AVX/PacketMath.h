@@ -124,6 +124,7 @@ struct packet_traits<float> : default_packet_traits {
     HasRsqrt = 1,
     HasTanh = EIGEN_FAST_MATH,
     HasErf = EIGEN_FAST_MATH,
+    HasErfc = EIGEN_FAST_MATH,
     HasBlend = 1
   };
 };
@@ -144,6 +145,8 @@ struct packet_traits<double> : default_packet_traits {
 #endif
     HasTanh = EIGEN_FAST_MATH,
     HasLog = 1,
+    HasErf = 1,
+    HasErfc = 1,
     HasExp = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
@@ -659,6 +662,16 @@ EIGEN_STRONG_INLINE uint64_t predux<Packet4ul>(const Packet4ul& a) {
   __m128i r = _mm_add_epi64(_mm256_castsi256_si128(a), _mm256_extractf128_si256(a, 1));
   return numext::bit_cast<uint64_t>(_mm_extract_epi64_0(r) + _mm_extract_epi64_1(r));
 }
+
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet4l& a) {
+  return _mm256_movemask_pd(_mm256_castsi256_pd(a)) != 0;
+}
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet4ul& a) {
+  return _mm256_movemask_pd(_mm256_castsi256_pd(a)) != 0;
+}
+
 #define MM256_SHUFFLE_EPI64(A, B, M) _mm256_shuffle_pd(_mm256_castsi256_pd(A), _mm256_castsi256_pd(B), M)
 EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet4l, 4>& kernel) {
   __m256d T0 = MM256_SHUFFLE_EPI64(kernel.packet[0], kernel.packet[1], 15);
@@ -1922,6 +1935,22 @@ EIGEN_STRONG_INLINE Packet4d pldexp<Packet4d>(const Packet4d& a, const Packet4d&
 }
 
 template <>
+EIGEN_STRONG_INLINE Packet4d pldexp_fast<Packet4d>(const Packet4d& a, const Packet4d& exponent) {
+  // Clamp exponent to [-1024, 1024]
+  const Packet4d min_exponent = pset1<Packet4d>(-1023.0);
+  const Packet4d max_exponent = pset1<Packet4d>(1024.0);
+  const Packet4i e = _mm256_cvtpd_epi32(pmin(pmax(exponent, min_exponent), max_exponent));
+  const Packet4i bias = pset1<Packet4i>(1023);
+
+  // 2^e
+  Packet4i hi = vec4i_swizzle1(padd(e, bias), 0, 2, 1, 3);
+  const Packet4i lo = _mm_slli_epi64(hi, 52);
+  hi = _mm_slli_epi64(_mm_srli_epi64(hi, 32), 52);
+  const Packet4d c = _mm256_castsi256_pd(_mm256_insertf128_si256(_mm256_castsi128_si256(lo), hi, 1));
+  return pmul(a, c);  // a * 2^e
+}
+
+template <>
 EIGEN_STRONG_INLINE float predux<Packet8f>(const Packet8f& a) {
   return predux(Packet4f(_mm_add_ps(_mm256_castps256_ps128(a), _mm256_extractf128_ps(a, 1))));
 }
@@ -2002,12 +2031,26 @@ EIGEN_STRONG_INLINE bool predux_any(const Packet8f& x) {
 }
 
 template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet4d& x) {
+  return _mm256_movemask_pd(x) != 0;
+}
+
+template <>
 EIGEN_STRONG_INLINE bool predux_any(const Packet8i& x) {
   return _mm256_movemask_ps(_mm256_castsi256_ps(x)) != 0;
 }
 template <>
 EIGEN_STRONG_INLINE bool predux_any(const Packet8ui& x) {
   return _mm256_movemask_ps(_mm256_castsi256_ps(x)) != 0;
+}
+
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet8h& x) {
+  return _mm_movemask_epi8(x) != 0;
+}
+template <>
+EIGEN_STRONG_INLINE bool predux_any(const Packet8bf& x) {
+  return _mm_movemask_epi8(x) != 0;
 }
 
 EIGEN_DEVICE_FUNC inline void ptranspose(PacketBlock<Packet8f, 8>& kernel) {

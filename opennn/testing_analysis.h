@@ -41,11 +41,11 @@ public:
     {
         Tensor<type, 2> roc_curve;
 
-        type area_under_curve;
+        type area_under_curve = 0;
 
-        type confidence_limit;
+        type confidence_limit = 0;
 
-        type optimal_threshold;
+        type optimal_threshold = 0;
     };
 
 
@@ -155,6 +155,7 @@ public:
    Tensor<Index, 2> calculate_confusion(const Tensor<type, 3>&, const Tensor<type, 3>&) const;
 
    Tensor<Index, 2> calculate_confusion() const;
+   Tensor<Index, 2> calculate_sentimental_analysis_transformer_confusion() const;
 
    Tensor<Index, 1> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -244,6 +245,8 @@ public:
    // Transformer
 
    pair<type, type> test_transformer() const;
+
+   string test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const;
 
    // Serialization
 

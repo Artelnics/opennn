@@ -32,7 +32,7 @@ void YoloError::calculate_error(const Batch& batch,
     // cout<<"=========error========="<<endl;
 
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -158,7 +158,7 @@ void YoloError::calculate_output_delta(const Batch& batch,
     YOLODataset* yolo_dataset = static_cast<YOLODataset*>(data_set);
 
     const vector<Tensor<type, 1>> anchors = yolo_dataset->get_anchors();
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 

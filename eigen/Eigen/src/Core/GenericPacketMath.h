@@ -194,7 +194,7 @@ struct is_half {
   static constexpr int Size = unpacket_traits<Packet>::size;
   using DefaultPacket = typename packet_traits<Scalar>::type;
   static constexpr int DefaultSize = unpacket_traits<DefaultPacket>::size;
-  static constexpr bool value = Size < DefaultSize;
+  static constexpr bool value = Size != 1 && Size < DefaultSize;
 };
 
 template <typename Src, typename Tgt>

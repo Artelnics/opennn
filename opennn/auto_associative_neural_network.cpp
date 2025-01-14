@@ -290,9 +290,9 @@ void AutoAssociativeNeuralNetwork::distance_descriptives_from_XML(const XMLDocum
     if(standard_deviation_element->GetText())
         new_standard_deviation = type(stod(standard_deviation_element->GetText()));
 
-    const Descriptives distance_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
+    const Descriptives new_distance_descriptives(new_minimum, new_maximum, new_mean, new_standard_deviation);
 
-    set_distance_descriptives(distance_descriptives);
+    set_distance_descriptives(new_distance_descriptives);
 
 }
 
@@ -437,7 +437,7 @@ void AutoAssociativeNeuralNetwork::save_autoassociation_outputs(const Tensor<typ
 {
     ofstream file(file_name);
 
-    if(distances_vector.size() != types_vector.size())
+    if(distances_vector.size() != Index(types_vector.size()))
         throw runtime_error("Distances and types vectors must have the same dimensions.\n");
 
     if(!file.is_open())
@@ -483,11 +483,13 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& printer) const
 
     buffer.str("");
 
-    for(Index i = 0; i < Index(layers.size()); i++)
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
     {
         buffer << layers[i]->get_type_string();
 
-        if(i != layers.size()-1)
+        if(i != layers_number - 1)
             buffer << " ";
     }
 
@@ -555,8 +557,6 @@ void AutoAssociativeNeuralNetwork::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     // DistancesDescriptives
-
-    const Descriptives distance_descriptives = get_distance_descriptives();
 
     printer.OpenElement("DistancesDescriptives");
     add_xml_element(printer, "Minimum", to_string(distance_descriptives.minimum));

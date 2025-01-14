@@ -4,9 +4,9 @@
 #include <iostream>
 #include <string>
 
-#include "config.h"
 #include "layer.h"
 #include "layer_forward_propagation.h"
+#include "pch.h"
 
 namespace opennn
 {
@@ -53,7 +53,7 @@ struct DetectionLayerForwardPropagation : LayerForwardPropagation
 
     pair<type *, dimensions> get_outputs_pair() const final;
 
-    void set(const Index& = 0, Layer* = nullptr) final;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const;
 

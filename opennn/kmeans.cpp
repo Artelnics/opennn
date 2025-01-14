@@ -134,7 +134,7 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
     const Index rows_number = data.dimension(0);
 
     Index original_clusters_number = clusters_number;
-    type sum_squared_error;
+    type mean_squared_error;
 
     for(Index cluster_index = 1; cluster_index <= max_clusters; cluster_index++)
     {
@@ -142,17 +142,17 @@ Tensor<type, 1> KMeans::elbow_method(const Tensor<type, 2>& data, Index max_clus
 
         fit(data);
 
-        sum_squared_error = type(0);
+        mean_squared_error = type(0);
 
         for(Index row_index = 0; row_index < rows_number; row_index++)
         {
             data_point = data.chip(row_index, 0);
             cluster_center = cluster_centers.chip(rows_cluster_labels(row_index), 0);
 
-            sum_squared_error += type(pow(l2_distance(data_point, cluster_center), 2));
+            mean_squared_error += type(pow(l2_distance(data_point, cluster_center), 2));
         }
 
-        sum_squared_error_values(cluster_index-1) = sum_squared_error;
+        sum_squared_error_values(cluster_index-1) = mean_squared_error;
     }
 
     clusters_number = original_clusters_number;

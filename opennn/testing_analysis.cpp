@@ -27,6 +27,7 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+
 }
 
 
@@ -491,10 +492,10 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
 
     Tensor<type, 1> errors(4);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    errors.setValues({sum_squared_error(0),
+    errors.setValues({mean_squared_error(0),
                       errors(0) / type(samples_number),
                       sqrt(errors(1)),
                       calculate_normalized_squared_error(targets, outputs)});;
@@ -533,10 +534,10 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_errors(const Da
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -565,10 +566,10 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_errors(const 
 
     // Results
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs-targets).square().sum().sqrt();
 
-    errors(0) = sum_squared_error(0);
+    errors(0) = mean_squared_error(0);
     errors(1) = errors(0)/type(training_samples_number);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
@@ -584,8 +585,8 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum();
 
     type normalization_coefficient = type(0);
 
@@ -598,7 +599,7 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
         normalization_coefficient += norm(0);
     }
 
-    return sum_squared_error()/normalization_coefficient;
+    return mean_squared_error()/normalization_coefficient;
 }
 
 
@@ -622,7 +623,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            if(outputs_row(j) < type(NUMERIC_LIMITS_MIN))
+            if(outputs_row(j) < NUMERIC_LIMITS_MIN)
                 outputs_row(j) = type(1.0e-6);
             else if(double(outputs_row(j)) == 1.0)
                 outputs_row(j) = numeric_limits<type>::max();
@@ -647,21 +648,18 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     Tensor<bool, 2> mask(batch_samples_number, outputs_number);
 
     Tensor<type, 0> cross_entropy_error;
-
-    mask.device(*thread_pool_device) = targets != targets.constant(0);
+    mask = targets != targets.constant(0);
 
     Tensor<type, 0> mask_sum;
-    mask_sum.device(*thread_pool_device) = mask.cast<type>().sum();
-
-#pragma omp parallel for
+    mask_sum = mask.cast<type>().sum();
 
     for(Index i = 0; i < batch_samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
-    errors.device(*thread_pool_device) = errors * mask.cast<type>();
+    errors = errors * mask.cast<type>();
 
-    cross_entropy_error.device(*thread_pool_device) = errors.sum();
+    cross_entropy_error = errors.sum();
 
     return cross_entropy_error(0) / mask_sum(0);
 }
@@ -705,8 +703,8 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     f_3.device(*thread_pool_device) = targets.constant(type(0));
 
-    Tensor<type, 0> sum_squared_error;
-    sum_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
+    Tensor<type, 0> mean_squared_error;
+    mean_squared_error.device(*thread_pool_device) = (if_sentence.select(f_1, else_sentence.select(f_2, f_3))).sum();
 
     Index negatives = 0;
 
@@ -718,7 +716,7 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
 
     const type normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
 
-    return sum_squared_error(0)/normalization_coefficient;
+    return mean_squared_error(0)/normalization_coefficient;
 }
 
 
@@ -744,17 +742,17 @@ type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, 
 
     Tensor<type, 0> accuracy;
 
-    mask.device(*thread_pool_device) = targets != targets.constant(0);
+    mask = targets != targets.constant(0);
 
     const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
 
-    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
+    predictions = outputs.argmax(2).cast<type>();
 
-    matches.device(*thread_pool_device) = predictions == targets;
+    matches = predictions == targets;
 
-    matches.device(*thread_pool_device) = matches && mask;
+    matches = matches && mask;
 
-    accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
+    accuracy = matches.cast<type>().sum() / mask_sum(0);
 
     return accuracy(0);
 }
@@ -887,7 +885,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     check();
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    //const Index outputs_number = neural_network->get_outputs_number();
 
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
@@ -895,12 +893,12 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
     const Index samples_number = targets.dimension(0);
 
-    const dimensions& input_dimensions = data_set->get_input_dimensions();
-    
+    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
+
     if(input_dimensions.size() == 1)
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
-        
+
         return calculate_confusion(outputs, targets);
     }
     else if(input_dimensions.size() == 3)
@@ -917,6 +915,67 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
         return calculate_confusion(outputs, targets);
+    }
+
+    return Tensor<Index, 2>();
+}
+
+
+Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_confusion() const
+{
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+    const Tensor<type, 2> inputs = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
+    const Tensor<type, 2> targets = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
+
+    const Index testing_batch_size = inputs.dimension(0) > 2000 ? 2000 : inputs.dimension(0);
+
+    Tensor<type, 2> testing_input(testing_batch_size, inputs.dimension(1));
+    Tensor<type, 2> testing_context(testing_batch_size, context.dimension(1));
+    Tensor<type, 2> testing_target(testing_batch_size, targets.dimension(1));
+
+    for(Index i = 0; i < testing_batch_size; i++)
+    {
+        testing_input.chip(i, 0) = inputs.chip(i, 0);
+        testing_context.chip(i, 0) = context.chip(i, 0);
+        testing_target.chip(i, 0) = targets.chip(i, 0);
+    }
+
+
+    if(input_dimensions.size() == 1)
+    {
+        Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+        cout<<outputs.dimensions()<<endl;
+        Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
+
+        for (Index i = 0; i < outputs.dimension(0); i++) {
+            reduced_outputs(i,0) = outputs(i,1,9);
+            reduced_outputs(i,1) = outputs(i,1,10);
+        }
+
+        // Tensor<type, 2> reduced_outputs(outputs.dimension(0), outputs.dimension(1));
+        // type index;
+        // type max;
+
+        // for (Index i = 0; i < outputs.dimension(0); i++) {
+        //     for (Index j = 0; j < outputs.dimension(1); j++) {
+        //         index = 0;
+        //         max = outputs(i,j,0);
+        //         for(Index k = 1; k < outputs.dimension(2); k++)
+        //             if(max < outputs(i,j,k)){
+        //                 index = type(k);
+        //                 max = outputs(i,j,k);
+        //             }
+        //         reduced_outputs(i,j) = index;
+        //     }
+        // }
+        // cout<<reduced_outputs.dimensions()<<endl;
+
+        return calculate_confusion(reduced_outputs, testing_target);
     }
 
     return Tensor<Index, 2>();
@@ -1244,7 +1303,7 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
         maximum_index = Index(percentage* type(testing_samples_number));
 
         for(Index j = 0; j < maximum_index; j++)
-            if(sorted_targets(j) < type(NUMERIC_LIMITS_MIN))
+            if(sorted_targets(j) < NUMERIC_LIMITS_MIN)
                  negatives++;
 
         negative_cumulative_gain(i + 1, 0) = percentage;
@@ -1393,12 +1452,12 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
     // Subtracts calibration plot rows with value -1
 
     Index points_number_subtracted = 0;
-
+/*
     while(contains(calibration_plot.chip(0,1), type(-1)))
      {
          for(Index i = 1; i < points_number - points_number_subtracted + 1; i++)
          {
-             if(abs(calibration_plot(i, 0) + type(1)) < type(NUMERIC_LIMITS_MIN))
+             if(abs(calibration_plot(i, 0) + type(1)) < NUMERIC_LIMITS_MIN)
              {
                  calibration_plot = delete_row(calibration_plot, i);
 
@@ -1406,7 +1465,7 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
              }
          }
      }
-
+*/
     return calibration_plot;
 }
 
@@ -1598,7 +1657,7 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
     {
         file << target_variable_names[i];
 
-        if(i != target_variable_names.size() - 1)
+        if(i != Index(target_variable_names.size()) - 1)
             file << ",";
     }
 
@@ -1988,7 +2047,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
     const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Context);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
@@ -2010,11 +2069,63 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
 
+
+    // cout<<"English:"<<endl;
+    // cout<<testing_context.chip(10,0)<<endl;
+    // for(Index i = 0; i < testing_context.dimension(1); i++){
+    //     cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
+    // }
+    // cout<<endl;
+    // cout<<endl;
+    // cout<<"Spanish:"<<endl;
+    // cout<<testing_input.chip(10,0)<<endl;
+    // for(Index i = 0; i < testing_input.dimension(1); i++){
+    //     cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
+    // }
+    // cout<<endl;
+    // cout<<endl;
+    // cout<<"Prediction:"<<endl;
+
+    // for(Index j = 0; j < outputs.dimension(1); j++){
+    //     type max = outputs(10, j, 0);
+    //     Index index = 0;
+    //     for(Index i = 1; i < outputs.dimension(2); i++){
+    //         if(max < outputs(10,j,i)){
+    //             index = i;
+    //             max = outputs(10,j,i);
+    //         }else{continue;}
+    //     }
+    //     cout<<index<<" ";
+    // }
+    // cout<<endl;
+    // for(Index j = 0; j < outputs.dimension(1); j++){
+    //     type max = outputs(10, j, 0);
+    //     Index index = 0;
+    //     for(Index i = 1; i < outputs.dimension(2); i++){
+    //         if(max < outputs(10,j,i)){
+    //             index = i;
+    //             max = outputs(10,j,i);
+    //         }else{continue;}
+    //     }
+    //     cout<<language_data_set->get_completion_vocabulary()[index]<<" ";
+    // }
+
+
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 
     const type accuracy = calculate_masked_accuracy(outputs, testing_target);
 
     return pair<type, type>(error, accuracy);
+}
+
+
+string TestingAnalysis::test_transformer(const vector<string>& context_string, const bool& imported_vocabulary) const
+{   cout<<endl;
+    cout<<"Testing transformer..."<<endl;
+
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+
+    return transformer->calculate_outputs(context_string);
 }
 
 
@@ -2053,9 +2164,9 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     type positive_likelihood;
 
-    if(abs(classification_accuracy - type(1)) < type(NUMERIC_LIMITS_MIN))
+    if(abs(classification_accuracy - type(1)) < NUMERIC_LIMITS_MIN)
         positive_likelihood = type(1);
-    else if(abs(type(1) - specificity) < type(NUMERIC_LIMITS_MIN))
+    else if(abs(type(1) - specificity) < NUMERIC_LIMITS_MIN)
         positive_likelihood = type(0);
     else
         positive_likelihood = sensitivity/(type(1) - specificity);
@@ -2064,7 +2175,7 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
 
     if(Index(classification_accuracy) == 1)
         negative_likelihood = type(1);
-    else if(abs(type(1) - sensitivity) < type(NUMERIC_LIMITS_MIN))
+    else if(abs(type(1) - sensitivity) < NUMERIC_LIMITS_MIN)
         negative_likelihood = type(0);
     else
         negative_likelihood = specificity/(type(1) - sensitivity);

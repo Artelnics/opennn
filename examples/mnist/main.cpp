@@ -22,15 +22,17 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
-
+        
         //Random image data set
-        const Index samples_number = 6;
+
+        const Index samples_number = 3;
         const Index image_height = 4;
         const Index image_width = 4;
         const Index channels = 1;
         const Index targets = 3;
 
         // ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
+
 
         // image_data_set.set_image_data_random();
 
@@ -49,7 +51,8 @@ int main()
         //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small");
         //image_data_set.set_data_source_path("C:/melanoma_supersmall");
 
-        //image_data_set.set_input_dimensions({24,24,1});
+
+        // image_data_set.set_input_dimensions({24,24,1});
 
         image_data_set.read_bmp();
 
@@ -59,7 +62,7 @@ int main()
             image_data_set.get_input_dimensions(),
             { 32 },
             image_data_set.get_target_dimensions());
-
+        
         //neural_network.print();
 
         // Training strategy
@@ -87,13 +90,12 @@ int main()
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         */
-
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+        
         cout << "Bye!" << endl;
         
         return 0;

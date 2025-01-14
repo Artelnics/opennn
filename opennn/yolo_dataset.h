@@ -5,7 +5,6 @@
 #include <chrono>
 #include <fstream>
 
-#include "config.h"
 #include "data_set.h"
 #include <filesystem>
 

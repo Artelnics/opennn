@@ -26,19 +26,18 @@ TEST(GrowingInputsTest, InputSelection)
     TrainingStrategy training_strategy;
 
     GrowingInputs growing_inputs(&training_strategy);
+    growing_inputs.set_display(false);
 
     EXPECT_EQ(growing_inputs.has_training_strategy(), true);
+
+//    InputsSelectionResults input_selection_results = growing_inputs.perform_inputs_selection();
 }
 
 /*
 
 void GrowingInputsTest::test_perform_inputs_selection()
 {
-    GrowingInputs growing_inputs(&training_strategy);
 
-    growing_inputs.set_display(false);
-
-    InputsSelectionResults inputs_selection_results;
 
     // Test
 
@@ -47,15 +46,14 @@ void GrowingInputsTest::test_perform_inputs_selection()
     Tensor<string, 1> columns_uses(3);
     columns_uses.setValues({"Input","Input","Target"});
 
-    data_set.set_raw_variables_uses(columns_uses);
+    data_set.set_raw_variable_uses(columns_uses);
 
     data_set.split_samples_random();
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2,1,1});
 
-    //inputs_selection_results = growing_inputs.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2);
+    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
 
     // Test
 
@@ -67,9 +65,9 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 
-    //inputs_selection_results = growing_inputs.perform_inputs_selection();
+    //input_selection_results = growing_inputs.perform_inputs_selection();
 
-    EXPECT_EQ(inputs_selection_results.optimal_input_raw_variables_indices[0] < 2);
+    EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
 
 }
 

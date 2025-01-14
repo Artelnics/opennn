@@ -72,7 +72,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    Index neurons_number;
+    Index neurons_number = 0;
 
     // Loss index
 

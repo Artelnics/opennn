@@ -26,9 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Classification Example." << endl;
-
-        //        srand(unsigned(time(nullptr)));
-
+/*
         // Data set
 
         DataSet data_set; //("../data/1000_classification_problem.csv", ',', false);
@@ -38,7 +36,7 @@ int main()
         const Index classes_number = 100;
         const Index hidden_neurons_number = 1000;
 
-        data_set.set_data_classification();
+        //data_set.set_data_classification();
 
         //      const Index input_variables_number = data_set.get_input_variables_number();
         //      const Index target_variables_number = data_set.get_target_variables_number();
@@ -56,7 +54,7 @@ int main()
             else
                 target_columns_indices(i-variables_number) = i;
         }
-/*
+
         data_set.set_input_target_raw_variables_indices(input_columns_indices, target_columns_indices);
         data_set.set(DataSet::SampleUse::Training);
 

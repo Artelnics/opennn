@@ -281,7 +281,8 @@ Tensor<ResponseOptimization::Condition, 1> ResponseOptimization::get_conditions(
 }
 
 
-Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, const Tensor<type, 1>& values) const
+Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Tensor<ResponseOptimization::Condition, 1>& conditions, 
+                                                                       const Tensor<type, 1>& values) const
 {
     const Index conditions_size = conditions.size();
 
@@ -369,7 +370,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             if(raw_variable_type == DataSet::RawVariableType::Numeric
             || raw_variable_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i, index++) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
+                inputs(i, index++) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
             else if(raw_variable_type == DataSet::RawVariableType::Binary)
@@ -405,7 +406,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             }
             else
             {
-                inputs(i, index) = calculate_random_uniform(input_minimums[index], input_maximums[index]);
+                inputs(i, index) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
         }

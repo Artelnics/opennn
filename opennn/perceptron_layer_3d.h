@@ -29,9 +29,10 @@ public:
                                   RectifiedLinear};
 
    PerceptronLayer3D(const Index& = 0,
-                              const Index& = 0,
-                              const Index& = 0,
-                              const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+                     const Index& = 0,
+                     const Index& = 0,
+                     const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
+                     const string& = "perceptron_layer_3d");
 
    Index get_inputs_number_xxx() const;
    Index get_inputs_depth() const;
@@ -56,9 +57,12 @@ public:
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent);
+            const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
+            const string & = "perceptron_layer_3d");
 
+   void set_inputs_number(Index);
    void set_input_dimensions(const dimensions&) override;
+
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
@@ -131,7 +135,7 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -151,10 +155,10 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 1> biases_derivatives;
-    Tensor<type, 2> synaptic_weights_derivatives;
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> synaptic_weight_derivatives;
 
-    Tensor<type, 3> combinations_derivatives;
+    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 };
 

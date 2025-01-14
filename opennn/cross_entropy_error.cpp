@@ -26,7 +26,7 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet*
 void CrossEntropyError::calculate_error(const Batch& batch,
                                         const ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation) const
-{      
+{
     const Index outputs_number = neural_network->get_outputs_number();
 
     (outputs_number == 1)
@@ -41,7 +41,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -70,8 +70,8 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
-    
+    const Index batch_samples_number = batch.get_samples_number();
+
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
@@ -90,19 +90,16 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     // Back propagation
 
-    const Index layers_number = back_propagation.neural_network.layers.size();
+    //const Index layers_number = back_propagation.neural_network.layers.size();
 
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
-        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
+    //ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+    //    static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
-    // cout<<"============Error============="<<endl;
-
-    probabilistic_layer_back_propagation->targets = targets;
+    //probabilistic_layer_back_propagation->targets = targets;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-
-    error.device(*thread_pool_device) =(targets*(outputs.log())).sum() / type(-batch_samples_number);
+    error.device(*thread_pool_device) = (targets*outputs.log()).sum() / type(-batch_samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -130,7 +127,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -158,7 +155,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 

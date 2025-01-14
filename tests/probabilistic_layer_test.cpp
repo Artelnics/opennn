@@ -21,7 +21,6 @@ TEST(ProbabilisticLayerTest, GeneralConstructor)
 }
 
 
-
 TEST(ProbabilisticLayerTest, CalculateCombinations)
 {
     ProbabilisticLayer probabilistic_layer({ 1 }, { 2 });
@@ -30,28 +29,20 @@ TEST(ProbabilisticLayerTest, CalculateCombinations)
     EXPECT_EQ(probabilistic_layer.get_output_dimensions(), dimensions{ 2 });
     EXPECT_EQ(probabilistic_layer.get_parameters_number(), 4);
 
-    Tensor<type, 1> biases(1);
-    Tensor<type, 2> synaptic_weights(1, 1);
-
-    biases.setConstant(type(1));
-    synaptic_weights.setConstant(type(2));
-
     Tensor<type, 2> inputs(1, 1);
-    inputs.setConstant(type(3));
-/*
-    Tensor<type, 2> combinations(1, 1);
-    probabilistic_layer.set(1, 1);
+    inputs.setConstant(type(1));
 
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer.set_biases(biases);
+    Tensor<type, 2> combinations(1, 1);
+    probabilistic_layer.set({ 1 }, { 1 });
+    probabilistic_layer.set_parameters_constant(type(1));
 
     probabilistic_layer.calculate_combinations(inputs, combinations);
 
-    EXPECT_EQ(combinations.rank() == 2
-        && combinations.dimension(0) == 1
-        && combinations.dimension(1) == 1);
-
-    EXPECT_EQ(abs(combinations(0, 0) - type(7)) < type(1e-5));
+    EXPECT_EQ(combinations.rank(), 2);
+    EXPECT_EQ(combinations.dimension(0), 1);
+    EXPECT_EQ(combinations.dimension(1), 1);
+/*
+    EXPECT_EQ(combinations(0, 0),  type(1), NUMERIC_LIMITS_MIN);
 */
 }
 
@@ -65,11 +56,10 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
 
     Tensor<type, 2> activations(1, 1);
     Tensor<type, 2> activation_derivatives(1, 1);
-/*
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
 
-    probabilistic_layer.calculate_activations(combinations,
-        activation_derivatives);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    /*
+    probabilistic_layer.calculate_activations(combinations, activation_derivatives);
 
     EXPECT_EQ(abs(activations(0, 0) - type(0.175)) < type(1e-2));
 
@@ -83,55 +73,44 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
 }
 
 
-
-/*
-void ProbabilisticLayerTest::test_calculate_activations()
+TEST(ProbabilisticLayerTest, ForwardPropagate)
 {
-    // Test
+    const Index inputs_number = 2;
+    const Index neurons_number = 2;
+    const Index samples_number = 5;
 
-    samples_number = 1;
-    inputs_number = 1;
-    neurons_number = 1;
-
-}
-
-
-void ProbabilisticLayerTest::test_forward_propagate()
-{
-    cout << "test_forward_propagate\n";
-
-    inputs_number = 2;
-    neurons_number = 2;
-    samples_number = 5;
-
-    probabilistic_layer.set(inputs_number, neurons_number);
+    ProbabilisticLayer probabilistic_layer({ inputs_number }, { neurons_number });
 
     probabilistic_layer.set_parameters_constant(type(1));
 
-    inputs.resize(samples_number, inputs_number);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
     //Forward propagate
 
-    probabilistic_layer_forward_propagation.set(samples_number, &probabilistic_layer);
+    ProbabilisticLayerForwardPropagation probabilistic_layer_forward_propagation(samples_number, &probabilistic_layer);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    input_pairs.first = inputs.data();
-    input_pairs.second = {{samples_number, inputs_number}};
-
-    probabilistic_layer.forward_propagate({input_pairs},
-                                          &probabilistic_layer_forward_propagation,
-                                          is_training);
+    const vector<pair<type*, dimensions>> input_pairs;// = { inputs.data(), {{samples_number, inputs_number}} };
+/*
+    probabilistic_layer.forward_propagate({ input_pairs },
+        &probabilistic_layer_forward_propagation,
+        is_training);
 
     outputs = probabilistic_layer_forward_propagation.outputs;
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == neurons_number );
-    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,1) - type(0.5)) < type(1e-3));
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), neurons_number);
+    EXPECT_EQ(abs(outputs(0, 0) - type(0.5)) < type(1e-3));
+    EXPECT_EQ(abs(outputs(0, 1) - type(0.5)) < type(1e-3));
+*/
+}
+
+/*
+
+void ProbabilisticLayerTest::test_forward_propagate()
+{
     
     // Test 1
 
@@ -143,18 +122,6 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> inputs_test_1_tensor(samples_number,inputs_number);
     inputs_test_1_tensor.setConstant(type(1));
-
-    synaptic_weights.resize(3, 4);
-    biases.resize( 4);
-
-    biases.setConstant(type(1));
-
-    synaptic_weights.setValues({{type(1),type(-1),type(0),type(1)},
-                                {type(2),type(-2),type(0),type(2)},
-                                {type(3),type(-3),type(0),type(3)}});
-
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer.set_biases(biases);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
 
@@ -207,32 +174,18 @@ void ProbabilisticLayerTest::test_forward_propagate()
 
     Tensor<type, 2> outputs_test_2 = probabilistic_layer_forward_propagation.outputs;
 
-    EXPECT_EQ(outputs_test_2.dimension(0) == 1);
-    EXPECT_EQ(outputs_test_2.dimension(1) == 4);
-    EXPECT_EQ(Index(outputs_test_2(0,0)) == 1);
-    EXPECT_EQ(Index(outputs_test_2(0,1)) == 0);
-    EXPECT_EQ(Index(outputs_test_2(0,2)) == 0);
-    EXPECT_EQ(Index(outputs_test_2(0,3)) == 0);
+    EXPECT_EQ(outputs_test_2.dimension(0), 1);
+    EXPECT_EQ(outputs_test_2.dimension(1), 4);
+    EXPECT_EQ(Index(outputs_test_2(0,0)), 1);
+    EXPECT_EQ(Index(outputs_test_2(0,1)), 0);
+    EXPECT_EQ(Index(outputs_test_2(0,2)), 0);
+    EXPECT_EQ(Index(outputs_test_2(0,3)), 0);
 
     // Test 3
 
     inputs_number = 2;
     neurons_number = 4;
     samples_number = 1;
-    is_training = true;
-
-    biases.resize( 4);
-    biases.setValues({type(9),type(-8),type(7),type(-6)});
-
-    synaptic_weights.resize(2, 4);
-
-    synaptic_weights.resize(2, 4);
-
-    synaptic_weights.setValues({{type(-11), type(12), type(-13), type(14)},
-                                {type(21), type(-22), type(23), type(-24)}});
-
-    probabilistic_layer.set_synaptic_weights(synaptic_weights);
-    probabilistic_layer.set_biases(biases);
 
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
@@ -280,9 +233,7 @@ void ProbabilisticLayerTest::test_forward_propagate()
     
     EXPECT_EQ(outputs.dimension(0) == 1);
     EXPECT_EQ(outputs.dimension(1) == 2);
-    EXPECT_EQ(abs(outputs(0,0) - type(0.5)) < type(NUMERIC_LIMITS_MIN));
-
-}
+    EXPECT_NEAR(abs(outputs(0,0) - type(0.5)) < NUMERIC_LIMITS_MIN);
 
 }
 */

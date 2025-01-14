@@ -26,12 +26,11 @@ class MultiheadAttentionLayer : public Layer
 public:
 
     MultiheadAttentionLayer(const Index& = 0,
-                                     const Index& = 0,
-                                     const Index& = 0,
-                                     const Index& = 0,
-                                     const bool & = false);
-
-    bool is_empty() const;
+                            const Index& = 0,
+                            const Index& = 0,
+                            const Index& = 0,
+                            const bool& = false,
+                            const string& = "multihead_attention_layer");
 
     Index get_input_size() const;
     Index get_context_size() const;
@@ -39,27 +38,21 @@ public:
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
-    // @todo
-    dimensions get_input_dimensions() const override
-    {
-        throw runtime_error("XXX");
-    }
+    dimensions get_input_dimensions() const override;
 
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
-    void set(const Index& = 0, const Index& = 0, const Index& = 0, const Index& = 0);
+    void set(const Index& = 0, 
+             const Index& = 0, 
+             const Index& = 0, 
+             const Index& = 0, 
+             const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
-    void set_input_size(const Index&);
-    void set_context_size(const Index&);
-    void set_depth(const Index&);
-    void set_heads_number(const Index&);
-
-    void set_weights();
     void set_parameters_random() override;
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;
@@ -74,7 +67,8 @@ public:
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    //void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -144,19 +138,19 @@ private:
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
 
-    MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0, 
+    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
                                                        Layer* new_layer = nullptr);
-                
+
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index& = 0, Layer* = nullptr) override;
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     Tensor<type, 4> query;
     Tensor<type, 4> key;
     Tensor<type, 4> value;
-        
+
     Tensor<type, 2> sample_matrix;
 
     Tensor<type, 4> attention_scores;
@@ -171,7 +165,7 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

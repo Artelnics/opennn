@@ -124,8 +124,7 @@ struct evaluator_base {
   // noncopyable:
   // Don't make this class inherit noncopyable as this kills EBO (Empty Base Optimization)
   // and make complex evaluator much larger than then should do.
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE evaluator_base() {}
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~evaluator_base() {}
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr evaluator_base() = default;
 
  private:
   EIGEN_DEVICE_FUNC evaluator_base(const evaluator_base&);
@@ -143,7 +142,7 @@ struct evaluator_base {
 template <typename Scalar, int OuterStride>
 class plainobjectbase_evaluator_data {
  public:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE plainobjectbase_evaluator_data(const Scalar* ptr, Index outerStride)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr plainobjectbase_evaluator_data(const Scalar* ptr, Index outerStride)
       : data(ptr) {
 #ifndef EIGEN_INTERNAL_DEBUGGING
     EIGEN_UNUSED_VARIABLE(outerStride);
@@ -157,9 +156,9 @@ class plainobjectbase_evaluator_data {
 template <typename Scalar>
 class plainobjectbase_evaluator_data<Scalar, Dynamic> {
  public:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE plainobjectbase_evaluator_data(const Scalar* ptr, Index outerStride)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr plainobjectbase_evaluator_data(const Scalar* ptr, Index outerStride)
       : data(ptr), m_outerStride(outerStride) {}
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index outerStride() const { return m_outerStride; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Index outerStride() const { return m_outerStride; }
   const Scalar* data;
 
  protected:
@@ -189,32 +188,34 @@ struct evaluator<PlainObjectBase<Derived>> : evaluator_base<Derived> {
                                                      : RowsAtCompileTime
   };
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE evaluator() : m_d(0, OuterStrideAtCompileTime) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr evaluator() : m_d(0, OuterStrideAtCompileTime) {
     EIGEN_INTERNAL_CHECK_COST_VALUE(CoeffReadCost);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit evaluator(const PlainObjectType& m)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr explicit evaluator(const PlainObjectType& m)
       : m_d(m.data(), IsVectorAtCompileTime ? 0 : m.outerStride()) {
     EIGEN_INTERNAL_CHECK_COST_VALUE(CoeffReadCost);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index row, Index col) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr CoeffReturnType coeff(Index row, Index col) const {
     if (IsRowMajor)
       return m_d.data[row * m_d.outerStride() + col];
     else
       return m_d.data[row + col * m_d.outerStride()];
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const { return m_d.data[index]; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr CoeffReturnType coeff(Index index) const { return m_d.data[index]; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar& coeffRef(Index row, Index col) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Scalar& coeffRef(Index row, Index col) {
     if (IsRowMajor)
       return const_cast<Scalar*>(m_d.data)[row * m_d.outerStride() + col];
     else
       return const_cast<Scalar*>(m_d.data)[row + col * m_d.outerStride()];
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar& coeffRef(Index index) { return const_cast<Scalar*>(m_d.data)[index]; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr Scalar& coeffRef(Index index) {
+    return const_cast<Scalar*>(m_d.data)[index];
+  }
 
   template <int LoadMode, typename PacketType>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketType packet(Index row, Index col) const {
@@ -251,9 +252,10 @@ struct evaluator<Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>
     : evaluator<PlainObjectBase<Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>> {
   typedef Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> XprType;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE evaluator() {}
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr evaluator() = default;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit evaluator(const XprType& m) : evaluator<PlainObjectBase<XprType>>(m) {}
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr explicit evaluator(const XprType& m)
+      : evaluator<PlainObjectBase<XprType>>(m) {}
 };
 
 template <typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
@@ -261,9 +263,10 @@ struct evaluator<Array<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>
     : evaluator<PlainObjectBase<Array<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>> {
   typedef Array<Scalar, Rows, Cols, Options, MaxRows, MaxCols> XprType;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE evaluator() {}
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr evaluator() = default;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE explicit evaluator(const XprType& m) : evaluator<PlainObjectBase<XprType>>(m) {}
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr explicit evaluator(const XprType& m)
+      : evaluator<PlainObjectBase<XprType>>(m) {}
 };
 
 // -------------------- Transpose --------------------

@@ -35,7 +35,8 @@ public:
                         Forecasting,
                         ImageClassification,
                         Yolo,
-                        TextClassification,};
+                        TextClassification,
+                        TextClassificationTransformer};
 
     enum class ProgrammingLanguage{C,
                                    Python,
@@ -96,6 +97,7 @@ public:
    void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
+   void set_text_classification_transformer(const dimensions&, const dimensions&, const dimensions&);
 
    void set(const filesystem::path&);
 
@@ -131,9 +133,6 @@ public:
    Index get_first_trainable_layer_index() const;
    Index get_last_trainable_layer_index() const;
 
-   // bool is_input_layer(const vector<Index>&) const;
-   // bool is_context_layer(const vector<Index>&) const;
-
    // Architecture
 
    Index get_inputs_number() const;
@@ -165,7 +164,7 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Index calculate_image_output(const string&);
+   Index calculate_image_output(const filesystem::path&);
 
    // Serialization
 
@@ -179,7 +178,7 @@ public:
 
    void to_XML(XMLPrinter&) const;
 
-   void print() const;
+   virtual void print() const;
    void save(const filesystem::path&) const;
    void save_parameters(const filesystem::path&) const;
 

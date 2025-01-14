@@ -179,7 +179,7 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 }
 
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMethodData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
     {
@@ -197,7 +197,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
@@ -236,7 +236,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& opt
 }
 
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& optimization_data) const
 {
     const Tensor<type, 1>& parameters_difference = optimization_data.parameters_difference;
     const Tensor<type, 1>& gradient_difference = optimization_data.gradient_difference;
@@ -285,7 +285,7 @@ void QuasiNewtonMethod::update_parameters(
         const Batch& batch,
         ForwardPropagation& forward_propagation,
         BackPropagation& back_propagation,
-        QuasiNewtonMehtodData& optimization_data) const
+        QuasiNewtonMethodData& optimization_data) const
 {
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
@@ -312,8 +312,8 @@ void QuasiNewtonMethod::update_parameters(
     // Get training direction
 
     if(optimization_data.epoch == 0 
-    || is_zero(parameters_difference) 
-    || is_zero(gradient_difference))
+    || is_equal(parameters_difference, type(0)) 
+    || is_equal(gradient_difference, type(0)))
         set_identity(inverse_hessian);
     else
         calculate_inverse_hessian_approximation(optimization_data);
@@ -349,7 +349,7 @@ void QuasiNewtonMethod::update_parameters(
     }
     else
     {
-        const type epsilon = std::numeric_limits<type>::epsilon();
+        constexpr type epsilon = std::numeric_limits<type>::epsilon();
 
         const Index parameters_number = parameters.size();
 
@@ -357,7 +357,7 @@ void QuasiNewtonMethod::update_parameters(
 
         for(Index i = 0; i < parameters_number; i++)
         {
-            if (abs(gradient(i)) < type(NUMERIC_LIMITS_MIN))
+            if (abs(gradient(i)) < NUMERIC_LIMITS_MIN)
             {
                 parameters_increment(i) = type(0);
             }
@@ -389,6 +389,9 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
     // Start training
 
     if(display) cout << "Training with quasi-Newton method...\n";
@@ -462,7 +465,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     time(&beginning_time);
     type elapsed_time;
 
-    QuasiNewtonMehtodData optimization_data(this);
+    QuasiNewtonMethodData optimization_data(this);
 
     // Main loop
 
@@ -477,7 +480,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
-        
+
         // Loss index
 
         loss_index->back_propagate(training_batch, 
@@ -653,7 +656,7 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 }
 
 
-void QuasiNewtonMehtodData::set(QuasiNewtonMethod* new_quasi_newton_method)
+void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 {
     quasi_newton_method = new_quasi_newton_method;
 

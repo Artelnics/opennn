@@ -54,7 +54,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -82,7 +82,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
                                             ForwardPropagation&,
                                             BackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_batch_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
     // Back propagation
    
@@ -91,20 +91,10 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
     const Tensor<type, 2>& errors = back_propagation.errors;
-/*
-    p_norm_derivative.device(*thread_pool_device) 
-        = ;
 
-    if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-    {
-        deltas.setZero();
+    const type coefficient = type(1.0 / batch_samples_number);
 
-        return;
-    }
-
-    const type coefficient = type(1.0 / (p_norm_derivative() * batch_samples_number));
-*/
-    deltas.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter - 1)*(minkowski_parameter/(type)batch_samples_number);
+    deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
 }
 
 

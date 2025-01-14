@@ -88,23 +88,23 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 2"));
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 128},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 3"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 128},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 3"));
 
-    // // layers[5]->set_parameters_constant(1);
+    // // // layers[5]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 64},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 4"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 64},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 4"));
 
-    // // layers[6]->set_parameters_constant(1);
+    // // // layers[6]->set_parameters_constant(1);
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 128},
@@ -122,23 +122,23 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            pooling_method,
                                            "Pooling layer 3"));
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 256},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 6"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 256},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 6"));
 
-    // // layers[9]->set_parameters_constant(1);
+    // // // layers[9]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 128},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 7"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 128},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 7"));
 
-    // // layers[10]->set_parameters_constant(1);
+    // // // layers[10]->set_parameters_constant(1);
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                  (dimensions){3, 3, get_output_dimensions()[2], 256},
@@ -166,41 +166,41 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // layers[13]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 256},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 10"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 10"));
 
-    // // layers[14]->set_parameters_constant(1);
+    // // // layers[14]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 512},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 11"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 11"));
 
-    // // layers[15]->set_parameters_constant(1);
+    // // // layers[15]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 256},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 12"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 12"));
 
-    // // layers[16]->set_parameters_constant(1);
+    // // // layers[16]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){3, 3, get_output_dimensions()[2], 512},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 13"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 13"));
 
-    // // layers[17]->set_parameters_constant(1);
+    // // // layers[17]->set_parameters_constant(1);
 
     add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                            pool_dimensions,
@@ -216,16 +216,16 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
     //                                           convolution_type,
     //                                           "Convolutional layer 14"));
 
-    // // layers[19]->set_parameters_constant(1);
+    // // // layers[19]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                 (dimensions){1, 1, get_output_dimensions()[2], 512},
-                                                 activation_function,
-                                                 convolution_stride_dimensions,
-                                                 convolution_type,
-                                                 "Convolutional layer 15"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                              (dimensions){1, 1, get_output_dimensions()[2], 512},
+    //                                              activation_function,
+    //                                              convolution_stride_dimensions,
+    //                                              convolution_type,
+    //                                              "Convolutional layer 15"));
 
-    // // // layers[20]->set_parameters_constant(1);
+    // // // // layers[20]->set_parameters_constant(1);
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
@@ -254,32 +254,32 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
 
     // // // layers[23]->set_parameters_constant(1);
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                              activation_function,
-                                              convolution_stride_dimensions,
-                                              convolution_type,
-                                              "Convolutional layer 19"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           activation_function,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 19"));
 
-    // // layers[24]->set_parameters_constant(1)
+    // // // layers[24]->set_parameters_constant(1)
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                              activation_function,
-                                              convolution_stride_dimensions,
-                                              convolution_type,
-                                              "Convolutional layer 20"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           activation_function,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 20"));
 
-    // // layers[25]->set_parameters_constant(1)
+    // // // layers[25]->set_parameters_constant(1)
 
-    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                              (dimensions){3, 3, get_output_dimensions()[2], 1024},
-                                              activation_function,
-                                              convolution_stride_dimensions,
-                                              convolution_type,
-                                              "Convolutional layer 21"));
+    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+    //                                           (dimensions){3, 3, get_output_dimensions()[2], 1024},
+    //                                           activation_function,
+    //                                           convolution_stride_dimensions,
+    //                                           convolution_type,
+    //                                           "Convolutional layer 21"));
 
-    // // layers[26]->set_parameters_constant(1)
+    // // // layers[26]->set_parameters_constant(1)
 
     add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                               (dimensions){1, 1, get_output_dimensions()[2], 125},

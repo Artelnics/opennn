@@ -1,141 +1,99 @@
 #include "pch.h"
 
-#include "../opennn/config.h"
 #include "../opennn/correlations.h"
-#include "../opennn/tensors.h"
-#include "../opennn/statistics.h"
+//#include "../opennn/tensors.h"
+//#include "../opennn/statistics.h"
 
+using namespace opennn;
 
-TEST(CorrelationsTest, SpearmanCorrelations)
+class CorrelationsTest : public ::testing::Test 
 {
-/*
+protected:
+
+    unique_ptr<ThreadPool> thread_pool;
+    unique_ptr<ThreadPoolDevice> thread_pool_device;
+
+    void SetUp() override {
+        const unsigned int threads_number = thread::hardware_concurrency();
+        thread_pool = make_unique<ThreadPool>(threads_number);
+        thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
+    }
+
+    void TearDown() override {
+    }
+};
+
+
+TEST_F(CorrelationsTest, SpearmanCorrelation)
+{
+
     Tensor<type, 1> x(10);
     x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
+    
     Tensor<type, 1> y(10);
     y.setValues({ type(1), type(3), type(7), type(9), type(10), type(16), type(20), type(28), type(44), type(100) });
 
-//    type solution = type(1);
-
-//    EXPECT_EQ(linear_correlation_spearman(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
-*/
+    EXPECT_NEAR(linear_correlation_spearman(thread_pool_device.get(), x, y).r, type(1), NUMERIC_LIMITS_MIN);
 }
 
 
-/*
-namespace opennn
+TEST_F(CorrelationsTest, LinearCorrelation)
 {
+    Tensor<type, 1> x(10);
+    x.setValues({ type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10) });
 
-void CorrelationsTest::test_linear_correlation()
-{
-    cout << "test_linear_correlation\n";
+    Tensor<type, 1> y(10);
+    y.setValues({ type(10), type(20), type(30),type(40),type(50),type(60),type(70),type(80),type(90),type(100) });
 
-    Index size;
+    EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(1), NUMERIC_LIMITS_MIN);
+    
+    y.setValues({ type(10), type(9), type(8),type(7),type(6),type(5),type(4),type(3),type(2),type(1) });
 
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
-
-    type correlation;
-    type solution;
-
-    // Perfect case
-
-    size = 10;
-
-    x.resize(size);
-    x.setValues({type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10)});
-
-    y.resize(size);
-    y.setValues({type(333), type(222), type(8),type( 4),type( 6),type( 5),type( 4),type( 3),type( 2),type( 50)});
-
-    solution = type(1);
-
-    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r - solution < type(NUMERIC_LIMITS_MIN));
-
-    const Tensor<type, 1> x1 = calculate_rank_greater(x).cast<type>();
-    const Tensor<type, 1> y1 = calculate_rank_greater(y).cast<type>();
+    EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(- 1), NUMERIC_LIMITS_MIN);
 
     // Test
 
-    y.setValues({type(10), type(9), type(8),type( 7),type( 6),type( 5),type( 4),type( 3),type( 2),type( 1)});
+    x.setRandom();
+    y.setRandom();
 
-    EXPECT_EQ(linear_correlation(thread_pool_device, x, y).r + solution < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    size = 100;
-
-    x.resize(size);
-    initialize_sequential(x);
-
-    y.resize(size);
-    y = type(2)*x;
-
-    correlation = linear_correlation(thread_pool_device, x, y).r;
-
-    EXPECT_EQ(abs(correlation - type(1)) < type(NUMERIC_LIMITS_MIN));
-
-    EXPECT_EQ(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN));
-
-    // Test
-
-    y = type(-1.0)*x;
-
-    correlation = linear_correlation(thread_pool_device, x, y).r;
-    EXPECT_EQ(abs(correlation + type(1)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(correlation) - type(1) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type(-1));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 0));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 1));
 }
 
 
-void CorrelationsTest::test_logistic_correlation()
+TEST_F(CorrelationsTest, LogisticCorrelation)
 {
-    cout << "test_logistic_correlation\n";
+    Tensor<type, 1> x(20);
+    x.setValues({ -10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9 });
 
-    Index size;
+    Tensor<type, 1> y(20);
+    y.setValues({ 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1 });
+    /*
+    Correlation correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    Tensor<type, 1> x;
-    Tensor<type, 1> y;
+    correlation.print(); system("pause");
 
-    Correlation correlation;
-
-    // Test
-
-    size = 20;
-
-    x.resize(size);
-    x.setValues({-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9});
-
-    y.resize(size);
-    y.setValues({0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1});
-
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
-
-    EXPECT_EQ(abs(correlation.r) <= type(0.1));
-    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
+    EXPECT_LE(abs(correlation.r), type(0.1));
+    EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
 
     // Test
 
-    size = 10;
+    Index size = 10;
 
     x.resize(size);
-    x.setValues({-5,-4,-3,-2,-1,1,2,3,4,5});
+    x.setValues({ -5,-4,-3,-2,-1,1,2,3,4,5 });
 
     y.resize(size);
-    y.setValues({0,0,0,0,0,1,1,1,1,1});
+    y.setValues({ 0,0,0,0,0,1,1,1,1,1 });
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    EXPECT_EQ(correlation.r >= type(0.9));
-    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
+    EXPECT_GE(correlation.r, type(0.9));
+    EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
 
-    y.setConstant(type(0));
-
-    for(Index i = size - (size/2); i < size; i++) y[i] = 1;
-
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
-
-    EXPECT_EQ(correlation.r - type(1) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ((correlation.form == Correlation::Form::Logistic));
+    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_EQ((correlation.form, Correlation::Form::Logistic));
 
     // Test
 
@@ -146,16 +104,16 @@ void CorrelationsTest::test_logistic_correlation()
 
     y.resize(size);
 
-    for(Index i = 0; i < size/2; i++) y[i] = 0;
+    for (Index i = 0; i < size / 2; i++) y[i] = 0;
 
-    for(Index i = size - (size/2); i < size; i++) y[i] = 1;
+    for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
     EXPECT_EQ(correlation.r <= type(1));
 
-    for(Index i = 0; i < size; i++)
-        y[i] = exp(type(2.5)*x[i] + type(1.4));
+    for (Index i = 0; i < size; i++)
+        y[i] = exp(type(2.5) * x[i] + type(1.4));
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
@@ -165,9 +123,9 @@ void CorrelationsTest::test_logistic_correlation()
 
     // Test
 
-    for(Index i = 0; i < size/2; i++) y[i] = 1.0;
+    for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
 
-    for(Index i = size - (size/2); i < size; i++) y[i] = 0.0;
+    for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
 
     correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
@@ -177,17 +135,72 @@ void CorrelationsTest::test_logistic_correlation()
 
     y.setConstant(type(0));
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x,y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
-    EXPECT_EQ(isnan(correlation.r));
+    EXPECT_EQ(isnan(correlation.r), true);
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
 
+    EXPECT_GE(correlation.r, type(0.9));
+    EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
+
+    y.setConstant(type(0));
+
+    for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
+
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+
+    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
+
+    // Test
+
+    size = 100;
+
+    x.resize(size);
+    initialize_sequential(x);
+
+    y.resize(size);
+
+    for (Index i = 0; i < size / 2; i++) y[i] = 0;
+
+    for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
+
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+
+    EXPECT_LE(correlation.r, type(1));
+
+    for (Index i = 0; i < size; i++)
+        y[i] = exp(type(2.5) * x[i] + type(1.4));
+
+    const unsigned int threads_number = thread::hardware_concurrency();
+
+    ThreadPool* thread_pool = new ThreadPool(threads_number);
+
+    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
+
+    // Test
+
+    for (Index i = 0; i < size / 2; i++) y[i] = 1.0;
+
+    for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
+
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+
+    EXPECT_GE(abs(correlation.r), type(-0.95));
+
+    // Test
+
+    y.setConstant(type(0));
+
+    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+
+    EXPECT_EQ(isnan(correlation.r), true);
+*/
 }
 
-
+/*
 void CorrelationsTest::test_logarithmic_correlation()
 {
-    cout << "test_logarithmic_correlation\n";
-
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
@@ -212,9 +225,9 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     solution = type(1);
 
-    EXPECT_EQ(abs(correlation.r - solution) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(correlation.b - type(4)) < type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(correlation.a - type(0)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(correlation.r, solution, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.b, type(4), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.a, type(0), NUMERIC_LIMITS_MIN);
 }
 
 
@@ -239,9 +252,9 @@ void CorrelationsTest::test_exponential_correlation()
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    EXPECT_EQ(abs(correlation.r - type(1))< type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(correlation.a - type(1))< type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(abs(correlation.b - type(0.5)) < type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(correlation.r, type(1)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.a, type(1)), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.b, type(0.5), NUMERIC_LIMITS_MIN);
 
     // Test missing values
 
@@ -255,15 +268,13 @@ void CorrelationsTest::test_exponential_correlation()
 
     correlation = exponential_correlation(thread_pool_device, x, y);
 
-    EXPECT_EQ(abs(correlation.r - type(1)) < type(1.0e-3));
-    EXPECT_EQ(correlation.b - type(2.5)< type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(correlation.r, type(1), type(1.0e-3));
+    EXPECT_NEAR(correlation.b, type(2.5), NUMERIC_LIMITS_MIN);
 }
 
 
 void CorrelationsTest::test_power_correlation()
 {
-    cout << "test_power_regression\n";
-
     Tensor<type, 1> x;
     Tensor<type, 1> y;
 
@@ -283,9 +294,9 @@ void CorrelationsTest::test_power_correlation()
 
     // Test
 
-    EXPECT_EQ(correlation.r > type(0.999999));
-    EXPECT_EQ(correlation.a - type(1)< type(NUMERIC_LIMITS_MIN));
-    EXPECT_EQ(correlation.b - type(2)< type(NUMERIC_LIMITS_MIN));
+    EXPECT_NEAR(correlation.r > type(0.999999));
+    EXPECT_NEAR(correlation.a, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(correlation.b, type(2), NUMERIC_LIMITS_MIN);
 }
 
 void CorrelationsTest::test_autocorrelations()

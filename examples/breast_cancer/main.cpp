@@ -19,8 +19,6 @@ int main()
     {
         cout << "OpenNN. Breast Cancer Application." << endl;
 
-        srand(unsigned(time(nullptr)));
-
         // Data set
 
         DataSet data_set("../data/breast_cancer.csv", ";", true);

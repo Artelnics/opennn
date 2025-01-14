@@ -16,7 +16,7 @@ namespace opennn
 
 BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
 {
-    set(output_dimensions);
+    set(output_dimensions, new_name);
 }
 
 
@@ -150,7 +150,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 
 void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                      const bool& is_training)
+                                      const bool&)
 {
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
@@ -160,24 +160,24 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
-    if(bounding_method == BoundingMethod::Bounding)
-    {
-        const Index rows_number = inputs.dimension(0);
-        const Index columns_number = inputs.dimension(1);
-
-        #pragma omp parallel for
-        for (Index j = 0; j < columns_number; j++)
-        {
-            const type& lower_bound = lower_bounds(j);
-            const type& upper_bound = upper_bounds(j);
-
-            for (Index i = 0; i < rows_number; i++)
-                outputs(i, j) = min(max(inputs(i, j), lower_bound), upper_bound);
-        }
-    }
-    else
+    if(bounding_method == BoundingMethod::NoBounding)
     {
         outputs.device(*thread_pool_device) = inputs;
+
+        return;
+    }
+
+    const Index rows_number = inputs.dimension(0);
+    const Index columns_number = inputs.dimension(1);
+
+    #pragma omp parallel for
+    for (Index j = 0; j < columns_number; j++)
+    {
+        const type& lower_bound = lower_bounds(j);
+        const type& upper_bound = upper_bounds(j);
+
+        for (Index i = 0; i < rows_number; i++)
+            outputs(i, j) = clamp(inputs(i, j), lower_bound, upper_bound);
     }
 }
 

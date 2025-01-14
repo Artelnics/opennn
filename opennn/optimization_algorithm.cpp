@@ -11,6 +11,8 @@
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
 #include "unscaling_layer.h"
+#include "language_data_set.h"
+#include "transformer.h"
 
 namespace opennn
 {
@@ -76,8 +78,6 @@ const string& OptimizationAlgorithm::get_neural_network_file_name() const
 void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 {
     loss_index = new_loss_index;
-
-    set_default();
 }
 
 
@@ -143,18 +143,6 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 //     return box_plot(distances);
 // }
-
-
-void OptimizationAlgorithm::set_default()
-{
-    display = true;
-
-    display_period = 10;
-
-    save_period = UINT_MAX;
-
-    neural_network_file_name = "neural_network.xml";
-}
 
 
 void OptimizationAlgorithm::check() const
@@ -229,8 +217,6 @@ void OptimizationAlgorithm::save(const filesystem::path& file_name) const
 
 void OptimizationAlgorithm::load(const filesystem::path& file_name)
 {
-    set_default();
-
     XMLDocument document;
 
     if (document.LoadFile(file_name.string().c_str()))
@@ -274,7 +260,6 @@ void OptimizationAlgorithm::set_scaling()
         input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
         const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-
 
         ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
@@ -323,6 +308,30 @@ void OptimizationAlgorithm::set_unscaling()
     // if(neural_network->has(Layer::Type::Unscaling))
     //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
+}
+
+
+void OptimizationAlgorithm::set_vocabularies()
+{
+    DataSet* data_set = loss_index->get_data_set();
+
+    if(!is_instance_of<LanguageDataSet>(data_set))
+        return;
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    if(!is_instance_of<Transformer>(neural_network))
+        return;
+
+    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+
+    const unordered_map<string, Index>& input_vocabulary = language_data_set->get_input_vocabulary();
+    const unordered_map<string, Index>& target_vocabulary = language_data_set->get_target_vocabulary();
+
+    Transformer* transformer = static_cast<Transformer*>(neural_network);
+
+    transformer->set_input_vocabulary(input_vocabulary);
+    transformer->set_output_vocabulary(target_vocabulary);
 }
 
 
@@ -399,7 +408,9 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
 
     training_error_history.resize(new_size);
 
-    for(Index i = 0; i < new_size; i++)
+    const Index copy_size = min(old_training_error_history.size(), new_size);
+
+    for(Index i = 0; i < copy_size; i++)
         training_error_history(i) = old_training_error_history(i);
 }
 
@@ -466,7 +477,7 @@ void TrainingResults::print(const string &message)
          << "Epochs number: " << epochs_number-1 << endl
          << "Training error: " << training_error_history(epochs_number-1) << endl;
 
-    if(abs(training_error_history(epochs_number-1) + type(1)) < type(NUMERIC_LIMITS_MIN))
+    if(abs(training_error_history(epochs_number-1) + type(1)) < NUMERIC_LIMITS_MIN)
         cout << "Selection error: " << selection_error_history(epochs_number-1) << endl;
 
     cout << "Stopping condition: " << write_stopping_condition() << endl;

@@ -3,7 +3,7 @@
 #include "../opennn/image_data_set.h"
 
 
-TEST(ImageDataSetTest, DefaultConstructor)
+TEST(ImageDataSet, DefaultConstructor)
 {
     ImageDataSet image_data_set;
 
@@ -12,29 +12,15 @@ TEST(ImageDataSetTest, DefaultConstructor)
 }
 
 
-TEST(ImageDataSetTest, GeneralConstructor)
+TEST(ImageDataSet, GeneralConstructor)
 {
-    EXPECT_EQ(1, 1);
+    ImageDataSet image_data_set(5, { 4, 3, 2 }, { 1 });
+
+    EXPECT_EQ(image_data_set.get_samples_number(), 5);
+    EXPECT_EQ(image_data_set.get_image_height(), 4);
+    EXPECT_EQ(image_data_set.get_image_width(), 3);
+    EXPECT_EQ(image_data_set.get_channels_number(), 2);
+    EXPECT_EQ(image_data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
+
 }
 
-/*
-namespace opennn
-{
-void ImageDataSetTest::test_constructor()
-{
-    cout << "test_constructor\n";    
-
-
-    // Image number, height, width, channels number and targets number constructor
-
-    ImageDataSet data_set_2(5, 3, 3, 3, 2);
-
-    EXPECT_EQ(data_set_2.get_samples_number() == 5);
-    EXPECT_EQ(data_set_2.get_image_height() == 3);
-    EXPECT_EQ(data_set_2.get_image_width() == 3);
-    EXPECT_EQ(data_set_2.get_channels_number() == 3);
-    EXPECT_EQ(data_set_2.get_raw_variables_number(DataSet::VariableUse::Target));
-}
-
-}
-*/

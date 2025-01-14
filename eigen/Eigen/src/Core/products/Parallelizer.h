@@ -153,7 +153,14 @@ inline void manage_multi_threading(Action action, int* v) {
 #endif
   } else if (action == GetAction) {
     eigen_internal_assert(v != nullptr);
+#if defined(EIGEN_HAS_OPENMP)
+    if (m_maxThreads > 0)
+      *v = m_maxThreads;
+    else
+      *v = omp_get_max_threads();
+#else
     *v = m_maxThreads;
+#endif
   } else {
     eigen_internal_assert(false);
   }

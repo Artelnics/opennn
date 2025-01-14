@@ -19,93 +19,126 @@ class LanguageDataSet : public DataSet
 
 public:
 
-    LanguageDataSet();
+    explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
-    const vector<string>& get_context_vocabulary() const;
-    const vector<string>& get_completion_vocabulary() const;
+    explicit LanguageDataSet(const filesystem::path&);
 
-    Index get_context_vocabulary_size() const;
-    Index get_completion_vocabulary_size() const;
+    const unordered_map<string, Index>& get_input_vocabulary() const;
+    const unordered_map<string, Index>& get_target_vocabulary() const;
 
-    Index get_context_length() const;
-    Index get_completion_length() const;
+    Index get_input_vocabulary_size() const;
+    Index get_target_vocabulary_size() const;
 
-    const dimensions& get_context_dimensions() const;
+    void set_input_vocabulary(const unordered_map<string, Index>&);
+    void set_target_vocabulary(const unordered_map<string, Index>&);
 
-    const vector<vector<string>>& get_documents() const;
-    const vector<vector<string>>& get_targets() const;
+    void set_data_random() override;
 
-    void set_default_raw_variables_uses();
-    void set_raw_variable_uses(const vector<string>& new_raw_variables_uses);
-    void set_raw_variable_uses(const vector<VariableUse>& new_raw_variables_uses);
+    void read_csv() override;
 
-    void set_context_dimensions(const dimensions& new_context_dimensions);
+    Index count_non_empty_lines() const;
 
-    void set_context_vocabulary_path(const string&);
-    void set_completion_vocabulary_path(const string&);
+    void from_XML(const XMLDocument&) override;
+    void to_XML(XMLPrinter&) const override;
 
-    void set_data_random_language_model(const Index&, const Index&, const Index&, const Index&, const Index&);
+    vector<string> tokenize(const string& document)
+    {
+        vector<string> tokens;
 
-    void set_default();
+        tokens.push_back("[END]");
 
-    Tensor<string, 2> get_text_data_file_preview() const;
+        string currentToken;
 
-    void from_XML(const XMLDocument&);
-    void to_XML(XMLPrinter&) const;
+        for (char c : document)
+        {
+            if (isalnum(c))
+            {
+                // Add alphanumeric characters to the current token
+                currentToken += tolower(c);
+            }
+            else
+            {
+                // If the current token is not empty, add it to the tokens list
+                if (!currentToken.empty())
+                {
+                    tokens.push_back(currentToken);
+                    currentToken.clear();
+                }
+                // Treat punctuation as a separate token
 
-    void import_vocabulary(const string&, vector<string>&);
+                if (ispunct(c))
+                {
+                    tokens.push_back(string(1, c));
+                }
+                else if (isspace(c))
+                {
+                    // Ignore spaces, they just delimit tokens
+                }
+            }
+        }
 
-    vector<string> calculate_vocabulary(const vector<vector<string>>& tokens,
-                                        const Index& vocabulary_size,
-                                        const vector<string>& reserved_tokens,
-                                        const Index& upper_threshold = 10000000,
-                                        const Index& lower_threshold = 10,
-                                        const Index& iterations_number = 4,
-                                        const Index& max_input_tokens = 5000000,
-                                        const Index& max_token_length = 50,
-                                        const Index& max_unique_chars = 1000,
-                                        const float& slack_ratio = 0.05,
-                                        const bool& include_joiner_token = true,
-                                        const string& joiner = "##");
+        // Add the last token if it's not empty
+        if (!currentToken.empty())
+            tokens.push_back(currentToken);
 
-    void load_documents(const filesystem::path&);
+        // Add [END] token
+        tokens.push_back("[END]");
 
-    void read_csv_1();
+        return tokens;
+    }
 
-    void read_csv_2_simple();
 
-    void read_csv_3_language_model();
+    unordered_map<string, Index> create_vocabulary(const vector<vector<string>>& document_tokens)
+    {
+        unordered_map<string, Index> vocabulary;
+        Index id = 0;
 
-    void read_csv_language_model();
+        vocabulary["[PAD]"] = id++;
+        vocabulary["[UNK]"] = id++;
+        vocabulary["[START]"] = id++;
+        vocabulary["[END]"] = id++;
 
-    void read_txt_language_model();
+        for (const auto& document : document_tokens)
+            for (const auto& token : document)
+                if (vocabulary.find(token) == vocabulary.end())
+                    vocabulary[token] = id++;
 
-//    void write_data_file_whitespace(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
-    void write_data_file_wordpiece(ofstream&, const vector<vector<string>>&, const vector<vector<string>>&);
+        return vocabulary;
+    }
+
+
+    void print_vocabulary(const unordered_map<std::string, Index>& vocabulary)
+    {
+        for (const auto& entry : vocabulary)
+            cout << entry.first << " : " << entry.second << "\n";
+    }
 
 private:
 
-    Tensor<string, 2> text_data_file_preview;
+    unordered_map<string, Index> input_vocabulary;
+    unordered_map<string, Index> target_vocabulary;
 
-    // LARGE LANGUAGE MODEL
+    Index maximum_input_length = 0;
 
-    vector<string> context_vocabulary;
+    Index maximum_target_length = 0;
 
-    string context_vocabulary_path;
+    const Index target_vocabulary_size = 8000;
+    const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
-    vector<string> completion_vocabulary;
-
-    string completion_vocabulary_path;
-
-    dimensions context_dimensions = dimensions{ 0 };
-
-    Index max_completion_length = 0;
-
-    Index max_context_length = 0;
-
-    vector<vector<string>> documents;
-
-    vector<vector<string>> targets;
+    struct WordpieceAlgorithmParameters
+    {
+        Index upper_threshold = 0;
+        Index lower_threshold = 0;
+        Index iterations_number = 0;
+        Index max_input_tokens = 0;
+        Index max_token_length = 0;
+        Index max_unique_characters = 0;
+        Index vocabulary_size = 0;
+        float slack_ratio = 0;
+        bool include_joiner_token = false;
+        string joiner;
+        vector<string> reserved_tokens;
+    };
 };
 
 }

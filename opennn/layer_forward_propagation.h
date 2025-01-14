@@ -14,7 +14,7 @@ struct LayerForwardPropagation
     {
     }
 
-    virtual void set(const Index&, Layer*) = 0;
+    virtual ~LayerForwardPropagation() {}
 
     virtual void print() const {}
 
