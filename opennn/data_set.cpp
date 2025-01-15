@@ -3408,10 +3408,8 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-
 void DataSet::set_data_classification()
-{
-    
+{    
     const Index samples_number = get_samples_number();
     const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index target_variables_number = get_variables_number(VariableUse::Target);
@@ -3531,7 +3529,8 @@ void DataSet::impute_missing_values_unuse()
     #pragma omp parallel for
 
     for(Index i = 0; i <samples_number; i++)
-        if(has_nan_row(i)) set_sample_use(i, "None");
+        if(has_nan_row(i)) 
+            set_sample_use(i, "None");
 }
 
 

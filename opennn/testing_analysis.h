@@ -92,6 +92,9 @@ public:
 
    // Error data
 
+   Tensor<type, 2> calculate_error() const;
+
+
    Tensor<type, 3> calculate_error_data() const;
    Tensor<type, 2> calculate_percentage_error_data() const;
 
