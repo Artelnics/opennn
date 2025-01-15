@@ -70,7 +70,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     training_strategy.set_display(false);
 
     growing_neurons.set_trials_number(1);
-    growing_neurons.set_maximum_neurons_number(7);
+    growing_neurons.set_maximum_neurons(7);
     growing_neurons.set_selection_error_goal(type(1.0e-3f));
     growing_neurons.set_display(false);
 

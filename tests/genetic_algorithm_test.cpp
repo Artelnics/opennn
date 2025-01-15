@@ -117,7 +117,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 TEST(GeneticAlgorithmTest, FitnessAssignment)
 {
-/*
+
     DataSet data_set;
 
     Tensor<type, 1> selection_errors;
@@ -156,7 +156,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     selection_errors(1) = type(3);
     selection_errors(2) = type(2);
     selection_errors(3) = type(1);
-
+/*
     genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
@@ -171,7 +171,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
 
 TEST(GeneticAlgorithmTest, Selection)
 {
-/*
+
     Tensor<bool, 2> population;
 
     Tensor<bool, 1> selection;
@@ -179,9 +179,7 @@ TEST(GeneticAlgorithmTest, Selection)
     Tensor<type, 1> selection_errors;
 
     Tensor<type, 1> fitness;
-
-    // Test 1
-
+/*
     genetic_algorithm.set_individuals_number(4);
 
     fitness.resize(4);
@@ -277,9 +275,10 @@ TEST(GeneticAlgorithmTest, Selection)
 
 TEST(GeneticAlgorithmTest, Crossover)
 {
-/*
+
     Tensor<type, 2> data(10,5);
     data.setRandom();
+    /*
     data_set.set_data(data);
 
     Tensor<bool, 2> population;
@@ -393,7 +392,7 @@ TEST(GeneticAlgorithmTest, Mutation)
 
 TEST(GeneticAlgorithmTest, InputSelection)
 {
-/*
+
     Tensor<type, 2> data;
 
     InputsSelectionResults input_selection_results;
@@ -409,7 +408,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
         data(i,2) = type(10.0);
         data(i,3) = type(i);
     }
-
+/*
     data_set.set_data(data);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2}, {6}, {1});
