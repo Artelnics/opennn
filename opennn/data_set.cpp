@@ -763,7 +763,39 @@ vector<string> DataSet::get_variable_names(const VariableUse& variable_use) cons
 
 dimensions DataSet::get_dimensions(const DataSet::VariableUse& variable_use) const
 {   
-    return dimensions({ get_variables_number(variable_use) });
+    switch (variable_use)
+    {
+    case DataSet::VariableUse::Input:
+        return input_dimensions;
+
+    case DataSet::VariableUse::Target:
+        return target_dimensions;
+
+    case DataSet::VariableUse::Decoder:
+        return decoder_dimensions;
+
+    default:
+        throw invalid_argument("get_dimensions::Invalid VariableUse type.");
+    }
+}
+
+
+void DataSet::set_dimensions(const DataSet::VariableUse& variable_use, const dimensions& new_dimensions)
+{
+    switch (variable_use)
+    {
+    case DataSet::VariableUse::Input:
+        input_dimensions = new_dimensions;
+
+    case DataSet::VariableUse::Target:
+        target_dimensions = new_dimensions;
+
+    case DataSet::VariableUse::Decoder:
+        decoder_dimensions = new_dimensions;
+
+    default:
+        throw invalid_argument("set_dimensions::Invalid VariableUse type.");
+    }
 }
 
 
@@ -1679,6 +1711,8 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
+    input_dimensions = new_input_dimensions;
+
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
     || new_target_dimensions.empty())
@@ -1695,6 +1729,8 @@ void DataSet::set(const Index& new_samples_number,
                                                 multiplies<Index>());
 
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+
+    target_dimensions = { targets_number };
 
     const Index new_variables_number = new_inputs_number + targets_number;
 
@@ -1741,7 +1777,7 @@ void DataSet::set(const Index& new_samples_number,
                 : VariableUse::Target;
         }
     }
-
+    
     sample_uses.resize(new_samples_number);
     
     split_samples_random();
@@ -2936,11 +2972,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input dimensions: ";
    
-    //print_vector(get_input_dimensions());
+    print_vector(get_dimensions(DataSet::VariableUse::Input));
          
     cout << "Target dimensions: ";
     
-    //print_vector(get_target_dimensions());
+    print_vector(get_dimensions(DataSet::VariableUse::Target));
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
