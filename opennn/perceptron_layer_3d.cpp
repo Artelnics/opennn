@@ -28,6 +28,7 @@ Index PerceptronLayer3D::get_inputs_number_xxx() const
     return inputs_number_xxx;
 }
 
+
 Index PerceptronLayer3D::get_inputs_depth() const
 {
     return synaptic_weights.dimension(0);

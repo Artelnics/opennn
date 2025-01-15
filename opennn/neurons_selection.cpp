@@ -87,36 +87,24 @@ void NeuronsSelection::set_training_strategy(TrainingStrategy* new_training_stra
 
 void NeuronsSelection::set_default()
 {
-    if(!training_strategy)
+    if (!(training_strategy && training_strategy->get_neural_network()))
         return;
 
-    NeuralNetwork* neural_network = training_strategy->get_neural_network();
-
-    if(!neural_network)
-        return;
-
-    const Index inputs_number = neural_network->get_inputs_number();
-    const Index outputs_number = neural_network->get_outputs_number();
+    const Index inputs_number = training_strategy->get_neural_network()->get_inputs_number();
+    const Index outputs_number = training_strategy->get_neural_network()->get_outputs_number();
 
     minimum_neurons = 1;
-
-    // Heuristic value for the maximum_neurons
-
-    maximum_neurons = 2*(inputs_number + outputs_number);
+    maximum_neurons = 2 * (inputs_number + outputs_number);
     trials_number = 1;
-
     display = true;
 
-    // Stopping criteria
-
     selection_error_goal = type(0);
-
     maximum_epochs_number = 1000;
     maximum_time = type(3600);
 }
 
 
-void NeuronsSelection::set_maximum_neurons_number(const Index& new_maximum_neurons)
+void NeuronsSelection::set_maximum_neurons(const Index& new_maximum_neurons)
 {
     maximum_neurons = new_maximum_neurons;
 }
@@ -216,18 +204,17 @@ void NeuronsSelection::check() const
 
 string NeuronsSelection::write_time(const type& time) const
 {
-    const int hours = int(time) / 3600;
-    int seconds = int(time) % 3600;
-    const int minutes = seconds / 60;
-    seconds = seconds % 60;
+    const int total_seconds = static_cast<int>(time);
+    const int hours = total_seconds / 3600;
+    const int minutes = (total_seconds % 3600) / 60;
+    const int seconds = total_seconds % 60;
 
     ostringstream elapsed_time;
+    elapsed_time << setfill('0') << setw(2)
+        << hours << ":"
+        << minutes << ":"
+        << seconds << endl;
 
-    elapsed_time << setfill('0')  << setw(2) 
-                 << hours << ":"
-                 << minutes << ":"
-                 << seconds << endl;
-    
     return elapsed_time.str();
 }
 

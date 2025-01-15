@@ -249,8 +249,8 @@ void GrowingNeurons::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("GrowingNeurons element is nullptr.\n");
 
-    minimum_neurons = read_xml_index(root_element, "MinimumNeurons");
-    maximum_neurons = read_xml_index(root_element, "MaximumNeurons");
+    set_minimum_neurons(read_xml_index(root_element, "MinimumNeurons"));
+    set_maximum_neurons(read_xml_index(root_element, "MaximumNeurons"));
     set_neurons_increment(read_xml_index(root_element, "NeuronsIncrement"));
     set_trials_number(read_xml_index(root_element, "TrialsNumber"));
     set_selection_error_goal(read_xml_type(root_element, "SelectionErrorGoal"));

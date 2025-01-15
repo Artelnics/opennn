@@ -134,8 +134,6 @@ private:
     
     Tensor<bool, 2> optimal_individuals_history;
 
-    Index genes_number;
-
     type mutation_rate;
 
     Index elitism_size;

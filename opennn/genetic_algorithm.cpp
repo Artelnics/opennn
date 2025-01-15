@@ -87,7 +87,7 @@ void GeneticAlgorithm::set_default()
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
-    const Index genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
+    const Index genes_number = get_genes_number();
 
     const Index individuals_number = 40;
 
@@ -129,7 +129,7 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
 void GeneticAlgorithm::set_genes_number(const Index& new_genes_number)
 {
-    genes_number = new_genes_number;
+    // @todo
 }
 
 
@@ -141,28 +141,17 @@ void GeneticAlgorithm::set_maximum_epochs_number(const Index& new_maximum_epochs
 
 void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
-    if(!training_strategy)
-        throw runtime_error("Training strategy is null");
+    if (!training_strategy || !training_strategy->get_data_set())
+        throw runtime_error("Training strategy or data set is null");
 
-    const DataSet* data_set = training_strategy->get_data_set();
-
-    if (!data_set)
-        throw runtime_error("Data set is null");
-
-    const Index new_genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+    const Index new_genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
 
     population.resize(new_individuals_number, new_genes_number);
-
     parameters.resize(new_individuals_number);
-
     training_errors.resize(new_individuals_number);
-
     selection_errors.resize(new_individuals_number);
-
     fitness.resize(new_individuals_number);
-
     fitness.setConstant(type(-1.0));
-
     selection.resize(new_individuals_number);
 
     elitism_size = min(elitism_size, new_individuals_number);
@@ -199,14 +188,8 @@ void GeneticAlgorithm::initialize_population_random()
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
-
+    const Index genes_number = get_genes_number();
     const Index individuals_number = get_individuals_number();
-
-    population.resize(individuals_number, genes_number);
-
-    original_input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-    original_target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const Index original_input_raw_variables_number = original_input_raw_variable_indices.size();
 
@@ -432,8 +415,6 @@ void GeneticAlgorithm::evaluate_population()
         data_set->set_raw_variable_indices(original_input_raw_variable_indices, original_target_raw_variable_indices);
     }
 
-    // Mean generational selection and training error calculation (primitive way)
-
     const Tensor<type, 0> sum_training_errors = training_errors.sum();
     const Tensor<type, 0> sum_selection_errors = selection_errors.sum();
 
@@ -501,11 +482,11 @@ vector<Index> GeneticAlgorithm::get_selected_individuals_indices()
 {
     vector<Index> selection_indices(count(selection.data(), selection.data() + selection.size(), 1));
 
-    Index activated_index_count = 0;
+    Index count = 0;
 
     for(Index i = 0; i < selection.size(); i++)
         if(selection(i))
-            selection_indices[activated_index_count++] = i;
+            selection_indices[count++] = i;
 
     return selection_indices;
 }
@@ -899,7 +880,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_genes(const Tensor<bool, 1>& in
 {
     DataSet* data_set = training_strategy->get_data_set();
 
-    const Index genes_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+    const Index genes_number = get_genes_number();
     const Index raw_variables_number = individual_raw_variables.size();
 
     Tensor<bool, 1> individual_raw_variables_to_variables(genes_number);
