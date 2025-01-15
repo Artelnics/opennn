@@ -104,45 +104,45 @@ struct InputsSelectionResults
 
     void set(const Index& = 0);
 
-   string write_stopping_condition() const;
+    string write_stopping_condition() const;
 
-   void resize_history(const Index& new_size);
+    void resize_history(const Index& new_size);
 
-   void print() const;
+    void print() const;
 
-   // Neural network
+    // Neural network
 
-   Tensor<type, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
-   // Loss index
+    // Loss index
 
-   Tensor<type, 1> training_error_history;
+    Tensor<type, 1> training_error_history;
 
-   Tensor<type, 1> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     // Mean Selection Error of different neural networks
 
-   Tensor<type, 1>  mean_selection_error_history;
+    Tensor<type, 1>  mean_selection_error_history;
 
     // Mean Training Error of different neural networks
 
-   Tensor<type, 1> mean_training_error_history;
+    Tensor<type, 1> mean_training_error_history;
 
-   type optimum_training_error = numeric_limits<type>::max();
+    type optimum_training_error = numeric_limits<type>::max();
 
-   type optimum_selection_error = numeric_limits<type>::max();
+    type optimum_selection_error = numeric_limits<type>::max();
 
-   vector<string> optimal_input_raw_variables_names;
+    vector<string> optimal_input_raw_variables_names;
 
-   vector<Index> optimal_input_raw_variables_indices;
+    vector<Index> optimal_input_raw_variables_indices;
 
-   Tensor<bool, 1> optimal_inputs;
+    Tensor<bool, 1> optimal_inputs;
 
-   // Model selection
+    // Model selection
 
-   InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
+    InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
 
-   string elapsed_time;
+    string elapsed_time;
 };
 
 }

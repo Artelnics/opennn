@@ -89,8 +89,6 @@ public:
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
-    const vector<Index>& get_original_unused_raw_variables();
-
     InputsSelectionResults perform_inputs_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
@@ -111,7 +109,9 @@ private:
 
     vector<bool> original_input_raw_variables;
 
-    vector<Index> original_unused_raw_variable_indices;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
+
     vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> inputs_activation_probabilities;
@@ -133,10 +133,6 @@ private:
     type mean_inputs_number;
     
     Tensor<bool, 2> optimal_individuals_history;
-
-    vector<Index> original_input_raw_variable_indices;
-
-    vector<Index> original_target_raw_variable_indices;
 
     Index genes_number;
 

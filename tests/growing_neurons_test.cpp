@@ -63,7 +63,7 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     TrainingStrategy training_strategy;
     GrowingNeurons growing_neurons(&training_strategy);
 
-    NeuronsSelectionResults neurons_selection_results;
+    NeuronsSelectionResults neuron_selection_results;
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
     training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
@@ -136,9 +136,9 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     //EXPECT_EQ(neural_network.get_layers_neurons_numbers()[0] == inputs_number);
 
-    neurons_selection_results = growing_neurons.perform_neurons_selection();
+    neuron_selection_results = growing_neurons.perform_neurons_selection();
 
-    EXPECT_EQ(neurons_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumNeurons);
+    EXPECT_EQ(neuron_selection_results.stopping_condition == NeuronsSelection::StoppingCondition::MaximumNeurons);
 
 }
 
