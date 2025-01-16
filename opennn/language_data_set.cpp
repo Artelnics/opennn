@@ -69,9 +69,6 @@ void LanguageDataSet::set_target_vocabulary(const unordered_map<string, Index>& 
 void LanguageDataSet::set_data_random()
 {
 /*
-    data_path.clear();
-
-    set(batch_samples_number, decoder_length + 2 * completion_length);
 
     for(Index i = 0; i < batch_samples_number; i++)
     {
