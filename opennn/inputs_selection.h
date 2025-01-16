@@ -65,7 +65,7 @@ public:
 
     Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&) const;
 
-    virtual InputsSelectionResults perform_inputs_selection() = 0;
+    virtual InputsSelectionResults perform_input_selection() = 0;
 
     string write_time(const type&) const;
 

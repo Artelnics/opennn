@@ -74,7 +74,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
 }
 
 
-InputsSelectionResults GrowingInputs::perform_inputs_selection()
+InputsSelectionResults GrowingInputs::perform_input_selection()
 {
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 

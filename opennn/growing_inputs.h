@@ -35,7 +35,7 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    InputsSelectionResults perform_inputs_selection() override;
+    InputsSelectionResults perform_input_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
 

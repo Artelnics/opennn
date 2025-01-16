@@ -49,8 +49,6 @@ public:
 
     void set_individuals_number(const Index& new_individuals_number=4);
 
-    void set_genes_number(const Index&);  
-
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
     void set_mutation_rate(const type&);
@@ -89,7 +87,7 @@ public:
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
-    InputsSelectionResults perform_inputs_selection() override;
+    InputsSelectionResults perform_input_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
 

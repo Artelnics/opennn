@@ -95,8 +95,6 @@ void GeneticAlgorithm::set_default()
 
     mutation_rate = type(0.0010);
 
-    // Population stuff
-
     population.resize(individuals_number, genes_number);
 
     parameters.resize(individuals_number);
@@ -113,23 +111,15 @@ void GeneticAlgorithm::set_default()
 
     selection.resize(individuals_number);
 
-    // Training operators
-
     elitism_size = Index(ceil(individuals_number / 4));
 
-    set_initialization_method(GeneticAlgorithm::InitializationMethod::Random);
+    initialization_method = GeneticAlgorithm::InitializationMethod::Random;
 }
 
 
 void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 {
     population = new_population;
-}
-
-
-void GeneticAlgorithm::set_genes_number(const Index& new_genes_number)
-{
-    // @todo
 }
 
 
@@ -614,7 +604,7 @@ void GeneticAlgorithm::perform_mutation()
 }
 
 
-InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
+InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
     if(display) cout << "Performing genetic inputs selection...\n" << endl;
 
