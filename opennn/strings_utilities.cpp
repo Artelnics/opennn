@@ -352,37 +352,6 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
 
 void replace_substring_within_quotes(string &str, const string &target, const string &replacement)
 {
-/*
-    regex r("\"([^\"]*)\"");
-
-    string result;
-    smatch match;
-
-    string prefix = str;
-
-    string::const_iterator search_start(str.begin());
-
-
-    while(regex_search(prefix, match, r))
-    {
-        string match_str = match.str();
-        string replaced_str = match_str;
-        size_t position = 0;
-
-        while((position = replaced_str.find(target, position)) != string::npos)
-        {
-            replaced_str.replace(position, target.length(), replacement);
-            position += replacement.length();
-        }
-
-        result += match.prefix().str() + replaced_str;
-        prefix = match.suffix().str();
-    }
-
-    result += prefix;
-    str = result;
-*/
-
     regex r("\"([^\"]*)\"");
     string result;
     string::const_iterator search_start(str.begin());
@@ -390,8 +359,8 @@ void replace_substring_within_quotes(string &str, const string &target, const st
 
     while (regex_search(search_start, str.cend(), match, r))
     {
-        result += string(search_start, match[0].first); // Append text before match
-        string quoted_content = match[1].str(); // Extract quoted content
+        result += string(search_start, match[0].first); 
+        string quoted_content = match[1].str();
 
         size_t position = 0;
         while ((position = quoted_content.find(target, position)) != string::npos)
@@ -400,11 +369,11 @@ void replace_substring_within_quotes(string &str, const string &target, const st
             position += replacement.length();
         }
 
-        result += "\"" + quoted_content + "\""; // Append updated quoted content
-        search_start = match[0].second; // Move search start past the current match
+        result += "\"" + quoted_content + "\"";
+        search_start = match[0].second; 
     }
 
-    result += string(search_start, str.cend()); // Append remaining text
+    result += string(search_start, str.cend()); 
     str = result;
 }
 

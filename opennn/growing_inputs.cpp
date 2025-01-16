@@ -41,31 +41,16 @@ const Index& GrowingInputs::get_maximum_selection_failures() const
 void GrowingInputs::set_default()
 {
     maximum_selection_failures = 100;
-
-    if(!training_strategy || !training_strategy->has_neural_network())
-    {
-        maximum_inputs_number = 100;
-    }
-    else
-    {
-        training_strategy->get_neural_network()->get_display();
-
-        const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
-
-        maximum_selection_failures = 100;
-
-        maximum_inputs_number = inputs_number;
-    }
-
     minimum_inputs_number = 1;
-
     minimum_correlation = type(0);
-
     trials_number = 3;
-
     maximum_epochs_number = 1000;
-
     maximum_time = type(3600.0);
+
+    if (training_strategy && training_strategy->has_neural_network())
+        maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
+    else
+        maximum_inputs_number = 100;
 }
 
 
@@ -73,7 +58,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 {
     const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    maximum_inputs_number = min(new_maximum_inputs_number,inputs_number);
+    maximum_inputs_number = min(new_maximum_inputs_number, inputs_number);
 }
 
 
@@ -89,7 +74,7 @@ void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_sele
 }
 
 
-InputsSelectionResults GrowingInputs::perform_inputs_selection()
+InputsSelectionResults GrowingInputs::perform_input_selection()
 {
     InputsSelectionResults input_selection_results(maximum_epochs_number);
 
@@ -112,7 +97,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     const vector<string> raw_variable_names = data_set->get_raw_variable_names();
 
-    vector<string> input_raw_variables_names;
+    vector<string> input_raw_variable_names;
 
     const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variable_pearson_correlations());
 
@@ -159,21 +144,16 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
     bool stop = false;
 
     for(Index i = 0; i < maximum_epochs_number; i++)
-    {
-        
+    {     
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
 
         Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
-        Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+        const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
         if (input_raw_variables_number < minimum_inputs_number)
-        {
-            // @todo
-
             continue;
-        }
             
-        Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
+        const Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
         neural_network->set_input_dimensions({ input_variables_number });
 
         if(display)
@@ -183,9 +163,9 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                     << "Input raw_variables number: " << input_raw_variables_number << endl
                     << "Inputs: " << endl;
 
-            input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+            input_raw_variable_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
-            print_vector(input_raw_variables_names);
+            print_vector(input_raw_variable_names);
         }
 
         type minimum_training_error = numeric_limits<type>::max();
@@ -226,8 +206,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             if(display)
                 cout << "Trial number: " << j+1 << endl
-                        << "   Training error: " << training_results.get_training_error() << endl
-                        << "   Selection error: " << training_results.get_selection_error() << endl;           
+                     << "   Training error: " << training_results.get_training_error() << endl
+                     << "   Selection error: " << training_results.get_selection_error() << endl;           
         }
 
         if(previus_training_error < minimum_training_error)
@@ -301,14 +281,13 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             break;
         }
             
-
         raw_variable_index++;        
     }
 
     // Set data set stuff
 
-    data_set->set_input_target_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices, 
-                                                    target_raw_variable_indices);
+    data_set->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices, 
+                                       target_raw_variable_indices);
 
     data_set->print();
     

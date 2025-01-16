@@ -317,7 +317,6 @@
     <ClCompile Include="neurons_selection.cpp" />
     <ClCompile Include="normalization_layer_3d.cpp" />
     <ClCompile Include="normalized_squared_error.cpp" />
-    <ClInclude Include="opennn.h" />
     <ClInclude Include="images.h" />
     <ClCompile Include="images.cpp" />
     <ClInclude Include="pch.h" />
