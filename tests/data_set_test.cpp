@@ -1698,7 +1698,7 @@ void DataSet::test_fill()
 
     batch.set(training_samples_number, &data_set);
     /*
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
     
     Tensor<type, 2> input_data(3,2);
     input_data.setValues({{1,4},{2,5},{3,6}});

@@ -1364,9 +1364,8 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
 
             if(isnan(value)) continue;
 
-            if(value < minimums(j)) minimums(j) = value;
-
-            if(value > maximums(j)) maximums(j) = value;
+            minimums(j) = min(minimums(j), value);
+            maximums(j) = max(maximums(j), value);
 
             sums(j) += double(value);
             squared_sums(j) += double(value)*double(value);

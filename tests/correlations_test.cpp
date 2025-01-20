@@ -43,6 +43,7 @@ TEST_F(CorrelationsTest, SpearmanCorrelation)
     //Correlation result = linear_correlation_spearman(thread_pool_device.get(), x, y);
 
     //EXPECT_NEAR(result.r, type(1), NUMERIC_LIMITS_MIN);
+
 }
 
 

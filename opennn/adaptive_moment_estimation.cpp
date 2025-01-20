@@ -165,6 +165,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
+    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
     const Index selection_batch_samples_number = (selection_samples_number != 0)
@@ -172,7 +174,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                                  : 0;
 
     Batch training_batch(training_batch_samples_number, data_set);
-
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
@@ -253,15 +254,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
 
             // Data set
+
             training_batch.fill(training_batches[iteration],
-                input_variable_indices,
-                decoder_variable_indices,
-                target_variable_indices);
-            
-            
-
+                                input_variable_indices,
+                                decoder_variable_indices,
+                                target_variable_indices);
+                              
             // Neural network
-
+            
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -276,6 +276,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
             //cout << "numerical gradient:\n" << numerical_gradient<< endl;
+
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
@@ -291,7 +292,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //if(display && epoch % display_period == 0)
             // display_progress_bar(iteration, training_batches_number - 1);
         }
-
+        
         // Loss
 
         training_error /= type(training_batches_number);
@@ -300,7 +301,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
-        
+
         if(has_selection)
         {
             selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
@@ -310,7 +311,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-
                 // Data set
 
                 selection_batch.fill(selection_batches[iteration],

@@ -30,7 +30,7 @@ TEST(GrowingInputsTest, InputSelection)
 
     EXPECT_EQ(growing_inputs.has_training_strategy(), true);
 
-//    InputsSelectionResults input_selection_results = growing_inputs.perform_inputs_selection();
+//    InputsSelectionResults input_selection_results = growing_inputs.perform_input_selection();
 }
 
 /*
@@ -65,7 +65,7 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
     TrainingStrategy training_strategy1(&neural_network, &data_set);
 
-    //input_selection_results = growing_inputs.perform_inputs_selection();
+    //input_selection_results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(input_selection_results.optimal_input_raw_variables_indices[0] < 2);
 

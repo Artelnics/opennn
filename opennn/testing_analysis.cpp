@@ -124,7 +124,6 @@ void TestingAnalysis::print_linear_correlations() const
 
 Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodness_of_fit_analysis() const
 {
-
     check();
 
     // Data set
@@ -171,33 +170,34 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 }
 
 
-Tensor<type, 3> TestingAnalysis::calculate_error_data() const
-{
-    const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
-
+Tensor<type, 2> TestingAnalysis::calculate_error() const
+{ 
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
-    // Neural network
+    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+
+    const Tensor<type, 2> error = (outputs - targets);
+
+    return error;
+}
+
+Tensor<type, 3> TestingAnalysis::calculate_error_data() const
+{
+    const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> outputs  = neural_network->calculate_outputs(inputs);
-
     UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
 
-    const Tensor<type, 1>& outputs_minimum = unscaling_layer->get_minimums();
+    const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
 
-    const Tensor<type, 1>& outputs_maximum = unscaling_layer->get_maximums();
-
-    // Error data
+    const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
-    // Absolute error
-
-   const Tensor<type, 2> difference_absolute_value = (outputs - targets).abs();
+   const Tensor<type, 2> absolute_errors = calculate_error().abs();
 
    #pragma omp parallel for
 
@@ -205,9 +205,9 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
    {
        for(Index j = 0; j < testing_samples_number; j++)
        {
-           error_data(j, 0, i) = difference_absolute_value(j,i);
-           error_data(j, 1, i) = difference_absolute_value(j,i)/abs(outputs_maximum(i)-outputs_minimum(i));
-           error_data(j, 2, i) = difference_absolute_value(j,i)*type(100.0)/abs(outputs_maximum(i)-outputs_minimum(i));
+           error_data(j, 0, i) = absolute_errors(j,i);
+           error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
+           error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
        }
    }
 
@@ -217,26 +217,16 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
 Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
-    // Data set
-
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
-
-    const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-
-    const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
-
-    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
-
     UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
 
-    const Tensor<type, 1>& outputs_minimum = unscaling_layer->get_minimums();
-    const Tensor<type, 1>& outputs_maximum = unscaling_layer->get_maximums();
+    const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
+    const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    const Tensor<type, 2> difference_value = outputs - targets;
+    const Tensor<type, 2> errors = calculate_error();
 
     // Error data
 
@@ -246,7 +236,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     for(Index i = 0; i < testing_samples_number; i++)
        for(Index j = 0; j < outputs_number; j++)
-           error_data(i, j) = difference_value(i, j)*type(100.0)/abs(outputs_maximum(j) - outputs_minimum(j));
+           error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
 
     return error_data;
 }
@@ -265,7 +255,7 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() c
 
 
 vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives(const Tensor<type, 2>& targets,
-                                                                                const Tensor<type, 2>& outputs) const
+                                                                             const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> difference = (targets-outputs).abs();
 
@@ -286,7 +276,7 @@ vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives()
 
 
 vector<Descriptives> TestingAnalysis::calculate_percentage_errors_descriptives(const Tensor<type, 2>& targets,
-                                                                                  const Tensor<type, 2>& outputs) const
+                                                                               const Tensor<type, 2>& outputs) const
 {
     const Tensor<type, 2> difference = type(100)*(targets-outputs).abs()/targets;
 
@@ -797,8 +787,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
-        target = targets(i,0);
-        output = outputs(i,0);
+        target = targets(i, 0);
+        output = outputs(i, 0);
 
         if(target >= decision_threshold && output >= decision_threshold)
             true_positive++;
@@ -879,8 +869,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 {
     check();
 
-    //const Index outputs_number = neural_network->get_outputs_number();
-
     Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
@@ -939,14 +927,14 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
         testing_target.chip(i, 0) = targets.chip(i, 0);
     }
 
-
     if(input_dimensions.size() == 1)
     {
-        Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
-        cout<<outputs.dimensions()<<endl;
+        const Tensor<type, 3> outputs = transformer->calculate_outputs(testing_input, testing_context);
+
         Tensor<type, 2> reduced_outputs(outputs.dimension(0), targets.dimension(1));
 
-        for (Index i = 0; i < outputs.dimension(0); i++) {
+        for (Index i = 0; i < outputs.dimension(0); i++) 
+        {
             reduced_outputs(i,0) = outputs(i,1,9);
             reduced_outputs(i,1) = outputs(i,1,10);
         }
@@ -1151,8 +1139,8 @@ type TestingAnalysis::calculate_area_under_curve_confidence_limit(const Tensor<t
     const type Q_2 = (type(2.0) *area_under_curve*area_under_curve)/(type(1) *area_under_curve);
 
     const type confidence_limit = type(type(1.64485)*sqrt((area_under_curve*(type(1) - area_under_curve)
-                                  + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
-                                  + (type(total_negatives) - type(1))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives))));
+                                + (type(total_positives) - type(1))*(Q_1-area_under_curve*area_under_curve)
+                                + (type(total_negatives) - type(1))*(Q_2-area_under_curve*area_under_curve))/(type(total_positives*total_negatives))));
 
     return confidence_limit;
 }
@@ -1168,8 +1156,6 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& roc_cur
 
     for(Index i = 0; i < points_number; i++)
     {
-        //const type distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - type(1))*(roc_curve(i,1) - type(1)));
-
         const type distance = hypot(roc_curve(i, 0), roc_curve(i, 1) - type(1));
 
         if(distance < minimun_distance)
@@ -1466,10 +1452,9 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 
 Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
 {
-
     const Tensor<type, 1> output_column = outputs.chip(0,1);
 
-    Tensor<Histogram, 1> output_histogram (1);
+    Tensor<Histogram, 1> output_histogram(1);
 
     output_histogram(0) = histogram(output_column, bins_number);
 

@@ -9,6 +9,9 @@ TEST(GeneticAlgorithmTest, DefaultConstructor)
     GeneticAlgorithm genetic_algorithm;
 
     EXPECT_EQ(genetic_algorithm.has_training_strategy(), false);
+    EXPECT_EQ(genetic_algorithm.get_population().dimension(0), 0);
+    
+
 }
 
 
@@ -117,7 +120,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 TEST(GeneticAlgorithmTest, FitnessAssignment)
 {
-/*
+
     DataSet data_set;
 
     Tensor<type, 1> selection_errors;
@@ -156,7 +159,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
     selection_errors(1) = type(3);
     selection_errors(2) = type(2);
     selection_errors(3) = type(1);
-
+/*
     genetic_algorithm.set_selection_errors(selection_errors);
 
     genetic_algorithm.perform_fitness_assignment();
@@ -171,7 +174,7 @@ TEST(GeneticAlgorithmTest, FitnessAssignment)
 
 TEST(GeneticAlgorithmTest, Selection)
 {
-/*
+
     Tensor<bool, 2> population;
 
     Tensor<bool, 1> selection;
@@ -179,9 +182,7 @@ TEST(GeneticAlgorithmTest, Selection)
     Tensor<type, 1> selection_errors;
 
     Tensor<type, 1> fitness;
-
-    // Test 1
-
+/*
     genetic_algorithm.set_individuals_number(4);
 
     fitness.resize(4);
@@ -277,9 +278,10 @@ TEST(GeneticAlgorithmTest, Selection)
 
 TEST(GeneticAlgorithmTest, Crossover)
 {
-/*
+
     Tensor<type, 2> data(10,5);
     data.setRandom();
+    /*
     data_set.set_data(data);
 
     Tensor<bool, 2> population;
@@ -393,7 +395,7 @@ TEST(GeneticAlgorithmTest, Mutation)
 
 TEST(GeneticAlgorithmTest, InputSelection)
 {
-/*
+
     Tensor<type, 2> data;
 
     InputsSelectionResults input_selection_results;
@@ -409,7 +411,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
         data(i,2) = type(10.0);
         data(i,3) = type(i);
     }
-
+/*
     data_set.set_data(data);
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, {2}, {6}, {1});
@@ -420,7 +422,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
 
     genetic_algorithm.set_selection_error_goal(1);
 
-    input_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_input_selection();
 
     EXPECT_EQ(input_selection_results.stopping_condition == InputsSelection::StoppingCondition::SelectionErrorGoal);
     EXPECT_EQ(input_selection_results.selection_error_history(0) <= 1);
@@ -453,7 +455,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_selection_error_goal(type(0));
     genetic_algorithm.set_maximum_epochs_number(1);
 
-    input_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_input_selection();
 
     EXPECT_EQ(genetic_algorithm.get_maximum_iterations_number() == 1);
     EXPECT_EQ(genetic_algorithm.get_selection_error_goal() < 1);
@@ -482,7 +484,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_selection_error_goal(type(0.01));
     genetic_algorithm.set_maximum_epochs_number(10);
 
-    input_selection_results = genetic_algorithm.perform_inputs_selection();
+    input_selection_results = genetic_algorithm.perform_input_selection();
 
     EXPECT_EQ(input_selection_results.get_epochs_number() <= 100);
 */
