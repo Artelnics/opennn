@@ -60,9 +60,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layers.push_back(std::move(layer));
 
     layer_input_indices.push_back(input_indices.empty()
-
         ? vector<Index>(1, old_layers_number - 1)
-
         : input_indices);
 }
 
@@ -434,21 +432,21 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         throw runtime_error("Input dimensions size is not 3.");
 
     add_layer(make_unique<ScalingLayer4D>(input_dimensions));
-
+    
     const Index complexity_size = complexity_dimensions.size();
-
+    
     for (Index i = 0; i < complexity_size; i++)
     {
         const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
-        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-                                                  kernel_dimensions,
-                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-                                                  stride_dimensions,
-                                                  convolution_type,
-                                                  "convolutional_layer_" + to_string(i+1)));
+        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+        //                                          kernel_dimensions,
+        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+        //                                          stride_dimensions,
+        //                                          convolution_type,
+        //                                          "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
@@ -462,12 +460,13 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         //                                    pooling_method,
         //                                    "pooling_layer_" + to_string(i + 1)));
     }
-
+    
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
 
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
+    
 }
 
 /*
@@ -926,31 +925,6 @@ Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
 
     return count;
 }
-
-
-// bool NeuralNetwork::is_input_layer(const vector<Index>& this_layer_inputs_indices) const
-// {
-//     const Index input_layers_number = this_layer_inputs_indices.size();
-
-//     for(Index i = 0; i < input_layers_number; i++)
-//         if(this_layer_inputs_indices[i] == -1)
-//             return true;
-
-//     return false;
-// }
-
-
-// bool NeuralNetwork::is_context_layer(const vector<Index>& this_layer_inputs_indices) const
-// {
-//     // @todo Is this ok?
-//     const Index layers_number = get_layers_number();
-
-//     for(Index i = 0; i < layers_number; i++)
-//         if(this_layer_inputs_indices[i] == -2)
-//             return true;
-
-//     return false;
-// }
 
 
 void NeuralNetwork::set_parameters_constant(const type& value) const

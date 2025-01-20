@@ -39,8 +39,9 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
 
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-        data_set.get_variable_indices(DataSet::VariableUse::Input),
-        data_set.get_variable_indices(DataSet::VariableUse::Target));
+               data_set.get_variable_indices(DataSet::VariableUse::Input),
+               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
+               data_set.get_variable_indices(DataSet::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
@@ -86,7 +87,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -135,7 +136,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -179,7 +180,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -223,7 +224,7 @@ void NormalizedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -276,7 +277,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -327,7 +328,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -379,7 +380,7 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 

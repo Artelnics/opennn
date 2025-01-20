@@ -182,9 +182,7 @@ void Batch::print() const
          << "Input dimensions:" << endl;
 
     print_vector(input_dimensions);
-
-
-    /*
+    
     if(input_dimensions.size() == 4)
     {
         const TensorMap<Tensor<type, 4>> inputs((type*)input_tensor.data(),
@@ -195,7 +193,7 @@ void Batch::print() const
 
         cout << inputs << endl;
     }
-    */
+    
 
     cout << "Decoder:" << endl
          << "Decoder dimensions:" << endl;
@@ -207,11 +205,11 @@ void Batch::print() const
 
     print_vector(target_dimensions);
 
-//    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
-//                                             target_dimensions[0],
-//                                             target_dimensions[1]);
+    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
+                                             target_dimensions[0],
+                                             target_dimensions[1]);
 
-//    cout << targets << endl;
+    cout << targets << endl;
 
 }
 

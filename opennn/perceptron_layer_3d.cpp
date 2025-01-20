@@ -28,6 +28,7 @@ Index PerceptronLayer3D::get_inputs_number_xxx() const
     return inputs_number_xxx;
 }
 
+
 Index PerceptronLayer3D::get_inputs_depth() const
 {
     return synaptic_weights.dimension(0);
@@ -225,7 +226,7 @@ void PerceptronLayer3D::set_parameters_glorot()
 
     #pragma omp parallel for
     for(Index i = 0; i < synaptic_weights.size(); i++)
-        synaptic_weights(i) = minimum + (maximum - minimum)*type(rand() / (RAND_MAX + 1.0));
+        synaptic_weights(i) = get_random_type(minimum, maximum);
 }
 
 

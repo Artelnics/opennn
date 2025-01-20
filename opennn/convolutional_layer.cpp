@@ -249,7 +249,6 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index output_width = get_output_width();
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     // Forward propagation
@@ -293,6 +292,11 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Eigen::array<pair<Index, Index>, 2> paddings 
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
+    cout << "Inputs: \n" << inputs << endl;
+    cout << "Deltas: \n" << deltas << endl;
+
+    cout << "synaptic weigths:\n" << synaptic_weights << endl;
+
     // Convolutions derivatives
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
@@ -303,7 +307,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Synaptic weigth derivatives
     
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
@@ -322,6 +326,16 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
     }
     
+    cout << "synaptic_weight_derivatives:\n" << convolutional_layer_back_propagation->synaptic_weight_derivatives << endl;
+    cout << "synaptic_weight dimension[0]:" << synaptic_weights.dimension(0) << endl;
+    cout << "synaptic_weight dimension[1]:" << synaptic_weights.dimension(1) << endl;
+    cout << "synaptic_weight dimension[2]:" << synaptic_weights.dimension(2) << endl;
+    cout << "synaptic_weight dimension[3]:" << synaptic_weights.dimension(3) << endl;
+    cout << "synaptic_weight_derivatives dimension[0]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(0) << endl;
+    cout << "synaptic_weight_derivatives dimension[1]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(1) << endl;
+    cout << "synaptic_weight_derivatives dimension[2]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(2) << endl;
+    cout << "synaptic_weight_derivatives dimension[3]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(3) << endl;
+
     // Input derivatives
 
     rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
@@ -606,29 +620,25 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     set_convolution_type(new_convolution_type);
 
     biases.resize(kernels_number);
-    biases.setZero();
-    //set_random(biases);
+    set_random(biases);
 
     synaptic_weights.resize(kernel_height,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
-
+    /*
     float* data_ptr = synaptic_weights.data();
 
     data_ptr[0] = 0.05f;
     data_ptr[1] = -0.04f;
     data_ptr[2] = -0.09f;
     data_ptr[3] = 0.09f;
-
-    // Fila 2
     data_ptr[4] = 0.03f;
     data_ptr[5] = -0.05f;
     data_ptr[6] = -0.08f;
     data_ptr[7] = 0.09f;
-
-    // Fila 3
     data_ptr[8] = 0.07f;
+    /*
     data_ptr[9] = 0.02f;
     data_ptr[10] = 0.02f;
     data_ptr[11] = -0.08f;
@@ -668,8 +678,9 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     data_ptr[33] = -0.02f;
     data_ptr[34] = -0.07f;
     data_ptr[35] = 0.01f;
+    */
 
-    //set_random(synaptic_weights);
+    set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);
@@ -1030,9 +1041,9 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
     bias_derivatives.resize(kernels_number);
 
     synaptic_weight_derivatives.resize(kernels_number,
-                                        kernel_height,
-                                        kernel_width,
-                                        kernel_channels);
+                                       kernel_height,
+                                       kernel_width,
+                                       kernel_channels);
 
     rotated_synaptic_weights.resize(kernel_height,
                                     kernel_width,

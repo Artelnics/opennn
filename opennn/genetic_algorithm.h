@@ -43,13 +43,11 @@ public:
 
     const InitializationMethod& get_initialization_method() const;
 
-    virtual void set_default();
+    void set_default();
 
     void set_population(const Tensor<bool, 2>&);
 
     void set_individuals_number(const Index& new_individuals_number=4);
-
-    void set_genes_number(const Index&);  
 
     void set_initialization_method(const GeneticAlgorithm::InitializationMethod&);
 
@@ -81,19 +79,15 @@ public:
 
     void perform_mutation();
 
-    Tensor<bool, 1> get_individual_raw_variables(Tensor<bool, 1>&);
+    Tensor<bool, 1> get_individual_raw_genes(const Tensor<bool, 1>&);
 
-    Tensor<bool, 1> get_individual_variables(Tensor<bool,1>&);
+    Tensor<bool, 1> get_individual_genes(const Tensor<bool,1>&);
 
     vector<Index> get_selected_individuals_indices ();
 
-    vector<Index> get_individual_as_raw_variables_indexes_from_variables( Tensor<bool, 1>&);
+    vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
-    void set_unused_raw_variables(vector<Index>&);
-
-    const vector<Index>& get_original_unused_raw_variables();
-
-    InputsSelectionResults perform_inputs_selection ()  override;
+    InputsSelectionResults perform_input_selection() override;
 
     Tensor<string, 2> to_string_matrix() const;
 
@@ -107,14 +101,15 @@ public:
 
     void load(const filesystem::path&);
 
+private:
+
     Tensor<Tensor<type, 1>, 1> parameters;
 
-private:
-    
-    vector<Index> initial_raw_variables_indices;
     vector<bool> original_input_raw_variables;
 
-    vector<Index> original_unused_raw_variable_indices;
+    vector<Index> original_input_raw_variable_indices;
+    vector<Index> original_target_raw_variable_indices;
+
     vector<bool> original_unused_raw_variables;
     
     Tensor<type, 1> inputs_activation_probabilities;
@@ -136,12 +131,6 @@ private:
     type mean_inputs_number;
     
     Tensor<bool, 2> optimal_individuals_history;
-
-    vector<Index> original_input_raw_variable_indices;
-
-    vector<Index> original_target_raw_variable_indices;
-
-    Index genes_number;
 
     type mutation_rate;
 

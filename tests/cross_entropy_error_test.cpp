@@ -52,8 +52,9 @@ TEST(CrossEntropyErrorTest, BackPropagate)
 
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-        data_set.get_variable_indices(DataSet::VariableUse::Input),
-        data_set.get_variable_indices(DataSet::VariableUse::Target));
+               data_set.get_variable_indices(DataSet::VariableUse::Input),
+               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
+               data_set.get_variable_indices(DataSet::VariableUse::Target));
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
         { inputs_number }, { neurons_number }, { targets_number });

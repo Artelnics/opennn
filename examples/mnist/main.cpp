@@ -27,8 +27,8 @@ int main()
 
         const Index samples_number = 3;
 
-        const Index image_height = 4;
-        const Index image_width = 4;
+        const Index image_height = 2;
+        const Index image_width = 2;
         const Index channels = 1;
         const Index targets = 3;
 
@@ -55,10 +55,8 @@ int main()
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 4 },
+            { 1 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
-        
-        //neural_network.print();
 
         // Training strategy
 

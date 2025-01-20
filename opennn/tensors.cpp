@@ -8,7 +8,6 @@
 
 #include "../eigen/Eigen/Dense"
 
-//#include "strings_utilities.h"
 #include "tensors.h"
 
 namespace opennn

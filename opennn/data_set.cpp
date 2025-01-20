@@ -971,27 +971,6 @@ Index DataSet::get_used_raw_variables_number() const
 }
 
 
-Index DataSet::get_input_and_unused_variables_number() const
-{
-    Index raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const RawVariable& raw_variable = raw_variables[i];
-
-        if(raw_variable.use != VariableUse::Input && raw_variable.use != VariableUse::None)
-            continue;
-
-        if(raw_variable.type == RawVariableType::Categorical)
-                raw_variables_number += raw_variable.categories.size();
-        else
-                raw_variables_number++;
-    }
-
-    return raw_variables_number;
-}
-
-
 const vector<DataSet::RawVariable>& DataSet::get_raw_variables() const
 {
     return raw_variables;
@@ -1113,8 +1092,8 @@ void DataSet::set_raw_variables(const VariableUse& variable_use)
 }
 
 
-void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_raw_variables,
-                                                    const vector<Index>& target_raw_variables)
+void DataSet::set_raw_variable_indices(const vector<Index>& input_raw_variables,
+                                       const vector<Index>& target_raw_variables)
 {
     set_raw_variables(VariableUse::None);
 
@@ -1126,7 +1105,7 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 }
 
 
-// void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
+// void DataSet::set_raw_variable_indices(const vector<string>& input_raw_variables,
 //                                                     const vector<string>& target_raw_variables)
 // {
 //     set_raw_variables(VariableUse::None);
@@ -1711,12 +1690,12 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
-    input_dimensions = new_input_dimensions;
-
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
     || new_target_dimensions.empty())
         return;
+
+    input_dimensions = new_input_dimensions;
 
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), 
                                                new_input_dimensions.end(), 
@@ -1758,10 +1737,19 @@ void DataSet::set(const Index& new_samples_number,
                 RawVariableType::Binary,
                 Scaler::None); 
         else
+        {
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
-                Scaler::None);     
+                Scaler::None);
+
+            vector<string> new_categories;
+
+            for (int i = 1; i <= targets_number; ++i) 
+                new_categories.push_back(to_string(i-1));
+
+            raw_variables[raw_variables_number - 1].set_categories(new_categories);
+        }
     }
     else
     {
@@ -3444,10 +3432,8 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-
 void DataSet::set_data_classification()
-{
-    
+{    
     const Index samples_number = get_samples_number();
     const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index target_variables_number = get_variables_number(VariableUse::Target);
@@ -3567,7 +3553,8 @@ void DataSet::impute_missing_values_unuse()
     #pragma omp parallel for
 
     for(Index i = 0; i <samples_number; i++)
-        if(has_nan_row(i)) set_sample_use(i, "None");
+        if(has_nan_row(i)) 
+            set_sample_use(i, "None");
 }
 
 
