@@ -1000,12 +1000,10 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair);
 
-    for (Index i = first_layer_index; i <= last_layer_index; i++){
-
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);}
-
+            forward_propagation.layers[i],
+            is_training);
 }
 
 
@@ -1109,8 +1107,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagate({input_pair}, forward_propagation);
 
-    //forward_propagation.print();
-
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
@@ -1120,6 +1116,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
+    cout << "Esta funcion no funciona, arreglar al volver" << endl;
     const Index layers_number = get_layers_number();
 
     if (layers_number == 0)

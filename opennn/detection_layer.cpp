@@ -160,8 +160,8 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
 
         // Exponential
 
-        cout << "Width and height before the exponential:\n" << inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
-                             Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}) << endl;
+        // cout << "Width and height before the exponential:\n" << inputs.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
+        //                      Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}) << endl;
 
         detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2})

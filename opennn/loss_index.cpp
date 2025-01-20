@@ -406,11 +406,11 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                                 ForwardPropagation& forward_propagation,
                                                 BackPropagation& back_propagation) const
 {
-    cout<<"========delta========="<<endl;
+    cout<<"=========delta========="<<endl;
 
     const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
 
-    cout<<"========delta=========="<<endl;
+    cout<<"=========delta========="<<endl;
 
 
     const Index layers_number = layers.size();
@@ -420,24 +420,24 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    cout<<"========delta=========="<<endl;
+    cout<<"=========delta========="<<endl;
 
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs
         = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
 
-    cout<<"========delta=========="<<endl;
+    cout<<"=========delta========="<<endl;
 
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation.get_layer_delta_pairs();
 
-    cout<<"========delta=========="<<endl;
+    cout<<"=========delta========="<<endl;
 
 
     calculate_output_delta(batch, forward_propagation, back_propagation);
 
-    cout<<"========delta=========="<<endl;
+    cout<<"=========delta========="<<endl;
 
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
@@ -710,7 +710,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
-    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -745,7 +745,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
-       // cout<<"Error forward: "<<error_forward<<endl;
+       cout<<"Error forward "<< to_string(i) << ": " << error_forward<<endl;
 
        parameters_forward(i) -= h;
 

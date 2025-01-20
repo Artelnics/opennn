@@ -167,6 +167,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
+    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
     const Index selection_batch_samples_number = (selection_samples_number != 0)
@@ -174,7 +176,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                                  : 0;
 
     Batch training_batch(training_batch_samples_number, data_set);
-
     Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
@@ -262,6 +263,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             cout<<"=========training========="<<endl;
 
             // Data set
+
             training_batch.fill(training_batches[iteration],
                 input_variable_indices,
                 decoder_variable_indices,
@@ -304,8 +306,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Neural network
 
-
-
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -337,21 +337,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                     // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
-                    throw runtime_error("Yep");
+                    throw runtime_error("Nan");
                 }
                 if (isinf(training_back_propagation.gradient(i)))
                 {
                     cerr << "THERE IS AN INF TERM IN THE GRADIENT" << endl;
-                    throw runtime_error("Nope");
+                    throw runtime_error("Infinity");
                 }
             }
 
 
             // NUMERICAL GRADIENT
 
-            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
 
-            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             // // for(Index i = 0; i < training_back_propagation.gradient.size(); i++)
             // //     if(isnan(training_back_propagation.gradient(i))){
@@ -359,16 +358,21 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // //         break;
             // //     }
 
-            // cout << "numerical gradient:\n" << numerical_gradient << endl<<endl<<endl;
+            cout << "gradient:\n" << training_back_propagation.gradient << endl;
+
+            cerr << "numerical gradient:\n" << numerical_gradient << endl<<endl<<endl;
 
             // // // throw runtime_error("Stop here");
 
-            // cout << "gradient - numerical gradient :\n" << (training_back_propagation.gradient - numerical_gradient).abs() << endl<<endl<<endl;
+            cout << "gradient - numerical gradient :\n" << (training_back_propagation.gradient - numerical_gradient).abs() << endl<<endl<<endl;
 
             // cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 
-            // throw runtime_error("Stop here");
+            throw runtime_error("Stop here");
 
+
+
+            // NUMERICAL OUTPUT DELTAS
 
             // TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(training_back_propagation.get_output_deltas_pair());
 
@@ -393,7 +397,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //if(display && epoch % display_period == 0)
             // display_progress_bar(iteration, training_batches_number - 1);
         }
-
+        
         // Loss
 
         training_error /= type(training_batches_number);
@@ -402,7 +406,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_accuracy /= type(training_batches_number);
 
         results.training_error_history(epoch) = training_error;
-        
+
         if(has_selection)
         {
             selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
@@ -412,7 +416,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
-
                 // Data set
 
                 selection_batch.fill(selection_batches[iteration],

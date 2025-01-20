@@ -543,6 +543,12 @@ type calculate_intersection_over_union(const Tensor<type, 1>& box_1, const Tenso
     type x_right = min(box_1(0) + box_1(2) / 2, box_2(0) + box_2(2) / 2);
     type y_bottom = min(box_1(1) + box_1(3) / 2, box_2(1) + box_2(3) / 2);
 
+    // cout << "x_left: " << x_left << endl;
+    // cout << "x_right: " << x_right << endl;
+    // cout << "y_top: " << y_top << endl;
+    // cout << "y_bottom: " << y_bottom << endl;
+
+    // throw runtime_error("Checking boxes");
 
     type intersection_area = max(0.0f, x_right - x_left) * max(0.0f, y_bottom - y_top);
 

@@ -103,7 +103,7 @@ void YoloError::calculate_error(const Batch& batch,
                         confidence_loss_object += pow(confidence - outputs(i, j, k, l * box_data_size + 4), 2);
 
                         for(Index c = 0; c < classes_number; c++)
-                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(epsilon + outputs(i,j, k, l * box_data_size + (5 + c)));
+                            class_loss += targets(i,j, k, l * box_data_size + (5 + c)) * log(/*epsilon +*/ outputs(i,j, k, l * box_data_size + (5 + c)));
                     }
                     else
                     {
@@ -145,7 +145,6 @@ void YoloError::calculate_error(const Batch& batch,
     // cout<<error<<endl;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
-
 
 }
 
@@ -189,11 +188,11 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
-    const Index classes_number = (outputs.dimension(3) / boxes_per_cell) - 5;
-    const Index box_data_size = 5 + classes_number;
+    const Index box_data_size = (outputs.dimension(3) / boxes_per_cell);
+    const Index classes_number = box_data_size - 5;
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
-    const type epsilon = 1e-05;
+    // const type epsilon = 1e-05;
 
     cout<<"========delta4=========="<<endl;
 
@@ -220,13 +219,15 @@ void YoloError::calculate_output_delta(const Batch& batch,
                                                                   * outputs(i,j,k, base_index + 1) * (1 - outputs(i,j,k, base_index + 1));                               // chain rule
 
                         // Width and height deltas
-                        output_deltas(i, j, k, base_index + 2) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 2)) - sqrt(targets(i, j, k, base_index + 2)))
-                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 2)))
-                                                                 * outputs(i,j,k, base_index + 2);                                    // chain rule
+                        output_deltas(i, j, k, base_index + 2) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 2)) - sqrt(targets(i, j, k, base_index + 2)))
+                                                                 * sqrt(outputs(i, j, k, base_index + 2))
+                                                                /* * (1 / sqrt(outputs(i, j, k, base_index + 2)))
+                                                                 * outputs(i,j,k, base_index + 2)*/;                                    // chain rule
 
-                        output_deltas(i, j, k, base_index + 3) = lambda_coord * 2 * (sqrt(outputs(i, j, k, base_index + 3)) - sqrt(targets(i, j, k, base_index + 3)))
-                                                                 * (0.5 / sqrt(outputs(i, j, k, base_index + 3)))
-                                                                 * outputs(i,j,k, base_index + 3);                                    // chain rule
+                        output_deltas(i, j, k, base_index + 3) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 3)) - sqrt(targets(i, j, k, base_index + 3)))
+                                                                 * sqrt(outputs(i, j, k, base_index + 3))
+                                                                 /* * (1 / sqrt(outputs(i, j, k, base_index + 3)))
+                                                                 * outputs(i,j,k, base_index + 3)*/;                                    // chain rule
 
                         // Confidence deltas (there is an object)
                         Tensor<type, 1> ground_truth_box(4);
@@ -249,7 +250,7 @@ void YoloError::calculate_output_delta(const Batch& batch,
                         // Classes deltas
                         for(Index c = 0; c < classes_number; c++)
                         {
-                            output_deltas(i, j, k, base_index + 5 + c) = /*-targets(i,j,k,base_index + 5 + c) / (epsilon + outputs(i,j,k,base_index + 5 + c))*/ outputs(i, j, k, base_index + 5 + c) - targets(i, j, k, base_index + 5 + c);
+                            output_deltas(i, j, k, base_index + 5 + c) = outputs(i, j, k, base_index + 5 + c) - targets(i, j, k, base_index + 5 + c);
                         }
                     }
                     else

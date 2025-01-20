@@ -10,6 +10,7 @@
 #include "batch.h"
 #include "tensors.h"
 #include "image_data_set.h"
+#include "language_data_set.h"
 #include "images.h"
 #include "language_data_set.h"
 #include "yolo_dataset.h"
@@ -27,23 +28,28 @@ void Batch::fill(const vector<Index>& sample_indices,
 
     if(is_instance_of<ImageDataSet>(data_set))
     {
-        // @todo
-        //ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+        ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
 
-        //image_data_set && image_data_set->get_augmentation())
+        if (image_data_set->get_augmentation())
+        {
+            // @todo
 
-        //Tensor<type, 2> augmented_data = perform_augmentation(data);
+            //Tensor<type, 2> augmented_data = perform_augmentation(data);
 
-        //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
-
-
+            //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
+        }
+        else
+        {
+            fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+        }
     }
     else
     {
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
 
-    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    if (is_instance_of<LanguageDataSet>(data_set))
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
     fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 

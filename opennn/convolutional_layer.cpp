@@ -276,6 +276,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.get());
 
+    Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
+
     const Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
@@ -328,9 +330,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     //     }
     // }
 
-    cout << "KERNEL WIDTH AND HEIGHT: " << kernel_width << ", " << kernel_height << endl;
-
-    cerr << deltas.dimensions() << ", " << activation_derivatives.dimensions() << endl;
+    // cout << "KERNEL WIDTH AND HEIGHT: " << kernel_width << ", " << kernel_height << endl;
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
 
@@ -340,6 +340,10 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Synaptic weigth derivatives
     
+    // cout << "Convolution derivatives dimensions: " << convolutions_derivatives.dimensions() << "\nSize: " << batch_samples_number * output_height * output_width << endl;
+
+    preprocess_inputs(inputs, preprocessed_inputs);
+
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -351,12 +355,19 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
             synaptic_weights_derivatives_data + kernel_index * kernel_size,
-            1, 
+            1,
             kernel_height, 
             kernel_width, 
             kernel_channels);
 
-        kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+        // cout << "Kernel synaptic weights derivatives dimensions: " << kernel_synaptic_weights_derivatives.dimensions() << "\nSize: " << kernel_size << endl;
+
+        // cout << "Kernel convolutions derivatives dimensions: " << kernel_convolutions_derivatives.dimensions() << "\nSize: " << batch_samples_number * output_height * output_width << endl;
+
+        // cout << "Input dimensions: " << inputs.dimensions() << endl;
+
+        // cout << "Correct dimensions so far" << endl;
+        kernel_synaptic_weights_derivatives = preprocessed_inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
 
         // cout<<"kernel synaptic weights derivatives dimensions: "<<kernel_synaptic_weights_derivatives.dimensions()<<endl;
 
@@ -380,6 +391,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     }
 
     // Input derivatives
+
+    // cout << "Correct dimensions so far" << endl;
 
     rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
     
@@ -428,11 +441,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    cerr << "EVERYTHING GOOD IN BACK PROPAGATION" << endl;
-
-    // cout<< "Convolutions derivatives:\n" << convolutions_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-    // cout<< "Biases derivatives:\n" << biases_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-    // cout<< "Input derivatives:\n" << input_derivatives << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
+    // cerr << "EVERYTHING GOOD IN BACK PROPAGATION" << endl;
 
 
     /*
@@ -463,8 +472,8 @@ void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
     const type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weights_derivatives.data();
     const type* biases_derivatives_data = convolutional_layer_back_propagation->biases_derivatives.data();
 
-    cout << "SYNAPTIC WEIGHTS NUMBER: " << synaptic_weights_number << endl;
-    cerr << "BIASES NUMBER: " << biases_number << endl;
+    // cout << "SYNAPTIC WEIGHTS NUMBER: " << synaptic_weights_number << endl;
+    // cerr << "BIASES NUMBER: " << biases_number << endl;
 
     for (Index i = 0; i < synaptic_weights_number; ++i) {
         if (isnan(convolutional_layer_back_propagation->synaptic_weights_derivatives(i))) {
@@ -644,12 +653,12 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
     memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
 
     memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
-    if(batch_normalization)
-    {
-        memcpy(parameters.data() + synaptic_weights.size() + biases.size(), scales.data(), scales.size()*sizeof(type));
+    // if(batch_normalization)
+    // {
+    //     memcpy(parameters.data() + synaptic_weights.size() + biases.size(), scales.data(), scales.size()*sizeof(type));
 
-        memcpy(parameters.data() + synaptic_weights.size() + biases.size() + scales.size(), offsets.data(), offsets.size()*sizeof(type));
-    }
+    //     memcpy(parameters.data() + synaptic_weights.size() + biases.size() + scales.size(), offsets.data(), offsets.size()*sizeof(type));
+    // }
 // @todo add scales and offsets
 
     return parameters;

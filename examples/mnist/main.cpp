@@ -40,7 +40,7 @@ int main()
 
         ImageDataSet image_data_set;
 
-        //image_data_set.set(DataSet::SampleUse::Training);
+        //image_data_set.set_data_random();
 
         //image_data_set.set_data_source_path("data");
         //image_data_set.set_data_source_path("C:/mnist/train");
@@ -56,12 +56,14 @@ int main()
 
         image_data_set.read_bmp();
 
+        //image_data_set.set(DataSet::SampleUse::Training);
+
         // Neural network
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            image_data_set.get_input_dimensions(),
-            { 32 },
-            image_data_set.get_target_dimensions());
+            image_data_set.get_dimensions(DataSet::VariableUse::Input),
+            { 8 },
+            image_data_set.get_dimensions(DataSet::VariableUse::Target));
         
         //neural_network.print();
 
