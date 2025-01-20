@@ -1808,8 +1808,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     if (new_data.dimension(0) != get_samples_number())
         throw runtime_error("Rows number is not equal to samples number");
 
-    if (new_data.dimension(1) != get_variables_number())
+    if (new_data.dimension(1) != get_variables_number()) {
         throw runtime_error("Columns number is not equal to variables number");
+    }
 
     data = new_data;
 }

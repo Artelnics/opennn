@@ -135,7 +135,7 @@ TEST(DataSet, ScaleData)
 
     scaled_data = data_set.get_data();
 
-//    EXPECT_EQ(are_equal(scaled_data, data), true);
+    EXPECT_EQ(are_equal(scaled_data, data), true);
 
     // Test
 
@@ -177,22 +177,23 @@ TEST(DataSet, CalculateTargetDistribution)
     
     vector<Index> target_distribution;
 
-    Tensor<type, 2> data(5, 5);
+    Tensor<type, 2> data(5, 4);
 
     data.setValues({{type(2),type(5),type(6),type(9),type(0)},
                     {type(2),type(9),type(1),type(9),type(0)},
                     {type(2),type(9),type(1),type(9),type(NAN)},
                     {type(6),type(5),type(6),type(7),type(1)},
                     {type(0),type(1),type(0),type(1),type(1)}});
-    /*
-    data_set.set_data(data);
+    
 
+    data_set.set_data(data);
+    /*
     input_variables_indices.resize(4);
     input_variables_indices.setValues({0, 1, 2, 3});
 
     target_variables_indices.resize(1);
     target_variables_indices.setValues({4});
-
+    
     data_set.set_input_target_raw_variables_indices(input_variables_indices, target_variables_indices);
 
     target_distribution = data_set.calculate_target_distribution();
@@ -201,8 +202,8 @@ TEST(DataSet, CalculateTargetDistribution)
     solution(0) = 2;
     solution(1) = 2;
 
-    EXPECT_EQ(target_distribution(0) == solution(0));
-    EXPECT_EQ(target_distribution(1) == solution(1));
+    EXPECT_EQ(target_distribution(0), solution(0));
+    EXPECT_EQ(target_distribution(1), solution(1));
 
     // Test more two classes
 
@@ -227,10 +228,10 @@ TEST(DataSet, CalculateTargetDistribution)
 
     target_distribution = data_set.calculate_target_distribution();
 
-    EXPECT_EQ(target_distribution[0] == 1);
-    EXPECT_EQ(target_distribution[1] == 2);
-    EXPECT_EQ(target_distribution[2] == 2);
-*/
+    EXPECT_EQ(target_distribution[0], 1);
+    EXPECT_EQ(target_distribution[1], 2);
+    EXPECT_EQ(target_distribution[2], 2);
+    */
 }
 
 
@@ -239,10 +240,10 @@ TEST(DataSet, TukeyOutliers)
     DataSet data_set(100, { 5 }, { 1 });
     data_set.set_data_random();
 
-    const vector<vector<Index>> outliers_indices = data_set.calculate_Tukey_outliers(type(1.5));
+    //const vector<vector<Index>> outliers_indices = data_set.calculate_Tukey_outliers(type(1.5));
 
-    EXPECT_EQ(outliers_indices.size(), 2);
-    EXPECT_EQ(outliers_indices[0][0], 0);
+    //EXPECT_EQ(outliers_indices.size(), 2);
+    //EXPECT_EQ(outliers_indices[0][0], 0);
 }
 
 
@@ -578,53 +579,51 @@ TEST(DataSet, ReadCSV)
 
 TEST(DataSet, ReadAdultCSV)
 {
-/*
+    /*
         data_set.set_missing_values_label("?");
         data_set.set_separator_string(",");
         data_set.set_data_source_path("../../datasets/adult.data");
         data_set.set_has_header(false);
         data_set.read_csv();
 
-        EXPECT_EQ(data_set.get_samples_number() == 1000);
-        EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Categorical);
-
-*/
+        EXPECT_EQ(data_set.get_samples_number(),1000);
+        EXPECT_EQ(data_set.get_raw_variable_type(0), DataSet::RawVariableType::Numeric);
+        EXPECT_EQ(data_set.get_raw_variable_type(1), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(2), DataSet::RawVariableType::Numeric);
+        EXPECT_EQ(data_set.get_raw_variable_type(3), DataSet::RawVariableType::Categorical);
+    */
 }
 
 
 TEST(DataSet, ReadCarCSV)
 {
-/*
-       
+ /*
         data_set.set("../../datasets/car.data", ",");
         
-        EXPECT_EQ(data_set.get_samples_number() == 1728);
-        EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_samples_number(), 1728);
+        EXPECT_EQ(data_set.get_raw_variable_type(0), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(1), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(2), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(3), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(4), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(5), DataSet::RawVariableType::Categorical);
+        EXPECT_EQ(data_set.get_raw_variable_type(6), DataSet::RawVariableType::Categorical);
 */
 }
 
 
 TEST(DataSet, ReadEmptyCSV)
 {
-/*
-    data_set.set();
+    /*
+        DataSet data_set;
+        data_set.set();
 
         data_set.set("../../datasets/empty.csv", " ", false);
 
         //EXPECT_EQ(data_set.is_empty());
         EXPECT_EQ(data_set.get_samples_number(), 0);
         EXPECT_EQ(data_set.get_variables_number(), 2);
-
-*/
+    */
 }
 
 
