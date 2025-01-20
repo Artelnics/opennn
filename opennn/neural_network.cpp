@@ -439,26 +439,26 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     {
         const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
 
-        //add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-        //                                          kernel_dimensions,
-        //                                          ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-        //                                          stride_dimensions,
-        //                                          convolution_type,
-        //                                          "convolutional_layer_" + to_string(i+1)));
+        add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                  kernel_dimensions,
+                                                  ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+                                                  stride_dimensions,
+                                                  convolution_type,
+                                                  "convolutional_layer_" + to_string(i+1)));
 
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
         const PoolingLayer::PoolingMethod pooling_method = PoolingLayer::PoolingMethod::MaxPooling;
 
-        //add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
-        //                                    pool_dimensions,
-        //                                    pooling_stride_dimensions,
-        //                                    padding_dimensions,
-        //                                    pooling_method,
-        //                                    "pooling_layer_" + to_string(i + 1)));
+        add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
+                                            pool_dimensions,
+                                            pooling_stride_dimensions,
+                                            padding_dimensions,
+                                            pooling_method,
+                                            "pooling_layer_" + to_string(i + 1)));
     }
     
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));

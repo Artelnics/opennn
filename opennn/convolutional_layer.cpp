@@ -205,7 +205,7 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
     Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs);
-
+    
     calculate_convolutions(preprocessed_inputs, outputs);
 
     if(batch_normalization)
@@ -230,8 +230,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    cout << "Calculando tiempo convolution backward..." << endl;
-    auto start = chrono::high_resolution_clock::now();
+    //cout << "Calculando tiempo convolution backward..." << endl;
+    //auto start = chrono::high_resolution_clock::now();
     // Convolutional layer
 
     const Index batch_samples_number = back_propagation->batch_samples_number;
@@ -255,6 +255,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     ConvolutionalLayerForwardPropagation* convolutional_layer_forward_propagation =
             static_cast<ConvolutionalLayerForwardPropagation*>(forward_propagation.get());
+
+    Tensor<type, 4>& preprocessed_inputs = convolutional_layer_forward_propagation->preprocessed_inputs;
 
     const Tensor<type, 4>& activation_derivatives = convolutional_layer_forward_propagation->activation_derivatives;
 
@@ -292,10 +294,9 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Eigen::array<pair<Index, Index>, 2> paddings 
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
-    cout << "Inputs: \n" << inputs << endl;
-    cout << "Deltas: \n" << deltas << endl;
-
-    cout << "synaptic weigths:\n" << synaptic_weights << endl;
+    // Inputs
+    
+    preprocess_inputs(inputs, preprocessed_inputs);
 
     // Convolutions derivatives
 
@@ -307,7 +308,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Synaptic weigth derivatives
     
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
@@ -323,18 +324,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             kernel_width, 
             kernel_channels);
 
-        kernel_synaptic_weights_derivatives = inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+        kernel_synaptic_weights_derivatives = preprocessed_inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
     }
-    
-    cout << "synaptic_weight_derivatives:\n" << convolutional_layer_back_propagation->synaptic_weight_derivatives << endl;
-    cout << "synaptic_weight dimension[0]:" << synaptic_weights.dimension(0) << endl;
-    cout << "synaptic_weight dimension[1]:" << synaptic_weights.dimension(1) << endl;
-    cout << "synaptic_weight dimension[2]:" << synaptic_weights.dimension(2) << endl;
-    cout << "synaptic_weight dimension[3]:" << synaptic_weights.dimension(3) << endl;
-    cout << "synaptic_weight_derivatives dimension[0]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(0) << endl;
-    cout << "synaptic_weight_derivatives dimension[1]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(1) << endl;
-    cout << "synaptic_weight_derivatives dimension[2]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(2) << endl;
-    cout << "synaptic_weight_derivatives dimension[3]:" << convolutional_layer_back_propagation->synaptic_weight_derivatives.dimension(3) << endl;
 
     // Input derivatives
 
@@ -376,12 +367,12 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    cout << "Tiempo convolution back propagate: "
-        << duration.count() / 1000 << "::"
-        << duration.count() % 1000
-        << " segundos::milisegundos" << endl;
+    //auto end = chrono::high_resolution_clock::now();
+    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    //cout << "Tiempo convolution back propagate: "
+    //    << duration.count() / 1000 << "::"
+    //    << duration.count() % 1000
+    //    << " segundos::milisegundos" << endl;
 }
 
 
@@ -818,7 +809,7 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index kernel_width = get_kernel_width();
 
         const Index row_stride = get_row_stride();
-        //const Index column_stride = get_column_stride();
+        const Index column_stride = get_column_stride();
 
         const Index pad_rows = std::max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
         const Index pad_columns = std::max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
