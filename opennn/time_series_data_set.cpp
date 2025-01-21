@@ -1077,15 +1077,15 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         {
             continue;
         }
-
+        
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
-
+        
         autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
-
         for(Index j = 0; j < new_lags_number; j++)
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
 
         counter_i++;
+ 
     }
 
     return autocorrelations;
