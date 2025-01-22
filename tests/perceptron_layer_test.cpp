@@ -202,6 +202,5 @@ TEST(PerceptronLayerTest, ForwardPropagate)
 
     EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3));
     EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3));
-
 */
 }

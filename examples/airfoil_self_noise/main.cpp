@@ -10,11 +10,7 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/data_set.h"
-#include "../../opennn/neural_network.h"
-#include "../../opennn/training_strategy.h"
 #include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
 
 int main()
 {
@@ -31,11 +27,6 @@ int main()
 
         data_set.set(DataSet::SampleUse::Training);
         
-        //data_set.print_input_target_raw_variables_correlations();
-
-        //data_set.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        //data_set.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-
         // Neural network
 
         const Index neurons_number = 10;
@@ -43,12 +34,17 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
 
-        // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
+        // @todo fails
+        //neural_network.save("../data/neural_network.xml");
+        //neural_network.load("../data/neural_network.xml");
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.save("../data/training_strategy.xml");
+        training_strategy.load("../data/training_strategy.xml");
+/*
 
 //        training_strategy.set_display(false);
 
@@ -78,7 +74,7 @@ int main()
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_inputs_selection();
-/*
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);

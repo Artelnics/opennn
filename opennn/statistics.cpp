@@ -1197,7 +1197,7 @@ Histogram histogram(const Tensor<bool, 1>& v)
 }
 
 
-//Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
+//Tensor<Index, 1> total_frequencies(const vector<Histogram>& histograms)
 //{
 //    const Index histograms_number = histograms.size();
 
@@ -1210,11 +1210,11 @@ Histogram histogram(const Tensor<bool, 1>& v)
 //}
 
 
-Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
+vector<Histogram> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<Histogram, 1> histograms(columns_number);
+    vector<Histogram> histograms(columns_number);
 /*
     for(Index i = 0; i < columns_number; i++)
         histograms(i) = histogram(tensor_map(matrix, i), bins_number);

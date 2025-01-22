@@ -347,16 +347,16 @@ void TestingAnalysis::print_error_data_descriptives() const
 }
 
 
-Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
+vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
 {
     const Tensor<type, 2> error_data = calculate_percentage_error_data();
 
     const Index outputs_number = error_data.dimension(1);
 
-    Tensor<Histogram, 1> histograms(outputs_number);
+    vector<Histogram> histograms(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        histograms(i) = histogram_centered(error_data.chip(i,1), type(0), bins_number);
+        histograms[i] = histogram_centered(error_data.chip(i,1), type(0), bins_number);
 
     return histograms;
 }
@@ -1464,14 +1464,15 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 }
 
 
-Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
+vector<Histogram> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs,
+                                                              const Index& bins_number) const
 {
 
     const Tensor<type, 1> output_column = outputs.chip(0,1);
 
-    Tensor<Histogram, 1> output_histogram (1);
+    vector<Histogram> output_histogram (1);
 
-    output_histogram(0) = histogram(output_column, bins_number);
+    output_histogram[0] = histogram(output_column, bins_number);
 
     return output_histogram;
 }

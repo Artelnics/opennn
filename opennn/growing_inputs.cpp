@@ -214,7 +214,7 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
                 // Neural network
 
                 input_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-                input_selection_results.optimal_input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+                input_selection_results.optimal_input_raw_variable_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
                 input_selection_results.optimal_parameters = neural_network->get_parameters();
 

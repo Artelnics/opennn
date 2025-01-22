@@ -54,10 +54,10 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
         data_set.get_variable_indices(DataSet::VariableUse::Input),
         data_set.get_variable_indices(DataSet::VariableUse::Target));
-/*
+    /*
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
-
+    
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);

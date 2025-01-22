@@ -2823,16 +2823,18 @@ void DataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();  
 
     printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if (missing_values_number > 0) 
     {
+        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
-    printer.CloseElement();  
+    printer.CloseElement();
+
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -2870,8 +2872,8 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1))
-            throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
+        if (raw_variable_element->Attribute("Item") != to_string(i + 1))
+            throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
@@ -2899,11 +2901,12 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
     if (missing_values_number > 0)
     {
+        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
 
         for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)

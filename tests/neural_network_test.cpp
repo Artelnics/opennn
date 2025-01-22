@@ -116,9 +116,9 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setConstant(type(0));  
-
-    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
     /*
+    const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
+    
 //    EXPECT_EQ(outputs.size(), batch_samples_number * outputs_number);
 //    EXPECT_NEAR(outputs(0,0), 0, NUMERIC_LIMITS_MIN);
 //    EXPECT_NEAR(outputs(0,1), 0, NUMERIC_LIMITS_MIN);

@@ -11,6 +11,7 @@
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
 #include "scaling_layer_2d.h"
+#include "optimization_algorithm.h"
 
 namespace opennn
 {
@@ -756,7 +757,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             data_set->set_input_target_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variable_indices);
 
-            input_selection_results.optimal_input_raw_variables_names 
+            input_selection_results.optimal_input_raw_variable_names 
                 = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);

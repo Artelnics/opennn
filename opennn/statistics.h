@@ -87,8 +87,8 @@ namespace opennn
  Histogram histogram_centered(const Tensor<type, 1>&, const type& = type(0), const Index&  = 10);
  Histogram histogram(const Tensor<bool, 1>&);
  Histogram histogram(const Tensor<Index, 1>&, const Index&  = 10);
- Tensor<Histogram, 1> histograms(const Tensor<type, 2>&, const Index& = 10);
- //Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>&);
+ vector<Histogram> histograms(const Tensor<type, 2>&, const Index& = 10);
+ //Tensor<Index, 1> total_frequencies(const vector<Histogram>&);
 
 
  // Minimal indices

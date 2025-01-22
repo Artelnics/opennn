@@ -52,7 +52,7 @@ int main()
         image_data_set.read_bmp();
 
         // Neural network
-        
+/*
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_input_dimensions(),
             { 32 },
@@ -74,7 +74,7 @@ int main()
         training_strategy.perform_training();
         
         // Testing analysis
-        /*
+
         neural_network.save("C:/xmltest/outputs.xml");
 
         NeuralNetwork imported_neural_network;
@@ -84,13 +84,13 @@ int main()
         cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
-        */
+
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+        */
         cout << "Bye!" << endl;
         
         return 0;

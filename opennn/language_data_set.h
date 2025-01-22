@@ -19,9 +19,9 @@ class LanguageDataSet : public DataSet
 
 public:
 
-    explicit LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
+    LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
-    explicit LanguageDataSet(const filesystem::path&);
+    LanguageDataSet(const filesystem::path&);
 
     const unordered_map<string, Index>& get_input_vocabulary() const;
     const unordered_map<string, Index>& get_target_vocabulary() const;
