@@ -165,7 +165,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+    //const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
@@ -276,11 +276,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "gradient:\n" << training_back_propagation.gradient << endl;
             //cout << "numerical gradient:\n" << numerical_gradient<< endl;
-
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-            //system("pause");
+            cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            
+            system("pause");
 
             training_error += training_back_propagation.error();
 
