@@ -44,7 +44,7 @@ public:
 
     void set_default();
 
-    void set_maximum_neurons_number(const Index&);
+    void set_maximum_neurons(const Index&);
     void set_minimum_neurons(const Index&);
     void set_trials_number(const Index&);
 

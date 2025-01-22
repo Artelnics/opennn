@@ -371,7 +371,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
         batch.set(batch_samples_number, &data_set);
 
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number, outputs_number });
 
@@ -425,7 +425,7 @@ void NeuralNetworkTest::test_forward_propagate()
         target_variables_indices = data_set.get_target_variables_indices();
 
         batch.set(batch_samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         neural_network.set();
 

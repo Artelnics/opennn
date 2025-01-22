@@ -63,7 +63,7 @@ public:
 
     NeuronsSelectionResults perform_neurons_selection();
 
-    InputsSelectionResults perform_inputs_selection();
+    InputsSelectionResults perform_input_selection();
 
     // Serialization
     

@@ -42,16 +42,15 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.save("../data/training_strategy.xml");
-        training_strategy.load("../data/training_strategy.xml");
-/*
+        //training_strategy.save("../data/training_strategy.xml");
+        //training_strategy.load("../data/training_strategy.xml");
 
-//        training_strategy.set_display(false);
+        training_strategy.set_display(false);
 
         //training_strategy.print();
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-       //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
@@ -69,11 +68,12 @@ int main()
         //training_strategy.save("../data/training_strategy.xml");
         //training_strategy.load("../data/training_strategy.xml");
 
-//        training_strategy.perform_training();
+        training_strategy.perform_training();
 
+        /*
         ModelSelection model_selection(&training_strategy);
 
-        model_selection.perform_inputs_selection();
+        model_selection.perform_input_selection();
 
         // Testing analysis
 

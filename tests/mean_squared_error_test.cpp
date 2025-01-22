@@ -52,9 +52,11 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-        data_set.get_variable_indices(DataSet::VariableUse::Input),
-        data_set.get_variable_indices(DataSet::VariableUse::Target));
-    /*
+
+    data_set.get_variable_indices(DataSet::VariableUse::Input),
+    data_set.get_variable_indices(DataSet::VariableUse::Decoder),
+    data_set.get_variable_indices(DataSet::VariableUse::Target));
+
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
         { inputs_number }, { neurons_number }, { targets_number });
     
@@ -73,7 +75,6 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
     EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-*/
 }
 
 
@@ -93,6 +94,7 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
                data_set.get_variable_indices(DataSet::VariableUse::Input),
+               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
                data_set.get_variable_indices(DataSet::VariableUse::Target));
 
     // Neural network

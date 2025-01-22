@@ -763,7 +763,39 @@ vector<string> DataSet::get_variable_names(const VariableUse& variable_use) cons
 
 dimensions DataSet::get_dimensions(const DataSet::VariableUse& variable_use) const
 {   
-    return dimensions({ get_variables_number(variable_use) });
+    switch (variable_use)
+    {
+    case DataSet::VariableUse::Input:
+        return input_dimensions;
+
+    case DataSet::VariableUse::Target:
+        return target_dimensions;
+
+    case DataSet::VariableUse::Decoder:
+        return decoder_dimensions;
+
+    default:
+        throw invalid_argument("get_dimensions::Invalid VariableUse type.");
+    }
+}
+
+
+void DataSet::set_dimensions(const DataSet::VariableUse& variable_use, const dimensions& new_dimensions)
+{
+    switch (variable_use)
+    {
+    case DataSet::VariableUse::Input:
+        input_dimensions = new_dimensions;
+
+    case DataSet::VariableUse::Target:
+        target_dimensions = new_dimensions;
+
+    case DataSet::VariableUse::Decoder:
+        decoder_dimensions = new_dimensions;
+
+    default:
+        throw invalid_argument("set_dimensions::Invalid VariableUse type.");
+    }
 }
 
 
@@ -939,27 +971,6 @@ Index DataSet::get_used_raw_variables_number() const
 }
 
 
-Index DataSet::get_input_and_unused_variables_number() const
-{
-    Index raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-    {
-        const RawVariable& raw_variable = raw_variables[i];
-
-        if(raw_variable.use != VariableUse::Input && raw_variable.use != VariableUse::None)
-            continue;
-
-        if(raw_variable.type == RawVariableType::Categorical)
-                raw_variables_number += raw_variable.categories.size();
-        else
-                raw_variables_number++;
-    }
-
-    return raw_variables_number;
-}
-
-
 const vector<DataSet::RawVariable>& DataSet::get_raw_variables() const
 {
     return raw_variables;
@@ -1081,8 +1092,8 @@ void DataSet::set_raw_variables(const VariableUse& variable_use)
 }
 
 
-void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_raw_variables,
-                                                    const vector<Index>& target_raw_variables)
+void DataSet::set_raw_variable_indices(const vector<Index>& input_raw_variables,
+                                       const vector<Index>& target_raw_variables)
 {
     set_raw_variables(VariableUse::None);
 
@@ -1094,7 +1105,7 @@ void DataSet::set_input_target_raw_variable_indices(const vector<Index>& input_r
 }
 
 
-// void DataSet::set_input_target_raw_variable_indices(const vector<string>& input_raw_variables,
+// void DataSet::set_raw_variable_indices(const vector<string>& input_raw_variables,
 //                                                     const vector<string>& target_raw_variables)
 // {
 //     set_raw_variables(VariableUse::None);
@@ -1684,6 +1695,8 @@ void DataSet::set(const Index& new_samples_number,
     || new_target_dimensions.empty())
         return;
 
+    input_dimensions = new_input_dimensions;
+
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), 
                                                new_input_dimensions.end(), 
                                                1, 
@@ -1695,6 +1708,8 @@ void DataSet::set(const Index& new_samples_number,
                                                 multiplies<Index>());
 
     const Index targets_number = (new_targets_number == 2) ? 1 : new_targets_number;
+
+    target_dimensions = { targets_number };
 
     const Index new_variables_number = new_inputs_number + targets_number;
 
@@ -1722,10 +1737,19 @@ void DataSet::set(const Index& new_samples_number,
                 RawVariableType::Binary,
                 Scaler::None); 
         else
+        {
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
-                Scaler::None);     
+                Scaler::None);
+
+            vector<string> new_categories;
+
+            for (int i = 1; i <= targets_number; ++i) 
+                new_categories.push_back(to_string(i-1));
+
+            raw_variables[raw_variables_number - 1].set_categories(new_categories);
+        }
     }
     else
     {
@@ -1741,7 +1765,7 @@ void DataSet::set(const Index& new_samples_number,
                 : VariableUse::Target;
         }
     }
-
+    
     sample_uses.resize(new_samples_number);
     
     split_samples_random();
@@ -1808,8 +1832,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     if (new_data.dimension(0) != get_samples_number())
         throw runtime_error("Rows number is not equal to samples number");
 
-    if (new_data.dimension(1) != get_variables_number())
+    if (new_data.dimension(1) != get_variables_number()) {
         throw runtime_error("Columns number is not equal to variables number");
+    }
 
     data = new_data;
 }
@@ -2939,11 +2964,11 @@ void DataSet::print() const
          << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input dimensions: ";
    
-    //print_vector(get_input_dimensions());
+    print_vector(get_dimensions(DataSet::VariableUse::Input));
          
     cout << "Target dimensions: ";
     
-    //print_vector(get_target_dimensions());
+    print_vector(get_dimensions(DataSet::VariableUse::Target));
     
     cout << "Number of training samples: " << training_samples_number << endl
          << "Number of selection samples: " << selection_samples_number << endl
@@ -3411,10 +3436,8 @@ void DataSet::set_data_rosenbrock()
 }
 
 
-
 void DataSet::set_data_classification()
-{
-    
+{    
     const Index samples_number = get_samples_number();
     const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index target_variables_number = get_variables_number(VariableUse::Target);
@@ -3534,7 +3557,8 @@ void DataSet::impute_missing_values_unuse()
     #pragma omp parallel for
 
     for(Index i = 0; i <samples_number; i++)
-        if(has_nan_row(i)) set_sample_use(i, "None");
+        if(has_nan_row(i)) 
+            set_sample_use(i, "None");
 }
 
 

@@ -33,7 +33,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     data_set.set(DataSet::SampleUse::Training);
 
     Batch batch(1, &data_set);
-    //batch.fill({0}, {0}, {1});
+    batch.fill({0}, {0}, {}, {1});
 
     // Neural network
 
@@ -97,7 +97,7 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     target_variables_indices = data_set.get_target_variables_indices();
 
     batch.set(batch_samples_number, &data_set);
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     // Neural network
 
@@ -138,7 +138,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
     Index heads_number;
     Index layers_number;
 
-    vector<Index> context_variables_indices;
+    vector<Index> decoder_variables_indices;
 
     Transformer transformer;
 
@@ -165,13 +165,13 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         data_set.set(DataSet::SampleUse::Training);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Decoder);
+        decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Decoder);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
         
         batch.set(batch_samples_number, &data_set);
 
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
         transformer.set({ inputs_number, context_length, input_dimensions, context_dimension,
                           depth, perceptron_depth, heads_number, layers_number });
