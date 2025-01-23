@@ -159,7 +159,7 @@ void OptimizationAlgorithm::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("OptimizationAlgorithm");
 
-    add_xml_element(printer, "Display", std::to_string(display));
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -243,7 +243,7 @@ void OptimizationAlgorithm::set_names()
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     neural_network->set_input_names(input_names);
-    neural_network->set_output_namess(target_names);
+    neural_network->set_output_names(target_names);
 }
 
 

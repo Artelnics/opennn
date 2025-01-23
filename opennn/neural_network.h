@@ -112,7 +112,7 @@ public:
    void set_model_type(const ModelType&);
    void set_model_type_string(const string&);
    void set_input_names(const vector<string>&);
-   void set_output_namess(const vector<string>&);
+   void set_output_names(const vector<string>&);
 
    void set_input_dimensions(const dimensions&);
 

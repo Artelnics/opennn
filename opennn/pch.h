@@ -1,6 +1,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#pragma once
+
 #define NUMERIC_LIMITS_MIN type(0.000001)
 
 #define NOMINMAX
@@ -43,7 +45,6 @@
 #include "../eigen/Eigen/Core"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
-
 
 #ifdef OPENNN_CUDA
 

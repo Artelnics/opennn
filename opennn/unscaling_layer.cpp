@@ -447,7 +447,7 @@ void UnscalingLayer::to_XML(XMLPrinter& printer) const
 
     const dimensions output_dimensions = get_output_dimensions();
 
-    add_xml_element(printer, "UnscalingNeuronsNumber", to_string(output_dimensions[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
 
     const vector<string> scalers = write_unscaling_methods();
 
@@ -472,21 +472,22 @@ void UnscalingLayer::from_XML(const XMLDocument& document)
     if(!root_element)
         throw runtime_error("Unscaling element is nullptr.\n");
 
-    Index neurons_number = read_xml_index(root_element, "UnscalingNeuronsNumber");
+    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
+
     set(neurons_number);
 
-    const XMLElement* start_element = root_element->FirstChildElement("UnscalingNeuronsNumber");
+    const XMLElement* start_element = root_element->FirstChildElement("NeuronsNumber");
 
     for (Index i = 0; i < neurons_number; i++) {
         const XMLElement* unscaling_neuron_element = start_element->NextSiblingElement("UnscalingNeuron");
         if (!unscaling_neuron_element) {
-            throw runtime_error("Unscaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Unscaling neuron " + to_string(i + 1) + " is nullptr.\n");
         }
 
         unsigned index = 0;
         unscaling_neuron_element->QueryUnsignedAttribute("Index", &index);
         if (index != i + 1) {
-            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
         const XMLElement* descriptives_element = unscaling_neuron_element->FirstChildElement("Descriptives");

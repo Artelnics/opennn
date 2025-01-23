@@ -131,8 +131,7 @@ HEADERS += \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
     addition_layer_3d.h \
-    normalization_layer_3d.h \
-    opennn.h
+    normalization_layer_3d.h
 
 SOURCES += \
     auto_associative_data_set.cpp \

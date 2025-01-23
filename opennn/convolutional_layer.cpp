@@ -354,15 +354,11 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         {
             image_kernel_convolutions_derivatives_padded
                 = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
-            cout << "image_kernel_convolutions_derivatives_padded:\n" << image_kernel_convolutions_derivatives_padded << endl;
+
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
                 channel_convolution.device(*thread_pool_device)
                     = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
-
-                cout << "channel_convolution:\n" << channel_convolution << endl;
-
-                system("pause");
 
                 #pragma omp parallel for
                 for (Index height = 0; height < input_height; ++height)
@@ -372,55 +368,10 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    cout << "Input derivatives OLD: " << endl;
-    for(int i = 0 ; i < input_derivatives.size() ; i++)
-        cout << input_derivatives(i) << " ";
-    cout << endl;
-
-    // Input derivatives new
-    input_derivatives.setZero();
-
-    Tensor<type, 3> convolution(input_height, input_width, input_channels);
-    Tensor<type, 4> convolutions_derivatives_padded;
-
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++) {
-
-        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
-            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
-            batch_samples_number,
-            output_height,
-            output_width);
-
-        const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
-            rotated_synaptic_weights.data() + kernel_index * kernel_size,
-            kernel_height,
-            kernel_width,
-            kernel_channels);
-
-
-        cout << "convolution dims: " << convolution.dimensions() << endl;
-        cout << "convolutions_derivatives dims: " << convolutions_derivatives.dimensions() << endl;
-        cout << "rotated_synaptic_weights dims: " << rotated_synaptic_weights.dimensions() << endl;
-        //convolution.device(*thread_pool_device)
-        //    = convolutions_derivatives_padded.convolve(rotated_synaptic_weights, convolutions_dimensions);
-            
-        //cout << "image_convolution:\n" << convolution << endl;
-
-        system("pause");
-
-        #pragma omp parallel for
-        for (Index height = 0; height < input_height; ++height)
-            for (Index width = 0; width < input_width; ++width)
-                for (Index channels = 0; channels < input_channels; ++channels)
-                    input_derivatives(0, height, width, channels) += convolution(height, width, channels);
-
-    }
-
-
-    cout << "Input derivatives NEW: " << endl;
-    for (int i = 0; i < input_derivatives.size(); i++)
-        cout << input_derivatives(i) << " ";
-    cout << endl;
+    //cout << "Input derivatives: " << endl;
+    //for(int i = 0 ; i < input_derivatives.size() ; i++)
+    //    cout << input_derivatives(i) << " ";
+    //cout << endl;
 
     //auto end = chrono::high_resolution_clock::now();
     //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);

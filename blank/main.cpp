@@ -16,7 +16,6 @@
 
 #include "../opennn/opennn.h"
 
-
 using namespace std;
 using namespace opennn;
 using namespace std::chrono;

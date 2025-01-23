@@ -11,6 +11,7 @@
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
 #include "scaling_layer_2d.h"
+#include "optimization_algorithm.h"
 
 namespace opennn
 {
