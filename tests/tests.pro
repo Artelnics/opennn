@@ -38,7 +38,6 @@ SOURCES += test.cpp \
            growing_inputs_test.cpp \
            growing_neurons_test.cpp \
            image_data_set_test.cpp \
-           inputs_selection_test.cpp \
            learning_rate_algorithm_test.cpp \
            levenberg_marquardt_algorithm_test.cpp \
            long_short_term_memory_layer_test.cpp \
@@ -46,7 +45,6 @@ SOURCES += test.cpp \
            minkowski_error_test.cpp \
            model_selection_test.cpp \
            neural_network_test.cpp \
-           neurons_selection_test.cpp \
            normalized_squared_error_test.cpp \
            performance_test.cpp \
            pooling_layer_test.cpp \

@@ -546,21 +546,20 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
     for (Index i = 0; i < neurons_number; i++) {
         const XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         if (!scaling_neuron_element) {
-            throw runtime_error("Scaling neuron " + std::to_string(i + 1) + " is nullptr.\n");
+            throw runtime_error("Scaling neuron " + to_string(i + 1) + " is nullptr.\n");
         }
 
-        // Verify neuron index
         unsigned index = 0;
         scaling_neuron_element->QueryUnsignedAttribute("Index", &index);
         if (index != i + 1) {
-            throw runtime_error("Index " + std::to_string(index) + " is not correct.\n");
+            throw runtime_error("Index " + to_string(index) + " is not correct.\n");
         }
 
-        // Descriptives
         const XMLElement* descriptives_element = scaling_neuron_element->FirstChildElement("Descriptives");
-        if (!descriptives_element) {
-            throw runtime_error("Descriptives element " + std::to_string(i + 1) + " is nullptr.\n");
-        }
+
+        if (!descriptives_element)
+            throw runtime_error("Descriptives element " + to_string(i + 1) + " is nullptr.\n");
+
         if (descriptives_element->GetText()) {
             const vector<string> descriptives_string = get_tokens(descriptives_element->GetText(), " ");
             descriptives[i].set(
@@ -571,11 +570,7 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
             );
         }
 
-        const XMLElement* scaling_method_element = scaling_neuron_element->FirstChildElement("Scaler");
-        if (!scaling_method_element) {
-            throw runtime_error("Scaling method element " + std::to_string(i + 1) + " is nullptr.\n");
-        }
-        set_scaler(i, scaling_method_element->GetText());
+        set_scaler(i, read_xml_string(scaling_neuron_element, "Scaler"));
 
         start_element = scaling_neuron_element;
     }

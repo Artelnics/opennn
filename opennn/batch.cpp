@@ -205,11 +205,11 @@ void Batch::print() const
 
     print_vector(target_dimensions);
 
-//    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
-//                                             target_dimensions[0],
-//                                             target_dimensions[1]);
+    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
+                                             target_dimensions[0],
+                                             target_dimensions[1]);
 
-//    cout << targets << endl;
+    cout << targets << endl;
 
 }
 

@@ -289,13 +289,13 @@ TEST(Transformer, ForwardPropagate)
         data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
     training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-    context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
+    decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
     input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
     target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
     batch.set(batch_samples_number, &data_set);
 
-    batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
+    batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
     transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                         embedding_depth, perceptron_depth, heads_number, layers_number });
@@ -358,13 +358,13 @@ TEST(Transformer, ForwardPropagate)
             data_set.set_raw_variable_use(i + context_length + input_length, DataSet::VariableUse::Target);
 
         training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        context_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
+        decoder_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Context);
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(batch_samples_number, &data_set);
 
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices, context_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
 
         transformer.set({ input_length, context_length, input_dimensions, context_dimension,
                           embedding_depth, perceptron_depth, heads_number, layers_number });

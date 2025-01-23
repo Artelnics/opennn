@@ -17,17 +17,6 @@
    </LossIndex>
    <OptimizationAlgorithm>
       <OptimizationMethod>ADAPTIVE_MOMENT_ESTIMATION</OptimizationMethod>
-      <GradientDescent>
-         <LearningRateAlgorithm>
-            <LearningRateMethod>BrentMethod</LearningRateMethod>
-            <LearningRateTolerance>0.000000</LearningRateTolerance>
-         </LearningRateAlgorithm>
-         <MinimumLossDecrease>0.000000</MinimumLossDecrease>
-         <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionFailures>9223372036854775807</MaximumSelectionFailures>
-         <MaximumEpochsNumber>1000</MaximumEpochsNumber>
-         <MaximumTime>3600.000000</MaximumTime>
-      </GradientDescent>
       <ConjugateGradient>
          <TrainingDirectionMethod>FR</TrainingDirectionMethod>
          <LearningRateAlgorithm>
@@ -63,7 +52,7 @@
          </LearningRateAlgorithm>
          <MinimumLossDecrease>0.000000</MinimumLossDecrease>
          <LossGoal>0.000000</LossGoal>
-         <MaximumSelectionFailures>9223372036854775807</MaximumSelectionFailures>
+         <MaximumSelectionFailures>1000</MaximumSelectionFailures>
          <MaximumEpochsNumber>1000</MaximumEpochsNumber>
          <MaximumTime>3600.000000</MaximumTime>
       </QuasiNewtonMethod>
@@ -76,4 +65,5 @@
          <MaximumTime>3600.000000</MaximumTime>
       </LevenbergMarquardt>
    </OptimizationAlgorithm>
+   <Display>1</Display>
 </TrainingStrategy>

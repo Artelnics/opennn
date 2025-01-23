@@ -60,9 +60,7 @@ void NeuralNetwork::add_layer(unique_ptr<Layer> layer, const vector<Index>& inpu
     layers.push_back(std::move(layer));
 
     layer_input_indices.push_back(input_indices.empty()
-
         ? vector<Index>(1, old_layers_number - 1)
-
         : input_indices);
 }
 
@@ -434,12 +432,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
         throw runtime_error("Input dimensions size is not 3.");
 
     add_layer(make_unique<ScalingLayer4D>(input_dimensions));
-
+    
     const Index complexity_size = complexity_dimensions.size();
-
+    
     for (Index i = 0; i < complexity_size; i++)
     {
-        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
@@ -462,12 +460,13 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pooling_method,
                                             "pooling_layer_" + to_string(i + 1)));
     }
-
+    
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
 
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
+    
 }
 
 /*
@@ -669,7 +668,7 @@ void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 }
 
 
-void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
+void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 {
     output_names = new_output_namess;
 }
@@ -1292,7 +1291,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for (Index i = 0; i < outputs_number; i++) 
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
-    printer.CloseElement(); 
+    printer.CloseElement();
+
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -1307,10 +1308,14 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     if(!neural_network_element)
         throw runtime_error("Neural network element is nullptr.\n");
 
+    cout << "Inputs" << endl;
     inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
+    cout << "Layers" << endl;
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
+    cout << "Outputs" << endl;
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
-    //set_display(read_xml_bool(neural_network_element, "Display"));
+    cout << "Display" << endl;
+    set_display(read_xml_bool(neural_network_element, "Display"));
 }
 
 
@@ -1345,7 +1350,7 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
     }
 }
 
-
+/*
 void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 {
     if(!layers_element)
@@ -1370,97 +1375,114 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
 
-        if (layer_type_string == "Scaling2D") {
+        if (layer_type_string == "Scaling2D")
+        {
             unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        else if (layer_type_string == "Scaling4D") {
+        else if (layer_type_string == "Scaling4D")
+        {
             unique_ptr<ScalingLayer4D> scaling_layer = make_unique<ScalingLayer4D>();
             scaling_layer->from_XML(layer_document);
             add_layer(std::move(scaling_layer));
         }
-        else if (layer_type_string == "Convolutional") {
+        else if (layer_type_string == "Convolutional")
+        {
             unique_ptr<ConvolutionalLayer> convolutional_layer = make_unique<ConvolutionalLayer>();
             convolutional_layer->from_XML(layer_document);
             add_layer(std::move(convolutional_layer));
         }
-        else if (layer_type_string == "Perceptron") {
+        else if (layer_type_string == "Perceptron")
+        {
             unique_ptr<PerceptronLayer> perceptron_layer = make_unique<PerceptronLayer>();
             perceptron_layer->from_XML(layer_document);
             add_layer(std::move(perceptron_layer));
         }
-        else if (layer_type_string == "Perceptron3D") {
+        else if (layer_type_string == "Perceptron3D")
+        {
             unique_ptr<PerceptronLayer3D> perceptron_layer_3d = make_unique<PerceptronLayer3D>();
             perceptron_layer_3d->from_XML(layer_document);
             add_layer(std::move(perceptron_layer_3d));
         }
-        else if (layer_type_string == "Pooling") {
+        else if (layer_type_string == "Pooling")
+        {
             unique_ptr<PoolingLayer> pooling_layer = make_unique<PoolingLayer>();
             pooling_layer->from_XML(layer_document);
             add_layer(std::move(pooling_layer));
         }
-        else if (layer_type_string == "Flatten") {
+        else if (layer_type_string == "Flatten")
+        {
             unique_ptr<FlattenLayer> flatten_layer = make_unique<FlattenLayer>();
             flatten_layer->from_XML(layer_document);
             add_layer(std::move(flatten_layer));
         }
-        else if (layer_type_string == "Probabilistic") {
+        else if (layer_type_string == "Probabilistic")
+        {
             unique_ptr<ProbabilisticLayer> probabilistic_layer = make_unique<ProbabilisticLayer>();
             probabilistic_layer->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer));
         }
-        else if (layer_type_string == "Probabilistic3D") {
+        else if (layer_type_string == "Probabilistic3D")
+        {
             unique_ptr<ProbabilisticLayer3D> probabilistic_layer_3d = make_unique<ProbabilisticLayer3D>();
             probabilistic_layer_3d->from_XML(layer_document);
             add_layer(std::move(probabilistic_layer_3d));
         }
-        else if (layer_type_string == "LongShortTermMemory") {
+        else if (layer_type_string == "LongShortTermMemory")
+        {
             unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer = make_unique<LongShortTermMemoryLayer>();
             long_short_term_memory_layer->from_XML(layer_document);
             add_layer(std::move(long_short_term_memory_layer));
         }
-        else if (layer_type_string == "Recurrent") {
+        else if (layer_type_string == "Recurrent")
+        {
             unique_ptr<RecurrentLayer> recurrent_layer = make_unique<RecurrentLayer>();
             recurrent_layer->from_XML(layer_document);
             add_layer(std::move(recurrent_layer));
         }
-        else if (layer_type_string == "Unscaling") {
+        else if (layer_type_string == "Unscaling")
+        {
             unique_ptr<UnscalingLayer> unscaling_layer = make_unique<UnscalingLayer>();
             unscaling_layer->from_XML(layer_document);
             add_layer(std::move(unscaling_layer));
         }
-        else if (layer_type_string == "Bounding") {
+        else if (layer_type_string == "Bounding")
+        {
             unique_ptr<BoundingLayer> bounding_layer = make_unique<BoundingLayer>();
             bounding_layer->from_XML(layer_document);
             add_layer(std::move(bounding_layer));
         }
-        else if (layer_type_string == "Embedding") {
+        else if (layer_type_string == "Embedding")
+        {
             unique_ptr<EmbeddingLayer> embedding_layer = make_unique<EmbeddingLayer>();
             embedding_layer->from_XML(layer_document);
             add_layer(std::move(embedding_layer));
         }
-        else if (layer_type_string == "MultiheadAttention") {
+        else if (layer_type_string == "MultiheadAttention")
+        {
             unique_ptr<MultiheadAttentionLayer> multihead_attention_layer = make_unique<MultiheadAttentionLayer>();           
             multihead_attention_layer->from_XML(layer_document);
             add_layer(std::move(multihead_attention_layer));
         }
-        else if (layer_type_string == "Addition3D") {
+        else if (layer_type_string == "Addition3D")
+        {
             unique_ptr<AdditionLayer3D> addition_layer_3d = std::make_unique<AdditionLayer3D>();
             addition_layer_3d->from_XML(layer_document);
             add_layer(std::move(addition_layer_3d));
         }
-        else if (layer_type_string == "Normalization3D") {
+        else if (layer_type_string == "Normalization3D")
+        {
             unique_ptr<NormalizationLayer3D> normalization_layer_3d = make_unique<NormalizationLayer3D>();
             normalization_layer_3d->from_XML(layer_document);
             add_layer(std::move(normalization_layer_3d));
         }
-        else {
+        else
+        {
             throw runtime_error("Unknown layer type");
         }
 
-        start_element = layer_element;
-        
+        start_element = layer_element;       
     }
 
     // Layers inputs indices
@@ -1493,6 +1515,94 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
             layer_input_indices.push_back(input_index);
     }
 }
+*/
+
+
+void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
+{
+    if (!layers_element)
+        throw runtime_error("Layers element is nullptr.\n");
+
+    const Index layers_number = read_xml_index(layers_element, "LayersNumber");
+
+    using LayerFactory = function<unique_ptr<Layer>()>;
+    const unordered_map<string, LayerFactory> layer_factories =
+    {{"Scaling2D", []() -> unique_ptr<Layer> { return make_unique<ScalingLayer2D>(); }},
+     {"Scaling4D", []() -> unique_ptr<Layer> { return make_unique<ScalingLayer4D>(); }},
+     {"Convolutional", []() -> unique_ptr<Layer> { return make_unique<ConvolutionalLayer>(); }},
+     {"Perceptron", []() -> unique_ptr<Layer> { return make_unique<PerceptronLayer>(); }},
+     {"Perceptron3D", []() -> unique_ptr<Layer> { return make_unique<PerceptronLayer3D>(); }},
+     {"Pooling", []() -> unique_ptr<Layer> { return make_unique<PoolingLayer>(); }},
+     {"Flatten", []() -> unique_ptr<Layer> { return make_unique<FlattenLayer>(); }},
+     {"Probabilistic", []() -> unique_ptr<Layer> { return make_unique<ProbabilisticLayer>(); }},
+     {"Probabilistic3D", []() -> unique_ptr<Layer> { return make_unique<ProbabilisticLayer3D>(); }},
+     {"LongShortTermMemory", []() -> unique_ptr<Layer> { return make_unique<LongShortTermMemoryLayer>(); }},
+     {"Recurrent", []() -> unique_ptr<Layer> { return make_unique<RecurrentLayer>(); }},
+     {"Unscaling", []() -> unique_ptr<Layer> { return make_unique<UnscalingLayer>(); }},
+     {"Bounding", []() -> unique_ptr<Layer> { return make_unique<BoundingLayer>(); }},
+     {"Embedding", []() -> unique_ptr<Layer> { return make_unique<EmbeddingLayer>(); }},
+     {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiheadAttentionLayer>(); }},
+     {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<AdditionLayer3D>(); }},
+     {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<NormalizationLayer3D>(); }},
+    };
+
+    const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        const XMLElement* layer_element = start_element->NextSiblingElement();
+
+        if (!layer_element)
+            throw runtime_error("Layer element is nullptr.");
+
+        const string layer_type_string = layer_element->Name();
+
+        auto it = layer_factories.find(layer_type_string);
+
+        if (it == layer_factories.end())
+            throw runtime_error("Unknown layer type: " + layer_type_string);
+
+        unique_ptr<Layer> layer = it->second();
+        XMLDocument layer_document;
+        XMLNode* element_clone = layer_element->DeepClone(&layer_document);
+        layer_document.InsertFirstChild(element_clone);
+        layer->from_XML(layer_document);
+        add_layer(std::move(layer));
+
+        start_element = layer_element;
+
+        cout << layer_type_string << endl;
+    }
+
+
+    // Layers inputs indices
+
+    const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
+    if (!layer_input_indices_element)
+        throw runtime_error("LayerInputIndices element is nullptr.\n");
+
+    layer_input_indices.clear();
+    layer_input_indices.resize(layers.size());
+
+    for (const XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
+         layer_inputs_indices_element;
+         layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
+    {
+        int layer_index;
+        if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
+            throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
+
+        const char* text = layer_inputs_indices_element->GetText();
+        if (!text)
+            throw runtime_error("Text is nullptr for LayerInputsIndices element.");
+
+        const vector<Index> input_index = string_to_dimensions(string(text), " ");
+        if (layer_index >= layer_input_indices.size())
+            layer_input_indices.push_back(input_index);
+    }
+
+}
+
 
 
 void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)

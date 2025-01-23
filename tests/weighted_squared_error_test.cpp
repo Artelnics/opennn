@@ -45,7 +45,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         // Neural network
 
@@ -94,7 +94,7 @@ void WeightedSquaredErrorTest::test_back_propagate()
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
         batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+        batch.fill(training_samples_indices, input_variables_indices, {} ,target_variables_indices);
 
         // Neural network
 

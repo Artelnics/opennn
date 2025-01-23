@@ -243,8 +243,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        //const Index training_batches_number = training_batches.size();
-
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
@@ -259,13 +257,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 input_variable_indices,
                                 decoder_variable_indices,
                                 target_variable_indices);
-                              
+
             // Neural network
             
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
-            
+
             // Loss index
 
             loss_index->back_propagate(training_batch,
@@ -279,17 +277,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            
             //system("pause");
 
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
-            // Optimization algorithm
             update_parameters(training_back_propagation, optimization_data);
-
-            //if(display && epoch % display_period == 0)
-            // display_progress_bar(iteration, training_batches_number - 1);
         }
         
         // Loss

@@ -294,8 +294,8 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
-                                target_variable_indices,
-                                decoder_variable_indices);
+                                decoder_variable_indices,
+                                target_variable_indices);
 
             // Neural network
             
@@ -340,6 +340,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
+                                     decoder_variable_indices,
                                      target_variable_indices);
 
                 // Neural network

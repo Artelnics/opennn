@@ -439,22 +439,14 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
     const Index samples_number = sample_indices.size();
 
-    //Index buffer_size = min(new_buffer_size, samples_number);
-
     Index batches_number;
 
     const Index batch_size = min(batch_samples_number, samples_number);
 
-
     if(samples_number < batch_size)
-    {
         batches_number = 1;
-//        buffer_size = batch_size;
-    }
     else
-    {
         batches_number = samples_number / batch_size;
-    }
 
     vector<vector<Index>> batches(batches_number);
 
@@ -465,7 +457,6 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
     std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
     #pragma omp parallel for
-
     for(Index i = 0; i < batches_number; i++)
     {
         batches[i].resize(batch_size);
@@ -1683,6 +1674,9 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
+    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
 }
 
 
@@ -1690,12 +1684,12 @@ void DataSet::set(const Index& new_samples_number,
                   const dimensions& new_input_dimensions,
                   const dimensions& new_target_dimensions)
 {
-    input_dimensions = new_input_dimensions;
-
     if (new_samples_number == 0 
     || new_input_dimensions.empty() 
     || new_target_dimensions.empty())
         return;
+
+    input_dimensions = new_input_dimensions;
 
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), 
                                                new_input_dimensions.end(), 
@@ -1737,10 +1731,19 @@ void DataSet::set(const Index& new_samples_number,
                 RawVariableType::Binary,
                 Scaler::None); 
         else
+        {
             raw_variables[raw_variables_number - 1].set("target",
                 VariableUse::Target,
                 RawVariableType::Categorical,
-                Scaler::None);     
+                Scaler::None);
+
+            vector<string> new_categories;
+
+            for (int i = 1; i <= targets_number; ++i) 
+                new_categories.push_back(to_string(i-1));
+
+            raw_variables[raw_variables_number - 1].set_categories(new_categories);
+        }
     }
     else
     {
@@ -1783,11 +1786,11 @@ void DataSet::set_default()
 
     has_header = false;
 
+    has_sample_ids = false;
+
     separator = Separator::Comma;
 
     missing_values_label = "NA";
-
-    //set_default_raw_variables_uses();
 
     set_default_raw_variables_names();
 }
@@ -1823,8 +1826,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     if (new_data.dimension(0) != get_samples_number())
         throw runtime_error("Rows number is not equal to samples number");
 
-    if (new_data.dimension(1) != get_variables_number())
+    if (new_data.dimension(1) != get_variables_number()) {
         throw runtime_error("Columns number is not equal to variables number");
+    }
 
     data = new_data;
 }
@@ -2838,16 +2842,18 @@ void DataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();  
 
     printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if (missing_values_number > 0) 
     {
+        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
-    printer.CloseElement();  
+    printer.CloseElement();
+
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -2885,8 +2891,8 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1))
-            throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
+        if (raw_variable_element->Attribute("Item") != to_string(i + 1))
+            throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
@@ -2914,11 +2920,12 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
     if (missing_values_number > 0)
     {
+        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
 
         for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
@@ -3890,7 +3897,6 @@ void DataSet::read_csv()
 
     sample_ids.resize(samples_number);
     
-    // const Index variables_number = get_variables_number();
     const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
@@ -3964,12 +3970,9 @@ void DataSet::read_csv()
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
-
-
                 (token.empty() || token == missing_values_label)
                     ? data(sample_index, variable_indices[0]) = NAN
                     : data(sample_index, variable_indices[0]) = stof(token);
-
             }
             else if(raw_variable_type == RawVariableType::DateTime)
             {              
@@ -4344,11 +4347,11 @@ void DataSet::fix_repeated_names()
 }
 
 
-vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_samples_number) const
+vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_samples_number) const
 {
     const Index samples_number = sample_indices.size();
 
-    Index batch_size = new_samples_number;
+    Index batch_size = new_batch_samples_number;
 
     Index batches_number;
 
@@ -4358,16 +4361,13 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
         batch_size = samples_number;
     }
     else
-    {
         batches_number = samples_number / batch_size;
-    }
-
-//    const Index batches_number = (samples_number + new_samples_number - 1) / new_samples_number; // Round up division
 
     vector<vector<Index>> batches(batches_number);
 
     Index count = 0;
 
+    // @todo #pragma omp parallel for ??
     for (Index i = 0; i < batches_number; i++)
     {   
         batches[i].resize(batch_size);

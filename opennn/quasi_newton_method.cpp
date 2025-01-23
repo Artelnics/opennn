@@ -434,11 +434,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     Batch training_batch(training_samples_number, data_set);
 
-    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, data_set);
 
-    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index
 
@@ -598,11 +598,11 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 
     learning_rate_algorithm.to_XML(printer);
 
-    add_xml_element(printer, "MinimumLossDecrease", std::to_string(minimum_loss_decrease));
-    add_xml_element(printer, "LossGoal", std::to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", std::to_string(maximum_selection_failures));
-    add_xml_element(printer, "MaximumEpochsNumber", std::to_string(maximum_epochs_number));
-    add_xml_element(printer, "MaximumTime", std::to_string(maximum_time));
+    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
     printer.CloseElement();
 }
