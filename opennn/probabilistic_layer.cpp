@@ -187,10 +187,10 @@ void ProbabilisticLayer::set_parameters_random()
 
     float* data_ptr = synaptic_weights.data();
 
-    data_ptr[0] = -0.046;
-    data_ptr[1] = 0.062;
-    data_ptr[2] = 0.029;
-    data_ptr[3] = -0.074;
+    data_ptr[0] = -0.046F;
+    data_ptr[1] = 0.062F;
+    data_ptr[2] = 0.029F;
+    data_ptr[3] = -0.074F;
 }
 
 
