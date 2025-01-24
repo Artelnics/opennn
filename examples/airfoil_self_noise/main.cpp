@@ -26,6 +26,13 @@ int main()
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         data_set.set(DataSet::SampleUse::Training);
+
+        //data_set.save("data/neural_network.xml");
+        //data_set.print();
+
+        //DataSet data_set_xml;
+        //data_set_xml.load("data/neural_network.xml");
+        //data_set_xml.print();
         
         // Neural network
 
@@ -34,18 +41,17 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
 
-        //neural_network.print();
-
-        // @todo fails
-        //neural_network.save("../data/neural_network.xml");
-        //neural_network.load("../data/neural_network.xml");
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        //training_strategy.save("../data/training_strategy.xml");
-        //training_strategy.load("../data/training_strategy.xml");
+        //training_strategy.save("data/training_strategy.xml");
+
+        //TrainingStrategy training_strategy_xml;
+        //training_strategy_xml.load("data/training_strategy.xml");
+        //training_strategy_xml.save("data/training_strategy_xml.xml");
+
+        //system("pause");
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);

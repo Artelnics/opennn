@@ -506,8 +506,6 @@ void UnscalingLayer::from_XML(const XMLDocument& document)
 
         start_element = unscaling_neuron_element;
     }
-
-    set_display(read_xml_bool(root_element, "Display"));
 }
 
 
