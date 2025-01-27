@@ -607,15 +607,13 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     const XMLElement* root_element = document.FirstChildElement("TrainingStrategy");
     if (!root_element) throw runtime_error("TrainingStrategy element is nullptr.\n");
 
-    cout << "LossIndex" << endl;
-
     const XMLElement* loss_index_element = root_element->FirstChildElement("LossIndex");
     if (!loss_index_element) throw runtime_error("Loss index element is nullptr.\n");
 
     // Loss method
 
     set_loss_method(read_xml_string(loss_index_element, "LossMethod"));
-
+    
     // Minkowski error
 
     const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
@@ -674,8 +672,6 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
         regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
         get_loss_index()->regularization_from_XML(regularization_document);
     }
-
-    cout << "OptimizationAlgorithm" << endl;
 
     // Optimization algorithm
 

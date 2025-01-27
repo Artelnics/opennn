@@ -610,7 +610,7 @@ void ConjugateGradient::from_XML(const XMLDocument& document)
 
     if (!root_element) 
         throw runtime_error("Conjugate gradient element is nullptr.\n");
-    
+
     set_training_direction_method(read_xml_string(root_element, "TrainingDirectionMethod"));
 
     const XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
@@ -627,9 +627,6 @@ void ConjugateGradient::from_XML(const XMLDocument& document)
     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
     set_maximum_epochs_number(read_xml_index(root_element, "MaximumEpochsNumber"));
     set_maximum_time(read_xml_type(root_element, "MaximumTime"));
-    //set_display_period(read_xml_index(root_element, "DisplayPeriod"));
-    //set_save_period(read_xml_index(root_element, "SavePeriod"));
-    //set_neural_network_file_name(read_xml_string(root_element, "NeuralNetworkFileName"));
 }
 
 

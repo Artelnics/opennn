@@ -45,31 +45,19 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        //training_strategy.save("data/training_strategy.xml");
-
-        //TrainingStrategy training_strategy_xml;
-        //training_strategy_xml.load("data/training_strategy.xml");
-        //training_strategy_xml.save("data/training_strategy_xml.xml");
-
-        //system("pause");
-
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(500);
         training_strategy.set_maximum_epochs_number(10000);
-
-        //training_strategy.save("../data/training_strategy.xml");
-        //training_strategy.load("../data/training_strategy.xml");
 
         training_strategy.perform_training();
 

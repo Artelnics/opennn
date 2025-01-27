@@ -184,7 +184,7 @@ void CrossEntropyError::from_XML(const XMLDocument& document)
 
     if(!root_element)
         throw runtime_error("Cross entropy error element is nullptr.\n");
-
+    /*
     // Regularization
 
     XMLDocument regularization_document;
@@ -193,6 +193,7 @@ void CrossEntropyError::from_XML(const XMLDocument& document)
     regularization_document.InsertFirstChild(regularization_element->DeepClone(&regularization_document));
 
     regularization_from_XML(regularization_document);
+    */
 }
 
 }

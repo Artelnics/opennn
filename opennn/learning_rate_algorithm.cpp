@@ -433,7 +433,6 @@ void LearningRateAlgorithm::from_XML(const XMLDocument& document)
 
     set_learning_rate_method(read_xml_string(root_element, "LearningRateMethod"));
     set_learning_rate_tolerance(read_xml_type(root_element, "LearningRateTolerance"));
-    set_display(read_xml_bool(root_element, "Display"));
 }
 
 

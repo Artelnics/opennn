@@ -140,8 +140,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     check();
 
-    // Start training
-
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
 
     // Data set
@@ -164,8 +162,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
-
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
