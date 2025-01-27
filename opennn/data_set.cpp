@@ -530,7 +530,7 @@ void DataSet::set_sample_uses(const vector<SampleUse>& new_uses)
 
 void DataSet::set_sample_uses(const vector<string>& new_uses)
 {
-    const Index samples_number = get_samples_number();
+    const Index samples_number = new_uses.size();
 
     for(Index i = 0; i < samples_number; i++)
         if(new_uses[i] == "Training" || new_uses[i] == "0")
@@ -2910,8 +2910,10 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
-
-    sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
+    
+    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+    data.resize(samples_number, (Index)raw_variables.size());
+    sample_uses.resize(samples_number);
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 
     // Missing values
@@ -2935,6 +2937,9 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     }
 
     set_display(read_xml_bool(data_set_element, "Display"));
+
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
+    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
 }
 
 

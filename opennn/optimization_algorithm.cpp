@@ -146,6 +146,7 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 void OptimizationAlgorithm::check() const
 {
+    // @todo
 }
 
 
