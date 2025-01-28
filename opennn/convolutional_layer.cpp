@@ -617,67 +617,13 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
     set_convolution_type(new_convolution_type);
 
     biases.resize(kernels_number);
-    //set_random(biases);
-    biases.setZero();
+    set_random(biases);
 
     synaptic_weights.resize(kernel_height,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
-    
-    float* data_ptr = synaptic_weights.data();
-
-    data_ptr[0] = 0.04f;
-    data_ptr[1] = -0.01f;
-    data_ptr[2] = -0.08f;
-    data_ptr[3] = -0.04f;
-    data_ptr[4] = 0.03f;
-    data_ptr[5] = -0.05f;
-    data_ptr[6] = -0.08f;
-    data_ptr[7] = 0.09f;
-    data_ptr[8] = 0.07f;
-    data_ptr[9] = 0.02f;
-    data_ptr[10] = 0.02f;
-    data_ptr[11] = -0.08f;
-    /*
-    // Fila 4
-    data_ptr[12] = 0.04f;
-    data_ptr[13] = -0.01f;
-    data_ptr[14] = -0.08f;
-    data_ptr[15] = -0.04f;
-
-    // Fila 5
-    data_ptr[16] = -0.06f;
-    data_ptr[17] = -0.08f;
-    data_ptr[18] = -0.06f;
-    data_ptr[19] = -0.09f;
-
-    // Fila 6
-    data_ptr[20] = 0.05f;
-    data_ptr[21] = -0.07f;
-    data_ptr[22] = 0.06f;
-    data_ptr[23] = -0.09f;
-
-    // Fila 7
-    data_ptr[24] = 0.09f;
-    data_ptr[25] = 0.04f;
-    data_ptr[26] = 0.01f;
-    data_ptr[27] = -0.06f;
-
-    // Fila 8
-    data_ptr[28] = 0.01f;
-    data_ptr[29] = 0.03f;
-    data_ptr[30] = -0.05f;
-    data_ptr[31] = -0.01f;
-
-    // Fila 9
-    data_ptr[32] = 0.02f;
-    data_ptr[33] = -0.02f;
-    data_ptr[34] = -0.07f;
-    data_ptr[35] = 0.01f;
-    */
-
-    //set_random(synaptic_weights);
+    set_random(synaptic_weights);
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);

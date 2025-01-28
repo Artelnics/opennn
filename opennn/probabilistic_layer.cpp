@@ -17,10 +17,7 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_output_dimensions,
                                        const string& new_name) : Layer()
 {
-    set(new_input_dimensions, 
-        new_output_dimensions, 
-        new_name);
-
+    set(new_input_dimensions, new_output_dimensions, new_name);
 }
 
 
@@ -181,16 +178,9 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    //set_random(biases);
-    biases.setZero();
-    //set_random(synaptic_weights);
+    set_random(biases);
 
-    float* data_ptr = synaptic_weights.data();
-
-    data_ptr[0] = -0.046;
-    data_ptr[1] = 0.062;
-    data_ptr[2] = 0.029;
-    data_ptr[3] = -0.074;
+    set_random(synaptic_weights);
 }
 
 

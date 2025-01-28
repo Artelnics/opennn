@@ -532,14 +532,14 @@ void DataSet::set_sample_uses(const vector<string>& new_uses)
 {
     const Index samples_number = new_uses.size();
 
-    for(Index i = 0; i < samples_number; i++)
-        if(new_uses[i] == "Training" || new_uses[i] == "0")
+    for (Index i = 0; i < samples_number; i++)
+        if (new_uses[i] == "Training" || new_uses[i] == "0")
             sample_uses[i] = SampleUse::Training;
-        else if(new_uses[i] == "Selection" || new_uses[i] == "1")
+        else if (new_uses[i] == "Selection" || new_uses[i] == "1")
             sample_uses[i] = SampleUse::Selection;
-        else if(new_uses[i] == "Testing" || new_uses[i] == "2")
+        else if (new_uses[i] == "Testing" || new_uses[i] == "2")
             sample_uses[i] = SampleUse::Testing;
-        else if(new_uses[i] == "None" || new_uses[i] == "3")
+        else if (new_uses[i] == "None" || new_uses[i] == "3")
             sample_uses[i] = SampleUse::None;
         else
             throw runtime_error("Unknown sample use: " + new_uses[i] + ".\n");
@@ -758,12 +758,15 @@ dimensions DataSet::get_dimensions(const DataSet::VariableUse& variable_use) con
     {
     case DataSet::VariableUse::Input:
         return input_dimensions;
+        break;
 
     case DataSet::VariableUse::Target:
         return target_dimensions;
+        break;
 
     case DataSet::VariableUse::Decoder:
         return decoder_dimensions;
+        break;
 
     default:
         throw invalid_argument("get_dimensions::Invalid VariableUse type.");
@@ -777,12 +780,15 @@ void DataSet::set_dimensions(const DataSet::VariableUse& variable_use, const dim
     {
     case DataSet::VariableUse::Input:
         input_dimensions = new_dimensions;
+        break;
 
     case DataSet::VariableUse::Target:
         target_dimensions = new_dimensions;
+        break;
 
     case DataSet::VariableUse::Decoder:
         decoder_dimensions = new_dimensions;
+        break;
 
     default:
         throw invalid_argument("set_dimensions::Invalid VariableUse type.");
@@ -1656,7 +1662,6 @@ void DataSet::set(const filesystem::path& new_data_path,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
 {
-
     set_default();
 
     set_data_path(new_data_path);
@@ -1668,9 +1673,9 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_has_ids(new_has_ids);
 
     set_codification(new_codification);
-    
+
     read_csv();
-    
+
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
@@ -2900,7 +2905,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary) 
-            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), " ");
     }
 
     if (has_sample_ids)
@@ -2912,7 +2917,12 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         throw runtime_error("Samples element is nullptr.\n");
     
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
-    data.resize(samples_number, (Index)raw_variables.size());
+
+    if (raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical)
+        data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1);
+    else
+        data.resize(samples_number, (Index)raw_variables.size());
+    
     sample_uses.resize(samples_number);
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 
@@ -3905,8 +3915,11 @@ void DataSet::read_csv()
     const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
-    
-    data.resize(samples_number, variables_number);
+
+    if (raw_variables[columns_number - 1].type == RawVariableType::Categorical)
+        data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1);
+    else
+        data.resize(samples_number, variables_number);
     data.setZero();
 
     rows_missing_values_number = 0;
@@ -3984,9 +3997,9 @@ void DataSet::read_csv()
                 data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
             }
             else if(raw_variable_type == RawVariableType::Categorical)
-            {
+            {  
                 const Index categories_number = raw_variables[raw_variable_index].get_categories_number();
-
+                
                 if(token.empty() || token == missing_values_label)
                 {
                     for(Index category_index = 0; category_index < categories_number; category_index++)
@@ -3996,10 +4009,10 @@ void DataSet::read_csv()
                 {
                     const vector<string> categories = raw_variables[raw_variable_index].categories;
 
-                    for(Index category_index = 0; category_index < categories_number; category_index++)
-                        if(token == categories[category_index])
-                            data(sample_index, variable_indices[category_index]) = 1;
-                }
+                    for (Index category_index = 0; category_index < categories_number; category_index++)
+                        if (token == categories[category_index])
+                            data(sample_index, variable_indices[category_index]) = 1; 
+                } 
             }
             else if(raw_variable_type == RawVariableType::Binary)
             {

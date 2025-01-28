@@ -73,11 +73,7 @@ int main()
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/breast_cancer.py");
 
-        cout << "End breast cancer application" << endl;
-
-        // OKR
-        cout << " \n write_loss_method \n" << training_strategy.write_loss_method_text();
-        cout << " \n write_opt_method \n" << training_strategy.write_optimization_method_text();
+        cout << "Good bye!" << endl;
 
         return 0;
     }

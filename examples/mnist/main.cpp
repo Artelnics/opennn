@@ -39,8 +39,18 @@ int main()
 
         image_data_set.set_data_path("C:/binary_mnist");
 
-
         image_data_set.read_bmp();
+
+        image_data_set.save("data/data.xml");
+
+        ImageDataSet data_set_xml;
+        data_set_xml.load("data/data.xml");
+        data_set_xml.save("data/data_xml.xml");
+
+        image_data_set.print();
+        data_set_xml.print();
+
+        system("pause");
 
         // Neural network
 
