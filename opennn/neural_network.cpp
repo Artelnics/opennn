@@ -76,10 +76,8 @@ bool NeuralNetwork::validate_layer_type(const Layer::Type& layer_type) const
 
 bool NeuralNetwork::has(const Layer::Type& layer_type) const
 {
-    const Index layers_number = get_layers_number();
-
-    for (Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_type() == layer_type)
+    for (const auto& layer : layers)
+        if (layer->get_type() == layer_type)
             return true;
 
     return false;
@@ -704,10 +702,8 @@ void NeuralNetwork::set_default()
 
 void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        layers[i]->set_threads_number(new_threads_number);
+    for (auto& layer : layers)
+        layer->set_threads_number(new_threads_number);
 }
 
 
