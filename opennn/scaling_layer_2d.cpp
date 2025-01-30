@@ -112,19 +112,9 @@ vector<string> ScalingLayer2D::write_scalers() const
     vector<string> scaling_methods_strings(outputs_number);
 
     #pragma omp parallel for
-    for(Index i = 0; i < outputs_number; i++)
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "None";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "MinimumMaximum";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "MeanStandardDeviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "StandardDeviation";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
-        else
-            throw runtime_error("Unknown " + to_string(i) + " scaling method.\n");
+
+    for (Index i = 0; i < outputs_number; i++)
+        scaling_methods_strings[i] = scaler_to_string(scalers[i]);
 
     return scaling_methods_strings;
 }
@@ -233,43 +223,9 @@ void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_strin
 
     #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
-        if(new_scaling_methods_string[i] == "None")
-            new_scaling_methods[i] = Scaler::None;
-        else if(new_scaling_methods_string[i] == "MinimumMaximum")
-            new_scaling_methods[i] = Scaler::MinimumMaximum;
-        else if(new_scaling_methods_string[i] == "MeanStandardDeviation")
-            new_scaling_methods[i] = Scaler::MeanStandardDeviation;
-        else if(new_scaling_methods_string[i] == "StandardDeviation")
-            new_scaling_methods[i] = Scaler::StandardDeviation;
-        else if(new_scaling_methods_string[i] == "Logarithm")
-            new_scaling_methods[i] = Scaler::Logarithm;
-        else
-            throw runtime_error("Unknown scaling method: " + new_scaling_methods_string[i] + ".\n");
+        new_scaling_methods[i] = string_to_scaler(new_scaling_methods_string[i]);
 
     set_scalers(new_scaling_methods);
-}
-
-
-void ScalingLayer2D::set_scaler(const Index& variable_index, const Scaler& new_scaler)
-{
-    scalers[variable_index] = new_scaler;
-}
-
-
-void ScalingLayer2D::set_scaler(const Index& variable_index, const string& new_scaler_string)
-{
-    if(new_scaler_string == "None")
-        scalers[variable_index] = Scaler::None;
-    else if(new_scaler_string == "MeanStandardDeviation")
-        scalers[variable_index] = Scaler::MeanStandardDeviation;
-    else if(new_scaler_string == "MinimumMaximum")
-        scalers[variable_index] = Scaler::MinimumMaximum;
-    else if(new_scaler_string == "StandardDeviation")
-        scalers[variable_index] = Scaler::StandardDeviation;
-    else if(new_scaler_string == "Logarithm")
-        scalers[variable_index] = Scaler::Logarithm;
-    else
-        throw runtime_error("Unknown scaling method: " + new_scaler_string + ".\n");
 }
 
 
@@ -279,7 +235,7 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 
     #pragma omp parallel for
     for(Index i = 0; i < outputs_number; i++)
-        set_scaler(i, new_scaling_methods_string);
+        scalers[i] = string_to_scaler(new_scaling_methods_string);
 }
 
 
@@ -570,7 +526,7 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
             );
         }
 
-        set_scaler(i, read_xml_string(scaling_neuron_element, "Scaler"));
+        scalers[i] = string_to_scaler(read_xml_string(scaling_neuron_element, "Scaler"));
 
         start_element = scaling_neuron_element;
     }

@@ -324,9 +324,9 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     set_data_path(read_xml_string(data_source_element, "Path"));
     set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
 
-    set_dimensions(DataSet::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
-                                                  read_xml_index(data_source_element, "Width"),
-                                                  read_xml_index(data_source_element, "Channels") });
+    set_dimensions(ImageDataSet::VariableUse::Input, { read_xml_index(data_source_element, "Height"),
+                                                       read_xml_index(data_source_element, "Width"),
+                                                       read_xml_index(data_source_element, "Channels") });
 
     set_image_padding(read_xml_index(data_source_element, "Padding"));
 
@@ -375,6 +375,8 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 
     const Index targets_number = (target_count == 2) ? 1 : target_count;
 
+    target_dimensions = { targets_number };
+
     // Samples
 
     if (has_sample_ids)
@@ -385,7 +387,10 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
+    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
+
+    sample_uses.resize(samples_number);
+    data.resize(samples_number, (Index)raw_variables.size());
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 }
 

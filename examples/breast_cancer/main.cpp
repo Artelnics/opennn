@@ -21,10 +21,7 @@ int main()
 
         // Data set
 
-        DataSet data_set("../data/breast_cancer.csv", ";", true);
-
-        data_set.save("../data/data_set.xml");
-        data_set.load("../data/data_set.xml");
+        DataSet data_set("data/breast_cancer.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -36,25 +33,15 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
             { input_variables_number }, { neurons_number }, { target_variables_number });
 
-        neural_network.print();
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-
-
-        // OKR
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
 
-        // cross entropy
-
-        // OKR
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
@@ -68,16 +55,7 @@ int main()
 
         testing_analysis.print_binary_classification_tests();
 
-        // Save results
-
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression(NeuralNetwork::ProgrammingLanguage::Python, "../data/breast_cancer.py");
-
-        cout << "End breast cancer application" << endl;
-
-        // OKR
-        cout << " \n write_loss_method \n" << training_strategy.write_loss_method_text();
-        cout << " \n write_opt_method \n" << training_strategy.write_optimization_method_text();
+        cout << "Good bye!" << endl;
 
         return 0;
     }

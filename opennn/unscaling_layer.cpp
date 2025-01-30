@@ -159,19 +159,8 @@ vector<string> UnscalingLayer::write_unscaling_methods() const
 
     vector<string> scaling_methods_strings(outputs_number);
 
-    for(Index i = 0; i < outputs_number; i++)
-        if(scalers[i] == Scaler::None)
-            scaling_methods_strings[i] = "None";
-        else if(scalers[i] == Scaler::MinimumMaximum)
-            scaling_methods_strings[i] = "MinimumMaximum";
-        else if(scalers[i] == Scaler::MeanStandardDeviation)
-            scaling_methods_strings[i] = "MeanStandardDeviation";
-        else if(scalers[i] == Scaler::StandardDeviation)
-            scaling_methods_strings[i] = "StandardDeviation";
-        else if(scalers[i] == Scaler::Logarithm)
-            scaling_methods_strings[i] = "Logarithm";
-        else
-            throw runtime_error("Unknown unscaling method.\n");
+    for (Index i = 0; i < outputs_number; i++)
+        scaling_methods_strings[i] = scaler_to_string(scalers[i]);
 
     return scaling_methods_strings;
 }
@@ -292,7 +281,7 @@ void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
     const Index outputs_number = get_outputs_number();
 
     for(Index i = 0; i < outputs_number; i++)
-        set_scaler(i, new_scalers[i]);
+        scalers[i] = string_to_scaler(new_scalers[i]);
 }
 
 
@@ -302,23 +291,6 @@ void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 
     for(Index i = 0; i < outputs_number; i++)
         scalers[i] = new_unscaling_method;
-}
-
-
-void UnscalingLayer::set_scaler(const Index& variable_index, const string& new_scaler)
-{
-    if(new_scaler == "None")
-        scalers[variable_index] = Scaler::None;
-    else if(new_scaler == "MeanStandardDeviation")
-        scalers[variable_index] = Scaler::MeanStandardDeviation;
-    else if(new_scaler == "StandardDeviation")
-        scalers[variable_index] = Scaler::StandardDeviation;
-    else if(new_scaler == "MinimumMaximum")
-        scalers[variable_index] = Scaler::MinimumMaximum;
-    else if(new_scaler == "Logarithm")
-        scalers[variable_index] = Scaler::Logarithm;
-    else
-        throw runtime_error("Unknown scaling method: " + new_scaler + ".\n");
 }
 
 
@@ -502,7 +474,7 @@ void UnscalingLayer::from_XML(const XMLDocument& document)
                 type(stof(splitted_descriptives[3])));
         }
 
-        set_scaler(i, read_xml_string(unscaling_neuron_element, "Scaler"));
+        scalers[i] = string_to_scaler(read_xml_string(unscaling_neuron_element, "Scaler"));
 
         start_element = unscaling_neuron_element;
     }
