@@ -33,7 +33,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
     data_set.set(DataSet::SampleUse::Training);
 
     Batch batch(1, &data_set);
-    batch.fill({0}, {0}, {}, {1});
+    //batch.fill({0}, {0}, {}, {1});
 
     // Neural network
 

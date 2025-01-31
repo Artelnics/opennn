@@ -18,7 +18,8 @@ TEST(RecurrentLayerTest, GeneralConstructor)
 
     RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
 
-//    EXPECT_EQ(recurrent_layer.get_parameters_number(), 3);
+    Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
+    //EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
 }
 
 

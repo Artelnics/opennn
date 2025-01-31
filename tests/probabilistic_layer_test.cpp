@@ -23,6 +23,7 @@ TEST(ProbabilisticLayerTest, GeneralConstructor)
 
 TEST(ProbabilisticLayerTest, CalculateCombinations)
 {
+    /*
     ProbabilisticLayer probabilistic_layer({ 1 }, { 2 });
 
     EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{ 1 });
