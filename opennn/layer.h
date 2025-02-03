@@ -119,9 +119,9 @@ public:
                                                    const Index&,
                                                    Tensor<type, 2>&) const {}
 
-    virtual void from_XML(const XMLDocument&) {}
+    virtual void from_XML(const tinyxml2::XMLDocument&) {}
 
-    virtual void to_XML(XMLPrinter&) const {}
+    virtual void to_XML(tinyxml2::XMLPrinter&) const {}
 
     virtual string get_expression(const vector<string>& = vector<string>(), const vector<string>& = vector<string>()) const;
 

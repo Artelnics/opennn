@@ -11,6 +11,7 @@
 #include "genetic_algorithm.h"
 #include "tinyxml2.h"
 #include "scaling_layer_2d.h"
+#include "optimization_algorithm.h"
 
 namespace opennn
 {
@@ -817,8 +818,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_raw_genes(const Tensor<bool,1>&
         }
         else
         {
-            raw_variables_from_variables(i) = individual(genes_count);
-            genes_count++;
+            raw_variables_from_variables(i) = individual(genes_count++);
         }
     }
 
@@ -940,8 +940,7 @@ Tensor<bool, 1> GeneticAlgorithm::get_individual_genes(const Tensor<bool, 1>& in
             }
             else
             {
-                original_inputs_variables(unused_index) = true;
-                unused_index++;
+                original_inputs_variables(unused_index++) = true;
             }
         }
         else

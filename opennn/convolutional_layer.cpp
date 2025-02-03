@@ -35,10 +35,9 @@ bool ConvolutionalLayer::get_batch_normalization() const
 void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& preprocessed_inputs) const
 {
-    if (convolution_type == ConvolutionType::Same)
-        preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
-    else
-        preprocessed_inputs.device(*thread_pool_device) = inputs;
+    convolution_type == ConvolutionType::Same
+        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
+        : preprocessed_inputs.device(*thread_pool_device) = inputs;
 
     if (row_stride != 1 || column_stride != 1)
         preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
@@ -225,10 +224,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     }
 
-    if (is_training)
-        calculate_activations(outputs, activation_derivatives);
-    else
-        calculate_activations(outputs, empty);   
+    is_training
+        ? calculate_activations(outputs, activation_derivatives)
+        : calculate_activations(outputs, empty);   
 }
 
 
@@ -290,6 +288,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     vector<Tensor<type, 2>> rotated_slices(input_channels);
     Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
     Tensor<type, 2> channel_convolution(input_height, input_width);
+    
 
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width = (input_width + kernel_width - 1) - output_width;
@@ -324,7 +323,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     // cout << "KERNEL WIDTH AND HEIGHT: " << kernel_width << ", " << kernel_height << endl;
 
     convolutions_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
-
+    
     // Biases derivatives
 
     bias_derivatives.device(*thread_pool_device) = convolutions_derivatives.sum(convolutions_dimensions_3d);
@@ -408,14 +407,17 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     // cerr << "EVERYTHING GOOD IN BACK PROPAGATION" << endl;
 
 
-    /*
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    cout << "Tiempo convolution back propagate: "
-        << duration.count() / 1000 << "::"
-        << duration.count() % 1000
-        << " segundos::milisegundos" << endl;
-    */
+    //cout << "Input derivatives: " << endl;
+    //for(int i = 0 ; i < input_derivatives.size() ; i++)
+    //    cout << input_derivatives(i) << " ";
+    //cout << endl;
+
+    //auto end = chrono::high_resolution_clock::now();
+    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    //cout << "Tiempo convolution back propagate: "
+    //    << duration.count() / 1000 << "::"
+    //    << duration.count() % 1000
+    //    << " segundos::milisegundos" << endl;
 }
 
 
@@ -682,59 +684,6 @@ void ConvolutionalLayer::set(const dimensions& new_input_dimensions,
                             kernel_width,
                             kernel_channels,
                             kernels_number);
-    /*
-    float* data_ptr = synaptic_weights.data();
-
-    data_ptr[0] = 0.05f;
-    data_ptr[1] = -0.04f;
-    data_ptr[2] = -0.09f;
-    data_ptr[3] = 0.09f;
-    data_ptr[4] = 0.03f;
-    data_ptr[5] = -0.05f;
-    data_ptr[6] = -0.08f;
-    data_ptr[7] = 0.09f;
-    data_ptr[8] = 0.07f;
-    /*
-    data_ptr[9] = 0.02f;
-    data_ptr[10] = 0.02f;
-    data_ptr[11] = -0.08f;
-
-    // Fila 4
-    data_ptr[12] = 0.04f;
-    data_ptr[13] = -0.01f;
-    data_ptr[14] = -0.08f;
-    data_ptr[15] = -0.04f;
-
-    // Fila 5
-    data_ptr[16] = -0.06f;
-    data_ptr[17] = -0.08f;
-    data_ptr[18] = -0.06f;
-    data_ptr[19] = -0.09f;
-
-    // Fila 6
-    data_ptr[20] = 0.05f;
-    data_ptr[21] = -0.07f;
-    data_ptr[22] = 0.06f;
-    data_ptr[23] = -0.09f;
-
-    // Fila 7
-    data_ptr[24] = 0.09f;
-    data_ptr[25] = 0.04f;
-    data_ptr[26] = 0.01f;
-    data_ptr[27] = -0.06f;
-
-    // Fila 8
-    data_ptr[28] = 0.01f;
-    data_ptr[29] = 0.03f;
-    data_ptr[30] = -0.05f;
-    data_ptr[31] = -0.01f;
-
-    // Fila 9
-    data_ptr[32] = 0.02f;
-    data_ptr[33] = -0.02f;
-    data_ptr[34] = -0.07f;
-    data_ptr[35] = 0.01f;
-    */
 
     set_random(synaptic_weights);
 
@@ -1100,6 +1049,7 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_batch_samples_numbe
                                     kernels_number);
 
     biases_derivatives.resize(kernels_number);
+
 
     synaptic_weights_derivatives.resize(kernels_number,
                                        kernel_height,

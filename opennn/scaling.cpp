@@ -39,7 +39,48 @@ namespace opennn
 //         matrix(i, raw_variable_index) = slope*matrix(i, raw_variable_index)+intercept;
 // }
 
-void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
+    string scaler_to_string(const Scaler& scaler)
+    {
+        switch (scaler)
+        {
+        case Scaler::None:
+            return "None";
+        case Scaler::MinimumMaximum:
+            return "MinimumMaximum";
+        case Scaler::MeanStandardDeviation:
+            return "MeanStandardDeviation";
+        case Scaler::StandardDeviation:
+            return "StandardDeviation";
+        case Scaler::Logarithm:
+            return "Logarithm";
+        case Scaler::ImageMinMax:
+            return "ImageMinMax";
+        default:
+            throw runtime_error("Unknown scaler\n");
+        }
+    }
+
+
+    Scaler string_to_scaler(const string& new_scaler)
+    {
+        if (new_scaler == "None")
+            return Scaler::None;
+        else if (new_scaler == "MinimumMaximum")
+            return Scaler::MinimumMaximum;
+        else if (new_scaler == "MeanStandardDeviation")
+            return Scaler::MeanStandardDeviation;
+        else if (new_scaler == "StandardDeviation")
+            return Scaler::StandardDeviation;
+        else if (new_scaler == "Logarithm")
+            return Scaler::Logarithm;
+        else if (new_scaler == "ImageMinMax")
+            return Scaler::ImageMinMax;
+        else
+            throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+
+    }
+
+    void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
                                    const Index& raw_variable_index,
                                    const Descriptives& column_descriptives)
 {
@@ -97,62 +138,6 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
 }
 
 
-// Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
-// {
-//     const Tensor<type, 0> minimum = x.minimum();
-//     const Tensor<type, 0> maximum = x.maximum();
-
-//     const type min_range = type(-1);
-//     const type max_range = type(1);
-
-//     const type slope = (max_range-min_range)/(maximum()-minimum());
-//     const type intercept = (min_range*maximum()-max_range*minimum())/(maximum()-minimum());
-
-//     Tensor<type, 1> scaled_x(x.size());
-
-//     #pragma omp parallel for
-
-//     for(Index i = 0; i < scaled_x.size(); i++)
-//     {
-//         scaled_x(i) = slope*x(i)+intercept;
-//     }
-
-//     return scaled_x;
-// }
-
-
-// Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
-// {
-//     const Index rows_number = x.dimension(0);
-//     const Index columns_number = x.dimension(1);
-
-//     Tensor<type, 2> scaled_x(rows_number, columns_number);
-
-//     const Tensor<type, 1> column_minimums = opennn::column_minimums(x);
-
-//     const Tensor<type, 1> column_maximums = opennn::column_maximums(x);
-
-//     const type min_range = type(-1);
-//     const type max_range = type(1);
-
-//     #pragma omp parallel for
-
-//     for(Index j = 0; j < columns_number; j++)
-//     {
-//         const type minimum = column_minimums(j);
-//         const type maximum = column_maximums(j);
-
-//         const type slope = (max_range-min_range)/(maximum - minimum);
-//         const type intercept = (min_range*maximum-max_range*minimum)/(maximum - minimum);
-
-//         for(Index i = 0; i < rows_number; i++)
-//             scaled_x(i, j) = slope*x(i, j)+intercept;
-//     }
-
-//     return scaled_x;
-// }
-
-
 void scale_logarithmic(Tensor<type, 2>& matrix, const Index& raw_variable_index)
 {
     type min_value = numeric_limits<type>::max();
@@ -193,9 +178,7 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, raw_variable_index) = matrix(i, raw_variable_index)*slope + intercept;
-    }
 }
 
 
@@ -212,9 +195,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& raw_v
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, raw_variable_index) = matrix(i, raw_variable_index)*slope + intercept;
-    }
 }
 
 
@@ -227,9 +208,7 @@ void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& raw_variab
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-    {
         matrix(i, raw_variable_index) = matrix(i, raw_variable_index) * slope;
-    }
 }
 
 

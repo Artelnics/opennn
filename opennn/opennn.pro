@@ -140,6 +140,7 @@ HEADERS += \
     yolo_error.h \
     yolo_network.h \
     forward_propagation.h
+    normalization_layer_3d.h
 
 SOURCES += \
     auto_associative_data_set.cpp \

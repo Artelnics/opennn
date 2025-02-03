@@ -46,11 +46,7 @@ DataSet::RawVariable::RawVariable(const string& new_name,
                                   const Scaler& new_scaler,
                                   const vector<string>& new_categories)
 {
-    name = new_name;
-    use = new_raw_variable_use;
-    type = new_type;
-    scaler = new_scaler;
-    categories = new_categories;
+    set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
 }
 
 
@@ -74,22 +70,11 @@ void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 }
 
 
-void DataSet::RawVariable::set_scaler(const string& new_scaler)
+void DataSet::RawVariable::set_scaler(const string& new_scaler_string)
 {
-    if(new_scaler == "None")
-        set_scaler(Scaler::None);
-    else if(new_scaler == "MinimumMaximum")
-        set_scaler(Scaler::MinimumMaximum);
-    else if(new_scaler == "MeanStandardDeviation")
-        set_scaler(Scaler::MeanStandardDeviation);
-    else if(new_scaler == "StandardDeviation")
-        set_scaler(Scaler::StandardDeviation);
-    else if(new_scaler == "Logarithm")
-        set_scaler(Scaler::Logarithm);
-    else if (new_scaler == "ImageMinMax")
-        set_scaler(Scaler::ImageMinMax);
-    else
-        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+    const Scaler new_scaler = string_to_scaler(new_scaler_string);
+
+    set_scaler(new_scaler);
 }
 
 
@@ -100,7 +85,8 @@ void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
-{   if(new_raw_variable_use == "Decoder")
+{   
+    if(new_raw_variable_use == "Decoder")
         set_use(VariableUse::Decoder);
     else if(new_raw_variable_use == "Input")
         set_use(VariableUse::Input);
@@ -134,8 +120,6 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
 
 void DataSet::RawVariable::set_categories(const vector<string>& new_categories)
 {
-    categories.resize(new_categories.size());
-
     categories = new_categories;
 }
 
@@ -158,7 +142,7 @@ void DataSet::RawVariable::from_XML(const XMLDocument& document)
 void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer,"Name", name);
-    add_xml_element(printer,"Scaler", get_scaler_string());
+    add_xml_element(printer,"Scaler", scaler_to_string(scaler));
     add_xml_element(printer,"Use", get_use_string());
     add_xml_element(printer,"Type", get_type_string());
 
@@ -178,7 +162,7 @@ void DataSet::RawVariable::print() const
          << "Name: " << name << endl
          << "Use: " << get_use_string() << endl
          << "Type: " << get_type_string() << endl
-         << "Scaler: " << get_scaler_string() << endl;
+         << "Scaler: " << scaler_to_string(scaler) << endl;
 
     if (categories.size() != 0)
     {
@@ -222,23 +206,12 @@ string DataSet::RawVariable::get_use_string() const
 {
     switch (use)
     {
-    case VariableUse::Decoder:
-        return "Decoder";
-
-    case VariableUse::Input:
-        return "Input";
-
-    case VariableUse::Target:
-        return "Target";
-
-    case VariableUse::Time:
-        return "Time";
-
-    case VariableUse::None:
-        return "None";
-
-    default:
-        throw runtime_error("Unknown raw variable use");
+    case VariableUse::Decoder: return "Decoder";
+    case VariableUse::Input: return "Input";
+    case VariableUse::Target: return "Target";
+    case VariableUse::Time: return "Time";
+    case VariableUse::None: return "None";
+    default: throw runtime_error("Unknown raw variable use");
     }
 }
 
@@ -442,22 +415,13 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
     const Index samples_number = sample_indices.size();
 
-    //Index buffer_size = min(new_buffer_size, samples_number);
-
     Index batches_number;
 
     const Index batch_size = min(batch_samples_number, samples_number);
 
-
-    if(samples_number < batch_size)
-    {
-        batches_number = 1;
-//        buffer_size = batch_size;
-    }
-    else
-    {
-        batches_number = samples_number / batch_size;
-    }
+    samples_number < batch_size
+        ? batches_number = 1
+        : batches_number = samples_number / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
@@ -468,7 +432,6 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
     std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
     #pragma omp parallel for
-
     for(Index i = 0; i < batches_number; i++)
     {
         batches[i].resize(batch_size);
@@ -543,16 +506,16 @@ void DataSet::set_sample_uses(const vector<SampleUse>& new_uses)
 
 void DataSet::set_sample_uses(const vector<string>& new_uses)
 {
-    const Index samples_number = get_samples_number();
+    const Index samples_number = new_uses.size();
 
-    for(Index i = 0; i < samples_number; i++)
-        if(new_uses[i] == "Training" || new_uses[i] == "0")
+    for (Index i = 0; i < samples_number; i++)
+        if (new_uses[i] == "Training" || new_uses[i] == "0")
             sample_uses[i] = SampleUse::Training;
-        else if(new_uses[i] == "Selection" || new_uses[i] == "1")
+        else if (new_uses[i] == "Selection" || new_uses[i] == "1")
             sample_uses[i] = SampleUse::Selection;
-        else if(new_uses[i] == "Testing" || new_uses[i] == "2")
+        else if (new_uses[i] == "Testing" || new_uses[i] == "2")
             sample_uses[i] = SampleUse::Testing;
-        else if(new_uses[i] == "None" || new_uses[i] == "3")
+        else if (new_uses[i] == "None" || new_uses[i] == "3")
             sample_uses[i] = SampleUse::None;
         else
             throw runtime_error("Unknown sample use: " + new_uses[i] + ".\n");
@@ -684,30 +647,29 @@ void DataSet::set_default_raw_variables_uses()
     if(raw_variables_number == 1)
     {
         raw_variables[0].set_use(VariableUse::None);
+        return;
     }
-    else
+
+    set(VariableUse::Input);
+
+    for(Index i = raw_variables.size()-1; i >= 0; i--)
     {
-        set(VariableUse::Input);
-
-        for(Index i = raw_variables.size()-1; i >= 0; i--)
+        if(raw_variables[i].type == RawVariableType::Constant 
+        || raw_variables[i].type == RawVariableType::DateTime)
         {
-            if(raw_variables[i].type == RawVariableType::Constant 
-            || raw_variables[i].type == RawVariableType::DateTime)
-            {
-                raw_variables[i].set_use(VariableUse::None);
-                continue;
-            }
-
-            if(!target)
-            {
-                raw_variables[i].set_use(VariableUse::Target);
-
-                target = true;
-
-                continue;
-            }
+            raw_variables[i].set_use(VariableUse::None);
+            continue;
         }
-    }
+
+        if(!target)
+        {
+            raw_variables[i].set_use(VariableUse::Target);
+
+            target = true;
+
+            continue;
+        }
+    }    
 }
 
 
@@ -773,12 +735,15 @@ dimensions DataSet::get_dimensions(const DataSet::VariableUse& variable_use) con
     {
     case DataSet::VariableUse::Input:
         return input_dimensions;
+        break;
 
     case DataSet::VariableUse::Target:
         return target_dimensions;
+        break;
 
     case DataSet::VariableUse::Decoder:
         return decoder_dimensions;
+        break;
 
     default:
         throw invalid_argument("get_dimensions::Invalid VariableUse type.");
@@ -792,12 +757,15 @@ void DataSet::set_dimensions(const DataSet::VariableUse& variable_use, const dim
     {
     case DataSet::VariableUse::Input:
         input_dimensions = new_dimensions;
+        break;
 
     case DataSet::VariableUse::Target:
         target_dimensions = new_dimensions;
+        break;
 
     case DataSet::VariableUse::Decoder:
         decoder_dimensions = new_dimensions;
+        break;
 
     default:
         throw invalid_argument("set_dimensions::Invalid VariableUse type.");
@@ -829,10 +797,9 @@ vector<Index> DataSet::get_variable_indices(const VariableUse& variable_use) con
     {
         if (raw_variables[i].use != variable_use)
         {
-            if (raw_variables[i].type == RawVariableType::Categorical)
-                variable_index += raw_variables[i].get_categories_number();
-            else
-                variable_index++;
+            raw_variables[i].type == RawVariableType::Categorical
+                ? variable_index += raw_variables[i].get_categories_number()
+                : variable_index++;
 
             continue;
         }
@@ -1672,7 +1639,6 @@ void DataSet::set(const filesystem::path& new_data_path,
                   const bool& new_has_ids,
                   const DataSet::Codification& new_codification)
 {
-
     set_default();
 
     set_data_path(new_data_path);
@@ -1684,12 +1650,15 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_has_ids(new_has_ids);
 
     set_codification(new_codification);
-    
+
     read_csv();
-    
+
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
+    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
 }
 
 
@@ -1801,11 +1770,11 @@ void DataSet::set_default()
 
     has_header = false;
 
+    has_sample_ids = false;
+
     separator = Separator::Comma;
 
     missing_values_label = "NA";
-
-    //set_default_raw_variables_uses();
 
     set_default_raw_variables_names();
 }
@@ -1843,8 +1812,9 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
     if (new_data.dimension(0) != get_samples_number())
         throw runtime_error("Rows number is not equal to samples number");
 
-    if (new_data.dimension(1) != get_variables_number())
+    if (new_data.dimension(1) != get_variables_number()) {
         throw runtime_error("Columns number is not equal to variables number");
+    }
 
     data = new_data;
 }
@@ -2858,16 +2828,18 @@ void DataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();  
 
     printer.OpenElement("MissingValues");
-    add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
     add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if (missing_values_number > 0) 
     {
+        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
         add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
         add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
-    printer.CloseElement();  
+    printer.CloseElement();
+
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -2905,8 +2877,8 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        if (raw_variable_element->Attribute("Item") != std::to_string(i + 1))
-            throw runtime_error("Raw variable item number (" + std::to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
+        if (raw_variable_element->Attribute("Item") != to_string(i + 1))
+            throw runtime_error("Raw variable item number (" + to_string(i + 1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
         raw_variable.name = read_xml_string(raw_variable_element, "Name");
         raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
@@ -2914,7 +2886,7 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
         raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
         if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary) 
-            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
+            raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), " ");
     }
 
     if (has_sample_ids)
@@ -2924,8 +2896,14 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
+    
+    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
-    sample_uses.resize(read_xml_index(samples_element, "SamplesNumber"));
+    raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical
+        ? data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1)
+        : data.resize(samples_number, (Index)raw_variables.size());
+    
+    sample_uses.resize(samples_number);
     set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
 
     // Missing values
@@ -2934,11 +2912,12 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     if (!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
     missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
     if (missing_values_number > 0)
     {
+        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
+
         raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
 
         for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
@@ -2948,6 +2927,9 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
     }
 
     set_display(read_xml_bool(data_set_element, "Display"));
+
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
+    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
 }
 
 
@@ -3910,12 +3892,14 @@ void DataSet::read_csv()
 
     sample_ids.resize(samples_number);
     
-    // const Index variables_number = get_variables_number();
     const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
-    
-    data.resize(samples_number, variables_number);
+
+    raw_variables[columns_number - 1].type == RawVariableType::Categorical
+        ? data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1)
+        : data.resize(samples_number, variables_number);
+
     data.setZero();
 
     rows_missing_values_number = 0;
@@ -3984,21 +3968,18 @@ void DataSet::read_csv()
 
             if(raw_variable_type == RawVariableType::Numeric)
             {
-
-
                 (token.empty() || token == missing_values_label)
                     ? data(sample_index, variable_indices[0]) = NAN
                     : data(sample_index, variable_indices[0]) = stof(token);
-
             }
             else if(raw_variable_type == RawVariableType::DateTime)
             {              
                 data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
             }
             else if(raw_variable_type == RawVariableType::Categorical)
-            {
+            {  
                 const Index categories_number = raw_variables[raw_variable_index].get_categories_number();
-
+                
                 if(token.empty() || token == missing_values_label)
                 {
                     for(Index category_index = 0; category_index < categories_number; category_index++)
@@ -4008,10 +3989,10 @@ void DataSet::read_csv()
                 {
                     const vector<string> categories = raw_variables[raw_variable_index].categories;
 
-                    for(Index category_index = 0; category_index < categories_number; category_index++)
-                        if(token == categories[category_index])
-                            data(sample_index, variable_indices[category_index]) = 1;
-                }
+                    for (Index category_index = 0; category_index < categories_number; category_index++)
+                        if (token == categories[category_index])
+                            data(sample_index, variable_indices[category_index]) = 1; 
+                } 
             }
             else if(raw_variable_type == RawVariableType::Binary)
             {
@@ -4066,28 +4047,6 @@ string DataSet::RawVariable::get_type_string() const
         return "DateTime";
     default:
         throw runtime_error("Unknown raw variable type");
-    }
-}
-
-
-string DataSet::RawVariable::get_scaler_string() const
-{
-    switch(scaler)
-    {
-    case Scaler::None:
-        return "None";
-    case Scaler::MinimumMaximum:
-        return "MinimumMaximum";
-    case Scaler::MeanStandardDeviation:
-        return "MeanStandardDeviation";
-    case Scaler::StandardDeviation:
-        return "StandardDeviation";
-    case Scaler::Logarithm:
-        return "Logarithm";
-    case Scaler::ImageMinMax:
-        return "ImageMinMax";
-    default:
-        return "";
     }
 }
 
@@ -4293,8 +4252,6 @@ Index DataSet::count_nan() const
 
 void DataSet::fix_repeated_names()
 {
-    // Fix raw_variables names
-
     const Index raw_variables_number = raw_variables.size();
 
     map<string, Index> raw_variables_count_map;
@@ -4364,11 +4321,11 @@ void DataSet::fix_repeated_names()
 }
 
 
-vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_samples_number) const
+vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_samples_number) const
 {
     const Index samples_number = sample_indices.size();
 
-    Index batch_size = new_samples_number;
+    Index batch_size = new_batch_samples_number;
 
     Index batches_number;
 
@@ -4378,16 +4335,13 @@ vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices
         batch_size = samples_number;
     }
     else
-    {
         batches_number = samples_number / batch_size;
-    }
-
-//    const Index batches_number = (samples_number + new_samples_number - 1) / new_samples_number; // Round up division
 
     vector<vector<Index>> batches(batches_number);
 
     Index count = 0;
 
+    // @todo #pragma omp parallel for ??
     for (Index i = 0; i < batches_number; i++)
     {   
         batches[i].resize(batch_size);
@@ -4428,8 +4382,6 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
     const Index raw_variables_number = get_raw_variables_number();
 
     ifstream file(input_data_file_name);
-
-    // Count samples number
 
     Index input_samples_count = 0;
 
@@ -4551,10 +4503,9 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
             }
             else if(raw_variable.type == RawVariableType::DateTime)
             {
-                if(token == missing_values_label || token.empty())
-                    input_data(line_number, variable_index) = type(NAN);
-                else
-                    input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
+                token == missing_values_label || token.empty()
+                    ? input_data(line_number, variable_index) = type(NAN)
+                    : input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
 
                 variable_index++;
             }

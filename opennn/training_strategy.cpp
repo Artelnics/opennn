@@ -630,7 +630,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
     // Loss method
 
     set_loss_method(read_xml_string(loss_index_element, "LossMethod"));
-
+    
     // Minkowski error
 
     const XMLElement* minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");

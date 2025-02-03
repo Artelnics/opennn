@@ -19,10 +19,7 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
                                        const dimensions& new_output_dimensions,
                                        const string& new_name) : Layer()
 {
-    set(new_input_dimensions, 
-        new_output_dimensions, 
-        new_name);
-
+    set(new_input_dimensions, new_output_dimensions, new_name);
 }
 
 
@@ -184,7 +181,7 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 void ProbabilisticLayer::set_parameters_random()
 {
     set_random(biases);
-    
+
     set_random(synaptic_weights);
 }
 
@@ -574,15 +571,9 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    //if(neurons_number > 1)
-    //    targets.resize(batch_samples_number, neurons_number);
-
     bias_derivatives.resize(outputs_number);
 
     synaptic_weight_derivatives.resize(inputs_number, outputs_number);
-
-    //deltas_row.resize(neurons_number);
-    //activations_derivatives_matrix.resize(neurons_number, neurons_number);
 
     combination_derivatives.resize(batch_samples_number, outputs_number);
 
@@ -629,9 +620,6 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_num
 
     const Index outputs_number = layer->get_outputs_number();
     const Index parameters_number = layer->get_parameters_number();
-
-    //deltas.resize(batch_samples_number, neurons_number);
-    //deltas_row.resize(neurons_number);
 
     squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
 

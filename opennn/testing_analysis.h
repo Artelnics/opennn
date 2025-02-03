@@ -107,7 +107,7 @@ public:
    vector<vector<Descriptives>> calculate_error_data_descriptives() const;
    void print_error_data_descriptives() const;
 
-   Tensor<Histogram, 1> calculate_error_data_histograms(const Index& = 10) const;
+   vector<Histogram> calculate_error_data_histograms(const Index& = 10) const;
 
    Tensor<Tensor<Index, 1>, 1> calculate_maximal_errors(const Index& = 10) const;
 
@@ -191,7 +191,7 @@ public:
 
    // Output histogram
 
-   Tensor<Histogram, 1> calculate_output_histogram(const Tensor<type, 2>&, const Index& = 10) const;
+   vector<Histogram> calculate_output_histogram(const Tensor<type, 2>&, const Index& = 10) const;
 
    // Binary classification rates
 

@@ -311,12 +311,9 @@ void QuasiNewtonMethod::update_parameters(
 
     // Get training direction
 
-    if(optimization_data.epoch == 0 
-    || is_equal(parameters_difference, type(0)) 
-    || is_equal(gradient_difference, type(0)))
-        set_identity(inverse_hessian);
-    else
-        calculate_inverse_hessian_approximation(optimization_data);
+    optimization_data.epoch == 0 || is_equal(parameters_difference, type(0)) || is_equal(gradient_difference, type(0))
+        ? set_identity(inverse_hessian)
+        : calculate_inverse_hessian_approximation(optimization_data);
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
 
@@ -392,24 +389,26 @@ TrainingResults QuasiNewtonMethod::perform_training()
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
-    // Start training
+    TrainingResults results(maximum_epochs_number + 1);
+
+    check();
 
     if(display) cout << "Training with quasi-Newton method...\n";
-
-    TrainingResults results(maximum_epochs_number+1);
 
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
 
-    // Loss index
+    if (!data_set)
+        throw runtime_error("Data set is null.");
+
+    const bool has_selection = data_set->has_selection();
 
     const string error_type = loss_index->get_loss_method();
 
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
 
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
-    const bool has_selection = data_set->has_selection();
 
     const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
     const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
@@ -417,11 +416,13 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-    const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
+    // Batch
 
-    vector<Descriptives> input_variable_descriptives;
-    vector<Descriptives> target_variable_descriptives;
+    Batch training_batch(training_samples_number, data_set);
+    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+
+    Batch selection_batch(selection_samples_number, data_set);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Neural network
 
@@ -436,13 +437,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     set_scaling();
 
-    Batch training_batch(training_samples_number, data_set);
-
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
-
-    Batch selection_batch(selection_samples_number, data_set);
-
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index
 
@@ -531,8 +525,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         old_loss = training_back_propagation.loss;
 
-
-
         stop_training = true;
 
         if(loss_decrease < minimum_loss_decrease)
@@ -562,7 +554,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
         }
         else
         {
-            stop_training = true;
+            stop_training = false;
         }
 
         if(stop_training)
@@ -602,11 +594,11 @@ void QuasiNewtonMethod::to_XML(XMLPrinter& printer) const
 
     learning_rate_algorithm.to_XML(printer);
 
-    add_xml_element(printer, "MinimumLossDecrease", std::to_string(minimum_loss_decrease));
-    add_xml_element(printer, "LossGoal", std::to_string(training_loss_goal));
-    add_xml_element(printer, "MaximumSelectionFailures", std::to_string(maximum_selection_failures));
-    add_xml_element(printer, "MaximumEpochsNumber", std::to_string(maximum_epochs_number));
-    add_xml_element(printer, "MaximumTime", std::to_string(maximum_time));
+    add_xml_element(printer, "MinimumLossDecrease", to_string(minimum_loss_decrease));
+    add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
+    add_xml_element(printer, "MaximumSelectionFailures", to_string(maximum_selection_failures));
+    add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
+    add_xml_element(printer, "MaximumTime", to_string(maximum_time));
 
     printer.CloseElement();
 }

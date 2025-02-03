@@ -7,9 +7,6 @@
 //   artelnics@artelnics.com
 
 
-//#include <stdio.h>
-//#include <cstring>
-
 #include <iostream>
 //#include <fstream>
 //#include <sstream>
@@ -28,7 +25,6 @@
 #include "yolo_network.h"
 #include "layer.h"
 #include "detection_layer.h"
-
 
 
 using namespace std;

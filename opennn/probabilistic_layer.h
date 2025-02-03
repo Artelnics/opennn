@@ -86,8 +86,8 @@ public:
     enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
 
     ProbabilisticLayer(const dimensions& = {0},
-                                const dimensions& = {0},
-                                const string& = "probabilistic_layer");
+                       const dimensions& = {0},
+                       const string& = "probabilistic_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;

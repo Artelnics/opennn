@@ -52,8 +52,6 @@ public:
    void set_scalers(const vector<string>&);
    void set_scalers(const Scaler&);
 
-   void set_scaler(const Index&, const string&);
-
    bool is_empty() const;
 
    void forward_propagate(const vector<pair<type*, dimensions>>&,

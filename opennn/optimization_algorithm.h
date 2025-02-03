@@ -100,7 +100,7 @@ public:
        NeuralNetwork* neural_network = loss_index->get_neural_network();
 
        neural_network->set_input_names(input_names);
-       neural_network->set_output_namess(target_names);
+       neural_network->set_output_names(target_names);
 /*
        const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
        const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);

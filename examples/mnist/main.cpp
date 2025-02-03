@@ -23,46 +23,41 @@ int main()
 
         // Data set
         
-        //Random image data set
+        /*
+        const Index samples_number = 1;
 
-        const Index samples_number = 3;
         const Index image_height = 3;
         const Index image_width = 3;
         const Index channels = 3;
-        const Index targets = 3;
+        const Index targets = 1;
 
-        // ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
+        ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
+        image_data_set.set_data_random();
+        */
+        ImageDataSet image_data_set(0,{0,0,0},{0});
 
-        // image_data_set.set_image_data_random();
-
-        // image_data_set.set(DataSet::SampleUse::Training);
-
-        ImageDataSet image_data_set;
-
-        //image_data_set.set_data_random();
-
-        //image_data_set.set_data_source_path("data");
-        //image_data_set.set_data_source_path("C:/mnist/train");
-        // image_data_set.set_data_source_path("C:/binary_mnist");
-        // image_data_set.set_data_source_path("C:/melanoma_dataset_bmp");
+        // image_data_set.set_data_path("C:/binary_mnist");
         image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
-
-        //image_data_set.set_data_source_path("C:/melanoma_dataset_bmp_small");
-        //image_data_set.set_data_source_path("C:/melanoma_supersmall");
-
-
-        // image_data_set.set_input_dimensions({24,24,1});
 
         image_data_set.read_bmp();
 
-        //image_data_set.set(DataSet::SampleUse::Training);
+        image_data_set.save("data/data.xml");
+
+        ImageDataSet data_set_xml;
+        data_set_xml.load("data/data.xml");
+        data_set_xml.save("data/data_xml.xml");
+
+        image_data_set.print();
+        data_set_xml.print();
+
+        system("pause");
 
         // Neural network
-        
+
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 8 },
+            { 1 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
@@ -90,6 +85,7 @@ int main()
         prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
         cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
         */
+
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;

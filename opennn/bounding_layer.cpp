@@ -273,7 +273,7 @@ void BoundingLayer::from_XML(const XMLDocument& document)
         item_element->QueryUnsignedAttribute("Index", &index);
 
         if (index != i + 1) 
-            throw runtime_error("Index " + std::to_string(index) + " is incorrect.\n");
+            throw runtime_error("Index " + to_string(index) + " is incorrect.\n");
         
         lower_bounds[index - 1] = read_xml_type(item_element, "LowerBound");
         upper_bounds[index - 1] = read_xml_type(item_element, "UpperBound");

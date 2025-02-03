@@ -138,8 +138,8 @@ private:
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
 
-    explicit MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
-                                                       Layer* new_layer = nullptr);
+    MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
+                                              Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -165,7 +165,7 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
 {
 
-    explicit MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

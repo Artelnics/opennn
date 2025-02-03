@@ -142,8 +142,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     check();
 
-    // Start training
-
     if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
 
     // Data set
@@ -166,8 +164,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
-
-    const vector<Descriptives> input_variables_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
 
@@ -252,6 +248,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
 
         cout<<"========"<<endl;
+
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
@@ -265,9 +262,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // Data set
 
             training_batch.fill(training_batches[iteration],
-                input_variable_indices,
-                decoder_variable_indices,
-                target_variable_indices);
+                                input_variable_indices,
+                                decoder_variable_indices,
+                                target_variable_indices);
+
+            // Neural network
+
             
             
 
@@ -372,16 +372,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // throw runtime_error("ya");
 
+            //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            
+            //system("pause");
 
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
-            // Optimization algorithm
             update_parameters(training_back_propagation, optimization_data);
-
-            //if(display && epoch % display_period == 0)
-            // display_progress_bar(iteration, training_batches_number - 1);
         }
         
         // Loss

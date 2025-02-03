@@ -78,10 +78,8 @@ bool NeuralNetwork::validate_layer_type(const Layer::Type& layer_type) const
 
 bool NeuralNetwork::has(const Layer::Type& layer_type) const
 {
-    const Index layers_number = get_layers_number();
-
-    for (Index i = 0; i < layers_number; i++)
-        if (layers[i]->get_type() == layer_type)
+    for (const auto& layer : layers)
+        if (layer->get_type() == layer_type)
             return true;
 
     return false;
@@ -442,7 +440,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
-        const dimensions kernel_dimensions = { 3, 3, get_output_dimensions()[2], complexity_dimensions[i] };
+        const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
 
@@ -675,7 +673,7 @@ void NeuralNetwork::set_input_names(const vector<string>& new_input_names)
 }
 
 
-void NeuralNetwork::set_output_namess(const vector<string>& new_output_namess)
+void NeuralNetwork::set_output_names(const vector<string>& new_output_namess)
 {
     output_names = new_output_namess;
 }
@@ -711,10 +709,8 @@ void NeuralNetwork::set_default()
 
 void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        layers[i]->set_threads_number(new_threads_number);
+    for (auto& layer : layers)
+        layer->set_threads_number(new_threads_number);
 }
 
 
@@ -1304,7 +1300,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for (Index i = 0; i < outputs_number; i++) 
         add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
-    printer.CloseElement(); 
+    printer.CloseElement();
+
+    add_xml_element(printer, "Display", to_string(display));
 
     printer.CloseElement();
 }
@@ -1322,7 +1320,7 @@ void NeuralNetwork::from_XML(const XMLDocument& document)
     inputs_from_XML(neural_network_element->FirstChildElement("Inputs"));
     layers_from_XML(neural_network_element->FirstChildElement("Layers"));
     outputs_from_XML(neural_network_element->FirstChildElement("Outputs"));
-    //set_display(read_xml_bool(neural_network_element, "Display"));
+    set_display(read_xml_bool(neural_network_element, "Display"));
 }
 
 
@@ -1332,14 +1330,11 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
         throw runtime_error("Inputs element is nullptr.\n");
 
     const Index new_inputs_number = read_xml_index(inputs_element, "InputsNumber");
-
     input_names.resize(new_inputs_number);
-
-    const XMLElement* inputs_number_element = inputs_element->FirstChildElement("InputsNumber");
 
     // Inputs names
 
-    const XMLElement* start_element = inputs_number_element;
+    const XMLElement* start_element = inputs_element->FirstChildElement("InputsNumber");
 
     for(Index i = 0; i < new_inputs_number; i++)
     {
@@ -1360,150 +1355,83 @@ void NeuralNetwork::inputs_from_XML(const XMLElement* inputs_element)
 
 void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
 {
-    if(!layers_element)
+    if (!layers_element)
         throw runtime_error("Layers element is nullptr.\n");
 
     const Index layers_number = read_xml_index(layers_element, "LayersNumber");
 
-    // Add layers
+    using LayerFactory = function<unique_ptr<Layer>()>;
+    const unordered_map<string, LayerFactory> layer_factories =
+    {{"Scaling2D", []() -> unique_ptr<Layer> { return make_unique<ScalingLayer2D>(); }},
+     {"Scaling4D", []() -> unique_ptr<Layer> { return make_unique<ScalingLayer4D>(); }},
+     {"Convolutional", []() -> unique_ptr<Layer> { return make_unique<ConvolutionalLayer>(); }},
+     {"Perceptron", []() -> unique_ptr<Layer> { return make_unique<PerceptronLayer>(); }},
+     {"Perceptron3D", []() -> unique_ptr<Layer> { return make_unique<PerceptronLayer3D>(); }},
+     {"Pooling", []() -> unique_ptr<Layer> { return make_unique<PoolingLayer>(); }},
+     {"Flatten", []() -> unique_ptr<Layer> { return make_unique<FlattenLayer>(); }},
+     {"Probabilistic", []() -> unique_ptr<Layer> { return make_unique<ProbabilisticLayer>(); }},
+     {"Probabilistic3D", []() -> unique_ptr<Layer> { return make_unique<ProbabilisticLayer3D>(); }},
+     {"LongShortTermMemory", []() -> unique_ptr<Layer> { return make_unique<LongShortTermMemoryLayer>(); }},
+     {"Recurrent", []() -> unique_ptr<Layer> { return make_unique<RecurrentLayer>(); }},
+     {"Unscaling", []() -> unique_ptr<Layer> { return make_unique<UnscalingLayer>(); }},
+     {"Bounding", []() -> unique_ptr<Layer> { return make_unique<BoundingLayer>(); }},
+     {"Embedding", []() -> unique_ptr<Layer> { return make_unique<EmbeddingLayer>(); }},
+     {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiheadAttentionLayer>(); }},
+     {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<AdditionLayer3D>(); }},
+     {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<NormalizationLayer3D>(); }},
+    };
 
     const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
 
-    for(Index i = 0; i < layers_number; i++)
+    for (Index i = 0; i < layers_number; i++)
     {
         const XMLElement* layer_element = start_element->NextSiblingElement();
 
-        if(!layer_element)
-             throw runtime_error("Layer element is nullptr.");
+        if (!layer_element)
+            throw runtime_error("Layer element is nullptr.");
 
         const string layer_type_string = layer_element->Name();
 
+        auto it = layer_factories.find(layer_type_string);
+
+        if (it == layer_factories.end())
+            throw runtime_error("Unknown layer type: " + layer_type_string);
+
+        unique_ptr<Layer> layer = it->second();
         XMLDocument layer_document;
         XMLNode* element_clone = layer_element->DeepClone(&layer_document);
         layer_document.InsertFirstChild(element_clone);
-
-        if (layer_type_string == "Scaling2D") {
-            unique_ptr<ScalingLayer2D> scaling_layer = make_unique<ScalingLayer2D>();
-            scaling_layer->from_XML(layer_document);
-            add_layer(std::move(scaling_layer));
-        }
-        else if (layer_type_string == "Scaling4D") {
-            unique_ptr<ScalingLayer4D> scaling_layer = make_unique<ScalingLayer4D>();
-            scaling_layer->from_XML(layer_document);
-            add_layer(std::move(scaling_layer));
-        }
-        else if (layer_type_string == "Convolutional") {
-            unique_ptr<ConvolutionalLayer> convolutional_layer = make_unique<ConvolutionalLayer>();
-            convolutional_layer->from_XML(layer_document);
-            add_layer(std::move(convolutional_layer));
-        }
-        else if (layer_type_string == "Perceptron") {
-            unique_ptr<PerceptronLayer> perceptron_layer = make_unique<PerceptronLayer>();
-            perceptron_layer->from_XML(layer_document);
-            add_layer(std::move(perceptron_layer));
-        }
-        else if (layer_type_string == "Perceptron3D") {
-            unique_ptr<PerceptronLayer3D> perceptron_layer_3d = make_unique<PerceptronLayer3D>();
-            perceptron_layer_3d->from_XML(layer_document);
-            add_layer(std::move(perceptron_layer_3d));
-        }
-        else if (layer_type_string == "Pooling") {
-            unique_ptr<PoolingLayer> pooling_layer = make_unique<PoolingLayer>();
-            pooling_layer->from_XML(layer_document);
-            add_layer(std::move(pooling_layer));
-        }
-        else if (layer_type_string == "Flatten") {
-            unique_ptr<FlattenLayer> flatten_layer = make_unique<FlattenLayer>();
-            flatten_layer->from_XML(layer_document);
-            add_layer(std::move(flatten_layer));
-        }
-        else if (layer_type_string == "Probabilistic") {
-            unique_ptr<ProbabilisticLayer> probabilistic_layer = make_unique<ProbabilisticLayer>();
-            probabilistic_layer->from_XML(layer_document);
-            add_layer(std::move(probabilistic_layer));
-        }
-        else if (layer_type_string == "Probabilistic3D") {
-            unique_ptr<ProbabilisticLayer3D> probabilistic_layer_3d = make_unique<ProbabilisticLayer3D>();
-            probabilistic_layer_3d->from_XML(layer_document);
-            add_layer(std::move(probabilistic_layer_3d));
-        }
-        else if (layer_type_string == "LongShortTermMemory") {
-            unique_ptr<LongShortTermMemoryLayer> long_short_term_memory_layer = make_unique<LongShortTermMemoryLayer>();
-            long_short_term_memory_layer->from_XML(layer_document);
-            add_layer(std::move(long_short_term_memory_layer));
-        }
-        else if (layer_type_string == "Recurrent") {
-            unique_ptr<RecurrentLayer> recurrent_layer = make_unique<RecurrentLayer>();
-            recurrent_layer->from_XML(layer_document);
-            add_layer(std::move(recurrent_layer));
-        }
-        else if (layer_type_string == "Unscaling") {
-            unique_ptr<UnscalingLayer> unscaling_layer = make_unique<UnscalingLayer>();
-            unscaling_layer->from_XML(layer_document);
-            add_layer(std::move(unscaling_layer));
-        }
-        else if (layer_type_string == "Bounding") {
-            unique_ptr<BoundingLayer> bounding_layer = make_unique<BoundingLayer>();
-            bounding_layer->from_XML(layer_document);
-            add_layer(std::move(bounding_layer));
-        }
-        else if (layer_type_string == "Embedding") {
-            unique_ptr<EmbeddingLayer> embedding_layer = make_unique<EmbeddingLayer>();
-            embedding_layer->from_XML(layer_document);
-            add_layer(std::move(embedding_layer));
-        }
-        else if (layer_type_string == "MultiheadAttention") {
-            unique_ptr<MultiheadAttentionLayer> multihead_attention_layer = make_unique<MultiheadAttentionLayer>();           
-            multihead_attention_layer->from_XML(layer_document);
-            add_layer(std::move(multihead_attention_layer));
-        }
-        else if (layer_type_string == "Addition3D") {
-            unique_ptr<AdditionLayer3D> addition_layer_3d = std::make_unique<AdditionLayer3D>();
-            addition_layer_3d->from_XML(layer_document);
-            add_layer(std::move(addition_layer_3d));
-        }
-        else if (layer_type_string == "Normalization3D") {
-            unique_ptr<NormalizationLayer3D> normalization_layer_3d = make_unique<NormalizationLayer3D>();
-            normalization_layer_3d->from_XML(layer_document);
-            add_layer(std::move(normalization_layer_3d));
-        }
-        else {
-            throw runtime_error("Unknown layer type");
-        }
+        layer->from_XML(layer_document);
+        add_layer(std::move(layer));
 
         start_element = layer_element;
-        
     }
 
     // Layers inputs indices
-
+    /* @todo Not needed?
     const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
-
-    if(!layer_input_indices_element)
+    if (!layer_input_indices_element)
         throw runtime_error("LayerInputIndices element is nullptr.\n");
 
-    layer_input_indices.clear(); // @todo .clear because they are already saved from Add layers for (is this code needed?)
     layer_input_indices.resize(layers.size());
 
-    for (const tinyxml2::XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
-        layer_inputs_indices_element;
-        layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
+    for (const XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
+         layer_inputs_indices_element;
+         layer_inputs_indices_element = layer_inputs_indices_element->NextSiblingElement("LayerInputsIndices"))
     {
         int layer_index;
-
         if (layer_inputs_indices_element->QueryIntAttribute("LayerIndex", &layer_index) != tinyxml2::XML_SUCCESS)
             throw runtime_error("Error: LayerIndex attribute missing or invalid.\n");
 
         const char* text = layer_inputs_indices_element->GetText();
-
         if (!text)
-            throw runtime_error("Text is nullptr for LayerInputsIndices element.");        
+            throw runtime_error("Text is nullptr for LayerInputsIndices element.");
 
         const vector<Index> input_index = string_to_dimensions(string(text), " ");
-
         if (layer_index >= layer_input_indices.size())
             layer_input_indices.push_back(input_index);
     }
+    */
 }
 
 

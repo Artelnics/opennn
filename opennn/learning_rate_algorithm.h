@@ -31,12 +31,7 @@ public:
 
        bool operator == (const Triplet& other_triplet) const
        {
-          if(A == other_triplet.A
-          && U == other_triplet.U
-          && B == other_triplet.B)
-             return true;
-          else
-             return false;
+           return (A == other_triplet.A && U == other_triplet.U && B == other_triplet.B);
        }
 
        type get_length() const;

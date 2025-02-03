@@ -10,7 +10,7 @@
 
 #include "perceptron_layer.h"
 #include "tensors.h"
-//#include "strings_utilities.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -529,8 +529,7 @@ void PerceptronLayer::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(perceptron_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-    // @todo chech this
-    //set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), 0);
 }
 
 

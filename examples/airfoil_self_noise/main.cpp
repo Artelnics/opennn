@@ -10,11 +10,8 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/data_set.h"
-#include "../../opennn/neural_network.h"
-#include "../../opennn/training_strategy.h"
 #include "../../opennn/model_selection.h"
-#include "../../opennn/testing_analysis.h"
+#include "testing_analysis.h"
 
 int main()
 {
@@ -24,18 +21,14 @@ int main()
 
         // Data set
         
-        DataSet data_set("C:/airfoil_self_noise.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true, false);
+        // DataSet data_set("data/airfoil_self_noise.csv", ";", true, false);
         
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
         data_set.set(DataSet::SampleUse::Training);
         
-        //data_set.print_input_target_raw_variables_correlations();
-
-        //data_set.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        //data_set.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-
         // Neural network
 
         const Index neurons_number = 10;
@@ -43,22 +36,13 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
 
-        // neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-        // neural_network.load("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        training_strategy.set_display(false);
-
-        //training_strategy.print();
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-       //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
 
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
@@ -66,20 +50,17 @@ int main()
         //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(1000);
-
-        //training_strategy.set_maximum_epochs_number(10000);
-
-        //training_strategy.save("../data/training_strategy.xml");
-        //training_strategy.load("../data/training_strategy.xml");
+        training_strategy.set_maximum_epochs_number(10000);
 
 
-//        training_strategy.perform_training();
+        training_strategy.perform_training();
+
 
         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_input_selection();
-/*
+
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
@@ -117,7 +98,7 @@ int main()
         cout << outputs << endl;
 
         neural_network.print();
-*/
+
 
         cout << "Good bye!" << endl;
 

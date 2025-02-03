@@ -337,16 +337,16 @@ void TestingAnalysis::print_error_data_descriptives() const
 }
 
 
-Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
+vector<Histogram> TestingAnalysis::calculate_error_data_histograms(const Index& bins_number) const
 {
     const Tensor<type, 2> error_data = calculate_percentage_error_data();
 
     const Index outputs_number = error_data.dimension(1);
 
-    Tensor<Histogram, 1> histograms(outputs_number);
+    vector<Histogram> histograms(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
-        histograms(i) = histogram_centered(error_data.chip(i,1), type(0), bins_number);
+        histograms[i] = histogram_centered(error_data.chip(i,1), type(0), bins_number);
 
     return histograms;
 }
@@ -613,10 +613,7 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
         for(Index j = 0; j < outputs_number; j++)
         {
-            if(outputs_row(j) < NUMERIC_LIMITS_MIN)
-                outputs_row(j) = type(1.0e-6);
-            else if(double(outputs_row(j)) == 1.0)
-                outputs_row(j) = numeric_limits<type>::max();
+            outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), numeric_limits<type>::max());
 
             cross_entropy_error -=
                     targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
@@ -1456,13 +1453,14 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 }
 
 
-Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
+vector<Histogram> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs,
+                                                              const Index& bins_number) const
 {
     const Tensor<type, 1> output_column = outputs.chip(0,1);
 
-    Tensor<Histogram, 1> output_histogram(1);
+    vector<Histogram> output_histogram (1);
 
-    output_histogram(0) = histogram(output_column, bins_number);
+    output_histogram[0] = histogram(output_column, bins_number);
 
     return output_histogram;
 }
@@ -1535,11 +1533,8 @@ vector<Index> TestingAnalysis::calculate_false_positive_samples(const Tensor<typ
         if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
             false_positives_indices_copy[index++] = testing_indices[i];
 
-    vector<Index> false_positives_indices(index);
-
-    copy(false_positives_indices_copy.data(),
-         false_positives_indices_copy.data() + index,
-         false_positives_indices.data());
+    const vector<Index> false_positives_indices(false_positives_indices_copy.begin(),
+                                                false_positives_indices_copy.begin() + index);
 
     return false_positives_indices;
 }
@@ -1560,11 +1555,8 @@ vector<Index> TestingAnalysis::calculate_false_negative_samples(const Tensor<typ
         if(targets(i,0) > decision_threshold && outputs(i,0) < decision_threshold)
             false_negatives_indices_copy[index++] = testing_indices[i];
 
-    vector<Index> false_negatives_indices(index);
-
-    copy(false_negatives_indices_copy.data(),
-         false_negatives_indices_copy.data() + index,
-         false_negatives_indices.data());
+    const vector<Index> false_negatives_indices(false_negatives_indices_copy.begin(),
+                                                false_negatives_indices_copy.begin() + index);
 
     return false_negatives_indices;
 }
@@ -1577,19 +1569,16 @@ vector<Index> TestingAnalysis::calculate_true_negative_samples(const Tensor<type
 {
     const Index rows_number = targets.dimension(0);
 
-    Tensor<Index, 1> true_negatives_indices_copy(rows_number);
+    vector<Index> true_negatives_indices_copy(rows_number);
 
     Index index = 0;
 
     for(Index i = 0; i < rows_number; i++)
         if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
-            true_negatives_indices_copy(index++) = testing_indices[i];
+            true_negatives_indices_copy[index++] = testing_indices[i];
 
-    vector<Index> true_negatives_indices(index);
-
-    copy(true_negatives_indices_copy.data(),
-         true_negatives_indices_copy.data() + index,
-         true_negatives_indices.data());
+    vector<Index> true_negatives_indices(true_negatives_indices_copy.begin(),
+        true_negatives_indices_copy.begin() + index);
 
     return true_negatives_indices;
 }
@@ -1653,10 +1642,9 @@ void TestingAnalysis::save_confusion(const filesystem::path& file_name) const
         file << target_variable_names[i] << ",";
 
         for(Index j = 0; j < raw_variables_number; j++)
-            if(j == raw_variables_number - 1)
-                file << confusion(i, j) << endl;
-            else
-                file << confusion(i, j) << ",";
+            j == raw_variables_number - 1
+                ? file << confusion(i, j) << endl
+                : file << confusion(i, j) << ",";
     }
 
     file.close();

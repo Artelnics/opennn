@@ -86,7 +86,6 @@ public:
 
         string get_use_string() const;
         string get_type_string() const;
-        string get_scaler_string() const;
 
         Index get_categories_number() const;
 

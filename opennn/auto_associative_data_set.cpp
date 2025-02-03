@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A U T O   A S S O C I A T I O N   D A T A S E T   C L A S S
+//   A U T O   A S S O C I A T I V E   D A T A S E T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -64,14 +64,13 @@ void AutoAssociativeDataSet::transform_associative_raw_variables()
     {
         raw_variable_index = i%raw_variables_number;
 
-        if(i < raw_variables_number)
-            new_raw_variables[index].set(raw_variables[raw_variable_index].name,
+        i < raw_variables_number
+            ? new_raw_variables[index].set(raw_variables[raw_variable_index].name,
                                          DataSet::VariableUse::Input,
                                          raw_variables[raw_variable_index].type,
                                          raw_variables[raw_variable_index].scaler,
-                                         raw_variables[raw_variable_index].categories);
-        else
-            new_raw_variables[index].set(raw_variables[raw_variable_index].name + "_output",
+                                         raw_variables[raw_variable_index].categories)
+            : new_raw_variables[index].set(raw_variables[raw_variable_index].name + "_output",
                                          DataSet::VariableUse::Target,
                                          raw_variables[raw_variable_index].type,
                                          raw_variables[raw_variable_index].scaler,
