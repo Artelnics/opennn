@@ -88,11 +88,10 @@ void Transformer::set(const Index& new_input_length,
                                                        false,
                                                        "context_self_attention_" + to_string(i+1)));
 
-        if(i == 0)
-            set_layer_inputs_indices("context_self_attention_1", 
-                                    {"context_embedding", "context_embedding"});
-        else
-            set_layer_inputs_indices("context_self_attention_" + to_string(i+1), 
+        i == 0
+            ? set_layer_inputs_indices("context_self_attention_1", 
+                                    {"context_embedding", "context_embedding"})
+            : set_layer_inputs_indices("context_self_attention_" + to_string(i+1), 
                 { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
 
         //context_self_attention_layer->set_dropout_rate(dropout_rate);
@@ -103,10 +102,9 @@ void Transformer::set(const Index& new_input_length,
                                                new_embedding_dimension,
                                                "context_self_attention_addition_" + to_string(i+1)));
 
-        if(i == 0)
-            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i+1), { "context_embedding", "context_self_attention_" + to_string(i+1) });
-        else
-            set_layer_inputs_indices("context_self_attention_addition_" + to_string(i+1), { "encoder_perceptron_normalization_" + to_string(i), "context_self_attention_" + to_string(i+1) });
+        i == 0
+            ? set_layer_inputs_indices("context_self_attention_addition_" + to_string(i+1), { "context_embedding", "context_self_attention_" + to_string(i+1) })
+            : set_layer_inputs_indices("context_self_attention_addition_" + to_string(i+1), { "encoder_perceptron_normalization_" + to_string(i), "context_self_attention_" + to_string(i+1) });
 
         // Normalization
         
@@ -162,20 +160,18 @@ void Transformer::set(const Index& new_input_length,
                                                        false,
                                                        "input_self_attention_" + to_string(i+1)));
 
-        if(i == 0)
-            set_layer_inputs_indices("input_self_attention_1", {"input_embedding", "input_embedding"});
-        else
-            set_layer_inputs_indices("input_self_attention_" + to_string(i+1), {"decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_normalization_" + to_string(i)});
+        i == 0
+            ? set_layer_inputs_indices("input_self_attention_1", {"input_embedding", "input_embedding"})
+            : set_layer_inputs_indices("input_self_attention_" + to_string(i+1), {"decoder_perceptron_normalization_" + to_string(i), "decoder_perceptron_normalization_" + to_string(i)});
 
         //input_self_attention_layer->set_dropout_rate(dropout_rate);
 
         add_layer(make_unique<AdditionLayer3D>(new_input_length,
                                                new_embedding_dimension,
                                                "input_self_attention_addition_" + to_string(i+1)));
-        if(i == 0)
-            set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "input_embedding", "input_self_attention_" + to_string(i+1) });
-        else
-            set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i+1) });
+        i == 0
+            ? set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "input_embedding", "input_self_attention_" + to_string(i+1) })
+            : set_layer_inputs_indices("input_self_attention_addition_" + to_string(i+1), { "decoder_perceptron_normalization_" + to_string(i), "input_self_attention_" + to_string(i+1) });
 
         add_layer(make_unique<NormalizationLayer3D>(new_input_length,
                                                     new_embedding_dimension,

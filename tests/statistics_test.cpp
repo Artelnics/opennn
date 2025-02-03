@@ -52,7 +52,6 @@ TEST(StatisticsTest, CountEmptyBins)
     
 }
 
-
 TEST(StatisticsTest, CalculateMinimumFrequency)
 {
     
@@ -236,7 +235,6 @@ TEST(StatisticsTest, CalculateMaximalCenters)
     solution.setValues({ type(1), type(7)});
 
     //EXPECT_NEAR(histogram.calculate_maximal_centers()(4), solution[1], 1.0e-7);
-
     
     // Test
 

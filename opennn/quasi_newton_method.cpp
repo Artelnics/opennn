@@ -309,12 +309,9 @@ void QuasiNewtonMethod::update_parameters(
 
     // Get training direction
 
-    if(optimization_data.epoch == 0 
-    || is_equal(parameters_difference, type(0)) 
-    || is_equal(gradient_difference, type(0)))
-        set_identity(inverse_hessian);
-    else
-        calculate_inverse_hessian_approximation(optimization_data);
+    optimization_data.epoch == 0 || is_equal(parameters_difference, type(0)) || is_equal(gradient_difference, type(0))
+        ? set_identity(inverse_hessian)
+        : calculate_inverse_hessian_approximation(optimization_data);
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
 

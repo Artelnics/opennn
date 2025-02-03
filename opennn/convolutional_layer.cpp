@@ -34,10 +34,9 @@ bool ConvolutionalLayer::get_batch_normalization() const
 void ConvolutionalLayer::preprocess_inputs(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& preprocessed_inputs) const
 {
-    if (convolution_type == ConvolutionType::Same)
-        preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
-    else
-        preprocessed_inputs.device(*thread_pool_device) = inputs;
+    convolution_type == ConvolutionType::Same
+        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
+        : preprocessed_inputs.device(*thread_pool_device) = inputs;
 
     if (row_stride != 1 || column_stride != 1)
         preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
@@ -218,10 +217,9 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 */
     }
 
-    if (is_training)
-        calculate_activations(outputs, activation_derivatives);
-    else
-        calculate_activations(outputs, empty);   
+    is_training
+        ? calculate_activations(outputs, activation_derivatives)
+        : calculate_activations(outputs, empty);   
 }
 
 

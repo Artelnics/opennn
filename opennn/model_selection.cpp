@@ -94,10 +94,9 @@ void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsS
 
 void ModelSelection::set_neurons_selection_method(const string& new_neurons_selection_method)
 {
-    if(new_neurons_selection_method == "GROWING_NEURONS")
-        set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
-    else
-        throw runtime_error("Unknown neurons selection type: " + new_neurons_selection_method + ".\n");
+    new_neurons_selection_method == "GROWING_NEURONS"
+        ? set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS)
+        : throw runtime_error("Unknown neurons selection type: " + new_neurons_selection_method + ".\n");
 }
 
 
