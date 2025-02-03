@@ -136,11 +136,10 @@ TEST(TimeSeriesDataSet, test_transform_time_series) {
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::None), 0);
 
     std::vector<std::string> input_variable_names = data_set.get_variable_names(DataSet::VariableUse::Input);
+    std::vector<std::string> target_variable_names = data_set.get_variable_names(DataSet::VariableUse::Target);
 
-    //EXPECT_EQ(input_variable_names[0], "x_lag_1");
-    //EXPECT_EQ(input_variable_names[1], "y_lag_1");
-    //EXPECT_EQ(input_variable_names[2], "x_lag_0");
-    //EXPECT_EQ(input_variable_names[3], "y_lag_0");
+    EXPECT_EQ(input_variable_names[0], "x");
+    EXPECT_EQ(target_variable_names[0], "y");
     
 }
 

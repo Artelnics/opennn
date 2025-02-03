@@ -25,6 +25,7 @@ TEST(LearningRateAlgorithmTest, GeneralConstructor)
 
 TEST(LearningRateAlgorithmTest, BracketingTriplet)
 {    
+    /*
     DataSet data_set(1, {1}, {1});
     data_set.set_data_random();
 

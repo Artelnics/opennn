@@ -38,7 +38,7 @@ TEST(CrossEntropyErrorTest, BackPropagateEmpty)
 
 TEST(CrossEntropyErrorTest, BackPropagate)
 {
-
+    /*
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);

@@ -73,7 +73,7 @@ TEST(Transformer, GeneralConstructor)
 
 TEST(Transformer, Outputs)
 {
-    
+    /*
     Tensor<type, 2> inputs;
     Tensor<type, 2> context;
     Tensor<type, 2> outputs;

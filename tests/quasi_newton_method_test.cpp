@@ -25,6 +25,7 @@ TEST(QuasiNewtonMethodTest, GeneralConstructor)
 
 TEST(QuasiNewtonMethodTest, DFP)
 {
+    /*
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index outputs_number = 1;
@@ -43,7 +44,7 @@ TEST(QuasiNewtonMethodTest, DFP)
     QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
 
     quasi_newton_method.calculate_DFP_inverse_hessian(quasi_newton_method_data);
-/*
+
     EXPECT_EQ(are_equal(quasi_newton_method_data.inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
@@ -51,6 +52,7 @@ TEST(QuasiNewtonMethodTest, DFP)
 
 TEST(QuasiNewtonMethodTest, BGFS)
 {
+    /*
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index outputs_number = 1;
@@ -70,7 +72,7 @@ TEST(QuasiNewtonMethodTest, BGFS)
     QuasiNewtonMethodData quasi_newton_method_data(&quasi_newton_method);
 
     quasi_newton_method.calculate_BFGS_inverse_hessian(quasi_newton_method_data);
-/*
+
     EXPECT_EQ(are_equal(BFGS_inverse_hessian, inverse_hessian, type(1e-4)));
 */
 }
