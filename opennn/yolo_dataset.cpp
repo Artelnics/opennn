@@ -505,7 +505,7 @@ Tensor<type, 3>  normalize_tensor(const Tensor<type, 3>& image, const bool& is_n
 Tensor<type, 2> extract_boxes_width_height_data(const vector<Tensor<type, 2> >&labels)
 {
     vector<Tensor<type, 1>> box_dimensions;
-    const Index image_size = 416;
+    // const Index image_size = 416;
     Tensor<type, 1> dimension(2);
 
     for(size_t i = 0; i < labels.size(); i++)

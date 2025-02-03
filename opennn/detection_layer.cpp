@@ -179,8 +179,8 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
 
       //  Box dimensions detection
 
-        Tensor<type, 4> box_detections = detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 0},
-                                                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 4});
+        Tensor<type, 4> box_detections = detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
+                                                          Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2});
 
         for(Index i = 0; i < batch_size; i++)
         {
@@ -188,13 +188,13 @@ void DetectionLayer::apply_detection(const Tensor<type, 4>& inputs, Tensor<type,
             {
                 for(Index k = 0; k < grid_size; k++)
                 {
-                    box_detections(i,j,k,2) *= anchors[box](0);
-                    box_detections(i,j,k,3) *= anchors[box](1);
+                    box_detections(i,j,k,0) *= anchors[box](0);
+                    box_detections(i,j,k,1) *= anchors[box](1);
                 }
             }
         }
-        detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 0},
-                         Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 4}) = box_detections;
+        detections.slice(Eigen::array<Index, 4>{0, 0, 0, box * box_data_size + 2},
+                         Eigen::array<Index, 4>{batch_size, grid_size, grid_size, 2}) = box_detections;
     }
 
     // cout<<"Detection layer outputs:\n"<<detections<<endl;

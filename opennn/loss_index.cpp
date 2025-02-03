@@ -713,7 +713,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
-
     BackPropagation back_propagation(samples_number, this);
 
     const Tensor<type, 1> parameters = neural_network->get_parameters();
@@ -736,7 +735,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
         h = calculate_h(parameters(i));
 
        parameters_forward(i) += h;
-       
+
        neural_network->forward_propagate(batch.get_input_pairs(),
                                          parameters_forward,
                                          forward_propagation);
@@ -924,7 +923,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
-    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 
@@ -978,7 +977,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
-    batch.fill(sample_indices, input_variable_indices, target_variable_indices);
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
 

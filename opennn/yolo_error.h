@@ -30,6 +30,9 @@ public:
                                 ForwardPropagation&,
                                 BackPropagation&) const final;
 
+    type calculate_intersection_over_union_deltas(const Tensor<type, 1>&, const Tensor<type, 1>&, type&, type&, type&, type&) const;
+
+
     string get_loss_method() const final;
     string get_error_type_text() const final;
 

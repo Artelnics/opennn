@@ -273,7 +273,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             cout<<"=========batch========="<<endl;
 
-            const vector<vector<pair<type*, dimensions>>> layer_input_pairs = training_forward_propagation.get_layer_input_pairs(training_batch.get_input_pairs());
+            // const vector<vector<pair<type*, dimensions>>> layer_input_pairs = training_forward_propagation.get_layer_input_pairs(training_batch.get_input_pairs());
             // if(epoch == 1)
             //     cout << "Inputs of epoch 1:\n" << tensor_map_4(layer_input_pairs[7][0]) << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
             // if(epoch == 1)
@@ -321,54 +321,40 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
 
 
+            // for(Index i = 0; i < training_back_propagation.gradient.size(); i++)
+            // {
+            //     if(isnan(training_back_propagation.gradient(i)))
+            //     {
+            //         cerr << "THERE IS A NAN TERM IN THE GRADIENT" << endl;
 
-            //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            //         // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
 
-
-
-            // TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(training_back_propagation.get_output_deltas_pair());
-
-
-            for(Index i = 0; i < training_back_propagation.gradient.size(); i++)
-            {
-                if(isnan(training_back_propagation.gradient(i)))
-                {
-                    cerr << "THERE IS A NAN TERM IN THE GRADIENT" << endl;
-
-                    // cout<<"Output deltas:\n" << output_deltas << endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-
-                    throw runtime_error("Nan");
-                }
-                if (isinf(training_back_propagation.gradient(i)))
-                {
-                    cerr << "THERE IS AN INF TERM IN THE GRADIENT" << endl;
-                    throw runtime_error("Infinity");
-                }
-            }
+            //         throw runtime_error("Nan");
+            //     }
+            //     if (isinf(training_back_propagation.gradient(i)))
+            //     {
+            //         cerr << "THERE IS AN INF TERM IN THE GRADIENT" << endl;
+            //         throw runtime_error("Infinity");
+            //     }
+            // }
 
 
             // NUMERICAL GRADIENT
 
 
-            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // // for(Index i = 0; i < training_back_propagation.gradient.size(); i++)
-            // //     if(isnan(training_back_propagation.gradient(i))){
-            // //         cerr<<"There is a nan term in the gradient"<<endl;
-            // //         break;
-            // //     }
+            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
 
-            cout << "gradient:\n" << training_back_propagation.gradient << endl;
-
-            cerr << "numerical gradient:\n" << numerical_gradient << endl<<endl<<endl;
+            // cerr << "numerical gradient:\n" << numerical_gradient << endl<<endl<<endl;
 
             // // // throw runtime_error("Stop here");
 
-            cout << "gradient - numerical gradient :\n" << (training_back_propagation.gradient - numerical_gradient).abs() << endl<<endl<<endl;
+            // cout << "gradient - numerical gradient :\n" << (training_back_propagation.gradient - numerical_gradient).abs() << endl<<endl<<endl;
 
-            // cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            // // cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 
-            throw runtime_error("Stop here");
+            // throw runtime_error("Stop here");
 
 
 

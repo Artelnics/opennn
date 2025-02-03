@@ -184,15 +184,15 @@ NeuronsSelectionResults ModelSelection::perform_neurons_selection()
 }
 
 
-InputsSelectionResults ModelSelection::perform_inputs_selection()
+InputsSelectionResults ModelSelection::perform_input_selection()
 {
     switch(inputs_selection_method)
     {
     case InputsSelectionMethod::GROWING_INPUTS:
-        return growing_inputs.perform_inputs_selection();
+        return growing_inputs.perform_input_selection();
 
     case InputsSelectionMethod::GENETIC_ALGORITHM:
-        return genetic_algorithm.perform_inputs_selection();
+        return genetic_algorithm.perform_input_selection();
     }
 
     return InputsSelectionResults();

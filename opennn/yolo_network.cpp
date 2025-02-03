@@ -62,7 +62,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                               convolution_stride_dimensions,
                                               convolution_type,
                                               "Convolutional layer 1"));
-    // // // layers[1]->set_parameters_constant(1);
+    // // layers[1]->set_parameters_constant(1);
 
     add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                         // (dimensions){height, width, channels},
@@ -79,7 +79,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
     //                                              convolution_type,
     //                                              "Convolutional layer 2"));
 
-    // layers[3]->set_parameters_constant(1);
+    // // // layers[3]->set_parameters_constant(1);
 
     add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                            pool_dimensions,
@@ -147,7 +147,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
     //                                              convolution_type,
     //                                              "Convolutional layer 8"));
 
-    // layers[11]->set_parameters_constant(1);
+    // // // layers[11]->set_parameters_constant(1);
 
     add_layer(make_unique<PoolingLayer>(get_output_dimensions(),
                                            pool_dimensions,
@@ -157,14 +157,14 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                            "Pooling layer 4"));
 
 
-    // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-    //                                              (dimensions){3, 3, get_output_dimensions()[2], 512},
-    //                                              activation_function,
-    //                                              convolution_stride_dimensions,
-    //                                              convolution_type,
-    //                                              "Convolutional layer 9"));
+    add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+                                                 (dimensions){3, 3, get_output_dimensions()[2], 512},
+                                                 activation_function,
+                                                 convolution_stride_dimensions,
+                                                 convolution_type,
+                                                 "Convolutional layer 9"));
 
-    // layers[13]->set_parameters_constant(1);
+    // // // layers[13]->set_parameters_constant(1);
 
     // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
     //                                              (dimensions){1, 1, get_output_dimensions()[2], 256},
@@ -288,7 +288,7 @@ void YoloNetwork::set(const Index& height, const Index& width, const Index& chan
                                               convolution_type,
                                               "Convolutional layer 22"));
 
-    // layers[27]->set_parameters_constant(1);
+    // // layers[27]->set_parameters_constant(1);
 
     add_layer(make_unique<DetectionLayer>(get_output_dimensions(),
                                           anchors,

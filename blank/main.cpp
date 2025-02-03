@@ -81,7 +81,8 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(5);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(1000000000);
         training_strategy.set_display_period(1);
 
 

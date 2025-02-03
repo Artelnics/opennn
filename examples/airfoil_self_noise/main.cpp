@@ -78,7 +78,7 @@ int main()
 
         ModelSelection model_selection(&training_strategy);
 
-        model_selection.perform_inputs_selection();
+        model_selection.perform_input_selection();
 /*
         // Testing analysis
 

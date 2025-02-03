@@ -438,11 +438,11 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     Batch training_batch(training_samples_number, data_set);
 
-    training_batch.fill(training_samples_indices, input_variable_indices, target_variable_indices);
+    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     Batch selection_batch(selection_samples_number, data_set);
 
-    selection_batch.fill(selection_samples_indices, input_variable_indices, target_variable_indices);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index
 

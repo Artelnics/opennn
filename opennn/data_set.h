@@ -137,7 +137,6 @@ public:
     inline Index get_raw_variables_number() const { return raw_variables.size(); }
     Index get_raw_variables_number(const VariableUse&) const;
     Index get_used_raw_variables_number() const;
-    Index get_input_and_unused_variables_number() const;
 
     const vector<RawVariable>& get_raw_variables() const;
     vector<RawVariable> get_raw_variables(const VariableUse&) const;
@@ -267,8 +266,7 @@ public:
     virtual void set_raw_variable_uses(const vector<VariableUse>&);
 
     void set_raw_variables(const VariableUse&);
-    void set_input_target_raw_variable_indices(const vector<Index>&, const vector<Index>&);
-    //void set_input_target_raw_variable_indices(const vector<string>&, const vector<string>&);
+    void set_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_raw_variables_unused();
 
     //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);

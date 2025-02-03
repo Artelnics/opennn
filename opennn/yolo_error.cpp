@@ -36,13 +36,7 @@ void YoloError::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    // cout<<targets_pair.second[0]<<", "<< targets_pair.second[1]<<", "<<targets_pair.second[2]<<", "<< targets_pair.second[3]<<endl;
-
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
-
-    // cout<<targets<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-
-    // throw runtime_error("I wanted to see the targets");
 
     // Forward propagation
 
@@ -50,13 +44,9 @@ void YoloError::calculate_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 4>> outputs = tensor_map_4(outputs_pair);
 
-
-    // cout<<outputs<<endl<<endl<<endl<<endl<<endl<<endl<<endl;
-
     // Back propagation
 
-    // const Index batch_samples_number = outputs.dimension(0);
-    const type epsilon = 1e-06;
+    // const type epsilon = 1e-06;
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
     const Index classes_number = (outputs.dimension(3) / boxes_per_cell) - 5;
@@ -167,10 +157,11 @@ void YoloError::calculate_output_delta(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    cout<<targets_pair.second.size()<<endl;
+    // cout<<targets_pair.second.size()<<endl;
 
     const TensorMap<Tensor<type, 4>> targets = tensor_map_4(targets_pair);
 
+    cout << "targets:\n" << targets << endl;
 
     cout<<"========delta4=========="<<endl;
 
@@ -184,20 +175,20 @@ void YoloError::calculate_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 4>> output_deltas = tensor_map_4(output_deltas_pair);
     output_deltas.setZero();
 
-    // cout<<output_deltas<<endl;
-
     const Index grid_size = outputs.dimension(1);
     const Index boxes_per_cell = anchors.size();
     const Index box_data_size = (outputs.dimension(3) / boxes_per_cell);
     const Index classes_number = box_data_size - 5;
     const type lambda_coord = 5.0;
     const type lambda_noobject = 0.5;
+    type dx, dy, dw, dh;                       //Derivatives of the logits in the IOU
     // const type epsilon = 1e-05;
 
     cout<<"========delta4=========="<<endl;
 
     // cout<<batch_samples_number<<endl;
 
+    #pragma omp parallel for
     for(Index i = 0; i < batch_samples_number; i++)
     {
         for(Index j = 0; j < grid_size; j++)
@@ -211,25 +202,6 @@ void YoloError::calculate_output_delta(const Batch& batch,
                     if(targets(i, j, k, base_index + 4) == 1)
                     {
 
-                        // Center deltas
-                        output_deltas(i, j, k, base_index + 0) = lambda_coord * 2 * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0))
-                                                                 * outputs(i,j,k, base_index + 0) * (1 - outputs(i,j,k, base_index + 0));                                // chain rule
-
-                        output_deltas(i, j, k, base_index + 1) = lambda_coord * 2 * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1))
-                                                                  * outputs(i,j,k, base_index + 1) * (1 - outputs(i,j,k, base_index + 1));                               // chain rule
-
-                        // Width and height deltas
-                        output_deltas(i, j, k, base_index + 2) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 2)) - sqrt(targets(i, j, k, base_index + 2)))
-                                                                 * sqrt(outputs(i, j, k, base_index + 2))
-                                                                /* * (1 / sqrt(outputs(i, j, k, base_index + 2)))
-                                                                 * outputs(i,j,k, base_index + 2)*/;                                    // chain rule
-
-                        output_deltas(i, j, k, base_index + 3) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 3)) - sqrt(targets(i, j, k, base_index + 3)))
-                                                                 * sqrt(outputs(i, j, k, base_index + 3))
-                                                                 /* * (1 / sqrt(outputs(i, j, k, base_index + 3)))
-                                                                 * outputs(i,j,k, base_index + 3)*/;                                    // chain rule
-
-                        // Confidence deltas (there is an object)
                         Tensor<type, 1> ground_truth_box(4);
                         Tensor<type, 1> predicted_box(4);
 
@@ -242,10 +214,31 @@ void YoloError::calculate_output_delta(const Batch& batch,
                         // cout<<ground_truth_box<<endl;
                         // cout<<predicted_box<<endl;
 
-                        type confidence = calculate_intersection_over_union(ground_truth_box, predicted_box);
+                        type confidence = calculate_intersection_over_union_deltas(ground_truth_box, predicted_box, dx, dy, dw, dh);
+
+
+                        // Center deltas
+                        output_deltas(i, j, k, base_index + 0) = 2 * (lambda_coord * (outputs(i, j, k, base_index + 0) - targets(i, j, k, base_index + 0)) + (outputs(i, j, k, base_index + 4) - confidence) * dx)
+                                                                 * outputs(i, j, k, base_index + 0) * (1 - outputs(i,j,k, base_index + 0));                                // chain rule
+
+                        output_deltas(i, j, k, base_index + 1) = 2 * (lambda_coord * (outputs(i, j, k, base_index + 1) - targets(i, j, k, base_index + 1)) + (outputs(i, j, k, base_index + 4) - confidence) * dy)
+                                                                  * outputs(i, j, k, base_index + 1) * (1 - outputs(i, j, k, base_index + 1));                               // chain rule
+
+                        // Width and height deltas
+                        output_deltas(i, j, k, base_index + 2) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 2)) - sqrt(targets(i, j, k, base_index + 2)))
+                                                                     * sqrt(outputs(i, j, k, base_index + 2)) + 2 * (outputs(i, j, k, base_index + 4) - confidence) * dw * outputs(i, j, k, base_index + 2)
+                                                                /* * (1 / sqrt(outputs(i, j, k, base_index + 2)))
+                                                                 * outputs(i,j,k, base_index + 2)*/;                                    // chain rule
+
+                        output_deltas(i, j, k, base_index + 3) = lambda_coord * (sqrt(outputs(i, j, k, base_index + 3)) - sqrt(targets(i, j, k, base_index + 3)))
+                                                                     * sqrt(outputs(i, j, k, base_index + 3)) + 2 * (outputs(i, j, k, base_index + 4) - confidence) * dh * outputs(i, j, k, base_index + 3)
+                                                                 /* * (1 / sqrt(outputs(i, j, k, base_index + 3)))
+                                                                 * outputs(i,j,k, base_index + 3)*/;                                    // chain rule
+
+                        // Confidence deltas (there is an object)
 
                         output_deltas(i, j, k, base_index + 4) = 2 * (outputs(i, j, k, base_index + 4) - confidence)
-                                                                 * outputs(i, j, k, base_index + 4) * (1 - outputs(i, j, k, base_index + 4));                           // chain rule
+                                                                 * (outputs(i, j, k, base_index + 4) * (1 - outputs(i, j, k, base_index + 4)));                           // chain rule
 
                         // Classes deltas
                         for(Index c = 0; c < classes_number; c++)
@@ -263,11 +256,59 @@ void YoloError::calculate_output_delta(const Batch& batch,
             }
         }
     }
-    // cout<<output_deltas<<endl;
+
     output_deltas = output_deltas / (type) batch_samples_number;
 
     // cout<<"Yolo error output deltas:\n"<<output_deltas<<endl;
     // throw runtime_error("ya");
+}
+
+type YoloError::calculate_intersection_over_union_deltas(const Tensor<type, 1>& box_1, const Tensor<type, 1>& box_2, type& dx, type& dy, type& dw, type& dh) const
+{
+    if(box_1.dimension(0) < 4 || box_2.dimension(0) < 4)
+        throw runtime_error("Boxes must have 4 coordinates");
+
+    const type x_left = max(box_1(0) - box_1(2) / 2, box_2(0) - box_2(2) / 2);
+    const type y_top = max(box_1(1) - box_1(3) / 2, box_2(1) - box_2(3) / 2);
+    const type x_right = min(box_1(0) + box_1(2) / 2, box_2(0) + box_2(2) / 2);
+    const type y_bottom = min(box_1(1) + box_1(3) / 2, box_2(1) + box_2(3) / 2);
+    const type w_inter = max(type(0), x_right - x_left);
+    const type h_inter = max(type(0), y_top - y_bottom);
+
+
+    // cout << "x_left: " << x_left << endl;
+    // cout << "x_right: " << x_right << endl;
+    // cout << "y_top: " << y_top << endl;
+    // cout << "y_bottom: " << y_bottom << endl;
+
+    // throw runtime_error("Checking boxes");
+
+    const type intersection_area = w_inter * h_inter;
+
+    const type box_1_area = box_1(2) * box_1(3);
+    const type box_2_area = box_2(2) * box_2(3);
+
+    const type union_area = box_1_area + box_2_area - intersection_area;
+
+    const type d_inter_dx = (x_left == box_1(0) - box_1(2) / 2 ? -h_inter : 0) +
+                            (x_right == box_1(0) + box_1(2) / 2 ? h_inter : 0);
+    const type d_inter_dy = (y_bottom == box_1(1) - box_1(3) / 2 ? -w_inter : 0) +
+                            (y_top == box_1(1) + box_1(3) / 2 ? w_inter : 0);
+    const type d_inter_dw = (x_left == box_1(0) - box_1(2) / 2 || x_right == box_1(0) + box_1(2) / 2 ? h_inter : 0);
+    const type d_inter_dh = (y_bottom == box_1(1) - box_1(3) / 2 || y_top == box_1(1) + box_1(3) / 2 ? w_inter : 0);
+
+    const type d_union_dx = d_inter_dx;
+    const type d_union_dy = d_inter_dy;
+    const type d_union_dw = - d_inter_dw + box_1(3);
+    const type d_union_dh = - d_inter_dh + box_1(2);
+
+    dx = (d_inter_dx * union_area - intersection_area * d_union_dx) / (union_area * union_area);
+    dy = (d_inter_dy * union_area - intersection_area * d_union_dy) / (union_area * union_area);
+    dw = (d_inter_dw * union_area - intersection_area * d_union_dw) / (union_area * union_area);
+    dh = (d_inter_dh * union_area - intersection_area * d_union_dh) / (union_area * union_area);
+
+
+    return (intersection_area / union_area);
 }
 
 string YoloError::get_loss_method() const

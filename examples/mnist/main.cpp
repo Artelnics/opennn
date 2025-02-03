@@ -26,9 +26,9 @@ int main()
         //Random image data set
 
         const Index samples_number = 3;
-        const Index image_height = 4;
-        const Index image_width = 4;
-        const Index channels = 1;
+        const Index image_height = 3;
+        const Index image_width = 3;
+        const Index channels = 3;
         const Index targets = 3;
 
         // ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
@@ -64,8 +64,6 @@ int main()
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
             { 8 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
-        
-        //neural_network.print();
 
         // Training strategy
 
