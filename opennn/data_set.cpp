@@ -1793,7 +1793,7 @@ void DataSet::set_default()
 
     has_sample_ids = false;
 
-    separator = Separator::Comma;
+    separator = Separator::Semicolon;
 
     missing_values_label = "NA";
 
@@ -2915,16 +2915,21 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
-    
+
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
-    if (raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical)
-        data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1);
+    if (raw_variables.size() != 0)
+    {
+        if (raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical)
+            data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1);
+        else
+            data.resize(samples_number, (Index)raw_variables.size());
+
+        sample_uses.resize(samples_number);
+        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    }
     else
-        data.resize(samples_number, (Index)raw_variables.size());
-    
-    sample_uses.resize(samples_number);
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+        data.resize(0, 0);
 
     // Missing values
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");

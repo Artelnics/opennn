@@ -1036,10 +1036,9 @@ void GeneticAlgorithm::from_XML(const XMLDocument& document)
     set_elitism_size(read_xml_index(root, "ElitismSize"));
     set_selection_error_goal(read_xml_type(root, "SelectionErrorGoal"));
     set_maximum_epochs_number(read_xml_index(root, "MaximumGenerationsNumber"));
-    set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
-    set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
+    //set_maximum_correlation(read_xml_type(root, "MaximumCorrelation"));
+    //set_minimum_correlation(read_xml_type(root, "MinimumCorrelation"));
     set_maximum_time(read_xml_type(root, "MaximumTime"));
-    set_display(read_xml_bool(root, "Display"));
 }
 
 

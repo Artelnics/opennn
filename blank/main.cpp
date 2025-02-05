@@ -26,6 +26,18 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
+        DataSet data_set;
+        NeuralNetwork neural_network;
+        data_set.save("data_set_empty.xml");
+        neural_network.save("neural_network_empty.xml");
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.save("training_strategy_empty.xml");
+
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.save("model_selection_empty.xml");
 
         cout << "Bye!" << endl;
 

@@ -18,7 +18,7 @@ GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
 }
 
 
-const Index& GrowingNeurons::get_step() const
+const Index& GrowingNeurons::get_neurons_increment() const
 {
     return neurons_increment;
 }

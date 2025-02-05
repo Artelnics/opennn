@@ -1,0 +1,36 @@
+<ModelSelection>
+   <NeuronsSelection>
+      <NeuronsSelectionMethod>GROWING_NEURONS</NeuronsSelectionMethod>
+      <GrowingNeurons>
+         <MinimumNeurons>1</MinimumNeurons>
+         <MaximumNeurons>10</MaximumNeurons>
+         <NeuronsIncrement>1</NeuronsIncrement>
+         <TrialsNumber>3</TrialsNumber>
+         <SelectionErrorGoal>0.000000</SelectionErrorGoal>
+         <MaximumSelectionFailures>100</MaximumSelectionFailures>
+         <MaximumTime>3600.000000</MaximumTime>
+      </GrowingNeurons>
+   </NeuronsSelection>
+   <InputsSelection>
+      <InputsSelectionMethod>GROWING_INPUTS</InputsSelectionMethod>
+      <GrowingInputs>
+         <TrialsNumber>3</TrialsNumber>
+         <SelectionErrorGoal>0.000000</SelectionErrorGoal>
+         <MaximumSelectionFailures>100</MaximumSelectionFailures>
+         <MinimumInputsNumber>1</MinimumInputsNumber>
+         <MaximumInputsNumber>100</MaximumInputsNumber>
+         <MinimumCorrelation>0.000000</MinimumCorrelation>
+         <MaximumCorrelation>0.000000</MaximumCorrelation>
+         <MaximumEpochsNumber>1000</MaximumEpochsNumber>
+         <MaximumTime>3600.000000</MaximumTime>
+      </GrowingInputs>
+      <GeneticAlgorithm>
+         <PopulationSize>0</PopulationSize>
+         <ElitismSize>349073629184</ElitismSize>
+         <MutationRate>-12.000320</MutationRate>
+         <SelectionErrorGoal>0.000000</SelectionErrorGoal>
+         <MaximumGenerationsNumber>140723813566385</MaximumGenerationsNumber>
+         <MaximumTime>-32143110144.000000</MaximumTime>
+      </GeneticAlgorithm>
+   </InputsSelection>
+</ModelSelection>

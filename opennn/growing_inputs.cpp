@@ -370,7 +370,6 @@ void GrowingInputs::from_XML(const XMLDocument& document)
     set_minimum_inputs_number(read_xml_index(root_element, "MinimumInputsNumber"));
     set_maximum_inputs_number(read_xml_index(root_element, "MaximumInputsNumber"));
     set_maximum_selection_failures(read_xml_index(root_element, "MaximumSelectionFailures"));
-    set_display(read_xml_bool(root_element, "Display"));
 }
 
 
