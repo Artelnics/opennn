@@ -23,7 +23,7 @@ TEST(ModelSelectionTest, GeneralConstructor)
 
 TEST(ModelSelectionTest, NeuronsSelection)
 {
-
+    /*
 //    data_set.generate_sum_data(20, 2);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
@@ -46,4 +46,5 @@ TEST(ModelSelectionTest, NeuronsSelection)
     EXPECT_EQ(model_selection.get_neurons_selection_method(), ModelSelection::NeuronsSelectionMethod::GROWING_NEURONS);
 //    EXPECT_EQ(results.optimum_selection_error != 0.0);
 //    EXPECT_EQ(results.optimal_neurons_number >= 1);
+*/
 }

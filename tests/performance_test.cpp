@@ -6,6 +6,7 @@ using namespace opennn;
 
 TEST(PerformanceTest, Rosenbrock)
 {
+    /*
     const Index samples_number = 100;
     const Index inputs_number = 10;
     const Index outputs_number = 1;

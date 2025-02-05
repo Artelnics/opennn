@@ -324,10 +324,9 @@ string get_expression_c(const NeuralNetwork& neural_network)
     buffer << endl;
 
     for(int i = 0; i < lines_number; i++)
-        if(lines[i].size() <= 1)
-            outputs_buffer << endl;
-        else
-            outputs_buffer << "\t" << lines[i] << endl;
+        lines[i].size() <= 1
+            ? outputs_buffer << endl
+            : outputs_buffer << "\t" << lines[i] << endl;
 
     const string keyword = "double";
 
@@ -688,10 +687,9 @@ string get_expression_api(const NeuralNetwork& neural_network)
     buffer << "if(" << endl;
 
     for(int i = 0; i < inputs_number; i++)
-        if(i != inputs_number - 1)
-            buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl;
-        else
-            buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
+        i != inputs_number - 1
+            ? buffer << "is_numeric(" << "$" << "num" + to_string(i) << ") &&" << endl
+            : buffer << "is_numeric(" << "$" << "num" + to_string(i) << "))" << endl;
 
     buffer << "{" << endl
            << "$status=200;" << endl
@@ -1744,10 +1742,9 @@ string get_expression_python(const NeuralNetwork& neural_network)
     if(LSTM_number>0)
         buffer << "\n\t\t" << "self.time_step_counter += 1" << endl;
 
-    if(model_type != NeuralNetwork::ModelType::AutoAssociation)
-        buffer << "\n\t\t" << "return out;" << endl;
-    else
-        buffer << "\n\t\t" << "return out, sample_autoassociation_distance, sample_autoassociation_variables_distance;" << endl;
+    model_type != NeuralNetwork::ModelType::AutoAssociation
+        ? buffer << "\n\t\t" << "return out;" << endl
+        : buffer << "\n\t\t" << "return out, sample_autoassociation_distance, sample_autoassociation_variables_distance;" << endl;
 
     buffer << "\t" << "def calculate_batch_output(self, input_batch):" << endl
            << "\t\toutput_batch = [None]*input_batch.shape[0]\n" << endl

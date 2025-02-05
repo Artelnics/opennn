@@ -477,20 +477,15 @@ void ConjugateGradient::update_parameters(
 {
     const Index parameters_number = back_propagation.parameters.dimension(0);
 
-    if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
-    {
-        calculate_gradient_descent_training_direction(
+    optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0
+        ? calculate_gradient_descent_training_direction(
                     back_propagation.gradient,
-                    optimization_data.training_direction);
-    }
-    else
-    {
-        calculate_conjugate_gradient_training_direction(
+                    optimization_data.training_direction)
+        : calculate_conjugate_gradient_training_direction(
                     optimization_data.old_gradient,
                     back_propagation.gradient,
                     optimization_data.old_training_direction,
                     optimization_data.training_direction);
-    }
 
     optimization_data.training_slope.device(*thread_pool_device)
             = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);

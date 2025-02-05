@@ -32,7 +32,7 @@ TEST(AdaptiveMomentEstimationTest, TrainEmpty)
 
     const TrainingResults training_results = adaptive_moment_estimation.perform_training();
 
-    //EXPECT_TRUE(adaptive_moment_estimation.has_loss_index());
+    EXPECT_EQ(adaptive_moment_estimation.has_loss_index(), false);
 }
 
 

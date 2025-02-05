@@ -50,9 +50,6 @@ public:
 
    void set_scalers(const vector<Scaler>&);
    void set_scalers(const vector<string>&);
-
-   void set_scaler(const Index&, const Scaler&);
-   void set_scaler(const Index&, const string&);
    void set_scalers(const Scaler&);
    void set_scalers(const string&);
 

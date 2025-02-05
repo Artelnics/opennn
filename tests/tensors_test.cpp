@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "../opennn/tensors.h"
+using namespace opennn;
 
 TEST(Tensors, Fill)
 {
@@ -18,9 +19,9 @@ TEST(Tensors, Fill)
 
     submatrix.resize(1, 1);
 
-//    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
+    fill_tensor_data(matrix, rows_indices, columns_indices, submatrix.data());
 
-//    EXPECT_EQ(is_equal(submatrix, type(3.1416)), true);
+    EXPECT_EQ(is_equal(submatrix, type(3.1416)), true);
 
 }
 

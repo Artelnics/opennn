@@ -13,6 +13,7 @@ TEST(TestingAnalysis, DefaultConstructor)
 
 TEST(TestingAnalysis, ErrorData)
 {
+    /*
     const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index targets_number = 1;

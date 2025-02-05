@@ -45,11 +45,7 @@ DataSet::RawVariable::RawVariable(const string& new_name,
                                   const Scaler& new_scaler,
                                   const vector<string>& new_categories)
 {
-    name = new_name;
-    use = new_raw_variable_use;
-    type = new_type;
-    scaler = new_scaler;
-    categories = new_categories;
+    set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
 }
 
 
@@ -73,22 +69,11 @@ void DataSet::RawVariable::set_scaler(const Scaler& new_scaler)
 }
 
 
-void DataSet::RawVariable::set_scaler(const string& new_scaler)
+void DataSet::RawVariable::set_scaler(const string& new_scaler_string)
 {
-    if(new_scaler == "None")
-        set_scaler(Scaler::None);
-    else if(new_scaler == "MinimumMaximum")
-        set_scaler(Scaler::MinimumMaximum);
-    else if(new_scaler == "MeanStandardDeviation")
-        set_scaler(Scaler::MeanStandardDeviation);
-    else if(new_scaler == "StandardDeviation")
-        set_scaler(Scaler::StandardDeviation);
-    else if(new_scaler == "Logarithm")
-        set_scaler(Scaler::Logarithm);
-    else if (new_scaler == "ImageMinMax")
-        set_scaler(Scaler::ImageMinMax);
-    else
-        throw runtime_error("Unknown scaler: " + new_scaler + "\n");
+    const Scaler new_scaler = string_to_scaler(new_scaler_string);
+
+    set_scaler(new_scaler);
 }
 
 
@@ -99,7 +84,8 @@ void DataSet::RawVariable::set_use(const VariableUse& new_raw_variable_use)
 
 
 void DataSet::RawVariable::set_use(const string& new_raw_variable_use)
-{   if(new_raw_variable_use == "Decoder")
+{   
+    if(new_raw_variable_use == "Decoder")
         set_use(VariableUse::Decoder);
     else if(new_raw_variable_use == "Input")
         set_use(VariableUse::Input);
@@ -133,8 +119,6 @@ void DataSet::RawVariable::set_type(const string& new_raw_variable_type)
 
 void DataSet::RawVariable::set_categories(const vector<string>& new_categories)
 {
-    categories.resize(new_categories.size());
-
     categories = new_categories;
 }
 
@@ -157,7 +141,7 @@ void DataSet::RawVariable::from_XML(const XMLDocument& document)
 void DataSet::RawVariable::to_XML(XMLPrinter& printer) const
 {
     add_xml_element(printer,"Name", name);
-    add_xml_element(printer,"Scaler", get_scaler_string());
+    add_xml_element(printer,"Scaler", scaler_to_string(scaler));
     add_xml_element(printer,"Use", get_use_string());
     add_xml_element(printer,"Type", get_type_string());
 
@@ -177,7 +161,7 @@ void DataSet::RawVariable::print() const
          << "Name: " << name << endl
          << "Use: " << get_use_string() << endl
          << "Type: " << get_type_string() << endl
-         << "Scaler: " << get_scaler_string() << endl;
+         << "Scaler: " << scaler_to_string(scaler) << endl;
 
     if (categories.size() != 0)
     {
@@ -219,23 +203,12 @@ string DataSet::RawVariable::get_use_string() const
 {
     switch (use)
     {
-    case VariableUse::Decoder:
-        return "Decoder";
-
-    case VariableUse::Input:
-        return "Input";
-
-    case VariableUse::Target:
-        return "Target";
-
-    case VariableUse::Time:
-        return "Time";
-
-    case VariableUse::None:
-        return "None";
-
-    default:
-        throw runtime_error("Unknown raw variable use");
+    case VariableUse::Decoder: return "Decoder";
+    case VariableUse::Input: return "Input";
+    case VariableUse::Target: return "Target";
+    case VariableUse::Time: return "Time";
+    case VariableUse::None: return "None";
+    default: throw runtime_error("Unknown raw variable use");
     }
 }
 
@@ -443,10 +416,9 @@ vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
 
     const Index batch_size = min(batch_samples_number, samples_number);
 
-    if(samples_number < batch_size)
-        batches_number = 1;
-    else
-        batches_number = samples_number / batch_size;
+    samples_number < batch_size
+        ? batches_number = 1
+        : batches_number = samples_number / batch_size;
 
     vector<vector<Index>> batches(batches_number);
 
@@ -669,30 +641,29 @@ void DataSet::set_default_raw_variables_uses()
     if(raw_variables_number == 1)
     {
         raw_variables[0].set_use(VariableUse::None);
+        return;
     }
-    else
+
+    set(VariableUse::Input);
+
+    for(Index i = raw_variables.size()-1; i >= 0; i--)
     {
-        set(VariableUse::Input);
-
-        for(Index i = raw_variables.size()-1; i >= 0; i--)
+        if(raw_variables[i].type == RawVariableType::Constant 
+        || raw_variables[i].type == RawVariableType::DateTime)
         {
-            if(raw_variables[i].type == RawVariableType::Constant 
-            || raw_variables[i].type == RawVariableType::DateTime)
-            {
-                raw_variables[i].set_use(VariableUse::None);
-                continue;
-            }
-
-            if(!target)
-            {
-                raw_variables[i].set_use(VariableUse::Target);
-
-                target = true;
-
-                continue;
-            }
+            raw_variables[i].set_use(VariableUse::None);
+            continue;
         }
-    }
+
+        if(!target)
+        {
+            raw_variables[i].set_use(VariableUse::Target);
+
+            target = true;
+
+            continue;
+        }
+    }    
 }
 
 
@@ -820,10 +791,9 @@ vector<Index> DataSet::get_variable_indices(const VariableUse& variable_use) con
     {
         if (raw_variables[i].use != variable_use)
         {
-            if (raw_variables[i].type == RawVariableType::Categorical)
-                variable_index += raw_variables[i].get_categories_number();
-            else
-                variable_index++;
+            raw_variables[i].type == RawVariableType::Categorical
+                ? variable_index += raw_variables[i].get_categories_number()
+                : variable_index++;
 
             continue;
         }
@@ -3921,10 +3891,10 @@ void DataSet::read_csv()
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
-    if (raw_variables[columns_number - 1].type == RawVariableType::Categorical)
-        data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1);
-    else
-        data.resize(samples_number, variables_number);
+    raw_variables[columns_number - 1].type == RawVariableType::Categorical
+        ? data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1)
+        : data.resize(samples_number, variables_number);
+
     data.setZero();
 
     rows_missing_values_number = 0;
@@ -4072,28 +4042,6 @@ string DataSet::RawVariable::get_type_string() const
         return "DateTime";
     default:
         throw runtime_error("Unknown raw variable type");
-    }
-}
-
-
-string DataSet::RawVariable::get_scaler_string() const
-{
-    switch(scaler)
-    {
-    case Scaler::None:
-        return "None";
-    case Scaler::MinimumMaximum:
-        return "MinimumMaximum";
-    case Scaler::MeanStandardDeviation:
-        return "MeanStandardDeviation";
-    case Scaler::StandardDeviation:
-        return "StandardDeviation";
-    case Scaler::Logarithm:
-        return "Logarithm";
-    case Scaler::ImageMinMax:
-        return "ImageMinMax";
-    default:
-        return "";
     }
 }
 
@@ -4299,8 +4247,6 @@ Index DataSet::count_nan() const
 
 void DataSet::fix_repeated_names()
 {
-    // Fix raw_variables names
-
     const Index raw_variables_number = raw_variables.size();
 
     map<string, Index> raw_variables_count_map;
@@ -4432,8 +4378,6 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
 
     ifstream file(input_data_file_name);
 
-    // Count samples number
-
     Index input_samples_count = 0;
 
     string line;
@@ -4554,10 +4498,9 @@ Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_
             }
             else if(raw_variable.type == RawVariableType::DateTime)
             {
-                if(token == missing_values_label || token.empty())
-                    input_data(line_number, variable_index) = type(NAN);
-                else
-                    input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
+                token == missing_values_label || token.empty()
+                    ? input_data(line_number, variable_index) = type(NAN)
+                    : input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
 
                 variable_index++;
             }

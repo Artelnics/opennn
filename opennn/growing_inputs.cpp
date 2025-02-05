@@ -47,10 +47,9 @@ void GrowingInputs::set_default()
     maximum_epochs_number = 1000;
     maximum_time = type(3600.0);
 
-    if (training_strategy && training_strategy->has_neural_network())
-        maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
-    else
-        maximum_inputs_number = 100;
+    training_strategy && training_strategy->has_neural_network()
+        ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input)
+        : maximum_inputs_number = 100;
 }
 
 
