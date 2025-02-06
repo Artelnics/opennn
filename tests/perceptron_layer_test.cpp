@@ -173,7 +173,6 @@ TEST(PerceptronLayerTest, ForwardPropagate)
 
     Tensor<type, 1> parameters;
     Tensor<type, 2> inputs;
-    Tensor<type, 2> outputs;
 
     Tensor<type, 1> potential_parameters;
 
@@ -192,20 +191,21 @@ TEST(PerceptronLayerTest, ForwardPropagate)
     inputs.resize(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
-    PerceptronLayerForwardPropagation perceptron_layer_forward_propagation(samples_number, &perceptron_layer);
-
+    unique_ptr<LayerForwardPropagation> forward_propagation =
+        make_unique<PerceptronLayerForwardPropagation>(samples_number, &perceptron_layer);
     const pair<type*, dimensions> input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-/*
-    perceptron_layer->forward_propagate({input_pairs},
-                                        perceptron_layer_forward_propagation,
+
+    perceptron_layer.forward_propagate({input_pairs},
+                                        forward_propagation,
                                         is_training);
 
-    outputs = perceptron_layer_forward_propagation.outputs;
+    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(1e-3));
-    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(1e-3));
+    const Tensor<type, 2> outputs = tensor_map_2(output_pair);
 
-    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,0) - type(1)) < type(1e-3));
-    EXPECT_EQ(abs(perceptron_layer_forward_propagation.activation_derivatives(0,1) - type(1)) < type(1e-3));
-*/
+    EXPECT_EQ(abs(outputs(0,0) - type(3)) < type(1e-3), true);
+    EXPECT_EQ(abs(outputs(0,1) - type(3)) < type(1e-3), true);
+
+    // EXPECT_EQ(abs(forward_propagation->activation_derivatives(0,0) - type(1)) < type(1e-3), true);
+    // EXPECT_EQ(abs(forward_propagation->activation_derivatives(0,1) - type(1)) < type(1e-3), true);
 }

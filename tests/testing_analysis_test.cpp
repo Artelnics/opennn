@@ -3,7 +3,7 @@
 
 TEST(TestingAnalysis, DefaultConstructor)
 {
-//    TestingAnalysis testing_analysis(&neural_network, &data_set);
+   // TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //    EXPECT_EQ(testing_analysis.get_neural_network());
 
@@ -205,57 +205,42 @@ TEST(TestingAnalysis, MaximalErrors)
 
 TEST(TestingAnalysis, LinearRegression)
 {
-/*
-    Index neurons_number;
 
     Tensor<Correlation, 1> linear_correlation;
 
     // Test
 
-    samples_number = 1;
-    inputs_number = 1;
-    targets_number = 1;
-    neurons_number = 1;
+    const Index samples_number = 2;
+    const Index inputs_number = 2;
+    const Index neurons_number = 1;
+    const Index targets_number = 1;
 
-    data_set.set(samples_number, inputs_number, targets_number);
-    data_set.set_data_constant(type(0));
+    DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    data_set.set_data_random();
     data_set.set(DataSet::SampleUse::Testing);
 
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
     neural_network.set_parameters_constant(type(0));
+
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     linear_correlation = testing_analysis.linear_correlation();
 
-    EXPECT_EQ(linear_correlation.size() == 1);
-    EXPECT_EQ(isnan(linear_correlation(0).a));
-    EXPECT_EQ(isnan(linear_correlation(0).b));
-    EXPECT_EQ(isnan(linear_correlation(0).r));
+    EXPECT_EQ(linear_correlation.size() == 1, true);
+    EXPECT_EQ(isnan(linear_correlation(0).a), true);
+    EXPECT_EQ(isnan(linear_correlation(0).b), true);
+    EXPECT_EQ(isnan(linear_correlation(0).r), true);
 
-    // DataSet
-
-    samples_number = 1;
-    inputs_number = 1;
-    neurons_number = 2;
-    targets_number = 1;
-
-    data_set.set(samples_number, inputs_number, targets_number);
-
-    data_set.set_data_constant(type(0));
-
-    data_set.set(DataSet::SampleUse::Testing);
-
-    // Neural Network
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
-    neural_network.set_parameters_constant(type(0));
 
     // Testing Analysis
 
     Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
-    EXPECT_EQ(goodness_of_fit_analysis.size() == 1 );
-    EXPECT_EQ(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN));
-*/
+    cout << "goodness_of_fit_analysis determination: " << goodness_of_fit_analysis[0].determination << endl;
+
+    EXPECT_EQ(goodness_of_fit_analysis.size() == 1, true);
+    EXPECT_EQ(abs(goodness_of_fit_analysis[0].determination - type(1)) < type(NUMERIC_LIMITS_MIN), true);
+
 }
 
 
