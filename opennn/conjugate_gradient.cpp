@@ -278,20 +278,7 @@ TrainingResults ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
-
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
+    set_scaling();
 
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);

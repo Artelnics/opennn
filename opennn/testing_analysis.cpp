@@ -143,6 +143,9 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
 
+    // cout << "testing_output_data" << endl;
+    // cout << testing_output_data << endl;
+
     // Testing analysis
 
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
@@ -2380,8 +2383,10 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
     cout << "Goodness-of-fit analysis" << endl
          << "Determination: " << determination << endl;
 
-    // cout << targets << endl;
-    // cout << outputs << endl;
+    cout << "Targets:" << endl;
+    cout << targets << endl;
+    cout << "Outputs:" << endl;
+    cout << outputs << endl;
 }
 
 }

@@ -203,12 +203,6 @@ void ScalingLayer2D::set_descriptives(const vector<Descriptives>& new_descriptiv
 }
 
 
-void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
-{
-    descriptives[i] = item_descriptives;
-}
-
-
 void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
 {
     scalers = new_scaling_methods;

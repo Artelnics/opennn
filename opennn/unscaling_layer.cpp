@@ -206,15 +206,6 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 {
     descriptives.resize(new_neurons_number);
 
-    //new:
-    // for(Index i = 0; i < new_neurons_number; i++){
-    //     descriptives[i].set_minimum(type(-1.0));
-    //     descriptives[i].set_maximum(type(1));
-    //     descriptives[i].set_mean(type(0));
-    //     descriptives[i].set_standard_deviation(type(1));
-    // }
-    //end new
-
     scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
     name = new_name;
@@ -227,13 +218,6 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 }
 
 
-void UnscalingLayer::set(const vector<Descriptives>& new_descriptives, const vector<Scaler>& new_scalers)
-{
-    descriptives = new_descriptives;
-}
-
-
-
 void UnscalingLayer::set_min_max_range(const type min, const type max)
 {
     min_range = min;
@@ -244,12 +228,6 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
 void UnscalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
-}
-
-
-void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
-{
-    descriptives[i] = item_descriptives;
 }
 
 
@@ -311,6 +289,9 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
+    // cout << "inputs" << endl;
+    // cout << inputs << endl;
+
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
 
     for(Index i = 0; i < outputs_number; i++)
@@ -324,21 +305,13 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
         TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
 
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-        {
-            if(display)
-                cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "void forward_propagate\n"
-                     << "Standard deviation of variable " << i << " is zero.\n"
-                     << "Those variables won't be scaled.\n";
-            
-            continue;
-        }
+            throw runtime_error("Standard deviation is zero.");
 
         type slope, intercept, standard_deviation;
 
         switch(scaler)
         {
-        case Scaler::None:
+        case Scaler::None:                                    
             output_column.device(*thread_pool_device) = input_column;
             break;
 
@@ -349,9 +322,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
             break;
 
         case Scaler::MeanStandardDeviation:
-            slope = descriptive.standard_deviation;
-            intercept = descriptive.mean;
-            output_column.device(*thread_pool_device) = intercept + slope*input_column;
+            output_column.device(*thread_pool_device) = descriptive.mean + input_column*descriptive.standard_deviation;
             break;
 
         case Scaler::StandardDeviation:

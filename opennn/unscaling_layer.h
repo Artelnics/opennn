@@ -36,14 +36,11 @@ public:
    vector<string> write_unscaling_method_text() const;
 
    void set(const Index& = 0, const string& = "unscaling_layer");
-   void set(const vector<Descriptives>&, const vector<Scaler>&);
 
    void set_input_dimensions(const dimensions&) override;
    void set_output_dimensions(const dimensions&) override;
 
    void set_descriptives(const vector<Descriptives>&);
-
-   void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_min_max_range(const type min, const type max);
 
