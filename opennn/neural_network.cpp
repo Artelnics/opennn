@@ -76,11 +76,8 @@ bool NeuralNetwork::validate_layer_type(const Layer::Type& layer_type) const
 
 bool NeuralNetwork::has(const Layer::Type& layer_type) const
 {
-    for (const auto& layer : layers)
-        if (layer->get_type() == layer_type)
-            return true;
-
-    return false;
+    return any_of(layers.begin(), layers.end(),
+                  [&](const auto& layer) {return layer->get_type() == layer_type;});
 }
 
 
@@ -907,19 +904,11 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
     throw runtime_error("The neural network has no trainable layers.");
 }
 
+
 Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
 {
-    const Index layers_number = get_layers_number();
-
-    Index count = 0;
-
-    #pragma omp parallel for reduction(+: count)
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == layer_type)
-            count++;
-
-    return count;
+    return count_if(layers.begin(), layers.end(),
+                    [&](const auto& layer) {return layer->get_type() == layer_type;});
 }
 
 
