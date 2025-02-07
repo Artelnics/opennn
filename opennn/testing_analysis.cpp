@@ -130,12 +130,14 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
 
-    if(testing_samples_number == 0)
+    if(testing_samples_number == Index(0))
         throw runtime_error("Number of testing samples is zero.\n");
 
     const Tensor<type, 2> testing_input_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    // cout << "testing_input_data:\n" << testing_input_data << endl;
 
     // Neural network
 
@@ -154,6 +156,10 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     {
         const TensorMap<Tensor<type, 1>> targets = tensor_map(testing_target_data, i);
         const TensorMap<Tensor<type, 1>> outputs = tensor_map(testing_output_data, i);
+
+        // cout << "Outputs:\n" << outputs << endl;
+
+        // cerr << "Targets:\n" << targets << endl;
 
         const type determination = calculate_determination(outputs, targets);
 
@@ -2383,10 +2389,10 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
     cout << "Goodness-of-fit analysis" << endl
          << "Determination: " << determination << endl;
 
-    cout << "Targets:" << endl;
-    cout << targets << endl;
-    cout << "Outputs:" << endl;
-    cout << outputs << endl;
+    // cout << "Targets:" << endl;
+    // cout << targets << endl;
+    // cout << "Outputs:" << endl;
+    // cout << outputs << endl;
 }
 
 }

@@ -283,6 +283,9 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
+    if(!is_training)
+        cerr << "Inputs:\n" << inputs << endl;
+
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation.get());
 
@@ -307,6 +310,9 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
         calculate_activations(outputs, empty);
     }
+
+    if(!is_training)
+        cout << "Outputs:\n" << outputs << endl;
 
 }
 

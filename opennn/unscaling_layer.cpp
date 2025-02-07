@@ -294,50 +294,46 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
 
+    outputs = inputs;
+
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
 
         const Descriptives& descriptive = descriptives[i];
 
-        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
-
-        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
-
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
             throw runtime_error("Standard deviation is zero.");
 
-        type slope, intercept, standard_deviation;
-
         switch(scaler)
         {
-        case Scaler::None:                                    
-            output_column.device(*thread_pool_device) = input_column;
-            break;
+        case Scaler::None:
+            continue;
+        break;
 
         case Scaler::MinimumMaximum:
-            slope = (descriptive.maximum-descriptive.minimum)/(max_range-min_range);
-            intercept = -(min_range*descriptive.maximum-max_range*descriptive.minimum)/(max_range-min_range);
-            output_column.device(*thread_pool_device) = intercept + slope * input_column;
-            break;
+            unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
+        break;
 
         case Scaler::MeanStandardDeviation:
-            output_column.device(*thread_pool_device) = descriptive.mean + input_column*descriptive.standard_deviation;
-            break;
+            unscale_mean_standard_deviation(outputs, i, descriptive);
+        break;
 
         case Scaler::StandardDeviation:
-            standard_deviation = descriptive.standard_deviation;
-            output_column.device(*thread_pool_device) = standard_deviation*input_column;
-            break;
+            unscale_standard_deviation(outputs, i, descriptive);
+        break;
 
         case Scaler::Logarithm:
-            output_column.device(*thread_pool_device) = input_column.exp();
-            break;
+            unscale_logarithmic(outputs, i);
+        break;
 
         default:
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
+
+    // cout << "Outputs unscaling layer:\n" << outputs << endl;
 
 }
 

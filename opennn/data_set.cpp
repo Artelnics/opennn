@@ -2681,6 +2681,7 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
     const vector<Index> variable_indices = get_variable_indices(variable_use);
     const vector<Scaler> variable_scalers = get_variable_scalers(variable_use);
 
+
     const vector<Descriptives> variable_descriptives = calculate_variable_descriptives(variable_use);
 
     for(Index i = 0; i < variables_number; i++)
