@@ -264,12 +264,14 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     outputs = inputs;
 
-    // cout << outputs << endl;
+    cout<< "outputs_number: " << outputs_number << endl;
 
 
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
+
+        cout << "scaler: " << scaler_to_string(scaler) << endl;
 
 
         switch(scaler)
@@ -300,8 +302,8 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     // cerr << "Inputs scaling layer:\n" << inputs << endl;
 
-    cout << "Outputs scaling layer:\n" << outputs << endl;
-    throw runtime_error("Checking");
+    // cout << "Outputs scaling layer:\n" << outputs << endl;
+    // throw runtime_error("Checking");
 
 }
 

@@ -944,7 +944,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair);
+    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
     
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
@@ -1834,7 +1834,7 @@ pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pai
 }
 
 
-vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pairs(const vector<pair<type*, dimensions>>& batch_input_pairs) const
+vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pairs(const vector<pair<type*, dimensions>>& batch_input_pairs, const bool& is_training) const
 {
     const Index layers_number = neural_network->get_layers_number();
 
@@ -1878,7 +1878,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
                 continue;
             }
         } else {
-            if (i == first_trainable_layer_index)
+            if (i == first_trainable_layer_index && is_training)
             {
                 layer_input_pairs[i] = batch_input_pairs;
                 continue;
