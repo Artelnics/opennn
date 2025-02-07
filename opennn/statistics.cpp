@@ -236,11 +236,12 @@ Index Histogram::calculate_maximum_frequency() const
     return maximum(frequencies);
 }
 
-Index Histogram::calculate_most_populated_bin() const {
-    if (frequencies.size() == 0) {
-        return 0;
-    }
 
+Index Histogram::calculate_most_populated_bin() const 
+{
+    if (frequencies.size() == 0) 
+        return 0;
+    
     const Tensor<Index, 0> max_element = frequencies.maximum();
 
     for (Index i = 0; i < frequencies.size(); i++) {
