@@ -271,6 +271,8 @@ TrainingResults ConjugateGradient::perform_training()
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
+    Tensor<type, 2> not_scaled_data = data_set->get_data();
+
     const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
     vector<Descriptives> target_variable_descriptives;
 
@@ -278,20 +280,8 @@ TrainingResults ConjugateGradient::perform_training()
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
-    if(neural_network->has(Layer::Type::Scaling2D))
-    {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
-        scaling_layer_2d->set_descriptives(input_variable_descriptives);
-        scaling_layer_2d->set_scalers(input_variable_scalers);
-    }
+    set_scaling();
 
-    if(neural_network->has(Layer::Type::Unscaling))
-    {
-        target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
-
-        UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
-        unscaling_layer->set(target_variable_descriptives, target_variable_scalers);
-    }
 
     Batch training_batch(training_samples_number, data_set);
     training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
@@ -440,10 +430,15 @@ TrainingResults ConjugateGradient::perform_training()
             neural_network->save(neural_network_file_name);
     }
 
-    data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+    set_unscaling();
 
-    if(neural_network->has(Layer::Type::Unscaling))
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    // cout << "Unscaled data:\n" << not_scaled_data - data_set->get_data() << endl;
+
+    // throw runtime_error("Checking scaled data");
+    // data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+
+    // if(neural_network->has(Layer::Type::Unscaling))
+    //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
 
     if(display) results.print();
 

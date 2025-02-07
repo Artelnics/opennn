@@ -69,7 +69,7 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<typ
 void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 
-template <Index Rank>
+template <int Rank>
 bool is_binary(const Tensor<type, Rank>& tensor)
 {
     const Index size = tensor.size();
@@ -82,7 +82,7 @@ bool is_binary(const Tensor<type, Rank>& tensor)
 }
 
 
-template <Index Rank>
+template <int Rank>
 bool is_constant(const Tensor<type, Rank>& tensor)
 {
 

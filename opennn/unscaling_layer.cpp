@@ -206,15 +206,6 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 {
     descriptives.resize(new_neurons_number);
 
-    //new:
-    // for(Index i = 0; i < new_neurons_number; i++){
-    //     descriptives[i].set_minimum(type(-1.0));
-    //     descriptives[i].set_maximum(type(1));
-    //     descriptives[i].set_mean(type(0));
-    //     descriptives[i].set_standard_deviation(type(1));
-    // }
-    //end new
-
     scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
     name = new_name;
@@ -227,13 +218,6 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 }
 
 
-void UnscalingLayer::set(const vector<Descriptives>& new_descriptives, const vector<Scaler>& new_scalers)
-{
-    descriptives = new_descriptives;
-}
-
-
-
 void UnscalingLayer::set_min_max_range(const type min, const type max)
 {
     min_range = min;
@@ -244,12 +228,6 @@ void UnscalingLayer::set_min_max_range(const type min, const type max)
 void UnscalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
-}
-
-
-void UnscalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
-{
-    descriptives[i] = item_descriptives;
 }
 
 
@@ -311,7 +289,12 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
+    // cout << "inputs" << endl;
+    // cout << inputs << endl;
+
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
+
+    outputs = inputs;
 
     for(Index i = 0; i < outputs_number; i++)
     {
@@ -319,54 +302,38 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
         const Descriptives& descriptive = descriptives[i];
 
-        const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
-
-        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
-
         if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-        {
-            if(display)
-                cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "void forward_propagate\n"
-                     << "Standard deviation of variable " << i << " is zero.\n"
-                     << "Those variables won't be scaled.\n";
-            
-            continue;
-        }
-
-        type slope, intercept, standard_deviation;
+            throw runtime_error("Standard deviation is zero.");
 
         switch(scaler)
         {
         case Scaler::None:
-            output_column.device(*thread_pool_device) = input_column;
-            break;
+            continue;
+        break;
 
         case Scaler::MinimumMaximum:
-            slope = (descriptive.maximum-descriptive.minimum)/(max_range-min_range);
-            intercept = -(min_range*descriptive.maximum-max_range*descriptive.minimum)/(max_range-min_range);
-            output_column.device(*thread_pool_device) = intercept + slope * input_column;
-            break;
+            unscale_minimum_maximum(outputs, i, descriptive, min_range, max_range);
+        break;
 
         case Scaler::MeanStandardDeviation:
-            slope = descriptive.standard_deviation;
-            intercept = descriptive.mean;
-            output_column.device(*thread_pool_device) = intercept + slope*input_column;
-            break;
+            unscale_mean_standard_deviation(outputs, i, descriptive);
+        break;
 
         case Scaler::StandardDeviation:
-            standard_deviation = descriptive.standard_deviation;
-            output_column.device(*thread_pool_device) = standard_deviation*input_column;
-            break;
+            unscale_standard_deviation(outputs, i, descriptive);
+        break;
 
         case Scaler::Logarithm:
-            output_column.device(*thread_pool_device) = input_column.exp();
-            break;
+            unscale_logarithmic(outputs, i);
+        break;
 
         default:
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
+
+    // cout << "Outputs unscaling layer:\n" << outputs << endl;
 
 }
 

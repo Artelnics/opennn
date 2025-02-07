@@ -203,12 +203,6 @@ void ScalingLayer2D::set_descriptives(const vector<Descriptives>& new_descriptiv
 }
 
 
-void ScalingLayer2D::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
-{
-    descriptives[i] = item_descriptives;
-}
-
-
 void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
 {
     scalers = new_scaling_methods;
@@ -268,68 +262,48 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
 
+    outputs = inputs;
+
+    cout<< "outputs_number: " << outputs_number << endl;
+
+
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
 
-        // @todo What's going on with this?
+        cout << "scaler: " << scaler_to_string(scaler) << endl;
 
-        //const TensorMap<Tensor<type, 1>> input_column = tensor_map(inputs, i);
-
-        const TensorMap<Tensor<type, 1>> input_column((type*) inputs.data() + i * inputs.dimension(0),
-                                                      inputs.dimension(0));
-
-        TensorMap<Tensor<type, 1>> output_column = tensor_map(outputs, i);
-        
-        if(abs(descriptives[i].standard_deviation) < NUMERIC_LIMITS_MIN)
-        {
-            if(display)
-                cout << "OpenNN Warning: ScalingLayer2D class.\n"
-                     << "forward_propagate method.\n"
-                     << "Standard deviation of variable " << i << " is zero.\n"
-                     << "Those variables won't be scaled.\n";
-
-            continue;
-        }
 
         switch(scaler)
         {
         case Scaler::None:
-            output_column.device(*thread_pool_device) = input_column;
+            continue;
         break;
+
         case Scaler::MinimumMaximum:
-        {
-            const type slope =
-                    (max_range-min_range)/(descriptives[i].maximum-descriptives[i].minimum);
-
-            const type intercept =
-                    (min_range*descriptives[i].maximum-max_range*descriptives[i].minimum)/(descriptives[i].maximum-descriptives[i].minimum);
-
-            output_column.device(*thread_pool_device) = intercept + slope * input_column;
-        }
+            scale_minimum_maximum(outputs, i, descriptives[i], min_range, max_range);
         break;
         case Scaler::MeanStandardDeviation:
-        {
-            const type slope = type(1)/descriptives[i].standard_deviation;
-
-            const type intercept = -descriptives[i].mean/descriptives[i].standard_deviation;
-
-            output_column.device(*thread_pool_device) = intercept + slope*input_column;
-        }
+            scale_mean_standard_deviation(outputs, i, descriptives[i]);
         break;
         case Scaler::StandardDeviation:
-            output_column.device(*thread_pool_device) = type(1/descriptives[i].standard_deviation)*input_column;
-            break;
+            scale_standard_deviation(outputs, i, descriptives[i]);
+        break;
         case Scaler::Logarithm:
-            output_column.device(*thread_pool_device) = input_column.log();
-            break;
+            scale_logarithmic(outputs, i);
+        break;
         case Scaler::ImageMinMax:
-            output_column.device(*thread_pool_device) = input_column/type(255);
-            break;
+            outputs.chip(i,1).device(*thread_pool_device) =  outputs.chip(i,1) / type(255);
+        break;
         default:
             throw runtime_error("Unknown scaling method.\n");
         }
     }
+
+    // cerr << "Inputs scaling layer:\n" << inputs << endl;
+
+    // cout << "Outputs scaling layer:\n" << outputs << endl;
+    // throw runtime_error("Checking");
 
 }
 

@@ -1763,7 +1763,7 @@ void DataSet::set_default()
 
     has_sample_ids = false;
 
-    separator = Separator::Comma;
+    separator = Separator::Semicolon;
 
     missing_values_label = "NA";
 
@@ -2676,83 +2676,84 @@ vector<Descriptives> DataSet::scale_data()
 
 vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_use);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Index> variable_indices = get_variable_indices(variable_use);
+    const vector<Scaler> variable_scalers = get_variable_scalers(variable_use);
 
-    const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
-    for(Index i = 0; i < input_variables_number; i++)
+    const vector<Descriptives> variable_descriptives = calculate_variable_descriptives(variable_use);
+
+    for(Index i = 0; i < variables_number; i++)
     {
-        switch(input_variable_scalers[i])
+        switch(variable_scalers[i])
         {
         case Scaler::None:
             break;
 
         case Scaler::MinimumMaximum:
-            scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
+            scale_minimum_maximum(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::MeanStandardDeviation:
-            scale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            scale_mean_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::StandardDeviation:
-            scale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            scale_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::Logarithm:
-            scale_logarithmic(data, input_variable_indices[i]);
+            scale_logarithmic(data, variable_indices[i]);
             break;
 
         default:
-            throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variable_scalers[i])) + "\n");
+            throw runtime_error("Unknown scaling inputs method: " + to_string(int(variable_scalers[i])) + "\n");
         }
     }
 
-    return input_variable_descriptives;
+    return variable_descriptives;
 }
 
 
-void DataSet::unscale_variables(const VariableUse& variable_use, 
-                                const vector<Descriptives>& input_variable_descriptives)
+void DataSet::unscale_variables(const VariableUse& variable_use,
+                                const vector<Descriptives>& variable_descriptives)
 {
-    const Index input_variables_number = get_variables_number(variable_use);
+    const Index variables_number = get_variables_number(variable_use);
 
-    const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+    const vector<Index> variable_indices = get_variable_indices(variable_use);
 
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> variable_scalers = get_variable_scalers(variable_use);
 
-    for(Index i = 0; i < input_variables_number; i++)
+    for(Index i = 0; i < variables_number; i++)
     {
-        switch(input_variable_scalers[i])
+        switch(variable_scalers[i])
         {
         case Scaler::None:
             break;
 
         case Scaler::MinimumMaximum:
-            unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_minimum_maximum(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::MeanStandardDeviation:
-            unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_mean_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::StandardDeviation:
-            unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
+            unscale_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
             break;
 
         case Scaler::Logarithm:
-            unscale_logarithmic(data, input_variable_indices[i]);
+            unscale_logarithmic(data, variable_indices[i]);
             break;
 
         case Scaler::ImageMinMax:
-            unscale_image_minimum_maximum(data, input_variable_indices[i]);
+            unscale_image_minimum_maximum(data, variable_indices[i]);
             break;
 
         default:
-            throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variable_scalers[i])) + "\n");
+            throw runtime_error("Unknown scaler: " + to_string(int(variable_scalers[i])) + "\n");
         }
     }
 }
@@ -2885,15 +2886,21 @@ void DataSet::from_XML(const XMLDocument& data_set_document)
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
-    
+
     const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
-    raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical
-        ? data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1)
-        : data.resize(samples_number, (Index)raw_variables.size());
-    
-    sample_uses.resize(samples_number);
-    set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    if (raw_variables.size() != 0)
+    {
+        if (raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical)
+            data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1);
+        else
+            data.resize(samples_number, (Index)raw_variables.size());
+
+        sample_uses.resize(samples_number);
+        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
+    }
+    else
+        data.resize(0, 0);
 
     // Missing values
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");

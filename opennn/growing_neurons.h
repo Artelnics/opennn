@@ -23,7 +23,7 @@ public:
 
     GrowingNeurons(TrainingStrategy* = nullptr);
 
-    const Index& get_step() const;
+    const Index& get_neurons_increment() const;
 
     const Index& get_maximum_selection_failures() const;
 

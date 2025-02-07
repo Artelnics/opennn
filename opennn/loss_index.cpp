@@ -261,8 +261,8 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs 
-        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
+    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation_lm.get_layer_delta_pairs();
@@ -407,7 +407,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs
-        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
+        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation.get_layer_delta_pairs();

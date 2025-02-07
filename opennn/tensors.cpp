@@ -943,7 +943,6 @@ TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
     if(x_pair.second.size() != 2)
         throw runtime_error("Dimensions must be 2");
 
-
     return TensorMap<Tensor<type, 2>>(x_pair.first,
                                       x_pair.second[0],
                                       x_pair.second[1]);

@@ -414,13 +414,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-    // Batch
 
-    Batch training_batch(training_samples_number, data_set);
-    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
-
-    Batch selection_batch(selection_samples_number, data_set);
-    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Neural network
 
@@ -432,6 +426,14 @@ TrainingResults QuasiNewtonMethod::perform_training()
     set_names();
 
     set_scaling();
+
+    // Batch
+
+    Batch training_batch(training_samples_number, data_set);
+    training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
+
+    Batch selection_batch(selection_samples_number, data_set);
+    selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     // Loss index
 

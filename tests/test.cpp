@@ -9,5 +9,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "PoolingLayerTests/*";
     //::testing::GTEST_FLAG(filter) = "ConvolutionalLayerTests/*";
 
+    // ::testing::GTEST_FLAG(filter) = "TestingAnalysis.*";
+
     return RUN_ALL_TESTS();
 }
