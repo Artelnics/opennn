@@ -60,7 +60,7 @@ int main()
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        training_strategy.perform_training();
+        // training_strategy.perform_training();
 
         /*
         ModelSelection model_selection(&training_strategy);
