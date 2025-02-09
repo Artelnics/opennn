@@ -63,10 +63,8 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 }
 
 
-// @todo
-
 dimensions MultiheadAttentionLayer::get_input_dimensions() const
-{
+{// @todo
     throw runtime_error("XXX");
 }
 
@@ -79,11 +77,10 @@ dimensions MultiheadAttentionLayer::get_output_dimensions() const
 
 Index MultiheadAttentionLayer::get_parameters_number() const
 {
-    return
-        query_weights.size() + query_biases.size()
-        + key_weights.size() + key_biases.size()
-        + value_weights.size() + value_biases.size()
-        + projection_weights.size() + projection_biases.size();
+    return query_weights.size() + query_biases.size()
+         + key_weights.size() + key_biases.size()
+         + value_weights.size() + value_biases.size()
+         + projection_weights.size() + projection_biases.size();
 }
 
 
@@ -427,8 +424,8 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 
 
 void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,
-                                                       const Tensor<type, 4>& attention_weights,
-                                                       Tensor<type, 4>& attention_outputs) const
+                                                        const Tensor<type, 4>& attention_weights,
+                                                        Tensor<type, 4>& attention_outputs) const
 {
     batch_matrix_multiplication(thread_pool_device.get(), attention_weights, value, attention_outputs, AT_B);
 }
