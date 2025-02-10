@@ -912,29 +912,15 @@ vector<string> DataSet::get_raw_variable_names(const VariableUse& variable_use) 
 
 Index DataSet::get_raw_variables_number(const VariableUse& variable_use) const
 {
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index count = 0;
-
-    for (Index i = 0; i < raw_variables_number; i++)
-        if (raw_variables[i].use == variable_use)
-            count++;
-
-    return count;
+    return count_if(raw_variables.begin(), raw_variables.end(),
+                    [&](const RawVariable& raw_variable) {return raw_variable.use == variable_use;});
 }
 
 
 Index DataSet::get_used_raw_variables_number() const
 {
-    const Index raw_variables_number = get_raw_variables_number();
-
-    Index used_raw_variables_number = 0;
-
-    for(Index i = 0; i < raw_variables_number; i++)
-        if(raw_variables[i].use != VariableUse::None)
-            used_raw_variables_number++;
-
-    return used_raw_variables_number;
+    return count_if(raw_variables.begin(), raw_variables.end(),
+                    [](const RawVariable& raw_variable) {return raw_variable.use != VariableUse::None;});
 }
 
 
@@ -4159,11 +4145,9 @@ bool DataSet::has_categorical_raw_variables() const
 
 bool DataSet::has_binary_or_categorical_raw_variables() const
 {
-    for (const auto& raw_variable : raw_variables)
-        if (raw_variable.type == RawVariableType::Binary || raw_variable.type == RawVariableType::Categorical)
-            return true;
-
-    return false;
+    return any_of(raw_variables.begin(), raw_variables.end(),
+                 [](const RawVariable& var) 
+                 {return var.type == RawVariableType::Binary || var.type == RawVariableType::Categorical;});
 }
 
 
@@ -4175,11 +4159,9 @@ bool DataSet::has_selection() const
 
 bool DataSet::has_missing_values(const vector<string>& row) const
 {
-    for(size_t i = 0; i < row.size(); i++)
-        if(row[i].empty() || row[i] == missing_values_label)
-            return true;
+    return any_of(row.begin(), row.end(),
+                  [&](const string& value) {return value.empty() || value == missing_values_label;});
 
-    return false;
 }
 
 
