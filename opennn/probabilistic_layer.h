@@ -128,6 +128,11 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
+    // void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+    //                        const vector<pair<type*, dimensions>>&,
+    //                        unique_ptr<LayerForwardPropagation>&,
+    //                        unique_ptr<LayerBackPropagationLM>&) const override;
+
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
                          Tensor<type, 1>&) const override;

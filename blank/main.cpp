@@ -39,6 +39,7 @@ int main()
 
         model_selection.save("model_selection_empty.xml");
 
+
         cout << "Bye!" << endl;
 
         return 0;
