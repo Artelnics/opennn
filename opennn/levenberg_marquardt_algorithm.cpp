@@ -182,7 +182,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     else if(loss_index->get_loss_method() == "CROSS_ENTROPY_ERROR")
         throw runtime_error("Levenberg-Marquard algorithm cannot work with cross-entropy error.");
     else if(loss_index->get_loss_method() == "WEIGHTED_SQUARED_ERROR")
-        throw runtime_error("Levenberg-Marquard algorithm is not implemented yet with weighted squared error.");
+        throw runtime_error("Levenberg-Marquard algorithm is not implemented with weighted squared error.");
 
     // Start training
 
@@ -259,8 +259,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation,
                                           is_training);
-        cout << "Epoch " << epoch << endl;
-        training_forward_propagation.print();
+        // cout << "Epoch " << epoch << endl;
+        // training_forward_propagation.print();
 
         // Loss index
 
@@ -268,7 +268,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
-        training_back_propagation_lm.print();
+        // training_back_propagation_lm.print();
 
         results.training_error_history(epoch) = training_back_propagation_lm.error();
         

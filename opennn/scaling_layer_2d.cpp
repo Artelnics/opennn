@@ -264,14 +264,14 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     outputs = inputs;
 
-    cout<< "outputs_number: " << outputs_number << endl;
+    // cout<< "outputs_number: " << outputs_number << endl;
 
 
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
 
-        cout << "scaler: " << scaler_to_string(scaler) << endl;
+        // cout << "scaler: " << scaler_to_string(scaler) << endl;
 
 
         switch(scaler)

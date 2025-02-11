@@ -30,6 +30,7 @@ struct BackPropagation
     type loss = type(0);
 
     Tensor<type, 2> errors;
+    Tensor<type, 2> errors_weights;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;

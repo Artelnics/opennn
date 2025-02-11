@@ -276,6 +276,47 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
+// void ProbabilisticLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
+//                                             const vector<pair<type*, dimensions>>& delta_pairs,
+//                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+//                                             unique_ptr<LayerBackPropagationLM>& back_propagation) const
+// {
+//     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
+//     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+
+//     const Index inputs_number = get_inputs_number();
+//     const Index outputs_number = get_outputs_number();
+
+//     const Index synaptic_weights_number = synaptic_weights.size();
+
+//     // Forward propagation
+
+//     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+//         static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
+
+//     const Tensor<type, 2>& activation_derivatives
+//         = probabilistic_layer_forward_propagation->activation_derivatives;
+
+//     // Back propagation
+
+//     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+//         static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
+
+//     Tensor<type, 2>& combination_derivatives = probabilistic_layer_back_propagation_lm->combination_derivatives;
+
+//     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
+
+//     const bool& is_first_layer = probabilistic_layer_back_propagation_lm->is_first_layer;
+
+//     // Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation_lm->input_derivatives;
+
+//     combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
+
+//     Index synaptic_weight_index = 0;
+
+// }
+
+
 void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          const Index& index,
                                          Tensor<type, 1>& gradient) const
