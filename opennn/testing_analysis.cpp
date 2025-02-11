@@ -864,7 +864,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 {
     const Tensor<Index, 2> confusion = calculate_confusion_binary_classification(targets, outputs, type(0.5));
 
-    Tensor<Index, 1> positives_negatives_rate;
+    Tensor<Index, 1> positives_negatives_rate(2);
     positives_negatives_rate.setValues({confusion(0,0) + confusion(0,1), confusion(1,0) + confusion(1,1)});
 
     return positives_negatives_rate;
@@ -1090,7 +1090,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
                 true_negative++;
         }
 
-        roc_curve(i,0) = type(1 - true_positive)/type(true_positive + false_negative);
+        roc_curve(i,0) = type(1) - type(true_positive)/type(true_positive + false_negative);
         roc_curve(i,1) = type(true_negative)/type(true_negative + false_positive);
         roc_curve(i,2) = type(threshold);
 
