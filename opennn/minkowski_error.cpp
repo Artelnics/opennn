@@ -52,7 +52,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
-    const type epsilon = 1e-6;
+    const type epsilon = 1e-6F;
 
     // Batch
 
