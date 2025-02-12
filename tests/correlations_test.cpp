@@ -40,9 +40,9 @@ TEST_F(CorrelationsTest, SpearmanCorrelation)
     Tensor<type, 1> y(10);
     y.setValues({ type(1), type(4), type(9), type(16), type(25), type(36), type(49), type(64), type(81), type(100) });
     
-    //Correlation result = linear_correlation_spearman(thread_pool_device.get(), x, y);
+    Correlation result = linear_correlation_spearman(thread_pool_device.get(), x, y);
 
-    //EXPECT_NEAR(result.r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(result.r, type(1), NUMERIC_LIMITS_MIN);
 
 }
 
@@ -55,20 +55,20 @@ TEST_F(CorrelationsTest, LinearCorrelation)
     Tensor<type, 1> y(10);
     y.setValues({ type(10), type(20), type(30),type(40),type(50),type(60),type(70),type(80),type(90),type(100) });
 
-    //EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(1), NUMERIC_LIMITS_MIN);
     
     y.setValues({ type(10), type(9), type(8),type(7),type(6),type(5),type(4),type(3),type(2),type(1) });
 
-    //EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(- 1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(linear_correlation(thread_pool_device.get(), x, y).r, type(- 1), NUMERIC_LIMITS_MIN);
     
     // Test
 
     x.setRandom();
     y.setRandom();
 
-    //EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type(-1));
-    //EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 0));
-    //EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 1));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type(-1));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 0));
+    EXPECT_NE(linear_correlation(thread_pool_device.get(), x, y).r, type( 1));
 }
 
 
@@ -79,10 +79,10 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     Tensor<type, 1> y(20);
     y.setValues({ 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1 });
-    /*
+
     Correlation correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    correlation.print(); system("pause");
+    correlation.print(); /*system("pause");*/
 
     EXPECT_LE(abs(correlation.r), type(0.1));
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
@@ -99,18 +99,25 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
+    correlation.print();
+
     EXPECT_GE(correlation.r, type(0.9));
+    EXPECT_LE(correlation.r, type(1));
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
 
-    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
-    EXPECT_EQ((correlation.form, Correlation::Form::Logistic));
+    // EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
 
     // Test
 
     size = 100;
 
+    vector<Index> x_vector(100);
+
     x.resize(size);
-    initialize_sequential(x);
+
+    iota(x_vector.begin(), x_vector.end(),0);
+    for(Index i = 0; i < x.size(); i++)
+        x(i) = type(x_vector[i]);
 
     y.resize(size);
 
@@ -118,18 +125,14 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    EXPECT_EQ(correlation.r <= type(1));
+    correlation.print();
+
+    EXPECT_EQ(correlation.r <= type(1), true);
 
     for (Index i = 0; i < size; i++)
         y[i] = exp(type(2.5) * x[i] + type(1.4));
-
-    const unsigned int threads_number = thread::hardware_concurrency();
-
-    ThreadPool* thread_pool = new ThreadPool(threads_number);
-
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, threads_number);
 
     // Test
 
@@ -137,18 +140,23 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    EXPECT_EQ(abs(correlation.r) >= type(-0.95));
+    correlation.print();
 
+    EXPECT_EQ(abs(correlation.r) >= type(0.95), true);
+/*
     // Test
 
     y.setConstant(type(0));
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
     EXPECT_EQ(isnan(correlation.r), true);
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
+
+    correlation.print();
 
     EXPECT_GE(correlation.r, type(0.9));
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
@@ -157,17 +165,17 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
-    EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
+    // EXPECT_NEAR(correlation.r, type(1), NUMERIC_LIMITS_MIN);
     EXPECT_EQ(correlation.form, Correlation::Form::Logistic);
-
+/*
     // Test
 
     size = 100;
 
     x.resize(size);
-    initialize_sequential(x);
+    // initialize_sequential(x);
 
     y.resize(size);
 
@@ -175,7 +183,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 1;
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
     EXPECT_LE(correlation.r, type(1));
 
@@ -194,7 +202,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     for (Index i = size - (size / 2); i < size; i++) y[i] = 0.0;
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
     EXPECT_GE(abs(correlation.r), type(-0.95));
 
@@ -202,7 +210,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     y.setConstant(type(0));
 
-    correlation = logistic_correlation_vector_vector(thread_pool_device, x, y);
+    correlation = logistic_correlation_vector_vector(thread_pool_device.get(), x, y);
 
     EXPECT_EQ(isnan(correlation.r), true);
 */
