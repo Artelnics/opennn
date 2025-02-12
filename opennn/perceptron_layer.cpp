@@ -319,11 +319,6 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
         calculate_activations(outputs, empty);
     }
-
-    // if(!is_training)
-    // {
-    //     cout << "Outputs:\n" << outputs << endl;
-    // }
 }
 
 

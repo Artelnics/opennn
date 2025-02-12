@@ -544,9 +544,10 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network;//(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
+    /* Does not compile in visual
     neural_network.add_layer(make_unique<ScalingLayer2D>((dimensions){1}));
     neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1},(dimensions){1},PerceptronLayer::ActivationFunction::Logistic));
-
+*/
     neural_network.set_parameters_constant(type(0.001));
 
 //    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
