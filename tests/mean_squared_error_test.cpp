@@ -86,7 +86,7 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     const Index inputs_number = get_random_index(1, 1);
     const Index outputs_number = get_random_index(1, 1);
     const Index neurons_number = get_random_index(1, 1);
-/*
+
     // Data set
 
     DataSet data_set(samples_number, { inputs_number }, { outputs_number });
@@ -125,5 +125,5 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     EXPECT_NEAR(back_propagation_lm.error(), back_propagation.error(), type(1.0e-3));
     EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian), true);
     EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient), true);
-*/
+
 }

@@ -294,6 +294,12 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
+    // cout << "Input dimensions: " << inputs.dimensions() << endl;
+    // cout << "Ouptut dimensions: " << outputs.dimensions() << endl;
+    // cout << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+    // cout << "Biases dimensions: " << biases.dimensions() << endl;
+    // throw runtime_error(".");
+
     calculate_combinations(inputs,
                            outputs);
 
@@ -407,7 +413,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
         for(Index input_index = 0; input_index < inputs_number; input_index++)
         {
-            const TensorMap<Tensor<type, 1>> input = tensor_map(inputs, input_index);
+            const Tensor<type, 1> input = inputs.chip(input_index,1);
 
             TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight 
                 = tensor_map(squared_errors_Jacobian, synaptic_weight_index++);
@@ -425,7 +431,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
     }
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) 
+        input_derivatives.device(*thread_pool_device)
         = combination_derivatives.contract(synaptic_weights, A_BT);
 }
 
