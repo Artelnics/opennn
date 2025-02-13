@@ -112,7 +112,7 @@ private:
 
     vector<bool> original_unused_raw_variables;
     
-    Tensor<type, 1> inputs_activation_probabilities;
+    Tensor<type, 1> input_activation_probabilities;
 
     Tensor<bool, 2> population;
 

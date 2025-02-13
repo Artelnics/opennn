@@ -178,6 +178,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
        ? selection_samples_number / selection_batch_samples_number
        : 0;
 
+
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
 
@@ -193,7 +194,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     Batch training_batch(training_batch_samples_number, data_set);
     Batch selection_batch(selection_batch_samples_number, data_set);
-
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);

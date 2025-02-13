@@ -66,6 +66,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
     void print() const override;
 
     Tensor<type, 2> combination_derivatives;
+    Tensor<type, 2> input_derivatives;
 
     Tensor<type, 2> squared_errors_Jacobian;
 
@@ -128,11 +129,11 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    // void back_propagate_lm(const vector<pair<type*, dimensions>>&,
-    //                        const vector<pair<type*, dimensions>>&,
-    //                        unique_ptr<LayerForwardPropagation>&,
-    //                        unique_ptr<LayerBackPropagationLM>&) const override;
-
+/*    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
+                           const vector<pair<type*, dimensions>>&,
+                           unique_ptr<LayerForwardPropagation>&,
+                           unique_ptr<LayerBackPropagationLM>&) const override;
+*/
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          const Index&,
                          Tensor<type, 1>&) const override;

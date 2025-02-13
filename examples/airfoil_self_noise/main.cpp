@@ -45,7 +45,7 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56  (not anymore)
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
 
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
@@ -57,13 +57,15 @@ int main()
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        training_strategy.perform_training();
+        // training_strategy.perform_training();
 
-        /*
+
         ModelSelection model_selection(&training_strategy);
 
+        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+
         model_selection.perform_input_selection();
-*/
+
 
         // Testing analysis
 

@@ -276,46 +276,81 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-// void ProbabilisticLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
-//                                             const vector<pair<type*, dimensions>>& delta_pairs,
-//                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
-//                                             unique_ptr<LayerBackPropagationLM>& back_propagation) const
-// {
-//     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-//     const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+/* void ProbabilisticLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
+                                            const vector<pair<type*, dimensions>>& delta_pairs,
+                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                             unique_ptr<LayerBackPropagationLM>& back_propagation) const
+{
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-//     const Index inputs_number = get_inputs_number();
-//     const Index outputs_number = get_outputs_number();
+    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
-//     const Index synaptic_weights_number = synaptic_weights.size();
 
-//     // Forward propagation
+    const Index inputs_number          = get_inputs_number();
+    const Index outputs_number         = get_outputs_number();
+    const Index synaptic_weights_count = synaptic_weights.size();
+    const Index batch_size             = deltas.dimension(0);
 
-//     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-//         static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
+    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
 
-//     const Tensor<type, 2>& activation_derivatives
-//         = probabilistic_layer_forward_propagation->activation_derivatives;
+    const Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-//     // Back propagation
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
 
-//     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
-//         static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
+    Tensor<type, 2>& combination_derivatives = probabilistic_layer_back_propagation_lm->combination_derivatives;
 
-//     Tensor<type, 2>& combination_derivatives = probabilistic_layer_back_propagation_lm->combination_derivatives;
+    Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
 
-//     Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
+    const bool& is_first_layer = probabilistic_layer_back_propagation_lm->is_first_layer;
 
-//     const bool& is_first_layer = probabilistic_layer_back_propagation_lm->is_first_layer;
 
-//     // Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation_lm->input_derivatives;
+    Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation_lm->input_derivatives;
 
-//     combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
+    if(outputs_number == 1)
+        combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
 
-//     Index synaptic_weight_index = 0;
+    else
+        combination_derivatives.device(*thread_pool_device) = deltas;
 
-// }
 
+    // cout << "Dimensiones esperadas y reales en back_propagate_lm:\n";
+
+    // cout << "inputs: " << inputs.dimensions() << endl;
+    // cout << "deltas: " << deltas.dimensions() << endl;
+    // cout << "combination_derivatives: " << combination_derivatives.dimensions() << endl;
+    // cout << "squared_errors_Jacobian: " << squared_errors_Jacobian.dimensions() << endl;
+    // cout << "synaptic_weights: " << synaptic_weights.dimensions() << endl;
+    // cout << "input_derivatives: " << input_derivatives.dimensions() << endl;
+
+    // cout << "batch_size: " << batch_size << endl;
+    // cout << "inputs_number: " << inputs_number << endl;
+    // cout << "outputs_number: " << outputs_number << endl;
+    // cout << "synaptic_weights_count: " << synaptic_weights_count << endl;
+
+
+    #pragma omp parallel for
+    for(Index i = 0; i < batch_size; i++)
+    {
+        for(Index j = 0; j < outputs_number; j++)
+        {
+            for(Index k = 0; k < inputs_number; k++)
+            {
+                const Index param_index = j*inputs_number + k;
+                squared_errors_Jacobian(i, param_index) = combination_derivatives(i, j)* inputs(i, k);
+            }
+
+            const Index bias_index = synaptic_weights_count + j;
+
+            squared_errors_Jacobian(i, bias_index) = combination_derivatives(i, j);
+        }
+    }
+
+    // if(!is_first_layer)
+    // input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(synaptic_weights, A_BT);
+}
+*/
 
 void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          const Index& index,
