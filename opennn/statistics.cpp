@@ -194,7 +194,7 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
     centers = new_centers;
     frequencies = new_frequencies;
 
-    cout << "Tamaño de frequencies: " << frequencies.size() << "\n";
+    cout << "Tamaï¿½o de frequencies: " << frequencies.size() << "\n";
     cout << "Valores de frequencies: ";
     for (Index i = 0; i < frequencies.size(); ++i) {
         cout << frequencies(i) << " ";
@@ -879,7 +879,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
 {
     const Index size = vector.dimension(0);
 
-    // Comprobación de tamaño válido
+    // Comprobaciï¿½n de tamaï¿½o vï¿½lido
     if (size == 0 || bins_number <= 0)
     {
         throw std::invalid_argument("Vector size or number of bins must be positive.");
@@ -896,7 +896,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     std::vector<type> unique_values;
     unique_values.reserve(std::min<Index>(size, bins_number));
 
-    // Detectamos los valores únicos en el vector
+    // Detectamos los valores ï¿½nicos en el vector
     for (Index i = 0; i < size; i++)
     {
         const type val = vector(i);
@@ -930,7 +930,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
             centers(i) = v;
         }
 
-        // Verificación de frecuencias y validación de accesos
+        // Verificaciï¿½n de frecuencias y validaciï¿½n de accesos
         for (Index i = 0; i < size; i++)
         {
             const type val = vector(i);
@@ -949,7 +949,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
                 }
             }
 
-            // Si no encontramos bin, algo está mal
+            // Si no encontramos bin, algo estï¿½ mal
             if (!found_bin)
             {
                 std::cerr << "Error: Value " << val << " did not match any bin center!" << std::endl;
@@ -961,7 +961,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
         const type min_val = minimum(vector);
         const type max_val = maximum(vector);
 
-        // Comprobación de valores mínimos y máximos
+        // Comprobaciï¿½n de valores mï¿½nimos y mï¿½ximos
         std::cout << "Min value: " << min_val << ", Max value: " << max_val << std::endl;
 
         if (min_val == max_val)
@@ -971,7 +971,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
 
         const type bin_width = (max_val - min_val) / static_cast<type>(effective_bins);
 
-        // Verificación de bin_width
+        // Verificaciï¿½n de bin_width
         std::cout << "Bin width: " << bin_width << std::endl;
 
         if (bin_width == 0)
@@ -987,7 +987,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
             centers(i) = (minimums(i) + maximums(i)) / static_cast<type>(2.0);
         }
 
-        // Depuración de los bins creados
+        // Depuraciï¿½n de los bins creados
         std::cout << "Bins information: \n";
         for (Index i = 0; i < effective_bins; i++)
         {
@@ -1000,12 +1000,12 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
             const type val = vector(i);
             if (std::isnan(val)) continue;
 
-            // Validación de acceso a bin
+            // Validaciï¿½n de acceso a bin
             Index bin_index = static_cast<Index>((val - min_val) / bin_width);
             if (bin_index < 0 || bin_index >= effective_bins)
             {
                 std::cerr << "Error: Bin index out of range for value " << val << std::endl;
-                bin_index = std::min(bin_index, effective_bins - 1); // Ajustar el índice al último bin
+                bin_index = std::min(bin_index, effective_bins - 1); // Ajustar el ï¿½ndice al ï¿½ltimo bin
             }
 
             std::cout << "Value " << val << " falls into bin index: " << bin_index << std::endl;
@@ -1981,7 +1981,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

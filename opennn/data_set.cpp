@@ -3753,7 +3753,7 @@ void DataSet::prepare_line(string& line) const
 
 void DataSet::process_tokens(vector<string>& tokens)
 {
-    const Index raw_variables_number = tokens.size();
+    const Index raw_variables_number = raw_variables.size();
 
     //#pragma omp parallel for reduction(+:missing_values_number)
 
@@ -3823,7 +3823,7 @@ void DataSet::read_csv()
 
         if(line.empty()) continue;
 
-//        check_separators(line);
+        check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
@@ -3865,7 +3865,7 @@ void DataSet::read_csv()
 
         if(line.empty()) continue;
 
-        //check_separators(line);
+        check_separators(line);
 
         tokens = get_tokens(line, separator_string);
 
@@ -3874,10 +3874,10 @@ void DataSet::read_csv()
                                 "Tokens number is not equal to columns number.");
 
         process_tokens(tokens);
-
+        
         samples_number++;
     }
-    
+
     for(Index i = 0; i < raw_variables_number; i++)
         if(raw_variables[i].type == RawVariableType::Categorical
         && raw_variables[i].get_categories_number() == 2)
@@ -3886,21 +3886,18 @@ void DataSet::read_csv()
     sample_uses.resize(samples_number);
 
     sample_ids.resize(samples_number);
-    
+
     const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
-    raw_variables[columns_number - 1].type == RawVariableType::Categorical
-        ? data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1)
-        : data.resize(samples_number, variables_number);
-
+    data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
     data.setZero();
 
     rows_missing_values_number = 0;
 
     missing_values_number = 0;
-    
+
     raw_variables_missing_values_number.resize(raw_variables_number);
     raw_variables_missing_values_number.setZero();
 
@@ -3960,7 +3957,7 @@ void DataSet::read_csv()
                 : tokens[raw_variable_index];
 
             const vector<Index>& variable_indices = all_variable_indices[raw_variable_index];
-
+            
             if(raw_variable_type == RawVariableType::Numeric)
             {
                 (token.empty() || token == missing_values_label)
@@ -4012,10 +4009,10 @@ void DataSet::read_csv()
                 }
             }
         }
-
+        
         sample_index++;
     }
-
+    
     file.close();
 
     unuse_constant_raw_variables();
@@ -4575,7 +4572,7 @@ void DataSet::save_auto_associative_data_binary(const string&) const {};
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

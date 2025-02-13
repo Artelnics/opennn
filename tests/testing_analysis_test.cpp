@@ -1067,7 +1067,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 */
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

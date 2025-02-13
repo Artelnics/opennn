@@ -25,7 +25,7 @@ int main()
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        data_set.set(DataSet::SampleUse::Training);
+        //data_set.set(DataSet::SampleUse::Training);
         
         // Neural network
 
