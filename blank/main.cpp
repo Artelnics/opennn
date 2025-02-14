@@ -26,6 +26,14 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv", ";", true, true);
+        cout << "data set creado" << endl;
+        data_set.save("data_set_cancer.xml");
+        cout << "data set guardado" << endl;
+        DataSet prueba;
+        prueba.load("data_set_cancer.xml");
+        cout << "Bye!" << endl;
+
         return 0;
     }
     catch(const exception& e)
