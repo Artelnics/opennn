@@ -44,7 +44,6 @@ public:
    void set_output_dimensions(const dimensions&) override;
 
    void set_descriptives(const vector<Descriptives>&);
-   void set_item_descriptives(const Index&, const Descriptives&);
 
    void set_min_max_range(const type& min, const type& max);
 

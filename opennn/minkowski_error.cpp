@@ -52,6 +52,8 @@ void MinkowskiError::calculate_error(const Batch& batch,
                                      const ForwardPropagation& forward_propagation,
                                      BackPropagation& back_propagation) const
 {
+    const type epsilon = 1e-6;
+
     // Batch
 
     const Index batch_samples_number = batch.get_samples_number();
@@ -70,7 +72,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
     
     Tensor<type, 0>& error = back_propagation.error;
 
-    errors.device(*thread_pool_device) = outputs - targets;
+    errors.device(*thread_pool_device) = outputs - targets + epsilon;
 
     error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(batch_samples_number);
 

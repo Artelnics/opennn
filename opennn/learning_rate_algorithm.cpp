@@ -273,7 +273,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     do
     {
-
         count++;
 
         triplet.B.first = optimization_data.initial_learning_rate*type(count);

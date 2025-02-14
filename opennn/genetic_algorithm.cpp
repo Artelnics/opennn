@@ -267,12 +267,12 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
     for(Index i = 0; i < raw_variables_number; i++)
         fitness_correlations(rank(i)) = type(i+1);
 
-    Tensor<type, 1> probabilities_vector(raw_variables_number);
+    Tensor<type, 1> probabilities(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number ; i++)
-        probabilities_vector[i] = type(2) * type(raw_variables_number - fitness_correlations(i) + 1) / (type(raw_variables_number)*type(raw_variables_number+1));
+        probabilities[i] = type(2) * type(raw_variables_number - fitness_correlations(i) + 1) / (type(raw_variables_number)*type(raw_variables_number+1));
 
-    inputs_activation_probabilities = probabilities_vector.cumsum(0);
+    input_activation_probabilities = probabilities.cumsum(0);
 }
 
 
@@ -314,11 +314,11 @@ void GeneticAlgorithm::initialize_population_correlations()
         {
             arrow = type(distribution(gen));
 
-            individual_raw_variables(0) = arrow < inputs_activation_probabilities(0) && !individual_raw_variables(0);
+            individual_raw_variables(0) = arrow < input_activation_probabilities(0) && !individual_raw_variables(0);
 
             for(Index j = 1; j < input_raw_variables_number; j++)
-                if(arrow >= inputs_activation_probabilities(j - 1)
-                && arrow < inputs_activation_probabilities(j)
+                if(arrow >= input_activation_probabilities(j - 1)
+                && arrow < input_activation_probabilities(j)
                 && !individual_raw_variables(j))
                     individual_raw_variables(j) = true;
         }

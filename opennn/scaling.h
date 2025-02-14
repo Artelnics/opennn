@@ -19,16 +19,12 @@ namespace opennn
 
     Scaler string_to_scaler(const string& new_scaler);
 
+
     void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));
 
-    // Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>&);
-    // Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>&);
-
     void scale_logarithmic(Tensor<type, 2>&, const Index&);
-
-    //void scale_minimum_maximum_binary(Tensor<type, 2>&, const type&, const type&, const Index&);
 
     void unscale_minimum_maximum(Tensor<type, 2>&, const Index&, const Descriptives&, const type& = type(-1), const type& = type(1));
     void unscale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);

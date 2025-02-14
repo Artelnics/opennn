@@ -26,6 +26,8 @@ public:
 
    type get_normalizaton_coefficient() const;
 
+   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+
    void set_default();
 
    void set_positives_weight(const type&);
@@ -53,22 +55,6 @@ public:
                                ForwardPropagation&,
                                BackPropagation&) const override;
 
-   // Back propagation LM
-
-   void calculate_squared_errors_lm(const Batch&,
-                                    const ForwardPropagation&,
-                                    BackPropagationLM&) const override;
-
-   void calculate_error_lm(const Batch&,
-                           const ForwardPropagation&,
-                           BackPropagationLM&) const override;
-
-   void calculate_error_gradient_lm(const Batch&,
-                                    BackPropagationLM&) const override;
-
-   void calculate_error_hessian_lm(const Batch&,
-                                   BackPropagationLM&) const override;
-
    // Serialization
 
    void from_XML(const XMLDocument&);
@@ -82,6 +68,8 @@ private:
    type negatives_weight = type(NAN);
 
    type normalization_coefficient;
+
+   Tensor<type, 2> errors_weights;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/weighted_squared_error_cuda.h"

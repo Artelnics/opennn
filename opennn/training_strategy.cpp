@@ -268,6 +268,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
 {
     neural_network = new_neural_network;
     data_set = new_data_set;
+
     
     set_default();
 

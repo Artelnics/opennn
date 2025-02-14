@@ -48,7 +48,9 @@ SOURCES += test.cpp \
            normalized_squared_error_test.cpp \
            performance_test.cpp \
            pooling_layer_test.cpp \
-           pch.cpp  # Precompiled header source
+           pch.cpp \
+           testing_analysis_test.cpp \
+           perceptron_layer_test.cpp \# Precompiled header source
             # Include more test files if needed by uncommenting
 
 # Precompiled Header

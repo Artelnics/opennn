@@ -396,11 +396,8 @@ string get_trimmed(const string& text)
 
 bool has_numbers(const vector<string>& string_list)
 {
-    for(size_t i = 0; i < string_list.size(); i++)
-        if(is_numeric_string(string_list[i])) 
-            return true;
-
-    return false;
+    return any_of(string_list.begin(), string_list.end(),
+                  [](const string& str) {return is_numeric_string(str);});
 }
 
 

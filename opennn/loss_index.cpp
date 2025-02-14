@@ -229,6 +229,8 @@ void LossIndex::back_propagate_lm(const Batch& batch,
     
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
+    // cout << "OK 2" << endl;
+
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
  
     calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
@@ -261,8 +263,8 @@ void LossIndex::calculate_layers_squared_errors_jacobian_lm(const Batch& batch,
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs 
-        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
+    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation_lm.get_layer_delta_pairs();
@@ -407,7 +409,7 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs
-        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs());
+        = forward_propagation.get_layer_input_pairs(batch.get_input_pairs(), true);
 
     const vector<vector<pair<type*, dimensions>>> layer_delta_pairs 
         = back_propagation.get_layer_delta_pairs();
@@ -868,28 +870,52 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+
+    const vector<Index> sample_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+
+    Batch batch(samples_number, data_set);
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    BackPropagationLM back_propagation_lm(samples_number, this);
+
     const Tensor<type, 1> parameters = neural_network->get_parameters();
 
     const Index parameters_number = parameters.size();
 
-//    type y = (t.*f)(x);
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      parameters,
+                                      forward_propagation);
+
+    calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+    calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+    calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+    const type y = back_propagation_lm.error();
 
     Tensor<type, 2> H(parameters_number, parameters_number);
+    H.setZero();
 
     type h_i;
     type h_j;
 
-    Tensor<type, 1> x_backward_2i(parameters);
-    Tensor<type, 1> x_backward_i(parameters);
+    Tensor<type, 1> x_backward_2i = parameters;
+    Tensor<type, 1> x_backward_i = parameters;
 
-    Tensor<type, 1> x_forward_i(parameters);
-    Tensor<type, 1> x_forward_2i(parameters);
+    Tensor<type, 1> x_forward_i = parameters;
+    Tensor<type, 1> x_forward_2i = parameters;
 
-    Tensor<type, 1> x_backward_ij(parameters);
-    Tensor<type, 1> x_forward_ij(parameters);
+    Tensor<type, 1> x_backward_ij = parameters;
+    Tensor<type, 1> x_forward_ij = parameters;
 
-    Tensor<type, 1> x_backward_i_forward_j(parameters);
-    Tensor<type, 1> x_forward_i_backward_j(parameters);
+    Tensor<type, 1> x_backward_i_forward_j = parameters;
+    Tensor<type, 1> x_forward_i_backward_j = parameters;
 
     type y_backward_2i;
     type y_backward_i;
@@ -908,48 +934,147 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
         h_i = calculate_h(parameters(i));
 
         x_backward_2i(i) -= static_cast<type>(2.0) * h_i;
-        //y_backward_2i = (t.*f)(x_backward_2i);
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          x_backward_2i,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        y_backward_2i = back_propagation_lm.error();
+
         x_backward_2i(i) += static_cast<type>(2.0) * h_i;
 
         x_backward_i(i) -= h_i;
-        //y_backward_i = (t.*f)(x_backward_i);
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          x_backward_i,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        y_backward_i = back_propagation_lm.error();
+
         x_backward_i(i) += h_i;
 
         x_forward_i(i) += h_i;
-        //y_forward_i = (t.*f)(x_forward_i);
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          x_forward_i,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        y_forward_i = back_propagation_lm.error();
+
         x_forward_i(i) -= h_i;
 
         x_forward_2i(i) += static_cast<type>(2.0) * h_i;
-        //y_forward_2i = (t.*f)(x_forward_2i);
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          x_forward_2i,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        y_forward_2i = back_propagation_lm.error();
+
         x_forward_2i(i) -= static_cast<type>(2.0) * h_i;
 
-        //H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * pow(h_i, type(2)));
+        H(i, i) = (-y_forward_2i + type(16.0) * y_forward_i - type(30.0) * y + type(16.0) * y_backward_i - y_backward_2i) / (type(12.0) * pow(h_i, type(2)));
 
         for (Index j = i; j < parameters_number; j++)
         {
+            if(j == i)
+                continue;
+
             h_j = calculate_h(parameters(j));
 
             x_backward_ij(i) -= h_i;
             x_backward_ij(j) -= h_j;
-            //y_backward_ij = (t.*f)(x_backward_ij);
+
+            neural_network->forward_propagate(batch.get_input_pairs(),
+                                              x_backward_ij,
+                                              forward_propagation);
+
+            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+            y_backward_ij = back_propagation_lm.error();
+
             x_backward_ij(i) += h_i;
             x_backward_ij(j) += h_j;
 
             x_forward_ij(i) += h_i;
             x_forward_ij(j) += h_j;
-            //y_forward_ij = (t.*f)(x_forward_ij);
+
+            neural_network->forward_propagate(batch.get_input_pairs(),
+                                              x_forward_ij,
+                                              forward_propagation);
+
+            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+            y_forward_ij = back_propagation_lm.error();
+
             x_forward_ij(i) -= h_i;
             x_forward_ij(j) -= h_j;
 
             x_backward_i_forward_j(i) -= h_i;
             x_backward_i_forward_j(j) += h_j;
-            //y_backward_i_forward_j = (t.*f)(x_backward_i_forward_j);
+
+            neural_network->forward_propagate(batch.get_input_pairs(),
+                                              x_backward_i_forward_j,
+                                              forward_propagation);
+
+            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+            y_backward_i_forward_j = back_propagation_lm.error();
+
             x_backward_i_forward_j(i) += h_i;
             x_backward_i_forward_j(j) -= h_j;
 
             x_forward_i_backward_j(i) += h_i;
             x_forward_i_backward_j(j) -= h_j;
-            //y_forward_i_backward_j = (t.*f)(x_forward_i_backward_j);
+
+            neural_network->forward_propagate(batch.get_input_pairs(),
+                                              x_forward_i_backward_j,
+                                              forward_propagation);
+
+            calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+            calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+            y_forward_i_backward_j = back_propagation_lm.error();
+
             x_forward_i_backward_j(i) -= h_i;
             x_forward_i_backward_j(j) += h_j;
 

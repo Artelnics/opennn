@@ -12,8 +12,6 @@ struct LayerBackPropagationLM
 {
     LayerBackPropagationLM() {}
 
-    virtual ~LayerBackPropagationLM() {}
-
     virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
 
     virtual void print() const {}

@@ -30,6 +30,7 @@ int main()
         cout << "data set creado" << endl;
         data_set.save("data_set_cancer.xml");
 
+
         cout << "Bye!" << endl;
 
         return 0;

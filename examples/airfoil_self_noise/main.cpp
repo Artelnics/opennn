@@ -10,7 +10,9 @@
 #include <string>
 #include <time.h>
 
+#include "../../opennn/testing_analysis.h"
 #include "../../opennn/model_selection.h"
+#include "testing_analysis.h"
 
 int main()
 {
@@ -20,51 +22,57 @@ int main()
 
         // Data set
         
-        DataSet data_set("data/airfoil_self_noise.csv", ";", true, false);
+        // DataSet data_set("data/airfoil_self_noise.csv", ";", true, false);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true, false);
+
         
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        //data_set.set(DataSet::SampleUse::Training);
+        // data_set.set(DataSet::SampleUse::Training);
         
         // Neural network
 
-        const Index neurons_number = 10;
+        const Index neurons_number = 100;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
+
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR); // @todo gives 0.56
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.set_maximum_epochs_number(10000);
 
-        training_strategy.perform_training();
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        /*
+        // training_strategy.perform_training();
+
+
         ModelSelection model_selection(&training_strategy);
 
+        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+
         model_selection.perform_input_selection();
+
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-//        testing_analysis.print_goodness_of_fit_analysis();
-
+        testing_analysis.print_goodness_of_fit_analysis();
+/*
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");

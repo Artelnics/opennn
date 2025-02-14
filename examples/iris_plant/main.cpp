@@ -22,7 +22,8 @@ int main()
 
         // Data set
 
-        DataSet data_set("data/iris_plant_original.csv", ";", true);
+        // DataSet data_set("data/iris_plant_original.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/iris_plant/data/iris_plant_original.csv", ";", true);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -47,6 +48,8 @@ int main()
         // Testing analysis
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+        testing_analysis.print_goodness_of_fit_analysis();
 
         cout << "Good bye!" << endl;
 

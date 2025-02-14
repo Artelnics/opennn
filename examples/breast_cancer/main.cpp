@@ -21,7 +21,9 @@ int main()
 
         // Data set
 
-        DataSet data_set("data/breast_cancer.csv", ";", true);
+        // DataSet data_set("data/breast_cancer.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true);
+
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -38,24 +40,46 @@ int main()
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
-        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
+        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        //training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.perform_training();
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //The probabilistic layer hasn't got implemented the lm back propagation
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
+        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        // if(training_strategy.get_optimization_method() == TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT)
+        //     cout << "What is happening" << endl;
+
+        // throw runtime_error("What?");
+
+        // training_strategy.perform_training();
+
+
+
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
+
+        model_selection.perform_input_selection();
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_binary_classification_tests();
+        // TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
-        cout << "Good bye!" << endl;
+        // cout << "Area under the curve: " << roc_analysis.area_under_curve << endl << "Roc curve:\n" << roc_analysis.roc_curve << endl;
+
+        // cout << "Confidence limit: " << roc_analysis.confidence_limit << endl << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+
+        // cout << "Good bye!" << endl;
 
         return 0;
     }

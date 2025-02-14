@@ -83,6 +83,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
+
 //    type previus_selection_error = numeric_limits< type>::max();
     type previus_training_error = numeric_limits< type>::max();
 
@@ -146,14 +147,22 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     {     
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
 
+        // const Index samples_number = data_set->get_samples_number();
+
         Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
         const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
         if (input_raw_variables_number < minimum_inputs_number)
+        {
+            raw_variable_index++;
             continue;
-            
+        }
         const Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
         neural_network->set_input_dimensions({ input_variables_number });
+
+        data_set->set_dimensions(DataSet::VariableUse::Input, {input_variables_number});
+
+        // cout << "input_variables_number: " << input_variables_number << endl;
 
         if(display)
         {
@@ -179,6 +188,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             training_results = training_strategy->perform_training();
 
+            // throw runtime_error("Is everything correct so far?");
+
             if(training_results.get_selection_error() < minimum_selection_error)
             {
                 minimum_training_error = training_results.get_training_error();
@@ -187,6 +198,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 input_selection_results.training_error_history(input_raw_variables_number-1) = minimum_training_error;
                 input_selection_results.selection_error_history(input_raw_variables_number-1) = minimum_selection_error;
             }
+
 
             if(training_results.get_selection_error() < input_selection_results.optimum_selection_error)
             {
@@ -308,9 +320,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }
-/*
+
     neural_network->set_parameters(input_selection_results.optimal_parameters);
-*/
+
     if(display) input_selection_results.print();
 
     return input_selection_results;

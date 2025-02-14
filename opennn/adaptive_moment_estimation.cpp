@@ -169,8 +169,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                                  ? min(selection_samples_number, batch_samples_number)
                                                  : 0;
 
-    Batch training_batch(training_batch_samples_number, data_set);
-    Batch selection_batch(selection_batch_samples_number, data_set);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
         ? training_samples_number / training_batch_samples_number
@@ -179,6 +177,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index selection_batches_number = (selection_batch_samples_number != 0)
        ? selection_samples_number / selection_batch_samples_number
        : 0;
+
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
@@ -192,6 +191,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     set_scaling();
 
     set_vocabularies();
+
+    Batch training_batch(training_batch_samples_number, data_set);
+    Batch selection_batch(selection_batch_samples_number, data_set);
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
@@ -305,8 +307,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 selection_batch.fill(selection_batches[iteration],
                                      input_variable_indices,
-                                     target_variable_indices,
-                                     decoder_variable_indices);
+                                     decoder_variable_indices,
+                                     target_variable_indices);
+
                 // Neural network
 
                 neural_network->forward_propagate(selection_batch.get_input_pairs(),
