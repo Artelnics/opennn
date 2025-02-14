@@ -234,14 +234,20 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
 
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
+    // @ Changes to test
     const Index columns_number = matrix.dimension(1);
+    Tensor<type, 1> corrected_vector = vector;
 
     for(Index i = 0; i < columns_number; i++)
     {
         //TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
         auto column = matrix.chip(i, 1);  // chip slices along dimension 1
 
-        column.device(*thread_pool_device) = column / vector;
+        for(Index j = 0; j < vector.size(); j++)
+            if(vector(j) == 0)
+                corrected_vector(j) = 1;
+
+        column.device(*thread_pool_device) = column / corrected_vector;
     }
 }
 
@@ -981,7 +987,7 @@ void print_pairs(const vector<pair<string, Index>>& pairs)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

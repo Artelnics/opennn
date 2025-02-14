@@ -912,15 +912,29 @@ namespace opennn
 
     Index DataSet::get_raw_variables_number(const VariableUse& variable_use) const
     {
-        return count_if(raw_variables.begin(), raw_variables.end(),
-            [&](const RawVariable& raw_variable) {return raw_variable.use == variable_use; });
+        const Index raw_variables_number = get_raw_variables_number();
+
+        Index count = 0;
+
+        for (Index i = 0; i < raw_variables_number; i++)
+            if (raw_variables[i].use == variable_use)
+                count++;
+
+        return count;
     }
 
 
     Index DataSet::get_used_raw_variables_number() const
     {
-        return count_if(raw_variables.begin(), raw_variables.end(),
-            [](const RawVariable& raw_variable) {return raw_variable.use != VariableUse::None; });
+        const Index raw_variables_number = get_raw_variables_number();
+
+        Index used_raw_variables_number = 0;
+
+        for (Index i = 0; i < raw_variables_number; i++)
+            if (raw_variables[i].use != VariableUse::None)
+                used_raw_variables_number++;
+
+        return used_raw_variables_number;
     }
 
 
@@ -981,34 +995,6 @@ namespace opennn
         return count;
     }
 
-    /*
-    vector<Index> DataSet::get_used_variable_indices() const
-    {
-        const Index used_variables_number = get_used_variables_number();
-        vector<Index> used_variable_indices(used_variables_number);
-
-        const Index raw_variables_number = get_raw_variables_number();
-
-        Index variable_index = 0;
-        Index used_variable_index = 0;
-
-        for(Index i = 0; i < raw_variables_number; i++)
-        {
-            const Index categories_number = raw_variables[i].get_categories_number();
-
-            if(raw_variables[i].use == VariableUse::None)
-            {
-                variable_index += categories_number;
-                continue;
-            }
-
-            for(Index j = 0; j < categories_number; j++)
-                used_variable_indices[used_variable_index++] = variable_index++;
-        }
-
-        return used_variable_indices;
-    }
-    */
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -1030,9 +1016,7 @@ namespace opennn
             }
 
             for (Index j = 0; j < categories_number; j++)
-            {
                 used_variable_indices[used_variable_index++] = variable_index++;
-            }
         }
 
         return used_variable_indices;
@@ -1084,7 +1068,6 @@ namespace opennn
 
         for (size_t i = 0; i < target_raw_variables.size(); i++)
             set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-
     }
 
 
@@ -1754,7 +1737,6 @@ namespace opennn
         sample_uses.resize(new_samples_number);
 
         split_samples_random();
-
     }
 
 
@@ -2120,7 +2102,6 @@ namespace opennn
                 throw runtime_error("Unknown raw variable type.");
             }
         }
-
 
         return histograms;
     }
@@ -2694,84 +2675,83 @@ namespace opennn
 
     vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
     {
-        const Index variables_number = get_variables_number(variable_use);
+        const Index input_variables_number = get_variables_number(variable_use);
 
-        const vector<Index> variable_indices = get_variable_indices(variable_use);
-        const vector<Scaler> variable_scalers = get_variable_scalers(variable_use);
+        const vector<Index> input_variable_indices = get_variable_indices(variable_use);
+        const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
+        const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
-        const vector<Descriptives> variable_descriptives = calculate_variable_descriptives(variable_use);
-
-        for (Index i = 0; i < variables_number; i++)
+        for (Index i = 0; i < input_variables_number; i++)
         {
-            switch (variable_scalers[i])
+            switch (input_variable_scalers[i])
             {
             case Scaler::None:
                 break;
 
             case Scaler::MinimumMaximum:
-                scale_minimum_maximum(data, variable_indices[i], variable_descriptives[i]);
+                scale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::MeanStandardDeviation:
-                scale_mean_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
+                scale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::StandardDeviation:
-                scale_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
+                scale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::Logarithm:
-                scale_logarithmic(data, variable_indices[i]);
+                scale_logarithmic(data, input_variable_indices[i]);
                 break;
 
             default:
-                throw runtime_error("Unknown scaling inputs method: " + to_string(int(variable_scalers[i])) + "\n");
+                throw runtime_error("Unknown scaling inputs method: " + to_string(int(input_variable_scalers[i])) + "\n");
             }
         }
 
-        return variable_descriptives;
+        return input_variable_descriptives;
     }
 
 
     void DataSet::unscale_variables(const VariableUse& variable_use,
-        const vector<Descriptives>& variable_descriptives)
+        const vector<Descriptives>& input_variable_descriptives)
     {
-        const Index variables_number = get_variables_number(variable_use);
+        const Index input_variables_number = get_variables_number(variable_use);
 
-        const vector<Index> variable_indices = get_variable_indices(variable_use);
+        const vector<Index> input_variable_indices = get_variable_indices(variable_use);
 
-        const vector<Scaler> variable_scalers = get_variable_scalers(variable_use);
+        const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
-        for (Index i = 0; i < variables_number; i++)
+        for (Index i = 0; i < input_variables_number; i++)
         {
-            switch (variable_scalers[i])
+            switch (input_variable_scalers[i])
             {
             case Scaler::None:
                 break;
 
             case Scaler::MinimumMaximum:
-                unscale_minimum_maximum(data, variable_indices[i], variable_descriptives[i]);
+                unscale_minimum_maximum(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::MeanStandardDeviation:
-                unscale_mean_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
+                unscale_mean_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::StandardDeviation:
-                unscale_standard_deviation(data, variable_indices[i], variable_descriptives[i]);
+                unscale_standard_deviation(data, input_variable_indices[i], input_variable_descriptives[i]);
                 break;
 
             case Scaler::Logarithm:
-                unscale_logarithmic(data, variable_indices[i]);
+                unscale_logarithmic(data, input_variable_indices[i]);
                 break;
 
             case Scaler::ImageMinMax:
-                unscale_image_minimum_maximum(data, variable_indices[i]);
+                unscale_image_minimum_maximum(data, input_variable_indices[i]);
                 break;
 
             default:
-                throw runtime_error("Unknown scaler: " + to_string(int(variable_scalers[i])) + "\n");
+                throw runtime_error("Unknown unscaling and unscaling method: " + to_string(int(input_variable_scalers[i])) + "\n");
             }
         }
     }
@@ -3480,11 +3460,14 @@ namespace opennn
         */
     }
 
+
     Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums,
         const Tensor<type, 1>& maximums)
     {
         const vector<Index> used_variable_indices = get_used_variable_indices();
+
         const Index used_variables_number = used_variable_indices.size();
+
         const Index samples_number = get_samples_number();
 
         Tensor<type, 1> filtered_indices(samples_number);
@@ -3495,51 +3478,60 @@ namespace opennn
 
         Index sample_index = 0;
 
-        for (Index j = 0; j < used_samples_number; j++)
+        for (Index i = 0; i < used_variables_number; i++)
         {
-            sample_index = used_sample_indices[j];
-            bool should_filter = false;
+            const Index variable_index = used_variable_indices[i];
 
-            for (Index i = 0; i < used_variables_number; i++)
+            for (Index j = 0; j < used_samples_number; j++)
             {
-                const Index variable_index = used_variable_indices[i];
+                sample_index = used_sample_indices[j];
+
+                if (get_sample_use(sample_index) == SampleUse::None
+                    || isnan(data(sample_index, variable_index)))
+                    continue;
+
                 const type value = data(sample_index, variable_index);
 
-                if (value < minimums(i) || value > maximums(i))
+                if (abs(value - minimums(i)) <= NUMERIC_LIMITS_MIN
+                    || abs(value - maximums(i)) <= NUMERIC_LIMITS_MIN)
+                    continue;
+
+                if (minimums(i) == maximums(i))
                 {
-                    should_filter = true;
-                    break;
+                    if (value != minimums(i))
+                    {
+                        filtered_indices(sample_index) = type(1);
+                        set_sample_use(sample_index, SampleUse::None);
+                    }
+                }
+                else if (value < minimums(i)
+                    || value > maximums(i))
+                {
+                    filtered_indices(sample_index) = type(1);
+                    set_sample_use(sample_index, SampleUse::None);
                 }
             }
-
-            if (should_filter)
-            {
-                filtered_indices(sample_index) = type(1);
-                set_sample_use(sample_index, SampleUse::None);
-            }
         }
 
-        Index filtered_samples_number = 0;
-        for (Index i = 0; i < samples_number; i++)
-        {
-            if (filtered_indices(i) > type(0.5))
-            {
-                filtered_samples_number++;
-            }
-        }
+        const Index filtered_samples_number =
+            Index(count_if(filtered_indices.data(),
+                filtered_indices.data() + filtered_indices.size(),
+                [](type value)
+                {
+                    return value > type(0.5);
+                }));
 
         Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
+
         Index index = 0;
+
         for (Index i = 0; i < samples_number; i++)
-        {
             if (filtered_indices(i) > type(0.5))
-            {
                 filtered_samples_indices(index++) = i;
-            }
-        }
 
         return filtered_samples_indices;
     }
+
 
     void DataSet::impute_missing_values_unuse()
     {
@@ -3760,7 +3752,7 @@ namespace opennn
 
     void DataSet::process_tokens(vector<string>& tokens)
     {
-        const Index raw_variables_number = tokens.size();
+        const Index raw_variables_number = raw_variables.size();
 
         //#pragma omp parallel for reduction(+:missing_values_number)
 
@@ -3799,22 +3791,22 @@ namespace opennn
         }
     }
 
-    /*
+
     void DataSet::read_csv()
     {
-        if(data_path.empty())
+        if (data_path.empty())
             throw runtime_error("Data path is empty.\n");
 
         ifstream file(data_path);
 
-        if(!file.is_open())
+        if (!file.is_open())
             throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
 
         const string separator_string = get_separator_string();
 
-        const vector<string> positive_words = {"yes", "positive", "+", "true"};
+        const vector<string> positive_words = { "yes", "positive", "+", "true" };
 
-        const vector<string> negative_words = {"no", "negative", "-", "false"};
+        const vector<string> negative_words = { "no", "negative", "-", "false" };
 
         string line;
 
@@ -3824,37 +3816,37 @@ namespace opennn
 
         // Read first line
 
-        while(getline(file, line))
+        while (getline(file, line))
         {
             prepare_line(line);
 
-            if(line.empty()) continue;
+            if (line.empty()) continue;
 
-    //        check_separators(line);
+            check_separators(line);
 
             tokens = get_tokens(line, separator_string);
 
             columns_number = tokens.size();
 
-            if(columns_number != 0) break;
+            if (columns_number != 0) break;
         }
 
         const Index raw_variables_number = has_sample_ids
-                ? columns_number - 1
-                : columns_number;
+            ? columns_number - 1
+            : columns_number;
 
         raw_variables.resize(raw_variables_number);
 
         Index samples_number = 0;
 
-        if(has_header)
+        if (has_header)
         {
-            if(has_numbers(tokens))
+            if (has_numbers(tokens))
                 throw runtime_error("Error: Some header names are numeric: " + line + "\n");
 
-            if(has_sample_ids)
-                for(Index i = 0; i < raw_variables_number; i++)
-                    raw_variables[i].name = tokens[i+1];
+            if (has_sample_ids)
+                for (Index i = 0; i < raw_variables_number; i++)
+                    raw_variables[i].name = tokens[i + 1];
             else
                 set_raw_variable_names(tokens);
         }
@@ -3866,28 +3858,28 @@ namespace opennn
 
         // Rest of lines
 
-        while(getline(file, line))
+        while (getline(file, line))
         {
             prepare_line(line);
 
-            if(line.empty()) continue;
+            if (line.empty()) continue;
 
-            //check_separators(line);
+            check_separators(line);
 
             tokens = get_tokens(line, separator_string);
 
-            if(tokens.size() != columns_number)
-                throw runtime_error("Sample " + to_string(samples_number+1) + ": "
-                                    "Tokens number is not equal to columns number.");
+            if (tokens.size() != columns_number)
+                throw runtime_error("Sample " + to_string(samples_number + 1) + ": "
+                    "Tokens number is not equal to columns number.");
 
             process_tokens(tokens);
 
             samples_number++;
         }
 
-        for(Index i = 0; i < raw_variables_number; i++)
-            if(raw_variables[i].type == RawVariableType::Categorical
-            && raw_variables[i].get_categories_number() == 2)
+        for (Index i = 0; i < raw_variables_number; i++)
+            if (raw_variables[i].type == RawVariableType::Categorical
+                && raw_variables[i].get_categories_number() == 2)
                 raw_variables[i].type = RawVariableType::Binary;
 
         sample_uses.resize(samples_number);
@@ -3898,10 +3890,7 @@ namespace opennn
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
-        raw_variables[columns_number - 1].type == RawVariableType::Categorical
-            ? data.resize(samples_number, variables_number + raw_variables[columns_number - 1].get_categories_number() - 1)
-            : data.resize(samples_number, variables_number);
-
+        data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
         data.setZero();
 
         rows_missing_values_number = 0;
@@ -3916,36 +3905,36 @@ namespace opennn
         file.clear();
         file.seekg(0);
 
-        if(has_header)
+        if (has_header)
         {
-            while(getline(file, line))
+            while (getline(file, line))
             {
                 prepare_line(line);
 
-                if(line.empty()) continue;
+                if (line.empty()) continue;
                 break;
             }
         }
 
         Index sample_index = 0;
 
-        while(getline(file, line))
+        while (getline(file, line))
         {
             prepare_line(line);
 
-            if(line.empty()) continue;
+            if (line.empty()) continue;
 
             check_separators(line);
 
             tokens = get_tokens(line, separator_string);
 
-            if(has_missing_values(tokens))
+            if (has_missing_values(tokens))
             {
-                rows_missing_values_number ++;
+                rows_missing_values_number++;
 
-                for(size_t i = 0; i < tokens.size(); i++)
+                for (size_t i = 0; i < tokens.size(); i++)
                 {
-                    if(tokens[i].empty() || tokens[i] == missing_values_label)
+                    if (tokens[i].empty() || tokens[i] == missing_values_label)
                     {
                         missing_values_number++;
 
@@ -3954,37 +3943,37 @@ namespace opennn
                 }
             }
 
-            if(has_sample_ids)
+            if (has_sample_ids)
                 sample_ids[sample_index] = tokens[0];
 
             // #pragma omp parallel for
-            for(Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
+            for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
             {
                 const RawVariableType raw_variable_type = raw_variables[raw_variable_index].type;
 
                 const string token = has_sample_ids
-                    ? tokens[raw_variable_index+1]
+                    ? tokens[raw_variable_index + 1]
                     : tokens[raw_variable_index];
 
                 const vector<Index>& variable_indices = all_variable_indices[raw_variable_index];
 
-                if(raw_variable_type == RawVariableType::Numeric)
+                if (raw_variable_type == RawVariableType::Numeric)
                 {
                     (token.empty() || token == missing_values_label)
                         ? data(sample_index, variable_indices[0]) = NAN
                         : data(sample_index, variable_indices[0]) = stof(token);
                 }
-                else if(raw_variable_type == RawVariableType::DateTime)
+                else if (raw_variable_type == RawVariableType::DateTime)
                 {
                     data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
                 }
-                else if(raw_variable_type == RawVariableType::Categorical)
+                else if (raw_variable_type == RawVariableType::Categorical)
                 {
                     const Index categories_number = raw_variables[raw_variable_index].get_categories_number();
 
-                    if(token.empty() || token == missing_values_label)
+                    if (token.empty() || token == missing_values_label)
                     {
-                        for(Index category_index = 0; category_index < categories_number; category_index++)
+                        for (Index category_index = 0; category_index < categories_number; category_index++)
                             data(sample_index, variable_indices[category_index]) = NAN;
                     }
                     else
@@ -3996,9 +3985,9 @@ namespace opennn
                                 data(sample_index, variable_indices[category_index]) = 1;
                     }
                 }
-                else if(raw_variable_type == RawVariableType::Binary)
+                else if (raw_variable_type == RawVariableType::Binary)
                 {
-                    if(contains(positive_words, token) || contains(negative_words, token))
+                    if (contains(positive_words, token) || contains(negative_words, token))
                     {
                         data(sample_index, variable_indices[0]) = contains(positive_words, token)
                             ? 1
@@ -4008,11 +3997,11 @@ namespace opennn
                     {
                         const vector<string> categories = raw_variables[raw_variable_index].categories;
 
-                        if(token.empty() || token == missing_values_label)
+                        if (token.empty() || token == missing_values_label)
                             data(sample_index, variable_indices[0]) = type(NAN);
-                        else if(token == categories[0])
+                        else if (token == categories[0])
                             data(sample_index, variable_indices[0]) = 1;
-                        else if(token == categories[1])
+                        else if (token == categories[1])
                             data(sample_index, variable_indices[0]) = 0;
                         else
                             throw runtime_error("Unknown token " + token);
@@ -4028,73 +4017,6 @@ namespace opennn
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();
-    }
-    */
-    void DataSet::read_csv()
-    {
-        if (data_path.empty())
-            throw runtime_error("Data path is empty.\n");
-
-        ifstream file(data_path);
-
-        if (!file.is_open())
-            throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
-
-        const string separator_string = get_separator_string();
-
-        const vector<string> positive_words = { "yes", "positive", "+", "true" };
-        const vector<string> negative_words = { "no", "negative", "-", "false" };
-
-        string line;
-        vector<string> tokens;
-        size_t columns_number = 0;
-
-        if (getline(file, line))
-        {
-            prepare_line(line);
-            tokens = get_tokens(line, separator_string);
-            columns_number = tokens.size();
-
-            if (columns_number == 0)
-                throw runtime_error("Error: CSV file is empty or misformatted.");
-
-            if (has_header)
-            {
-                if (has_numbers(tokens))
-                    throw runtime_error("Error: Some header names are numeric: " + line + "\n");
-
-                if (has_sample_ids)
-                    for (Index i = 0; i < columns_number - 1; i++)
-                        raw_variables[i].name = tokens[i + 1];
-                else
-                    set_raw_variable_names(tokens);
-
-                if (!getline(file, line))
-                    throw runtime_error("Error: Empty file after header.");
-            }
-        }
-        else
-        {
-            throw runtime_error("Error: Could not read the file.");
-        }
-
-        Index samples_number = 0;
-
-        while (getline(file, line))
-        {
-            prepare_line(line);
-            if (line.empty()) continue;
-
-            tokens = get_tokens(line, separator_string);
-
-            if (tokens.size() != columns_number)
-                throw runtime_error("Sample " + to_string(samples_number + 1) + ": Tokens number is not equal to columns number.");
-
-            process_tokens(tokens);
-            samples_number++;
-        }
-
-        file.close();
     }
 
     string DataSet::RawVariable::get_type_string() const
@@ -4231,9 +4153,11 @@ namespace opennn
 
     bool DataSet::has_binary_or_categorical_raw_variables() const
     {
-        return any_of(raw_variables.begin(), raw_variables.end(),
-            [](const RawVariable& var)
-            {return var.type == RawVariableType::Binary || var.type == RawVariableType::Categorical; });
+        for (const auto& raw_variable : raw_variables)
+            if (raw_variable.type == RawVariableType::Binary || raw_variable.type == RawVariableType::Categorical)
+                return true;
+
+        return false;
     }
 
 
@@ -4245,9 +4169,11 @@ namespace opennn
 
     bool DataSet::has_missing_values(const vector<string>& row) const
     {
-        return any_of(row.begin(), row.end(),
-            [&](const string& value) {return value.empty() || value == missing_values_label; });
+        for (size_t i = 0; i < row.size(); i++)
+            if (row[i].empty() || row[i] == missing_values_label)
+                return true;
 
+        return false;
     }
 
 
@@ -4644,7 +4570,7 @@ namespace opennn
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

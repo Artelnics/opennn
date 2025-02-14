@@ -198,6 +198,14 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
 
     centers = new_centers;
     frequencies = new_frequencies;
+    /*
+    cout << "Tamano de frequencies: " << frequencies.size() << "\n";
+    cout << "Valores de frequencies: ";
+    for (Index i = 0; i < frequencies.size(); ++i) {
+        cout << frequencies(i) << " ";
+    }
+    cout << "\n";
+    */
 }
 
 
@@ -239,7 +247,6 @@ Index Histogram::calculate_most_populated_bin() const
 {
     if (frequencies.size() == 0) 
         return 0;
-    }
 
     Index max_element=frequencies(0);
     for (Index j = 1; j < frequencies.size(); j++) {
@@ -924,13 +931,13 @@ BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
 }
 
 
-Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) {
+Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) 
+{
+    /*
     const Index size = vector.dimension(0);
 
     if (size == 0 || bins_number <= 0) {
         throw invalid_argument("Vector size or number of bins must be positive.");
-    }
-
 
     std::vector<type> value_keys;
     std::vector<Index> value_frequencies;
@@ -959,10 +966,25 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) {
     sort(sorted_values.begin(), sorted_values.end());
 
     std::vector<type> unique_values;
+<<<<<<< HEAD
+    unique_values.reserve(std::min<Index>(size, bins_number));
+
+    // Detectamos los valores ï¿½nicos en el vector
+    for (Index i = 0; i < size; i++)
+    {
+        const type val = vector(i);
+        if (std::find(unique_values.begin(), unique_values.end(), val) == unique_values.end())
+        {
+            unique_values.push_back(val);
+            if (static_cast<Index>(unique_values.size()) >= effective_bins)
+                break;
+        }
+=======
     std::vector<Index> unique_frequencies;
     for (const auto& entry : sorted_values) {
         unique_values.push_back(entry.first);
         unique_frequencies.push_back(entry.second);
+>>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
     }
 
     const Index unique_values_number = static_cast<Index>(unique_values.size());
@@ -994,18 +1016,103 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) {
             remaining_values--;
         }
 
+<<<<<<< HEAD
+        // Verificaciï¿½n de frecuencias y validaciï¿½n de accesos
+        for (Index i = 0; i < size; i++)
+        {
+            const type val = vector(i);
+            if (std::isnan(val)) continue;
+=======
         std::vector<type> bin_values(unique_values.begin() + current_value_index,
             unique_values.begin() + current_value_index + bin_size);
         std::vector<Index> bin_freqs(unique_frequencies.begin() + current_value_index,
             unique_frequencies.begin() + current_value_index + bin_size);
+>>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
 
         minimums(current_bin) = *std::min_element(bin_values.begin(), bin_values.end());
         maximums(current_bin) = *std::max_element(bin_values.begin(), bin_values.end());
         centers(current_bin) = (minimums(current_bin) + maximums(current_bin)) / type(2.0);
         frequencies(current_bin) = std::accumulate(bin_freqs.begin(), bin_freqs.end(), Index(0));
 
+<<<<<<< HEAD
+            bool found_bin = false;
+            for (Index j = 0; j < unique_values_number; j++)
+            {
+                if (std::abs(val - centers(j)) < NUMERIC_LIMITS_MIN)
+                {
+                    frequencies(j)++;
+                    found_bin = true;
+                    break;
+                }
+            }
+
+            // Si no encontramos bin, algo estï¿½ mal
+            if (!found_bin)
+            {
+                std::cerr << "Error: Value " << val << " did not match any bin center!" << std::endl;
+            }
+        }
+    }
+    else
+    {
+        const type min_val = minimum(vector);
+        const type max_val = maximum(vector);
+
+        // Comprobaciï¿½n de valores mï¿½nimos y mï¿½ximos
+        std::cout << "Min value: " << min_val << ", Max value: " << max_val << std::endl;
+
+        if (min_val == max_val)
+        {
+            throw std::invalid_argument("All values in the vector are identical.");
+        }
+
+        const type bin_width = (max_val - min_val) / static_cast<type>(effective_bins);
+
+        // Verificaciï¿½n de bin_width
+        std::cout << "Bin width: " << bin_width << std::endl;
+
+        if (bin_width == 0)
+        {
+            std::cerr << "Error: bin_width is zero, which means all values are identical or there's a bug!" << std::endl;
+            return Histogram(); // Salida temprana en caso de error
+        }
+
+        for (Index i = 0; i < effective_bins; i++)
+        {
+            minimums(i) = min_val + bin_width * i;
+            maximums(i) = minimums(i) + bin_width;
+            centers(i) = (minimums(i) + maximums(i)) / static_cast<type>(2.0);
+        }
+
+        // Depuraciï¿½n de los bins creados
+        std::cout << "Bins information: \n";
+        for (Index i = 0; i < effective_bins; i++)
+        {
+            std::cout << "Bin " << i << ": [" << minimums(i) << ", " << maximums(i) << "] Center: " << centers(i) << std::endl;
+        }
+
+        // Contar las frecuencias
+        for (Index i = 0; i < size; i++)
+        {
+            const type val = vector(i);
+            if (std::isnan(val)) continue;
+
+            // Validaciï¿½n de acceso a bin
+            Index bin_index = static_cast<Index>((val - min_val) / bin_width);
+            if (bin_index < 0 || bin_index >= effective_bins)
+            {
+                std::cerr << "Error: Bin index out of range for value " << val << std::endl;
+                bin_index = std::min(bin_index, effective_bins - 1); // Ajustar el ï¿½ndice al ï¿½ltimo bin
+            }
+
+            std::cout << "Value " << val << " falls into bin index: " << bin_index << std::endl;
+
+            frequencies(bin_index)++;
+        }
+=======
         current_value_index += bin_size;
         current_bin++;
+>>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
     }
 
     Histogram hist(bins_number);
@@ -1013,7 +1120,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) {
     hist.minimums = minimums;
     hist.maximums = maximums;
     hist.frequencies = frequencies;
-    
+    */
     return 0;
 }
 
@@ -1258,7 +1365,7 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
     if (size <= 0)
     {
-        std::cerr << "Error: vector_descriptives() recibió un tensor vacío." << std::endl;
+        std::cerr << "Error: vector_descriptives() recibiï¿½ un tensor vacï¿½o." << std::endl;
         return my_descriptives;
     }
 
@@ -1277,7 +1384,7 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
             sum += x(i);
         }
         else {
-            std::cerr << "Índice fuera de rango: " << i << std::endl;
+            std::cerr << "ï¿½ndice fuera de rango: " << i << std::endl;
         }
         squared_sum += double(x(i)) * double(x(i));
         count++;
@@ -1316,10 +1423,10 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
             descriptives[i] = vector_descriptives(column);
         }
         else {
-            std::cerr << "Índice fuera de rango: " << i << std::endl;
+            std::cerr << "ï¿½ndice fuera de rango: " << i << std::endl;
         }
 
-        std::cout << "Tamaño del vector descriptives: " << descriptives.size() << std::endl;
+        std::cout << "Tamaï¿½o del vector descriptives: " << descriptives.size() << std::endl;
     }
 
     return descriptives;
@@ -2006,7 +2113,7 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -155,6 +155,7 @@ public:
    static type calculate_h(const type&);
 
    Tensor<type, 1> calculate_numerical_gradient();
+   Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();
    Tensor<type, 1> calculate_numerical_inputs_derivatives();
    Tensor<type, 2> calculate_numerical_hessian();
@@ -239,7 +240,7 @@ struct BackPropagationLM
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

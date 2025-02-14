@@ -296,7 +296,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     case ModelType::AutoAssociation:
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
-
+    
 /*
     case ModelType::TextClassificationTransformer:
         set_text_classification_transformer(input_dimensions, complexity_dimensions, output_dimensions);
@@ -1953,7 +1953,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
 // Namespace
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
