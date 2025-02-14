@@ -155,6 +155,7 @@ public:
    static type calculate_h(const type&);
 
    Tensor<type, 1> calculate_numerical_gradient();
+   Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();
    Tensor<type, 1> calculate_numerical_inputs_derivatives();
    Tensor<type, 2> calculate_numerical_hessian();

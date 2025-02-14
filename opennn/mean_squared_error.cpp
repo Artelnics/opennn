@@ -58,7 +58,6 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
                                           const ForwardPropagation&,
                                           BackPropagationLM& back_propagation) const
 {
-
     const Index outputs_number = neural_network->get_outputs_number();
     
     const Index batch_samples_number = batch.get_samples_number();
@@ -70,7 +69,6 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
     error.device(*thread_pool_device) = squared_errors.square().sum() / type(batch_samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
-
 }
 
 
@@ -122,10 +120,14 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2)/type(batch_samples_number);
 
+    // const Tensor<type, 2>& errors = back_propagation_lm.errors;
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
+
+    // cout << "Errors dimensions: " << errors.dimensions() << endl;
+    // cout << "Squared errors dimensions: " << squared_errors.dimensions() << endl;
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }

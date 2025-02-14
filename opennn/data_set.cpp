@@ -991,7 +991,10 @@ namespace opennn
         return count;
     }
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 4a757b0db08d559de35c721d0a82303dbdd89c8a
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -4023,7 +4026,10 @@ namespace opennn
         set_binary_raw_variables();
         split_samples_random();
     }
+<<<<<<< HEAD
+=======
 
+>>>>>>> 4a757b0db08d559de35c721d0a82303dbdd89c8a
 
     string DataSet::RawVariable::get_type_string() const
     {

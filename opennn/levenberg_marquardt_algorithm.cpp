@@ -270,10 +270,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         // training_back_propagation_lm.print();
 
+/*
+        // Numerical Jacobian and Hessian
         Tensor<type, 2> numerical_hessian = loss_index->calculate_numerical_hessian();
         Tensor<type, 2> numerical_jacobian = loss_index->calculate_numerical_jacobian();
-
-        // Numerical Jacobian and Hessian
 
         cout << "Jacobian:\n" << training_back_propagation_lm.squared_errors_jacobian << endl;
 
@@ -288,7 +288,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         throw runtime_error("Checking the numerical Hessian.");
 
         results.training_error_history(epoch) = training_back_propagation_lm.error();
-        
+*/
         if(has_selection)
         {
             neural_network->forward_propagate(selection_batch.get_input_pairs(),

@@ -26,8 +26,6 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        cout << "Bye!" << endl;
-
         return 0;
     }
     catch(const exception& e)
