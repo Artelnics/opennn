@@ -26,7 +26,6 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-
         // DataSet data_set;
         // NeuralNetwork neural_network;
         // data_set.save("data_set_empty.xml");
