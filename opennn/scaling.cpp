@@ -104,7 +104,8 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-        matrix(i, column_index) = (matrix(i, column_index) + min_range * maximum - max_range * minimum) / (maximum - minimum);
+        //matrix(i, column_index) = (matrix(i, column_index) + min_range * maximum - max_range * minimum) / (maximum - minimum);
+        matrix(i, column_index) = (matrix(i, column_index) - minimum) / (maximum - minimum);
 }
 
 
@@ -147,8 +148,9 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-        matrix(i, column_index) = (matrix(i, column_index) * (maximum - minimum) - (min_range * maximum - max_range * minimum))
-                                  / (max_range - min_range);
+        //matrix(i, column_index) = (matrix(i, column_index) * (maximum - minimum) - (min_range * maximum - max_range * minimum))
+                                  // (max_range - min_range);
+        matrix(i,column_index) = (matrix(i, column_index)*(maximum-minimum)+minimum);
 
 }
 

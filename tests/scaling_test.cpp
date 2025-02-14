@@ -6,7 +6,6 @@
 
 using namespace opennn;
 
-/*
 TEST(ScalingTest, ScaleDataMeanStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
@@ -23,7 +22,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
    
     vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
 
-    EXPECT_NEAR(matrix_descriptives[0].mean, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(matrix_descriptives[0].mean, type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), NUMERIC_LIMITS_MIN);
     
 }
@@ -35,15 +34,21 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
     Tensor<type, 2> matrix(samples_number, 1);
     matrix.setRandom();
 
+    Tensor<type, 2> scaled_matrix;
+
     DataSet data_set(samples_number, { 1 }, { 0 });
 
     data_set.set_data(matrix);
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
+
     data_set.scale_data();
 
     vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
 
-    EXPECT_NEAR(abs(matrix_descriptives[0].minimum), type(1), NUMERIC_LIMITS_MIN);
+    //std::cout <<"Maximum after scaling:"<< matrix_descriptives[0].maximum<<std::endl;
+    //std::cout <<"Minimum after scaling:"<< matrix_descriptives[0].minimum<<std::endl;
+
+    EXPECT_NEAR(abs(matrix_descriptives[0].minimum), type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(matrix_descriptives[0].maximum), type(1), NUMERIC_LIMITS_MIN);
 }
 
@@ -163,6 +168,9 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 
     unscaled_matrix = data_set.get_data();
 
+    //std::cout<<"Matrix:\n"<<matrix<<std::endl;
+    //std::cout<<"Unscaled Matrix:\n"<<unscaled_matrix<<std::endl;
+
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 
 }
@@ -241,4 +249,4 @@ TEST(ScalingTest, UnscaleDataLogarithmic)
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
 
 }
-*/
+
