@@ -26,20 +26,12 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        DataSet data_set;
-        NeuralNetwork neural_network;
-        data_set.save("data_set_empty.xml");
-        neural_network.save("neural_network_empty.xml");
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.save("training_strategy_empty.xml");
-
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.save("model_selection_empty.xml");
-
-
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv", ";", true, true);
+        cout << "data set creado" << endl;
+        data_set.save("data_set_cancer.xml");
+        cout << "data set guardado" << endl;
+        DataSet prueba;
+        prueba.load("data_set_cancer.xml");
         cout << "Bye!" << endl;
 
         return 0;
@@ -53,7 +45,7 @@ int main()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2024 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2025 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

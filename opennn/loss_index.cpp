@@ -729,6 +729,76 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     return numerical_gradient;
 }
 
+Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
+{
+    const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+
+    const vector<Index> sample_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+
+    Batch batch(samples_number, data_set);
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+    BackPropagationLM back_propagation_lm(samples_number, this);
+
+    const Tensor<type, 1> parameters = neural_network->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+    type h = 0;
+
+    Tensor<type, 1> parameters_forward = parameters;
+    Tensor<type, 1> parameters_backward = parameters;
+
+    type error_forward = 0;
+    type error_backward = 0;
+
+    Tensor<type, 1> numerical_gradient_lm(parameters_number);
+    numerical_gradient_lm.setConstant(type(0));
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        h = calculate_h(parameters(i));
+
+        parameters_forward(i) += h;
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          parameters_forward,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        error_forward = back_propagation_lm.error();
+
+        parameters_forward(i) -= h;
+
+        parameters_backward(i) -= h;
+
+        neural_network->forward_propagate(batch.get_input_pairs(),
+                                          parameters_backward,
+                                          forward_propagation);
+
+        calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
+
+        calculate_error_lm(batch, forward_propagation, back_propagation_lm);
+
+        error_backward = back_propagation_lm.error();
+
+        parameters_backward(i) += h;
+
+        numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
+    }
+
+    return numerical_gradient_lm;
+}
 
 Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 {
@@ -786,7 +856,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     return numerical_inputs_derivatives;
 }
-
 
 Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
@@ -864,9 +933,6 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
     return jacobian;
 }
-
-
-// @todo
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
@@ -1001,8 +1067,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 
         for (Index j = i; j < parameters_number; j++)
         {
-            if(j == i)
-                continue;
+            // if(j == i)
+                // continue;
 
             h_j = calculate_h(parameters(j));
 
@@ -1239,7 +1305,7 @@ BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, Loss
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2024 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
