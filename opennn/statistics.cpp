@@ -1419,7 +1419,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
         // Acceder directamente a la columna sin usar TensorMap
         const Tensor<type, 1> column = matrix.chip(i, 1); // Chip devuelve un tensor con la columna
 
-        if (i >= 0 && i < descriptives.size()) {
+        if (i >= 0 && i < static_cast<Index>(descriptives.size())) {
             descriptives[i] = vector_descriptives(column);
         }
         else {
