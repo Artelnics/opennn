@@ -544,7 +544,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
     NeuralNetwork neural_network;//(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
-    /*Does not compile in visual
+    // /*Does not compile in visual
     neural_network.add_layer(make_unique<ScalingLayer2D>((dimensions){1}));
     neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1},(dimensions){1},PerceptronLayer::ActivationFunction::Logistic));
 // */
@@ -575,13 +575,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
 
-    cout << "OK?" << endl;
-
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    // cout << "outputs:\n" << outputs << endl;
-    // cout << "Targets:\n" << targets << endl;
-    // throw runtime_error("");
 
     // Logistic correlation
 

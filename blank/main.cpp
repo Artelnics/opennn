@@ -40,7 +40,6 @@ int main()
         // model_selection.save("model_selection_empty.xml");
 
         // @todo Create an example to test if the numerical hessian works properly.
-        // Also test if the outputs deltas are modified or it's the jacobian itself to test if the NAN error problem lays there
 
         NeuralNetwork neural_network;
         DataSet data_set(7, {1}, {1});
@@ -52,7 +51,7 @@ int main()
         }
         data_set.set_data(data);
 
-        neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1}, (dimensions){1}, PerceptronLayer::ActivationFunction::RectifiedLinear));
+        neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1}, (dimensions){1}, PerceptronLayer::ActivationFunction::Linear));
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 

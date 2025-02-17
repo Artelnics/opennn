@@ -271,10 +271,9 @@ TrainingResults ConjugateGradient::perform_training()
     const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
     const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
 
-    Tensor<type, 2> not_scaled_data = data_set->get_data();
+    print_vector(input_variable_indices);
 
-    const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
-    vector<Descriptives> target_variable_descriptives;
+    // throw runtime_error("Dimensions check");
 
     // Neural network
 

@@ -1116,7 +1116,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
 Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 {
-    Tensor<float, 3> image = read_bmp_image(image_path);
+    Tensor<type, 3> image = read_bmp_image(image_path);
 
     ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(get_first(Layer::Type::Scaling4D));
 
