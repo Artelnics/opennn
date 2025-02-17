@@ -26,6 +26,7 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
+<<<<<<< HEAD
         // DataSet data_set;
         // NeuralNetwork neural_network;
         // data_set.save("data_set_empty.xml");
@@ -62,6 +63,14 @@ int main()
         training_strategy.perform_training();
 
 
+=======
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv", ";", true, true);
+        cout << "data set creado" << endl;
+        data_set.save("data_set_cancer.xml");
+        cout << "data set guardado" << endl;
+        DataSet prueba;
+        prueba.load("data_set_cancer.xml");
+>>>>>>> 4ae9e8d247c651b500ce044e2395e279b8b052d2
         cout << "Bye!" << endl;
 
         return 0;

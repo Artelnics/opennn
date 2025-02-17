@@ -146,12 +146,8 @@ namespace opennn
         add_xml_element(printer, "Type", get_type_string());
 
         if (type == RawVariableType::Categorical || type == RawVariableType::Binary)
-        {
-            if (categories.size() == 0)
-                return;
-
-            add_xml_element(printer, "Categories", vector_to_string(categories));
-        }
+            if (categories.size() != 0) 
+                add_xml_element(printer, "Categories", vector_to_string(categories));
     }
 
 
@@ -995,6 +991,10 @@ namespace opennn
         return count;
     }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ae9e8d247c651b500ce044e2395e279b8b052d2
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -1220,15 +1220,11 @@ namespace opennn
                 variable_index++;
             }
             else if (raw_variable.type == RawVariableType::Categorical)
-            {
                 variable_index += raw_variable.get_categories_number();
-            }
             else if (raw_variable.type == RawVariableType::DateTime
-                || raw_variable.type == RawVariableType::Constant
-                || raw_variable.type == RawVariableType::Binary)
-            {
+                    || raw_variable.type == RawVariableType::Constant
+                    || raw_variable.type == RawVariableType::Binary)
                 variable_index++;
-            }
         }
     }
 
@@ -2839,7 +2835,9 @@ namespace opennn
         if (!data_set_element)
             throw runtime_error("Data set element is nullptr.\n");
 
+        // Data Source
         const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
+        
         if (!data_source_element)
             throw runtime_error("Data source element is nullptr.\n");
 
@@ -2850,15 +2848,16 @@ namespace opennn
         set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
         set_codification(read_xml_string(data_source_element, "Codification"));
 
+        // Raw Variables
         const XMLElement* raw_variables_element = data_set_element->FirstChildElement("RawVariables");
 
         if (!raw_variables_element)
             throw runtime_error("RawVariables element is nullptr.\n");
-
+        
         set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
         const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-
+        
         for (size_t i = 0; i < raw_variables.size(); i++)
         {
             RawVariable& raw_variable = raw_variables[i];
@@ -2874,12 +2873,19 @@ namespace opennn
             raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
             if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
-                raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), " ");
+            {
+                const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
+
+                if (categories_element)
+                    raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), " ");
+                else if (raw_variable.type == RawVariableType::Binary)
+                    raw_variable.categories = { "0", "1" };
+                else
+                    throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
+            }
         }
-
-        if (has_sample_ids)
-            sample_ids = get_tokens(read_xml_string(data_set_element, "SamplesId"), " ");
-
+        
+        // Samples
         const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
         if (!samples_element)
@@ -2887,12 +2893,15 @@ namespace opennn
 
         const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
+        if (has_sample_ids)
+            sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), " ");
+
         if (raw_variables.size() != 0)
         {
-            if (raw_variables[(Index)raw_variables.size() - 1].type == RawVariableType::Categorical)
-                data.resize(samples_number, (Index)raw_variables.size() + raw_variables[(Index)raw_variables.size() - 1].get_categories_number() - 1);
-            else
-                data.resize(samples_number, (Index)raw_variables.size());
+            const vector<vector<Index>> all_variable_indices = get_variable_indices();
+
+            data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
+            data.setZero();
 
             sample_uses.resize(samples_number);
             set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
@@ -4008,7 +4017,6 @@ namespace opennn
                     }
                 }
             }
-
             sample_index++;
         }
 
@@ -4018,6 +4026,10 @@ namespace opennn
         set_binary_raw_variables();
         split_samples_random();
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ae9e8d247c651b500ce044e2395e279b8b052d2
 
     string DataSet::RawVariable::get_type_string() const
     {
