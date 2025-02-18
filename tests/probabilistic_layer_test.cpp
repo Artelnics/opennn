@@ -23,7 +23,6 @@ TEST(ProbabilisticLayerTest, GeneralConstructor)
 
 TEST(ProbabilisticLayerTest, CalculateCombinations)
 {
-    /*
     ProbabilisticLayer probabilistic_layer({ 1 }, { 2 });
 
     EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{ 1 });
@@ -42,9 +41,7 @@ TEST(ProbabilisticLayerTest, CalculateCombinations)
     EXPECT_EQ(combinations.rank(), 2);
     EXPECT_EQ(combinations.dimension(0), 1);
     EXPECT_EQ(combinations.dimension(1), 1);
-/*
-    EXPECT_EQ(combinations(0, 0),  type(1), NUMERIC_LIMITS_MIN);
-*/
+    EXPECT_NEAR(combinations(0, 0),  type(2), NUMERIC_LIMITS_MIN);
 }
 
 
