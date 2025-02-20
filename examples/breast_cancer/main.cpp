@@ -67,6 +67,8 @@ int main()
 
         model_selection.perform_input_selection();
 
+        model_selection.perform_neurons_selection();
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);

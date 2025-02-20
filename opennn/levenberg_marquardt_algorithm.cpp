@@ -286,9 +286,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         cout << "Hessian - numerical Hessian:\n" << training_back_propagation_lm.hessian - numerical_hessian << endl;
 
         throw runtime_error("Checking the numerical Hessian.");
-
-        results.training_error_history(epoch) = training_back_propagation_lm.error();
 */
+        results.training_error_history(epoch) = training_back_propagation_lm.error();
+
         if(has_selection)
         {
             neural_network->forward_propagate(selection_batch.get_input_pairs(),

@@ -1741,7 +1741,7 @@ void DataSet::test_fill()
 
     const vector<pair<type*, dimensions>> input_pairs = batch.get_input_pairs();
 
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map(input_pairs[0]);
+    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     const pair<type*, dimensions> targets_pair = batch.get_targets_pair();
 

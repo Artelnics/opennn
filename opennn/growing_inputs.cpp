@@ -147,8 +147,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     {     
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
 
-        // const Index samples_number = data_set->get_samples_number();
-
         Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
         const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
 
@@ -161,8 +159,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         neural_network->set_input_dimensions({ input_variables_number });
 
         data_set->set_dimensions(DataSet::VariableUse::Input, {input_variables_number});
-
-        // cout << "input_variables_number: " << input_variables_number << endl;
 
         if(display)
         {
@@ -188,8 +184,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             training_results = training_strategy->perform_training();
 
-            // throw runtime_error("Is everything correct so far?");
-
             if(training_results.get_selection_error() < minimum_selection_error)
             {
                 minimum_training_error = training_results.get_training_error();
@@ -200,7 +194,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             }
 
 
-            if(training_results.get_selection_error() < input_selection_results.optimum_selection_error)
+            if(minimum_selection_error < input_selection_results.optimum_selection_error)
             {
                 // Neural network
 
@@ -218,7 +212,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             if(display)
                 cout << "Trial number: " << j+1 << endl
                      << "   Training error: " << training_results.get_training_error() << endl
-                     << "   Selection error: " << training_results.get_selection_error() << endl;           
+                     << "   Selection error: " << training_results.get_selection_error() << endl;
         }
 
         if(previus_training_error < minimum_training_error)
@@ -229,7 +223,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::None);
 
-            input_raw_variables_number += -1;
+            input_raw_variables_number--;
         }
         else
         {
@@ -297,8 +291,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Set data set stuff
 
-    data_set->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices, 
+    data_set->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
                                        target_raw_variable_indices);
+
+    data_set->set_dimensions(DataSet::VariableUse::Input, {(Index)input_selection_results.optimal_input_raw_variables_indices.size()});
 
     data_set->print();
     

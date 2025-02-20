@@ -234,7 +234,7 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
 
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
-    // @ Changes to test
+    // @ Changes to test (the case in which you can divide by 0)
     const Index columns_number = matrix.dimension(1);
     Tensor<type, 1> corrected_vector = vector;
 
@@ -271,7 +271,7 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
+        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //Maybe this one gives error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
 
         column.device(*thread_pool_device) = column + vector(i);
     }

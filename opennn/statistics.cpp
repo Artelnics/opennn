@@ -966,25 +966,10 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     sort(sorted_values.begin(), sorted_values.end());
 
     std::vector<type> unique_values;
-<<<<<<< HEAD
-    unique_values.reserve(std::min<Index>(size, bins_number));
-
-    // Detectamos los valores �nicos en el vector
-    for (Index i = 0; i < size; i++)
-    {
-        const type val = vector(i);
-        if (std::find(unique_values.begin(), unique_values.end(), val) == unique_values.end())
-        {
-            unique_values.push_back(val);
-            if (static_cast<Index>(unique_values.size()) >= effective_bins)
-                break;
-        }
-=======
     std::vector<Index> unique_frequencies;
     for (const auto& entry : sorted_values) {
         unique_values.push_back(entry.first);
         unique_frequencies.push_back(entry.second);
->>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
     }
 
     const Index unique_values_number = static_cast<Index>(unique_values.size());
@@ -1016,103 +1001,18 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
             remaining_values--;
         }
 
-<<<<<<< HEAD
-        // Verificaci�n de frecuencias y validaci�n de accesos
-        for (Index i = 0; i < size; i++)
-        {
-            const type val = vector(i);
-            if (std::isnan(val)) continue;
-=======
         std::vector<type> bin_values(unique_values.begin() + current_value_index,
             unique_values.begin() + current_value_index + bin_size);
         std::vector<Index> bin_freqs(unique_frequencies.begin() + current_value_index,
             unique_frequencies.begin() + current_value_index + bin_size);
->>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
 
         minimums(current_bin) = *std::min_element(bin_values.begin(), bin_values.end());
         maximums(current_bin) = *std::max_element(bin_values.begin(), bin_values.end());
         centers(current_bin) = (minimums(current_bin) + maximums(current_bin)) / type(2.0);
         frequencies(current_bin) = std::accumulate(bin_freqs.begin(), bin_freqs.end(), Index(0));
 
-<<<<<<< HEAD
-            bool found_bin = false;
-            for (Index j = 0; j < unique_values_number; j++)
-            {
-                if (std::abs(val - centers(j)) < NUMERIC_LIMITS_MIN)
-                {
-                    frequencies(j)++;
-                    found_bin = true;
-                    break;
-                }
-            }
-
-            // Si no encontramos bin, algo est� mal
-            if (!found_bin)
-            {
-                std::cerr << "Error: Value " << val << " did not match any bin center!" << std::endl;
-            }
-        }
-    }
-    else
-    {
-        const type min_val = minimum(vector);
-        const type max_val = maximum(vector);
-
-        // Comprobaci�n de valores m�nimos y m�ximos
-        std::cout << "Min value: " << min_val << ", Max value: " << max_val << std::endl;
-
-        if (min_val == max_val)
-        {
-            throw std::invalid_argument("All values in the vector are identical.");
-        }
-
-        const type bin_width = (max_val - min_val) / static_cast<type>(effective_bins);
-
-        // Verificaci�n de bin_width
-        std::cout << "Bin width: " << bin_width << std::endl;
-
-        if (bin_width == 0)
-        {
-            std::cerr << "Error: bin_width is zero, which means all values are identical or there's a bug!" << std::endl;
-            return Histogram(); // Salida temprana en caso de error
-        }
-
-        for (Index i = 0; i < effective_bins; i++)
-        {
-            minimums(i) = min_val + bin_width * i;
-            maximums(i) = minimums(i) + bin_width;
-            centers(i) = (minimums(i) + maximums(i)) / static_cast<type>(2.0);
-        }
-
-        // Depuraci�n de los bins creados
-        std::cout << "Bins information: \n";
-        for (Index i = 0; i < effective_bins; i++)
-        {
-            std::cout << "Bin " << i << ": [" << minimums(i) << ", " << maximums(i) << "] Center: " << centers(i) << std::endl;
-        }
-
-        // Contar las frecuencias
-        for (Index i = 0; i < size; i++)
-        {
-            const type val = vector(i);
-            if (std::isnan(val)) continue;
-
-            // Validaci�n de acceso a bin
-            Index bin_index = static_cast<Index>((val - min_val) / bin_width);
-            if (bin_index < 0 || bin_index >= effective_bins)
-            {
-                std::cerr << "Error: Bin index out of range for value " << val << std::endl;
-                bin_index = std::min(bin_index, effective_bins - 1); // Ajustar el �ndice al �ltimo bin
-            }
-
-            std::cout << "Value " << val << " falls into bin index: " << bin_index << std::endl;
-
-            frequencies(bin_index)++;
-        }
-=======
         current_value_index += bin_size;
         current_bin++;
->>>>>>> d7ffa331db14c8a5b0fe761318637adbd3f9d567
     }
 
     Histogram hist(bins_number);
