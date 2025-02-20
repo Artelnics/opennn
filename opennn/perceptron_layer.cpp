@@ -283,12 +283,6 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    // if(!is_training)
-    // {
-    //     cerr << "Inputs:\n" << inputs << endl;
-    //     throw runtime_error("Checking");
-    // }
-
     PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
         static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation.get());
 
@@ -298,7 +292,7 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
     // cout << "Ouptut dimensions: " << outputs.dimensions() << endl;
     // cout << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
     // cout << "Biases dimensions: " << biases.dimensions() << endl;
-    // throw runtime_error(".");
+    // throw runtime_error("Checking the perceptron layer dimensions.");
 
     calculate_combinations(inputs,
                            outputs);
@@ -403,7 +397,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        const TensorMap<Tensor<type, 1>> combinations_derivatives_neuron 
+        const Tensor<type, 1> combinations_derivatives_neuron
             = tensor_map(combination_derivatives, neuron_index);
 
         for(Index input_index = 0; input_index < inputs_number; input_index++)
