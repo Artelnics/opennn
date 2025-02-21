@@ -1,6 +1,9 @@
+#include "back_propagation.h"
+#include "forward_propagation.h"
 #include "pch.h"
 
 #include "../opennn/weighted_squared_error.h"
+#include "gtest/gtest.h"
 
 TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
@@ -22,107 +25,96 @@ TEST(WeightedSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(weighted_squared_error.has_data_set(), true);
 }
 
-/*
-
-void WeightedSquaredErrorTest::test_back_propagate()
+TEST(WeightedSquaredErrorTest, BackPropagate)
 {
+    //Test binary classification trivial
+
+    const Index inputs_number = 1;
+    const Index outputs_number = 1;
+    const Index samples_number = 1;
+    bool is_training = true;
+
+    DataSet data_set(samples_number, {inputs_number}, {outputs_number});
+    data_set.set_data_constant(type(0));
+
+    const vector<Index> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+
+    Batch batch(samples_number, &data_set);
+    batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+
+    //Neural network
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+                                 { inputs_number }, {  }, { outputs_number });
+    neural_network.set_parameters_constant(type(0));
+
+    WeightedSquaredError weighted_squared_error(&neural_network, &data_set);
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+
+    //Loss index
+
+    weighted_squared_error.set_weights();
+    BackPropagation back_propagation(samples_number, &weighted_squared_error);
     weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-    // Test binary classification trivial
-    {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
-        bool is_training = true;
+    const Tensor<type, 1> numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
 
-        // Data set
+    EXPECT_EQ(back_propagation.errors.dimension(0), samples_number);
+    EXPECT_EQ(back_propagation.errors.dimension(1), outputs_number);
+    //std::cout << "Back Propagation Error: " << back_propagation.error() << std::endl;
+    EXPECT_NEAR((abs(back_propagation.error()) - type(0.25)), type(0), NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
 
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
+    //Test binary classification random samples, inputs, outputs, neurons
 
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
+    const Index samples_number_rand = 1 + rand()%10;
+    const Index inputs_number_rand = 1 + rand()%10;
+    const Index neurons_number = 1 + rand()%10;
+    const Index outputs_number_rand = 1+ rand()%10;
 
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+    //Data set
 
-        // Neural network
+    DataSet data_set_rand(samples_number_rand, {inputs_number_rand}, {outputs_number_rand});
+    data_set_rand.set_data_random();
 
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
-        neural_network.set_parameters_constant(type(0));
+    const vector<Index> training_samples_indices_rand = data_set_rand.get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> input_variables_indices_rand = data_set_rand.get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variables_indices_rand = data_set_rand.get_variable_indices(DataSet::VariableUse::Target);
 
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+    Batch batch_rand(samples_number_rand, &data_set_rand);
+    batch_rand.fill(training_samples_indices_rand, input_variables_indices_rand, {}, target_variables_indices_rand);
 
-        // Loss index
+    //Neural Network
 
-        weighted_squared_error.set_weights();
+    NeuralNetwork neural_network_rand(NeuralNetwork::ModelType::Classification,
+                                 { inputs_number_rand }, { neurons_number }, { outputs_number_rand });
+    neural_network_rand.set_parameters_random();
 
-        back_propagation.set(samples_number, &weighted_squared_error);
-        weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+    WeightedSquaredError weighted_squared_error_rand(&neural_network_rand, &data_set_rand);
 
-        numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
+    ForwardPropagation forward_propagation_rand(samples_number_rand, &neural_network_rand);
+    neural_network_rand.forward_propagate(batch_rand.get_input_pairs(), forward_propagation_rand, is_training);
 
+    //Loss index
 
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
+    weighted_squared_error_rand.set_weights();
+    BackPropagation back_propagation_rand(samples_number_rand, &weighted_squared_error_rand);
+    //crashes here
+    weighted_squared_error_rand.back_propagate(batch_rand, forward_propagation_rand, back_propagation_rand);
 
-        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
-        EXPECT_EQ(back_propagation.error() - type(0.25) < type(NUMERIC_LIMITS_MIN));
+    const Tensor<type, 1> numerical_gradient_rand = weighted_squared_error_rand.calculate_numerical_gradient();
 
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
-    }
-
-    // Test binary classification random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_binary_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {} ,target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        weighted_squared_error.set_weights();
-
-        back_propagation.set(samples_number, &weighted_squared_error);
-        weighted_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = weighted_squared_error.calculate_numerical_gradient();
-
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
-    }
+    EXPECT_EQ(back_propagation_rand.errors.dimension(0), samples_number_rand);
+    EXPECT_EQ(back_propagation_rand.errors.dimension(1), outputs_number_rand);
+    //std::cout << "Back Propagation Error Random: " << back_propagation_rand.error() << std::endl;
+    EXPECT_EQ(are_equal(back_propagation_rand.gradient, numerical_gradient_rand, type(1.0e-2)), true);
 }
 
-}
-*/
+
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
 //
