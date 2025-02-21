@@ -103,7 +103,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     weighted_squared_error_rand.set_weights();
     BackPropagation back_propagation_rand(samples_number_rand, &weighted_squared_error_rand);
-    //crashes here
+
     weighted_squared_error_rand.back_propagate(batch_rand, forward_propagation_rand, back_propagation_rand);
 
     const Tensor<type, 1> numerical_gradient_rand = weighted_squared_error_rand.calculate_numerical_gradient();
