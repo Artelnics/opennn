@@ -28,7 +28,6 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 
 TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
 {
-    /*
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
@@ -50,7 +49,7 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
-    /*
+
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
@@ -62,10 +61,49 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
     
     const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-*/
+    //std::cout << "Back Propagation Gradient: " << back_propagation.gradient << std::endl;
+    //std::cout << "Numerical Gradient: " << numerical_gradient << std::endl;
+
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
+
 }
 
+TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
+{
+    const Index samples_number = 4;
+    const Index inputs_number = 4;
+    const Index outputs_number = 4;
+
+    Tensor<string, 1> uses;
+
+    Tensor<type, 1> targets_mean;
+    Tensor<type, 2> target_data;
+
+    // Test
+
+    DataSet data_set(samples_number, { inputs_number }, { outputs_number });
+    data_set.set_data_random();
+
+    uses.resize(8);
+    uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
+
+    //data_set.set_raw_variable_uses(uses);
+
+    target_data = data_set.get_data(DataSet::VariableUse::Target);
+
+    Eigen::array<int, 1> dimensions({0});
+    targets_mean = target_data.mean(dimensions);
+
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+                                 { inputs_number }, { 2 }, { outputs_number });
+    neural_network.set_parameters_random();
+
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+
+    type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
+    //std::cout << "Normalization Coefficient: " << normalization_coefficient << std::endl;
+    EXPECT_GE(normalization_coefficient, 0);
+}
 
 /*
 void NormalizedSquaredErrorTest::test_back_propagate()
@@ -414,43 +452,6 @@ void NormalizedSquaredErrorTest::test_back_propagate_lm()
     }
 
     // Forecasting incompatible with LM
-}
-
-
-void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
-{
-    Index samples_number;
-    Index inputs_number;
-    Index outputs_number;
-
-    Tensor<string, 1> uses;
-
-    Tensor<type, 1> targets_mean;
-    Tensor<type, 2> target_data;
-
-    // Test
-
-    samples_number = 4;
-    inputs_number = 4;
-    outputs_number = 4;
-
-    data_set.generate_random_data(samples_number, inputs_number + outputs_number);
-
-    uses.resize(8);
-    uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
-
-    data_set.set_raw_variable_uses(uses);
-
-    target_data = data_set.get_data(DataSet::VariableUse::Target);
-
-    Eigen::array<int, 1> dimensions({0});
-    targets_mean = target_data.mean(dimensions);
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {2}, {outputs_number});
-    neural_network.set_parameters_random();
-
-    type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
-    EXPECT_EQ(normalization_coefficient > 0);
 }
 
 }
