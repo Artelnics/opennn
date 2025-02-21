@@ -26,12 +26,8 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        DataSet data_set("C:/Users/davidgonzalez/Documents/iris_plant_original.csv", ";", true, false);
-        cout << "data set creado" << endl;
-        data_set.save("data_set_test.xml");
-        cout << "data set guardado" << endl;
-        DataSet prueba;
-        prueba.load("data_set_test.xml");
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {6},{1},{1});
+        neural_network.save("neural_network_test.xml");
 
         cout << "Bye!" << endl;
 
