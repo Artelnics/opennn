@@ -146,8 +146,7 @@ namespace opennn
         add_xml_element(printer, "Type", get_type_string());
 
         if (type == RawVariableType::Categorical || type == RawVariableType::Binary)
-            if (categories.size() != 0) 
-                add_xml_element(printer, "Categories", vector_to_string(categories));
+            add_xml_element(printer, "Categories", vector_to_string(categories));
     }
 
 
@@ -991,10 +990,7 @@ namespace opennn
         return count;
     }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 4ae9e8d247c651b500ce044e2395e279b8b052d2
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -1215,7 +1211,10 @@ namespace opennn
                 const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
                 if (is_binary(data_column))
+                {
                     raw_variable.type = RawVariableType::Binary;
+                    raw_variable.categories = {"0","1"};
+                }
 
                 variable_index++;
             }
@@ -4026,10 +4025,7 @@ namespace opennn
         set_binary_raw_variables();
         split_samples_random();
     }
-<<<<<<< HEAD
-=======
 
->>>>>>> 4ae9e8d247c651b500ce044e2395e279b8b052d2
 
     string DataSet::RawVariable::get_type_string() const
     {
