@@ -41,7 +41,7 @@ type get_random_type(const type& minimum, const type& maximum)
 
 bool get_random_bool()
 {
-    return rand() % 2 == 1;
+    return arc4random() % 2 == 1;
 }
 
 

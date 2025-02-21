@@ -265,7 +265,6 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-
         const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
         const vector<Descriptives> target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
