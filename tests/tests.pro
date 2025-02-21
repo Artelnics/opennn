@@ -51,6 +51,7 @@ SOURCES += test.cpp \
            pch.cpp \
            testing_analysis_test.cpp \
            perceptron_layer_test.cpp \# Precompiled header source
+           probabilistic_layer_test.cpp\
             # Include more test files if needed by uncommenting
 
 # Precompiled Header

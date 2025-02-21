@@ -192,12 +192,28 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     sum_columns(thread_pool_device.get(), biases, combinations);
 }
 
+void ProbabilisticLayer::calculate_activations(Tensor<type, 2>& activations,Tensor<type, 2>& activation_derivatives) const
+{   
+    switch (activation_function)
+    {
+    case ActivationFunction::Softmax:
+        softmax(activations);
+        return;
+    case ActivationFunction::Logistic:
+        logistic(activations, activation_derivatives);
+        return;
+    case ActivationFunction::Competitive:
+        competitive(activations);
+        return;
+    default:
+        return;
+    }
+}
 
 void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            unique_ptr<LayerForwardPropagation>& forward_propagation,
                                            const bool& is_training)
 {
-    const Index outputs_number = get_outputs_number();
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -208,23 +224,14 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     calculate_combinations(inputs, outputs);
 
-    if (outputs_number == 1 && !is_training)
+    if(is_training)
     {
-        logistic(outputs, empty);
-    }
-    else if (outputs_number == 1 && is_training)
-    {
-        Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
-
-        logistic(outputs, activation_derivatives);
-    }
-    else if (outputs_number > 1)
-    {
-        softmax(outputs);
+        Tensor<type, 2> activation_derivatives(outputs.dimensions());
+        calculate_activations(outputs,activation_derivatives);
     }
     else
     {
-		throw runtime_error("Unknown case in forward propagation.\n");
+        throw runtime_error("Unknown case in forward propagation.\n");
     }
 }
 

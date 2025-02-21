@@ -120,6 +120,8 @@ public:
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
+    void calculate_activations(Tensor<type, 2>&,Tensor<type, 2>&) const;
+
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
