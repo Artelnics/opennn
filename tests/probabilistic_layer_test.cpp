@@ -23,7 +23,7 @@ TEST(ProbabilisticLayerTest, GeneralConstructor)
 
 TEST(ProbabilisticLayerTest, CalculateCombinations)
 {
-    
+
     ProbabilisticLayer probabilistic_layer({ 1 }, { 1 });
 
     EXPECT_EQ(probabilistic_layer.get_input_dimensions(), dimensions{ 1 });
@@ -56,15 +56,15 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
     Tensor<type, 2> activation_derivatives(1, 1);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
-    
+
     probabilistic_layer.calculate_activations(activations,activation_derivatives);
-    
+
     EXPECT_NEAR(abs(activations(0, 0)), type(0.175), type(1e-2));
 
     EXPECT_EQ(
-       activation_derivatives.rank() == 2 &&
-        activation_derivatives.dimension(0) == 1 &&
-        activation_derivatives.dimension(1) == 1,true);
+        activation_derivatives.rank() == 2 &&
+            activation_derivatives.dimension(0) == 1 &&
+            activation_derivatives.dimension(1) == 1,true);
 
     EXPECT_NEAR(abs(activation_derivatives(0, 0)), type(0.1444), type(1e-3));
 
@@ -107,8 +107,8 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
     bool is_training = true;
 
     probabilistic_layer.forward_propagate({ input_pairs },
-        forward_propagation,
-        is_training);
+                                          forward_propagation,
+                                          is_training);
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
