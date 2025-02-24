@@ -50,6 +50,8 @@ void GrowingInputs::set_default()
     training_strategy && training_strategy->has_neural_network()
         ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input)
         : maximum_inputs_number = 100;
+
+    throw runtime_error("WHY IS IT ENTERING THE SET_DEFAULT FUNCTION OF THE GROWING INPUTS ALGORITHM?");
 }
 
 
