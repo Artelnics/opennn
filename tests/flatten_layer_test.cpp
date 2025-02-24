@@ -37,7 +37,7 @@ public:
     }
 };
 
-/*
+
 TEST_F(FlattenLayerTest, Constructor) 
 {
     
@@ -72,4 +72,3 @@ TEST_F(FlattenLayerTest, BackPropagate)
     EXPECT_EQ(input_derivatives_pair[0].second[2], input_dimensions[1]);
     EXPECT_EQ(input_derivatives_pair[0].second[3], input_dimensions[2]);
 }
-*/

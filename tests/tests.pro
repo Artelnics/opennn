@@ -33,6 +33,7 @@ SOURCES += test.cpp \
            cross_entropy_error_3d_test.cpp \
            cross_entropy_error_test.cpp \
            data_set_test.cpp \
+           embedding_layer_test.cpp \
            flatten_layer_test.cpp \
            genetic_algorithm_test.cpp \
            growing_inputs_test.cpp \
@@ -44,6 +45,7 @@ SOURCES += test.cpp \
            mean_squared_error_test.cpp \
            minkowski_error_test.cpp \
            model_selection_test.cpp \
+           multihead_attention_layer_test.cpp \
            neural_network_test.cpp \
            normalized_squared_error_test.cpp \
            performance_test.cpp \
@@ -52,6 +54,8 @@ SOURCES += test.cpp \
            testing_analysis_test.cpp \
            perceptron_layer_test.cpp \# Precompiled header source
            probabilistic_layer_test.cpp\
+           recurrent_layer_test.cpp \
+           transformer_test.cpp \
             # Include more test files if needed by uncommenting
 
 # Precompiled Header
