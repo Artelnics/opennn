@@ -25,8 +25,44 @@ int main()
     try
     {
         cout << "OpenNN. Blank." << endl;
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {6},{1},{1});
-        neural_network.save("neural_network_test.xml");
+
+        // DataSet data_set;
+        // NeuralNetwork neural_network;
+        // data_set.save("data_set_empty.xml");
+        // neural_network.save("neural_network_empty.xml");
+
+        // TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        // training_strategy.save("training_strategy_empty.xml");
+
+        // ModelSelection model_selection(&training_strategy);
+
+        // model_selection.save("model_selection_empty.xml");
+
+        /*// @todo Create an example to test if the numerical hessian works properly.
+
+        NeuralNetwork neural_network;
+        DataSet data_set(7, {1}, {1});
+        Tensor<type, 2> data(7,2);
+        for(Index i = 0; i < 7; i++)
+        {
+            data(i,0) = i;
+            data(i,1) = sin(i);
+        }
+        data_set.set_data(data);
+
+
+
+        neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1}, (dimensions){1}, PerceptronLayer::ActivationFunction::Linear));
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+
+        cerr << data << endl;
+        training_strategy.perform_training();*/
+
         cout << "Bye!" << endl;
 
         return 0;

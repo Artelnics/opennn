@@ -73,7 +73,7 @@ const type& InputsSelection::get_minimum_correlation() const
 
 void InputsSelection::set(TrainingStrategy* new_training_strategy)
 {
-    training_strategy = new_training_strategy;     
+    training_strategy = new_training_strategy;
 }
 
 

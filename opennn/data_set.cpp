@@ -990,7 +990,6 @@ namespace opennn
         return count;
     }
 
-
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -1065,19 +1064,6 @@ namespace opennn
         for (size_t i = 0; i < target_raw_variables.size(); i++)
             set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
     }
-
-
-    // void DataSet::set_raw_variable_indices(const vector<string>& input_raw_variables,
-    //                                                     const vector<string>& target_raw_variables)
-    // {
-    //     set_raw_variables(VariableUse::None);
-
-    //     for(size_t i = 0; i < input_raw_variables.size(); i++)
-    //         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
-
-    //     for(size_t i = 0; i < target_raw_variables.size(); i++)
-    //         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-    // }
 
 
     void DataSet::set_input_raw_variables_unused()
@@ -2673,7 +2659,7 @@ namespace opennn
         const Index input_variables_number = get_variables_number(variable_use);
 
         const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-        const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+        const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
 
         const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
@@ -4025,7 +4011,6 @@ namespace opennn
         set_binary_raw_variables();
         split_samples_random();
     }
-
 
     string DataSet::RawVariable::get_type_string() const
     {

@@ -13,6 +13,8 @@ namespace opennn
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
+    cout << "Is it here?" << endl;
+
     set(new_training_strategy);
 }
 
@@ -63,7 +65,7 @@ void ModelSelection::set_default()
 {
     set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
 
-    set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
+    set_inputs_selection_method(InputsSelectionMethod::GENETIC_ALGORITHM);
 
     display = true;
 }
