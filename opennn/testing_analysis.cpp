@@ -48,7 +48,6 @@ const bool& TestingAnalysis::get_display() const
     return display;
 }
 
-
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
     thread_pool = make_unique<ThreadPool>(new_threads_number);
