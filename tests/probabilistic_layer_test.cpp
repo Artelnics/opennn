@@ -136,6 +136,8 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
+    probabilistic_layer.set_parameters_constant(type(1));
+
     probabilistic_layer.forward_propagate({ input_pairs },
                                           forward_propagation,
                                           is_training);
