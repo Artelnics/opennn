@@ -3959,7 +3959,7 @@ namespace opennn
                 }
                 else if (raw_variable_type == RawVariableType::DateTime)
                 {
-                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
+                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(token));
                 }
                 else if (raw_variable_type == RawVariableType::Categorical)
                 {

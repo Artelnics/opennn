@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -276,6 +276,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
             
+            // throw runtime_error("Checking the gradient and numerical gradient.");
             //system("pause");
 
             training_error += training_back_propagation.error();

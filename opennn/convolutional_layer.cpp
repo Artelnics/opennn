@@ -219,7 +219,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     is_training
         ? calculate_activations(outputs, activation_derivatives)
-        : calculate_activations(outputs, empty);   
+        : calculate_activations(outputs, empty);
+
 }
 
 

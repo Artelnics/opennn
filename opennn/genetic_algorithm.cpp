@@ -91,13 +91,13 @@ void GeneticAlgorithm::set_default()
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
-    const Index individuals_number = 60;
+    const Index individuals_number = 100;
 
     const Index genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
 
     population.resize(individuals_number, genes_number);
 
-    maximum_epochs_number = 40;
+    maximum_epochs_number = 60;
 
     maximum_time = type(3600.0);
 
@@ -395,8 +395,6 @@ void GeneticAlgorithm::evaluate_population()
                                            original_target_raw_variable_indices);
 
         data_set->set_dimensions(DataSet::VariableUse::Input, {inputs_number(i)});
-
-        cerr << "Reachs this point" << endl;
 
         data_set->scrub_missing_values();
 
