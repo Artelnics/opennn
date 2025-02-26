@@ -133,7 +133,7 @@ void ImageDataSet::set_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = arc4random() % 255;
+                data(i, j) = rand() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
