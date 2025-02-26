@@ -146,8 +146,7 @@ namespace opennn
         add_xml_element(printer, "Type", get_type_string());
 
         if (type == RawVariableType::Categorical || type == RawVariableType::Binary)
-            if (categories.size() != 0) 
-                add_xml_element(printer, "Categories", vector_to_string(categories));
+            add_xml_element(printer, "Categories", vector_to_string(categories));
     }
 
 
@@ -1067,19 +1066,6 @@ namespace opennn
     }
 
 
-    // void DataSet::set_raw_variable_indices(const vector<string>& input_raw_variables,
-    //                                                     const vector<string>& target_raw_variables)
-    // {
-    //     set_raw_variables(VariableUse::None);
-
-    //     for(size_t i = 0; i < input_raw_variables.size(); i++)
-    //         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
-
-    //     for(size_t i = 0; i < target_raw_variables.size(); i++)
-    //         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
-    // }
-
-
     void DataSet::set_input_raw_variables_unused()
     {
         const Index raw_variables_number = get_raw_variables_number();
@@ -1211,7 +1197,10 @@ namespace opennn
                 const Tensor<type, 1> data_column = data.chip(variable_index, 1);
 
                 if (is_binary(data_column))
+                {
                     raw_variable.type = RawVariableType::Binary;
+                    raw_variable.categories = {"0","1"};
+                }
 
                 variable_index++;
             }
@@ -2670,7 +2659,7 @@ namespace opennn
         const Index input_variables_number = get_variables_number(variable_use);
 
         const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-        const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+        const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
 
         const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
@@ -3970,7 +3959,7 @@ namespace opennn
                 }
                 else if (raw_variable_type == RawVariableType::DateTime)
                 {
-                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
+                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(token));
                 }
                 else if (raw_variable_type == RawVariableType::Categorical)
                 {

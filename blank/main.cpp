@@ -39,28 +39,6 @@ int main()
 
         // model_selection.save("model_selection_empty.xml");
 
-        // @todo Create an example to test if the numerical hessian works properly.
-
-        NeuralNetwork neural_network;
-        DataSet data_set(7, {1}, {1});
-        Tensor<type, 2> data(7,2);
-        for(Index i = 0; i < 7; i++)
-        {
-            data(i,0) = i;
-            data(i,1) = sin(i);
-        }
-        data_set.set_data(data);
-
-        neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1}, dimensions{1}, PerceptronLayer::ActivationFunction::Linear));
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
-
-        cerr << data << endl;
-        training_strategy.perform_training();
-
         cout << "Bye!" << endl;
 
         return 0;

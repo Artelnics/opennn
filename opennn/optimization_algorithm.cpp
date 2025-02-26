@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "image_data_set.h"
 #include "pch.h"
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
@@ -265,13 +266,18 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-
         const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
         const vector<Descriptives> target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
 
         UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
         unscaling_layer->set_descriptives(target_variable_descriptives);
         unscaling_layer->set_scalers(target_variable_scalers);
+    }
+
+    if(neural_network->has(Layer::Type::Scaling4D))
+    {
+        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+        image_data_set->scale_variables(DataSet::VariableUse::Input);
     }
 }
 
@@ -297,6 +303,12 @@ void OptimizationAlgorithm::set_unscaling()
         const vector<Descriptives> target_variable_descriptives = unscaling_layer->get_descriptives();
 
         data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    }
+
+    if(neural_network->has(Layer::Type::Scaling4D))
+    {
+        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+        image_data_set->unscale_variables(DataSet::VariableUse::Input);
     }
 
     // if(!is_instance_of<LanguageDataSet>(data_set))

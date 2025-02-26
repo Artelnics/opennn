@@ -56,6 +56,7 @@ public:
     void set_random_vertical_translation_maximum(const type&);
 
     vector<Descriptives> scale_variables(const VariableUse&) override;
+    void unscale_variables(const VariableUse&);
 
     void read_bmp();
 

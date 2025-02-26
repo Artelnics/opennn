@@ -1,0 +1,54 @@
+<DataSet>
+   <DataSource>
+      <FileType>csv</FileType>
+      <Path>C:/Users/davidgonzalez/Documents/iris_plant_original.csv</Path>
+      <Separator>Semicolon</Separator>
+      <HasHeader>1</HasHeader>
+      <HasSamplesId>0</HasSamplesId>
+      <MissingValuesLabel>NA</MissingValuesLabel>
+      <Codification>UTF-8</Codification>
+   </DataSource>
+   <RawVariables>
+      <RawVariablesNumber>5</RawVariablesNumber>
+      <RawVariable Item="1">
+         <Name>sepal_lenght</Name>
+         <Scaler>MinimumMaximum</Scaler>
+         <Use>Input</Use>
+         <Type>Binary</Type>
+         <Categories>0 1 </Categories>
+      </RawVariable>
+      <RawVariable Item="2">
+         <Name>sepal_width</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="3">
+         <Name>petal_lenght</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="4">
+         <Name>petal_width</Name>
+         <Scaler>MeanStandardDeviation</Scaler>
+         <Use>Input</Use>
+         <Type>Numeric</Type>
+      </RawVariable>
+      <RawVariable Item="5">
+         <Name>iris_class</Name>
+         <Scaler>MinimumMaximum</Scaler>
+         <Use>Target</Use>
+         <Type>Binary</Type>
+         <Categories>iris_setosa iris_virginica </Categories>
+      </RawVariable>
+   </RawVariables>
+   <Samples>
+      <SamplesNumber>4</SamplesNumber>
+      <SampleUses>0 0 0 0 </SampleUses>
+   </Samples>
+   <MissingValues>
+      <MissingValuesNumber>0</MissingValuesNumber>
+   </MissingValues>
+   <Display>1</Display>
+</DataSet>

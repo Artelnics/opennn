@@ -76,21 +76,21 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
                                               ForwardPropagation&,
                                               BackPropagation& back_propagation) const
 {
-     const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = neural_network->get_outputs_number();
 
-     // Batch
+    // Batch
 
-     const Index batch_samples_number = batch.get_samples_number();
+    const Index batch_samples_number = batch.get_samples_number();
 
-     // Back propagation
+    // Back propagation
 
-     const Tensor<type, 2>& errors = back_propagation.errors;       
+    const Tensor<type, 2>& errors = back_propagation.errors;
 
-     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
+    const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
-     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
-     
-     output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * batch_samples_number);
+    TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
+
+    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * batch_samples_number);
 }
 
 

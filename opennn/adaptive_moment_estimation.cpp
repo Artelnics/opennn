@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -268,14 +268,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            //Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            //cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            //cout << "numerical gradient:\n" << numerical_gradient<< endl;
-            //cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            // cout << "numerical gradient:\n" << numerical_gradient<< endl;
+            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
             //cout << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
             
+            // throw runtime_error("Checking the gradient and numerical gradient.");
             //system("pause");
 
             training_error += training_back_propagation.error();

@@ -20,9 +20,6 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
                                                  const bool& new_use_causal_mask,
                                                  const string& new_name) : Layer()
 {
-    if (new_input_size == 0 || new_context_size == 0 || new_depth == 0 || new_heads_number == 0)
-        return;
-
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
     set_causal_mask(new_use_causal_mask);
@@ -65,7 +62,7 @@ Index MultiheadAttentionLayer::get_weights_depth() const
 
 dimensions MultiheadAttentionLayer::get_input_dimensions() const
 {// @todo
-    throw runtime_error("XXX");
+    return { input_size};
 }
 
 
@@ -130,9 +127,6 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_heads_number, 
                                   const string& new_name)
 {
-    if (new_input_size == 0 || new_context_size == 0 || new_depth == 0 || new_heads_number == 0)
-        return;
-
     input_size = new_input_size;
 
     context_size = new_context_size;
