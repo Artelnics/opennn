@@ -80,8 +80,6 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
-    scaling_layer_2d.set_parameters_constant(type(1));
-
     scaling_layer_2d.forward_propagate({ input_pairs },
                                           forward_propagation,
                                           is_training);
