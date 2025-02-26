@@ -324,7 +324,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         individual_variables.setConstant(false);
 
-        raw_variables_active = 1 + arc4random() % input_raw_variables_number;
+        //raw_variables_active = 1 + arc4random() % input_raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
@@ -341,7 +341,7 @@ void GeneticAlgorithm::initialize_population_correlations()
         }
 
         if(is_equal(individual_raw_variables, false))
-            individual_raw_variables(arc4random()%input_raw_variables_number) = true;
+            //individual_raw_variables(arc4random()%input_raw_variables_number) = true;
 
         individual_variables = get_individual_genes(individual_raw_variables);
 
@@ -603,7 +603,7 @@ void GeneticAlgorithm::perform_crossover()
                     descendent_raw_variables(k) = get_random_bool();*/
 
             for(Index k = 0; k < raw_variables_number; k++)
-                descendent_raw_variables(k) = (arc4random() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
+                //descendent_raw_variables(k) = (arc4random() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
 
             descendent_genes = get_individual_genes(descendent_raw_variables);
 
