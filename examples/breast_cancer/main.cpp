@@ -22,12 +22,15 @@ int main()
         // Data set
 
         // DataSet data_set("data/breast_cancer.csv", ";", true);
-        // DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true);
 
         // Example downloaded dataset
 
-        DataSet data_set("/Users/artelnics/Desktop/breast-cancer-modified.csv", ",", true);
+        // DataSet data_set("/Users/artelnics/Desktop/breast-cancer-modified.csv", ",", true);
 
+        // 5 years mortality dataset
+
+        // DataSet data_set("/Users/artelnics/Desktop/5_years_mortality_modified.csv", ";", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -58,27 +61,31 @@ int main()
 
         // data_set.set(DataSet::SampleUse::Training);
 
-        // training_strategy.perform_training();
+        training_strategy.perform_training();
 
         // data_set.set(DataSet::SampleUse::Testing);
 
-        GeneticAlgorithm genetic_algorithm(&training_strategy);
+        // GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-        genetic_algorithm.perform_input_selection();
+        // genetic_algorithm.perform_input_selection();
 
-        /*// ModelSelection model_selection(&training_strategy);
+        // GrowingInputs growing_inputs(&training_strategy);
 
-        // model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GENETIC_ALGORITHM);
+        // growing_inputs.perform_input_selection();
+
+        // ModelSelection model_selection(&training_strategy);
+
+        // model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
 
         // model_selection.perform_input_selection();
 
         // model_selection.perform_neurons_selection();
-*/
+
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        data_set.print();
+        // data_set.print();
 
         testing_analysis.print_binary_classification_tests();
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();

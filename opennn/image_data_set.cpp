@@ -133,7 +133,7 @@ void ImageDataSet::set_data_random()
         for (Index i = 0; i < samples_number; i++)
         {
             for (Index j = 0; j < inputs_number; j++)
-                data(i, j) = rand() % 255;
+                data(i, j) = arc4random() % 255;
 
             data(i, inputs_number) = (i < half_samples) ? 0 : 1;
         }
@@ -408,6 +408,16 @@ vector<Descriptives> ImageDataSet::scale_variables(const VariableUse&)
     return vector<Descriptives>();
 }
 
+void ImageDataSet::unscale_variables(const VariableUse&)
+{
+    TensorMap<Tensor<type, 4>> inputs_data(data.data(),
+                                           get_samples_number(),
+                                           input_dimensions[0],
+                                           input_dimensions[1],
+                                           input_dimensions[2]);
+    inputs_data.device(*thread_pool_device) = inputs_data * type(255);
+}
+
 
 void ImageDataSet::read_bmp()
 {
@@ -498,7 +508,7 @@ void ImageDataSet::read_bmp()
         {
             for (Index k = 0; k < targets_number; k++)
             {
-                if (i >= images_number[k] && i < images_number[k + 1])
+                if (i >= images_number(k) && i < images_number(k + 1))
                 {
                     data(i, k + pixels_number) = 1;
                     break;
@@ -509,7 +519,7 @@ void ImageDataSet::read_bmp()
         if (display && i % 1000 == 0)
             display_progress_bar(i, samples_number - 1000);
     }
-    
+
     if (display)
     {
         chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();
@@ -525,6 +535,10 @@ void ImageDataSet::read_bmp()
              << seconds << " seconds, "
              << milliseconds << " milliseconds." << endl;
     }
+
+
+    // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
+    // scale_variables(VariableUse::Input);
 }
 
 } // opennn namespace

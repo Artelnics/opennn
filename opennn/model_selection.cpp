@@ -65,7 +65,7 @@ void ModelSelection::set_default()
 {
     set_neurons_selection_method(NeuronsSelectionMethod::GROWING_NEURONS);
 
-    set_inputs_selection_method(InputsSelectionMethod::GENETIC_ALGORITHM);
+    set_inputs_selection_method(InputsSelectionMethod::GROWING_INPUTS);
 
     display = true;
 }

@@ -37,26 +37,27 @@ int main()
         */
         ImageDataSet image_data_set(0,{0,0,0},{0});
 
-        image_data_set.set_data_path("C:/binary_mnist");
+        // image_data_set.set_data_path("C:/binary_mnist");
+        image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
         image_data_set.read_bmp();
 
-        image_data_set.save("data/data.xml");
+        // image_data_set.save("data/data.xml");
 
-        ImageDataSet data_set_xml;
-        data_set_xml.load("data/data.xml");
-        data_set_xml.save("data/data_xml.xml");
+        // ImageDataSet data_set_xml;
+        // data_set_xml.load("data/data.xml");
+        // data_set_xml.save("data/data_xml.xml");
 
         image_data_set.print();
-        data_set_xml.print();
+        // data_set_xml.print();
 
-        system("pause");
+        // system("pause");
 
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 1 },
+            { 32 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
