@@ -26,8 +26,8 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {6},{1},{1});
-        neural_network.save("neural_network_test.xml");
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv", ";", true, true);
+        data_set.save("data_set_cancer.xml");
 
         cout << "Bye!" << endl;
 

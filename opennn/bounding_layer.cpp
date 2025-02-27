@@ -80,9 +80,9 @@ void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
 
 void BoundingLayer::set_bounding_method(const string& new_method_string)
 {
-    if(new_method_string == "NoBounding")
+    if(new_method_string == "NoBounding" || new_method_string == "No bounding")
         bounding_method = BoundingMethod::NoBounding;
-    else if(new_method_string == "BoundingLayer")
+    else if(new_method_string == "Bounding")
         bounding_method = BoundingMethod::Bounding;
     else
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
@@ -182,7 +182,7 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 string BoundingLayer::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
-        return "BoundingLayer";
+        return "Bounding";
     else if(bounding_method == BoundingMethod::NoBounding)
         return "NoBounding";
     else
@@ -232,7 +232,7 @@ void BoundingLayer::to_XML(XMLPrinter& printer) const
 
     const dimensions output_dimensions = get_input_dimensions();
 
-    add_xml_element(printer, "BoundingNeuronsNumber", to_string(output_dimensions[0]));
+    add_xml_element(printer, "NeuronsNumber", to_string(output_dimensions[0]));
 
     for (Index i = 0; i < output_dimensions[0]; i++) 
     {
@@ -258,7 +258,7 @@ void BoundingLayer::from_XML(const XMLDocument& document)
     if (!root_element)
         throw runtime_error("Bounding element is nullptr.\n");
 
-    const Index neurons_number = read_xml_index(root_element, "BoundingNeuronsNumber");
+    const Index neurons_number = read_xml_index(root_element, "NeuronsNumber");
 
     set({ neurons_number });
 
@@ -333,3 +333,4 @@ void BoundingLayerForwardPropagation::print() const
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+

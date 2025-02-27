@@ -28,18 +28,21 @@
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="4">
          <Name>hormone_therapy</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="5">
          <Name>radio_therapy</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="6">
          <Name>cancer_type_detailed</Name>
@@ -66,12 +69,14 @@
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="10">
          <Name>er_status</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="11">
          <Name>neoplasm_histologic_grade</Name>
@@ -91,6 +96,7 @@
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="14">
          <Name>tumor_other_histologic_subtype</Name>
@@ -142,6 +148,7 @@
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="22">
          <Name>pam50_+_claudin-1_subtype</Name>
@@ -3108,1050 +3115,1224 @@
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="516">
          <Name>TP53_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="517">
          <Name>MUC16_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="518">
          <Name>AHNAK2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="519">
          <Name>KMT2C_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="520">
          <Name>SYNE1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="521">
          <Name>GATA3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="522">
          <Name>MAP3K1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="523">
          <Name>AHNAK_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="524">
          <Name>DNAH11_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="525">
          <Name>CDH1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="526">
          <Name>DNAH2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="527">
          <Name>KMT2D_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="528">
          <Name>USH2A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="529">
          <Name>RYR2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="530">
          <Name>DNAH5_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="531">
          <Name>HERC2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="532">
          <Name>PDE4DIP_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="533">
          <Name>AKAP9_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="534">
          <Name>TG_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="535">
          <Name>BIRC6_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="536">
          <Name>UTRN_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="537">
          <Name>TBX3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="538">
          <Name>COL6A3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="539">
          <Name>ARID1A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="540">
          <Name>LAMA2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="541">
          <Name>NOTCH1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="542">
          <Name>CBFB_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="543">
          <Name>NCOR2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="544">
          <Name>COL12A1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="545">
          <Name>COL22A1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="546">
          <Name>PTEN_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="547">
          <Name>AKT1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="548">
          <Name>ATR_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="549">
          <Name>THADA_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="550">
          <Name>NCOR1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="551">
          <Name>STAB2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="552">
          <Name>MYH9_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="553">
          <Name>RUNX1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="554">
          <Name>NF1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="555">
          <Name>MAP2K4_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="556">
          <Name>ROS1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="557">
          <Name>LAMB3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="558">
          <Name>ARID1B_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="559">
          <Name>ERBB2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="560">
          <Name>SF3B1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="561">
          <Name>SHANK2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="562">
          <Name>EP300_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="563">
          <Name>PTPRD_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="564">
          <Name>USP9X_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="565">
          <Name>SETD2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="566">
          <Name>SETD1A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="567">
          <Name>THSD7A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="568">
          <Name>AFDN_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="569">
          <Name>ERBB3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="570">
          <Name>RB1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="571">
          <Name>MYO1A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="572">
          <Name>ALK_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="573">
          <Name>FANCA_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="574">
          <Name>ADGRA2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="575">
          <Name>UBR5_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="576">
          <Name>PIK3R1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="577">
          <Name>MYO3A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="578">
          <Name>ASXL2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="579">
          <Name>APC_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="580">
          <Name>CTCF_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="581">
          <Name>ASXL1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="582">
          <Name>FANCD2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="583">
          <Name>TAF1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="584">
          <Name>KDM6A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="585">
          <Name>CTNNA3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="586">
          <Name>BRCA1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="587">
          <Name>PTPRM_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="588">
          <Name>FOXO3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="589">
          <Name>USP28_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="590">
          <Name>GLDC_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="591">
          <Name>BRCA2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="592">
          <Name>CACNA2D3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="593">
          <Name>ARID2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="594">
          <Name>AFF2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="595">
          <Name>LIFR_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="596">
          <Name>SBNO1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="597">
          <Name>KDM3A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="598">
          <Name>NCOA3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="599">
          <Name>BAP1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="600">
          <Name>L1CAM_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="601">
          <Name>PBRM1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="602">
          <Name>CHD1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="603">
          <Name>JAK1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="604">
          <Name>SETDB1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="605">
          <Name>FAM20C_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="606">
          <Name>ARID5B_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="607">
          <Name>EGFR_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="608">
          <Name>MAP3K10_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="609">
          <Name>SMARCC2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="610">
          <Name>ERBB4_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="611">
          <Name>NPNT_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="612">
          <Name>NEK1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="613">
          <Name>AGMO_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="614">
          <Name>ZFP36L1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="615">
          <Name>SMAD4_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="616">
          <Name>SIK1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="617">
          <Name>CASP8_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="618">
          <Name>PRKCQ_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="619">
          <Name>SMARCC1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="620">
          <Name>PALLD_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="621">
          <Name>DCAF4L2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="622">
          <Name>BCAS3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="623">
          <Name>CDKN1B_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="624">
          <Name>GPS2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="625">
          <Name>MEN1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="626">
          <Name>STK11_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="627">
          <Name>SIK2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="628">
          <Name>PTPN22_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="629">
          <Name>BRIP1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="630">
          <Name>FLT3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="631">
          <Name>NRG3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="632">
          <Name>FBXW7_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="633">
          <Name>TTYH1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="634">
          <Name>TAF4B_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="635">
          <Name>OR6A2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="636">
          <Name>MAP3K13_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="637">
          <Name>HDAC9_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="638">
          <Name>PRKACG_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="639">
          <Name>RPGR_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="640">
          <Name>LARGE1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="641">
          <Name>FOXP1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="642">
          <Name>CLK3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="643">
          <Name>PRKCZ_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="644">
          <Name>LIPI_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="645">
          <Name>PPP2R2A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="646">
          <Name>PRKCE_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="647">
          <Name>GH1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="648">
          <Name>GPR32_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="649">
          <Name>KRAS_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="650">
          <Name>NF2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="651">
          <Name>CHEK2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="652">
          <Name>LDLRAP1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="653">
          <Name>CLRN2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="654">
          <Name>ACVRL1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="655">
          <Name>AGTR2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="656">
          <Name>CDKN2A_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="657">
          <Name>CTNNA1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="658">
          <Name>MAGEA8_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="659">
          <Name>PRR16_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="660">
          <Name>DTWD2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="661">
          <Name>AKT2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="662">
          <Name>BRAF_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="663">
          <Name>FOXO1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="664">
          <Name>NT5E_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="665">
          <Name>CCND3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="666">
          <Name>NR3C1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="667">
          <Name>PRKG1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="668">
          <Name>TBL1XR1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="669">
          <Name>FRMD3_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="670">
          <Name>SMAD2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="671">
          <Name>SGCD_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="672">
          <Name>SPACA1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="673">
          <Name>RASGEF1B_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="674">
          <Name>HIST1H2BC_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="675">
          <Name>NR2F1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="676">
          <Name>KLRG1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="677">
          <Name>MBL2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="678">
          <Name>MTAP_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="679">
          <Name>PPP2CB_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="680">
          <Name>SMARCD1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="681">
          <Name>NRAS_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="682">
          <Name>NDFIP1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="683">
          <Name>HRAS_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="684">
          <Name>PRPS2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="685">
          <Name>SMARCB1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="686">
          <Name>STMN2_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="687">
          <Name>SIAH1_MUT</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Input</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
       <RawVariable Item="688">
          <Name>overall_mortality</Name>
          <Scaler>MinimumMaximum</Scaler>
          <Use>Target</Use>
          <Type>Binary</Type>
+         <Categories>0 1 </Categories>
       </RawVariable>
    </RawVariables>
    <Samples>
       <SamplesNumber>1880</SamplesNumber>
       <SamplesId>0 2 5 6 8 10 14 22 35 36 39 45 48 50 53 54 56 60 62 64 66 68 79 81 83 93 97 100 101 102 106 107 108 109 111 112 115 116 119 120 121 122 123 124 126 127 128 130 131 133 134 135 136 138 139 140 144 145 146 147 150 151 152 154 157 163 165 166 167 168 170 172 174 175 176 178 179 180 181 184 188 189 192 195 197 198 199 200 201 202 204 205 206 207 209 211 214 215 218 220 221 222 223 224 225 227 228 229 230 232 233 234 235 236 238 239 241 242 243 244 245 247 248 249 253 256 257 258 259 260 261 262 263 264 265 266 268 269 270 272 273 275 278 279 280 282 284 285 286 287 288 289 290 291 292 293 294 295 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 324 325 328 336 339 340 341 342 343 344 345 346 348 349 350 352 353 354 356 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 377 378 379 380 381 382 383 384 385 386 388 389 391 392 393 394 395 396 397 398 399 400 401 402 404 406 410 411 412 413 414 417 418 419 420 421 422 424 425 426 427 428 429 431 434 436 437 438 439 440 442 443 444 445 446 449 451 452 453 454 455 458 459 460 462 463 464 465 466 467 468 469 470 471 472 474 475 476 478 479 480 481 482 483 484 485 486 487 488 489 490 491 492 494 495 496 497 500 501 502 503 504 505 506 507 508 509 510 511 512 513 514 516 517 519 521 522 524 525 526 527 528 529 531 532 534 535 536 537 538 540 541 542 544 545 550 551 552 553 554 558 559 568 569 570 571 573 574 575 576 577 578 579 580 581 582 583 584 585 586 587 588 589 590 591 593 594 596 597 598 599 600 601 603 605 606 607 608 609 610 611 613 614 615 616 617 618 619 620 621 623 624 626 627 628 630 631 632 634 636 637 638 639 640 641 642 643 644 646 649 650 652 653 654 655 656 657 658 659 660 661 662 663 664 666 869 872 874 877 880 882 884 891 893 895 897 899 901 904 906 2513 2517 2536 2556 2564 2610 2613 2614 2616 2617 2618 2624 2626 2629 2632 2634 2642 2643 2645 2669 2686 2705 2708 2711 2712 2718 2721 2724 2725 2728 2730 2735 2742 2744 2745 2747 2749 2750 2752 2753 2754 2758 2760 2763 2764 2765 2767 2769 2770 2771 2772 2774 2778 2779 2781 2786 2790 2791 2792 2793 2795 2796 2797 2801 2803 2814 2815 2819 2820 2821 2823 2827 2833 2834 2835 2838 2840 2842 2843 2844 2845 2846 2847 2848 2849 2850 2851 2853 2854 2857 2858 2863 2867 2895 2896 2900 2901 2904 2912 2916 2917 2919 2922 2923 2927 2929 2931 2932 2933 2939 2944 2947 2951 2952 2953 2954 2957 2960 2963 2964 2966 2969 2970 2971 2977 2983 2984 2990 2993 2994 2996 2999 3001 3002 3005 3006 3007 3008 3013 3014 3016 3021 3025 3026 3028 3031 3032 3033 3035 3037 3046 3049 3050 3057 3058 3060 3062 3063 3064 3067 3079 3083 3085 3088 3092 3102 3103 3104 3105 3110 3121 3122 3123 3153 3165 3167 3171 3181 3211 3218 3222 3228 3235 3252 3253 3254 3266 3271 3272 3275 3277 3292 3295 3297 3298 3300 3301 3303 3328 3329 3341 3344 3350 3351 3355 3357 3360 3361 3363 3365 3367 3371 3378 3379 3381 3382 3383 3386 3388 3389 3395 3396 3402 3403 3412 3417 3429 3430 3435 3436 3437 3439 3450 3452 3453 3459 3462 3466 3467 3470 3476 3479 3487 3488 3490 3492 3497 3500 3502 3506 3510 3525 3526 3528 3530 3536 3545 3548 3556 3567 3576 3582 3600 3606 3614 3702 3706 3707 3711 3748 3752 3754 3781 3797 3824 3838 3840 3842 3850 3852 3854 3865 3866 3871 3874 3978 4000 4001 4003 4004 4005 4008 4010 4011 4012 4015 4017 4018 4024 4033 4046 4059 4079 4091 4098 4119 4120 4126 4127 4139 4140 4141 4145 4146 4148 4154 4171 4173 4189 4212 4213 4222 4224 4230 4233 4234 4235 4236 4250 4254 4264 4266 4270 4274 4276 4278 4281 4282 4283 4289 4292 4293 4300 4303 4306 4310 4313 4317 4318 4322 4323 4324 4328 4329 4331 4332 4333 4339 4341 4342 4343 4348 4350 4351 4353 4354 4357 4360 4362 4368 4374 4375 4381 4390 4395 4407 4408 4416 4417 4418 4421 4426 4434 4442 4484 4529 4548 4557 4564 4578 4591 4593 4598 4599 4601 4602 4603 4607 4616 4618 4621 4622 4623 4626 4627 4630 4633 4634 4639 4640 4641 4642 4643 4644 4648 4649 4651 4653 4654 4655 4660 4661 4663 4665 4666 4667 4669 4670 4671 4672 4673 4674 4675 4679 4681 4682 4685 4686 4687 4688 4691 4692 4694 4695 4696 4697 4698 4701 4702 4704 4705 4706 4707 4708 4709 4710 4711 4712 4714 4715 4716 4717 4718 4719 4721 4722 4723 4724 4725 4729 4730 4731 4732 4733 4735 4737 4738 4739 4741 4742 4743 4744 4745 4746 4749 4750 4752 4757 4758 4760 4762 4763 4764 4767 4769 4770 4771 4778 4779 4782 4784 4785 4787 4790 4791 4792 4793 4794 4796 4797 4798 4800 4801 4802 4805 4806 4809 4814 4818 4820 4822 4825 4827 4828 4829 4832 4834 4836 4838 4839 4843 4845 4846 4849 4851 4853 4855 4858 4859 4860 4862 4865 4866 4867 4869 4870 4871 4872 4873 4876 4878 4879 4880 4881 4882 4883 4886 4887 4888 4893 4894 4896 4897 4898 4899 4900 4904 4906 4908 4911 4912 4925 4928 4929 4930 4931 4933 4934 4935 4937 4938 4941 4942 4944 4945 4949 4950 4952 4956 4957 4959 4961 4962 4965 4966 4967 4968 4969 4970 4974 4976 4977 4978 4981 4982 4986 4987 4991 4992 4993 4994 4996 4998 4999 5001 5004 5008 5011 5013 5014 5015 5017 5018 5019 5020 5027 5033 5035 5039 5040 5041 5043 5044 5045 5048 5049 5050 5052 5053 5054 5057 5058 5059 5060 5061 5062 5063 5064 5065 5066 5068 5070 5072 5073 5074 5078 5079 5081 5084 5086 5088 5092 5093 5097 5098 5100 5101 5102 5105 5107 5110 5113 5114 5115 5116 5117 5118 5119 5120 5121 5122 5123 5124 5126 5127 5130 5134 5135 5138 5139 5143 5144 5145 5147 5148 5150 5152 5154 5155 5157 5160 5161 5162 5163 5164 5166 5167 5169 5171 5172 5173 5174 5175 5176 5177 5178 5179 5182 5183 5184 5185 5186 5188 5189 5190 5191 5193 5195 5196 5197 5199 5200 5201 5204 5205 5206 5208 5209 5211 5212 5213 5214 5215 5218 5221 5222 5223 5224 5225 5226 5227 5228 5229 5230 5231 5232 5233 5235 5236 5238 5239 5240 5243 5244 5251 5253 5256 5258 5259 5260 5261 5264 5266 5267 5268 5270 5271 5272 5273 5275 5277 5278 5279 5280 5281 5284 5287 5288 5290 5291 5292 5293 5294 5295 5296 5298 5299 5300 5305 5306 5308 5310 5311 5312 5313 5315 5317 5318 5322 5323 5324 5326 5327 5328 5329 5330 5331 5332 5334 5335 5338 5339 5341 5345 5346 5347 5348 5350 5351 5358 5360 5361 5364 5365 5366 5368 5369 5370 5373 5377 5378 5381 5382 5383 5384 5386 5388 5389 5390 5392 5393 5395 5396 5397 5398 5399 5401 5402 5403 5404 5405 5406 5407 5408 5409 5410 5411 5412 5414 5417 5418 5420 5421 5422 5424 5425 5426 5427 5428 5429 5431 5432 5433 5434 5435 5440 5441 5442 5444 5446 5447 5450 5451 5452 5453 5454 5455 5457 5458 5459 5463 5464 5465 5468 5470 5471 5472 5473 5474 5475 5477 5478 5481 5482 5483 5484 5485 5486 5489 5490 5491 5492 5493 5495 5497 5498 5499 5502 5505 5510 5511 5513 5514 5518 5519 5520 5521 5525 5526 5527 5529 5530 5531 5532 5533 5534 5535 5540 5541 5543 5547 5548 5549 5550 5551 5552 5553 5554 5556 5558 5559 5560 5562 5563 5565 5566 5567 5571 5572 5575 5576 5577 5579 5580 5582 5583 5584 5588 5589 5590 5591 5592 5593 5596 5597 5599 5601 5602 5603 5604 5605 5613 5614 5616 5617 5620 5622 5623 5624 5626 5628 5629 5632 5633 5634 5635 5636 5638 5640 5641 5642 5645 5646 5647 5651 5652 5653 5654 5655 5656 6001 6006 6007 6008 6010 6011 6012 6014 6016 6017 6018 6019 6021 6022 6023 6024 6026 6029 6030 6036 6039 6042 6044 6047 6048 6049 6050 6051 6052 6053 6055 6058 6059 6060 6062 6063 6065 6068 6069 6071 6075 6077 6079 6080 6082 6083 6085 6092 6097 6098 6100 6101 6103 6105 6107 6108 6113 6114 6116 6118 6122 6124 6125 6131 6133 6135 6138 6141 6143 6144 6145 6146 6147 6149 6150 6152 6154 6156 6157 6160 6163 6164 6167 6168 6169 6171 6178 6179 6181 6182 6183 6184 6185 6187 6188 6189 6190 6192 6194 6195 6200 6201 6204 6207 6208 6211 6212 6214 6217 6218 6223 6224 6225 6226 6228 6229 6231 6232 6233 6234 6237 6238 6239 6242 6245 6246 6248 6251 6253 6254 6256 6257 6263 6271 6272 6273 6280 6281 6283 6284 6286 6287 6288 6297 6300 6302 6305 6306 6308 6312 6314 6317 6318 6319 6322 6327 6328 6329 6330 6334 6336 6337 6344 6346 6358 6359 6363 7000 7001 7002 7003 7004 7005 7006 7007 7008 7009 7010 7011 7012 7013 7014 7015 7017 7018 7019 7020 7022 7023 7024 7025 7026 7027 7028 7029 7030 7031 7032 7034 7035 7036 7037 7038 7039 7040 7041 7042 7043 7044 7045 7046 7048 7049 7050 7051 7052 7053 7054 7055 7056 7057 7058 7059 7060 7061 7062 7063 7065 7066 7067 7068 7069 7070 7071 7072 7073 7074 7075 7076 7077 7078 7079 7080 7081 7082 7083 7084 7085 7086 7087 7088 7089 7090 7091 7092 7093 7094 7095 7096 7097 7099 7100 7101 7102 7104 7106 7107 7109 7111 7112 7113 7114 7115 7116 7118 7119 7121 7122 7123 7124 7127 7128 7130 7131 7132 7133 7135 7137 7138 7140 7141 7142 7143 7144 7145 7147 7149 7150 7151 7152 7153 7154 7155 7157 7158 7159 7160 7161 7162 7163 7164 7165 7167 7168 7170 7171 7172 7173 7174 7176 7181 7182 7185 7186 7187 7189 7193 7194 7195 7196 7197 7198 7199 7200 7201 7205 7207 7208 7212 7215 7216 7217 7218 7219 7220 7225 7226 7227 7228 7229 7230 7231 7232 7233 7234 7235 7236 7237 7238 7241 7243 7244 7249 7250 7251 7252 7253 7254 7256 7258 7260 7262 7263 7264 7266 7267 7268 7269 7270 7273 7275 7276 7277 7278 7279 7280 7281 7283 7284 7285 7286 7287 7288 7289 7291 7292 7293 7294 7295 7296 7297 7298 7299 </SamplesId>
-      <SampleUses>0 0 0 0 2 0 0 0 1 0 0 1 1 1 0 0 1 2 0 0 0 0 0 0 0 1 0 0 1 1 1 0 1 0 0 1 2 0 0 0 0 0 0 1 2 0 1 0 2 0 0 0 0 0 1 0 0 2 0 0 0 2 0 0 2 0 0 1 1 0 0 0 2 0 0 1 2 0 1 0 2 1 0 2 0 0 1 2 2 2 0 0 2 0 0 1 0 0 1 0 0 0 2 0 1 0 1 2 0 2 1 0 0 2 1 1 0 1 0 0 0 0 0 1 0 2 0 0 0 2 1 2 1 0 2 1 0 2 0 0 0 1 0 0 0 0 1 0 0 1 1 2 0 0 2 2 1 2 0 2 0 2 0 0 2 0 2 0 0 1 0 0 0 0 0 0 1 2 0 2 0 2 0 0 2 1 2 1 2 2 0 0 0 0 1 1 2 2 1 0 0 0 0 0 1 0 2 0 1 2 2 0 1 0 0 2 0 0 2 0 0 0 0 2 1 0 0 1 0 2 0 0 0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 2 1 0 0 2 2 1 0 2 2 2 0 0 1 0 0 2 1 2 0 1 0 0 0 0 0 2 0 0 2 0 2 0 2 0 1 0 0 0 2 0 1 0 0 0 0 0 0 0 2 0 0 0 2 0 2 0 0 1 0 0 2 0 0 0 2 2 0 0 0 0 0 0 0 2 0 2 0 0 0 0 1 2 1 1 1 0 0 0 0 2 0 2 1 2 0 0 0 1 0 2 1 1 2 2 0 0 0 1 0 1 1 0 0 0 2 2 0 0 2 2 2 0 0 2 2 1 1 0 0 1 0 2 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 1 0 0 1 1 1 0 0 0 0 2 0 2 1 0 0 0 0 2 2 0 1 0 1 0 1 0 0 0 0 0 1 0 0 1 0 1 0 1 0 1 1 2 1 0 2 1 0 0 0 0 1 2 2 0 1 0 0 0 1 2 1 0 0 2 0 0 1 0 1 2 1 0 2 0 0 0 2 0 2 2 0 0 0 0 2 1 0 0 0 1 0 0 2 0 0 0 0 2 1 0 0 0 0 2 0 0 0 0 2 0 0 0 1 2 0 0 0 0 0 0 0 1 0 0 0 2 0 1 0 2 0 0 0 2 0 1 1 0 1 0 2 2 0 0 1 0 0 0 0 0 2 0 0 0 0 2 0 2 2 0 0 0 0 0 0 0 0 0 0 0 0 2 2 1 2 0 1 1 1 0 0 0 2 0 1 2 0 2 0 2 1 0 0 1 0 0 0 0 0 0 0 0 0 2 2 0 1 1 1 0 2 0 0 1 0 1 1 0 0 0 2 2 2 0 2 0 0 0 0 0 0 2 0 1 0 1 0 1 0 0 0 1 0 0 0 2 0 0 0 2 0 1 0 1 2 1 0 2 0 2 1 1 0 0 2 1 1 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 0 0 0 0 1 0 1 0 0 0 2 2 1 0 0 0 0 1 1 0 0 0 1 1 0 1 1 2 0 1 1 2 2 0 0 0 0 1 2 0 1 1 0 0 1 0 0 0 0 0 0 1 0 2 0 0 0 0 2 1 0 0 0 1 0 0 0 0 0 2 1 0 2 1 2 0 0 0 2 0 0 1 1 2 0 2 0 1 0 1 1 1 1 0 0 2 2 2 1 0 0 1 1 0 1 1 1 2 0 1 2 1 0 2 0 0 0 2 0 0 0 1 0 0 0 0 1 0 0 0 1 1 2 0 0 1 0 0 0 0 2 0 0 0 0 0 0 1 1 1 0 1 0 0 0 0 1 1 2 1 1 1 0 2 0 0 2 1 0 1 0 0 0 0 2 0 0 1 0 0 1 1 1 0 0 1 1 0 0 0 0 0 2 1 0 0 0 0 2 1 0 2 0 0 0 2 1 0 2 2 1 0 0 2 2 2 2 2 0 2 1 0 0 2 0 1 1 2 0 0 2 1 2 1 0 2 0 2 1 2 2 2 0 2 0 0 0 1 2 0 1 2 0 0 0 0 0 1 0 2 1 0 0 1 1 0 0 1 0 1 2 0 0 1 1 0 1 0 0 0 0 0 0 0 2 0 0 2 1 2 0 1 0 0 0 0 0 2 0 0 0 0 1 1 0 2 0 1 1 0 1 1 1 0 0 1 0 2 0 2 2 0 0 1 0 0 0 0 0 0 0 2 0 2 0 0 2 0 2 0 2 0 0 0 2 0 0 2 1 2 0 0 0 0 0 0 2 2 2 0 0 1 0 0 0 1 0 0 0 0 2 1 0 0 0 0 0 0 0 0 0 2 1 0 0 0 0 1 2 1 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 1 0 2 0 1 2 0 1 2 0 2 0 1 0 0 0 0 2 0 0 0 2 0 1 0 0 2 0 0 0 0 1 1 2 0 2 0 0 0 1 1 0 0 1 0 0 0 1 1 0 0 0 0 1 2 0 0 0 0 0 0 1 0 2 0 2 0 0 0 1 0 0 2 0 2 0 0 1 2 0 0 0 0 0 2 1 0 1 2 2 0 2 0 0 0 0 1 2 0 2 2 0 1 0 0 2 0 0 0 2 0 2 0 1 0 0 0 0 1 0 1 0 0 1 0 0 2 0 0 2 0 0 0 2 0 0 0 2 1 0 1 1 0 0 0 0 0 2 0 0 2 0 1 1 0 0 0 2 1 0 0 0 0 0 0 2 0 1 0 2 1 0 0 1 0 0 2 0 2 0 1 0 0 2 1 2 1 0 0 0 2 0 0 0 0 0 0 2 0 1 0 1 0 0 0 2 0 2 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 0 1 2 0 2 2 1 1 0 1 0 2 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 2 0 0 0 0 2 0 2 0 0 2 2 0 0 2 1 0 2 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 1 1 0 0 2 0 1 2 2 1 0 0 0 1 1 0 2 0 2 2 0 0 2 0 0 0 2 0 0 0 2 0 1 0 0 1 1 0 0 0 2 0 0 0 0 0 1 0 2 0 2 0 2 0 0 2 0 0 2 0 2 1 1 2 2 0 0 1 0 0 0 1 2 0 2 0 2 2 1 0 0 0 1 0 0 0 2 1 0 0 0 1 0 1 2 0 1 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 0 2 1 1 2 0 2 2 0 1 1 2 1 2 2 0 2 0 0 0 0 0 2 0 0 2 0 1 0 0 0 0 0 0 0 0 2 0 0 2 0 2 1 0 0 0 0 2 2 2 0 2 2 2 0 0 1 0 0 1 0 1 2 0 0 0 0 0 2 2 0 0 0 1 0 0 0 1 2 0 0 0 1 1 0 1 2 1 0 0 2 0 1 0 0 0 2 0 0 0 0 1 1 0 1 0 2 1 0 2 0 0 2 1 0 0 0 1 0 0 0 0 0 0 0 1 0 0 1 1 2 1 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 2 0 2 1 0 0 2 1 0 0 2 1 0 0 1 0 0 1 2 2 0 2 0 2 0 2 0 0 1 2 0 2 0 2 1 1 0 0 0 0 2 1 0 0 0 0 2 2 2 1 1 0 0 2 1 0 1 0 1 0 0 0 2 0 0 0 0 0 1 0 1 0 0 2 0 2 0 0 0 0 0 0 0 0 2 0 0 0 2 1 0 0 2 0 0 0 0 2 0 0 2 2 0 1 0 1 0 0 2 0 0 1 0 2 0 1 1 2 0 0 1 2 2 2 0 0 2 0 0 0 0 2 2 0 2 0 2 1 0 0 0 1 0 1 0 0 0 0 0 0 2 1 0 2 0 0 1 1 1 0 0 1 0 0 1 0 0 0 1 0 1 0 1 0 2 0 2 0 0 2 0 2 2 0 0 0 2 0 0 0 0 0 0 0 2 0 1 2 2 2 1 0 0 2 0 0 0 0 1 0 2 1 0 2 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 2 0 0 1 0 </SampleUses>
+      <SampleUses>1 0 0 1 2 1 0 0 0 1 0 1 0 0 0 2 0 1 1 1 0 0 1 2 2 2 2 0 0 0 0 0 0 0 1 0 2 1 0 2 2 1 0 2 0 0 0 0 1 1 0 0 2 2 2 2 2 2 0 0 0 0 1 1 0 0 1 0 0 0 2 1 0 1 0 1 1 0 1 0 1 2 1 2 2 0 0 0 0 1 1 1 1 0 2 0 0 0 1 2 2 2 1 0 0 0 2 0 1 0 0 2 0 2 0 0 2 2 0 1 0 0 0 1 0 0 0 0 2 0 0 0 2 0 0 0 1 2 2 0 0 0 0 2 1 0 0 2 0 0 0 0 0 2 0 0 0 0 0 1 0 2 2 0 0 1 1 1 0 0 0 0 0 0 2 1 0 0 1 0 0 0 0 0 2 2 2 0 2 2 0 2 2 0 0 2 0 2 0 0 0 0 0 1 0 0 0 1 0 0 1 2 0 0 0 0 0 0 0 0 0 2 1 0 1 2 1 0 1 0 1 0 0 2 0 1 0 2 0 0 2 1 2 0 1 0 0 1 0 0 0 0 0 1 0 2 1 2 1 2 0 0 0 2 2 2 0 0 1 0 1 0 1 0 0 0 0 2 1 2 0 1 1 1 2 0 1 0 1 1 0 0 1 1 2 0 0 1 0 0 2 1 0 0 0 2 2 2 2 0 0 0 2 1 0 2 1 2 0 0 0 0 0 1 0 0 0 0 0 0 2 0 1 0 2 0 1 1 0 2 0 1 0 0 1 0 0 0 0 0 0 2 0 2 0 0 0 0 2 0 0 0 1 0 2 2 1 0 0 0 0 0 0 0 1 1 2 0 0 0 2 1 0 0 0 1 2 0 1 0 0 0 0 2 2 0 2 2 0 2 0 0 0 2 0 2 0 2 2 0 1 0 2 2 2 0 0 2 0 2 2 1 2 0 0 0 2 0 1 2 0 0 0 0 1 0 0 2 0 0 0 2 0 1 0 0 2 0 1 0 0 0 0 0 0 0 0 0 2 0 2 0 0 0 0 2 1 0 2 1 0 1 0 2 0 0 1 0 0 2 0 0 0 0 1 0 2 2 0 0 0 2 0 0 2 0 0 2 0 2 0 2 0 0 2 1 0 2 0 0 1 2 2 0 0 0 2 0 0 0 0 0 0 1 0 2 0 0 0 1 1 2 0 1 2 0 1 0 0 2 2 0 0 1 1 0 0 0 0 2 0 1 0 2 1 0 1 0 0 0 0 0 0 1 1 0 0 0 2 2 0 2 0 0 0 2 2 0 2 1 2 1 2 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0 1 0 0 2 2 0 1 0 0 2 0 2 0 0 1 0 0 0 0 0 1 1 0 2 0 0 1 0 0 0 0 1 1 0 0 1 0 1 0 2 0 0 2 1 2 2 0 1 0 1 1 0 0 2 2 0 1 2 1 2 0 0 1 0 2 1 0 0 1 0 0 1 2 1 1 2 0 0 0 2 2 0 1 2 1 0 0 0 2 0 0 2 0 2 1 0 1 0 0 1 0 0 0 0 1 1 2 0 0 1 0 0 1 0 0 2 2 0 0 0 1 0 0 0 0 0 1 1 2 1 0 0 1 0 0 1 2 2 2 0 2 0 0 1 0 0 2 0 0 2 2 0 0 0 0 0 0 0 0 2 1 1 1 2 0 0 2 2 0 1 0 0 0 0 1 2 1 0 1 1 0 0 2 2 0 1 0 1 2 0 0 0 2 0 0 0 2 1 0 2 2 0 1 0 0 0 1 0 0 1 0 0 0 1 0 2 0 2 0 0 0 0 0 2 0 2 0 1 0 0 0 1 0 0 1 2 0 1 0 1 0 2 0 0 2 0 1 0 0 2 0 2 0 0 0 1 0 0 0 1 1 1 2 0 0 1 0 2 2 2 2 0 0 0 0 0 0 0 0 0 2 0 0 2 0 2 1 0 2 1 0 0 0 1 0 2 0 2 0 1 0 2 0 0 0 0 1 0 1 1 0 0 0 0 0 1 0 0 2 0 0 0 0 1 0 0 1 0 0 2 0 0 0 2 2 0 1 0 2 0 1 0 1 0 0 0 1 1 0 0 1 2 0 1 0 1 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 1 0 1 0 2 1 0 0 1 0 2 1 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 1 1 2 0 0 1 1 0 2 0 0 2 2 0 2 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 2 0 1 2 1 0 2 0 0 0 0 1 2 0 0 0 0 0 1 2 1 0 0 0 0 0 0 0 0 0 2 0 0 2 0 0 0 1 0 2 2 0 2 0 0 0 2 2 1 2 0 0 0 0 0 2 0 0 0 2 0 0 0 1 0 0 2 1 2 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 1 2 0 2 0 0 0 0 2 1 0 0 2 0 2 0 2 0 1 1 0 0 2 0 1 2 0 1 0 2 2 0 0 0 2 0 0 0 1 0 2 0 1 0 2 2 0 0 1 0 1 0 1 0 2 0 2 0 0 0 0 2 0 0 1 2 0 1 0 2 2 0 1 0 0 0 0 1 0 0 1 2 0 2 2 2 0 2 0 2 0 1 2 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 2 0 1 0 1 0 0 0 1 0 1 0 1 1 1 0 2 0 1 1 0 0 2 2 1 0 2 2 1 0 1 0 0 0 0 0 2 1 2 0 0 0 2 1 0 0 0 2 0 0 1 0 0 0 0 2 0 1 1 0 0 0 0 1 2 1 0 1 0 0 0 0 0 2 1 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 2 1 1 1 2 2 1 1 2 0 1 0 2 0 1 0 1 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 1 1 0 1 0 1 2 2 0 0 0 0 2 1 0 0 0 0 0 0 0 2 0 0 0 0 1 2 2 1 2 2 0 0 0 1 1 0 0 0 0 1 2 2 0 2 0 0 0 0 0 0 0 2 2 0 0 0 2 0 0 2 0 2 1 1 1 2 0 1 1 0 0 2 0 0 0 1 1 0 0 0 1 2 0 0 0 1 0 0 0 1 2 2 0 0 0 0 0 0 2 1 0 0 2 0 1 0 2 2 0 0 1 1 0 0 2 0 0 0 1 0 1 2 0 0 0 1 0 2 0 0 2 0 0 1 0 1 1 0 0 1 2 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 1 0 1 1 0 1 1 0 2 1 1 0 0 1 0 0 1 0 1 0 0 2 0 0 0 0 0 1 2 0 2 0 0 2 2 2 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 2 0 1 1 0 0 0 1 0 1 0 1 1 2 2 0 0 1 2 1 0 0 0 0 1 0 1 0 2 2 0 0 1 1 0 0 0 0 0 0 2 2 1 0 0 2 0 2 0 1 0 1 2 0 0 0 0 0 2 0 0 0 2 1 2 2 0 0 1 0 0 2 0 0 1 0 2 1 0 1 0 0 0 0 0 0 0 0 2 2 2 2 0 1 1 0 0 0 2 2 0 0 1 0 0 0 2 0 2 1 1 1 2 0 2 1 0 1 0 0 1 1 0 2 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0 1 0 2 0 1 0 0 1 0 2 1 0 0 0 0 1 1 1 2 2 0 0 0 0 1 0 0 0 0 0 1 0 0 1 1 0 0 1 0 2 0 1 0 0 0 0 2 0 0 2 0 0 0 0 2 0 0 0 0 1 0 0 0 1 0 2 2 0 0 2 2 0 0 0 1 0 0 1 0 2 0 0 1 0 0 0 0 0 2 0 0 1 0 0 2 0 0 0 0 1 2 1 0 0 0 0 2 1 1 0 0 2 1 0 2 0 0 0 0 0 0 0 0 1 0 1 0 0 1 0 0 2 0 2 2 0 0 0 0 0 0 0 0 2 1 0 1 0 0 0 1 0 1 0 0 </SampleUses>
    </Samples>
    <MissingValues>
       <MissingValuesNumber>1216</MissingValuesNumber>
