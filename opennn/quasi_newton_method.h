@@ -105,7 +105,7 @@ private:
 
    Index maximum_epochs_number;
 
-   type maximum_time;
+   type maximum_time = type(360000);
 };
 
 

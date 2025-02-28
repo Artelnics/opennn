@@ -132,7 +132,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device)
-            = (-targets/outputs + (type(1) - targets)/(type(1) - outputs))/type(batch_samples_number);
+        = (-targets/(outputs + type(1e-5)) + (type(1) - targets)/(type(1) - outputs + type(1e-5)))/type(batch_samples_number);
 }
 
 

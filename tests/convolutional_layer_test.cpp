@@ -75,7 +75,7 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
 
 
 TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
-    /*
+/*
     ConvolutionalLayerConfig parameters = GetParam();
 
     ConvolutionalLayer convolutional_layer(parameters.input_dimensions,
@@ -124,13 +124,13 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
             }
         }
     }
-    */
+*/
 }
 
 
 TEST_P(ConvolutionalLayerTest, BackPropagate) 
 {
-    /*
+
     ConvolutionalLayerConfig parameters = GetParam();
 
     ConvolutionalLayer convolutional_layer(parameters.input_dimensions,
@@ -173,7 +173,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
                                         parameters.expected_output.dimension(1),
                                         parameters.expected_output.dimension(2),
                                         parameters.expected_output.dimension(3)});
-    /*
+
     convolutional_layer.back_propagate({input_pair}, {delta_pair}, forward_propagation, back_propagation);
 
     vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation->get_input_derivative_pairs();
@@ -189,6 +189,10 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
                                                  parameters.input_data.dimension(2),
                                                  parameters.input_data.dimension(3));
 
+
+    // @TODO fix the validate input derivatives
+
+/*
     // Validate input derivatives (mock expected values for now)
     Tensor<type, 4> expected_input_derivatives(batch_samples_number,
                                                parameters.input_data.dimension(1),
@@ -207,7 +211,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
             }
         }
     }
-
+*/
     // Validate bias derivatives
     const Tensor<type, 1>& bias_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->bias_derivatives;
     EXPECT_EQ(bias_derivatives.size(), convolutional_layer.get_kernels_number());
@@ -223,5 +227,5 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     EXPECT_EQ(weight_derivatives.dimension(1), parameters.kernel_dimensions[0]);
     EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);
     EXPECT_EQ(weight_derivatives.dimension(3), parameters.kernel_dimensions[2]);
-*/
+
 }
