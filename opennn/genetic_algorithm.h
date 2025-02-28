@@ -69,11 +69,11 @@ public:
 
     void perform_fitness_assignment();
 
-    Tensor<type, 1> calculate_selection_probabilities();
+    // Tensor<type, 1> calculate_selection_probabilities();
 
     void perform_selection();
 
-    Index weighted_random(const Tensor<type, 1>&);
+    // Index weighted_random(const Tensor<type, 1>&);
 
     void perform_crossover();
 

@@ -23,34 +23,24 @@ int main()
 
         // Data set
         
-        /*
-        const Index samples_number = 1;
+        
+        const Index samples_number = 2;
 
-        const Index image_height = 3;
-        const Index image_width = 3;
-        const Index channels = 3;
-        const Index targets = 1;
+        const Index image_height = 4;
+        const Index image_width = 4;
+        const Index channels = 1;
+        const Index targets = 2;
 
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
         image_data_set.set_data_random();
-        */
-        ImageDataSet image_data_set(0,{0,0,0},{0});
+        
+        //ImageDataSet image_data_set(0, {0,0,0}, {0});
 
-        image_data_set.set_data_path("C:/binary_mnist");
+        //image_data_set.set_data_path("C:/binary_mnist_test");
+        //image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
-        image_data_set.read_bmp();
-
-        image_data_set.save("data/data.xml");
-
-        ImageDataSet data_set_xml;
-        data_set_xml.load("data/data.xml");
-        data_set_xml.save("data/data_xml.xml");
-
-        image_data_set.print();
-        data_set_xml.print();
-
-        system("pause");
+        //image_data_set.read_bmp();
 
         // Neural network
 
@@ -58,6 +48,10 @@ int main()
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
             { 1 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
+
+        neural_network.print();
+
+        system("pause");
 
         // Training strategy
 

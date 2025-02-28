@@ -7,8 +7,11 @@
 //   artelnics@artelnics.com
 
 #include "unscaling_layer.h"
+#include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "descriptives.h"
+#include "statistics.h"
 
 namespace opennn
 {
@@ -289,9 +292,6 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    // cout << "inputs" << endl;
-    // cout << inputs << endl;
-
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
 
     outputs = inputs;
@@ -327,14 +327,14 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
             unscale_logarithmic(outputs, i);
         break;
 
+        case Scaler::ImageMinMax:
+            unscale_image_minimum_maximum(outputs, i);
+            break;
+
         default:
             throw runtime_error("Unknown scaling method.\n");
         }
     }
-
-
-    // cout << "Outputs unscaling layer:\n" << outputs << endl;
-
 }
 
 

@@ -167,6 +167,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
 
     for(Index i = 0; i < matrix.dimension(0); i++)
         matrix(i, column_index) = mean + matrix(i, column_index)*standard_deviation;
+
 }
 
 

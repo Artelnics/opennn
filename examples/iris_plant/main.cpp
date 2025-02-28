@@ -51,6 +51,8 @@ int main()
 
         testing_analysis.print_goodness_of_fit_analysis();
 
+        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+
         cout << "Good bye!" << endl;
 
         return 0;

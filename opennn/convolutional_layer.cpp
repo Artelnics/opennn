@@ -219,7 +219,8 @@ void ConvolutionalLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     is_training
         ? calculate_activations(outputs, activation_derivatives)
-        : calculate_activations(outputs, empty);   
+        : calculate_activations(outputs, empty);
+
 }
 
 
@@ -366,10 +367,10 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    //cout << "Input derivatives: " << endl;
-    //for(int i = 0 ; i < input_derivatives.size() ; i++)
-    //    cout << input_derivatives(i) << " ";
-    //cout << endl;
+    cout << "Input derivatives: " << endl;
+    for(int i = 0 ; i < input_derivatives.size() ; i++)
+        cout << input_derivatives(i) << " ";
+    cout << endl;
 
     //auto end = chrono::high_resolution_clock::now();
     //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
@@ -441,7 +442,7 @@ Index ConvolutionalLayer::get_output_height() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_height - kernel_height + 2*padding.first)/strides) + 1;
+    return floor((input_height - kernel_height + padding.first)/strides) + 1;
 }
 
 
@@ -453,7 +454,7 @@ Index ConvolutionalLayer::get_output_width() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_width - kernel_width + 2*padding.second)/strides) + 1;
+    return floor((input_width - kernel_width + padding.second)/strides) + 1;
 }
 
 
@@ -745,11 +746,10 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 pair<Index, Index> ConvolutionalLayer::get_padding() const
 {
-    switch(convolution_type)
+    switch (convolution_type)
     {
     case ConvolutionType::Valid:
         return make_pair(0, 0);
-
     case ConvolutionType::Same:
     {
         const Index input_height = get_input_height();
@@ -761,13 +761,19 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-        const Index pad_rows = max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
-        const Index pad_columns = max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
+        const Index output_height = (input_height + row_stride - 1) / row_stride;
+        const Index output_width = (input_width + column_stride - 1) / column_stride;
+
+        const Index pad_rows_total = max<Index>(0, (output_height - 1) * row_stride + kernel_height - input_height);
+        const Index pad_columns_total = max<Index>(0, (output_width - 1) * column_stride + kernel_width - input_width);
+
+        const Index pad_rows = (pad_rows_total + 1) / 2;
+        const Index pad_columns = (pad_columns_total + 1) / 2;
 
         return make_pair(pad_rows, pad_columns);
     }
     default:
-        throw runtime_error("Unknown convolution type.\n");
+        throw runtime_error("Unknown convolution type.");
     }
 }
 

@@ -2,51 +2,74 @@
 
 #include "../opennn/multihead_attention_layer.h"
 
-
-TEST(MultiheadAttentionLayer, DefaultConstructor)
-{
+TEST(MultiheadAttentionLayer, DefaultConstructor) {
     MultiheadAttentionLayer multihead_attention_layer;
 
-//    EXPECT_EQ(multihead_attention_layer.get_vocabulary_size(), 0);
-//    EXPECT_EQ(multihead_attention_layer.get_sequence_length(), 0);
-//    EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_heads_number(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_input_size(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_context_size(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_depth(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_weights_depth(), 0);
+
+    EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{0});
+    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({multihead_attention_layer.get_input_size(), multihead_attention_layer.get_depth()}));
 }
 
 
 TEST(MultiheadAttentionLayer, GeneralConstructor)
 {
-//    MultiheadAttentionLayer multihead_attention_layer;
+    const Index heads_number = 8;
+    const Index input_size = 64;
+    const Index context_size = 128;
+    const Index depth = 256;
+    const bool use_causal_mask = true;
 
-//    EXPECT_EQ(embedding_layer.get_vocabulary_size(), 1);
-//    EXPECT_EQ(embedding_layer.get_sequence_length(), 2);
-//    EXPECT_EQ(embedding_layer.get_embedding_dimension(), 3);
+    MultiheadAttentionLayer multihead_attention_layer(input_size,context_size,depth,heads_number,use_causal_mask);
+
+    EXPECT_EQ(multihead_attention_layer.get_heads_number(), heads_number);
+    EXPECT_EQ(multihead_attention_layer.get_input_size(), input_size);
+    EXPECT_EQ(multihead_attention_layer.get_context_size(), context_size);
+    EXPECT_EQ(multihead_attention_layer.get_depth(), depth);
+
+    EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{input_size});
+    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({input_size, depth}));
 }
 
 
 TEST(MultiheadAttentionLayer, ForwardPropagate)
 {
-/*
-    const Index samples_number = get_random_index(1, 10);
-    const Index vocabulary_size = get_random_index(1, 10);
-    const Index sequence_length = get_random_index(1, 10);
-    const Index embedding_dimension = get_random_index(1, 10);
+    const Index batch_samples_number = 2;
+    const Index input_size = 4;
+    const Index context_size = 4;
+    const Index depth = 8;
+    const Index heads_number = 2;
+    const bool is_training = true;
 
-    EmbeddingLayer embedding_layer(vocabulary_size, sequence_length, embedding_dimension);
-    embedding_layer.set_parameters_constant(type(0));
+    const dimensions input_dimensions = {batch_samples_number, input_size};
+    const dimensions context_dimensions = {batch_samples_number, context_size};
 
-    unique_ptr<LayerForwardPropagation> embedding_layer_forward_propagation
-        = make_unique<EmbeddingLayerForwardPropagation>(samples_number, &embedding_layer);
+    MultiheadAttentionLayer multihead_attention_layer(input_size, context_size, depth, heads_number);
 
-    Tensor<type, 2> inputs(samples_number, sequence_length);
-    inputs.setConstant(type(0));
+    unique_ptr<LayerForwardPropagation> multihead_attention_layer_forward_propagation
+        = make_unique<MultiheadAttentionLayerForwardPropagation>(batch_samples_number, &multihead_attention_layer);
 
-    embedding_layer.forward_propagate({ make_pair(inputs.data(), dimensions{samples_number, sequence_length}) },
-        embedding_layer_forward_propagation,
-        true);
+    Tensor<type, 3> input(batch_samples_number, input_size, depth);
+    Tensor<type, 3> context(batch_samples_number, context_size, depth);
 
-    EXPECT_EQ(embedding_layer_forward_propagation->batch_samples_number, samples_number);
-    EXPECT_EQ(embedding_layer_forward_propagation->get_outputs_pair().second[0], samples_number);
-    EXPECT_EQ(embedding_layer_forward_propagation->get_outputs_pair().second[1], sequence_length);
-    EXPECT_EQ(embedding_layer_forward_propagation->get_outputs_pair().second[2], embedding_dimension);
-*/
+    input.setRandom();
+    context.setRandom();
+
+    pair<type*, dimensions> input_pair = {input.data(), {batch_samples_number, input_size, depth}};
+    pair<type*, dimensions> context_pair = {context.data(), {batch_samples_number, context_size, depth}};
+
+    multihead_attention_layer.forward_propagate({input_pair, context_pair},
+                                                multihead_attention_layer_forward_propagation,
+                                                is_training);
+
+    pair<type*, dimensions> output_pair = multihead_attention_layer_forward_propagation->get_outputs_pair();
+
+    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[1], input_size);
+    EXPECT_EQ(output_pair.second[2], depth);
 }
+

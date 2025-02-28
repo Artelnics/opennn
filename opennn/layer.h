@@ -259,11 +259,13 @@ protected:
     template <int rank>
     void soft_sign(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
     {
-        y.device(*thread_pool_device) = (y / (1 + y.abs())).eval();
+        Tensor<type, rank> x = y;
+
+        y.device(*thread_pool_device) = (x / (1 + x.abs())).eval();
 
         if (dy_dx.size() == 0) return;
 
-        dy_dx.device(*thread_pool_device) = (type(1) + (y / type(1) - y).abs()).pow(-2);
+        dy_dx.device(*thread_pool_device) = (type(1)/ (type(1) + x.abs()).pow(type(2)));
     }
 
 
