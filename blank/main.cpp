@@ -26,42 +26,81 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        // DataSet data_set;
-        // NeuralNetwork neural_network;
-        // data_set.save("data_set_empty.xml");
-        // neural_network.save("neural_network_empty.xml");
+        ImageDataSet image_data_set(0,{0,0,0},{0});
 
-        // TrainingStrategy training_strategy(&neural_network, &data_set);
+        image_data_set.set_data_path("/Users/artelnics/Desktop/Datasets/melanoma_dataset_bmp_testing");
+        // image_data_set.set_data_path("/Users/artelnics/Desktop/Datasets/pepsico_resized_testing");
 
-        // training_strategy.save("training_strategy_empty.xml");
+        image_data_set.read_bmp();
 
-        // ModelSelection model_selection(&training_strategy);
-
-        // model_selection.save("model_selection_empty.xml");
-
-        /*// @todo Create an example to test if the numerical hessian works properly.
-
-        NeuralNetwork neural_network;
-        DataSet data_set(7, {1}, {1});
-        Tensor<type, 2> data(7,2);
-        for(Index i = 0; i < 7; i++)
-        {
-            data(i,0) = i;
-            data(i,1) = sin(i);
-        }
-        data_set.set_data(data);
+        // image_data_set.set(DataSet::SampleUse::Training);
 
 
+        // image_data_set.print();
 
-        neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1}, (dimensions){1}, PerceptronLayer::ActivationFunction::Linear));
+        // Neural network
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+                                     image_data_set.get_dimensions(DataSet::VariableUse::Input),
+                                     { 3,9,9,9 /*64, 128, 128*/ },
+                                     image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
 
-        cerr << data << endl;
-        training_strategy.perform_training();*/
+        // neural_network.print();
+        // throw runtime_error("Checking the parameters of the network");
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &image_data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(400);
+        training_strategy.set_maximum_time(3600000);
+        training_strategy.set_display_period(1);
+
+        training_strategy.perform_training();
+
+        neural_network.save("/Users/artelnics/Desktop/neural_network_save.xml");
+        neural_network.load("/Users/artelnics/Desktop/neural_network_save.xml");
+
+        // neural_network.print();
+/*
+        NeuralNetwork new_neural_network;
+        new_neural_network.load("/Users/artelnics/Desktop/neural_network_save.xml");
+        new_neural_network.set_model_type(NeuralNetwork::ModelType::ImageClassification);
+
+        // new_neural_network.print();
+        // throw runtime_error("Checking if the network loads.");
+
+        TrainingStrategy new_training_strategy(&new_neural_network, &image_data_set);
+        new_training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        new_training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        new_training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        new_training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
+        new_training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
+        new_training_strategy.set_maximum_time(3600000);
+        new_training_strategy.set_display_period(1);
+        new_training_strategy.perform_training();
+*/
+        // image_data_set.set(DataSet::SampleUse::Testing);
+
+        // Testing analysis
+
+        const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
+
+        testing_analysis.print_binary_classification_tests();
+        // TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        // cout << "Area under the curve: " << roc_analysis.area_under_curve << endl << "Roc curve:\n" << roc_analysis.roc_curve << endl;
+
+        // cout << "Confidence limit: " << roc_analysis.confidence_limit << endl << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
+
+        // cout << "Calculating confusion...." << endl;
+        // const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        // cout << "\nConfusion matrix:\n" << confusion << endl;
 
         cout << "Bye!" << endl;
 

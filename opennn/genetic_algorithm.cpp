@@ -91,13 +91,13 @@ void GeneticAlgorithm::set_default()
     if (!training_strategy || !training_strategy->has_neural_network())
         return;
 
-    const Index individuals_number = 60;
+    const Index individuals_number = 100;
 
     const Index genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
 
     population.resize(individuals_number, genes_number);
 
-    maximum_epochs_number = 40;
+    maximum_epochs_number = 60;
 
     maximum_time = type(3600.0);
 
@@ -324,7 +324,7 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         individual_variables.setConstant(false);
 
-        raw_variables_active = 1 + arc4random() % input_raw_variables_number;
+        //raw_variables_active = 1 + arc4random() % input_raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
@@ -341,7 +341,7 @@ void GeneticAlgorithm::initialize_population_correlations()
         }
 
         if(is_equal(individual_raw_variables, false))
-            individual_raw_variables(arc4random()%input_raw_variables_number) = true;
+            //individual_raw_variables(arc4random()%input_raw_variables_number) = true;
 
         individual_variables = get_individual_genes(individual_raw_variables);
 
@@ -395,8 +395,6 @@ void GeneticAlgorithm::evaluate_population()
                                            original_target_raw_variable_indices);
 
         data_set->set_dimensions(DataSet::VariableUse::Input, {inputs_number(i)});
-
-        cerr << "Reachs this point" << endl;
 
         data_set->scrub_missing_values();
 
@@ -603,7 +601,7 @@ void GeneticAlgorithm::perform_crossover()
                     descendent_raw_variables(k) = get_random_bool();*/
 
             for(Index k = 0; k < raw_variables_number; k++)
-                descendent_raw_variables(k) = (arc4random() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
+                //descendent_raw_variables(k) = (arc4random() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
 
             descendent_genes = get_individual_genes(descendent_raw_variables);
 

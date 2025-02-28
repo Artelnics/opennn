@@ -48,14 +48,26 @@ SOURCES += test.cpp \
            multihead_attention_layer_test.cpp \
            neural_network_test.cpp \
            normalized_squared_error_test.cpp \
+           perceptron_layer_test.cpp \
            performance_test.cpp \
            pooling_layer_test.cpp \
-           pch.cpp \
-           testing_analysis_test.cpp \
-           perceptron_layer_test.cpp \# Precompiled header source
-           probabilistic_layer_test.cpp\
+           probabilistic_layer_3d_test.cpp \
+           probabilistic_layer_test.cpp \
+           quasi_newton_method_test.cpp \
            recurrent_layer_test.cpp \
+           response_optimization_test.cpp \
+           scaling_layer_test.cpp \
+           scaling_test.cpp \
+           statistics_test.cpp \
+           stochastic_gradient_descent_test.cpp \
+           tensors_test.cpp \
+           testing_analysis_test.cpp \
+           time_series_data_set_test.cpp \
+           training_strategy_test.cpp \
            transformer_test.cpp \
+           unscaling_layer_test.cpp \
+           weighted_squared_error_test.cpp \
+           pch.cpp \
             # Include more test files if needed by uncommenting
 
 # Precompiled Header

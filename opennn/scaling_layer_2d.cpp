@@ -9,6 +9,8 @@
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
+#include "descriptives.h"
+#include "statistics.h"
 
 namespace opennn
 {
@@ -264,15 +266,19 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     outputs = inputs;
 
-    // cout<< "outputs_number: " << outputs_number << endl;
-
+    for(Index i = 0; i < outputs_number; i++){
+        type mean = opennn::mean(outputs,i);
+        Tensor<type,1> col(outputs.dimension(0));
+        for(Index j=0;j<outputs.dimension(0);j++){
+            col(j)=outputs(j,i);
+        }
+        type std_dev = opennn::standard_deviation(col);
+        descriptives[i]={min_range, max_range,mean,std_dev};
+    }
 
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
-
-        // cout << "scaler: " << scaler_to_string(scaler) << endl;
-
 
         switch(scaler)
         {
@@ -299,11 +305,6 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
             throw runtime_error("Unknown scaling method.\n");
         }
     }
-
-    // cerr << "Inputs scaling layer:\n" << inputs << endl;
-
-    // cout << "Outputs scaling layer:\n" << outputs << endl;
-    // throw runtime_error("Checking");
 
 }
 

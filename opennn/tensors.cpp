@@ -41,7 +41,7 @@ type get_random_type(const type& minimum, const type& maximum)
 
 bool get_random_bool()
 {
-    return arc4random() % 2 == 1;
+    return rand() % 2 == 1;
 }
 
 
@@ -828,10 +828,10 @@ dimensions string_to_dimensions(const string& x, const string& separator) {
 }
 
 
-Tensor<type, 1> string_to_tensor(const string& x, const string& separator) {
-    if (x.empty()) {
+Tensor<type, 1> string_to_tensor(const string& x, const string& separator)
+{
+    if (x.empty())
         throw runtime_error("Error: Input string must not be empty.\n");
-    }
 
     dimensions temp_dimensions;
     size_t start = 0;
@@ -862,9 +862,8 @@ Tensor<type, 1> string_to_tensor(const string& x, const string& separator) {
     }
 
     Tensor<type, 1> tensor(temp_dimensions.size());
-    for (size_t i = 0; i < temp_dimensions.size(); ++i) {
+    for (size_t i = 0; i < temp_dimensions.size(); ++i)
         tensor(i) = temp_dimensions[i];
-    }
 
     return tensor;
 }

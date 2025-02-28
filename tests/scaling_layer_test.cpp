@@ -27,82 +27,35 @@ TEST(ScalingLayerTest, GeneralConstructor)
     EXPECT_EQ(scaling_layer_2d.get_scaling_methods().size(), 1);
 }
 
-
 TEST(ScalingLayerTest, ForwardPropagate)
 {
-    /*
-    const Index inputs_number = 1;
-    const Index samples_number = 1;
+    Index inputs_number = 3;
+    Index samples_number = 1;
 
-    ScalingLayer2D scaling_layer_2d({ 1 });
+    ScalingLayer2D scaling_layer_2d({ inputs_number });
 
     Tensor<type, 2> outputs;
 
     Tensor<Descriptives, 1> inputs_descriptives;
 
-    pair<type*, dimensions> input_pairs;
-
-    // Test
-
-    NeuralNetwork neural_network;
-
-    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{ inputs_number }));
-
-    ForwardPropagation forward_propagation(samples_number, &neural_network);
-
-    Tensor<type, 2> inputs(samples_number, inputs_number);
-    inputs.setRandom();
-
-    scaling_layer_2d.set({ inputs_number });
-    scaling_layer_2d.set_display(false);
+    //Test None
     scaling_layer_2d.set_scalers(Scaler::None);
 
-    input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
-    neural_network.forward_propagate({ input_pairs },forward_propagation);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
+    inputs.setConstant(type(10));
 
-    //outputs = forward_propagation.get_last_trainable_layer_outputs_pair();
+    unique_ptr<LayerForwardPropagation> forward_propagation =
+        make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
 
-    //EXPECT_EQ(outputs.dimension(0), samples_number);
-    //EXPECT_EQ(outputs.dimension(1), inputs_number);
+    pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
 
-    //EXPECT_NEAR(outputs(0), inputs(0), NUMERIC_LIMITS_MIN);
-    */
-}
+    bool is_training = true;
 
-TEST(ScalingLayerTest, test_forward_propagate)
-{
-    
-    // Test
+    scaling_layer_2d.forward_propagate({ input_pairs }, forward_propagation, is_training);
 
-    Index inputs_number = 3 + rand()%10;
-    Index samples_number = 1;
+    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    Tensor<type, 2> inputs;
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setRandom();
-    
-    ScalingLayer2D scaling_layer;
-
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::None);
-
-    NeuralNetwork neural_network;
-/*
-    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{ inputs_number }));
-
-    ScalingLayer2DForwardPropagation scaling_layer_forward_propagation(&samples_number, *neural_network);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation, true);
-
-    outputs = scaling_layer_forward_propagation.outputs;
-
+    outputs = tensor_map_2(output_pair);
 
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), inputs_number);
@@ -110,176 +63,165 @@ TEST(ScalingLayerTest, test_forward_propagate)
     EXPECT_NEAR(abs(outputs(0)), inputs(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(outputs(1)), inputs(1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(outputs(2)), inputs(2), NUMERIC_LIMITS_MIN);
-    
-    // Test
-    
+
+    //Test MinimumMaximum
+
     inputs_number = 1;
-    samples_number = 1;
-
-    inputs.resize(samples_number, inputs_number);
-    inputs.setRandom();
-
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::MinimumMaximum);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
-
-    outputs = scaling_layer_forward_propagation.outputs;
-
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == inputs_number);
-
-    EXPECT_EQ(abs(outputs(0) - inputs(0)) < NUMERIC_LIMITS_MIN);
-    
-    // Test
-
-    inputs_number = 3;
     samples_number = 3;
 
-    inputs.resize(samples_number, inputs_number);
+    scaling_layer_2d.set({inputs_number});
 
-    inputs.setValues({{type(1),type(1),type(1)},
-                    {type(2),type(2),type(2)},
-                    {type(3),type(3),type(3)}});
+    inputs(samples_number,inputs_number);
+    inputs.setValues({{type(2)},{type(4)},{type(6)}});
 
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::MinimumMaximum);
+    scaling_layer_2d.set_scalers(Scaler::MinimumMaximum);
 
-    Tensor<Index, 1> all_indices;
-    initialize_sequential(all_indices, 0, 1, inputs_number-1);
-    
-    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
-    scaling_layer.set_descriptives(inputs_descriptives);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
+    scaling_layer_2d.forward_propagate({ input_pairs },
+                                          forward_propagation,
+                                          is_training);
 
-    outputs = scaling_layer_forward_propagation.outputs;
+    output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == inputs_number);
+    outputs = tensor_map_2(output_pair);
 
-    EXPECT_NEAR(abs(outputs(0,0) - type(-1)) < NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(outputs(1,0) - type(0)) < NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(outputs(2,0) - type(1)) < NUMERIC_LIMITS_MIN);
-    
-    // Test
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
+
+    EXPECT_NEAR(outputs(0), type(1.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(outputs(1), type(2.5), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(outputs(2), type(3.5), NUMERIC_LIMITS_MIN);
+
+    //Test MeanStandardDeviation
 
     inputs_number = 2;
     samples_number = 2;
 
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
+    scaling_layer_2d.set({inputs_number});
 
-    inputs.resize(samples_number, inputs_number);
+    inputs(samples_number,inputs_number);
     inputs.setValues({{type(0),type(0)},
                       {type(2),type(2)}});
 
-    initialize_sequential(all_indices, 0, 1, inputs_number-1);
+    scaling_layer_2d.set_scalers(Scaler::MeanStandardDeviation);
 
-    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
-    scaling_layer.set_descriptives(inputs_descriptives);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
+    scaling_layer_2d.forward_propagate({ input_pairs },
+                                       forward_propagation,
+                                       is_training);
 
-    outputs = scaling_layer_forward_propagation.outputs;
+    output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == inputs_number);
+    outputs = tensor_map_2(output_pair);
 
-    type scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation - inputs_descriptives(0).mean / inputs_descriptives(0).standard_deviation;
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
 
-    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(0, 0)),type(0.707), 0.001);
 
-    // Test
-    
+    //Test StandardDeviation
+
     inputs_number = 2;
     samples_number = 2;
 
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::StandardDeviation);
+    scaling_layer_2d.set({inputs_number});
 
-    inputs.resize(samples_number, inputs_number);
-    inputs.setValues({ {type(0),type(0)},
+    inputs(samples_number,inputs_number);
+    inputs.setValues({{type(0),type(0)},
                       {type(2),type(2)}});
 
-    initialize_sequential(all_indices, 0, 1, inputs_number - 1);
+    scaling_layer_2d.set_scalers(Scaler::StandardDeviation);
 
-    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
-    scaling_layer.set_descriptives(inputs_descriptives);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
+    scaling_layer_2d.forward_propagate({ input_pairs },
+                                       forward_propagation,
+                                       is_training);
 
-    outputs = scaling_layer_forward_propagation.outputs;
+    output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(outputs.dimension(0) == inputs_number);
-    EXPECT_EQ(outputs.dimension(1) == samples_number);
+    outputs = tensor_map_2(output_pair);
 
-    scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
 
-    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(outputs(0, 0)),type(0), 0.001);
+    EXPECT_NEAR(abs(outputs(0, 1)),type(1.41421), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 0)),type(1.41421), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 1)),type(0), 0.001);
 
-    // Test
+    //Test Logarithm
 
-    inputs_number = 2 + rand()%10;
-    samples_number = 1;
+    inputs_number = 2;
+    samples_number = 2;
 
-    scaling_layer.set({inputs_number});
-    scaling_layer.set_display(false);
-    scaling_layer.set_scalers(Scaler::StandardDeviation);
+    scaling_layer_2d.set({inputs_number});
 
-    inputs.resize(samples_number, inputs_number);
-    inputs.setRandom();
+    inputs(samples_number,inputs_number);
+    inputs.setValues({{type(0),type(0)},
+                      {type(2),type(2)}});
 
-    initialize_sequential(all_indices, 0, 1, inputs_number - 1);
+    scaling_layer_2d.set_scalers(Scaler::Logarithm);
 
-    inputs_descriptives = opennn::descriptives(inputs, all_indices, all_indices);
-    scaling_layer.set_descriptives(inputs_descriptives);
-
-    scaling_layer_forward_propagation.set(samples_number, &scaling_layer);
+    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
-    scaling_layer.forward_propagate({input_pairs},
-                                    &scaling_layer_forward_propagation,
-                                    is_training);
+    scaling_layer_2d.forward_propagate({ input_pairs },
+                                       forward_propagation,
+                                       is_training);
 
-    outputs = scaling_layer_forward_propagation.outputs;
+    output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(outputs.dimension(0) == samples_number);
-    EXPECT_EQ(outputs.dimension(1) == inputs_number);
+    outputs = tensor_map_2(output_pair);
 
-    scaled_input = inputs(0, 0) / inputs_descriptives(0).standard_deviation;
-    EXPECT_NEAR(abs(outputs(0, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
 
-    scaled_input = inputs(1, 0) / inputs_descriptives(1).standard_deviation;
-    EXPECT_NEAR(abs(outputs(1, 0) - scaled_input) < NUMERIC_LIMITS_MIN);
-*/
+    EXPECT_NEAR(abs(outputs(0, 0)),type(0), 0.001);
+    EXPECT_NEAR(abs(outputs(0, 1)),type(1.0986), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 0)),type(1.0986), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 1)),type(0), 0.001);
+
+    //Test ImageMinMax
+
+    inputs_number = 2;
+    samples_number = 2;
+
+    scaling_layer_2d.set({inputs_number});
+
+    inputs(samples_number,inputs_number);
+    inputs.setValues({{type(0),type(0)},
+                      {type(2),type(2)}});
+
+    scaling_layer_2d.set_scalers(Scaler::ImageMinMax);
+
+    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+
+    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+
+    scaling_layer_2d.forward_propagate({ input_pairs },
+                                       forward_propagation,
+                                       is_training);
+
+    output_pair = forward_propagation->get_outputs_pair();
+
+    outputs = tensor_map_2(output_pair);
+
+    EXPECT_EQ(outputs.dimension(0), samples_number);
+    EXPECT_EQ(outputs.dimension(1), inputs_number);
+
+    EXPECT_NEAR(abs(outputs(0, 0)),type(0), 0.001);
+    EXPECT_NEAR(abs(outputs(0, 1)),type(0.0078), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 0)),type(0.0078), 0.001);
+    EXPECT_NEAR(abs(outputs(1, 1)),type(0), 0.001);
+
 }
