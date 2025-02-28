@@ -279,7 +279,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // throw runtime_error("Checking the gradient and numerical gradient.");
             // }
-            //system("pause");            training_error += training_back_propagation.error();
+            //system("pause");
+            training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
