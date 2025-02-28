@@ -46,11 +46,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-<<<<<<< Updated upstream
-            { 1 },
-=======
             { 3 },
->>>>>>> Stashed changes
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         neural_network.print();

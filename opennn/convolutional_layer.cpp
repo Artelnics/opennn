@@ -375,19 +375,12 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-<<<<<<< Updated upstream
-    cout << "Input derivatives: " << endl;
-    for(int i = 0 ; i < input_derivatives.size() ; i++)
-        cout << input_derivatives(i) << " ";
-    cout << endl;
-=======
     // cout << "Input derivatives: " << endl;
     // for(int i = 0 ; i < input_derivatives.size() ; i++)
     //    cout << input_derivatives(i) << " ";
     // cout << endl;
 
     // throw runtime_error("Checking input derivatives.");
->>>>>>> Stashed changes
 
     //auto end = chrono::high_resolution_clock::now();
     //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
