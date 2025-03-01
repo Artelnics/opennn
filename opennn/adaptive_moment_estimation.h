@@ -107,7 +107,7 @@ private:
 
    Index maximum_selection_failures = numeric_limits<Index>::max();
 
-   type maximum_time = type(3600);
+   type maximum_time = type(360000);
 
    Index batch_samples_number = 1000;
 

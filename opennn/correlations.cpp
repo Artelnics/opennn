@@ -545,8 +545,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     NeuralNetwork neural_network;//(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
     // /*Does not compile in visual
-    neural_network.add_layer(make_unique<ScalingLayer2D>(dimensions{1}));
-    neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1},dimensions{1},PerceptronLayer::ActivationFunction::Logistic));
+    //neural_network.add_layer(make_unique<ScalingLayer2D>((dimensions){1}));
+    //neural_network.add_layer(make_unique<PerceptronLayer>((dimensions){1},(dimensions){1},PerceptronLayer::ActivationFunction::Logistic));
 // */
     neural_network.set_parameters_constant(type(0.001));
 

@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "convolutional_layer.h"
+#include "strings_utilities.h"
 #include "tensors.h"
 
 namespace opennn
@@ -271,11 +272,13 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     type* synaptic_weights_derivatives_data = convolutional_layer_back_propagation->synaptic_weight_derivatives.data();
 
-    //type* synaptic_weights_data = (type*)synaptic_weights.data();
+    // type* synaptic_weights_data = (type*)synaptic_weights.data();
 
     Tensor<type, 4>& rotated_synaptic_weights = convolutional_layer_back_propagation->rotated_synaptic_weights;
 
     Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+
+    input_derivatives.setZero();
 
     const Index kernel_size = kernel_height*kernel_width*kernel_channels;
 
@@ -311,6 +314,7 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
+
         const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
             convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
             batch_samples_number,
@@ -319,12 +323,13 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
         TensorMap<Tensor<type, 4>> kernel_synaptic_weights_derivatives(
             synaptic_weights_derivatives_data + kernel_index * kernel_size,
-            1, 
-            kernel_height, 
+            1,
+            kernel_height,
             kernel_width, 
             kernel_channels);
         
         kernel_synaptic_weights_derivatives = preprocessed_inputs.convolve(kernel_convolutions_derivatives, convolutions_dimensions_3d);
+
     }
 
     // Input derivatives
@@ -345,8 +350,8 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             kernel_width,
             kernel_channels);
 
-        #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
+        // #pragma omp parallel for
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
         
         for (Index image_index = 0; image_index < batch_samples_number; image_index++)
@@ -354,12 +359,15 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
             image_kernel_convolutions_derivatives_padded
                 = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
+            // cerr << "image_kernel_convolutions_derivatives_padded:\n" << image_kernel_convolutions_derivatives_padded << endl;
+            // throw runtime_error("Checking why it's wrong.");
+
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
                 channel_convolution.device(*thread_pool_device)
                     = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
 
-                #pragma omp parallel for
+                // #pragma omp parallel for
                 for (Index height = 0; height < input_height; ++height)
                     for (Index width = 0; width < input_width; ++width)
                         input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
@@ -367,10 +375,12 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         }
     }
 
-    //cout << "Input derivatives: " << endl;
-    //for(int i = 0 ; i < input_derivatives.size() ; i++)
+    // cout << "Input derivatives: " << endl;
+    // for(int i = 0 ; i < input_derivatives.size() ; i++)
     //    cout << input_derivatives(i) << " ";
-    //cout << endl;
+    // cout << endl;
+
+    // throw runtime_error("Checking input derivatives.");
 
     //auto end = chrono::high_resolution_clock::now();
     //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
@@ -442,7 +452,7 @@ Index ConvolutionalLayer::get_output_height() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_height - kernel_height + 2*padding.first)/strides) + 1;
+    return floor((input_height - kernel_height + padding.first)/strides) + 1;
 }
 
 
@@ -454,7 +464,7 @@ Index ConvolutionalLayer::get_output_width() const
 
     const pair<Index, Index> padding = get_padding();
 
-    return floor((input_width - kernel_width + 2*padding.second)/strides) + 1;
+    return floor((input_width - kernel_width + padding.second)/strides) + 1;
 }
 
 
@@ -746,11 +756,10 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
 
 pair<Index, Index> ConvolutionalLayer::get_padding() const
 {
-    switch(convolution_type)
+    switch (convolution_type)
     {
     case ConvolutionType::Valid:
         return make_pair(0, 0);
-
     case ConvolutionType::Same:
     {
         const Index input_height = get_input_height();
@@ -762,13 +771,19 @@ pair<Index, Index> ConvolutionalLayer::get_padding() const
         const Index row_stride = get_row_stride();
         const Index column_stride = get_column_stride();
 
-        const Index pad_rows = max<Index>(0, ((static_cast<float>(input_height) / row_stride) - 1) * row_stride + kernel_height - input_height) / 2;
-        const Index pad_columns = max<Index>(0, ((static_cast<float>(input_width) / column_stride) - 1) * column_stride + kernel_width - input_width) / 2;
+        const Index output_height = (input_height + row_stride - 1) / row_stride;
+        const Index output_width = (input_width + column_stride - 1) / column_stride;
+
+        const Index pad_rows_total = max<Index>(0, (output_height - 1) * row_stride + kernel_height - input_height);
+        const Index pad_columns_total = max<Index>(0, (output_width - 1) * column_stride + kernel_width - input_width);
+
+        const Index pad_rows = (pad_rows_total + 1) / 2;
+        const Index pad_columns = (pad_columns_total + 1) / 2;
 
         return make_pair(pad_rows, pad_columns);
     }
     default:
-        throw runtime_error("Unknown convolution type.\n");
+        throw runtime_error("Unknown convolution type.");
     }
 }
 
@@ -819,6 +834,13 @@ void ConvolutionalLayer::print() const
     print_vector(input_dimensions);
     cout << "Output dimensions: " << endl;
     print_vector(get_output_dimensions());
+    cout << "Biases dimensions: " << biases.dimensions() << endl;
+    cout << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+
+    cout << "biases:" << endl;
+    cout << biases << endl;
+    cout << "Synaptic weights:" << endl;
+    cout << synaptic_weights << endl;
 }
 
 
@@ -874,7 +896,8 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
     set_row_stride(stride_dimensions[1]);
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
-    set_parameters(string_to_tensor(read_xml_string(convolutional_layer_element, "Parameters")));
+
+    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "));
 }
 
 
