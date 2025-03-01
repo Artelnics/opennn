@@ -4033,6 +4033,7 @@ namespace opennn
         }
     }
 
+
     void DataSet::read_data_file_preview(ifstream& file)
     {
         if (display) cout << "Reading data file preview..." << endl;
