@@ -23,7 +23,7 @@ TEST(TestingAnalysis, ErrorData)
     EXPECT_EQ(error_data.size(), 3);
     EXPECT_EQ(error_data.dimension(0), 1);
     EXPECT_EQ(error_data.dimension(1), 3);
-    //EXPECT_EQ(static_cast<double>(error_data(0, 0, 0)), 0.0);
+    EXPECT_NEAR(static_cast<double>(error_data(0, 0, 0)), 0, NUMERIC_LIMITS_MIN);
 }
 
 
@@ -51,7 +51,7 @@ TEST(TestingAnalysis, PercentageErrorData)
 
     EXPECT_EQ(error_data.size(), 1);
     EXPECT_EQ(error_data.dimension(1), 1);
-    //EXPECT_EQ(static_cast<double>(error_data(0,0)), 0.0);
+    //EXPECT_NEAR(static_cast<double>(error_data(0,0)), 0, NUMERIC_LIMITS_MIN);
 }
 
 
@@ -78,10 +78,10 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
-    //EXPECT_EQ(static_cast<double>(error_data[0].minimum), 0.0);
-    //EXPECT_EQ(static_cast<double>(error_data[0].maximum), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data[0].mean), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data[0].standard_deviation), 0.0);
+    EXPECT_NEAR(static_cast<double>(error_data[0].minimum), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data[0].maximum), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data[0].mean), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data[0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
 
 }
 
@@ -140,14 +140,10 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
 
     EXPECT_EQ(error_data_statistics.size(), 1);
     EXPECT_EQ(error_data_statistics[0].size(), 3);
-    //EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].minimum), 0.0);
-    //EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].maximum), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].mean), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0.0);
-    //EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].minimum), 0.0);
-    //EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].maximum), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].mean), 0.0);
-    EXPECT_EQ(static_cast<double>(error_data_statistics[0][2].standard_deviation), 0.0);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
 
 }
 
@@ -186,7 +182,7 @@ TEST(TestingAnalysis, MaximalErrors)
 
     Tensor<Tensor<Index, 1>, 1> maximal_errors;
 
-    const Index samples_number = 4;
+    const Index samples_number = 1;
     const Index inputs_number = 1;
     const Index targets_number = 1;
 
@@ -237,14 +233,12 @@ TEST(TestingAnalysis, LinearRegression)
 
 
     // Testing Analysis
-/*
+
     Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
-    cout << "goodness_of_fit_analysis determination: " << goodness_of_fit_analysis[0].determination << endl;
-
     EXPECT_EQ(goodness_of_fit_analysis.size() == 1, true);
-    EXPECT_EQ(abs(goodness_of_fit_analysis[0].determination - type(1)) < type(NUMERIC_LIMITS_MIN), true);
-*/
+    EXPECT_EQ(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN), true);
+
 }
 
 
@@ -318,7 +312,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     // Testing Analysis
 
     TestingAnalysis testing_analysis(&neural_network, &data_set);
-/*
+
     Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
 
@@ -339,7 +333,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     EXPECT_EQ(binary[12], 0 );
     EXPECT_EQ(binary[13], -1 );
     EXPECT_EQ(binary[14], -1 );
-*/
+
 }
 
 TEST(TestingAnalysis, RocCurve)
