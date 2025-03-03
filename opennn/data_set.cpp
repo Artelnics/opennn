@@ -694,7 +694,7 @@ namespace opennn
 
     vector<string> DataSet::get_variable_names(const VariableUse& variable_use) const
     {
-        const Index variables_number = get_variables_number(VariableUse::Input);
+        const Index variables_number = get_variables_number(variable_use);
 
         vector<string> variable_names(variables_number);
 
@@ -707,7 +707,7 @@ namespace opennn
             if (raw_variables[i].use != variable_use)
                 continue;
 
-            if (raw_variables[i].type == RawVariableType::Categorical)
+            if (raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
                 for (Index j = 0; j < raw_variables[i].get_categories_number(); j++)
                     variable_names[index++] = raw_variables[i].categories[j];
             else

@@ -45,7 +45,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 1 },
+            { 3 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         neural_network.print();

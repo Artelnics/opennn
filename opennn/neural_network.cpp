@@ -271,6 +271,16 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     for(Index i = 0; i < inputs_number; i++)
         input_names[i] = "input_" + to_string(i+1);
 
+    const Index outputs_number = accumulate(output_dimensions.begin(),
+                                            output_dimensions.end(),
+                                            1,
+                                            multiplies<Index>());
+
+    output_names.resize(outputs_number);
+
+    for(Index i = 0; i < outputs_number; i++)
+        output_names[i] = "output_" + to_string(i+1);
+
     switch(model_type)
     {    
     case ModelType::Approximation:
@@ -308,15 +318,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
 
     }
 
-    const Index outputs_number = accumulate(output_dimensions.begin(), 
-                                            output_dimensions.end(), 
-                                            1, 
-                                            multiplies<Index>());
-
-    output_names.resize(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-        output_names[i] = "output_" + to_string(i+1);
 }
 
 
@@ -442,7 +443,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                                   stride_dimensions,
                                                   convolution_type,
                                                   "convolutional_layer_" + to_string(i+1)));
-        /*
+
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
@@ -454,15 +455,25 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             padding_dimensions,
                                             pooling_method,
                                             "pooling_layer_" + to_string(i + 1)));
-                                            */
+
+
+        // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
+        //                                           dimensions({ 2, 2, get_output_dimensions()[2], complexity_dimensions[i] }),
+        //                                           ConvolutionalLayer::ActivationFunction::RectifiedLinear,
+        //                                           stride_dimensions,
+        //                                           convolution_type,
+        //                                           "convolutional_layer_" + to_string(i+2)));
     }
     
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
 
+    // add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
+    //                                        (dimensions){24}));
+
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
                                               "probabilistic_layer"));
-    
+
 }
 
 /*
@@ -1233,7 +1244,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 {
     const Index inputs_number = get_inputs_number();
     const Index layers_number = get_layers_number();
-    const Index outputs_number = output_names.size();
+    const Index outputs_number = get_outputs_number();
 
     printer.OpenElement("NeuralNetwork");
 
@@ -1287,6 +1298,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
+
     set();
 
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");

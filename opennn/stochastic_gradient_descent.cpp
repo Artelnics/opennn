@@ -288,6 +288,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
+            cout << "Iteration: " << iteration << endl;
             optimization_data.iteration++;
             
             // Data set
