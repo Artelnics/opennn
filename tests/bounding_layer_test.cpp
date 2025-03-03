@@ -17,7 +17,7 @@ TEST(BoundingLayerTest, ForwardPropagate)
 
     bounding_layer.set_lower_bound(0, type(-1.0));
     bounding_layer.set_upper_bound(0, type(1));
-    bounding_layer.set_bounding_method("BoundingLayer");
+    bounding_layer.set_bounding_method("Bounding");
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<BoundingLayerForwardPropagation>(1, &bounding_layer);
