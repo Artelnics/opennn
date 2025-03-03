@@ -89,7 +89,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 
     vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
 
-    EXPECT_EQ(abs(matrix_descriptives[0].standard_deviation), type(1), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(abs(matrix_descriptives[0].standard_deviation), type(1), NUMERIC_LIMITS_MIN);
 }
 
 

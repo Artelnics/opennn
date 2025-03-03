@@ -170,7 +170,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         parameters.device(*thread_pool_device) += parameters_increment * momentum - gradient * learning_rate;
     }
 
-    optimization_data.iteration++;
+    // optimization_data.iteration++;
 
     neural_network->set_parameters(parameters);
 }
@@ -184,6 +184,8 @@ TrainingResults StochasticGradientDescent::perform_training()
     TrainingResults results(maximum_epochs_number+1);
     
     check();
+
+    display = 1;
 
     // Start training
 
@@ -238,9 +240,13 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     set_vocabularies();
 
+    cout << "Here too? (SGD)" << endl;
+
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
     
+    cerr << "Even here (SGD)" << endl;
+
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -253,7 +259,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     type selection_error = type(0);
 
     Index selection_failures = 0;
-    
+
     // Optimization algorithm
 
     StochasticGradientDescentData optimization_data(this);
@@ -273,11 +279,16 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     // Main loop
     
+    cout << "Enters the epochs loop (SGD)" << endl;
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);               
+        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+
+        if(epoch<10)
+            cerr << "catches the batches" << endl;
 
         const Index batches_number = training_batches.size();
 
@@ -288,7 +299,6 @@ TrainingResults StochasticGradientDescent::perform_training()
         
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
-            cout << "Iteration: " << iteration << endl;
             optimization_data.iteration++;
             
             // Data set
@@ -322,6 +332,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             //if(display && epoch % display_period == 0)      display_progress_bar(iteration, batches_number - 1);
         }
         
+
         // Loss
 
         //training_loss /= type(batches_number);

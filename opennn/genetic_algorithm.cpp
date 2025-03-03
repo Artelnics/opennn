@@ -105,8 +105,8 @@ void GeneticAlgorithm::set_default()
 
     parameters.resize(individuals_number);
 
-    for(Index i = 0; i < individuals_number; i++)
-        parameters(i).resize(genes_number);
+    // for(Index i = 0; i < individuals_number; i++)
+    //     parameters(i).resize(genes_number);
 
     training_errors.resize(individuals_number);
 
@@ -119,7 +119,7 @@ void GeneticAlgorithm::set_default()
 
     elitism_size = Index(ceil(individuals_number / 4));
 
-    initialization_method = GeneticAlgorithm::InitializationMethod::Correlations;
+    initialization_method = GeneticAlgorithm::InitializationMethod::Random;
 }
 
 
@@ -265,19 +265,20 @@ void GeneticAlgorithm::calculate_inputs_activation_probabilities() //outdated
 
     const Tensor<type, 1> absolute_correlations = get_correlation_values(correlation_matrix).chip(0, 1).abs();
 
-    const Tensor<Index, 1> rank = calculate_rank_less(absolute_correlations);
+    const Tensor<Index, 1> rank = calculate_rank_greater(absolute_correlations);
 
-    Tensor<type, 1> fitness_correlations(raw_variables_number);
+    Tensor<type, 1> fitness_correlations_reversed(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number; i++)
-        fitness_correlations(rank(i)) = type(i+1);
+        fitness_correlations_reversed(rank(i)) = type(i+1);
 
     Tensor<type, 1> probabilities(raw_variables_number);
 
     for(Index i = 0; i < raw_variables_number ; i++)
-        probabilities[i] = type(2) * type(raw_variables_number - fitness_correlations(i) + 1) / (type(raw_variables_number)*type(raw_variables_number+1));
+        probabilities[i] = type(2) * type(raw_variables_number - fitness_correlations_reversed(i) + 1) / (type(raw_variables_number)*type(raw_variables_number+1));
 
     input_activation_probabilities = probabilities.cumsum(0);
+    // cout << fitness_correlations_reversed << endl;
     // cout << input_activation_probabilities << endl;
     // throw runtime_error("Checking if the input activation probabilities works properly.");
 }
@@ -324,7 +325,9 @@ void GeneticAlgorithm::initialize_population_correlations()
 
         individual_variables.setConstant(false);
 
-        //raw_variables_active = 1 + arc4random() % input_raw_variables_number;
+        raw_variables_active = 1 + rand() % input_raw_variables_number;
+
+        cout << "raw_variables_active: " << raw_variables_active << endl;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
@@ -334,14 +337,12 @@ void GeneticAlgorithm::initialize_population_correlations()
                 individual_raw_variables(0) = true;
 
             for(Index j = 1; j < input_raw_variables_number; j++)
-                if(arrow >= input_activation_probabilities(j - 1)
-                && arrow < input_activation_probabilities(j)
-                && !individual_raw_variables(j))
+                if(arrow >= input_activation_probabilities(j - 1) && arrow < input_activation_probabilities(j) && !individual_raw_variables(j))
                     individual_raw_variables(j) = true;
         }
 
         if(is_equal(individual_raw_variables, false))
-            //individual_raw_variables(arc4random()%input_raw_variables_number) = true;
+            individual_raw_variables(rand()%input_raw_variables_number) = true;
 
         individual_variables = get_individual_genes(individual_raw_variables);
 
@@ -406,8 +407,11 @@ void GeneticAlgorithm::evaluate_population()
 
         neural_network->set_parameters_random();
 
+        cout << "Here?" << endl;
+
         // neural_network->print();
         // data_set->print();
+        // throw runtime_error("WHYYYYYY?");
 
         //Training
 
@@ -601,7 +605,7 @@ void GeneticAlgorithm::perform_crossover()
                     descendent_raw_variables(k) = get_random_bool();*/
 
             for(Index k = 0; k < raw_variables_number; k++)
-                //descendent_raw_variables(k) = (arc4random() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
+                descendent_raw_variables(k) = (rand() % 2) ? parent_1_raw_genes(k) : parent_2_raw_genes(k);
 
             descendent_genes = get_individual_genes(descendent_raw_variables);
 
@@ -656,7 +660,7 @@ void GeneticAlgorithm::perform_mutation()
 
     const Index raw_variables_number = original_input_raw_variable_indices.size();
 
-    const Index genes_number = get_genes_number();
+    // const Index genes_number = get_genes_number();
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -760,8 +764,6 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
         input_selection_results.mean_selection_error_history(epoch) = mean_selection_error;
 
         input_selection_results.mean_training_error_history(epoch)= mean_training_error;
-
-        // @todo check if this part is working properly
 
 
         if(selection_errors(optimal_individual_index) < input_selection_results.optimum_selection_error)
