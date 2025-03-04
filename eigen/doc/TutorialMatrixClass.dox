@@ -117,7 +117,7 @@ Matrix<int, 1, 5> c = {1, 2, 3, 4, 5}; // A row-vector containing the elements {
 \endcode
 
 In the general case of matrices and vectors with either fixed or runtime sizes,
-coefficients have to be grouped by rows and passed as an initializer list of initializer list (\link Matrix::Matrix(const std::initializer_list<std::initializer_list<Scalar>>&) details \endlink):
+coefficients have to be grouped by rows and passed as an initializer list of initializer list (\link matrix_initializer_list details \endlink):
 \code
 MatrixXi a {      // construct a 2x2 matrix
       {1, 2},     // first row

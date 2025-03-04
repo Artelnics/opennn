@@ -11,7 +11,7 @@ template <typename MatrixType_, int UpLo_, SparseFactorization_t Solver_, bool E
 class AccelerateImpl;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateLLT
+ * \typedef AccelerateLLT
  * \brief A direct Cholesky (LLT) factorization and solver based on Accelerate
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate
@@ -25,7 +25,7 @@ template <typename MatrixType, int UpLo = Lower>
 using AccelerateLLT = AccelerateImpl<MatrixType, UpLo | Symmetric, SparseFactorizationCholesky, true>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateLDLT
+ * \typedef AccelerateLDLT
  * \brief The default Cholesky (LDLT) factorization and solver based on Accelerate
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate
@@ -39,7 +39,7 @@ template <typename MatrixType, int UpLo = Lower>
 using AccelerateLDLT = AccelerateImpl<MatrixType, UpLo | Symmetric, SparseFactorizationLDLT, true>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateLDLTUnpivoted
+ * \typedef AccelerateLDLTUnpivoted
  * \brief A direct Cholesky-like LDL^T factorization and solver based on Accelerate with only 1x1 pivots and no pivoting
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate
@@ -53,7 +53,7 @@ template <typename MatrixType, int UpLo = Lower>
 using AccelerateLDLTUnpivoted = AccelerateImpl<MatrixType, UpLo | Symmetric, SparseFactorizationLDLTUnpivoted, true>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateLDLTSBK
+ * \typedef AccelerateLDLTSBK
  * \brief A direct Cholesky (LDLT) factorization and solver based on Accelerate with Supernode Bunch-Kaufman and static
  * pivoting
  *
@@ -68,7 +68,7 @@ template <typename MatrixType, int UpLo = Lower>
 using AccelerateLDLTSBK = AccelerateImpl<MatrixType, UpLo | Symmetric, SparseFactorizationLDLTSBK, true>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateLDLTTPP
+ * \typedef AccelerateLDLTTPP
  * \brief A direct Cholesky (LDLT) factorization and solver based on Accelerate with full threshold partial pivoting
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate
@@ -82,7 +82,7 @@ template <typename MatrixType, int UpLo = Lower>
 using AccelerateLDLTTPP = AccelerateImpl<MatrixType, UpLo | Symmetric, SparseFactorizationLDLTTPP, true>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateQR
+ * \typedef AccelerateQR
  * \brief A QR factorization and solver based on Accelerate
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate
@@ -95,7 +95,7 @@ template <typename MatrixType>
 using AccelerateQR = AccelerateImpl<MatrixType, 0, SparseFactorizationQR, false>;
 
 /** \ingroup AccelerateSupport_Module
- * \class AccelerateCholeskyAtA
+ * \typedef AccelerateCholeskyAtA
  * \brief A QR factorization and solver based on Accelerate without storing Q (equivalent to A^TA = R^T R)
  *
  * \warning Only single and double precision real scalar types are supported by Accelerate

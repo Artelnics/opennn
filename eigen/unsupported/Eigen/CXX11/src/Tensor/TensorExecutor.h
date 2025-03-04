@@ -15,20 +15,6 @@
 
 namespace Eigen {
 
-/**
- * \class TensorExecutor
- * \ingroup CXX11_Tensor_Module
- *
- * \brief The tensor executor class.
- *
- * This class is responsible for launch the evaluation of the expression on
- * the specified computing device.
- *
- * @tparam Vectorizable can use packet math (SSE/AVX/etc... registers and
- *                      instructions)
- * @tparam Tiling       can use block based tensor evaluation
- *                      (see TensorBlock.h)
- */
 namespace internal {
 
 /**
@@ -71,8 +57,20 @@ struct ExpressionHasTensorBroadcastingOp<const TensorBroadcastingOp<Broadcast, X
 // -------------------------------------------------------------------------- //
 
 /**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief The tensor executor class.
+ *
+ * This class is responsible for launch the evaluation of the expression on
+ * the specified computing device.
+ *
  * Default strategy: the expression is evaluated sequentially with a single cpu
  * thread, without vectorization and block evaluation.
+ *
+ * @tparam Vectorizable can use packet math (SSE/AVX/etc... registers and
+ *                      instructions)
+ * @tparam Tiling       can use block based tensor evaluation
+ *                      (see TensorBlock.h)
  */
 template <typename Expression, typename Device, bool Vectorizable, TiledEvaluation Tiling>
 class TensorExecutor {

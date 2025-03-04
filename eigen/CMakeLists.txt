@@ -109,8 +109,9 @@ set(EIGEN_VERSION_NUMBER ${EIGEN_WORLD_VERSION}.${EIGEN_MAJOR_VERSION}.${EIGEN_M
 if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   # if the git program is absent or this will leave the EIGEN_GIT_REVNUM string empty,
   # but won't stop CMake.
-  execute_process(COMMAND git ls-remote --refs -q ${CMAKE_SOURCE_DIR} HEAD OUTPUT_VARIABLE EIGEN_GIT_OUTPUT)
+  execute_process(COMMAND git ls-remote -q ${CMAKE_SOURCE_DIR} HEAD OUTPUT_VARIABLE EIGEN_GIT_OUTPUT)
 endif()
+
 # extract the git rev number from the git output...
 if(EIGEN_GIT_OUTPUT)
 string(REGEX MATCH "^([0-9;a-f]+).*" EIGEN_GIT_CHANGESET_MATCH "${EIGEN_GIT_OUTPUT}")
@@ -383,11 +384,16 @@ if (EIGEN_BUILD_TESTING)
     ei_add_cxx_compiler_flag("-Wno-psabi")
     ei_add_cxx_compiler_flag("-Wno-variadic-macros")
     ei_add_cxx_compiler_flag("-Wno-long-long")
-    ei_add_cxx_compiler_flag("-fno-check-new")
     ei_add_cxx_compiler_flag("-fno-common")
     ei_add_cxx_compiler_flag("-fstrict-aliasing")
     ei_add_cxx_compiler_flag("-wd981")                    # disable ICC's "operands are evaluated in unspecified order" remark
     ei_add_cxx_compiler_flag("-wd2304")                   # disable ICC's "warning #2304: non-explicit constructor with single argument may cause implicit type conversion" produced by -Wnon-virtual-dtor
+
+    # Clang emits warnings about unused flag.
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      ei_add_cxx_compiler_flag("-fno-check-new")
+    endif()
+
 
     if(ANDROID_NDK)
       ei_add_cxx_compiler_flag("-pie")
@@ -485,6 +491,12 @@ if (EIGEN_BUILD_TESTING)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmsa")
       message(STATUS "Enabling MSA in tests/examples")
     endif()
+
+   option(EIGEN_TEST_LSX "Enable/Disable LSX in tests/examples" OFF)
+   if(EIGEN_TEST_LSX)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlsx")
+     message(STATUS "Enabling LSX in tests/examples")
+   endif()
 
     option(EIGEN_TEST_NEON "Enable/Disable Neon in tests/examples" OFF)
     if(EIGEN_TEST_NEON)

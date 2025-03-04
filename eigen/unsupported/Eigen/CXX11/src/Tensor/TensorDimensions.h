@@ -15,22 +15,6 @@
 
 namespace Eigen {
 
-/** \internal
- *
- * \class TensorDimensions
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Set of classes used to encode and store the dimensions of a Tensor.
- *
- * The Sizes class encodes as part of the type the number of dimensions and the
- * sizes corresponding to each dimension. It uses no storage space since it is
- * entirely known at compile time.
- * The DSizes class is its dynamic sibling: the number of dimensions is known
- * at compile time but the sizes are set during execution.
- *
- * \sa Tensor
- */
-
 // Boilerplate code
 namespace internal {
 
@@ -80,7 +64,18 @@ struct fixed_size_tensor_index_extraction_helper<Index, 0> {
 
 }  // end namespace internal
 
-// Fixed size
+/** \internal
+ *
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Fixed dimensions of a Tensor.
+ *
+ * The Sizes class encodes as part of the type the number of dimensions and the
+ * sizes corresponding to each dimension. It uses no storage space since it is
+ * entirely known at compile time.
+ *
+ * \sa Tensor
+ */
 template <typename std::ptrdiff_t... Indices>
 struct Sizes {
   typedef internal::numeric_list<std::ptrdiff_t, Indices...> Base;
@@ -156,7 +151,17 @@ struct tensor_index_linearization_helper<Index, NumIndices, 0, RowMajor> {
 };
 }  // end namespace internal
 
-// Dynamic size
+/** \internal
+ *
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Dynamic dimensions of a Tensor.
+ *
+ * The DSizes class is its dynamic sibling: the number of dimensions is known
+ * at compile time but the sizes are set during execution.
+ *
+ * \sa Tensor
+ */
 template <typename DenseIndex, int NumDims>
 struct DSizes : array<DenseIndex, NumDims> {
   typedef array<DenseIndex, NumDims> Base;

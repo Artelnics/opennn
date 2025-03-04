@@ -8,7 +8,6 @@ but more complex types such as strings are also supported.
 You can manipulate a tensor with one of the following classes.  They all are in
 the namespace `::Eigen.`
 
-
 ### Class Tensor<data_type, rank>
 
 This is the class to use to create a tensor and allocate memory for it.  The
@@ -90,7 +89,7 @@ See Assigning to a `TensorRef` below.
 
 ## Accessing Tensor Elements
 
-#### <data_type> tensor(index0, index1...)
+#### data_type tensor(index0, index1...)
 
 Return the element at position `(index0, index1...)` in tensor
 `tensor`.  You must pass as many parameters as the rank of `tensor`.

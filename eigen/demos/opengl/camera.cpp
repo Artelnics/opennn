@@ -18,7 +18,7 @@ using namespace Eigen;
 Camera::Camera() : mViewIsUptodate(false), mProjIsUptodate(false) {
   mViewMatrix.setIdentity();
 
-  mFovY = M_PI / 3.;
+  mFovY = EIGEN_PI / 3.;
   mNearDist = 1.;
   mFarDist = 50000.;
 

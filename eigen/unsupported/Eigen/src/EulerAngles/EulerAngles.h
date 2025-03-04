@@ -315,6 +315,16 @@ class EulerAngles : public RotationBase<EulerAngles<Scalar_, _System>, 3> {
 EIGEN_EULER_ANGLES_TYPEDEFS(float, f)
 EIGEN_EULER_ANGLES_TYPEDEFS(double, d)
 
+// Specifically-referenced instantiations.
+/** \typedef EulerAnglesXYZd
+ * \ingroup EulerAngles_Module
+ * Euler XYZ system with type double entries.
+ */
+/** \typedef EulerAnglesZYZf
+ * \ingroup EulerAngles_Module
+ * Euler ZYZ system with type float entries.
+ */
+
 namespace internal {
 template <typename Scalar_, class _System>
 struct traits<EulerAngles<Scalar_, _System> > {

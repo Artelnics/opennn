@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorInflation
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor inflation class.
- *
- *
- */
 namespace internal {
 template <typename Strides, typename XprType>
 struct traits<TensorInflationOp<Strides, XprType> > : public traits<XprType> {
@@ -48,6 +41,11 @@ struct nested<TensorInflationOp<Strides, XprType>, 1, typename eval<TensorInflat
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor inflation class.
+ */
 template <typename Strides, typename XprType>
 class TensorInflationOp : public TensorBase<TensorInflationOp<Strides, XprType>, ReadOnlyAccessors> {
  public:

@@ -3155,7 +3155,7 @@ void gemmbfloat16(const DataMapper& res, const bfloat16* indexA, const bfloat16*
 
 #undef MAX_BFLOAT16_ACC_VSX
 
-#include "MatrixVectorProduct.h"
+#include "MatrixVectorProduct.inc"
 
 /************************************
  * ppc64le template specializations *

@@ -15,7 +15,7 @@
 
 namespace Eigen {
 
-/** \class TensorDevice
+/**
  * \ingroup CXX11_Tensor_Module
  *
  * \brief Pseudo expression providing an operator = that will evaluate its argument
@@ -26,7 +26,6 @@ namespace Eigen {
  *
  * Todo: operator *= and /=.
  */
-
 template <typename ExpressionType, typename DeviceType>
 class TensorDevice {
  public:

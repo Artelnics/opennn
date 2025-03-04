@@ -20,7 +20,7 @@ void insertCoefficient(int id, int i, int j, double w, std::vector<T>& coeffs, E
 
 void buildProblem(std::vector<T>& coefficients, Eigen::VectorXd& b, int n) {
   b.setZero();
-  Eigen::ArrayXd boundary = Eigen::ArrayXd::LinSpaced(n, 0, M_PI).sin().pow(2);
+  Eigen::ArrayXd boundary = Eigen::ArrayXd::LinSpaced(n, 0, EIGEN_PI).sin().pow(2);
   for (int j = 0; j < n; ++j) {
     for (int i = 0; i < n; ++i) {
       int id = i + j * n;

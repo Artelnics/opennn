@@ -37,8 +37,8 @@ bool Trackball::mapToSphere(const Vector2i& p2, Vector3f& v3) {
   if ((p2.x() >= 0) && (p2.x() <= int(mpCamera->vpWidth())) && (p2.y() >= 0) && (p2.y() <= int(mpCamera->vpHeight()))) {
     double x = (double)(p2.x() - 0.5 * mpCamera->vpWidth()) / (double)mpCamera->vpWidth();
     double y = (double)(0.5 * mpCamera->vpHeight() - p2.y()) / (double)mpCamera->vpHeight();
-    double sinx = sin(M_PI * x * 0.5);
-    double siny = sin(M_PI * y * 0.5);
+    double sinx = sin(EIGEN_PI * x * 0.5);
+    double siny = sin(EIGEN_PI * y * 0.5);
     double sinx2siny2 = sinx * sinx + siny * siny;
 
     v3.x() = sinx;

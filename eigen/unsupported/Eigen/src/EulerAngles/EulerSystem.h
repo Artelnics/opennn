@@ -260,10 +260,11 @@ class EulerSystem {
   friend struct internal::eulerangles_assign_impl;
 };
 
-#define EIGEN_EULER_SYSTEM_TYPEDEF(A, B, C) \
-  /** \ingroup EulerAngles_Module */        \
-  typedef EulerSystem<EULER_##A, EULER_##B, EULER_##C> EulerSystem##A##B##C;
+#define EIGEN_EULER_SYSTEM_TYPEDEF(A, B, C) typedef EulerSystem<EULER_##A, EULER_##B, EULER_##C> EulerSystem##A##B##C;
 
+/** Default XYZ Euler coordinate system.
+ * \ingroup EulerAngles_Module
+ */
 EIGEN_EULER_SYSTEM_TYPEDEF(X, Y, Z)
 EIGEN_EULER_SYSTEM_TYPEDEF(X, Y, X)
 EIGEN_EULER_SYSTEM_TYPEDEF(X, Z, Y)
