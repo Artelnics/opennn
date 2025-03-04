@@ -15,14 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorKChippingReshaping
- * \ingroup CXX11_Tensor_Module
- *
- * \brief A chip is a thin slice, corresponding to a column or a row in a 2-d tensor.
- *
- *
- */
-
 namespace internal {
 template <DenseIndex DimId, typename XprType>
 struct traits<TensorChippingOp<DimId, XprType> > : public traits<XprType> {
@@ -66,6 +58,9 @@ struct DimensionId<Dynamic> {
 
 }  // end namespace internal
 
+/** A chip is a thin slice, corresponding to a column or a row in a 2-d tensor.
+ * \ingroup CXX11_Tensor_Module
+ */
 template <DenseIndex DimId, typename XprType>
 class TensorChippingOp : public TensorBase<TensorChippingOp<DimId, XprType> > {
  public:

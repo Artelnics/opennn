@@ -17,13 +17,6 @@
 namespace Eigen {
 namespace internal {
 
-/** \class TensorIndexPair
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor + Index Pair class.
- *
- *
- */
 template <typename XprType>
 struct traits<TensorIndexPairOp<XprType>> : public traits<XprType> {
   typedef traits<XprType> XprTraits;
@@ -48,6 +41,11 @@ struct nested<TensorIndexPairOp<XprType>, 1, typename eval<TensorIndexPairOp<Xpr
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor + Index Pair class.
+ */
 template <typename XprType>
 class TensorIndexPairOp : public TensorBase<TensorIndexPairOp<XprType>, ReadOnlyAccessors> {
  public:

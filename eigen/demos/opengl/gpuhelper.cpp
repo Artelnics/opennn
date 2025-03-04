@@ -55,7 +55,7 @@ void GpuHelper::drawVector(const Vector3f& position, const Vector3f& vec, const 
   ax.normalize();
   Vector3f tmp = vec;
   tmp.normalize();
-  float angle = 180.f / M_PI * acos(tmp.z());
+  float angle = 180.f / EIGEN_PI * acos(tmp.z());
   if (angle > 1e-3) glRotatef(angle, ax.x(), ax.y(), ax.z());
   gluCylinder(cylinder, length / aspect, length / aspect, 0.8 * length, 10, 10);
   glTranslatef(0.0, 0.0, 0.8 * length);
@@ -74,7 +74,7 @@ void GpuHelper::drawVectorBox(const Vector3f& position, const Vector3f& vec, con
   ax.normalize();
   Vector3f tmp = vec;
   tmp.normalize();
-  float angle = 180.f / M_PI * acos(tmp.z());
+  float angle = 180.f / EIGEN_PI * acos(tmp.z());
   if (angle > 1e-3) glRotatef(angle, ax.x(), ax.y(), ax.z());
   gluCylinder(cylinder, length / aspect, length / aspect, 0.8 * length, 10, 10);
   glTranslatef(0.0, 0.0, 0.8 * length);

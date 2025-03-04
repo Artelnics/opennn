@@ -23,12 +23,12 @@
 test:windows:x86-64:msvc-14.16:default:official:
   extends: .test:windows:x86-64:msvc-14.16:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:windows:x86-64:msvc-14.16:default:unsupported:
   extends: .test:windows:x86-64:msvc-14.16:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 # MSVC 14.29 (VS 2019)
 .test:windows:x86-64:msvc-14.29:default:
@@ -38,12 +38,12 @@ test:windows:x86-64:msvc-14.16:default:unsupported:
 test:windows:x86-64:msvc-14.29:default:official:
   extends: .test:windows:x86-64:msvc-14.29:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:windows:x86-64:msvc-14.29:default:unsupported:
   extends: .test:windows:x86-64:msvc-14.29:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:windows:x86-64:msvc-14.29:avx2:
   extends: .test:windows
@@ -52,12 +52,12 @@ test:windows:x86-64:msvc-14.29:default:unsupported:
 test:windows:x86-64:msvc-14.29:avx2:official:
   extends: .test:windows:x86-64:msvc-14.29:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:windows:x86-64:msvc-14.29:avx2:unsupported:
   extends: .test:windows:x86-64:msvc-14.29:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:windows:x86-64:msvc-14.29:avx512dq:
   extends: .test:windows
@@ -71,19 +71,19 @@ test:windows:x86-64:msvc-14.29:avx2:unsupported:
 test:windows:x86-64:msvc-14.29:avx512dq:official:
   extends: .test:windows:x86-64:msvc-14.29:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:windows:x86-64:msvc-14.29:avx512dq:unsupported:
   extends: .test:windows:x86-64:msvc-14.29:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 ##### MSVC + CUDA ##############################################################
 .test:windows:cuda:
   extends: .test:windows
   allow_failure: true
   variables:
-    EIGEN_CI_TEST_LABEL: gpu
+    EIGEN_CI_CTEST_LABEL: gpu
   tags: 
     - eigen-runner
     - windows

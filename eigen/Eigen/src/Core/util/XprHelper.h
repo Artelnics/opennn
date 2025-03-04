@@ -885,8 +885,12 @@ struct scalar_div_cost {
 };
 
 template <typename T, bool Vectorized>
-struct scalar_div_cost<std::complex<T>, Vectorized> {
-  enum { value = 2 * scalar_div_cost<T>::value + 6 * NumTraits<T>::MulCost + 3 * NumTraits<T>::AddCost };
+struct scalar_div_cost<T, Vectorized, std::enable_if_t<NumTraits<T>::IsComplex>> {
+  using RealScalar = typename NumTraits<T>::Real;
+  enum {
+    value =
+        2 * scalar_div_cost<RealScalar>::value + 6 * NumTraits<RealScalar>::MulCost + 3 * NumTraits<RealScalar>::AddCost
+  };
 };
 
 template <bool Vectorized>

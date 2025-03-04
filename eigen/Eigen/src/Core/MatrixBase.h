@@ -112,7 +112,7 @@ class MatrixBase : public DenseBase<Derived> {
                              ConstTransposeReturnType>
       AdjointReturnType;
   /** \internal Return type of eigenvalues() */
-  typedef Matrix<std::complex<RealScalar>, internal::traits<Derived>::ColsAtCompileTime, 1, ColMajor>
+  typedef Matrix<internal::make_complex_t<Scalar>, internal::traits<Derived>::ColsAtCompileTime, 1, ColMajor>
       EigenvaluesReturnType;
   /** \internal the return type of identity */
   typedef CwiseNullaryOp<internal::scalar_identity_op<Scalar>, PlainObject> IdentityReturnType;
@@ -468,7 +468,7 @@ class MatrixBase : public DenseBase<Derived> {
   EIGEN_MATRIX_FUNCTION(MatrixSquareRootReturnValue, sqrt, square root)
   EIGEN_MATRIX_FUNCTION(MatrixLogarithmReturnValue, log, logarithm)
   EIGEN_MATRIX_FUNCTION_1(MatrixPowerReturnValue, pow, power to \c p, const RealScalar& p)
-  EIGEN_MATRIX_FUNCTION_1(MatrixComplexPowerReturnValue, pow, power to \c p, const std::complex<RealScalar>& p)
+  EIGEN_MATRIX_FUNCTION_1(MatrixComplexPowerReturnValue, pow, power to \c p, const internal::make_complex_t<Scalar>& p)
 
  protected:
   EIGEN_DEFAULT_COPY_CONSTRUCTOR(MatrixBase)

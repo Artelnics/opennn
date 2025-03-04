@@ -53,7 +53,8 @@ class FancySpheres {
       }
     }
 
-    static const float angles[10] = {0, 0, M_PI, 0. * M_PI, M_PI, 0.5 * M_PI, M_PI, 1. * M_PI, M_PI, 1.5 * M_PI};
+    static const float angles[10] = {
+        0, 0, EIGEN_PI, 0. * EIGEN_PI, EIGEN_PI, 0.5 * EIGEN_PI, EIGEN_PI, 1. * EIGEN_PI, EIGEN_PI, 1.5 * EIGEN_PI};
 
     // generate other levels
     int start = 1;
@@ -377,7 +378,7 @@ void RenderingWidget::mouseMoveEvent(QMouseEvent* e) {
         } else {
           // standard approach mapping the x and y displacements as rotations
           // around the camera's X and Y axes.
-          Quaternionf q = AngleAxisf(dx * M_PI, Vector3f::UnitY()) * AngleAxisf(-dy * M_PI, Vector3f::UnitX());
+          Quaternionf q = AngleAxisf(dx * EIGEN_PI, Vector3f::UnitY()) * AngleAxisf(-dy * EIGEN_PI, Vector3f::UnitX());
           if (mCurrentTrackingMode == TM_LOCAL_ROTATE)
             mCamera.localRotate(q);
           else

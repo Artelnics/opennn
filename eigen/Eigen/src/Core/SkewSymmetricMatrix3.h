@@ -321,7 +321,7 @@ bool MatrixBase<Derived>::isSkewSymmetric(const RealScalar& prec) const {
   return (this->transpose() + *this).isZero(prec);
 }
 
-/** \returns the matrix product of \c *this by the skew symmetric matrix \skew.
+/** \returns the matrix product of \c *this by the skew symmetric matrix \a skew.
  */
 template <typename Derived>
 template <typename SkewDerived>

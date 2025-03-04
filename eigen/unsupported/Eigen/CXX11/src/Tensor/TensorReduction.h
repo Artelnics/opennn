@@ -26,13 +26,6 @@
 
 namespace Eigen {
 
-/** \class TensorReduction
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor reduction class.
- *
- */
-
 namespace internal {
 template <typename Op, typename Dims, typename XprType, template <class> class MakePointer_>
 struct traits<TensorReductionOp<Op, Dims, XprType, MakePointer_> > : traits<XprType> {
@@ -506,6 +499,12 @@ struct ReductionReturnType {
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor reduction class.
+ *
+ */
 template <typename Op, typename Dims, typename XprType, template <class> class MakePointer_>
 class TensorReductionOp : public TensorBase<TensorReductionOp<Op, Dims, XprType, MakePointer_>, ReadOnlyAccessors> {
  public:

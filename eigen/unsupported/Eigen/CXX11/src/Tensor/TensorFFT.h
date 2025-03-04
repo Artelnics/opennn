@@ -15,18 +15,7 @@
 
 namespace Eigen {
 
-/** \class TensorFFT
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor FFT class.
- *
- * TODO:
- * Vectorize the Cooley Tukey and the Bluestein algorithm
- * Add support for multithreaded evaluation
- * Improve the performance on GPU
- */
-
-template <bool NeedUprade>
+template <bool IsReal>
 struct MakeComplex {
   template <typename T>
   EIGEN_DEVICE_FUNC T operator()(const T& val) const {
@@ -37,16 +26,8 @@ struct MakeComplex {
 template <>
 struct MakeComplex<true> {
   template <typename T>
-  EIGEN_DEVICE_FUNC std::complex<T> operator()(const T& val) const {
-    return std::complex<T>(val, 0);
-  }
-};
-
-template <>
-struct MakeComplex<false> {
-  template <typename T>
-  EIGEN_DEVICE_FUNC std::complex<T> operator()(const std::complex<T>& val) const {
-    return val;
+  EIGEN_DEVICE_FUNC internal::make_complex_t<T> operator()(const T& val) const {
+    return internal::make_complex_t<T>(val, T(0));
   }
 };
 
@@ -60,17 +41,17 @@ struct PartOf {
 
 template <>
 struct PartOf<RealPart> {
-  template <typename T>
-  T operator()(const std::complex<T>& val) const {
-    return val.real();
+  template <typename T, typename EnableIf = std::enable_if_t<NumTraits<T>::IsComplex>>
+  typename NumTraits<T>::Real operator()(const T& val) const {
+    return Eigen::numext::real(val);
   }
 };
 
 template <>
 struct PartOf<ImagPart> {
-  template <typename T>
-  T operator()(const std::complex<T>& val) const {
-    return val.imag();
+  template <typename T, typename EnableIf = std::enable_if_t<NumTraits<T>::IsComplex>>
+  typename NumTraits<T>::Real operator()(const T& val) const {
+    return Eigen::numext::imag(val);
   }
 };
 
@@ -78,8 +59,9 @@ namespace internal {
 template <typename FFT, typename XprType, int FFTResultType, int FFTDir>
 struct traits<TensorFFTOp<FFT, XprType, FFTResultType, FFTDir> > : public traits<XprType> {
   typedef traits<XprType> XprTraits;
-  typedef typename NumTraits<typename XprTraits::Scalar>::Real RealScalar;
-  typedef typename std::complex<RealScalar> ComplexScalar;
+  typedef typename XprTraits::Scalar Scalar;
+  typedef typename NumTraits<Scalar>::Real RealScalar;
+  typedef make_complex_t<Scalar> ComplexScalar;
   typedef typename XprTraits::Scalar InputScalar;
   typedef std::conditional_t<FFTResultType == RealPart || FFTResultType == ImagPart, RealScalar, ComplexScalar>
       OutputScalar;
@@ -105,12 +87,22 @@ struct nested<TensorFFTOp<FFT, XprType, FFTResultType, FFTDirection>, 1,
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor FFT class.
+ *
+ * TODO:
+ * Vectorize the Cooley Tukey and the Bluestein algorithm
+ * Add support for multithreaded evaluation
+ * Improve the performance on GPU
+ */
 template <typename FFT, typename XprType, int FFTResultType, int FFTDir>
 class TensorFFTOp : public TensorBase<TensorFFTOp<FFT, XprType, FFTResultType, FFTDir>, ReadOnlyAccessors> {
  public:
   typedef typename Eigen::internal::traits<TensorFFTOp>::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  typedef typename std::complex<RealScalar> ComplexScalar;
+  typedef internal::make_complex_t<Scalar> ComplexScalar;
   typedef std::conditional_t<FFTResultType == RealPart || FFTResultType == ImagPart, RealScalar, ComplexScalar>
       OutputScalar;
   typedef OutputScalar CoeffReturnType;
@@ -138,7 +130,7 @@ struct TensorEvaluator<const TensorFFTOp<FFT, ArgType, FFTResultType, FFTDir>, D
   typedef DSizes<Index, NumDims> Dimensions;
   typedef typename XprType::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  typedef typename std::complex<RealScalar> ComplexScalar;
+  typedef internal::make_complex_t<Scalar> ComplexScalar;
   typedef typename TensorEvaluator<ArgType, Device>::Dimensions InputDimensions;
   typedef internal::traits<XprType> XprTraits;
   typedef typename XprTraits::Scalar InputScalar;
@@ -261,7 +253,7 @@ struct TensorEvaluator<const TensorFFTOp<FFT, ArgType, FFTResultType, FFTDir>, D
         // pos_j_base_powered[0] = ComplexScalar(1, 0);
         // if (line_len > 1) {
         //   const ComplexScalar pos_j_base = ComplexScalar(
-        //       numext::cos(M_PI / line_len), numext::sin(M_PI / line_len));
+        //       numext::cos(EIGEN_PI / line_len), numext::sin(EIGEN_PI / line_len));
         //   pos_j_base_powered[1] = pos_j_base;
         //   if (line_len > 2) {
         //     const ComplexScalar pos_j_base_sq = pos_j_base * pos_j_base;
@@ -511,8 +503,8 @@ struct TensorEvaluator<const TensorFFTOp<FFT, ArgType, FFTResultType, FFTDir>, D
   template <int Dir>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void butterfly_1D_merge(ComplexScalar* data, Index n, Index n_power_of_2) {
     // Original code:
-    // RealScalar wtemp = std::sin(M_PI/n);
-    // RealScalar wpi =  -std::sin(2 * M_PI/n);
+    // RealScalar wtemp = std::sin(EIGEN_PI/n);
+    // RealScalar wpi =  -std::sin(2 * EIGEN_PI/n);
     const RealScalar wtemp = m_sin_PI_div_n_LUT[n_power_of_2];
     const RealScalar wpi =
         (Dir == FFT_FORWARD) ? m_minus_sin_2_PI_div_n_LUT[n_power_of_2] : -m_minus_sin_2_PI_div_n_LUT[n_power_of_2];
@@ -600,7 +592,7 @@ struct TensorEvaluator<const TensorFFTOp<FFT, ArgType, FFTResultType, FFTDir>, D
   const Device EIGEN_DEVICE_REF m_device;
 
   // This will support a maximum FFT size of 2^32 for each dimension
-  // m_sin_PI_div_n_LUT[i] = (-2) * std::sin(M_PI / std::pow(2,i)) ^ 2;
+  // m_sin_PI_div_n_LUT[i] = (-2) * std::sin(EIGEN_PI / std::pow(2,i)) ^ 2;
   const RealScalar m_sin_PI_div_n_LUT[32] = {RealScalar(0.0),
                                              RealScalar(-2),
                                              RealScalar(-0.999999999999999),
@@ -634,7 +626,7 @@ struct TensorEvaluator<const TensorFFTOp<FFT, ArgType, FFTResultType, FFTDir>, D
                                              RealScalar(-1.71210344531737e-17),
                                              RealScalar(-4.28025861329343e-18)};
 
-  // m_minus_sin_2_PI_div_n_LUT[i] = -std::sin(2 * M_PI / std::pow(2,i));
+  // m_minus_sin_2_PI_div_n_LUT[i] = -std::sin(2 * EIGEN_PI / std::pow(2,i));
   const RealScalar m_minus_sin_2_PI_div_n_LUT[32] = {RealScalar(0.0),
                                                      RealScalar(0.0),
                                                      RealScalar(-1.00000000000000e+00),

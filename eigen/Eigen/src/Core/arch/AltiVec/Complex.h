@@ -18,19 +18,28 @@ namespace Eigen {
 
 namespace internal {
 
-static Packet4ui p4ui_CONJ_XOR =
-    vec_mergeh((Packet4ui)p4i_ZERO, (Packet4ui)p4f_MZERO);  //{ 0x00000000, 0x80000000, 0x00000000, 0x80000000 };
+inline Packet4ui p4ui_CONJ_XOR() {
+  return vec_mergeh((Packet4ui)p4i_ZERO, (Packet4ui)p4f_MZERO);  //{ 0x00000000, 0x80000000, 0x00000000, 0x80000000 };
+}
 #ifdef EIGEN_VECTORIZE_VSX
 #if defined(_BIG_ENDIAN)
-static Packet2ul p2ul_CONJ_XOR1 =
-    (Packet2ul)vec_sld((Packet4ui)p2d_MZERO, (Packet4ui)p2l_ZERO, 8);  //{ 0x8000000000000000, 0x0000000000000000 };
-static Packet2ul p2ul_CONJ_XOR2 =
-    (Packet2ul)vec_sld((Packet4ui)p2l_ZERO, (Packet4ui)p2d_MZERO, 8);  //{ 0x8000000000000000, 0x0000000000000000 };
+inline Packet2ul p2ul_CONJ_XOR1() {
+  return (Packet2ul)vec_sld((Packet4ui)p2d_MZERO, (Packet4ui)p2l_ZERO,
+                            8);  //{ 0x8000000000000000, 0x0000000000000000 };
+}
+inline Packet2ul p2ul_CONJ_XOR2() {
+  return (Packet2ul)vec_sld((Packet4ui)p2l_ZERO, (Packet4ui)p2d_MZERO,
+                            8);  //{ 0x8000000000000000, 0x0000000000000000 };
+}
 #else
-static Packet2ul p2ul_CONJ_XOR1 =
-    (Packet2ul)vec_sld((Packet4ui)p2l_ZERO, (Packet4ui)p2d_MZERO, 8);  //{ 0x8000000000000000, 0x0000000000000000 };
-static Packet2ul p2ul_CONJ_XOR2 =
-    (Packet2ul)vec_sld((Packet4ui)p2d_MZERO, (Packet4ui)p2l_ZERO, 8);  //{ 0x8000000000000000, 0x0000000000000000 };
+inline Packet2ul p2ul_CONJ_XOR1() {
+  return (Packet2ul)vec_sld((Packet4ui)p2l_ZERO, (Packet4ui)p2d_MZERO,
+                            8);  //{ 0x8000000000000000, 0x0000000000000000 };
+}
+inline Packet2ul p2ul_CONJ_XOR2() {
+  return (Packet2ul)vec_sld((Packet4ui)p2d_MZERO, (Packet4ui)p2l_ZERO,
+                            8);  //{ 0x8000000000000000, 0x0000000000000000 };
+}
 #endif
 #endif
 
@@ -50,7 +59,7 @@ struct Packet2cf {
     v1 = vec_madd(v1, b.v, p4f_ZERO);
     // multiply a_im * b and get the conjugate result
     v2 = vec_madd(v2, b.v, p4f_ZERO);
-    v2 = reinterpret_cast<Packet4f>(pxor(v2, reinterpret_cast<Packet4f>(p4ui_CONJ_XOR)));
+    v2 = reinterpret_cast<Packet4f>(pxor(v2, reinterpret_cast<Packet4f>(p4ui_CONJ_XOR())));
     // permute back to a proper order
     v2 = vec_perm(v2, v2, p16uc_COMPLEX32_REV);
 
@@ -266,7 +275,7 @@ EIGEN_STRONG_INLINE Packet2cf pnegate(const Packet2cf& a) {
 }
 template <>
 EIGEN_STRONG_INLINE Packet2cf pconj(const Packet2cf& a) {
-  return Packet2cf(pxor<Packet4f>(a.v, reinterpret_cast<Packet4f>(p4ui_CONJ_XOR)));
+  return Packet2cf(pxor<Packet4f>(a.v, reinterpret_cast<Packet4f>(p4ui_CONJ_XOR())));
 }
 
 template <>
@@ -399,7 +408,7 @@ struct Packet1cd {
     // multiply a_im * b and get the conjugate result
     v2 = vec_madd(a_im, b.v, p2d_ZERO);
     v2 = reinterpret_cast<Packet2d>(vec_sld(reinterpret_cast<Packet4ui>(v2), reinterpret_cast<Packet4ui>(v2), 8));
-    v2 = pxor(v2, reinterpret_cast<Packet2d>(p2ul_CONJ_XOR1));
+    v2 = pxor(v2, reinterpret_cast<Packet2d>(p2ul_CONJ_XOR1()));
 
     return Packet1cd(padd<Packet2d>(v1, v2));
   }
@@ -543,7 +552,7 @@ EIGEN_STRONG_INLINE Packet1cd pnegate(const Packet1cd& a) {
 }
 template <>
 EIGEN_STRONG_INLINE Packet1cd pconj(const Packet1cd& a) {
-  return Packet1cd(pxor(a.v, reinterpret_cast<Packet2d>(p2ul_CONJ_XOR2)));
+  return Packet1cd(pxor(a.v, reinterpret_cast<Packet2d>(p2ul_CONJ_XOR2())));
 }
 
 template <>

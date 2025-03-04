@@ -1,4 +1,4 @@
-Vector3d v = Vector3d::Random(), w;
+Vector3d v = Vector3d::Random();
 Projective3d P(Matrix4d::Random());
 cout << "v                                   = [" << v.transpose() << "]^T" << endl;
 cout << "h.homogeneous()                     = [" << v.homogeneous().transpose() << "]^T" << endl;

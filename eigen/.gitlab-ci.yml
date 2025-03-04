@@ -20,8 +20,9 @@ variables:
   EIGEN_CI_BUILD_TARGET: ""
   # If a test regex is specified, that will be selected.
   # Otherwise, we will try a label if specified.
-  EIGEN_CI_TEST_REGEX: ""
-  EIGEN_CI_TEST_LABEL: ""
+  EIGEN_CI_CTEST_REGEX: ""
+  EIGEN_CI_CTEST_LABEL: ""
+  EIGEN_CI_CTEST_ARGS: ""
 
 include:
   - "/ci/checkformat.gitlab-ci.yml"

@@ -379,6 +379,8 @@ struct tridiagonalization_inplace_selector;
  *    decomposition.
  * \param[out]  subdiag  The subdiagonal of the tridiagonal matrix T in
  *    the decomposition.
+ * \param[out]  hcoeffs
+ * \param[out]  workspace
  * \param[in]  extractQ  If true, the orthogonal matrix Q in the
  *    decomposition is computed and stored in \p mat.
  *

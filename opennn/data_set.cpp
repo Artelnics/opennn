@@ -16,18 +16,18 @@ namespace opennn
 {
 
     DataSet::DataSet(const Index& new_samples_number,
-        const dimensions& new_input_dimensions,
-        const dimensions& new_target_dimensions)
+                     const dimensions& new_input_dimensions,
+                     const dimensions& new_target_dimensions)
     {
         set(new_samples_number, new_input_dimensions, new_target_dimensions);
     }
 
 
     DataSet::DataSet(const filesystem::path& data_path,
-        const string& separator,
-        const bool& has_header,
-        const bool& has_sample_ids,
-        const Codification& data_codification)
+                     const string& separator,
+                     const bool& has_header,
+                     const bool& has_sample_ids,
+                     const Codification& data_codification)
     {
         set(data_path, separator, has_header, has_sample_ids, data_codification);
     }
@@ -40,20 +40,20 @@ namespace opennn
 
 
     DataSet::RawVariable::RawVariable(const string& new_name,
-        const VariableUse& new_raw_variable_use,
-        const RawVariableType& new_type,
-        const Scaler& new_scaler,
-        const vector<string>& new_categories)
+                                      const VariableUse& new_raw_variable_use,
+                                      const RawVariableType& new_type,
+                                      const Scaler& new_scaler,
+                                      const vector<string>& new_categories)
     {
         set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
     }
 
 
     void DataSet::RawVariable::set(const string& new_name,
-        const VariableUse& new_raw_variable_use,
-        const RawVariableType& new_type,
-        const Scaler& new_scaler,
-        const vector<string>& new_categories)
+                                   const VariableUse& new_raw_variable_use,
+                                   const RawVariableType& new_type,
+                                   const Scaler& new_scaler,
+                                   const vector<string>& new_categories)
     {
         name = new_name;
         use = new_raw_variable_use;
@@ -3807,7 +3807,7 @@ namespace opennn
         vector<string> tokens;
 
         size_t columns_number = 0;
-
+        
         // Read first line
 
         while (getline(file, line))
@@ -3883,7 +3883,7 @@ namespace opennn
         const Index variables_number = columns_number;
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
-
+     
         data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
         data.setZero();
 
@@ -3898,7 +3898,7 @@ namespace opennn
 
         file.clear();
         file.seekg(0);
-
+        
         if (has_header)
         {
             while (getline(file, line))
@@ -3911,7 +3911,7 @@ namespace opennn
         }
 
         Index sample_index = 0;
-
+        
         while (getline(file, line))
         {
             prepare_line(line);
@@ -3936,10 +3936,10 @@ namespace opennn
                     }
                 }
             }
-
+          
             if (has_sample_ids)
                 sample_ids[sample_index] = tokens[0];
-
+            
             // #pragma omp parallel for
             for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
             {
@@ -4004,7 +4004,7 @@ namespace opennn
             }
             sample_index++;
         }
-
+        
         file.close();
 
         unuse_constant_raw_variables();
