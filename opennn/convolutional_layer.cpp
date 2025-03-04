@@ -332,48 +332,48 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     }
 
-    // Input derivatives
+    // // Input derivatives
 
-    rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
+    // rotated_synaptic_weights.device(*thread_pool_device) = synaptic_weights.reverse(reverse_dimensions);
     
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
-    {
-        const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
-            convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
-            batch_samples_number,
-            output_height,
-            output_width);
+    // for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    // {
+    //     const TensorMap<Tensor<type, 3>> kernel_convolutions_derivatives(
+    //         convolutions_derivatives.data() + kernel_index * batch_samples_number * output_height * output_width,
+    //         batch_samples_number,
+    //         output_height,
+    //         output_width);
 
-        const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
-            rotated_synaptic_weights.data() + kernel_index * kernel_size,
-            kernel_height,
-            kernel_width,
-            kernel_channels);
+    //     const TensorMap<Tensor<type, 3>> rotated_kernel_synaptic_weights(
+    //         rotated_synaptic_weights.data() + kernel_index * kernel_size,
+    //         kernel_height,
+    //         kernel_width,
+    //         kernel_channels);
 
-        // #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
+    //     // #pragma omp parallel for
+    //     for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+    //         rotated_slices[channel_index] = rotated_kernel_synaptic_weights.chip(channel_index, 2);
         
-        for (Index image_index = 0; image_index < batch_samples_number; image_index++)
-        {
-            image_kernel_convolutions_derivatives_padded
-                = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
+    //     for (Index image_index = 0; image_index < batch_samples_number; image_index++)
+    //     {
+    //         image_kernel_convolutions_derivatives_padded
+    //             = kernel_convolutions_derivatives.chip(image_index, 0).pad(paddings);
 
-            // cerr << "image_kernel_convolutions_derivatives_padded:\n" << image_kernel_convolutions_derivatives_padded << endl;
-            // throw runtime_error("Checking why it's wrong.");
+    //         // cerr << "image_kernel_convolutions_derivatives_padded:\n" << image_kernel_convolutions_derivatives_padded << endl;
+    //         // throw runtime_error("Checking why it's wrong.");
 
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            {
-                channel_convolution.device(*thread_pool_device)
-                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
+    //         for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+    //         {
+    //             channel_convolution.device(*thread_pool_device)
+    //                 = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
 
-                // #pragma omp parallel for
-                for (Index height = 0; height < input_height; ++height)
-                    for (Index width = 0; width < input_width; ++width)
-                        input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
-            }
-        }
-    }
+    //             // #pragma omp parallel for
+    //             for (Index height = 0; height < input_height; ++height)
+    //                 for (Index width = 0; width < input_width; ++width)
+    //                     input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
+    //         }
+    //     }
+    // }
 
     // cout << "Input derivatives: " << endl;
     // for(int i = 0 ; i < input_derivatives.size() ; i++)

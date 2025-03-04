@@ -78,24 +78,6 @@ int main()
         neural_network.load("/Users/artelnics/Desktop/neural_network_save.xml");
 
         // neural_network.print();
-/*
-        NeuralNetwork new_neural_network;
-        new_neural_network.load("/Users/artelnics/Desktop/neural_network_save.xml");
-        new_neural_network.set_model_type(NeuralNetwork::ModelType::ImageClassification);
-
-        // new_neural_network.print();
-        // throw runtime_error("Checking if the network loads.");
-
-        TrainingStrategy new_training_strategy(&new_neural_network, &image_data_set);
-        new_training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-        new_training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        new_training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        new_training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(1000);
-        new_training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
-        new_training_strategy.set_maximum_time(3600000);
-        new_training_strategy.set_display_period(1);
-        new_training_strategy.perform_training();
-*/
         // image_data_set.set(DataSet::SampleUse::Testing);
 
         // Testing analysis

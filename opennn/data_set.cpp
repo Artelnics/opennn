@@ -16,18 +16,18 @@ namespace opennn
 {
 
     DataSet::DataSet(const Index& new_samples_number,
-                     const dimensions& new_input_dimensions,
-                     const dimensions& new_target_dimensions)
+        const dimensions& new_input_dimensions,
+        const dimensions& new_target_dimensions)
     {
         set(new_samples_number, new_input_dimensions, new_target_dimensions);
     }
 
 
     DataSet::DataSet(const filesystem::path& data_path,
-                     const string& separator,
-                     const bool& has_header,
-                     const bool& has_sample_ids,
-                     const Codification& data_codification)
+        const string& separator,
+        const bool& has_header,
+        const bool& has_sample_ids,
+        const Codification& data_codification)
     {
         set(data_path, separator, has_header, has_sample_ids, data_codification);
     }
@@ -40,20 +40,20 @@ namespace opennn
 
 
     DataSet::RawVariable::RawVariable(const string& new_name,
-                                      const VariableUse& new_raw_variable_use,
-                                      const RawVariableType& new_type,
-                                      const Scaler& new_scaler,
-                                      const vector<string>& new_categories)
+        const VariableUse& new_raw_variable_use,
+        const RawVariableType& new_type,
+        const Scaler& new_scaler,
+        const vector<string>& new_categories)
     {
         set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
     }
 
 
     void DataSet::RawVariable::set(const string& new_name,
-                                   const VariableUse& new_raw_variable_use,
-                                   const RawVariableType& new_type,
-                                   const Scaler& new_scaler,
-                                   const vector<string>& new_categories)
+        const VariableUse& new_raw_variable_use,
+        const RawVariableType& new_type,
+        const Scaler& new_scaler,
+        const vector<string>& new_categories)
     {
         name = new_name;
         use = new_raw_variable_use;
@@ -694,7 +694,7 @@ namespace opennn
 
     vector<string> DataSet::get_variable_names(const VariableUse& variable_use) const
     {
-        const Index variables_number = get_variables_number(variable_use);
+        const Index variables_number = get_variables_number(VariableUse::Input);
 
         vector<string> variable_names(variables_number);
 
@@ -707,7 +707,7 @@ namespace opennn
             if (raw_variables[i].use != variable_use)
                 continue;
 
-            if (raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
+            if (raw_variables[i].type == RawVariableType::Categorical)
                 for (Index j = 0; j < raw_variables[i].get_categories_number(); j++)
                     variable_names[index++] = raw_variables[i].categories[j];
             else
@@ -990,6 +990,7 @@ namespace opennn
         return count;
     }
 
+
     vector<Index> DataSet::get_used_variable_indices() const
     {
         const Index used_variables_number = get_used_variables_number();
@@ -1064,6 +1065,19 @@ namespace opennn
         for (size_t i = 0; i < target_raw_variables.size(); i++)
             set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
     }
+
+
+    // void DataSet::set_raw_variable_indices(const vector<string>& input_raw_variables,
+    //                                                     const vector<string>& target_raw_variables)
+    // {
+    //     set_raw_variables(VariableUse::None);
+
+    //     for(size_t i = 0; i < input_raw_variables.size(); i++)
+    //         set_raw_variable_use(input_raw_variables[i], VariableUse::Input);
+
+    //     for(size_t i = 0; i < target_raw_variables.size(); i++)
+    //         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
+    // }
 
 
     void DataSet::set_input_raw_variables_unused()
@@ -1199,7 +1213,7 @@ namespace opennn
                 if (is_binary(data_column))
                 {
                     raw_variable.type = RawVariableType::Binary;
-                    raw_variable.categories = {"0","1"};
+                    raw_variable.categories = { "0","1" };
                 }
 
                 variable_index++;
@@ -1207,8 +1221,8 @@ namespace opennn
             else if (raw_variable.type == RawVariableType::Categorical)
                 variable_index += raw_variable.get_categories_number();
             else if (raw_variable.type == RawVariableType::DateTime
-                    || raw_variable.type == RawVariableType::Constant
-                    || raw_variable.type == RawVariableType::Binary)
+                || raw_variable.type == RawVariableType::Constant
+                || raw_variable.type == RawVariableType::Binary)
                 variable_index++;
         }
     }
@@ -2659,7 +2673,7 @@ namespace opennn
         const Index input_variables_number = get_variables_number(variable_use);
 
         const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-        const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
+        const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
 
         const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
@@ -2822,7 +2836,7 @@ namespace opennn
 
         // Data Source
         const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-        
+
         if (!data_source_element)
             throw runtime_error("Data source element is nullptr.\n");
 
@@ -2838,11 +2852,11 @@ namespace opennn
 
         if (!raw_variables_element)
             throw runtime_error("RawVariables element is nullptr.\n");
-        
+
         set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
         const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
-        
+
         for (size_t i = 0; i < raw_variables.size(); i++)
         {
             RawVariable& raw_variable = raw_variables[i];
@@ -2869,7 +2883,7 @@ namespace opennn
                     throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
             }
         }
-        
+
         // Samples
         const XMLElement* samples_element = data_set_element->FirstChildElement("Samples");
 
@@ -3425,17 +3439,17 @@ namespace opennn
         mt19937 gen(rd());
         uniform_int_distribution<int> dist(0, 1);
         /*
-        #pragma omp parallel for
-        for(Index i = 0; i < samples_number; i++)
-        {
-            for(Index j = 0; j < input_variables_number; j++)
-                data(i, j) = get_random_type(-1, 1);
+            #pragma omp parallel for
+            for(Index i = 0; i < samples_number; i++)
+            {
+                for(Index j = 0; j < input_variables_number; j++)
+                    data(i, j) = get_random_type(-1, 1);
 
-            target_variables_number == 1
-                ? data(i, input_variables_number) = dist(gen)
-                : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
-        }
-    */
+                target_variables_number == 1
+                    ? data(i, input_variables_number) = dist(gen)
+                    : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
+            }
+        */
     }
 
 
@@ -3444,14 +3458,14 @@ namespace opennn
     {
         set_random(data);
         /*
-            for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,variables_number-1) = type(0);
+                for(Index i = 0; i < samples_number; i++)
+                {
+                    data(i,variables_number-1) = type(0);
 
-                for(Index j = 0; j < variables_number-1; j++)
-                    data(i,variables_number-1) += data(i, j);
-            }
-        */
+                    for(Index j = 0; j < variables_number-1; j++)
+                        data(i,variables_number-1) += data(i, j);
+                }
+            */
     }
 
 
@@ -3807,7 +3821,7 @@ namespace opennn
         vector<string> tokens;
 
         size_t columns_number = 0;
-        
+
         // Read first line
 
         while (getline(file, line))
@@ -3883,7 +3897,7 @@ namespace opennn
         const Index variables_number = columns_number;
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
-     
+
         data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
         data.setZero();
 
@@ -3898,7 +3912,7 @@ namespace opennn
 
         file.clear();
         file.seekg(0);
-        
+
         if (has_header)
         {
             while (getline(file, line))
@@ -3911,7 +3925,7 @@ namespace opennn
         }
 
         Index sample_index = 0;
-        
+
         while (getline(file, line))
         {
             prepare_line(line);
@@ -3936,10 +3950,10 @@ namespace opennn
                     }
                 }
             }
-          
+
             if (has_sample_ids)
                 sample_ids[sample_index] = tokens[0];
-            
+
             // #pragma omp parallel for
             for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
             {
@@ -3959,7 +3973,7 @@ namespace opennn
                 }
                 else if (raw_variable_type == RawVariableType::DateTime)
                 {
-                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(token));
+                    data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
                 }
                 else if (raw_variable_type == RawVariableType::Categorical)
                 {
@@ -4004,13 +4018,14 @@ namespace opennn
             }
             sample_index++;
         }
-        
+
         file.close();
 
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();
     }
+
 
     string DataSet::RawVariable::get_type_string() const
     {

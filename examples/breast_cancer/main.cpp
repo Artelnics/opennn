@@ -21,8 +21,13 @@ int main()
 
         // Data set
 
+<<<<<<< HEAD
         DataSet data_set("data/breast_cancer.csv", ";", true);
         //DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true);
+=======
+        // DataSet data_set("data/breast_cancer.csv", ";", true);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true, false);
+>>>>>>> 575d26b6acd6f039338141494c32b9bf6ba190f9
 
         // Example downloaded dataset
 
@@ -34,14 +39,25 @@ int main()
         /*
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+<<<<<<< HEAD
        
+=======
+
+
+>>>>>>> 575d26b6acd6f039338141494c32b9bf6ba190f9
         // Neural network
         /*
         const Index neurons_number = 30;
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
             { input_variables_number }, { neurons_number }, { target_variables_number });
+<<<<<<< HEAD
         /*
+=======
+
+        // data_set.print();
+
+>>>>>>> 575d26b6acd6f039338141494c32b9bf6ba190f9
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -94,7 +110,11 @@ int main()
 
         cout << "Confidence limit: " << roc_analysis.confidence_limit << endl << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
 
+<<<<<<< HEAD
         */
+=======
+
+>>>>>>> 575d26b6acd6f039338141494c32b9bf6ba190f9
         cout << "Good bye!" << endl;
 
         return 0;

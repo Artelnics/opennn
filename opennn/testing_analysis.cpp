@@ -48,7 +48,6 @@ const bool& TestingAnalysis::get_display() const
     return display;
 }
 
-
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
     thread_pool = make_unique<ThreadPool>(new_threads_number);
@@ -137,16 +136,11 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
 
     const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
-    // cout << "testing_input_data:\n" << testing_input_data << endl;
-
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
-
-    // cout << "testing_output_data" << endl;
-    // cout << testing_output_data << endl;
 
     // Testing analysis
 
@@ -194,15 +188,43 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
+
+    check();
+
+    // Data set
+
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
+
+    if(testing_samples_number == Index(0))
+        throw runtime_error("Number of testing samples is zero.\n");
+
+    const Tensor<type, 2> testing_input_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+
+    const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
+    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
+
     UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+
+    Descriptives desc;
+    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
-
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
+
+    for(Index i = 0; i < testing_samples_number; i++){
+        type min_range=output_minimums[i];
+        type max_range=output_maximums[i];
+        desc.set(min_range, max_range);
+        descriptives.push_back(desc);
+    }
+
+    unscaling_layer->set_descriptives(descriptives);
 
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
@@ -226,14 +248,43 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
 Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 {
+
+    check();
+
+    // Data set
+
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
+
+    if(testing_samples_number == Index(0))
+        throw runtime_error("Number of testing samples is zero.\n");
+
+    const Tensor<type, 2> testing_input_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+
+    const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
 
+    const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
+
     UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+    unscaling_layer->set_scalers(Scaler::MinimumMaximum);
+
+    Descriptives desc;
+    vector <Descriptives> descriptives = unscaling_layer->get_descriptives();
 
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
+
+    for(Index i = 0; i < testing_samples_number; i++){
+        type min_range=output_minimums[i];
+        type max_range=output_maximums[i];
+        desc.set(min_range, max_range);
+        descriptives.push_back(desc);
+    }
+
+    unscaling_layer->set_descriptives(descriptives);
 
     const Tensor<type, 2> errors = calculate_error();
 
@@ -244,8 +295,12 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     #pragma omp parallel for
 
     for(Index i = 0; i < testing_samples_number; i++)
+    {
        for(Index j = 0; j < outputs_number; j++)
-           error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
+        {
+            error_data(i, j) = errors(i, j)*type(100.0)/abs(output_maximums(j) - output_minimums(j));
+       }
+    }
 
     return error_data;
 }
