@@ -26,7 +26,7 @@ TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 }
 
 
-TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
+TEST(NormalizedSquaredErrorTest, BackPropagate)
 {
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
@@ -61,10 +61,66 @@ TEST(NormalizedSquaredErrorTest, BackPropagateApproximation)
     
     const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
 
-    //std::cout << "Back Propagation Gradient: " << back_propagation.gradient << std::endl;
-    //std::cout << "Numerical Gradient: " << numerical_gradient << std::endl;
-
+    EXPECT_EQ(back_propagation.errors.dimension(0), samples_number);
+    EXPECT_EQ(back_propagation.errors.dimension(1), targets_number);
+    EXPECT_GE(back_propagation.error(), 0);
     EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
+
+}
+
+TEST(NormalizedSquaredErrorTest, BackPropagateLM)
+{
+
+    const Index samples_number = 1 + rand()%10;
+    const Index inputs_number = 1 + rand()%10;
+    const Index outputs_number = 1 + rand()%10;
+    const Index neurons_number = 1 + rand()%10;
+    bool is_training = true;
+
+    // Data set
+
+    DataSet data_set;
+    data_set.set(samples_number, {inputs_number}, {outputs_number});
+    data_set.set_data_random();
+    data_set.set(DataSet::SampleUse::Training);
+
+    Batch batch(samples_number, &data_set);
+    batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
+               data_set.get_variable_indices(DataSet::VariableUse::Input),
+               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
+               data_set.get_variable_indices(DataSet::VariableUse::Target));
+
+    // Neural network
+
+    NeuralNetwork neural_network;
+    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
+    neural_network.set_parameters_random();
+
+    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
+    normalized_squared_error.set_normalization_coefficient();
+
+    ForwardPropagation forward_propagation(samples_number, &neural_network);
+    neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+
+    // Loss index
+
+    BackPropagation back_propagation(samples_number, &normalized_squared_error);
+    normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
+
+    BackPropagationLM back_propagation_lm(samples_number, &normalized_squared_error);
+    normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
+
+    const Tensor<type, 1> numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
+    const Tensor<type, 2> numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
+    const Tensor<type, 2> numerical_hessian = normalized_squared_error.calculate_numerical_hessian();
+
+    EXPECT_EQ(back_propagation_lm.errors.dimension(0), samples_number);
+    EXPECT_EQ(back_propagation_lm.errors.dimension(1), outputs_number);
+    EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)), true);
+    EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)), true);
+    //EXPECT_EQ(are_equal(back_propagation_lm.hessian, numerical_hessian, type(1.0e-2)), true);
+    //std::cout << "back_propagation_lm.hessian" << back_propagation_lm.hessian << std::endl;
+    //std::cout << "numerical_hessian" << numerical_hessian << std::endl;
 
 }
 
@@ -87,8 +143,6 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
     uses.resize(8);
     uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
 
-    //data_set.set_raw_variable_uses(uses);
-
     target_data = data_set.get_data(DataSet::VariableUse::Target);
 
     Eigen::array<int, 1> dimensions({0});
@@ -101,358 +155,6 @@ TEST(NormalizedSquaredErrorTest, NormalizationCoefficient)
     NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
     type normalization_coefficient = normalized_squared_error.calculate_normalization_coefficient(target_data, targets_mean);
-    //std::cout << "Normalization Coefficient: " << normalization_coefficient << std::endl;
+
     EXPECT_GE(normalization_coefficient, 0);
 }
-
-/*
-void NormalizedSquaredErrorTest::test_back_propagate()
-{
-
-    // Test binary classification trivial
-    {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {}, {outputs_number});
-        neural_network.set_parameters_constant(type(0));
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        normalized_squared_error.set_normalization_coefficient();
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == 1);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == 1);
-        EXPECT_NEAR(back_propagation.error() - type(0.25) < NUMERIC_LIMITS_MIN);
-
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)));
-
-    }
-
-    // Test binary classification random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_binary_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        normalized_squared_error.set_normalization_coefficient();
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation.error() >= 0);
-
-        //EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)));
-
-    }
-
-    // Test forecasting trivial
-    {
-        inputs_number = 1;
-        outputs_number = 1;
-        samples_number = 1;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_constant(type(0));
-
-        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number, outputs_number});
-        neural_network.set_parameters_constant(type(0));
-
-        forward_propagation.set(samples_number, &neural_network);
-
-        bool is_training = true;
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        normalized_squared_error.set_normalization_coefficient(type(1));
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation.error() < type(1e-1));
-        EXPECT_EQ(is_zero(back_propagation.gradient,type(1e-1)));
-    }
-
-    // Test forecasting random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Forecasting, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-
-        bool is_training = true;
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        normalized_squared_error.set_normalization_coefficient(type(1));
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-
-        EXPECT_EQ(back_propagation.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation.error() >= type(0));
-        EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)));
-    }
-}
-
-
-void NormalizedSquaredErrorTest::test_back_propagate_lm()
-{
-    normalized_squared_error.set_normalization_coefficient();
-
-    // Test approximation random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
-        input_variables_indices = data_set.get_input_variables_indices();
-        target_variables_indices = data_set.get_target_variables_indices();
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        // visual studio not running
-        back_propagation_lm.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-        numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
-
-        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation_lm.error >= type(0));
-        EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-1));
-
-        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-1)));
-        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-1)));
-    }
-
-    // Test binary classification random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_binary_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        // visual studio not running
-        back_propagation_lm.set(samples_number, &normalized_squared_error);
-        //normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-        numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
-
-        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation_lm.error() >= type(0));
-        //EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2));
-
-        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)));
-        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)));
-
-    }
-
-    // Test multiple classification random samples, inputs, outputs, neurons
-    {
-        samples_number = 1 + rand()%10;
-        inputs_number = 1 + rand()%10;
-        outputs_number = 1 + rand()%10;
-        neurons_number = 1 + rand()%10;
-        bool is_training = true;
-
-        // Data set
-
-        data_set.set(samples_number, inputs_number, outputs_number);
-        data_set.set_data_random();
-        data_set.set(DataSet::SampleUse::Training);
-
-        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
-        input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
-        target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
-
-        batch.set(samples_number, &data_set);
-        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
-
-        // Neural network
-
-        neural_network.set(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
-        neural_network.set_parameters_random();
-
-        forward_propagation.set(samples_number, &neural_network);
-        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
-
-        // Loss index
-
-        back_propagation.set(samples_number, &normalized_squared_error);
-        normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
-
-        // visual studio not running
-        back_propagation_lm.set(samples_number, &normalized_squared_error);
-        //normalized_squared_error.back_propagate_lm(batch, forward_propagation, back_propagation_lm);
-
-        numerical_gradient = normalized_squared_error.calculate_numerical_gradient();
-        numerical_jacobian = normalized_squared_error.calculate_numerical_jacobian();
-
-        EXPECT_EQ(back_propagation_lm.errors.dimension(0) == samples_number);
-        EXPECT_EQ(back_propagation_lm.errors.dimension(1) == outputs_number);
-
-        EXPECT_EQ(back_propagation_lm.error() >= type(0));
-        //EXPECT_EQ(abs(back_propagation.error-back_propagation_lm.error) < type(1.0e-2));
-
-        //EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1.0e-2)));
-        //EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian, type(1.0e-2)));
-    }
-
-    // Forecasting incompatible with LM
-}
-
-}
-*/
