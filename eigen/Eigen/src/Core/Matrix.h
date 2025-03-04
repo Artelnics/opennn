@@ -224,8 +224,6 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
     return Base::_set(other);
   }
 
-  /* Here, doxygen failed to copy the brief information when using \copydoc */
-
   /**
    * \brief Copies the generic expression \a other into *this.
    * \copydetails DenseBase::operator=(const EigenBase<OtherDerived> &other)
@@ -266,7 +264,15 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
     return *this;
   }
 
-  /** \copydoc PlainObjectBase(const Scalar&, const Scalar&, const Scalar&,  const Scalar&, const ArgTypes&... args)
+  /** \brief Construct a row of column vector with fixed size from an arbitrary number of coefficients.
+   *
+   * \only_for_vectors
+   *
+   * This constructor is for 1D array or vectors with more than 4 coefficients.
+   *
+   * \warning To construct a column (resp. row) vector of fixed length, the number of values passed to this
+   * constructor must match the the fixed number of rows (resp. columns) of \c *this.
+   *
    *
    * Example: \include Matrix_variadic_ctor_cxx11.cpp
    * Output: \verbinclude Matrix_variadic_ctor_cxx11.out
@@ -280,6 +286,7 @@ class Matrix : public PlainObjectBase<Matrix<Scalar_, Rows_, Cols_, Options_, Ma
 
   /** \brief Constructs a Matrix and initializes it from the coefficients given as initializer-lists grouped by row.
    * \cpp11
+   * \anchor matrix_initializer_list
    *
    * In the general case, the constructor takes a list of rows, each row being represented as a list of coefficients:
    *

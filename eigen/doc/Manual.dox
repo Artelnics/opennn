@@ -39,7 +39,6 @@ namespace Eigen {
   - \subpage TopicVectorization
   - \subpage TopicEigenExpressionTemplates
   - \subpage TopicScalarTypes
-  - \subpage GettingStarted
   - \subpage TutorialSparse_example_details
   - \subpage TopicWritingEfficientProductExpression
   - \subpage Experimental
@@ -94,15 +93,15 @@ namespace Eigen {
         \ingroup DenseMatrixManipulation_Alignement */
 /**     \addtogroup TopicWrongStackAlignment
         \ingroup DenseMatrixManipulation_Alignement */
-    
+
 /** \addtogroup DenseMatrixManipulation_Reference
     \ingroup DenseMatrixManipulation_chapter       */
 /**     \addtogroup Core_Module
-        \ingroup DenseMatrixManipulation_Reference */  
+        \ingroup DenseMatrixManipulation_Reference */
 /**     \addtogroup Jacobi_Module
-        \ingroup DenseMatrixManipulation_Reference */ 
+        \ingroup DenseMatrixManipulation_Reference */
 /**     \addtogroup Householder_Module
-        \ingroup DenseMatrixManipulation_Reference */ 
+        \ingroup DenseMatrixManipulation_Reference */
 
 /** \addtogroup CoeffwiseMathFunctions
     \ingroup DenseMatrixManipulation_chapter */
@@ -118,7 +117,7 @@ namespace Eigen {
     \ingroup DenseLinearSolvers_chapter */
 /** \addtogroup TopicLinearAlgebraDecompositions
     \ingroup DenseLinearSolvers_chapter */
-/** \addtogroup LeastSquares 
+/** \addtogroup LeastSquares
     \ingroup DenseLinearSolvers_chapter */
 /** \addtogroup InplaceDecomposition
     \ingroup DenseLinearSolvers_chapter */
@@ -168,7 +167,7 @@ namespace Eigen {
 /** \addtogroup Sparse_Module
     \ingroup Sparse_Reference */
 /** \addtogroup Support_modules
-    \ingroup Sparse_Reference */    
+    \ingroup Sparse_Reference */
 
 /** \addtogroup SparseQuickRefPage
     \ingroup Sparse_chapter */
@@ -179,7 +178,7 @@ namespace Eigen {
 
 /** \addtogroup TutorialGeometry
     \ingroup Geometry_chapter */
-    
+
 /** \addtogroup Geometry_Reference
     \ingroup Geometry_chapter */
 /** \addtogroup Geometry_Module

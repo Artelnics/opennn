@@ -10,6 +10,13 @@
 #define EIGEN_TESTING_CONSTEXPR
 #include "main.h"
 
+template <typename Scalar, int Rows>
+struct ConstexprTest {
+  constexpr ConstexprTest(const Matrix<Scalar, Rows, Rows>& B) { A = B; }
+
+  Matrix<Scalar, Rows, Rows> A;
+};
+
 EIGEN_DECLARE_TEST(constexpr) {
   // Clang accepts (some of) this code when using C++14/C++17, but GCC does not like
   // the fact that `T array[Size]` inside Eigen::internal::plain_array is not initialized
@@ -32,6 +39,18 @@ EIGEN_DECLARE_TEST(constexpr) {
   static_assert(vec[0] == 1);
   VERIFY_IS_EQUAL(vec.size(), 3);
   static_assert(vec.coeff(0, 1) == 2);
+
+  // Check assignment. A wrapper struct is used to avoid copy ellision.
+  constexpr ConstexprTest<double, 2> obj1(Matrix2d({{1, 2}, {3, 4}}));
+  VERIFY_IS_EQUAL(obj1.A.size(), 4);
+  static_assert(obj1.A(0, 0) == 1);
+  static_assert(obj1.A(0) == 1);
+  static_assert(obj1.A.coeff(0, 1) == 2);
+  constexpr ConstexprTest<double, 3> obj2(Matrix3d({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}));
+  VERIFY_IS_EQUAL(obj2.A.size(), 9);
+  static_assert(obj2.A(0, 0) == 1);
+  static_assert(obj2.A(0) == 1);
+  static_assert(obj2.A.coeff(0, 1) == 2);
 
   // Also check dynamic size arrays/matrices with fixed-size storage (currently
   // only works if all elements are initialized, since otherwise the compiler

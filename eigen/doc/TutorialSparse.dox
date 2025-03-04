@@ -90,9 +90,7 @@ Such problem can be mathematically expressed as a linear problem of the form \f$
 <tr><td>
 \include Tutorial_sparse_example.cpp
 </td>
-<td>
-\image html Tutorial_sparse_example.jpeg
-</td></tr></table>
+</tr></table>
 
 In this example, we start by defining a column-major sparse matrix type of double \c SparseMatrix<double>, and a triplet list of the same scalar type \c  Triplet<double>. A triplet is a simple object representing a non-zero entry as the triplet: \c row index, \c column index, \c value.
 

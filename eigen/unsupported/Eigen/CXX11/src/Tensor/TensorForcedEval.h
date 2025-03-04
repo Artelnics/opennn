@@ -17,13 +17,6 @@
 
 namespace Eigen {
 
-/** \class TensorForcedEval
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor reshaping class.
- *
- *
- */
 namespace internal {
 template <typename XprType>
 struct traits<TensorForcedEvalOp<XprType>> {
@@ -53,6 +46,11 @@ struct nested<TensorForcedEvalOp<XprType>, 1, typename eval<TensorForcedEvalOp<X
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor reshaping class.
+ */
 template <typename XprType>
 class TensorForcedEvalOp : public TensorBase<TensorForcedEvalOp<XprType>, ReadOnlyAccessors> {
  public:

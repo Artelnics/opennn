@@ -16,14 +16,6 @@
 
 namespace Eigen {
 
-/** \class TensorTrace
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor Trace class.
- *
- *
- */
-
 namespace internal {
 template <typename Dims, typename XprType>
 struct traits<TensorTraceOp<Dims, XprType> > : public traits<XprType> {
@@ -49,6 +41,11 @@ struct nested<TensorTraceOp<Dims, XprType>, 1, typename eval<TensorTraceOp<Dims,
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor Trace class.
+ */
 template <typename Dims, typename XprType>
 class TensorTraceOp : public TensorBase<TensorTraceOp<Dims, XprType> > {
  public:

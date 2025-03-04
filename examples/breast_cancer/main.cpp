@@ -21,6 +21,7 @@ int main()
 
         // Data set
 
+
         // DataSet data_set("data/breast_cancer.csv", ";", true);
         DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true, false);
 
@@ -31,15 +32,15 @@ int main()
         // 5 years mortality dataset
 
         // DataSet data_set("/Users/artelnics/Desktop/5_years_mortality_modified.csv", ";", true, false);
-
+        /*
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
 
         // Neural network
-
+        /*
         const Index neurons_number = 30;
-
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
             { input_variables_number }, { neurons_number }, { target_variables_number });
 
@@ -66,7 +67,7 @@ int main()
 
         training_strategy.perform_training();
 
-        // data_set.set(DataSet::SampleUse::Testing);
+        //data_set.set(DataSet::SampleUse::Testing);
 
         GeneticAlgorithm genetic_algorithm(&training_strategy);
 
@@ -97,6 +98,7 @@ int main()
 
         cout << "Confidence limit: " << roc_analysis.confidence_limit << endl << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
 
+        */
 
         cout << "Good bye!" << endl;
 

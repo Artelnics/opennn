@@ -49,8 +49,8 @@ static void test_simple_rvalue_ref() {
   Tensor<int, 1> input2(6);
   input2.setRandom();
 
-  TensorRef<Tensor<int, 1>> ref3(input1 + input2);
-  TensorRef<Tensor<int, 1>> ref4 = input1 + input2;
+  TensorRef<const Tensor<int, 1>> ref3(input1 + input2);
+  TensorRef<const Tensor<int, 1>> ref4 = input1 + input2;
 
   VERIFY_IS_NOT_EQUAL(ref3.data(), input1.data());
   VERIFY_IS_NOT_EQUAL(ref4.data(), input1.data());
@@ -144,7 +144,7 @@ static void test_ref_in_expr() {
 
   Tensor<float, 3> result(3, 5, 7);
   result.setRandom();
-  TensorRef<Tensor<float, 3>> result_ref(result);
+  TensorRef<const Tensor<float, 3>> result_ref(result);
 
   Tensor<float, 3> bias(3, 5, 7);
   bias.setRandom();
@@ -192,7 +192,7 @@ static void test_nested_ops_with_ref() {
   paddings[2] = std::make_pair(3, 4);
   paddings[3] = std::make_pair(0, 0);
   DSizes<Eigen::DenseIndex, 4> shuffle_dims(0, 1, 2, 3);
-  TensorRef<Tensor<const float, 4>> ref(m.pad(paddings));
+  TensorRef<const Tensor<const float, 4>> ref(m.pad(paddings));
   array<std::pair<ptrdiff_t, ptrdiff_t>, 4> trivial;
   trivial[0] = std::make_pair(0, 0);
   trivial[1] = std::make_pair(0, 0);

@@ -129,6 +129,12 @@ class IncompleteLUT : public SparseSolverBase<IncompleteLUT<Scalar_, StorageInde
     compute(mat);
   }
 
+  /** \brief Extraction Method for L-Factor */
+  const FactorType matrixL() const;
+
+  /** \brief Extraction Method for U-Factor */
+  const FactorType matrixU() const;
+
   EIGEN_CONSTEXPR Index rows() const EIGEN_NOEXCEPT { return m_lu.rows(); }
 
   EIGEN_CONSTEXPR Index cols() const EIGEN_NOEXCEPT { return m_lu.cols(); }
@@ -205,6 +211,28 @@ void IncompleteLUT<Scalar, StorageIndex>::setDroptol(const RealScalar& droptol) 
 template <typename Scalar, typename StorageIndex>
 void IncompleteLUT<Scalar, StorageIndex>::setFillfactor(int fillfactor) {
   this->m_fillfactor = fillfactor;
+}
+
+/**
+ * get L-Factor
+ * \return L-Factor is a matrix containing the lower triangular part of the sparse matrix. All elements of the matrix
+ * above the main diagonal are zero.
+ **/
+template <typename Scalar, typename StorageIndex>
+const typename IncompleteLUT<Scalar, StorageIndex>::FactorType IncompleteLUT<Scalar, StorageIndex>::matrixL() const {
+  eigen_assert(m_factorizationIsOk && "factorize() should be called first");
+  return m_lu.template triangularView<UnitLower>();
+}
+
+/**
+ * get U-Factor
+ * \return L-Factor is a matrix containing the upper triangular part of the sparse matrix. All elements of the matrix
+ * below the main diagonal are zero.
+ **/
+template <typename Scalar, typename StorageIndex>
+const typename IncompleteLUT<Scalar, StorageIndex>::FactorType IncompleteLUT<Scalar, StorageIndex>::matrixU() const {
+  eigen_assert(m_factorizationIsOk && "Factorization must be computed first.");
+  return m_lu.template triangularView<Upper>();
 }
 
 template <typename Scalar, typename StorageIndex>

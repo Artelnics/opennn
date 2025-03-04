@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorPadding
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor padding class.
- * At the moment only padding with a constant value is supported.
- *
- */
 namespace internal {
 template <typename PaddingDimensions, typename XprType>
 struct traits<TensorPaddingOp<PaddingDimensions, XprType> > : public traits<XprType> {
@@ -49,6 +42,13 @@ struct nested<TensorPaddingOp<PaddingDimensions, XprType>, 1,
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor padding class.
+ * At the moment only padding with a constant value is supported.
+ *
+ */
 template <typename PaddingDimensions, typename XprType>
 class TensorPaddingOp : public TensorBase<TensorPaddingOp<PaddingDimensions, XprType>, ReadOnlyAccessors> {
  public:

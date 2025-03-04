@@ -138,7 +138,7 @@ static void test_const_slice() {
   TensorMap<Tensor<const T, 1>> m(b, 1);
   DSizes<DenseIndex, 1> offsets;
   offsets[0] = 0;
-  TensorRef<Tensor<const T, 1>> slice_ref(m.slice(offsets, m.dimensions()));
+  TensorRef<const Tensor<const T, 1>> slice_ref(m.slice(offsets, m.dimensions()));
   VERIFY_IS_EQUAL(slice_ref(0), 42);
 }
 

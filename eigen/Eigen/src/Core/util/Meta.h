@@ -79,7 +79,6 @@ typedef EIGEN_DEFAULT_DENSE_INDEX_TYPE DenseIndex;
  * \details To change this, \c \#define the preprocessor symbol \c EIGEN_DEFAULT_DENSE_INDEX_TYPE.
  * \sa \blank \ref TopicPreprocessorDirectives, StorageIndex.
  */
-
 typedef EIGEN_DEFAULT_DENSE_INDEX_TYPE Index;
 
 namespace internal {
@@ -221,7 +220,7 @@ struct is_void : is_same<void, std::remove_const_t<T>> {};
  *
  * Post C++17: Uses std::void_t
  */
-#if EIGEN_COMP_CXXVER >= 17
+#if EIGEN_COMP_CXXVER >= 17 && defined(__cpp_lib_void_t) && __cpp_lib_void_t >= 201411L
 using std::void_t;
 #else
 template <typename...>
@@ -339,7 +338,16 @@ struct array_size<std::array<T, N>> {
  *
  * For C++20, this function just forwards to `std::ssize`, or any ADL discoverable `ssize` function.
  */
-#if EIGEN_COMP_CXXVER < 20 || EIGEN_GNUC_STRICT_LESS_THAN(10, 0, 0)
+#if EIGEN_COMP_CXXVER >= 20 && defined(__cpp_lib_ssize) && __cpp_lib_ssize >= 201902L
+
+template <typename T>
+EIGEN_CONSTEXPR auto index_list_size(T&& x) {
+  using std::ssize;
+  return ssize(std::forward<T>(x));
+}
+
+#else
+
 template <typename T>
 EIGEN_CONSTEXPR auto index_list_size(const T& x) {
   using R = std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(x.size())>>;
@@ -350,13 +358,7 @@ template <typename T, std::ptrdiff_t N>
 EIGEN_CONSTEXPR std::ptrdiff_t index_list_size(const T (&)[N]) {
   return N;
 }
-#else
-template <typename T>
-EIGEN_CONSTEXPR auto index_list_size(T&& x) {
-  using std::ssize;
-  return ssize(std::forward<T>(x));
-}
-#endif  // EIGEN_COMP_CXXVER
+#endif
 
 /** \internal
  * Convenient struct to get the result type of a nullary, unary, binary, or
@@ -699,6 +701,12 @@ inline constexpr int max_size_prefer_dynamic(A a, B b) {
 }
 
 template <typename A, typename B>
+inline constexpr int size_prefer_fixed(A a, B b) {
+  plain_enum_asserts(a, b);
+  return int(a) == Dynamic ? int(b) : int(a);
+}
+
+template <typename A, typename B>
 inline constexpr bool enum_eq_not_dynamic(A a, B b) {
   plain_enum_asserts(a, b);
   if ((int)a == Dynamic || (int)b == Dynamic) return false;
@@ -740,11 +748,14 @@ inline constexpr bool logical_xor(bool a, bool b) { return a != b; }
 inline constexpr bool check_implication(bool a, bool b) { return !a || b; }
 
 /// \internal Provide fallback for std::is_constant_evaluated for pre-C++20.
-#if EIGEN_COMP_CXXVER >= 20
+#if EIGEN_COMP_CXXVER >= 20 && defined(__cpp_lib_is_constant_evaluated) && __cpp_lib_is_constant_evaluated >= 201811L
 using std::is_constant_evaluated;
 #else
 constexpr bool is_constant_evaluated() { return false; }
 #endif
+
+template <typename Scalar>
+using make_complex_t = std::conditional_t<NumTraits<Scalar>::IsComplex, Scalar, std::complex<Scalar>>;
 
 }  // end namespace internal
 

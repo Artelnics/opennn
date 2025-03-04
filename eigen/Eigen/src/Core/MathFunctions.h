@@ -182,6 +182,35 @@ struct imag_ref_retval {
   typedef typename NumTraits<Scalar>::Real& type;
 };
 
+}  // namespace internal
+
+namespace numext {
+
+template <typename Scalar>
+EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(real, Scalar) real(const Scalar& x) {
+  return EIGEN_MATHFUNC_IMPL(real, Scalar)::run(x);
+}
+
+template <typename Scalar>
+EIGEN_DEVICE_FUNC inline internal::add_const_on_value_type_t<EIGEN_MATHFUNC_RETVAL(real_ref, Scalar)> real_ref(
+    const Scalar& x) {
+  return internal::real_ref_impl<Scalar>::run(x);
+}
+
+template <typename Scalar>
+EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(real_ref, Scalar) real_ref(Scalar& x) {
+  return EIGEN_MATHFUNC_IMPL(real_ref, Scalar)::run(x);
+}
+
+template <typename Scalar>
+EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(imag, Scalar) imag(const Scalar& x) {
+  return EIGEN_MATHFUNC_IMPL(imag, Scalar)::run(x);
+}
+
+}  // namespace numext
+
+namespace internal {
+
 /****************************************************************************
  * Implementation of conj                                                 *
  ****************************************************************************/
@@ -221,7 +250,9 @@ template <typename Scalar>
 struct abs2_impl_default<Scalar, true>  // IsComplex
 {
   typedef typename NumTraits<Scalar>::Real RealScalar;
-  EIGEN_DEVICE_FUNC static inline RealScalar run(const Scalar& x) { return x.real() * x.real() + x.imag() * x.imag(); }
+  EIGEN_DEVICE_FUNC static inline RealScalar run(const Scalar& x) {
+    return numext::real(x) * numext::real(x) + numext::imag(x) * numext::imag(x);
+  }
 };
 
 template <typename Scalar>
@@ -250,16 +281,14 @@ struct sqrt_impl {
 };
 
 // Complex sqrt defined in MathFunctionsImpl.h.
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_sqrt(const std::complex<T>& a_x);
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_sqrt(const ComplexT& a_x);
 
 // Custom implementation is faster than `std::sqrt`, works on
 // GPU, and correctly handles special cases (unlike MSVC).
 template <typename T>
 struct sqrt_impl<std::complex<T>> {
-  EIGEN_DEVICE_FUNC static EIGEN_ALWAYS_INLINE std::complex<T> run(const std::complex<T>& x) {
-    return complex_sqrt<T>(x);
-  }
+  EIGEN_DEVICE_FUNC static EIGEN_ALWAYS_INLINE std::complex<T> run(const std::complex<T>& x) { return complex_sqrt(x); }
 };
 
 template <typename Scalar>
@@ -272,13 +301,13 @@ template <typename T>
 struct rsqrt_impl;
 
 // Complex rsqrt defined in MathFunctionsImpl.h.
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_rsqrt(const std::complex<T>& a_x);
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_rsqrt(const ComplexT& a_x);
 
 template <typename T>
 struct rsqrt_impl<std::complex<T>> {
   EIGEN_DEVICE_FUNC static EIGEN_ALWAYS_INLINE std::complex<T> run(const std::complex<T>& x) {
-    return complex_rsqrt<T>(x);
+    return complex_rsqrt(x);
   }
 };
 
@@ -299,7 +328,7 @@ struct norm1_default_impl<Scalar, true> {
   typedef typename NumTraits<Scalar>::Real RealScalar;
   EIGEN_DEVICE_FUNC static inline RealScalar run(const Scalar& x) {
     EIGEN_USING_STD(abs);
-    return abs(x.real()) + abs(x.imag());
+    return abs(numext::real(x)) + abs(numext::imag(x));
   }
 };
 
@@ -469,8 +498,8 @@ struct expm1_retval {
  ****************************************************************************/
 
 // Complex log defined in MathFunctionsImpl.h.
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_log(const std::complex<T>& z);
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_log(const ComplexT& z);
 
 template <typename Scalar>
 struct log_impl {
@@ -846,7 +875,7 @@ struct sign_impl<Scalar, true, IsInteger> {
     real_type aa = abs(a);
     if (aa == real_type(0)) return Scalar(0);
     aa = real_type(1) / aa;
-    return Scalar(a.real() * aa, a.imag() * aa);
+    return Scalar(numext::real(a) * aa, numext::imag(a) * aa);
   }
 };
 
@@ -1043,27 +1072,6 @@ SYCL_SPECIALIZE_FLOATING_TYPES_BINARY(maxi, fmax)
 #endif
 
 template <typename Scalar>
-EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(real, Scalar) real(const Scalar& x) {
-  return EIGEN_MATHFUNC_IMPL(real, Scalar)::run(x);
-}
-
-template <typename Scalar>
-EIGEN_DEVICE_FUNC inline internal::add_const_on_value_type_t<EIGEN_MATHFUNC_RETVAL(real_ref, Scalar)> real_ref(
-    const Scalar& x) {
-  return internal::real_ref_impl<Scalar>::run(x);
-}
-
-template <typename Scalar>
-EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(real_ref, Scalar) real_ref(Scalar& x) {
-  return EIGEN_MATHFUNC_IMPL(real_ref, Scalar)::run(x);
-}
-
-template <typename Scalar>
-EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(imag, Scalar) imag(const Scalar& x) {
-  return EIGEN_MATHFUNC_IMPL(imag, Scalar)::run(x);
-}
-
-template <typename Scalar>
 EIGEN_DEVICE_FUNC inline EIGEN_MATHFUNC_RETVAL(arg, Scalar) arg(const Scalar& x) {
   return EIGEN_MATHFUNC_IMPL(arg, Scalar)::run(x);
 }
@@ -1251,8 +1259,6 @@ template <typename T>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE EIGEN_CONSTEXPR T div_ceil(T a, T b) {
   using UnsignedT = typename internal::make_unsigned<T>::type;
   EIGEN_STATIC_ASSERT((NumTraits<T>::IsInteger), THIS FUNCTION IS FOR INTEGER TYPES)
-  eigen_assert(a >= 0);
-  eigen_assert(b > 0);
   // Note: explicitly declaring a and b as non-negative values allows the compiler to use better optimizations
   const UnsignedT ua = UnsignedT(a);
   const UnsignedT ub = UnsignedT(b);
@@ -1268,8 +1274,6 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE EIGEN_CONSTEXPR T round_down(T a, U b) {
   using UnsignedU = typename internal::make_unsigned<U>::type;
   EIGEN_STATIC_ASSERT((NumTraits<T>::IsInteger), THIS FUNCTION IS FOR INTEGER TYPES)
   EIGEN_STATIC_ASSERT((NumTraits<U>::IsInteger), THIS FUNCTION IS FOR INTEGER TYPES)
-  eigen_assert(a >= 0);
-  eigen_assert(b > 0);
   // Note: explicitly declaring a and b as non-negative values allows the compiler to use better optimizations
   const UnsignedT ua = UnsignedT(a);
   const UnsignedU ub = UnsignedU(b);
@@ -1279,7 +1283,6 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE EIGEN_CONSTEXPR T round_down(T a, U b) {
 /** Log base 2 for 32 bits positive integers.
  * Conveniently returns 0 for x==0. */
 EIGEN_CONSTEXPR inline int log2(int x) {
-  eigen_assert(x >= 0);
   unsigned int v(x);
   constexpr int table[32] = {0, 9,  1,  10, 13, 21, 2,  29, 11, 14, 16, 18, 22, 25, 3, 30,
                              8, 12, 20, 28, 15, 17, 24, 7,  19, 27, 23, 6,  26, 5,  4, 31};

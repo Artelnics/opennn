@@ -23,7 +23,6 @@ int main()
 
         // Data set
         
-        
         const Index samples_number = 2;
 
         const Index image_height = 4;

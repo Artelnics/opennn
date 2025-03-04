@@ -428,7 +428,7 @@ struct ThreadProperties {
  * \tparam input_mapper_properties : determine if the input tensors are matrix. If they are matrix, special memory
  access is used to guarantee that always the memory access are coalesced.
  *
- * \tptaram IsFinal : determine if this is the final kernel. If so, the result will be written in a final output.
+ * \tparam IsFinal : determine if this is the final kernel. If so, the result will be written in a final output.
  Otherwise, the result of contraction will be written iin a temporary buffer. This is the case when Tall/Skinny
  contraction is used. So in this case, a final reduction step is required to compute final output.
 

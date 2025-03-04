@@ -35,7 +35,7 @@ class PolynomialSolverBase {
 
   typedef Scalar_ Scalar;
   typedef typename NumTraits<Scalar>::Real RealScalar;
-  typedef std::complex<RealScalar> RootType;
+  typedef internal::make_complex_t<Scalar> RootType;
   typedef Matrix<RootType, Deg_, 1> RootsType;
 
   typedef DenseIndex Index;
@@ -308,7 +308,7 @@ class PolynomialSolver : public PolynomialSolverBase<Scalar_, Deg_> {
   typedef std::conditional_t<NumTraits<Scalar>::IsComplex, ComplexEigenSolver<CompanionMatrixType>,
                              EigenSolver<CompanionMatrixType> >
       EigenSolverType;
-  typedef std::conditional_t<NumTraits<Scalar>::IsComplex, Scalar, std::complex<Scalar> > ComplexScalar;
+  typedef internal::make_complex_t<Scalar_> ComplexScalar;
 
  public:
   /** Computes the complex roots of a new polynomial. */

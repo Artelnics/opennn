@@ -17,14 +17,12 @@ namespace Eigen {
 
 /** \internal
  *
- * \class TensorDimensionList
  * \ingroup CXX11_Tensor_Module
  *
  * \brief Special case of tensor index list used to list all the dimensions of a tensor of rank n.
  *
  * \sa Tensor
  */
-
 template <typename Index, std::size_t Rank>
 struct DimensionList {
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE const Index operator[](const Index i) const { return i; }

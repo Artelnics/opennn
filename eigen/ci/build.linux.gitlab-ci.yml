@@ -97,6 +97,20 @@ build:linux:cross:x86-64:clang-12:avx512dq:
   variables:
     EIGEN_CI_ADDITIONAL_ARGS: "-DEIGEN_TEST_AVX512DQ=on"
 
+build:linux:docs:
+  extends: .build:linux:cross
+  variables:
+    EIGEN_CI_TARGET_ARCH: any
+    EIGEN_CI_BUILD_TARGET: doc
+    EIGEN_CI_INSTALL: ca-certificates clang flex python3 bison graphviz
+    EIGEN_CI_C_COMPILER: clang
+    EIGEN_CI_CXX_COMPILER: clang++
+    EIGEN_CI_BEFORE_SCRIPT: ". ci/scripts/build_and_install_doxygen.sh Release_1_13_2"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "web" && $CI_PROJECT_NAMESPACE == "libeigen"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_NAMESPACE == "libeigen"
+
 # # Sanitizers (Disabled because ASAN hangs and MSAN requires instrumented libc++)
 # build:linux:cross:x86-64:clang-12:default:asan:
 #   extends: build:linux:cross:x86-64:clang-12:default
@@ -295,6 +309,31 @@ build:linux:cross:ppc64le:clang-12:default:
     EIGEN_CI_C_COMPILER: clang-12
     EIGEN_CI_CXX_COMPILER: clang++-12
     EIGEN_CI_CROSS_INSTALL: g++-10-powerpc64le-linux-gnu clang-12
+
+######## loongarch64 #################################################
+
+.build:linux:cross:loongarch64:
+  extends: .build:linux:cross
+  variables:
+    EIGEN_CI_TARGET_ARCH: loongarch64
+    EIGEN_CI_CROSS_TARGET_TRIPLE: loongarch64-linux-gnu
+  tags:
+    - eigen-runner
+    - linux
+    - cross-compiler
+
+# GCC-14 (minimum on Ubuntu 24)
+build:linux:cross:loongarch64:gcc-14:default:
+  extends: .build:linux:cross:loongarch64
+  image: ubuntu:24.04
+  variables:
+    EIGEN_CI_CROSS_INSTALL: g++-14-loongarch64-linux-gnu
+    EIGEN_CI_CROSS_C_COMPILER: loongarch64-linux-gnu-gcc-14
+    EIGEN_CI_CROSS_CXX_COMPILER: loongarch64-linux-gnu-g++-14
+    EIGEN_CI_ADDITIONAL_ARGS: >-
+      -DCMAKE_SYSTEM_NAME=Linux
+      -DCMAKE_CROSSCOMPILING_EMULATOR=qemu-loongarch64-static;-L;/usr/loongarch64-linux-gnu
+      -DEIGEN_TEST_LSX=on
 
 ######## MR Smoke Tests ########################################################
 
