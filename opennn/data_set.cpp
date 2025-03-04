@@ -146,7 +146,7 @@ namespace opennn
         add_xml_element(printer, "Type", get_type_string());
 
         if (type == RawVariableType::Categorical || type == RawVariableType::Binary)
-            add_xml_element(printer, "Categories", vector_to_string(categories));
+            add_xml_element(printer, "Categories", vector_to_string(categories,";"));
     }
 
 
@@ -2876,7 +2876,7 @@ namespace opennn
                 const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
                 if (categories_element)
-                    raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), " ");
+                    raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
                 else if (raw_variable.type == RawVariableType::Binary)
                     raw_variable.categories = { "0", "1" };
                 else
