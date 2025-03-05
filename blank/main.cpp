@@ -26,18 +26,6 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        DataSet data_set("C:/Users/davidgonzalez/Documents/iris_plant_original.csv", ";", true, true);
-
-        data_set.print();
-
-        data_set.save("data_set_test.xml");
-
-        DataSet test;
-
-        test.load("data_set_test.xml");
-
-        test.print();
-
         /*
         ImageDataSet image_data_set(0,{0,0,0},{0});
 

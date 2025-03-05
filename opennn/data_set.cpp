@@ -3119,20 +3119,18 @@ namespace opennn
         Index columns_number = data.dimension(1);
         Index rows_number = data.dimension(0);
 
-        cout << "Saving binary data file..." << endl;
-
         file.write(reinterpret_cast<char*>(&columns_number), size);
         file.write(reinterpret_cast<char*>(&rows_number), size);
 
         size = sizeof(type);
 
+        cout << "rows_number: " << rows_number << endl;
+        cout << "columns_number: " << columns_number << endl;
         const Index total_elements = columns_number * rows_number;
 
         file.write(reinterpret_cast<const char*>(data.data()), total_elements * size);
 
         file.close();
-
-        cout << "Binary data file saved." << endl;
     }
 
 
