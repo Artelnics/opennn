@@ -57,9 +57,6 @@ TEST(TestingAnalysis, PercentageErrorData)
 
 TEST(TestingAnalysis, AbsoluteErrorDescriptives)
 {
-    vector <Descriptives> error_data;
-
-    // Test
 
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -75,13 +72,14 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     neural_network.set_parameters_constant(type(0));
 
     TestingAnalysis testing_analysis(&neural_network, &data_set);
-    error_data = testing_analysis.calculate_absolute_errors_descriptives();
+
+    vector <Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
-    EXPECT_NEAR(static_cast<double>(error_data[0].minimum), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data[0].maximum), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data[0].mean), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data[0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].minimum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].maximum, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].mean, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
 
 }
 
@@ -114,7 +112,6 @@ TEST(TestingAnalysis, PercentageErrorDescriptives)
 
 }
 
-
 TEST(TestingAnalysis, ErrorDataDescriptives)
 {
 
@@ -146,7 +143,6 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
 
 }
-
 
 TEST(TestingAnalysis, ErrorDataHistograms)
 {
@@ -1090,7 +1086,6 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     EXPECT_EQ(multiple_classification_rates(2,2)(0), 2);
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.

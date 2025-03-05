@@ -900,12 +900,12 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
     if(vector.dimension(0) == 0) 
         return box_plot;
  
-    //const Tensor<type, 1> quartiles = opennn::quartiles(vector);
+    const Tensor<type, 1> quartiles = opennn::quartiles(vector);
 
     box_plot.minimum = minimum(vector);
-    //box_plot.first_quartile = quartiles(0);
-    //box_plot.median = quartiles(1);
-    //box_plot.third_quartile = quartiles(2);
+    box_plot.first_quartile = quartiles(0);
+    box_plot.median = quartiles(1);
+    box_plot.third_quartile = quartiles(2);
     box_plot.maximum = maximum(vector);
 
     return box_plot;
@@ -1231,7 +1231,7 @@ Histogram histogram(const Tensor<bool, 1>& v)
     return histogram;
 }
 
-/*
+
 Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 {
     const Index histograms_number = histograms.size();
@@ -1243,7 +1243,7 @@ Tensor<Index, 1> total_frequencies(const Tensor<Histogram, 1>& histograms)
 
     return total_frequencies;
 }
-*/
+
 
 vector<Histogram> histograms(const Tensor<type, 2>& matrix, const Index& bins_number)
 {
@@ -1326,7 +1326,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
             std::cerr << "�ndice fuera de rango: " << i << std::endl;
         }
 
-        std::cout << "Tama�o del vector descriptives: " << descriptives.size() << std::endl;
+        //std::cout << "Tama�o del vector descriptives: " << descriptives.size() << std::endl;
     }
 
     return descriptives;

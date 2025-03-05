@@ -60,7 +60,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
     const type standard_deviation = column_descriptives.standard_deviation;
 
     if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
-        throw runtime_error("Standard deviation is zero.");
+        //throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -96,7 +96,7 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
     const type maximum = column_descriptives.maximum;
 
     if(abs(maximum - minimum) < NUMERIC_LIMITS_MIN)
-        throw runtime_error("The difference between the maximum and minimum value is too small.");
+        //throw runtime_error("The difference between the maximum and minimum value is too small.");
 
     if(max_range - min_range < NUMERIC_LIMITS_MIN)
         throw runtime_error("The range values are not valid.");
@@ -104,7 +104,6 @@ void scale_minimum_maximum(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-        //matrix(i, column_index) = (matrix(i, column_index) + min_range * maximum - max_range * minimum) / (maximum - minimum);
         matrix(i, column_index) = (matrix(i, column_index) - minimum) / (maximum - minimum);
 }
 
@@ -148,8 +147,6 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
     #pragma omp parallel for
 
     for(Index i = 0; i < matrix.dimension(0); i++)
-        //matrix(i, column_index) = (matrix(i, column_index) * (maximum - minimum) - (min_range * maximum - max_range * minimum))
-                                  // (max_range - min_range);
         matrix(i,column_index) = (matrix(i, column_index)*(maximum-minimum)+minimum);
 
 }
@@ -161,7 +158,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
     const type standard_deviation = column_descriptives.standard_deviation;
 
     if(abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN)
-        throw runtime_error("Standard deviation is zero.");
+        //throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
 
