@@ -16,18 +16,18 @@ namespace opennn
 {
 
     DataSet::DataSet(const Index& new_samples_number,
-        const dimensions& new_input_dimensions,
-        const dimensions& new_target_dimensions)
+                     const dimensions& new_input_dimensions,
+                     const dimensions& new_target_dimensions)
     {
         set(new_samples_number, new_input_dimensions, new_target_dimensions);
     }
 
 
     DataSet::DataSet(const filesystem::path& data_path,
-        const string& separator,
-        const bool& has_header,
-        const bool& has_sample_ids,
-        const Codification& data_codification)
+                     const string& separator,
+                     const bool& has_header,
+                     const bool& has_sample_ids,
+                     const Codification& data_codification)
     {
         set(data_path, separator, has_header, has_sample_ids, data_codification);
     }
@@ -40,20 +40,20 @@ namespace opennn
 
 
     DataSet::RawVariable::RawVariable(const string& new_name,
-        const VariableUse& new_raw_variable_use,
-        const RawVariableType& new_type,
-        const Scaler& new_scaler,
-        const vector<string>& new_categories)
+                                      const VariableUse& new_raw_variable_use,
+                                      const RawVariableType& new_type,
+                                      const Scaler& new_scaler,
+                                      const vector<string>& new_categories)
     {
         set(new_name, new_raw_variable_use, new_type, new_scaler, new_categories);
     }
 
 
     void DataSet::RawVariable::set(const string& new_name,
-        const VariableUse& new_raw_variable_use,
-        const RawVariableType& new_type,
-        const Scaler& new_scaler,
-        const vector<string>& new_categories)
+                                   const VariableUse& new_raw_variable_use,
+                                   const RawVariableType& new_type,
+                                   const Scaler& new_scaler,
+                                   const vector<string>& new_categories)
     {
         name = new_name;
         use = new_raw_variable_use;
@@ -3107,7 +3107,7 @@ namespace opennn
 
     void DataSet::save_data_binary(const filesystem::path& binary_data_file_name) const
     {
-        ofstream file(binary_data_file_name);
+        ofstream file(binary_data_file_name, ios::binary);
 
         if (!file.is_open())
             throw runtime_error("Cannot open data binary file.");
@@ -3119,8 +3119,6 @@ namespace opennn
         Index columns_number = data.dimension(1);
         Index rows_number = data.dimension(0);
 
-        cout << "Saving binary data file..." << endl;
-
         file.write(reinterpret_cast<char*>(&columns_number), size);
         file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -3131,8 +3129,6 @@ namespace opennn
         file.write(reinterpret_cast<const char*>(data.data()), total_elements * size);
 
         file.close();
-
-        cout << "Binary data file saved." << endl;
     }
 
 
