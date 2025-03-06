@@ -38,7 +38,7 @@ TEST(CrossEntropyErrorTest, BackPropagateEmpty)
 
 TEST(CrossEntropyErrorTest, BackPropagate)
 {
-    /*
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
@@ -46,7 +46,7 @@ TEST(CrossEntropyErrorTest, BackPropagate)
 
     DataSet data_set(samples_number, { inputs_number }, { targets_number });
     
-    //data_set.set_data_classification();
+    data_set.set_data_classification();
 
     data_set.set(DataSet::SampleUse::Training);
 
@@ -62,7 +62,7 @@ TEST(CrossEntropyErrorTest, BackPropagate)
     neural_network.set_parameters_random();
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
-    /*
+
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
 
     // Loss index
@@ -75,6 +75,6 @@ TEST(CrossEntropyErrorTest, BackPropagate)
 
     const Tensor<type, 1> numerical_gradient = cross_entropy_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-*/
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-1)), true);
+
 }

@@ -60,7 +60,7 @@ void scale_mean_standard_deviation(Tensor<type, 2>& matrix,
     const type standard_deviation = column_descriptives.standard_deviation;
 
     if(abs(standard_deviation) < NUMERIC_LIMITS_MIN)
-        //throw runtime_error("Standard deviation is zero.");
+        throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
     for(Index i = 0; i < matrix.dimension(0); i++)
@@ -158,7 +158,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
     const type standard_deviation = column_descriptives.standard_deviation;
 
     if(abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN)
-        //throw runtime_error("Standard deviation is zero.");
+        throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
 
