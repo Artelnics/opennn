@@ -745,7 +745,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     {
         quartiles(0) = (sorted_vector[0] + sorted_vector[1]) / type(4);
         quartiles(1) = (sorted_vector[0] + sorted_vector[1]) / type(2);
-        quartiles(2) = (sorted_vector[0] + sorted_vector[1]) / type(3/4);
+        quartiles(2) = (sorted_vector[0] + sorted_vector[1]) / type(3.0F/4);
  
     }
     else if (new_size == 3)
