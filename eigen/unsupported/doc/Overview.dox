@@ -1,7 +1,7 @@
 /// \brief Namespace containing all symbols from the %Eigen library.
 namespace Eigen {
 
-/** \mainpage %Eigen's unsupported modules
+/** \mainpage notitle
 
 This is the API documentation for %Eigen's unsupported modules.
 

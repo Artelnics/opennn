@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorForcedEval
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor reshaping class.
- *
- *
- */
 namespace internal {
 template <typename XprType, template <class> class MakePointer_>
 struct traits<TensorEvalToOp<XprType, MakePointer_> > {

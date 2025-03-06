@@ -111,12 +111,13 @@ class DGMRES : public IterativeSolverBase<DGMRES<MatrixType_, Preconditioner_> >
   typedef typename MatrixType::Scalar Scalar;
   typedef typename MatrixType::StorageIndex StorageIndex;
   typedef typename MatrixType::RealScalar RealScalar;
+  typedef internal::make_complex_t<Scalar> ComplexScalar;
   typedef Preconditioner_ Preconditioner;
   typedef Matrix<Scalar, Dynamic, Dynamic> DenseMatrix;
   typedef Matrix<RealScalar, Dynamic, Dynamic> DenseRealMatrix;
   typedef Matrix<Scalar, Dynamic, 1> DenseVector;
   typedef Matrix<RealScalar, Dynamic, 1> DenseRealVector;
-  typedef Matrix<std::complex<RealScalar>, Dynamic, 1> ComplexVector;
+  typedef Matrix<ComplexScalar, Dynamic, 1> ComplexVector;
 
   /** Default constructor. */
   DGMRES()
@@ -389,15 +390,15 @@ inline typename DGMRES<MatrixType_, Preconditioner_>::ComplexVector DGMRES<Matri
   Index j = 0;
   while (j < it - 1) {
     if (T(j + 1, j) == Scalar(0)) {
-      eig(j) = std::complex<RealScalar>(T(j, j), RealScalar(0));
+      eig(j) = ComplexScalar(T(j, j), RealScalar(0));
       j++;
     } else {
-      eig(j) = std::complex<RealScalar>(T(j, j), T(j + 1, j));
-      eig(j + 1) = std::complex<RealScalar>(T(j, j + 1), T(j + 1, j + 1));
+      eig(j) = ComplexScalar(T(j, j), T(j + 1, j));
+      eig(j + 1) = ComplexScalar(T(j, j + 1), T(j + 1, j + 1));
       j++;
     }
   }
-  if (j < it - 1) eig(j) = std::complex<RealScalar>(T(j, j), RealScalar(0));
+  if (j < it - 1) eig(j) = ComplexScalar(T(j, j), RealScalar(0));
   return eig;
 }
 

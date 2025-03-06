@@ -1635,7 +1635,7 @@ void packetmath_scatter_gather() {
   EIGEN_ALIGN_MAX Scalar data1[PacketSize];
   RealScalar refvalue = RealScalar(0);
   for (int i = 0; i < PacketSize; ++i) {
-    data1[i] = internal::random<Scalar>() / RealScalar(PacketSize);
+    data1[i] = internal::random<Scalar>();
   }
 
   int stride = internal::random<int>(1, 20);
@@ -1655,7 +1655,7 @@ void packetmath_scatter_gather() {
   }
 
   for (int i = 0; i < PacketSize * 7; ++i) {
-    buffer[i] = internal::random<Scalar>() / RealScalar(PacketSize);
+    buffer[i] = internal::random<Scalar>();
   }
   packet = internal::pgather<Scalar, Packet>(buffer, 7);
   internal::pstore(data1, packet);
@@ -1745,6 +1745,7 @@ EIGEN_DECLARE_TEST(packetmath) {
     CALL_SUBTEST_12(test::runner<std::complex<double>>::run());
     CALL_SUBTEST_13(test::runner<half>::run());
     CALL_SUBTEST_14((packetmath<bool, internal::packet_traits<bool>::type>()));
+    CALL_SUBTEST_14((packetmath_scatter_gather<bool, internal::packet_traits<bool>::type>()));
     CALL_SUBTEST_15(test::runner<bfloat16>::run());
     g_first_pass = false;
   }

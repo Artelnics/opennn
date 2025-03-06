@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorCustomUnaryOp
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor custom class.
- *
- *
- */
 namespace internal {
 template <typename CustomUnaryFunc, typename XprType>
 struct traits<TensorCustomUnaryOp<CustomUnaryFunc, XprType> > {
@@ -47,6 +40,11 @@ struct nested<TensorCustomUnaryOp<CustomUnaryFunc, XprType> > {
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor custom class.
+ */
 template <typename CustomUnaryFunc, typename XprType>
 class TensorCustomUnaryOp : public TensorBase<TensorCustomUnaryOp<CustomUnaryFunc, XprType>, ReadOnlyAccessors> {
  public:

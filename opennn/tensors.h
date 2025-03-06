@@ -190,8 +190,11 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 {
     ostringstream buffer;
 
-    for(size_t i = 0; i < x.size(); i++)
-        buffer << x[i] << separator;
+    for (size_t i = 0; i < x.size(); i++) {
+        buffer << x[i];
+        if (i < x.size() - 1) 
+            buffer << separator;
+    }
 
     return buffer.str();
 }
@@ -239,14 +242,17 @@ size_t get_maximum_size(const vector<vector<T>>& v)
 
 
 template <typename T>
-void print_vector(const vector<T>& vec) 
+void print_vector(const vector<T>& vec)
 {
     cout << "[ ";
 
-    for (const auto& element : vec) 
-        cout << element << " ";
-   
-    cout << "]\n";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        cout << vec[i];
+        if (i < vec.size() - 1)
+            cout << ";";
+    }
+
+    cout << " ]\n";
 }
 
 

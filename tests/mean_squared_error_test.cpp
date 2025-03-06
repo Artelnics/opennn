@@ -37,7 +37,7 @@ TEST(MeanSquaredErrorTest, BackPropagateEmpty)
 
 TEST(MeanSquaredErrorTest, BackPropagate)
 {
-    /*
+
     const Index samples_number = get_random_index(1, 10);
     const Index inputs_number = get_random_index(1, 10);
     const Index targets_number = get_random_index(1, 10);
@@ -47,21 +47,16 @@ TEST(MeanSquaredErrorTest, BackPropagate)
     data_set.set_data_random();
     data_set.set(DataSet::SampleUse::Training);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {1}, {1}, {1});
+    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
+                                 { inputs_number }, { neurons_number }, { targets_number });
 
-    neural_network.set_parameters_constant(type(0)); 
+    neural_network.set_parameters_random();
 
     Batch batch(samples_number, &data_set);
     batch.fill(data_set.get_sample_indices(DataSet::SampleUse::Training),
-
-    data_set.get_variable_indices(DataSet::VariableUse::Input),
-    data_set.get_variable_indices(DataSet::VariableUse::Decoder),
-    data_set.get_variable_indices(DataSet::VariableUse::Target));
-/*
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-        { inputs_number }, { neurons_number }, { targets_number });
-    
-    neural_network.set_parameters_random();
+               data_set.get_variable_indices(DataSet::VariableUse::Input),
+               data_set.get_variable_indices(DataSet::VariableUse::Decoder),
+               data_set.get_variable_indices(DataSet::VariableUse::Target));
 
     ForwardPropagation forward_propagation(samples_number, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, true);
@@ -70,13 +65,13 @@ TEST(MeanSquaredErrorTest, BackPropagate)
 
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-    BackPropagation back_propagation(samples_number, &mean_squared_error);    
+    BackPropagation back_propagation(samples_number, &mean_squared_error);
     mean_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
 
-    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-3)), true);
-    */
+    EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
+
 }
 
 
@@ -122,12 +117,9 @@ TEST(MeanSquaredErrorTest, BackPropagateLm)
     const Tensor<type, 1> numerical_gradient = mean_squared_error.calculate_numerical_gradient();
     const Tensor<type, 2> numerical_hessian = mean_squared_error.calculate_numerical_hessian();
 
-    cout << "numerical_gradient:\n" << numerical_gradient << endl;
-
-    cerr << "Gradient:\n" << back_propagation_lm.gradient << endl;
-
     EXPECT_NEAR(back_propagation_lm.error(), back_propagation.error(), type(1.0e-3));
     EXPECT_EQ(are_equal(back_propagation_lm.squared_errors_jacobian, numerical_jacobian), true);
     EXPECT_EQ(are_equal(back_propagation_lm.gradient, numerical_gradient, type(1e-2)), true);
+    EXPECT_EQ(are_equal(back_propagation_lm.hessian, numerical_hessian, type(1.0e-1)), true);
 
 }

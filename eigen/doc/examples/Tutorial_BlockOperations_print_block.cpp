@@ -12,4 +12,8 @@ int main() {
     cout << "Block of size " << i << "x" << i << endl;
     cout << m.block(0, 0, i, i) << endl << endl;
   }
+  int j1 = 2;
+  int j2 = 3;
+  cout << "Non-square block of size " << j1 << "x" << j2 << endl;
+  cout << m.block(0, 0, j1, j2) << endl << endl;
 }

@@ -294,6 +294,7 @@ struct generic_product_impl<Lhs, Rhs, DenseShape, DenseShape, OuterProduct> {
     }
   };
   struct add {
+    /** Add to dst. */
     template <typename Dst, typename Src>
     EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& src) const {
       dst.const_cast_derived() += src;
@@ -305,9 +306,12 @@ struct generic_product_impl<Lhs, Rhs, DenseShape, DenseShape, OuterProduct> {
       dst.const_cast_derived() -= src;
     }
   };
+  /** Scaled add. */
   struct adds {
     Scalar m_scale;
+    /** Constructor */
     explicit adds(const Scalar& s) : m_scale(s) {}
+    /** Scaled add to dst. */
     template <typename Dst, typename Src>
     void EIGEN_DEVICE_FUNC operator()(const Dst& dst, const Src& src) const {
       dst.const_cast_derived() += m_scale * src;

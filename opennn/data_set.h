@@ -267,8 +267,6 @@ public:
     void set_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_raw_variables_unused();
 
-    //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
-
     void set_raw_variable_use(const Index&, const VariableUse&);
     void set_raw_variable_use(const string&, const VariableUse&);
 
@@ -480,12 +478,6 @@ public:
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
-    //void set_missing_values_number();
-
-    //void set_raw_variables_missing_values_number();
-
-    //void set_samples_missing_values_number();
-
     // Other
 
     void fix_repeated_names();
@@ -549,7 +541,7 @@ protected:
 
     vector<RawVariable> raw_variables;
 
-    // DATA FILE
+    // Data File
 
     filesystem::path data_path;
 
@@ -569,7 +561,7 @@ protected:
 
     Index gmt = 0;
 
-    // MISSING VALUES
+    // Missing Values
 
     MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
 

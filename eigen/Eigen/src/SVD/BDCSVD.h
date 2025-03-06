@@ -147,6 +147,8 @@ class BDCSVD : public SVDBase<BDCSVD<MatrixType_, Options_> > {
    * One \b cannot request unitaries using both the \a Options template parameter
    * and the constructor. If possible, prefer using the \a Options template parameter.
    *
+   * \param rows number of rows for the input matrix
+   * \param cols number of columns for the input matrix
    * \param computationOptions specification for computing Thin/Full unitaries U/V
    * \sa BDCSVD()
    *

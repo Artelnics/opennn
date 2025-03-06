@@ -495,7 +495,7 @@ TrainingResults TrainingStrategy::perform_training()
             return Levenberg_Marquardt_algorithm.perform_training();
         
         case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
-            return stochastic_gradient_descent.perform_training();        
+            return stochastic_gradient_descent.perform_training();
 
         case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
             return adaptive_moment_estimation.perform_training();

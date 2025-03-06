@@ -497,7 +497,7 @@ class MatrixComplexPowerReturnValue;
 namespace internal {
 template <typename Scalar>
 struct stem_function {
-  typedef std::complex<typename NumTraits<Scalar>::Real> ComplexScalar;
+  typedef internal::make_complex_t<Scalar> ComplexScalar;
   typedef ComplexScalar type(ComplexScalar, int);
 };
 }  // namespace internal

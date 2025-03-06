@@ -456,19 +456,9 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                             pooling_method,
                                             "pooling_layer_" + to_string(i + 1)));
 
-
-        // add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
-        //                                           dimensions({ 2, 2, get_output_dimensions()[2], complexity_dimensions[i] }),
-        //                                           ConvolutionalLayer::ActivationFunction::RectifiedLinear,
-        //                                           stride_dimensions,
-        //                                           convolution_type,
-        //                                           "convolutional_layer_" + to_string(i+2)));
     }
     
     add_layer(make_unique<FlattenLayer>(get_output_dimensions()));
-
-    // add_layer(make_unique<PerceptronLayer>(get_output_dimensions(),
-    //                                        (dimensions){24}));
 
     add_layer(make_unique<ProbabilisticLayer>(get_output_dimensions(),
                                               output_dimensions,
@@ -635,7 +625,7 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
         set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
     }
 */
-};
+// };
 
 
 void NeuralNetwork::set(const filesystem::path& file_name)
@@ -1063,7 +1053,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
-    forward_propagate({input_pair}, forward_propagation, false);
+    forward_propagate({input_pair}, forward_propagation, true);
 
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
@@ -1751,7 +1741,7 @@ void ForwardPropagation::set(const Index& new_batch_samples_number, NeuralNetwor
 
     neural_network = new_neural_network;
 
-    if(!neural_network) return;
+    if(!neural_network) throw runtime_error("There is no neural network.");
 
     const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
 
@@ -1963,7 +1953,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
     }
 }
 
-// Namespace
+}// Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

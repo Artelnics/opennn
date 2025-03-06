@@ -150,6 +150,10 @@ struct CoreThreadPoolDevice {
 
 namespace internal {
 
+#ifdef EIGEN_PARSED_BY_DOXYGEN
+struct Kernel;
+#endif
+
 template <typename Kernel>
 struct cost_helper {
   using SrcEvaluatorType = typename Kernel::SrcEvaluatorType;

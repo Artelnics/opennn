@@ -15,12 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorReverse
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor reverse elements class.
- *
- */
 namespace internal {
 template <typename ReverseDimensions, typename XprType>
 struct traits<TensorReverseOp<ReverseDimensions, XprType> > : public traits<XprType> {
@@ -48,6 +42,12 @@ struct nested<TensorReverseOp<ReverseDimensions, XprType>, 1,
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor reverse elements class.
+ *
+ */
 template <typename ReverseDimensions, typename XprType>
 class TensorReverseOp : public TensorBase<TensorReverseOp<ReverseDimensions, XprType>, WriteAccessors> {
  public:

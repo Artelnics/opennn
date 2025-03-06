@@ -39,9 +39,9 @@ namespace Eigen {
  *
  * \b Shifting \b strategy: Let \f$ B = S P A P' S \f$  be the scaled matrix on which the factorization is carried out,
  * and \f$ \beta \f$ be the minimum value of the diagonal. If \f$ \beta > 0 \f$ then, the factorization is directly
- * performed on the matrix B, and \sigma = 0. Otherwise, the factorization is performed on the shifted matrix \f$ B +
- * \sigma I \f$ for a shifting factor  \f$ \sigma \f$.  We start with \f$ \sigma = \sigma_0 - \beta \f$, where \f$
- * \sigma_0 \f$ is the initial shift value as returned and set by setInitialShift() method. The default value is \f$
+ * performed on the matrix B, and \f$ \sigma = 0 \f$. Otherwise, the factorization is performed on the shifted matrix
+ * \f$ B + \sigma I \f$ for a shifting factor  \f$ \sigma \f$.  We start with \f$ \sigma = \sigma_0 - \beta \f$, where
+ * \f$ \sigma_0 \f$ is the initial shift value as returned and set by setInitialShift() method. The default value is \f$
  * \sigma_0 = 10^{-3} \f$. If the factorization fails, then the shift in doubled until it succeed or a maximum of ten
  * attempts. If it still fails, as returned by the info() method, then you can either increase the initial shift, or
  * better use another preconditioning technique.

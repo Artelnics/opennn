@@ -50,6 +50,12 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypeUniform(uint64_t* state, uin
 }
 
 template <>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool RandomToTypeUniform<bool>(uint64_t* state, uint64_t stream) {
+  unsigned rnd = PCG_XSH_RS_generator(state, stream);
+  return (rnd & 0x1) != 0;
+}
+
+template <>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half RandomToTypeUniform<Eigen::half>(uint64_t* state, uint64_t stream) {
   // Generate 10 random bits for the mantissa, merge with exponent.
   unsigned rnd = PCG_XSH_RS_generator(state, stream);

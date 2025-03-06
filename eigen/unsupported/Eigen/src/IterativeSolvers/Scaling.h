@@ -16,7 +16,7 @@
 namespace Eigen {
 
 /**
- * \ingroup IterativeSolvers_Module
+ * \ingroup IterativeLinearSolvers_Module
  * \brief iterative scaling algorithm to equilibrate rows and column norms in matrices
  *
  * This class can be used as a preprocessing tool to accelerate the convergence of iterative methods

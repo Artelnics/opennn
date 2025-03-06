@@ -106,7 +106,7 @@ However there are a few corner cases where these alignment settings get overridd
 
 Three possibilities:
 <ul>
-  <li>Use the \c DontAlign option to Matrix, Array, Quaternion, etc. objects that gives you trouble. This way %Eigen won't try to over-align them, and thus won"t assume any special alignment. On the down side, you will pay the cost of unaligned loads/stores for them, but on modern CPUs, the overhead is either null or marginal. See \link StructHavingEigenMembers_othersolutions here \endlink for an example.</li>
+  <li>Use the \c DontAlign option to Matrix, Array, Quaternion, etc. objects that gives you trouble. This way %Eigen won't try to over-align them, and thus won't assume any special alignment. On the down side, you will pay the cost of unaligned loads/stores for them, but on modern CPUs, the overhead is either null or marginal. See \link StructHavingEigenMembers_othersolutions here \endlink for an example.</li>
   <li>Define \link TopicPreprocessorDirectivesPerformance EIGEN_MAX_STATIC_ALIGN_BYTES \endlink to 0. That disables all 16-byte (and above) static alignment code, while keeping 16-byte (or above) heap alignment. This has the effect of
       vectorizing fixed-size objects (like Matrix4d) through unaligned stores (as controlled by \link TopicPreprocessorDirectivesPerformance EIGEN_UNALIGNED_VECTORIZE \endlink), while keeping unchanged the vectorization of dynamic-size objects
       (like MatrixXd). On 64 bytes systems, you might also define it 16 to disable only 32 and 64 bytes of over-alignment. But do note that this breaks ABI compatibility with the default behavior of static alignment.</li>

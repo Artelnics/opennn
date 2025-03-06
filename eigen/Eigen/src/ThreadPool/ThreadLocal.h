@@ -43,12 +43,7 @@
 // This is primarily because of linker problems and toolchain misconfiguration:
 // TLS isn't supported until NDK r12b per
 // https://developer.android.com/ndk/downloads/revision_history.html
-// Since NDK r16, `__NDK_MAJOR__` and `__NDK_MINOR__` are defined in
-// <android/ndk-version.h>. For NDK < r16, users should define these macros,
-// e.g. `-D__NDK_MAJOR__=11 -D__NKD_MINOR__=0` for NDK r11.
-#if __has_include(<android/ndk-version.h>)
-#include <android/ndk-version.h>
-#endif  // __has_include(<android/ndk-version.h>)
+
 #if defined(__ANDROID__) && defined(__clang__) && defined(__NDK_MAJOR__) && defined(__NDK_MINOR__) && \
     ((__NDK_MAJOR__ < 12) || ((__NDK_MAJOR__ == 12) && (__NDK_MINOR__ < 1)))
 #undef EIGEN_THREAD_LOCAL

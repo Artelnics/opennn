@@ -13,8 +13,6 @@ namespace opennn
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy)
 {
-    cout << "Is it here?" << endl;
-
     set(new_training_strategy);
 }
 

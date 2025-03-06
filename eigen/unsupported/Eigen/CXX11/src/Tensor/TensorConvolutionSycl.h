@@ -20,14 +20,6 @@
 
 namespace Eigen {
 
-/** \class TensorConvolution
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor convolution class.
- *
- *
- */
-
 enum class convolution_type { CONV1D, CONV2D, CONV3D };
 template <typename Evaluator, typename CoeffReturnType, typename KernelType, typename Index, typename InputDims,
           typename Kernel_accessor, typename Buffer_accessor, convolution_type Conv_Dim>

@@ -95,8 +95,9 @@ struct traits<TensorMap<PlainObjectType, Options_, MakePointer_> > : public trai
   typedef typename MakePointer<Scalar>::Type PointerType;
 };
 
-template <typename PlainObjectType>
-struct traits<TensorRef<PlainObjectType> > : public traits<PlainObjectType> {
+template <typename PlainObjectType_>
+struct traits<TensorRef<PlainObjectType_> > : public traits<PlainObjectType_> {
+  typedef PlainObjectType_ PlainObjectType;
   typedef traits<PlainObjectType> BaseTraits;
   typedef typename BaseTraits::Scalar Scalar;
   typedef typename BaseTraits::StorageKind StorageKind;

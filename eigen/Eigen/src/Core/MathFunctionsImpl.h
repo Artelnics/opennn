@@ -171,8 +171,8 @@ struct hypot_impl {
 
 // Generic complex sqrt implementation that correctly handles corner cases
 // according to https://en.cppreference.com/w/cpp/numeric/complex/sqrt
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_sqrt(const std::complex<T>& z) {
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_sqrt(const ComplexT& z) {
   // Computes the principal sqrt of the input.
   //
   // For a complex square root of the number x + i*y. We want to find real
@@ -194,21 +194,21 @@ EIGEN_DEVICE_FUNC std::complex<T> complex_sqrt(const std::complex<T>& z) {
   //   if x == 0: u = w, v = sign(y) * w
   //   if x > 0:  u = w, v = y / (2 * w)
   //   if x < 0:  u = |y| / (2 * w), v = sign(y) * w
-
+  using T = typename NumTraits<ComplexT>::Real;
   const T x = numext::real(z);
   const T y = numext::imag(z);
   const T zero = T(0);
   const T w = numext::sqrt(T(0.5) * (numext::abs(x) + numext::hypot(x, y)));
 
-  return (numext::isinf)(y)           ? std::complex<T>(NumTraits<T>::infinity(), y)
-         : numext::is_exactly_zero(x) ? std::complex<T>(w, y < zero ? -w : w)
-         : x > zero                   ? std::complex<T>(w, y / (2 * w))
-                                      : std::complex<T>(numext::abs(y) / (2 * w), y < zero ? -w : w);
+  return (numext::isinf)(y)           ? ComplexT(NumTraits<T>::infinity(), y)
+         : numext::is_exactly_zero(x) ? ComplexT(w, y < zero ? -w : w)
+         : x > zero                   ? ComplexT(w, y / (2 * w))
+                                      : ComplexT(numext::abs(y) / (2 * w), y < zero ? -w : w);
 }
 
 // Generic complex rsqrt implementation.
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_rsqrt(const std::complex<T>& z) {
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_rsqrt(const ComplexT& z) {
   // Computes the principal reciprocal sqrt of the input.
   //
   // For a complex reciprocal square root of the number z = x + i*y. We want to
@@ -230,7 +230,7 @@ EIGEN_DEVICE_FUNC std::complex<T> complex_rsqrt(const std::complex<T>& z) {
   //   if x == 0: u = w / |z|, v = -sign(y) * w / |z|
   //   if x > 0:  u = w / |z|, v = -y / (2 * w * |z|)
   //   if x < 0:  u = |y| / (2 * w * |z|), v = -sign(y) * w / |z|
-
+  using T = typename NumTraits<ComplexT>::Real;
   const T x = numext::real(z);
   const T y = numext::imag(z);
   const T zero = T(0);
@@ -239,20 +239,21 @@ EIGEN_DEVICE_FUNC std::complex<T> complex_rsqrt(const std::complex<T>& z) {
   const T w = numext::sqrt(T(0.5) * (numext::abs(x) + abs_z));
   const T woz = w / abs_z;
   // Corner cases consistent with 1/sqrt(z) on gcc/clang.
-  return numext::is_exactly_zero(abs_z) ? std::complex<T>(NumTraits<T>::infinity(), NumTraits<T>::quiet_NaN())
-         : ((numext::isinf)(x) || (numext::isinf)(y)) ? std::complex<T>(zero, zero)
-         : numext::is_exactly_zero(x)                 ? std::complex<T>(woz, y < zero ? woz : -woz)
-         : x > zero                                   ? std::complex<T>(woz, -y / (2 * w * abs_z))
-                    : std::complex<T>(numext::abs(y) / (2 * w * abs_z), y < zero ? woz : -woz);
+  return numext::is_exactly_zero(abs_z)               ? ComplexT(NumTraits<T>::infinity(), NumTraits<T>::quiet_NaN())
+         : ((numext::isinf)(x) || (numext::isinf)(y)) ? ComplexT(zero, zero)
+         : numext::is_exactly_zero(x)                 ? ComplexT(woz, y < zero ? woz : -woz)
+         : x > zero                                   ? ComplexT(woz, -y / (2 * w * abs_z))
+                    : ComplexT(numext::abs(y) / (2 * w * abs_z), y < zero ? woz : -woz);
 }
 
-template <typename T>
-EIGEN_DEVICE_FUNC std::complex<T> complex_log(const std::complex<T>& z) {
+template <typename ComplexT>
+EIGEN_DEVICE_FUNC ComplexT complex_log(const ComplexT& z) {
   // Computes complex log.
+  using T = typename NumTraits<ComplexT>::Real;
   T a = numext::abs(z);
   EIGEN_USING_STD(atan2);
   T b = atan2(z.imag(), z.real());
-  return std::complex<T>(numext::log(a), b);
+  return ComplexT(numext::log(a), b);
 }
 
 }  // end namespace internal

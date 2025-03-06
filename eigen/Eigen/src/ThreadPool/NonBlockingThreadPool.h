@@ -18,8 +18,23 @@ namespace Eigen {
 template <typename Environment>
 class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
  public:
+  typedef typename Environment::EnvThread Thread;
   typedef typename Environment::Task Task;
   typedef RunQueue<Task, 1024> Queue;
+
+  struct PerThread {
+    constexpr PerThread() : pool(NULL), rand(0), thread_id(-1) {}
+    ThreadPoolTempl* pool;  // Parent pool, or null for normal threads.
+    uint64_t rand;          // Random generator state.
+    int thread_id;          // Worker thread index in pool.
+  };
+
+  struct ThreadData {
+    constexpr ThreadData() : thread(), steal_partition(0), queue() {}
+    std::unique_ptr<Thread> thread;
+    std::atomic<unsigned> steal_partition;
+    Queue queue;
+  };
 
   ThreadPoolTempl(int num_threads, Environment env = Environment()) : ThreadPoolTempl(num_threads, true, env) {}
 
@@ -27,6 +42,11 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
       : env_(env),
         num_threads_(num_threads),
         allow_spinning_(allow_spinning),
+        spin_count_(
+            // TODO(dvyukov,rmlarsen): The time spent in NonEmptyQueueIndex() is proportional to num_threads_ and
+            // we assume that new work is scheduled at a constant rate, so we divide `kSpintCount` by number of
+            // threads and number of spinning threads. The constant was picked based on a fair dice roll, tune it.
+            allow_spinning && num_threads > 0 ? kSpinCount / kMaxSpinningThreads / num_threads : 0),
         thread_data_(num_threads),
         all_coprimes_(num_threads),
         waiters_(num_threads),
@@ -133,6 +153,43 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
     }
   }
 
+  // Tries to assign work to the current task.
+  void MaybeGetTask(Task* t) {
+    PerThread* pt = GetPerThread();
+    const int thread_id = pt->thread_id;
+    // If we are not a worker thread of this pool, we can't get any work.
+    if (thread_id < 0) return;
+    Queue& q = thread_data_[thread_id].queue;
+    *t = q.PopFront();
+    if (t->f) return;
+    if (num_threads_ == 1) {
+      // For num_threads_ == 1 there is no point in going through the expensive
+      // steal loop. Moreover, since NonEmptyQueueIndex() calls PopBack() on the
+      // victim queues it might reverse the order in which ops are executed
+      // compared to the order in which they are scheduled, which tends to be
+      // counter-productive for the types of I/O workloads single thread pools
+      // tend to be used for.
+      for (int i = 0; i < spin_count_ && !t->f; ++i) *t = q.PopFront();
+    } else {
+      if (EIGEN_PREDICT_FALSE(!t->f)) *t = LocalSteal();
+      if (EIGEN_PREDICT_FALSE(!t->f)) *t = GlobalSteal();
+      if (EIGEN_PREDICT_FALSE(!t->f)) {
+        if (allow_spinning_ && StartSpinning()) {
+          for (int i = 0; i < spin_count_ && !t->f; ++i) *t = GlobalSteal();
+          // Notify `spinning_state_` that we are no longer spinning.
+          bool has_no_notify_task = StopSpinning();
+          // If a task was submitted to the queue without a call to
+          // `ec_.Notify()` (if `IsNotifyParkedThreadRequired()` returned
+          // false), and we didn't steal anything above, we must try to
+          // steal one more time, to make sure that this task will be
+          // executed. We will not necessarily find it, because it might
+          // have been already stolen by some other thread.
+          if (has_no_notify_task && !t->f) *t = q.PopFront();
+        }
+      }
+    }
+  }
+
   void Cancel() EIGEN_OVERRIDE {
     cancelled_ = true;
     done_ = true;
@@ -206,22 +263,6 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
     }
   }
 
-  typedef typename Environment::EnvThread Thread;
-
-  struct PerThread {
-    constexpr PerThread() : pool(NULL), rand(0), thread_id(-1) {}
-    ThreadPoolTempl* pool;  // Parent pool, or null for normal threads.
-    uint64_t rand;          // Random generator state.
-    int thread_id;          // Worker thread index in pool.
-  };
-
-  struct ThreadData {
-    constexpr ThreadData() : thread(), steal_partition(0), queue() {}
-    std::unique_ptr<Thread> thread;
-    std::atomic<unsigned> steal_partition;
-    Queue queue;
-  };
-
   // Maximum number of threads that can spin in steal loop.
   static constexpr int kMaxSpinningThreads = 1;
 
@@ -277,6 +318,7 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
   Environment env_;
   const int num_threads_;
   const bool allow_spinning_;
+  const int spin_count_;
   MaxSizeVector<ThreadData> thread_data_;
   MaxSizeVector<MaxSizeVector<unsigned>> all_coprimes_;
   MaxSizeVector<EventCount::Waiter> waiters_;
@@ -311,88 +353,16 @@ class ThreadPoolTempl : public Eigen::ThreadPoolInterface {
     pt->pool = this;
     pt->rand = GlobalThreadIdHash();
     pt->thread_id = thread_id;
-    Queue& q = thread_data_[thread_id].queue;
-    EventCount::Waiter* waiter = &waiters_[thread_id];
-    // TODO(dvyukov,rmlarsen): The time spent in NonEmptyQueueIndex() is
-    // proportional to num_threads_ and we assume that new work is scheduled at
-    // a constant rate, so we divide `kSpintCount` by number of threads and
-    // number of spinning threads. The constant was picked based on a fair dice
-    // roll, tune it.
-    const int spin_count = allow_spinning_ && num_threads_ > 0 ? kSpinCount / kMaxSpinningThreads / num_threads_ : 0;
-    if (num_threads_ == 1) {
-      // For num_threads_ == 1 there is no point in going through the expensive
-      // steal loop. Moreover, since NonEmptyQueueIndex() calls PopBack() on the
-      // victim queues it might reverse the order in which ops are executed
-      // compared to the order in which they are scheduled, which tends to be
-      // counter-productive for the types of I/O workloads the single thread
-      // pools tend to be used for.
-      while (!cancelled_.load(std::memory_order_relaxed)) {
-        Task t = q.PopFront();
-
-        for (int i = 0; i < spin_count && !t.f; ++i) {
-          t = q.PopFront();
-        }
-
-        if (EIGEN_PREDICT_FALSE(!t.f)) {
-          if (!WaitForWork(waiter, &t)) {
-            return;
-          }
-        }
-
-        if (EIGEN_PREDICT_TRUE(t.f)) {
-          env_.ExecuteTask(t);
-        }
+    Task t;
+    while (!cancelled_.load(std::memory_order_relaxed)) {
+      MaybeGetTask(&t);
+      // If we still don't have a task, wait for one. Return if thread pool is
+      // in cancelled state.
+      if (EIGEN_PREDICT_FALSE(!t.f)) {
+        EventCount::Waiter* waiter = &waiters_[pt->thread_id];
+        if (!WaitForWork(waiter, &t)) return;
       }
-
-    } else {
-      while (!cancelled_.load(std::memory_order_relaxed)) {
-        Task t = q.PopFront();
-
-        // Do one round of steal loop from local thread partition.
-        if (EIGEN_PREDICT_FALSE(!t.f)) {
-          t = LocalSteal();
-        }
-
-        // Do one round of steal loop from global thread partition.
-        if (EIGEN_PREDICT_FALSE(!t.f)) {
-          t = GlobalSteal();
-        }
-
-        // Maybe leave a thread spinning. This improves latency.
-        if (EIGEN_PREDICT_FALSE(!t.f)) {
-          if (allow_spinning_ && StartSpinning()) {
-            for (int i = 0; i < spin_count && !t.f; ++i) {
-              t = GlobalSteal();
-            }
-
-            // Notify `spinning_state_` that we are no longer spinning.
-            bool has_no_notify_task = StopSpinning();
-
-            // If a task was submitted to the queue without a call to
-            // `ec_.Notify()` (if `IsNotifyParkedThreadRequired()` returned
-            // false), and we didn't steal anything above, we must try to
-            // steal one more time, to make sure that this task will be
-            // executed. We will not necessarily find it, because it might
-            // have been already stolen by some other thread.
-            if (has_no_notify_task && !t.f) {
-              t = GlobalSteal();
-            }
-          }
-        }
-
-        // If we still don't have a task, wait for one. Return if thread pool is
-        // in cancelled state.
-        if (EIGEN_PREDICT_FALSE(!t.f)) {
-          if (!WaitForWork(waiter, &t)) {
-            return;
-          }
-        }
-
-        // Execute task if we found one.
-        if (EIGEN_PREDICT_TRUE(t.f)) {
-          env_.ExecuteTask(t);
-        }
-      }
+      if (EIGEN_PREDICT_TRUE(t.f)) env_.ExecuteTask(t);
     }
   }
 
