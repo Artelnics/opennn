@@ -37,7 +37,8 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("C:/translation.csv");
+        // LanguageDataSet language_data_set("C:/translation.csv");
+        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset.txt");
 /*
         // cout<<language_data_set.get_context_length()<<endl;
         // cout<<language_data_set.get_completion_length()<<endl;

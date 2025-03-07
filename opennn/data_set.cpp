@@ -694,7 +694,7 @@ namespace opennn
 
     vector<string> DataSet::get_variable_names(const VariableUse& variable_use) const
     {
-        const Index variables_number = get_variables_number(VariableUse::Input);
+        const Index variables_number = get_variables_number(variable_use);
 
         vector<string> variable_names(variables_number);
 
@@ -1064,6 +1064,12 @@ namespace opennn
 
         for (size_t i = 0; i < target_raw_variables.size(); i++)
             set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
+
+        const Index input_dimensions = get_variables_number(VariableUse::Input);
+        const Index target_dimensions = get_variables_number(VariableUse::Target);
+
+        set_dimensions(VariableUse::Input,{input_dimensions});
+        set_dimensions(VariableUse::Target, {target_dimensions});
     }
 
 
@@ -1643,6 +1649,10 @@ namespace opennn
         set_default_raw_variables_scalers();
 
         set_default_raw_variables_uses();
+
+
+        missing_values_method = MissingValuesMethod::Median;
+        scrub_missing_values();
 
         input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
         target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
@@ -2327,6 +2337,8 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
     {
+        cout << "Calculating correlations..." << endl;
+
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
@@ -4010,7 +4022,7 @@ namespace opennn
         }
 
         file.close();
-   
+
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();

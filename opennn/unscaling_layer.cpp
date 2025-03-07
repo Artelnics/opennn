@@ -331,8 +331,8 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
             break;
 
         default:
-            break;
-            //throw runtime_error("Unknown scaling method\n");
+            //break;
+            throw runtime_error("Unknown scaling method\n");
         }
     }
 }

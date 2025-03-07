@@ -155,10 +155,11 @@ void unscale_minimum_maximum(Tensor<type, 2>& matrix,
 void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
     const type mean = column_descriptives.mean;
-    const type standard_deviation = column_descriptives.standard_deviation;
+    type standard_deviation = column_descriptives.standard_deviation;
 
     if(abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN)
-        throw runtime_error("Standard deviation is zero.");
+        return;
+        // throw runtime_error("Standard deviation is zero.");
 
     #pragma omp parallel for
 
@@ -171,7 +172,7 @@ void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const Index& colum
 void unscale_standard_deviation(Tensor<type, 2>& matrix, const Index& column_index, const Descriptives& column_descriptives)
 {
     const type slope = abs(column_descriptives.standard_deviation) < NUMERIC_LIMITS_MIN
-            ? type(0)
+            ? type(1)
             : column_descriptives.standard_deviation;
 
     #pragma omp parallel for

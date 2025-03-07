@@ -435,7 +435,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     {
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
         add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                   kernel_dimensions,
@@ -682,12 +682,15 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
         scaling_layer->set_input_dimensions(new_input_dimensions);
     }
 
-    if (has(Layer::Type::Perceptron))
-    {
-        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
+    layers[get_first_trainable_layer_index()].get()->set_input_dimensions(new_input_dimensions);
 
-        perceptron_layer->set_input_dimensions(new_input_dimensions);
-    }
+    // if (has(Layer::Type::Perceptron))
+    // {
+    //     PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
+
+    //     perceptron_layer->set_input_dimensions(new_input_dimensions);
+    // }
+
 }
 
 
@@ -950,9 +953,8 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-                                     forward_propagation.layers[i],
-                                     is_training);
-    }
+            forward_propagation.layers[i],
+            is_training);
 }
 
 
@@ -1450,7 +1452,7 @@ void NeuralNetwork::print() const
          << "Model type:" << endl
          << get_model_type_string() << endl;
 
-    print_vector(get_input_names());
+    // print_vector(get_input_names());
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -1955,7 +1957,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
         }
     }
 }
-
+}
 // Namespace
 
 // OpenNN: Open Neural Networks Library.
