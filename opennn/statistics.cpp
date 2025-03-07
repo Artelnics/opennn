@@ -1405,12 +1405,12 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
             standard_deviation(i) = type(0);
     }
 
-    for(Index i = 0; i < column_indices_size; i++)
+    for(Index i = 0; i < column_indices_size; i++){
         descriptives[i].set(type(minimums(i)), 
                             type(maximums(i)), 
                             type(mean(i)), 
                             type(standard_deviation(i)));
-
+    }
     return descriptives;
 }
 

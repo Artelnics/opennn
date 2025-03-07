@@ -185,8 +185,6 @@ TrainingResults StochasticGradientDescent::perform_training()
     
     check();
 
-    display = 1;
-
     // Start training
 
     if(display) cout << "Training with stochastic gradient descent (SGD)...\n";
@@ -240,13 +238,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     set_vocabularies();
 
-    cout << "Here too? (SGD)" << endl;
-
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
     
-    cerr << "Even here (SGD)" << endl;
-
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -279,16 +273,11 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     // Main loop
     
-    cout << "Enters the epochs loop (SGD)" << endl;
-
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
-
-        if(epoch<10)
-            cerr << "catches the batches" << endl;
 
         const Index batches_number = training_batches.size();
 

@@ -694,7 +694,7 @@ vector<string> DataSet::get_variable_names() const
 
 vector<string> DataSet::get_variable_names(const VariableUse& variable_use) const
 {
-    const Index variables_number = get_variables_number(VariableUse::Input);
+    const Index variables_number = get_variables_number(variable_use);
 
     vector<string> variable_names(variables_number);
 
@@ -1064,6 +1064,12 @@ void DataSet::set_raw_variable_indices(const vector<Index>& input_raw_variables,
 
     for (size_t i = 0; i < target_raw_variables.size(); i++)
         set_raw_variable_use(target_raw_variables[i], VariableUse::Target);
+
+    const Index input_variables_number = get_variables_number(VariableUse::Input);
+    const Index target_variables_number = get_variables_number(VariableUse::Target);
+
+    set_dimensions(VariableUse::Input, {input_variables_number});
+    set_dimensions(VariableUse::Target, {target_variables_number});
 }
 
 
@@ -1643,6 +1649,14 @@ void DataSet::set(const filesystem::path& new_data_path,
     set_default_raw_variables_scalers();
 
     set_default_raw_variables_uses();
+
+    missing_values_method = MissingValuesMethod::Median;
+    scrub_missing_values();
+
+    split_samples_random();
+
+    unuse_constant_raw_variables();
+
 
     input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
     target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
@@ -2337,6 +2351,8 @@ Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_corr
 
     Tensor<Correlation, 2> correlations(input_raw_variables_number, target_raw_variables_number);
 
+    cout << "Calculating correlations..." << endl;
+
     //#pragma omp parallel for
 
     for (Index i = 0; i < input_raw_variables_number; i++)
@@ -2673,7 +2689,7 @@ vector<Descriptives> DataSet::scale_variables(const VariableUse& variable_use)
     const Index input_variables_number = get_variables_number(variable_use);
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
 
     const vector<Descriptives> input_variable_descriptives = calculate_variable_descriptives(variable_use);
 
@@ -2716,7 +2732,7 @@ void DataSet::unscale_variables(const VariableUse& variable_use,
 
     const vector<Index> input_variable_indices = get_variable_indices(variable_use);
 
-    const vector<Scaler> input_variable_scalers = get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = get_variable_scalers(variable_use);
 
     for (Index i = 0; i < input_variables_number; i++)
     {
@@ -2942,7 +2958,7 @@ void DataSet::print() const
     const Index variables_number = get_variables_number();
     const Index input_variables_number = get_variables_number(VariableUse::Input);
     const Index samples_number = get_samples_number();
-    const Index target_variables_bumber = get_variables_number(VariableUse::Target);
+    const Index target_variables_number = get_variables_number(VariableUse::Target);
     const Index training_samples_number = get_samples_number(SampleUse::Training);
     const Index selection_samples_number = get_samples_number(SampleUse::Selection);
     const Index testing_samples_number = get_samples_number(SampleUse::Testing);
@@ -2952,7 +2968,7 @@ void DataSet::print() const
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
-         << "Number of target variables: " << target_variables_bumber << "\n"
+         << "Number of target variables: " << target_variables_number << "\n"
          << "Input dimensions: ";
 
     print_vector(get_dimensions(DataSet::VariableUse::Input));
@@ -3894,7 +3910,7 @@ void DataSet::read_csv()
 
     sample_ids.resize(samples_number);
 
-    const Index variables_number = columns_number;
+    // const Index variables_number = columns_number;
 
     const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
@@ -3940,9 +3956,12 @@ void DataSet::read_csv()
         {
             rows_missing_values_number++;
 
-            for (size_t i = 0; i < tokens.size(); i++)
+            for (Index i = 0; i < raw_variables_number; i++)
             {
-                if (tokens[i].empty() || tokens[i] == missing_values_label)
+                const string token = has_sample_ids
+                                  ? tokens[i+1]
+                                  : tokens[i];
+                if (token.empty() || token == missing_values_label)
                 {
                     missing_values_number++;
 
@@ -3973,7 +3992,7 @@ void DataSet::read_csv()
             }
             else if (raw_variable_type == RawVariableType::DateTime)
             {
-                data(sample_index, raw_variable_index) = time_t(date_to_timestamp(tokens[raw_variable_index]));
+                data(sample_index, raw_variable_index) = time_t(date_to_timestamp(token));
             }
             else if (raw_variable_type == RawVariableType::Categorical)
             {
@@ -4006,7 +4025,7 @@ void DataSet::read_csv()
                     const vector<string> categories = raw_variables[raw_variable_index].categories;
 
                     if (token.empty() || token == missing_values_label)
-                        data(sample_index, variable_indices[0]) = type(NAN);
+                        data(sample_index, variable_indices[0]) = NAN;
                     else if (token == categories[0])
                         data(sample_index, variable_indices[0]) = 1;
                     else if (token == categories[1])
@@ -4021,9 +4040,7 @@ void DataSet::read_csv()
 
     file.close();
 
-    unuse_constant_raw_variables();
     set_binary_raw_variables();
-    split_samples_random();
 }
 
 

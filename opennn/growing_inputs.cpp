@@ -44,7 +44,7 @@ void GrowingInputs::set_default()
     minimum_inputs_number = 1;
     minimum_correlation = type(0);
     trials_number = 3;
-    maximum_epochs_number = 1000;
+    maximum_epochs_number = 10000;
     maximum_time = type(3600.0);
 
     training_strategy && training_strategy->has_neural_network()
@@ -90,6 +90,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     // Data set
 
     DataSet* data_set = loss_index->get_data_set();
+
+    data_set->scrub_missing_values();
 
     const vector<Index> target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 

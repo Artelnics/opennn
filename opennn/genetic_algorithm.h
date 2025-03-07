@@ -35,7 +35,7 @@ public:
 
     Index get_individuals_number() const;
 
-    Index get_genes_number() const;
+    Index get_raw_variables_number() const;
 
     const type& get_mutation_rate() const;
 
@@ -60,30 +60,19 @@ public:
     void initialize_population();
 
     void initialize_population_random();
-
-    void calculate_inputs_activation_probabilities();
-    
     void initialize_population_correlations();
 
     void evaluate_population();
 
     void perform_fitness_assignment();
 
-    // Tensor<type, 1> calculate_selection_probabilities();
-
     void perform_selection();
-
-    // Index weighted_random(const Tensor<type, 1>&);
 
     void perform_crossover();
 
     void perform_mutation();
 
-    Tensor<bool, 1> get_individual_raw_genes(const Tensor<bool, 1>&);
-
-    Tensor<bool, 1> get_individual_genes(const Tensor<bool,1>&);
-
-    vector<Index> get_selected_individuals_indices ();
+    vector<Index> get_selected_individuals_indices();
 
     vector<Index> get_raw_variable_indices(const Tensor<bool, 1>&);
 
@@ -112,7 +101,7 @@ private:
 
     vector<bool> original_unused_raw_variables;
     
-    Tensor<type, 1> input_activation_probabilities;
+    Tensor<type, 1> fitness_correlations;
 
     Tensor<bool, 2> population;
 
@@ -128,7 +117,7 @@ private:
 
     type mean_selection_error;
 
-    type mean_inputs_number;
+    type mean_raw_inputs_number;
     
     Tensor<bool, 2> optimal_individuals_history;
 
