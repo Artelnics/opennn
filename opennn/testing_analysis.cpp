@@ -15,6 +15,7 @@
 #include "unscaling_layer.h"
 #include "probabilistic_layer.h"
 
+
 namespace opennn
 {
 
@@ -188,7 +189,6 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
-
     check();
 
     // Data set
@@ -231,7 +231,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
    const Tensor<type, 2> absolute_errors = calculate_error().abs();
 
    #pragma omp parallel for
-
    for(Index i = 0; i < outputs_number; i++)
    {
        for(Index j = 0; j < testing_samples_number; j++)
@@ -241,7 +240,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
        }
    }
-
     return error_data;
 }
 

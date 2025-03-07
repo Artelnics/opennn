@@ -947,11 +947,12 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
-    
+
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
-            forward_propagation.layers[i],
-            is_training);
+                                     forward_propagation.layers[i],
+                                     is_training);
+    }
 }
 
 
@@ -1055,8 +1056,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagate({input_pair}, forward_propagation, false);
 
+
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
 
     return tensor_map_2(outputs_pair);
 }
@@ -1953,7 +1956,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
     }
 }
 
-}// Namespace
+// Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

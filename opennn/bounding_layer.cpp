@@ -156,10 +156,10 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
         static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
-
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        outputs.device(*thread_pool_device) = inputs;
+        outputs = inputs.eval();
+        //outputs.device(*thread_pool_device) = inputs;
 
         return;
     }
