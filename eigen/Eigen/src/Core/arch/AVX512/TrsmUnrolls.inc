@@ -213,11 +213,12 @@ class trans {
   }
 
   /**
-   * Transposes LxunrollN row major block of matrices stored EIGEN_AVX_MAX_NUM_ACC zmm registers to
+   * Transposes LxunrollN row major block of matrices stored `EIGEN_AVX_MAX_NUM_ACC` zmm registers to
    * "unrollN"xL ymm registers to be stored col-major into C.
    *
    *  For 8x48, the 8x48 block (row-major) is stored in zmm as follows:
    *
+   *  ```
    *  row0: zmm0 zmm1 zmm2
    *  row1: zmm3 zmm4 zmm5
    *    .
@@ -231,10 +232,10 @@ class trans {
    *    .
    *    .
    *  row7: zmm14 zmm15
-   *
+   * ```
    *
    * In general we will have {1,2,3} groups of avx registers each of size
-   * EIGEN_AVX_MAX_NUM_ROW. packetIndexOffset is used to select which "block" of
+   * `EIGEN_AVX_MAX_NUM_ROW`. packetIndexOffset is used to select which "block" of
    * avx registers are being transposed.
    */
   template <int64_t unrollN, int64_t packetIndexOffset>

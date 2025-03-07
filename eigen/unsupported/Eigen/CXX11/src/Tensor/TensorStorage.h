@@ -24,7 +24,6 @@ namespace Eigen {
 
 /** \internal
  *
- * \class TensorStorage
  * \ingroup CXX11_Tensor_Module
  *
  * \brief Stores the data of a tensor

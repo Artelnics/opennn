@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorContraction
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor contraction class.
- *
- *
- */
 namespace internal {
 
 template <typename Dimensions, typename LhsXprType, typename RhsXprType, typename OutputKernelType>
@@ -301,6 +294,9 @@ struct NoOpOutputKernel {
   }
 };
 
+/** Tensor contraction class.
+ * \ingroup CXX11_Tensor_Module
+ */
 template <typename Indices, typename LhsXprType, typename RhsXprType,
           typename OutputKernelType = const NoOpOutputKernel>
 class TensorContractionOp

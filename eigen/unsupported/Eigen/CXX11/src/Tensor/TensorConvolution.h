@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorConvolution
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor convolution class.
- *
- *
- */
 namespace internal {
 
 template <typename Index, typename InputDims, int NumKernelDims, int Layout>
@@ -231,6 +224,9 @@ struct nested<TensorConvolutionOp<Dimensions, InputXprType, KernelXprType>, 1,
 
 }  // end namespace internal
 
+/** Tensor convolution class.
+ * \ingroup CXX11_Tensor_Module
+ */
 template <typename Indices, typename InputXprType, typename KernelXprType>
 class TensorConvolutionOp
     : public TensorBase<TensorConvolutionOp<Indices, InputXprType, KernelXprType>, ReadOnlyAccessors> {

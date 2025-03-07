@@ -31,12 +31,12 @@
 test:linux:x86-64:gcc-6:default:official:
   extends: .test:linux:x86-64:gcc-6:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:gcc-6:default:unsupported:
   extends: .test:linux:x86-64:gcc-6:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 # GCC-10 (modern stable)
 .test:linux:x86-64:gcc-10:default:
@@ -48,12 +48,12 @@ test:linux:x86-64:gcc-6:default:unsupported:
 test:linux:x86-64:gcc-10:default:official:
   extends: .test:linux:x86-64:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:gcc-10:default:unsupported:
   extends: .test:linux:x86-64:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:gcc-10:avx:
   extends: .test:linux:x86-64
@@ -64,12 +64,12 @@ test:linux:x86-64:gcc-10:default:unsupported:
 test:linux:x86-64:gcc-10:avx:official:
   extends: .test:linux:x86-64:gcc-10:avx
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:gcc-10:avx:unsupported:
   extends: .test:linux:x86-64:gcc-10:avx
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:gcc-10:avx2:
   extends: .test:linux:x86-64
@@ -80,12 +80,12 @@ test:linux:x86-64:gcc-10:avx:unsupported:
 test:linux:x86-64:gcc-10:avx2:official:
   extends: .test:linux:x86-64:gcc-10:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:gcc-10:avx2:unsupported:
   extends: .test:linux:x86-64:gcc-10:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:gcc-10:avx512dq:
   extends: .test:linux:x86-64
@@ -101,12 +101,12 @@ test:linux:x86-64:gcc-10:avx2:unsupported:
 test:linux:x86-64:gcc-10:avx512dq:official:
   extends: .test:linux:x86-64:gcc-10:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:gcc-10:avx512dq:unsupported:
   extends: .test:linux:x86-64:gcc-10:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 # Clang-6 (minimum on Ubuntu 20.04)
 .test:linux:x86-64:clang-6:default:
@@ -119,12 +119,12 @@ test:linux:x86-64:gcc-10:avx512dq:unsupported:
 test:linux:x86-64:clang-6:default:official:
   extends: .test:linux:x86-64:clang-6:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:clang-6:default:unsupported:
   extends: .test:linux:x86-64:clang-6:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 # Clang-12 (modern stable)
 .test:linux:x86-64:clang-12:default:
@@ -136,12 +136,12 @@ test:linux:x86-64:clang-6:default:unsupported:
 test:linux:x86-64:clang-12:default:official:
   extends: .test:linux:x86-64:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:clang-12:default:unsupported:
   extends: .test:linux:x86-64:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:clang-12:avx:
   extends: .test:linux:x86-64
@@ -152,12 +152,12 @@ test:linux:x86-64:clang-12:default:unsupported:
 test:linux:x86-64:clang-12:avx:official:
   extends: .test:linux:x86-64:clang-12:avx
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:clang-12:avx:unsupported:
   extends: .test:linux:x86-64:clang-12:avx
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:clang-12:avx2:
   extends: .test:linux:x86-64
@@ -168,12 +168,12 @@ test:linux:x86-64:clang-12:avx:unsupported:
 test:linux:x86-64:clang-12:avx2:official:
   extends: .test:linux:x86-64:clang-12:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:clang-12:avx2:unsupported:
   extends: .test:linux:x86-64:clang-12:avx2
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:x86-64:clang-12:avx512dq:
   extends: .test:linux:x86-64
@@ -189,19 +189,19 @@ test:linux:x86-64:clang-12:avx2:unsupported:
 test:linux:x86-64:clang-12:avx512dq:official:
   extends: .test:linux:x86-64:clang-12:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:x86-64:clang-12:avx512dq:unsupported:
   extends: .test:linux:x86-64:clang-12:avx512dq
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 ##### CUDA #####################################################################
 .test:linux:cuda:
   extends: .test:linux
   allow_failure: true
   variables:
-    EIGEN_CI_TEST_LABEL: gpu
+    EIGEN_CI_CTEST_LABEL: gpu
   tags:
     - eigen-runner
     - linux
@@ -304,12 +304,12 @@ test:linux:cuda-12.2:clang-12:
 test:linux:arm:gcc-10:default:official:
   extends: .test:linux:arm:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:arm:gcc-10:default:unsupported:
   extends: .test:linux:arm:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:arm:clang-12:default:
   extends: .test:linux:arm
@@ -320,12 +320,12 @@ test:linux:arm:gcc-10:default:unsupported:
 test:linux:arm:clang-12:default:official:
   extends: .test:linux:arm:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:arm:clang-12:default:unsupported:
   extends: .test:linux:arm:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 ##### aarch64 ##################################################################
 
@@ -348,12 +348,12 @@ test:linux:arm:clang-12:default:unsupported:
 test:linux:aarch64:gcc-10:default:official:
   extends: .test:linux:aarch64:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:aarch64:gcc-10:default:unsupported:
   extends: .test:linux:aarch64:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:aarch64:clang-12:default:
   extends: .test:linux:aarch64
@@ -364,12 +364,12 @@ test:linux:aarch64:gcc-10:default:unsupported:
 test:linux:aarch64:clang-12:default:official:
   extends: .test:linux:aarch64:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:aarch64:clang-12:default:unsupported:
   extends: .test:linux:aarch64:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 ##### ppc64le ##################################################################
 
@@ -392,12 +392,12 @@ test:linux:aarch64:clang-12:default:unsupported:
 test:linux:ppc64le:gcc-10:default:official:
   extends: .test:linux:ppc64le:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:ppc64le:gcc-10:default:unsupported:
   extends: .test:linux:ppc64le:gcc-10:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 .test:linux:ppc64le:clang-12:default:
   extends: .test:linux:ppc64le
@@ -408,12 +408,43 @@ test:linux:ppc64le:gcc-10:default:unsupported:
 test:linux:ppc64le:clang-12:default:official:
   extends: .test:linux:ppc64le:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Official
+    EIGEN_CI_CTEST_LABEL: Official
 
 test:linux:ppc64le:clang-12:default:unsupported:
   extends: .test:linux:ppc64le:clang-12:default
   variables:
-    EIGEN_CI_TEST_LABEL: Unsupported
+    EIGEN_CI_CTEST_LABEL: Unsupported
+
+##### loongarch64 ###################################################################
+.test:linux:loongarch64:
+  extends: .test:linux
+  image: ubuntu:24.04
+  variables:
+    EIGEN_CI_TARGET_ARCH: loongarch64
+    EIGEN_CI_CROSS_TARGET_TRIPLE: loongarch64-linux-gnu
+    # Install QEMU and set up the execution environment in the image
+    EIGEN_CI_CROSS_INSTALL: g++-14-loongarch64-linux-gnu qemu-user-static
+    EIGEN_CI_CTEST_ARGS: --timeout 2000
+  tags:
+    - eigen-runner
+    - linux
+    - cross-compiler
+
+# GCC-14 (Ubuntu 24)
+.test:linux:loongarch64:gcc-14:default:
+  extends: .test:linux:loongarch64
+  image: ubuntu:24.04
+  needs: [ build:linux:cross:loongarch64:gcc-14:default ]
+
+test:linux:loongarch64:gcc-14:default:official:
+  extends: .test:linux:loongarch64:gcc-14:default
+  variables:
+    EIGEN_CI_CTEST_LABEL: Official
+
+test:linux:loongarch64:gcc-14:default:unsupported:
+  extends: .test:linux:loongarch64:gcc-14:default
+  variables:
+    EIGEN_CI_CTEST_LABEL: Unsupported
 
 ##### MR Smoke Tests ###########################################################
 
@@ -421,7 +452,7 @@ test:linux:x86-64:gcc-10:default:smoketest:
   extends: .test:linux:x86-64:gcc-10:default
   needs: [ build:linux:cross:x86-64:gcc-10:default:smoketest ]
   variables:
-    EIGEN_CI_TEST_LABEL: smoketest
+    EIGEN_CI_CTEST_LABEL: smoketest
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
@@ -429,6 +460,6 @@ test:linux:x86-64:clang-12:default:smoketest:
   extends: .test:linux:x86-64:clang-12:default
   needs: [ build:linux:cross:x86-64:clang-12:default:smoketest ]
   variables:
-    EIGEN_CI_TEST_LABEL: smoketest
+    EIGEN_CI_CTEST_LABEL: smoketest
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

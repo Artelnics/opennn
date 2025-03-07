@@ -267,8 +267,6 @@ public:
     void set_raw_variable_indices(const vector<Index>&, const vector<Index>&);
     void set_input_raw_variables_unused();
 
-    //void set_input_raw_variables(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
-
     void set_raw_variable_use(const Index&, const VariableUse&);
     void set_raw_variable_use(const string&, const VariableUse&);
 
@@ -463,6 +461,8 @@ public:
 
     // Missing values
 
+    inline Index get_missing_values_number() const { return missing_values_number; }
+
     bool has_nan() const;
 
     bool has_nan_row(const Index&) const;
@@ -476,15 +476,10 @@ public:
 
     void scrub_missing_values();
 
-    Tensor<Index, 1> count_raw_variables_with_nan() const;
+    Tensor<Index, 1> count_nans_per_raw_variable() const;
+    Index count_raw_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
-
-    //void set_missing_values_number();
-
-    //void set_raw_variables_missing_values_number();
-
-    //void set_samples_missing_values_number();
 
     // Other
 
@@ -509,8 +504,6 @@ public:
     void read_data_file_preview(ifstream&);
 
     void check_separators(const string&) const;
-
-    Tensor<type, 2> read_input_csv(const filesystem::path&, const string&, const string&, const bool&, const bool&) const;
 
     //Virtual functions
 
@@ -549,7 +542,7 @@ protected:
 
     vector<RawVariable> raw_variables;
 
-    // DATA FILE
+    // Data File
 
     filesystem::path data_path;
 
@@ -569,7 +562,7 @@ protected:
 
     Index gmt = 0;
 
-    // MISSING VALUES
+    // Missing Values
 
     MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
 
@@ -578,6 +571,8 @@ protected:
     Tensor<Index, 1> raw_variables_missing_values_number;
 
     Index rows_missing_values_number = 0;
+
+    // Display
 
     bool display = true;     
 };

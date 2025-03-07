@@ -251,6 +251,24 @@ struct vectorization_logic {
                         (Matrix1::Flags & RowMajorBit) ? PacketSize : 2 > (1, 2), DefaultTraversal, CompleteUnrolling));
     }
 
+    // the actual packet type used by the assignment evaluator is not necessarily PacketType for small fixed-size arrays
+    if (internal::unpacket_traits<typename internal::find_best_packet<Scalar, 2>::type>::size > 2) {
+      // the expression should not be vectorized if the size is too small
+      using Vector2 = Matrix<Scalar, 2, 1, ColMajor>;
+      using VectorMax3 = Matrix<Scalar, Dynamic, 1, ColMajor, 3, 1>;
+      VERIFY(test_assign(Vector2(), Vector2(), LinearTraversal, InnerUnrolling + CompleteUnrolling));
+      VERIFY(test_assign(VectorMax3(), Vector2(), LinearTraversal, InnerUnrolling + CompleteUnrolling));
+      VERIFY(test_assign(Vector2(), VectorMax3(), LinearTraversal, InnerUnrolling + CompleteUnrolling));
+      VERIFY(test_assign(VectorMax3(), VectorMax3(), LinearTraversal, NoUnrolling));
+    }
+
+    if (PacketSize > 1 && PacketSize < 8) {
+      // the size of the expression should be deduced at compile time by considering both the lhs and rhs
+      using Lhs = Matrix<Scalar, 7, Dynamic, ColMajor>;
+      using Rhs = Matrix<Scalar, Dynamic, 7, ColMajor>;
+      VERIFY(test_assign(Lhs(), Rhs(), -1, InnerUnrolling + CompleteUnrolling));
+    }
+
     VERIFY(
         test_redux(Matrix44c().template block<2 * PacketSize, 1>(1, 2), LinearVectorizedTraversal, CompleteUnrolling));
 

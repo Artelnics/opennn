@@ -14,12 +14,6 @@
 
 namespace Eigen {
 
-/** \class TensorRoll
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor roll (circular shift) elements class.
- *
- */
 namespace internal {
 template <typename RollDimensions, typename XprType>
 struct traits<TensorRollOp<RollDimensions, XprType> > : public traits<XprType> {
@@ -46,6 +40,12 @@ struct nested<TensorRollOp<RollDimensions, XprType>, 1, typename eval<TensorRoll
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor roll (circular shift) elements class.
+ *
+ */
 template <typename RollDimensions, typename XprType>
 class TensorRollOp : public TensorBase<TensorRollOp<RollDimensions, XprType>, WriteAccessors> {
  public:

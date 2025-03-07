@@ -80,27 +80,6 @@ struct matrix_swap_impl;
 
 }  // end namespace internal
 
-#ifdef EIGEN_PARSED_BY_DOXYGEN
-namespace doxygen {
-
-// This is a workaround to doxygen not being able to understand the inheritance logic
-// when it is hidden by the dense_xpr_base helper struct.
-// Moreover, doxygen fails to include members that are not documented in the declaration body of
-// MatrixBase if we inherits MatrixBase<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_> >,
-// this is why we simply inherits MatrixBase, though this does not make sense.
-
-/** This class is just a workaround for Doxygen and it does not not actually exist. */
-template <typename Derived>
-struct dense_xpr_base_dispatcher;
-/** This class is just a workaround for Doxygen and it does not not actually exist. */
-template <typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct dense_xpr_base_dispatcher<Matrix<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> : public MatrixBase {};
-/** This class is just a workaround for Doxygen and it does not not actually exist. */
-template <typename Scalar_, int Rows_, int Cols_, int Options_, int MaxRows_, int MaxCols_>
-struct dense_xpr_base_dispatcher<Array<Scalar_, Rows_, Cols_, Options_, MaxRows_, MaxCols_>> : public ArrayBase {};
-
-}  // namespace doxygen
-
 /** \class PlainObjectBase
  * \ingroup Core_Module
  * \brief %Dense storage base class for matrices and arrays.
@@ -113,12 +92,7 @@ struct dense_xpr_base_dispatcher<Array<Scalar_, Rows_, Cols_, Options_, MaxRows_
  * \sa \ref TopicClassHierarchy
  */
 template <typename Derived>
-class PlainObjectBase : public doxygen::dense_xpr_base_dispatcher<Derived>
-#else
-template <typename Derived>
-class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
-#endif
-{
+class PlainObjectBase : public internal::dense_xpr_base<Derived>::type {
  public:
   enum { Options = internal::traits<Derived>::Options };
   typedef typename internal::dense_xpr_base<Derived>::type Base;
@@ -525,7 +499,10 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
       eigen_assert(list_size == static_cast<size_t>(RowsAtCompileTime) || RowsAtCompileTime == Dynamic);
       resize(list_size, ColsAtCompileTime);
       if (list.begin()->begin() != nullptr) {
-        std::copy(list.begin()->begin(), list.begin()->end(), m_storage.data());
+        Index index = 0;
+        for (const Scalar& e : *list.begin()) {
+          coeffRef(index++) = e;
+        }
       }
     } else {
       eigen_assert(list.size() == static_cast<size_t>(RowsAtCompileTime) || RowsAtCompileTime == Dynamic);

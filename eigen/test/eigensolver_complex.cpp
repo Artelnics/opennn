@@ -12,6 +12,7 @@
 #include <limits>
 #include <Eigen/Eigenvalues>
 #include <Eigen/LU>
+#include "CustomComplex.h"
 
 template <typename MatrixType>
 bool find_pivot(typename MatrixType::Scalar tol, MatrixType& diffs, Index col = 0) {
@@ -164,6 +165,9 @@ EIGEN_DECLARE_TEST(eigensolver_complex) {
 
   // Test problem size constructors
   CALL_SUBTEST_5(ComplexEigenSolver<MatrixXf> tmp(s));
+
+  // Test custom complex scalar type.
+  CALL_SUBTEST_6(eigensolver(Matrix<CustomComplex<double>, 5, 5>()));
 
   TEST_SET_BUT_UNUSED_VARIABLE(s)
 }

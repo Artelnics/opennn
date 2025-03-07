@@ -60,12 +60,12 @@ struct eigen_fill_impl<Xpr, /*use_fill*/ false> {
   using Func = scalar_constant_op<Scalar>;
   using PlainObject = typename Xpr::PlainObject;
   using Constant = typename PlainObject::ConstantReturnType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(Xpr& dst, const Scalar& val) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void run(Xpr& dst, const Scalar& val) {
     const Constant src(dst.rows(), dst.cols(), val);
     run(dst, src);
   }
   template <typename SrcXpr>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(Xpr& dst, const SrcXpr& src) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void run(Xpr& dst, const SrcXpr& src) {
     call_dense_assignment_loop(dst, src, assign_op<Scalar, Scalar>());
   }
 };
@@ -78,7 +78,7 @@ template <typename Xpr>
 struct eigen_fill_impl<Xpr, /*use_fill*/ true> {
   using Scalar = typename Xpr::Scalar;
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(Xpr& dst, const Scalar& val) {
-    EIGEN_USING_STD(fill_n);
+    using std::fill_n;
     fill_n(dst.data(), dst.size(), val);
   }
   template <typename SrcXpr>
@@ -100,12 +100,12 @@ struct eigen_zero_impl<Xpr, /*use_memset*/ false> {
   using Scalar = typename Xpr::Scalar;
   using PlainObject = typename Xpr::PlainObject;
   using Zero = typename PlainObject::ZeroReturnType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(Xpr& dst) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void run(Xpr& dst) {
     const Zero src(dst.rows(), dst.cols());
     run(dst, src);
   }
   template <typename SrcXpr>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(Xpr& dst, const SrcXpr& src) {
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE constexpr void run(Xpr& dst, const SrcXpr& src) {
     call_dense_assignment_loop(dst, src, assign_op<Scalar, Scalar>());
   }
 };

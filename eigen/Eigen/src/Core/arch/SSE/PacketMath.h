@@ -1694,10 +1694,24 @@ EIGEN_STRONG_INLINE void pscatter<uint32_t, Packet4ui>(uint32_t* to, const Packe
 }
 template <>
 EIGEN_STRONG_INLINE void pscatter<bool, Packet16b>(bool* to, const Packet16b& from, Index stride) {
-  to[4 * stride * 0] = _mm_cvtsi128_si32(from);
-  to[4 * stride * 1] = _mm_cvtsi128_si32(_mm_shuffle_epi32(from, 1));
-  to[4 * stride * 2] = _mm_cvtsi128_si32(_mm_shuffle_epi32(from, 2));
-  to[4 * stride * 3] = _mm_cvtsi128_si32(_mm_shuffle_epi32(from, 3));
+  EIGEN_ALIGN16 bool tmp[16];
+  pstore(tmp, from);
+  to[stride * 0] = tmp[0];
+  to[stride * 1] = tmp[1];
+  to[stride * 2] = tmp[2];
+  to[stride * 3] = tmp[3];
+  to[stride * 4] = tmp[4];
+  to[stride * 5] = tmp[5];
+  to[stride * 6] = tmp[6];
+  to[stride * 7] = tmp[7];
+  to[stride * 8] = tmp[8];
+  to[stride * 9] = tmp[9];
+  to[stride * 10] = tmp[10];
+  to[stride * 11] = tmp[11];
+  to[stride * 12] = tmp[12];
+  to[stride * 13] = tmp[13];
+  to[stride * 14] = tmp[14];
+  to[stride * 15] = tmp[15];
 }
 
 // some compilers might be tempted to perform multiple moves instead of using a vector path.

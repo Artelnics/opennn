@@ -6,6 +6,7 @@ foreach(example_src ${examples_SRCS})
   if(EIGEN_STANDARD_LIBRARIES_TO_LINK_TO)
     target_link_libraries(${example} ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO})
   endif()
+  target_link_libraries(${example} Eigen3::Eigen)
   add_custom_command(
     TARGET ${example}
     POST_BUILD

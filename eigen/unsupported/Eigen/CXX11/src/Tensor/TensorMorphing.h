@@ -15,13 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorReshaping
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Tensor reshaping class.
- *
- *
- */
 namespace internal {
 template <typename NewDimensions, typename XprType>
 struct traits<TensorReshapingOp<NewDimensions, XprType>> : public traits<XprType> {
@@ -49,6 +42,11 @@ struct nested<TensorReshapingOp<NewDimensions, XprType>, 1,
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Tensor reshaping class.
+ */
 template <typename NewDimensions, typename XprType>
 class TensorReshapingOp : public TensorBase<TensorReshapingOp<NewDimensions, XprType>, WriteAccessors> {
  public:

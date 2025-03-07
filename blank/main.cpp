@@ -26,6 +26,11 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv",";", true, true);
+
+        //data_set.print_missing_values_information();
+
+        /*
         ImageDataSet image_data_set(0,{0,0,0},{0});
 
         image_data_set.set_data_path("/Users/artelnics/Desktop/Datasets/melanoma_dataset_bmp_testing");
@@ -42,7 +47,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
                                      image_data_set.get_dimensions(DataSet::VariableUse::Input),
-                                     { 3,9,9,9 /*64, 128, 128*/ },
+                                     { 3,9,9,9 },
                                      image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
 
@@ -50,7 +55,7 @@ int main()
         // throw runtime_error("Checking the parameters of the network");
 
         // Training strategy
-
+        /*
         TrainingStrategy training_strategy(&neural_network, &image_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
@@ -70,7 +75,7 @@ int main()
         // image_data_set.set(DataSet::SampleUse::Testing);
 
         // Testing analysis
-
+        /*
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
 
         testing_analysis.print_binary_classification_tests();
@@ -83,7 +88,7 @@ int main()
         // cout << "Calculating confusion...." << endl;
         // const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         // cout << "\nConfusion matrix:\n" << confusion << endl;
-
+        */
         cout << "Bye!" << endl;
 
         return 0;

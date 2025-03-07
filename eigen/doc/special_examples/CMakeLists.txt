@@ -7,7 +7,7 @@ endif()
 
 if(QT4_FOUND)
   add_executable(Tutorial_sparse_example Tutorial_sparse_example.cpp Tutorial_sparse_example_details.cpp)
-  target_link_libraries(Tutorial_sparse_example ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+  target_link_libraries(Tutorial_sparse_example ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} Eigen3::Eigen)
 
   add_custom_command(
     TARGET Tutorial_sparse_example
@@ -20,7 +20,7 @@ if(QT4_FOUND)
 endif()
 
 add_executable(random_cpp11 random_cpp11.cpp)
-target_link_libraries(random_cpp11 ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO})
+target_link_libraries(random_cpp11 ${EIGEN_STANDARD_LIBRARIES_TO_LINK_TO} Eigen3::Eigen)
 add_dependencies(all_examples random_cpp11)
 
 add_custom_command(

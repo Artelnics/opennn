@@ -15,28 +15,6 @@
 
 namespace Eigen {
 
-/** \class TensorLayoutSwap
- * \ingroup CXX11_Tensor_Module
- *
- * \brief Swap the layout from col-major to row-major, or row-major
- * to col-major, and invert the order of the dimensions.
- *
- * Beware: the dimensions are reversed by this operation. If you want to
- * preserve the ordering of the dimensions, you need to combine this
- * operation with a shuffle.
- *
- * \example:
- * Tensor<float, 2, ColMajor> input(2, 4);
- * Tensor<float, 2, RowMajor> output = input.swap_layout();
- * eigen_assert(output.dimension(0) == 4);
- * eigen_assert(output.dimension(1) == 2);
- *
- * array<int, 2> shuffle(1, 0);
- * output = input.swap_layout().shuffle(shuffle);
- * eigen_assert(output.dimension(0) == 2);
- * eigen_assert(output.dimension(1) == 4);
- *
- */
 namespace internal {
 template <typename XprType>
 struct traits<TensorLayoutSwapOp<XprType> > : public traits<XprType> {
@@ -63,6 +41,28 @@ struct nested<TensorLayoutSwapOp<XprType>, 1, typename eval<TensorLayoutSwapOp<X
 
 }  // end namespace internal
 
+/**
+ * \ingroup CXX11_Tensor_Module
+ *
+ * \brief Swap the layout from col-major to row-major, or row-major
+ * to col-major, and invert the order of the dimensions.
+ *
+ * Beware: the dimensions are reversed by this operation. If you want to
+ * preserve the ordering of the dimensions, you need to combine this
+ * operation with a shuffle.
+ *
+ * \example:
+ * Tensor<float, 2, ColMajor> input(2, 4);
+ * Tensor<float, 2, RowMajor> output = input.swap_layout();
+ * eigen_assert(output.dimension(0) == 4);
+ * eigen_assert(output.dimension(1) == 2);
+ *
+ * array<int, 2> shuffle(1, 0);
+ * output = input.swap_layout().shuffle(shuffle);
+ * eigen_assert(output.dimension(0) == 2);
+ * eigen_assert(output.dimension(1) == 4);
+ *
+ */
 template <typename XprType>
 class TensorLayoutSwapOp : public TensorBase<TensorLayoutSwapOp<XprType>, WriteAccessors> {
  public:

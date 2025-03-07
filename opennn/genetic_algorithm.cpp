@@ -577,8 +577,10 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     // Selection algorithm
 
-    InputsSelectionResults input_selection_results(maximum_epochs_number);
+    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(DataSet::VariableUse::Input);
+    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(DataSet::VariableUse::Target);
 
+    InputsSelectionResults input_selection_results(maximum_epochs_number);
 
     if(display) cout << "Performing genetic inputs selection...\n" << endl;
 

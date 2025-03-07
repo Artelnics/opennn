@@ -243,7 +243,10 @@ class FullPivLU : public SolverBase<FullPivLU<MatrixType_, PermutationIndex_> > 
       the LU decomposition.
     */
   inline RealScalar rcond() const {
-    eigen_assert(m_isInitialized && "PartialPivLU is not initialized.");
+    eigen_assert(m_isInitialized && "FullPivLU is not initialized.");
+    if (!isInvertible()) {
+      return RealScalar(0);
+    }
     return internal::rcond_estimate_helper(m_l1_norm, *this);
   }
 

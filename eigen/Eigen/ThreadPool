@@ -72,6 +72,7 @@
 #include "src/ThreadPool/Barrier.h"
 #include "src/ThreadPool/NonBlockingThreadPool.h"
 #include "src/ThreadPool/CoreThreadPoolDevice.h"
+#include "src/ThreadPool/ForkJoin.h"
 // IWYU pragma: end_exports
 
 #include "src/Core/util/ReenableStupidWarnings.h"
