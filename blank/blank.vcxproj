@@ -104,6 +104,7 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);__Cpp11__;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;__Cpp11__;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
@@ -156,6 +157,7 @@
       <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
       <InterproceduralOptimization>MultiFile</InterproceduralOptimization>
       <PGOUsePreTrainedModel>true</PGOUsePreTrainedModel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
@@ -200,6 +202,7 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
@@ -243,6 +246,7 @@
       <UseFullPaths>false</UseFullPaths>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);NDEBUG;__Cpp11__;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;NDEBUG;__Cpp11__;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>

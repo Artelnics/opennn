@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
+#include "scaling_layer_2d.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_data_set.h"
@@ -311,6 +312,10 @@ vector<Descriptives> TestingAnalysis::calculate_absolute_errors_descriptives() c
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+
+    data_set->set_raw_variable_scalers(Scaler::MinimumMaximum);
+    data_set->scale_data();
+    data_set->calculate_variable_descriptives();
 
     return calculate_absolute_errors_descriptives(targets, outputs);
 }

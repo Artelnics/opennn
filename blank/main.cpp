@@ -26,6 +26,10 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
+        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv",";", true, true);
+
+        //data_set.print_missing_values_information();
+
         /*
         ImageDataSet image_data_set(0,{0,0,0},{0});
 

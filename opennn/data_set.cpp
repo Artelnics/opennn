@@ -2420,15 +2420,12 @@ namespace opennn
 
     void DataSet::print_missing_values_information() const
     {
-        //const Index missing_values_number = count_nan();
-
-        const Tensor<Index, 0> raw_variables_with_missing_values = count_raw_variables_with_nan().sum();
-
+        const Index missing_raw_variables_number = count_raw_variables_with_nan();
         const Index samples_with_missing_values = count_rows_with_nan();
 
         cout << "Missing values number: " << missing_values_number << " (" << missing_values_number * 100 / data.size() << "%)" << endl
-            << "Raw variables with missing values: " << raw_variables_with_missing_values(0)
-            << " (" << raw_variables_with_missing_values(0) * 100 / data.dimension(1) << "%)" << endl
+            << "Raw variables with missing values: " << missing_raw_variables_number
+            << " (" << missing_raw_variables_number * 100 / data.dimension(1) << "%)" << endl
             << "Samples with missing values: "
             << samples_with_missing_values << " (" << samples_with_missing_values * 100 / data.dimension(0) << "%)" << endl;
     }
@@ -3890,8 +3887,6 @@ namespace opennn
 
         sample_ids.resize(samples_number);
 
-        const Index variables_number = columns_number;
-
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
         data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
@@ -3936,13 +3931,12 @@ namespace opennn
             {
                 rows_missing_values_number++;
 
-                for (size_t i = 0; i < tokens.size(); i++)
+                for (size_t i = (has_sample_ids ? 1 : 0); i < tokens.size(); i++)
                 {
                     if (tokens[i].empty() || tokens[i] == missing_values_label)
                     {
                         missing_values_number++;
-
-                        raw_variables_missing_values_number(i)++;
+                        raw_variables_missing_values_number(has_sample_ids ? i - 1 : i)++;
                     }
                 }
             }
@@ -4016,7 +4010,7 @@ namespace opennn
         }
 
         file.close();
-
+   
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();
@@ -4181,7 +4175,7 @@ namespace opennn
     }
 
 
-    Tensor<Index, 1> DataSet::count_raw_variables_with_nan() const
+    Tensor<Index, 1> DataSet::count_nans_per_raw_variable() const
     {
         const Index raw_variables_number = get_raw_variables_number();
         const Index rows_number = get_samples_number();
@@ -4189,8 +4183,7 @@ namespace opennn
         Tensor<Index, 1> raw_variables_with_nan(raw_variables_number);
         raw_variables_with_nan.setZero();
 
-#pragma omp parallel for
-
+        #pragma omp parallel for
         for (Index raw_variable_index = 0; raw_variable_index < raw_variables_number; raw_variable_index++)
         {
             const Index current_variable_index = get_variable_indices(raw_variable_index)[0];
@@ -4205,6 +4198,20 @@ namespace opennn
         }
 
         return raw_variables_with_nan;
+    }
+
+
+    Index DataSet::count_raw_variables_with_nan() const
+    {
+        Tensor<Index, 1> raw_variables_with_nan = count_nans_per_raw_variable();
+
+        Index missing_raw_variables_number = 0;
+
+        for (Index i = 0; i < raw_variables_with_nan.dimension(0); i++)
+            if (raw_variables_with_nan(i) > 0)
+                missing_raw_variables_number++;
+
+        return missing_raw_variables_number;
     }
 
 
@@ -4364,200 +4371,6 @@ namespace opennn
         default:
             break;
         }
-    }
-
-
-    Tensor<type, 2> DataSet::read_input_csv(const filesystem::path& input_data_file_name,
-        const string& separator_string,
-        const string& new_missing_values_label,
-        const bool& has_raw_variables_name,
-        const bool& new_has_sample_ids) const
-    {
-        const Index raw_variables_number = get_raw_variables_number();
-
-        ifstream file(input_data_file_name);
-
-        Index input_samples_count = 0;
-
-        string line;
-        Index line_number = 0;
-
-        Index tokens_count;
-
-        Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
-
-        if (model_type == ModelType::AutoAssociation)
-            input_raw_variables_number = get_raw_variables_number()
-            - get_raw_variables_number(VariableUse::Target)
-            - get_raw_variables_number(VariableUse::None) / 2;
-
-        while (getline(file, line))
-        {
-            prepare_line(line);
-
-            line_number++;
-
-            if (line.empty()) continue;
-
-            tokens_count = count_tokens(line, separator_string);
-
-            if (tokens_count != input_raw_variables_number)
-                throw runtime_error("Line " + to_string(line_number) + ": Size of tokens(" + to_string(tokens_count) + ") "
-                    "is not equal to number of raw_variables(" + to_string(input_raw_variables_number) + ").\n");
-
-            input_samples_count++;
-        }
-
-        file.close();
-
-        const Index input_variables_number = get_variables_number(VariableUse::Input);
-
-        if (has_raw_variables_name) input_samples_count--;
-
-        Tensor<type, 2> input_data(input_samples_count, input_variables_number);
-        input_data.setZero();
-
-        file.open(input_data_file_name);
-
-        //skip_header(file);
-
-        // Read rest of the lines
-
-        vector<string> tokens;
-
-        line_number = 0;
-        Index variable_index = 0;
-        Index token_index = 0;
-
-        const bool is_float = is_same<type, float>::value;
-        bool has_missing_values = false;
-
-        while (getline(file, line))
-        {
-            prepare_line(line);
-
-            if (line.empty()) continue;
-
-            tokens = get_tokens(line, separator_string);
-
-            variable_index = 0;
-            token_index = 0;
-
-            for (Index i = 0; i < raw_variables_number; i++)
-            {
-                const RawVariable& raw_variable = raw_variables[i];
-
-                if (has_sample_ids)
-                    continue;
-
-                if (raw_variable.use == VariableUse::None)
-                {
-                    token_index++;
-                    continue;
-                }
-                else if (raw_variable.use != VariableUse::Input)
-                {
-                    continue;
-                }
-
-                const string& token = tokens[token_index];
-
-                if (raw_variable.type == RawVariableType::Numeric)
-                {
-                    if (token == missing_values_label || token.empty())
-                        input_data(line_number, variable_index) = type(NAN);
-                    else if (is_float)
-                        input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
-                    else
-                        input_data(line_number, variable_index) = type(stof(token));
-
-                    variable_index++;
-                }
-                else if (raw_variable.type == RawVariableType::Binary)
-                {
-                    if (token == missing_values_label)
-                        input_data(line_number, variable_index) = type(NAN);
-                    else if (token == raw_variable.name
-                        || (raw_variable.categories.size() > 0 && token == raw_variable.categories[0]))
-                        input_data(line_number, variable_index) = type(1);
-
-                    variable_index++;
-                }
-                else if (raw_variable.type == RawVariableType::Categorical)
-                {
-                    for (Index k = 0; k < raw_variable.get_categories_number(); k++)
-                    {
-                        if (token == missing_values_label)
-                            input_data(line_number, variable_index) = type(NAN);
-                        else if (token == raw_variable.categories[k])
-                            input_data(line_number, variable_index) = type(1);
-
-                        variable_index++;
-                    }
-                }
-                else if (raw_variable.type == RawVariableType::DateTime)
-                {
-                    token == missing_values_label || token.empty()
-                        ? input_data(line_number, variable_index) = type(NAN)
-                        : input_data(line_number, variable_index) = type(date_to_timestamp(token, gmt));
-
-                    variable_index++;
-                }
-                else if (raw_variable.type == RawVariableType::Constant)
-                {
-                    if (token == missing_values_label || token.empty())
-                        input_data(line_number, variable_index) = type(NAN);
-                    else if (is_float)
-                        input_data(line_number, variable_index) = type(strtof(token.data(), nullptr));
-                    else
-                        input_data(line_number, variable_index) = type(stof(token));
-
-                    variable_index++;
-                }
-
-                token_index++;
-            }
-
-            line_number++;
-        }
-
-        file.close();
-
-        if (!has_missing_values)
-            return input_data;
-
-        // Scrub missing values
-
-        //const MissingValuesMethod missing_values_method = get_missing_values_method();
-
-        const Index samples_number = input_data.dimension(0);
-        const Index variables_number = input_data.dimension(1);
-
-        if (missing_values_method == MissingValuesMethod::Unuse
-            || missing_values_method == MissingValuesMethod::Mean)
-        {
-            const Tensor<type, 1> means = mean(input_data);
-
-#pragma omp parallel for schedule(dynamic)
-
-            for (Index j = 0; j < variables_number; j++)
-                for (Index i = 0; i < samples_number; i++)
-                    if (isnan(input_data(i, j)))
-                        input_data(i, j) = means(j);
-        }
-        else
-        {
-            const Tensor<type, 1> medians = median(input_data);
-
-#pragma omp parallel for schedule(dynamic)
-
-            for (Index j = 0; j < variables_number; j++)
-                for (Index i = 0; i < samples_number; i++)
-                    if (isnan(input_data(i, j)))
-                        input_data(i, j) = medians(j);
-        }
-
-        return input_data;
     }
 
 

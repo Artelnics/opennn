@@ -461,6 +461,8 @@ public:
 
     // Missing values
 
+    inline Index get_missing_values_number() const { return missing_values_number; }
+
     bool has_nan() const;
 
     bool has_nan_row(const Index&) const;
@@ -474,7 +476,8 @@ public:
 
     void scrub_missing_values();
 
-    Tensor<Index, 1> count_raw_variables_with_nan() const;
+    Tensor<Index, 1> count_nans_per_raw_variable() const;
+    Index count_raw_variables_with_nan() const;
     Index count_rows_with_nan() const;
     Index count_nan() const;
 
@@ -501,8 +504,6 @@ public:
     void read_data_file_preview(ifstream&);
 
     void check_separators(const string&) const;
-
-    Tensor<type, 2> read_input_csv(const filesystem::path&, const string&, const string&, const bool&, const bool&) const;
 
     //Virtual functions
 
@@ -570,6 +571,8 @@ protected:
     Tensor<Index, 1> raw_variables_missing_values_number;
 
     Index rows_missing_values_number = 0;
+
+    // Display
 
     bool display = true;     
 };
