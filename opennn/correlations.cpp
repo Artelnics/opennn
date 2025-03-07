@@ -543,7 +543,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set(DataSet::SampleUse::Training);
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network;//(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
+    NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<ScalingLayer2D>(dim1));
@@ -733,7 +733,13 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
  
     DataSet data_set(x_filtered.size(), {1}, {y_filtered.dimension(1)});
 
-    data_set.set_raw_variable_indices(input_columns_indices, target_columns_indices);
+    data_set.set_data(data);
+    // data_set.set_raw_variable_indices(input_columns_indices, target_columns_indices);
+    data_set.set_binary_raw_variables();
+    data_set.set_default_raw_variables_scalers();
+
+
+    // data_set.print();
 
     data_set.set(DataSet::SampleUse::Training);
 
@@ -741,20 +747,20 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 { input_variables_number }, {}, {target_variables_number});
+                                 (dimensions){ input_variables_number }, (dimensions){}, (dimensions){target_variables_number});
 
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+    // ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
 
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+    // ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
-    scaling_layer_2d->set_display(false);
+    // probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    // scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-    training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 

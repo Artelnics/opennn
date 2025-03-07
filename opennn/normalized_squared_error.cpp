@@ -104,6 +104,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
     const Index rows_number = targets.dimension(0);
 
     Tensor<type, 0> new_normalization_coefficient;
+    new_normalization_coefficient.setZero();
 
     for(Index i = 0; i < rows_number; i++)
         new_normalization_coefficient.device(*thread_pool_device)

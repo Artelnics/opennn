@@ -933,10 +933,9 @@ BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
 
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) 
 {
-    /*
     const Index size = vector.dimension(0);
 
-    if (size == 0 || bins_number <= 0) {
+    if (size == 0 || bins_number <= 0)
         throw invalid_argument("Vector size or number of bins must be positive.");
 
     std::vector<type> value_keys;
@@ -973,8 +972,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     }
 
     const Index unique_values_number = static_cast<Index>(unique_values.size());
-    //const Index effective_bins = std::min(bins_number, unique_values_number);
-    const Index effective_bins = bins_number;
+    const Index effective_bins = std::min(bins_number, unique_values_number);
+    //const Index effective_bins = bins_number;
 
     Tensor<type, 1> minimums(effective_bins);
     minimums.setZero();
@@ -1020,8 +1019,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     hist.minimums = minimums;
     hist.maximums = maximums;
     hist.frequencies = frequencies;
-    */
-    return 0;
+
+    return hist;
 }
 
 Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
@@ -1405,12 +1404,12 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
             standard_deviation(i) = type(0);
     }
 
-    for(Index i = 0; i < column_indices_size; i++)
+    for(Index i = 0; i < column_indices_size; i++){
         descriptives[i].set(type(minimums(i)), 
                             type(maximums(i)), 
                             type(mean(i)), 
                             type(standard_deviation(i)));
-
+    }
     return descriptives;
 }
 

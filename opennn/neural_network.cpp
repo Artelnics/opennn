@@ -435,7 +435,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     {
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Same;
+        const ConvolutionalLayer::ConvolutionType convolution_type = ConvolutionalLayer::ConvolutionType::Valid;
 
         add_layer(make_unique<ConvolutionalLayer>(get_output_dimensions(),
                                                   kernel_dimensions,
@@ -682,12 +682,15 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
         scaling_layer->set_input_dimensions(new_input_dimensions);
     }
 
-    if (has(Layer::Type::Perceptron))
-    {
-        PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
+    layers[get_first_trainable_layer_index()].get()->set_input_dimensions(new_input_dimensions);
 
-        perceptron_layer->set_input_dimensions(new_input_dimensions);
-    }
+    // if (has(Layer::Type::Perceptron))
+    // {
+    //     PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(get_first(Layer::Type::Perceptron));
+
+    //     perceptron_layer->set_input_dimensions(new_input_dimensions);
+    // }
+
 }
 
 
@@ -947,7 +950,7 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
-    
+
     for (Index i = first_layer_index; i <= last_layer_index; i++)
         layers[i]->forward_propagate(layer_input_pairs[i],
             forward_propagation.layers[i],
@@ -1055,8 +1058,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     forward_propagate({input_pair}, forward_propagation, true);
 
+
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
 
     return tensor_map_2(outputs_pair);
 }
@@ -1447,7 +1452,7 @@ void NeuralNetwork::print() const
          << "Model type:" << endl
          << get_model_type_string() << endl;
 
-    print_vector(get_input_names());
+    // print_vector(get_input_names());
 
     if(model_type != ModelType::ImageClassification)
     {
@@ -1952,8 +1957,8 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_samples_number,
         }
     }
 }
-
-}// Namespace
+}
+// Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
