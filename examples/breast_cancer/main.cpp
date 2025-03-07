@@ -72,8 +72,8 @@ int main()
 
         GeneticAlgorithm genetic_algorithm(&training_strategy);
 
-        genetic_algorithm.set_individuals_number(1200);
-        genetic_algorithm.set_maximum_epochs_number(1500);
+        // genetic_algorithm.set_individuals_number(1200);
+        // genetic_algorithm.set_maximum_epochs_number(1500);
 
         genetic_algorithm.perform_input_selection();
 

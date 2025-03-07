@@ -134,9 +134,9 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
     if (!training_strategy || !training_strategy->get_data_set())
         throw runtime_error("Training strategy or data set is null");
 
-    const Index new_genes_number = training_strategy->get_data_set()->get_variables_number(DataSet::VariableUse::Input);
+    const Index new_raw_variables_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    population.resize(new_individuals_number, new_genes_number);
+    population.resize(new_individuals_number, new_raw_variables_number);
     parameters.resize(new_individuals_number);
     training_errors.resize(new_individuals_number);
     selection_errors.resize(new_individuals_number);
@@ -258,8 +258,8 @@ void GeneticAlgorithm::initialize_population_correlations()
     if(absolute_correlations.dimension(1) > 1)
         for(Index i = 0; i < absolute_correlations.dimension(0); i++)
         {
-            const Tensor<type, 1> column_correlations = absolute_correlations.chip(i,1);
-            absolute_mean_correlations(i) = mean(column_correlations);
+            const Tensor<type, 1> row_correlations = absolute_correlations.chip(i,0);
+            absolute_mean_correlations(i) = mean(row_correlations);
         }
     else
         absolute_mean_correlations = absolute_correlations.chip(0,1);
@@ -269,8 +269,9 @@ void GeneticAlgorithm::initialize_population_correlations()
     for(Index i = 0; i < raw_variables_number; i++)
         fitness_correlations(rank(i)) = type(i+1);
 
-    Tensor<type,0> fitness_correlations_sum = fitness_correlations.sum();
+    const Tensor<type,0> fitness_correlations_sum = fitness_correlations.sum();
 
+    const Tensor<type,1> fitness_correlations_cumsum = fitness_correlations.cumsum(0);
 
     const Index individuals_number = get_individuals_number();
 
@@ -289,27 +290,31 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     mt19937 gen(rd());
 
-    uniform_real_distribution<> distribution(0, fitness_correlations_sum());
+    uniform_real_distribution<> distribution(0, fitness_correlations_sum(0));
 
     Index raw_variables_active;
 
     type arrow;
 
+    cout << "Arrow" << endl;
+
     for(Index i = 0; i < individuals_number; i++)
     {
         individual_raw_variables.setConstant(false);
-
-        raw_variables_active = 1 + rand() % min(Index(100), input_raw_variables_number);
+        
+        raw_variables_active = input_raw_variables_number > 100
+                                   ? 1 + rand() % 100
+                                   : 1 + rand() % input_raw_variables_number;
 
         while(count(individual_raw_variables.data(), individual_raw_variables.data() + individual_raw_variables.size(), 1) < raw_variables_active)
         {
             arrow = distribution(gen);
 
-            if(arrow < fitness_correlations(0) && !individual_raw_variables(0))
+            if(arrow < fitness_correlations_cumsum(0) && !individual_raw_variables(0))
                 individual_raw_variables(0) = true;
 
             for(Index j = 1; j < input_raw_variables_number; j++)
-                if(arrow >= fitness_correlations(j - 1) && arrow < fitness_correlations(j) && !individual_raw_variables(j))
+                if(arrow >= fitness_correlations_cumsum(j - 1) && arrow < fitness_correlations_cumsum(j) && !individual_raw_variables(j))
                     individual_raw_variables(j) = true;
         }
 
@@ -572,9 +577,6 @@ void GeneticAlgorithm::perform_mutation()
 
 InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 {
-    original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(DataSet::VariableUse::Input);
-    original_target_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(DataSet::VariableUse::Target);
-
     // Selection algorithm
 
     original_input_raw_variable_indices = training_strategy->get_data_set()->get_raw_variable_indices(DataSet::VariableUse::Input);

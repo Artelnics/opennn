@@ -543,7 +543,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     data_set.set(DataSet::SampleUse::Training);
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network;//(NeuralNetwork::ModelType::Classification, { 1 }, {}, {1});
+    NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<ScalingLayer2D>(dim1));
