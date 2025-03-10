@@ -45,7 +45,7 @@ void GrowingInputs::set_default()
     minimum_correlation = type(0);
     trials_number = 3;
     maximum_epochs_number = 1000;
-    maximum_time = type(3600.0);
+    maximum_time = type(3600);
 
     training_strategy && training_strategy->has_neural_network()
         ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input)

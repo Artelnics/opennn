@@ -28,7 +28,13 @@ int main()
 
         DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv",";", true, true);
 
-        //data_set.print_missing_values_information();
+        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
+            { input_variables_number }, { 3 }, { target_variables_number });
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         /*
         ImageDataSet image_data_set(0,{0,0,0},{0});

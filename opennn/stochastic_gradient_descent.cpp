@@ -68,7 +68,7 @@ void StochasticGradientDescent::set_default()
     // Stopping criteria
 
     training_loss_goal = type(0);
-    maximum_time = type(3600.0);
+    maximum_time = type(3600);
     maximum_epochs_number = 10000;
 
     // UTILITIES
