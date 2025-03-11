@@ -318,64 +318,6 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
     }
 }
 
-/*
-void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
-{
-    const Index batch_size = input_pairs[0].second[0];
-    const Index time_steps = input_pairs[0].second[1];
-    const Index input_size = input_pairs[0].second[2];
-    const Index output_size = get_outputs_number();
-
-    //RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
-    //    static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
-
-    TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
-
-    Tensor<type, 2> hidden_states(batch_size, output_size);
-    hidden_states.setZero();
-
-    Tensor<type, 2> outputs(batch_size, output_size);
-    outputs.setZero();
-
-    //Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
-
-    //Tensor<type, 2>& current_inputs = recurrent_layer_forward_propagation->current_inputs;
-
-    //Tensor<type, 3>& activation_derivatives = recurrent_layer_forward_propagation->activation_derivatives;
-
-    //Tensor<type, 2>& current_activations_derivatives = recurrent_layer_forward_propagation->current_activations_derivatives;
-
-    //const Index outputs_number = get_outputs_number();
-
-    //Tensor<type, 2> current_hidden_states(batch_size, outputs_number);
-    //current_hidden_states.setZero();
-
-    //for (Index time_step = 0; time_step < time_steps; time_step++)
-    //{
-    //    current_inputs.resize(3,1);
-    //    current_inputs = inputs.slice(Eigen::DSizes<Index, 2>{0, time_step},
-    //                                  Eigen::DSizes<Index, 2>{batch_size, 1});
-
-    //    calculate_combinations(current_inputs, current_hidden_states);
-
-    //    if (is_training)
-    //    {
-    //        calculate_activations(current_hidden_states, empty);
-    //    }
-    //    else
-    //    {
-    //        calculate_activations(current_hidden_states, current_activations_derivatives);
-    //        activation_derivatives.chip(time_step, 1) = current_activations_derivatives;
-    //    }
-
-    //    hidden_states.chip(time_step, 1) = current_hidden_states;
-    //}
-
-}
-*/
-
 void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
