@@ -1155,6 +1155,38 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
     return H;
 }
 
+Tensor<type, 2> LossIndex::calculate_inverse_hessian()
+{
+    Tensor<type, 2> H = calculate_numerical_hessian();
+
+    const Index parameters_number = H.dimension(0);
+
+    type determinant = 1;
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        determinant *= H(i, i);
+    }
+
+    if(abs(determinant) < NUMERIC_LIMITS_MIN)
+    {
+        throw runtime_error("Hessian is not invertible.");
+    }
+
+    Tensor<type, 2> H_inv(parameters_number, parameters_number);
+    H_inv.setZero();
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        for(Index j = 0; j < parameters_number; j++)
+        {
+            type cofactor = ((i + j) % 2 == 0 ? 1 : -1) * H(j, i);
+            H_inv(i, j) = cofactor / determinant;
+        }
+    }
+
+    return H_inv;
+}
 
 type LossIndex::calculate_h(const type& x) 
 {
