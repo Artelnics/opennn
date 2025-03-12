@@ -18,19 +18,19 @@ class Transformer : public NeuralNetwork
 {
 public:
 
-    Transformer(const Index& input_length = 0,
-                const Index& decoder_length = 0,
-                const Index& input_dimensions = 0,
-                const Index& context_dimension = 0,
+    Transformer(const Index& decoder_length = 0,
+                const Index& input_length = 0,
+                const Index& decoder_dimensions = 0,
+                const Index& input_dimension = 0,
                 const Index& embedding_dimension = 0,
                 const Index& perceptron_depth = 0,
                 const Index& heads_number = 0,
                 const Index& layers_number = 0);
 
-    void set(const Index& input_length = 0,
-             const Index& decoder_length = 0,
-             const Index& input_dimensions = 0,
-             const Index& context_dimension = 0,
+    void set(const Index& decoder_length = 0,
+             const Index& input_length = 0,
+             const Index& decoder_dimensions = 0,
+             const Index& input_dimension = 0,
              const Index& embedding_dimension = 0,
              const Index& perceptron_depth = 0,
              const Index& heads_number = 0,
@@ -46,6 +46,54 @@ public:
 
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
+
+    vector<string> preprocess_language_document(const string& document, const bool& input)
+    {
+        vector<string> tokens;
+
+        if(!input)
+            tokens.push_back("[START]");
+
+        string currentToken;
+
+        for (char c : document)
+        {
+            if (isalnum(c))
+            {
+                // Add alphanumeric characters to the current token
+                currentToken += tolower(c);
+            }
+            else
+            {
+                // If the current token is not empty, add it to the tokens list
+                if (!currentToken.empty())
+                {
+                    tokens.push_back(currentToken);
+                    currentToken.clear();
+                }
+                // Treat punctuation as a separate token
+
+                if (ispunct(c))
+                {
+                    tokens.push_back(string(1, c));
+                }
+                else if (isspace(c))
+                {
+                    // Ignore spaces, they just delimit tokens
+                }
+            }
+        }
+
+        // Add the last token if it's not empty
+        if (!currentToken.empty())
+            tokens.push_back(currentToken);
+
+        // Add [END] token
+        if(!input)
+            tokens.push_back("[END]");
+
+        return tokens;
+    }
 
 private:
 

@@ -38,7 +38,7 @@ public:
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
     void set_sequence_length(const Index&);
-    void set_inputs_depth(const Index&);
+    void set_embedding_dimension(const Index&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 
