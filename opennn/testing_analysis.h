@@ -46,6 +46,8 @@ public:
         type confidence_limit = 0;
 
         type optimal_threshold = 0;
+
+        void print() const;
     };
 
 

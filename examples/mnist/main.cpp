@@ -62,7 +62,7 @@ int main()
         training_strategy.set_display_period(1);
 
         training_strategy.perform_training();
-        
+
         // Testing analysis
         /*
         neural_network.save("C:/xmltest/outputs.xml");
