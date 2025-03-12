@@ -47,7 +47,9 @@ int main()
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        //cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        TestingAnalysis::RocAnalysis roc_curve = testing_analysis.perform_roc_analysis();
+        roc_curve.print();
 
         cout << "Good bye!" << endl;
 
