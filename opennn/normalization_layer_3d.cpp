@@ -95,7 +95,7 @@ void NormalizationLayer3D::set_sequence_length(const Index& new_sequence_length)
 }
 
 
-void NormalizationLayer3D::set_inputs_depth(const Index& new_inputs_depth)
+void NormalizationLayer3D::set_embedding_dimension(const Index& new_inputs_depth)
 {
     gammas.resize(new_inputs_depth);
     betas.resize(new_inputs_depth);
@@ -285,7 +285,7 @@ void NormalizationLayer3D::from_XML(const XMLDocument& document)
 
     set_name(read_xml_string(normalization_layer_element, "Name"));
     set_sequence_length(read_xml_index(normalization_layer_element, "SequenceLength"));
-    set_inputs_depth(read_xml_index(normalization_layer_element, "InputsDepth"));
+    set_embedding_dimension(read_xml_index(normalization_layer_element, "EmbeddingDimension"));
     set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "));
 }
 

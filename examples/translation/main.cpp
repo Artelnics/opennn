@@ -28,41 +28,37 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        srand(static_cast<unsigned>(time(nullptr)));
-
-
-//        _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-//        _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-
-
         // Data set
 
-        // LanguageDataSet language_data_set("C:/translation.csv");
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset.txt");
-/*
-        // cout<<language_data_set.get_context_length()<<endl;
-        // cout<<language_data_set.get_completion_length()<<endl;
-        cout << language_data_set.get_data().dimensions() << endl;
-                
-        const Index embedding_dimension = 64;
-        const Index perceptron_depth = 128;
-        const Index heads_number = 4;
-        const Index number_of_layers = 1;
+        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_4.txt");
 
-        const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
+        const Index input_length = language_data_set.get_input_length();
+        const Index decoder_length = language_data_set.get_target_length();
+
+        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
+        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
+
+        const Index embedding_dimension = /*1*/64;
+        const Index perceptron_depth = /*1*/128;
+        const Index heads_number = /*1*/4;
+        const Index layers_number = 1;
 
         // Neural network
-        const dimensions target_dimensions = language_data_set.get_completion_dimensions();
-        const dimensions input_dimensions = language_data_set.get_context_dimensions();
         
-        Transformer transformer(target_dimensions, input_dimensions, complexity);
-        transformer.set_input_vocabulary(language_data_set.get_completion_vocabulary());
-        transformer.set_context_vocabulary(language_data_set.get_context_vocabulary());
-        transformer.set_model_type_string("TextClassification");
+        Transformer transformer(decoder_length,
+                                input_length,
+                                target_vocabulary_size,
+                                input_vocabulary_size,
+                                embedding_dimension,
+                                perceptron_depth,
+                                heads_number,
+                                layers_number);
+
+        transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
+        transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
         transformer.set_dropout_rate(0);
 
-        cout << "Total number of parameters: " << transformer.get_parameters_number() << endl;
-
+/*
         const filesystem::path& file_name = "/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml";
 
         ofstream file(file_name);
@@ -73,8 +69,7 @@ int main()
         XMLPrinter printer;
         language_data_set.to_XML(printer);
         file << printer.CStr();
-
-
+*/
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -85,29 +80,34 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(complexity[0]);
+        AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.5);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10000);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(59400);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
-
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+        //adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); ???
+        adaptive_moment_estimation->set_loss_goal(0.5);
+        adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
+        adaptive_moment_estimation->set_maximum_time(59400);
+        adaptive_moment_estimation->set_batch_samples_number(64);
+        adaptive_moment_estimation->set_display_period(1);
 
         TrainingResults training_results = training_strategy.perform_training();
 
-        transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
+        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
+        transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
+        // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
         //Testing
 
-        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
-        pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
+        // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
 
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
+        // cout << "TESTING ANALYSIS:" << endl;
+        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
+        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
+        // string prediction = transformer.calculate_outputs({"I want you to return it"});
+
+        // cout << "Target: quiero que me lo devuelvas" << endl << "Prediction: " << prediction << endl;
+/*
 
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
@@ -153,7 +153,7 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
-
+/*
         // Data Set
 
         LanguageDataSet language_data_set({0},{0});

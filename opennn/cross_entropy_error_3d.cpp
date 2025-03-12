@@ -47,8 +47,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     
     ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
-        
-    probabilistic_layer_3d_back_propagation->targets.device(*thread_pool_device) = targets;
+
+    probabilistic_layer_3d_back_propagation->targets = targets;
 
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;
@@ -62,7 +62,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     if(!built_mask)
     {
-        mask.device(*thread_pool_device) = targets != targets.constant(0);
+        mask = targets != targets.constant(0);
         built_mask = true;
     }
 
@@ -74,7 +74,10 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
+    // cout << "Errors dimensions: " << errors.dimensions() << endl << "Mask dimensions: " << mask.dimensions() << endl << "Targets dimensions: " << targets.dimensions() << endl;
+
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
+
     error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
 
     // Masked accuracy

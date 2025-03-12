@@ -34,8 +34,7 @@ public:
                         Classification,
                         Forecasting,
                         ImageClassification,
-                        TextClassification,
-                        TextClassificationTransformer};
+                        TextClassification};
 
     enum class ProgrammingLanguage{C,
                                    Python,

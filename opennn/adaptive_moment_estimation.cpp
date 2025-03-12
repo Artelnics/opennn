@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -247,7 +247,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            // cout << "Iteration " << iteration << "/" << training_batches_number << endl;
 
             // Data set
 
@@ -267,6 +267,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+
             // if(epoch == 500)
             // {
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();

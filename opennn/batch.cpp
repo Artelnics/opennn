@@ -225,7 +225,7 @@ vector<pair<type*, dimensions>> Batch::get_input_pairs() const
     vector<pair<type*, dimensions>> input_pairs = {{(type*)input_tensor.data(), input_dimensions}};
 
     if (!decoder_dimensions.empty())
-        input_pairs.push_back({(type*)decoder_tensor.data(), decoder_dimensions});
+        input_pairs.insert(input_pairs.begin(), {(type*)decoder_tensor.data(), decoder_dimensions});
 
     return input_pairs;
 }

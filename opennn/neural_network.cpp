@@ -175,10 +175,10 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) cons
 
 Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
-    if(layer_name == "dataset" || layer_name == "input")
+    if(layer_name == "dataset" || layer_name == "decoder")
         return -1;
 
-    if(layer_name == "context")
+    if(layer_name == "input")
         return -2;
 
     const Index layers_number = get_layers_number();
@@ -187,7 +187,7 @@ Index NeuralNetwork::get_layer_index(const string& layer_name) const
         if(layers[i]->get_name() == layer_name)
             return i;
 
-    throw runtime_error("Layer not found" + layer_name);
+    throw runtime_error("Layer not found: " + layer_name);
 }
 
 
@@ -766,7 +766,14 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
+    // EN LOS TRANSFORMERS, LA PRIMERA CAPA RECIBE LAS DIMENSIONES DEL DECODER NO DEL INPUT, HABRÍA QUE MIRAR ESTO
+
+    if(model_type == ModelType::TextClassification)
+        return input_names.size();
+
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
+
+    print_vector(input_dimensions);
 
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
 }
@@ -1277,10 +1284,19 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     printer.OpenElement("Outputs");
 
-    add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
+    if(model_type != ModelType::TextClassification)
+        add_xml_element(printer, "OutputsNumber", to_string(outputs_number));
 
-    for (Index i = 0; i < outputs_number; i++) 
-        add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
+    else
+        add_xml_element(printer, "OutputsNumber", to_string(output_names.size()));
+
+    if(model_type != ModelType::TextClassification)
+        for (Index i = 0; i < outputs_number; i++)
+            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
+
+    else
+        for (size_t i = 0; i < output_names.size(); i++)
+            add_xml_element_attribute(printer, "Output", output_names[i], "Index", to_string(i + 1));
 
     printer.CloseElement();
 

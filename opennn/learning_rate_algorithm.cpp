@@ -478,7 +478,7 @@ string LearningRateAlgorithm::Triplet::struct_to_string() const
 void LearningRateAlgorithm::Triplet::print() const
 {
     cout << struct_to_string()
-        << "Lenght: " << get_length() << endl;
+        << "Length: " << get_length() << endl;
 }
 
 
