@@ -33,7 +33,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   RecurrentLayer(const dimensions & = {}, const dimensions& = {});
+   RecurrentLayer(const dimensions & = {0}, const dimensions& = {0});
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
@@ -94,13 +94,17 @@ private:
 
    Tensor<type, 1> biases;
 
+   Tensor<type, 1> output_biases;
+
    Tensor<type, 2> input_weights;
 
    Tensor<type, 2> recurrent_weights;
 
+   Tensor<type, 2> output_weights;
+
    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
-   Tensor<type, 3> hidden_states;
+   Tensor<type, 2> hidden_states;
 
    Tensor<type, 2> empty;
 

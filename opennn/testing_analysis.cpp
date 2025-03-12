@@ -1053,14 +1053,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 3>& outputs,
                                                       const Tensor<type, 3>& targets) const
 {
-    return Tensor<Index, 2>();
+    return Tensor<Index, 2>();  // @todo
 }
 
 
 TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
@@ -2451,6 +2450,17 @@ void TestingAnalysis::GoodnessOfFitAnalysis::print() const
     // cout << targets << endl;
     // cout << "Outputs:" << endl;
     // cout << outputs << endl;
+}
+
+
+void TestingAnalysis::RocAnalysis::print() const
+{
+    cout << "Roc Curve analysis" << endl;
+
+    cout << "Roc Curve:\n" << roc_curve << endl;
+    cout << "Area Under Curve: " << area_under_curve << endl;
+    cout << "Confidence Limit: " << confidence_limit << endl;
+    cout << "Optimal Threshold: " << optimal_threshold << endl;
 }
 
 }

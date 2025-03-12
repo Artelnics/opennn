@@ -17,23 +17,11 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Breast Cancer Application." << endl;
+        cout << "OpenNN. Breast Cancer Example." << endl;
 
         // Data set
 
-
-        // DataSet data_set("data/breast_cancer.csv", ";", true);
-        // DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true, false);
-        // DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer_with_missing_values.csv", ";", true, false);
-
-        // Example downloaded dataset
-
-        // DataSet data_set("/Users/artelnics/Desktop/breast-cancer-modified.csv", ",", true);
-
-        // 5 years mortality dataset
-
-        DataSet data_set("/Users/artelnics/Desktop/5_years_mortality.csv", ";", true, true);
-
+        DataSet data_set("data/breast_cancer.csv", ";", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -43,66 +31,25 @@ int main()
         const Index neurons_number = 30;
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-            { input_variables_number }, { }, { target_variables_number });
+                                    { input_variables_number }, { neurons_number }, { target_variables_number });
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
-
-
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //The probabilistic layer hasn't got implemented the lm back propagation
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
 
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        // data_set.set(DataSet::SampleUse::Training);
-
-        // training_strategy.perform_training();
-
-        //data_set.set(DataSet::SampleUse::Testing);
-
-        GeneticAlgorithm genetic_algorithm(&training_strategy);
-
-        // genetic_algorithm.set_individuals_number(1200);
-        // genetic_algorithm.set_maximum_epochs_number(1500);
-
-        genetic_algorithm.perform_input_selection();
-
-        // GrowingInputs growing_inputs(&training_strategy);
-
-        // growing_inputs.perform_input_selection();
-
-        // ModelSelection model_selection(&training_strategy);
-
-        // model_selection.set_inputs_selection_method(ModelSelection::InputsSelectionMethod::GROWING_INPUTS);
-
-        // model_selection.perform_input_selection();
-
-        // model_selection.perform_neurons_selection();
+        training_strategy.perform_training();
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        // data_set.print();
-
-        // testing_analysis.print_binary_classification_tests();
-        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
-
-        cout << "Area under the curve: " << roc_analysis.area_under_curve << endl /*<< "Roc curve:\n" << roc_analysis.roc_curve << endl*/;
-
-        // cout << "Confidence limit: " << roc_analysis.confidence_limit << endl << "Optimal threshold: " << roc_analysis.optimal_threshold << endl;
-
-
+        //cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        TestingAnalysis::RocAnalysis roc_curve = testing_analysis.perform_roc_analysis();
+        roc_curve.print();
 
         cout << "Good bye!" << endl;
 

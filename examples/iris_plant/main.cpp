@@ -22,8 +22,7 @@ int main()
 
         // Data set
 
-        // DataSet data_set("data/iris_plant_original.csv", ";", true);
-        DataSet data_set("/Users/artelnics/Documents/opennn/examples/iris_plant/data/iris_plant_original.csv", ";", true);
+        DataSet data_set("data/iris_plant_original.csv", ";", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -42,6 +41,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
 
         training_strategy.perform_training();
 
@@ -49,7 +49,7 @@ int main()
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        testing_analysis.print_goodness_of_fit_analysis();
+        //testing_analysis.print_goodness_of_fit_analysis();
 
         cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
 

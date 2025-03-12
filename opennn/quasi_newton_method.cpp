@@ -138,7 +138,7 @@ void QuasiNewtonMethod::set_default()
     maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
-    maximum_time = type(3600.0);
+    maximum_time = type(3600);
 
     // UTILITIES
 
