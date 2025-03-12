@@ -26,7 +26,7 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        DataSet data_set("C:/Users/davidgonzalez/Documents/5_years_mortality.csv",";", true, true);
+        DataSet data_set("C:/Users/davidgonzalez/Documents/aaa.csv",",", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
@@ -35,6 +35,21 @@ int main()
             { input_variables_number }, { 3 }, { target_variables_number });
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
+        training_strategy.set_display_period(10);
+
+        training_strategy.perform_training();
+
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+        cout << "Calculating confusion...." << endl;
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        cout << "\nConfusion matrix:\n" << confusion << endl;
 
         /*
         ImageDataSet image_data_set(0,{0,0,0},{0});

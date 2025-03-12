@@ -33,7 +33,7 @@ int main()
         
         // Neural network
 
-        const Index neurons_number = 100;
+        const Index neurons_number = 20;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
                                      {input_variables_number}, {neurons_number}, {target_variables_number});
@@ -59,6 +59,9 @@ int main()
 
         training_strategy.perform_training();
 
+
+        // GeneticAlgorithm genetic_algorithm(&training_strategy);
+        // genetic_algorithm.perform_input_selection();
 
         // ModelSelection model_selection(&training_strategy);
 

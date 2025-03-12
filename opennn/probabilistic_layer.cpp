@@ -330,21 +330,6 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         combination_derivatives.device(*thread_pool_device) = deltas;
 
 
-    // cout << "Dimensiones esperadas y reales en back_propagate_lm:\n";
-
-    // cout << "inputs: " << inputs.dimensions() << endl;
-    // cout << "deltas: " << deltas.dimensions() << endl;
-    // cout << "combination_derivatives: " << combination_derivatives.dimensions() << endl;
-    // cout << "squared_errors_Jacobian: " << squared_errors_Jacobian.dimensions() << endl;
-    // cout << "synaptic_weights: " << synaptic_weights.dimensions() << endl;
-    // cout << "input_derivatives: " << input_derivatives.dimensions() << endl;
-
-    // cout << "batch_size: " << batch_size << endl;
-    // cout << "inputs_number: " << inputs_number << endl;
-    // cout << "outputs_number: " << outputs_number << endl;
-    // cout << "synaptic_weights_count: " << synaptic_weights_count << endl;
-
-
     #pragma omp parallel for
     for(Index i = 0; i < batch_size; i++)
     {

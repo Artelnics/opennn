@@ -91,6 +91,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     DataSet* data_set = loss_index->get_data_set();
 
+    data_set->scrub_missing_values();
+
     const vector<Index> target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
 
     const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
