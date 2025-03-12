@@ -3499,11 +3499,12 @@ namespace opennn
             {
                 sample_index = used_sample_indices[j];
 
-                if (get_sample_use(sample_index) == SampleUse::None
-                    || isnan(data(sample_index, variable_index)))
-                    continue;
+                //const type value = data(sample_index, variable_index);
+                const type value = data(sample_index, i);
 
-                const type value = data(sample_index, variable_index);
+                if (get_sample_use(sample_index) == SampleUse::None
+                    || isnan(value))
+                    continue;
 
                 if (abs(value - minimums(i)) <= NUMERIC_LIMITS_MIN
                     || abs(value - maximums(i)) <= NUMERIC_LIMITS_MIN)
@@ -3520,7 +3521,6 @@ namespace opennn
                 else if (value < minimums(i)
                     || value > maximums(i))
                 {
-                    cout << "-- " << i << " " << j << " - " << value << "---" << minimums(i) << "-" << maximums(i)<< endl;
                     filtered_indices(sample_index) = type(1);
                     set_sample_use(sample_index, SampleUse::None);
                 }
