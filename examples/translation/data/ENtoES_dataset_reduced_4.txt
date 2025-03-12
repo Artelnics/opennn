@@ -1,0 +1,3 @@
+Hello, world!	¡Hola, mundo!
+What's your full name?	¿Cual es tu nombre completo?
+This is not okay at all.	Esto no esta bien.

@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms, 
+LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms,
                                  const dimensions& new_target_dimensionms)
 {
 }
@@ -24,10 +24,11 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
     separator = DataSet::Separator::Tab;
 
     read_csv();
-//    set_raw_variable_scalers(Scaler::None);
+    set_raw_variable_scalers(Scaler::None);
 
-//    target_dimensions = {get_target_length(), get_target_vocabulary_size()};
-//    input_dimensions = {get_input_length(), get_input_vocabulary_size()};
+   target_dimensions = {get_target_length()/*, get_target_vocabulary_size()*/};
+   decoder_dimensions = {get_target_length()/*, get_target_vocabulary_size()*/};
+   input_dimensions = {get_input_length()/*, get_input_vocabulary_size()*/};
 }
 
 
@@ -46,6 +47,16 @@ const unordered_map<string, Index>& LanguageDataSet::get_target_vocabulary() con
 Index LanguageDataSet::get_input_vocabulary_size() const
 {
     return input_vocabulary.size();
+}
+
+Index LanguageDataSet::get_input_length() const
+{
+    return maximum_input_length;
+}
+
+Index LanguageDataSet::get_target_length() const
+{
+    return maximum_target_length;
 }
 
 Index LanguageDataSet::get_target_vocabulary_size() const
@@ -466,7 +477,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
-Index LanguageDataSet::count_non_empty_lines() const 
+Index LanguageDataSet::count_non_empty_lines() const
 {
     ifstream file(data_path);
 
@@ -484,7 +495,7 @@ Index LanguageDataSet::count_non_empty_lines() const
         if (!line.empty())
             count++;
     }
-        
+
     return count;
 }
 
@@ -494,7 +505,7 @@ void LanguageDataSet::read_csv()
     cout << "Reading .txt file..." << endl;
 
     const Index samples_number = count_non_empty_lines();
-    
+
     ifstream file(data_path);
 
     if (!file.is_open())
@@ -511,6 +522,8 @@ void LanguageDataSet::read_csv()
 
     Index sample_index = 0;
 
+
+
     while (getline(file, line))
     {
         if (line.empty()) continue;
@@ -520,10 +533,16 @@ void LanguageDataSet::read_csv()
         if (tokens.size() != 2)
             throw runtime_error("Tokens number must be two.");
 
-        input_documents_tokens[sample_index] = tokenize(tokens[0]);
-        target_documents_tokens[sample_index] = tokenize(tokens[1]);
+        input_documents_tokens[sample_index] = tokenize(tokens[0], true);
+        target_documents_tokens[sample_index] = tokenize(tokens[1], false);
 
         sample_index++;
+    }
+
+    if (sample_index != samples_number)
+    {
+        cerr << "WARNING: Se esperaban " << samples_number << " muestras, pero se procesaron " << sample_index << "." << endl;
+        throw runtime_error("Why?");
     }
 
     maximum_input_length = get_maximum_size(input_documents_tokens);
@@ -532,16 +551,22 @@ void LanguageDataSet::read_csv()
     input_vocabulary = create_vocabulary(input_documents_tokens);
     target_vocabulary = create_vocabulary(target_documents_tokens);
 
-    input_documents_tokens.clear();
-    target_documents_tokens.clear();
+    input_vocabulary_size = get_input_vocabulary_size();
+    target_vocabulary_size = get_target_vocabulary_size();
 
     const Index input_variables_number = maximum_input_length;
     const Index decoder_variables_number = maximum_target_length - 1;
     const Index target_variables_number = maximum_target_length - 1;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
+    // input_dimensions = {input_variables_number};
+    // decoder_dimensions = {decoder_variables_number};
+    // target_dimensions = {target_variables_number};
+
     data.resize(samples_number, variables_number);
     data.setZero();
+
+    raw_variables.resize(variables_number);
 
     for(Index i = 0; i < input_variables_number; i++)
         set_raw_variable_use(i, VariableUse::Input);
@@ -563,7 +588,7 @@ void LanguageDataSet::read_csv()
 
         // Input data
 
-        for (Index j = 0; j < Index(input_document_tokens[i].size()); j++)
+        for (Index j = 0; j < Index(input_document_tokens.size()); j++)
         {
             const auto iterator = input_vocabulary.find(input_document_tokens[j]);
 
@@ -572,28 +597,45 @@ void LanguageDataSet::read_csv()
                 : data(i, column_index++) = 1;
         }
 
+        if(column_index < input_variables_number)
+            column_index = input_variables_number;
+
         // Decoder data
 
-        for (Index j = 0; j < Index(target_document_tokens[i].size()); j++)
+        for (Index j = 0; j < Index(target_document_tokens.size()); j++)
         {
-            const auto iterator = input_vocabulary.find(target_document_tokens[j]);
+            const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+
+            if(iterator->second == 3)
+                continue;
 
             iterator != target_vocabulary.end() && iterator->second != 3 // [END]
                 ? data(i, column_index++) = iterator->second
                 : data(i,column_index++) = 1;
         }
 
+        if(column_index < input_variables_number + decoder_variables_number)
+            column_index = input_variables_number + decoder_variables_number;
+
         // Target data
 
-        for (Index j = 0; j < Index(target_document_tokens[i].size()); j++)
+        for (Index j = 0; j < Index(target_document_tokens.size()); j++)
         {
-            const auto iterator = input_vocabulary.find(target_document_tokens[j]);
+            const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+
+            if(iterator->second == 2)
+                continue;
 
             iterator != target_vocabulary.end() && iterator->second != 2 // [START]
                 ? data(i, column_index++) = iterator->second
                 : data(i,column_index++) = 1;
         }
     }
+
+    sample_uses.resize(samples_number);
+
+    set_default_raw_variables_names();
+    split_samples_random();
 }
 
 }

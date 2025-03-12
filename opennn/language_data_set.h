@@ -29,6 +29,9 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
+    Index get_input_length() const;
+    Index get_target_length() const;
+
     void set_input_vocabulary(const unordered_map<string, Index>&);
     void set_target_vocabulary(const unordered_map<string, Index>&);
 
@@ -41,11 +44,12 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    vector<string> tokenize(const string& document)
+    vector<string> tokenize(const string& document, const bool& input)
     {
         vector<string> tokens;
 
-        tokens.push_back("[END]");
+        if(!input)
+            tokens.push_back("[START]");
 
         string currentToken;
 
@@ -82,7 +86,8 @@ public:
             tokens.push_back(currentToken);
 
         // Add [END] token
-        tokens.push_back("[END]");
+        if(!input)
+            tokens.push_back("[END]");
 
         return tokens;
     }
@@ -122,7 +127,8 @@ private:
 
     Index maximum_target_length = 0;
 
-    const Index target_vocabulary_size = 8000;
+    Index target_vocabulary_size = 8000;
+    Index input_vocabulary_size = 8000;
     const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
     struct WordpieceAlgorithmParameters
