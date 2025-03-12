@@ -1056,12 +1056,10 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
 
-    forward_propagate({input_pair}, forward_propagation, true);
-
+    forward_propagate({input_pair}, forward_propagation, false);
 
     const pair<type*, dimensions> outputs_pair
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
 
     return tensor_map_2(outputs_pair);
 }

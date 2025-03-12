@@ -102,11 +102,10 @@ void WeightedSquaredError::set_weights()
         positives_weight = type(1);
         negatives_weight = type(1);
     }
-    else if(target_raw_variables.size() == 1
-         && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set->calculate_target_distribution();
-        
+
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
 
@@ -132,11 +131,8 @@ void WeightedSquaredError::set_normalization_coefficient()
         = data_set->get_raw_variables(DataSet::VariableUse::Target);
 
     if(target_raw_variables.size() == 0)
-    {
         normalization_coefficient = type(1);
-    }
-    else if(target_raw_variables.size() == 1
-         && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
+    else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
         const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
@@ -145,9 +141,7 @@ void WeightedSquaredError::set_normalization_coefficient()
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
     else
-    {
         normalization_coefficient = type(1);
-    }
 }
 
 

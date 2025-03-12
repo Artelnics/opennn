@@ -96,7 +96,7 @@ void GeneticAlgorithm::set_default()
 
     maximum_epochs_number = 40;                 // Modify depending on the dataset
 
-    maximum_time = type(36000.0);
+    maximum_time = type(3600);
 
     mutation_rate = type(0.0010);
 

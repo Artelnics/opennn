@@ -747,7 +747,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                 dimensions{ input_variables_number }, dimensions{}, dimensions{target_variables_number});
+                                 { input_variables_number }, {1}, {target_variables_number});
 
     // ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
 
