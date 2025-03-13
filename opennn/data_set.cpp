@@ -1981,19 +1981,19 @@ namespace opennn
     }
 
 
-    vector<string> DataSet::unuse_multicollinear_raw_variables(Tensor<Index, 1>& original_variable_indices, Tensor<Index, 1>& override_variable_indices)
+    vector<string> DataSet::unuse_multicollinear_raw_variables(vector<Index>& original_variable_indices, vector<Index>& override_variable_indices)
     {
         vector<string> unused_raw_variables;
 
         for (Index i = 0; i < original_variable_indices.size(); i++)
         {
-            const Index original_raw_variable_index = original_variable_indices(i);
+            const Index original_raw_variable_index = original_variable_indices[i];
 
             bool found = false;
 
             for (Index j = 0; j < override_variable_indices.size(); j++)
             {
-                if (original_raw_variable_index == override_variable_indices(j))
+                if (original_raw_variable_index == override_variable_indices[j])
                 {
                     found = true;
                     break;
@@ -3499,11 +3499,12 @@ namespace opennn
             {
                 sample_index = used_sample_indices[j];
 
-                if (get_sample_use(sample_index) == SampleUse::None
-                    || isnan(data(sample_index, variable_index)))
-                    continue;
+                //const type value = data(sample_index, variable_index);
+                const type value = data(sample_index, i);
 
-                const type value = data(sample_index, variable_index);
+                if (get_sample_use(sample_index) == SampleUse::None
+                    || isnan(value))
+                    continue;
 
                 if (abs(value - minimums(i)) <= NUMERIC_LIMITS_MIN
                     || abs(value - maximums(i)) <= NUMERIC_LIMITS_MIN)
