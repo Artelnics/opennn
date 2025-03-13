@@ -1096,6 +1096,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(const Tensor<type, 2>&)
 {
+
     return Tensor<type, 2>();
 }
 
