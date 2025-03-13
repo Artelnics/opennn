@@ -1985,13 +1985,13 @@ namespace opennn
     {
         vector<string> unused_raw_variables;
 
-        for (Index i = 0; i < original_variable_indices.size(); i++)
+        for (Index i = 0; i < static_cast<Index>(original_variable_indices.size()); i++)
         {
             const Index original_raw_variable_index = original_variable_indices[i];
 
             bool found = false;
 
-            for (Index j = 0; j < override_variable_indices.size(); j++)
+            for (Index j = 0; j < static_cast<Index>(override_variable_indices.size()); j++)
             {
                 if (original_raw_variable_index == override_variable_indices[j])
                 {
