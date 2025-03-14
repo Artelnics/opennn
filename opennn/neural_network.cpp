@@ -766,8 +766,6 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    // EN LOS TRANSFORMERS, LA PRIMERA CAPA RECIBE LAS DIMENSIONES DEL DECODER NO DEL INPUT, HABRÍA QUE MIRAR ESTO
-
     if(model_type == ModelType::TextClassification)
         return input_names.size();
 

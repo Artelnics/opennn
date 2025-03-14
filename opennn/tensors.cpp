@@ -271,7 +271,8 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //Maybe this one gives error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
+        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //Maybe this one gives error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
+        auto column = matrix.chip(i, 1);
 
         column.device(*thread_pool_device) = column + vector(i);
     }
