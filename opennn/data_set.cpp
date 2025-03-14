@@ -2120,7 +2120,7 @@ namespace opennn
 
         vector<BoxPlot> box_plots(raw_variables_number);
 
-        //    Index used_raw_variable_index = 0;
+        //Index used_raw_variable_index = 0;
         Index variable_index = 0;
 
         for (Index i = 0; i < raw_variables_number; i++)
@@ -2134,7 +2134,7 @@ namespace opennn
                 {
                     box_plots[i] = box_plot(data.chip(variable_index, 1), used_sample_indices);
 
-                    //                used_raw_variable_index++;
+                    //used_raw_variable_index++;
                 }
 
                 variable_index++;
@@ -3239,7 +3239,7 @@ namespace opennn
         Index variable_index = 0;
         Index used_variable_index = 0;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 
         for (Index i = 0; i < raw_variables_number; i++)
         {

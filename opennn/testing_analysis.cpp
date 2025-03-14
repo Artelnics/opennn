@@ -176,13 +176,16 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 
 
 Tensor<type, 2> TestingAnalysis::calculate_error() const
-{ 
+{
+    cout << "11" << endl;
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
+    cout << "11" << endl;
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
+    cout << "11" << endl;
     const Tensor<type, 2> error = (outputs - targets);
 
     return error;
@@ -190,6 +193,7 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
+    cout << "func - p" << endl;
     check();
 
     // Data set
@@ -203,6 +207,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
+    cout << "func - p" << endl;
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -218,11 +223,11 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    for(Index i = 0; i < testing_samples_number; i++){
+    for(Index i = 0; i < outputs_number; i++){
         type min_range=output_minimums[i];
         type max_range=output_maximums[i];
         desc.set(min_range, max_range);
-        descriptives.push_back(desc);
+        descriptives[i] = desc;
     }
 
     unscaling_layer->set_descriptives(descriptives);
@@ -230,6 +235,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
    const Tensor<type, 2> absolute_errors = calculate_error().abs();
+   cout << "func - p" << endl;
 
    #pragma omp parallel for
    for(Index i = 0; i < outputs_number; i++)
@@ -276,11 +282,11 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    for(Index i = 0; i < testing_samples_number; i++){
+    for(Index i = 0; i < outputs_number; i++){
         type min_range=output_minimums[i];
         type max_range=output_maximums[i];
         desc.set(min_range, max_range);
-        descriptives.push_back(desc);
+        descriptives[i] = desc;
     }
 
     unscaling_layer->set_descriptives(descriptives);
@@ -360,6 +366,7 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
 
     // Testing analysis stuff
+    cout << "as" << endl;
 
     vector<vector<Descriptives>> descriptives(outputs_number);
 
@@ -367,6 +374,7 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     Index index = 0;
 
+    cout << "as" << endl;
     for(Index i = 0; i < outputs_number; i++)
     {
         const TensorMap<Tensor<type, 2>> matrix_error(error_data.data() + index, testing_samples_number, 3);
@@ -552,10 +560,10 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
     Tensor<type, 0> mean_squared_error;
     mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    errors.setValues({mean_squared_error(0),
-                      errors(0) / type(samples_number),
-                      sqrt(errors(1)),
-                      calculate_normalized_squared_error(targets, outputs)});;
+    errors(0) = mean_squared_error(0);
+    errors(1) = errors(0)/type(samples_number);
+    errors(2) = sqrt(errors(1));
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
 
     return errors;
 }

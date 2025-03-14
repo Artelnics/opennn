@@ -294,7 +294,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
     outputs = inputs;
-
+    cout << "-" << outputs_number << endl;
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
