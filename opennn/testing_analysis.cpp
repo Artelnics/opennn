@@ -1393,6 +1393,25 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
 }
 
 
+TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
+{
+    Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+
+    Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+
+    TestingAnalysis::KolmogorovSmirnovResults Kolmogorov_Smirnov_results;
+
+    Kolmogorov_Smirnov_results.positive_cumulative_gain = calculate_cumulative_gain(targets, outputs);
+    Kolmogorov_Smirnov_results.negative_cumulative_gain = calculate_negative_cumulative_gain(targets, outputs);
+    Kolmogorov_Smirnov_results.maximum_gain =
+        calculate_maximum_gain(Kolmogorov_Smirnov_results.positive_cumulative_gain, Kolmogorov_Smirnov_results.negative_cumulative_gain);
+
+    return Kolmogorov_Smirnov_results;
+}
+
+
 Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& positive_cumulative_gain,
                                                         const Tensor<type, 2>& negative_cumulative_gain) const
 {
