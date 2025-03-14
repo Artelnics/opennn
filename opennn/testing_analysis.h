@@ -182,6 +182,7 @@ public:
    Tensor<type, 2> perform_lift_chart_analysis() const;
    Tensor<type, 2> calculate_lift_chart(const Tensor<type, 2>&) const;
 
+   KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
    Tensor<type, 1> calculate_maximum_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Calibration plot

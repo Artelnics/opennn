@@ -1448,6 +1448,16 @@ namespace opennn
     }
 
 
+    Tensor<type, 2> DataSet::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& variable_indices) const
+    {
+        Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
+
+        fill_tensor_data(data, sample_indices, variable_indices, this_data.data());
+
+        return this_data;
+    }
+
+
     Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
     {
         return data.chip(index, 0);
