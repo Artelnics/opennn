@@ -41,15 +41,11 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
 
-        training_strategy.perform_training();
+        TrainingResults results = training_strategy.perform_training();
 
-        // Testing analysis
+        const Tensor<string, 2> final_results = results.write_override_results(4);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        //cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
-        TestingAnalysis::RocAnalysis roc_curve = testing_analysis.perform_roc_analysis();
-        roc_curve.print();
+        cout << "Final results:\n" << final_results << endl;
 
         cout << "Good bye!" << endl;
 

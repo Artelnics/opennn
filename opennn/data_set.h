@@ -175,6 +175,7 @@ public:
     Tensor<type, 2> get_data(const SampleUse&) const;
     Tensor<type, 2> get_data(const VariableUse&) const;   
     Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
+    Tensor<type, 2> get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
     Tensor<type, 1> get_sample_data(const Index&, const vector<Index>&) const;
@@ -346,7 +347,7 @@ public:
     Tensor<Index, 1> unuse_repeated_samples();
 
     vector<string> unuse_uncorrelated_raw_variables(const type& = type(0.25));
-    vector<string> unuse_multicollinear_raw_variables(Tensor<Index, 1>&, Tensor<Index, 1>&);
+    vector<string> unuse_multicollinear_raw_variables(vector<Index>&, vector<Index>&);
 
     // Initialization
 
