@@ -318,8 +318,6 @@ Index Layer::get_outputs_number() const
 {
     const dimensions output_dimensions = get_output_dimensions();
 
-    cout << output_dimensions.begin().base() << " --- " << output_dimensions.end().base() << endl;
-
     return accumulate(output_dimensions.begin(), output_dimensions.end(), 1, multiplies<Index>());
 }
 

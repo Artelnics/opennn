@@ -177,15 +177,12 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 
 Tensor<type, 2> TestingAnalysis::calculate_error() const
 {
-    cout << "11" << endl;
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
-    cout << "11" << endl;
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    cout << "11" << endl;
     const Tensor<type, 2> error = (outputs - targets);
 
     return error;
@@ -193,7 +190,6 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
 Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 {
-    cout << "func - p" << endl;
     check();
 
     // Data set
@@ -207,7 +203,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> testing_target_data = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
-    cout << "func - p" << endl;
     // Neural network
 
     const Index outputs_number = neural_network->get_outputs_number();
@@ -235,7 +230,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
    const Tensor<type, 2> absolute_errors = calculate_error().abs();
-   cout << "func - p" << endl;
 
    #pragma omp parallel for
    for(Index i = 0; i < outputs_number; i++)
@@ -366,7 +360,6 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
     const Index testing_samples_number = data_set->get_samples_number(DataSet::SampleUse::Testing);
 
     // Testing analysis stuff
-    cout << "as" << endl;
 
     vector<vector<Descriptives>> descriptives(outputs_number);
 
@@ -374,7 +367,6 @@ vector<vector<Descriptives>> TestingAnalysis::calculate_error_data_descriptives(
 
     Index index = 0;
 
-    cout << "as" << endl;
     for(Index i = 0; i < outputs_number; i++)
     {
         const TensorMap<Tensor<type, 2>> matrix_error(error_data.data() + index, testing_samples_number, 3);
