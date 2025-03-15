@@ -167,7 +167,7 @@ void EmbeddingLayer::set_parameters_random()
 
     embedding_weights.chip(0, 0).setConstant(0);
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
 
     for (Index i = 1; i < embedding_weights.dimension(0); i++)
         for (Index j = 0; j < embedding_weights.dimension(1); j++)

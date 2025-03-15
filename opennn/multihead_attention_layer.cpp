@@ -161,7 +161,8 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
     projection_weights.resize(hidden_depth, depth, heads_number);
     projection_biases.resize(depth);
 
-    set_parameters_glorot();
+    // set_parameters_glorot();
+    set_parameters_random();
 }
 
 
@@ -312,8 +313,11 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
         for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
-            + (sample_index + head_index) * context_input_size * batch_samples_number;
+            // + (sample_index + head_index) * context_input_size * batch_samples_number;
+            + (sample_index + head_index * batch_samples_number) * context_input_size;
             // + (sample_index * heads_number + head_index) * context_input_size * batch_samples_number;
+
+            cerr << "Changes in multihead_attention.cpp line 315 (comented and replaced by the one in the line 316)" << endl;
 
             TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data,
                                                                context_size,
@@ -678,7 +682,9 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
         // cout<<aux_rows<<endl;
         softmax_derivatives_times_tensor(head_attention_weights, head_attention_weights_derivatives, head_attention_scores_derivatives, aux_rows);
 
-        head_attention_scores_derivatives.setZero();
+        // head_attention_scores_derivatives.setZero();
+
+        cerr << "Check Multihead_attention.cpp 2 lines before this error" << endl;
 
         head_attention_scores_derivatives.device(*thread_pool_device) = head_attention_scores_derivatives * scaling_factor;
 

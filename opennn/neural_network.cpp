@@ -766,8 +766,6 @@ Index NeuralNetwork::get_inputs_number() const
     if(layers.empty())
         return 0;
 
-    // EN LOS TRANSFORMERS, LA PRIMERA CAPA RECIBE LAS DIMENSIONES DEL DECODER NO DEL INPUT, HABRÍA QUE MIRAR ESTO
-
     if(model_type == ModelType::TextClassification)
         return input_names.size();
 
@@ -958,10 +956,11 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
 
-    for (Index i = first_layer_index; i <= last_layer_index; i++)
+    for (Index i = first_layer_index; i <= last_layer_index; i++){
         layers[i]->forward_propagate(layer_input_pairs[i],
             forward_propagation.layers[i],
             is_training);
+    }
 }
 
 
@@ -1062,7 +1061,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     ForwardPropagation forward_propagation(batch_samples_number, this);
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_samples_number, inputs_number}});
-
     forward_propagate({input_pair}, forward_propagation, false);
 
     const pair<type*, dimensions> outputs_pair
@@ -1266,7 +1264,7 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for (Index i = 0; i < layers_number; i++) 
+    for (Index i = 0; i < layers_number; i++)
         layers[i]->to_XML(printer);
 
     // Layer input indices

@@ -1448,6 +1448,16 @@ namespace opennn
     }
 
 
+    Tensor<type, 2> DataSet::get_data_from_indices(const vector<Index>& sample_indices, const vector<Index>& variable_indices) const
+    {
+        Tensor<type, 2> this_data(sample_indices.size(), variable_indices.size());
+
+        fill_tensor_data(data, sample_indices, variable_indices, this_data.data());
+
+        return this_data;
+    }
+
+
     Tensor<type, 1> DataSet::get_sample_data(const Index& index) const
     {
         return data.chip(index, 0);
@@ -2120,7 +2130,7 @@ namespace opennn
 
         vector<BoxPlot> box_plots(raw_variables_number);
 
-        //    Index used_raw_variable_index = 0;
+        //Index used_raw_variable_index = 0;
         Index variable_index = 0;
 
         for (Index i = 0; i < raw_variables_number; i++)
@@ -2134,7 +2144,7 @@ namespace opennn
                 {
                     box_plots[i] = box_plot(data.chip(variable_index, 1), used_sample_indices);
 
-                    //                used_raw_variable_index++;
+                    //used_raw_variable_index++;
                 }
 
                 variable_index++;
@@ -3239,7 +3249,7 @@ namespace opennn
         Index variable_index = 0;
         Index used_variable_index = 0;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 
         for (Index i = 0; i < raw_variables_number; i++)
         {
