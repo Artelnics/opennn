@@ -55,7 +55,7 @@ public:
 
         for (char c : document)
         {
-            if (isalnum(c))
+            if (isalnum(static_cast<unsigned char>(c)))
             {
                 // Add alphanumeric characters to the current token
                 currentToken += tolower(c);
@@ -70,11 +70,11 @@ public:
                 }
                 // Treat punctuation as a separate token
 
-                if (ispunct(c))
+                if (ispunct(static_cast<unsigned char>(c)))
                 {
                     tokens.push_back(string(1, c));
                 }
-                else if (isspace(c))
+                else if (isspace(static_cast<unsigned char>(c)))
                 {
                     // Ignore spaces, they just delimit tokens
                 }
