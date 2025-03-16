@@ -30,7 +30,7 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_4.txt");
+        LanguageDataSet language_data_set("../data/ENtoES_dataset_reduced_4.txt");
 
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
