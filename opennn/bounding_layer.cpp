@@ -293,19 +293,19 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { batch_samples_number, output_dimensions[0]}};
+    return { (type*)outputs.data(), { samples_number, output_dimensions[0]}};
 }
 
 
-void BoundingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void BoundingLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_output_dimensions()[0];
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
-    outputs.resize(batch_samples_number, neurons_number);
+    outputs.resize(samples_number, neurons_number);
 }
 
 
@@ -333,4 +333,3 @@ void BoundingLayerForwardPropagation::print() const
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

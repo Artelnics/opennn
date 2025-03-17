@@ -383,14 +383,14 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
         static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
 
-    const Index batch_samples_number = back_propagation->batch_samples_number;
+    const Index samples_number = back_propagation->samples_number;
     const Index parameters_number = get_parameters_number();
 
     type* this_squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
     memcpy(squared_errors_Jacobian.data() + index,
            this_squared_errors_Jacobian_data,
-           parameters_number * batch_samples_number*sizeof(type));
+           parameters_number * samples_number*sizeof(type));
 }
 
 
@@ -592,24 +592,24 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 {
     const Index outputs_number = layer->get_outputs_number();
 
-    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, outputs_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{samples_number, outputs_number}});
 }
 
 
-void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_number, Layer *new_layer)
+void ProbabilisticLayerForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    outputs.resize(batch_samples_number, outputs_number);
+    outputs.resize(samples_number, outputs_number);
 
     activation_derivatives.resize(0, 0);
 
     if(outputs_number == 1)
-        activation_derivatives.resize(batch_samples_number, outputs_number);
+        activation_derivatives.resize(samples_number, outputs_number);
 }
 
 
@@ -634,11 +634,11 @@ ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index
 }
 
 
-void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_number, Layer *new_layer)
+void ProbabilisticLayerBackPropagation::set(const Index &new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
@@ -647,9 +647,9 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     synaptic_weight_derivatives.resize(inputs_number, outputs_number);
 
-    combination_derivatives.resize(batch_samples_number, outputs_number);
+    combination_derivatives.resize(samples_number, outputs_number);
 
-    input_derivatives.resize(batch_samples_number, inputs_number);
+    input_derivatives.resize(samples_number, inputs_number);
 }
 
 
@@ -657,7 +657,7 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_der
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
+    return {{(type*)(input_derivatives.data()), {samples_number, inputs_number}} };
 }
 
 
@@ -683,18 +683,18 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagationLM::get_input_d
 }
 
 
-void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ProbabilisticLayerBackPropagationLM::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index parameters_number = layer->get_parameters_number();
 
-    squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+    squared_errors_Jacobian.resize(samples_number, parameters_number);
 
-    combination_derivatives.resize(batch_samples_number, outputs_number);
+    combination_derivatives.resize(samples_number, outputs_number);
 }
 
 

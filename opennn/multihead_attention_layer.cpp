@@ -303,18 +303,17 @@ void MultiheadAttentionLayer::build_causal_mask()
 
 void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
-    const Index batch_samples_number = attention_scores.dimension(2);
+    const Index samples_number = attention_scores.dimension(2);
 
     const Index context_input_size = context_size * input_size;
 
-
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
-        for(Index sample_index = 0; sample_index < batch_samples_number; sample_index++)
+        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
             // + (sample_index + head_index) * context_input_size * batch_samples_number;
-            + (sample_index + head_index * batch_samples_number) * context_input_size;
+            + (sample_index + head_index * samples_number) * context_input_size;
             // + (sample_index * heads_number + head_index) * context_input_size * batch_samples_number;
 
             cerr << "Changes in multihead_attention.cpp line 315 (comented and replaced by the one in the line 316)" << endl;
@@ -847,17 +846,17 @@ pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_p
 
     const Index depth = multihead_attention_layer->get_depth();
 
-    return { (type*)outputs.data(), {{ batch_samples_number, input_size, depth }} };
+    return { (type*)outputs.data(), {{ samples_number, input_size, depth }} };
 }
 
 
-void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void MultiheadAttentionLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index input_size = multihead_attention_layer->get_input_size();
 
@@ -871,21 +870,21 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_batch_sampl
 
     // Outputs
 
-    outputs.resize(batch_samples_number, input_size, depth);
+    outputs.resize(samples_number, input_size, depth);
 
     // Rest of quantities
 
-    query.resize(input_size, hidden_depth, batch_samples_number, heads_number);
-    key.resize(context_size, hidden_depth, batch_samples_number, heads_number);
-    value.resize(context_size, hidden_depth, batch_samples_number, heads_number);
+    query.resize(input_size, hidden_depth, samples_number, heads_number);
+    key.resize(context_size, hidden_depth, samples_number, heads_number);
+    value.resize(context_size, hidden_depth, samples_number, heads_number);
 
     sample_matrix.resize(input_size, hidden_depth);
 
-    attention_scores.resize(context_size, input_size, batch_samples_number, heads_number);
-    attention_weights.resize(context_size, input_size, batch_samples_number, heads_number);
-    attention_outputs.resize(input_size, hidden_depth, batch_samples_number, heads_number);
+    attention_scores.resize(context_size, input_size, samples_number, heads_number);
+    attention_weights.resize(context_size, input_size, samples_number, heads_number);
+    attention_outputs.resize(input_size, hidden_depth, samples_number, heads_number);
 
-    projection_outputs.resize(batch_samples_number, input_size, depth, heads_number);
+    projection_outputs.resize(samples_number, input_size, depth, heads_number);
 }
 
 
@@ -902,13 +901,13 @@ void MultiheadAttentionLayerForwardPropagation::print() const
 }
 
 
-void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void MultiheadAttentionLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index input_size = multihead_attention_layer->get_input_size();
     const Index context_size = multihead_attention_layer->get_context_size();
@@ -916,15 +915,15 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
     const Index heads_number = multihead_attention_layer->get_heads_number();
     const Index hidden_depth = multihead_attention_layer->get_weights_depth();
 
-    error_attention_scores_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
-    error_attention_weights_derivatives.resize(context_size, input_size, batch_samples_number, heads_number);
-    error_attention_output_derivatives.resize(input_size, hidden_depth, batch_samples_number, heads_number);
+    error_attention_scores_derivatives.resize(context_size, input_size, samples_number, heads_number);
+    error_attention_weights_derivatives.resize(context_size, input_size, samples_number, heads_number);
+    error_attention_output_derivatives.resize(input_size, hidden_depth, samples_number, heads_number);
 
     sample_deltas.resize(input_size, depth);
 
-    error_query_derivatives.resize(input_size, hidden_depth, batch_samples_number, heads_number);
-    error_key_derivatives.resize(context_size, hidden_depth, batch_samples_number, heads_number);
-    error_value_derivatives.resize(context_size, hidden_depth, batch_samples_number, heads_number);
+    error_query_derivatives.resize(input_size, hidden_depth, samples_number, heads_number);
+    error_key_derivatives.resize(context_size, hidden_depth, samples_number, heads_number);
+    error_value_derivatives.resize(context_size, hidden_depth, samples_number, heads_number);
 
     query_weights_derivatives.resize(depth, hidden_depth, heads_number);
     key_weights_derivatives.resize(depth, hidden_depth, heads_number);
@@ -939,8 +938,8 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_batch_samples_
 
     aux_rows.resize(context_size);
 
-    input_derivatives.resize(batch_samples_number, input_size, depth);
-    context_derivatives.resize(batch_samples_number, context_size, depth);
+    input_derivatives.resize(samples_number, input_size, depth);
+    context_derivatives.resize(samples_number, context_size, depth);
 }
 
 
@@ -965,8 +964,8 @@ vector<pair<type*, dimensions>> MultiheadAttentionLayerBackPropagation::get_inpu
     const Index depth = multihead_attention_layer->get_depth();
 
     return
-    {{(type*)(input_derivatives.data()), {batch_samples_number, input_size, depth}},
-     {(type*)(context_derivatives.data()), {batch_samples_number, context_size, depth}} };
+    {{(type*)(input_derivatives.data()), {samples_number, input_size, depth}},
+     {(type*)(context_derivatives.data()), {samples_number, context_size, depth}} };
 }
 
 }

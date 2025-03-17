@@ -39,7 +39,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -56,7 +56,7 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     Tensor<type, 0>& error = back_propagation.error;
 
     error.device(*thread_pool_device)
-        = ((targets * (outputs + type(1e-5)).log() + (type(1) - targets) * ((type(1) - outputs + type(1e-5)).log())).sum()) / type(-batch_samples_number);
+        = ((targets * (outputs + type(1e-5)).log() + (type(1) - targets) * ((type(1) - outputs + type(1e-5)).log())).sum()) / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -68,7 +68,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -84,7 +84,7 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*(outputs + type(1e-5)).log()).sum() / type(-batch_samples_number);
+    error.device(*thread_pool_device) = (targets*(outputs + type(1e-5)).log()).sum() / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -112,7 +112,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -132,7 +132,7 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
     output_deltas.device(*thread_pool_device)
-        = (-targets/(outputs + type(1e-5)) + (type(1) - targets)/(type(1) - outputs + type(1e-5)))/type(batch_samples_number);
+        = (-targets/(outputs + type(1e-5)) + (type(1) - targets)/(type(1) - outputs + type(1e-5)))/type(samples_number);
 }
 
 
@@ -140,7 +140,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -154,7 +154,7 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = (outputs - targets) / type(batch_samples_number);
+    output_deltas.device(*thread_pool_device) = (outputs - targets) / type(samples_number);
 }
 
 

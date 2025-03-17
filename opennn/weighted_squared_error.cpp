@@ -165,7 +165,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -192,7 +192,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     for(Index i = 0; i < targets.size(); i++)
         errors_weights(i) = (targets(i) == type(0)) ?negatives_weight : positives_weight;
 
-    const type coefficient = type(total_samples_number) / (type(batch_samples_number) * normalization_coefficient);
+    const type coefficient = type(total_samples_number) / (type(samples_number) * normalization_coefficient);
 
     error.device(*thread_pool_device)
         = (errors.square() * errors_weights).sum()*coefficient;
@@ -209,7 +209,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.target_dimensions[0];
+    const Index samples_number = batch.target_dimensions[0];
 
     // Back propagation
 
@@ -221,7 +221,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
-    const type coefficient = type(2*total_samples_number)/(type(batch_samples_number)*normalization_coefficient);
+    const type coefficient = type(2*total_samples_number)/(type(samples_number)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient * (errors_weights * errors);
 }

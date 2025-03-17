@@ -619,11 +619,11 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 {
     const Index outputs_number = layer->get_outputs_number();
 
-    return {(type*)outputs.data(), {{batch_samples_number, outputs_number}}};
+    return {(type*)outputs.data(), {{samples_number, outputs_number}}};
 }
 
 
-void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void RecurrentLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -631,14 +631,14 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_samples_number
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index time_steps = 0;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
-    current_inputs.resize(batch_samples_number, inputs_number);
-    current_activations_derivatives.resize(batch_samples_number, outputs_number);
+    current_inputs.resize(samples_number, inputs_number);
+    current_activations_derivatives.resize(samples_number, outputs_number);
 
-    activation_derivatives.resize(batch_samples_number, time_steps, outputs_number);
+    activation_derivatives.resize(samples_number, time_steps, outputs_number);
 
-    outputs.resize(batch_samples_number, outputs_number);
+    outputs.resize(samples_number, outputs_number);
     outputs.setZero();
 }
 
@@ -648,11 +648,11 @@ void RecurrentLayerForwardPropagation::print() const
 }
 
 
-void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void RecurrentLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index outputs_number = layer->get_outputs_number();
@@ -665,7 +665,7 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     combinations_recurrent_weights_derivatives.resize(outputs_number, outputs_number, outputs_number);
 
-    combination_derivatives.resize(batch_samples_number, outputs_number);
+    combination_derivatives.resize(samples_number, outputs_number);
     current_combinations_derivatives.resize(outputs_number);
 
     bias_derivatives.resize(outputs_number);
@@ -676,7 +676,7 @@ void RecurrentLayerBackPropagation::set(const Index& new_batch_samples_number, L
 
     const Index time_steps = 0;
 
-    input_derivatives.resize(batch_samples_number, time_steps, inputs_number);
+    input_derivatives.resize(samples_number, time_steps, inputs_number);
 }
 
 
@@ -697,7 +697,7 @@ vector<pair<type*, dimensions>> RecurrentLayerBackPropagation::get_input_derivat
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}}};
+    return {{(type*)(input_derivatives.data()), {samples_number, inputs_number}}};
 }
 
 }

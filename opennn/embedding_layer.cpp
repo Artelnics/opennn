@@ -245,7 +245,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 {
     const Index embedding_dimension = get_embedding_dimension();
 
-    const Index batch_samples_number = input_pairs[0].second[0];
+    const Index samples_number = input_pairs[0].second[0];
     const Index inputs_number = input_pairs[0].second[1];
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
@@ -265,7 +265,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     embedding_weights_derivatives.setZero();
 
-    for(Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
     {
         positional_encoding
             ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension))
@@ -351,17 +351,17 @@ pair<type*, dimensions> EmbeddingLayerForwardPropagation::get_outputs_pair() con
 
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
     
-    return {(type*)outputs.data(), {batch_samples_number, sequence_length, embedding_dimension}};
+    return {(type*)outputs.data(), {samples_number, sequence_length, embedding_dimension}};
 }
 
 
-void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index sequence_length = embedding_layer->get_sequence_length();
 
@@ -369,7 +369,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_batch_samples_number
 
     // Outputs
 
-    outputs.resize(batch_samples_number, sequence_length, embedding_dimension);
+    outputs.resize(samples_number, sequence_length, embedding_dimension);
 
     if(embedding_layer->get_positional_encoding())
         build_positional_encoding_matrix();
@@ -426,13 +426,13 @@ vector<pair<type*, dimensions>> EmbeddingLayerBackPropagation::get_input_derivat
 }
 
 
-void EmbeddingLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(new_layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index sequence_length = embedding_layer->get_sequence_length();
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();

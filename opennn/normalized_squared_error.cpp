@@ -124,7 +124,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -144,7 +144,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = outputs - targets;
 
-    const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
+    const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
     error.device(*thread_pool_device) =  errors.contract(errors, SSE) * coefficient;
 
@@ -160,14 +160,14 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
     Tensor<type, 0>& error = back_propagation.error;
 
-    const type coefficient = type(total_samples_number) / type(batch_samples_number * normalization_coefficient);
+    const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
     error.device(*thread_pool_device) = squared_errors.square().sum() * coefficient;
 
@@ -185,7 +185,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -195,7 +195,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
-    const type coefficient = type(2*total_samples_number) / (type(batch_samples_number)*normalization_coefficient);
+    const type coefficient = type(2*total_samples_number) / (type(samples_number)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient*errors;
 }
@@ -225,7 +225,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -234,7 +234,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    const type coefficient = type(2* total_samples_number)/type(batch_samples_number* normalization_coefficient);
+    const type coefficient = type(2* total_samples_number)/type(samples_number* normalization_coefficient);
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
 }
@@ -247,7 +247,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -255,7 +255,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 
-    const type coefficient = type(2)/((type(batch_samples_number)/type(total_samples_number))*normalization_coefficient);
+    const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
 
     hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
 }
