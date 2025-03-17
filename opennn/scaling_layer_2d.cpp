@@ -516,19 +516,19 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0]}};
+    return {(type*)outputs.data(), {samples_number, output_dimensions[0]}};
 }
 
 
-void ScalingLayer2DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ScalingLayer2DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
-    outputs.resize(batch_samples_number, outputs_number);
+    outputs.resize(samples_number, outputs_number);
 }
 
 

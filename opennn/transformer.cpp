@@ -393,7 +393,7 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    TensorMap <Tensor<type, 2>> outputs(outputs_pair.first,outputs_pair.second[1],outputs_pair.second[2]);
+    TensorMap <Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
     outputs.setZero();
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);

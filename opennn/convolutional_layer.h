@@ -155,7 +155,7 @@ public:
 
 private:
 
-   Tensor<type, 4> synaptic_weights;
+   Tensor<type, 4> weights;
 
    Tensor<type, 1> biases;
 
@@ -234,7 +234,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    Tensor<type, 1> bias_derivatives;
    Tensor<type, 4> synaptic_weight_derivatives;
 
-   Tensor<type, 4> rotated_synaptic_weights;
+   Tensor<type, 4> rotated_weights;
 
 };
 
