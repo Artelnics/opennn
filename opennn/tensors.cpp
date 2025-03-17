@@ -278,7 +278,6 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
     }
 }
 
-
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
     const Index rows_number = tensor.dimension(0);
