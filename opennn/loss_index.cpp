@@ -675,7 +675,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
-    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
+    {
+        const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
+        batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
+    }
+    else
+        batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
     BackPropagation back_propagation(samples_number, this);
@@ -697,17 +703,20 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
+        // cout << "Parameter " << i << endl;
         h = calculate_h(parameters(i));
 
-       parameters_forward(i) += h;
+        parameters_forward(i) += h;
 
-       neural_network->forward_propagate(batch.get_input_pairs(),
+        neural_network->forward_propagate(batch.get_input_pairs(),
                                          parameters_forward,
                                          forward_propagation);
 
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_forward = back_propagation.error();
+
+       cout << "Forward error: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -720,6 +729,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        calculate_error(batch, forward_propagation, back_propagation);
 
        error_backward = back_propagation.error();
+
+       cout << "Backward error: " << error_backward << endl;
 
        parameters_backward(i) += h;
 

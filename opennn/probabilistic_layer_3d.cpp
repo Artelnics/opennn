@@ -109,7 +109,8 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
 
     weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_glorot();
+    // set_parameters_glorot();
+    set_parameters_random();
 
     name = new_name;
 

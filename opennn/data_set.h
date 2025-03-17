@@ -175,6 +175,7 @@ public:
     Tensor<type, 2> get_data(const SampleUse&) const;
     Tensor<type, 2> get_data(const VariableUse&) const;   
     Tensor<type, 2> get_data(const SampleUse&, const VariableUse&) const;
+    Tensor<type, 2> get_data_from_indices(const vector<Index>&, const vector<Index>&) const;
 
     Tensor<type, 1> get_sample_data(const Index&) const;
     Tensor<type, 1> get_sample_data(const Index&, const vector<Index>&) const;

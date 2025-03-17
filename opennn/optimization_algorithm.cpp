@@ -456,7 +456,7 @@ string OptimizationAlgorithm::write_time(const type& time) const
     elapsed_time << setfill('0')
         << setw(2) << hours << ":"
         << setw(2) << minutes << ":"
-        << setw(2) << seconds << endl;
+        << setw(2) << seconds;
 
     return elapsed_time.str();
 }
@@ -495,7 +495,7 @@ void TrainingResults::print(const string &message)
 
 Tensor<string, 2> TrainingResults::write_override_results(const Index& precision) const
 {
-    Tensor<string, 2> override_results(6, 2);
+    Tensor<string, 2> override_results(5, 2);
 
     override_results(0,0) = "Epochs number";
     override_results(1,0) = "Elapsed time";

@@ -176,7 +176,7 @@ void TestingAnalysis::print_goodness_of_fit_analysis() const
 
 
 Tensor<type, 2> TestingAnalysis::calculate_error() const
-{ 
+{
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
@@ -218,11 +218,11 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    for(Index i = 0; i < testing_samples_number; i++){
+    for(Index i = 0; i < outputs_number; i++){
         type min_range=output_minimums[i];
         type max_range=output_maximums[i];
         desc.set(min_range, max_range);
-        descriptives.push_back(desc);
+        descriptives[i] = desc;
     }
 
     unscaling_layer->set_descriptives(descriptives);
@@ -276,11 +276,11 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
     const Tensor<type, 1>& output_minimums = unscaling_layer->get_minimums();
     const Tensor<type, 1>& output_maximums = unscaling_layer->get_maximums();
 
-    for(Index i = 0; i < testing_samples_number; i++){
+    for(Index i = 0; i < outputs_number; i++){
         type min_range=output_minimums[i];
         type max_range=output_maximums[i];
         desc.set(min_range, max_range);
-        descriptives.push_back(desc);
+        descriptives[i] = desc;
     }
 
     unscaling_layer->set_descriptives(descriptives);
@@ -552,10 +552,10 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
     Tensor<type, 0> mean_squared_error;
     mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
-    errors.setValues({mean_squared_error(0),
-                      errors(0) / type(samples_number),
-                      sqrt(errors(1)),
-                      calculate_normalized_squared_error(targets, outputs)});;
+    errors(0) = mean_squared_error(0);
+    errors(1) = errors(0)/type(samples_number);
+    errors(2) = sqrt(errors(1));
+    errors(3) = calculate_normalized_squared_error(targets, outputs);
 
     return errors;
 }
@@ -1390,6 +1390,25 @@ Tensor<type, 2> TestingAnalysis::calculate_lift_chart(const Tensor<type, 2>& cum
     }
 
     return lift_chart;
+}
+
+
+TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis() const
+{
+    Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+
+    Tensor<type, 2> targets = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
+
+    Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
+
+    TestingAnalysis::KolmogorovSmirnovResults Kolmogorov_Smirnov_results;
+
+    Kolmogorov_Smirnov_results.positive_cumulative_gain = calculate_cumulative_gain(targets, outputs);
+    Kolmogorov_Smirnov_results.negative_cumulative_gain = calculate_negative_cumulative_gain(targets, outputs);
+    Kolmogorov_Smirnov_results.maximum_gain =
+        calculate_maximum_gain(Kolmogorov_Smirnov_results.positive_cumulative_gain, Kolmogorov_Smirnov_results.negative_cumulative_gain);
+
+    return Kolmogorov_Smirnov_results;
 }
 
 
