@@ -133,6 +133,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
+    cout << "entrenando ADAM" << endl;
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
@@ -234,11 +235,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
 
     optimization_data.iteration = 1;
-
+    cout << "sa - "  << maximum_epochs_number << endl;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {  
+    {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
+        cout << "ss-" << epoch << endl;
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         training_error = type(0);
@@ -403,7 +405,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-
+    cout << "sa" << endl;
     set_unscaling();
 
     if(display) results.print();

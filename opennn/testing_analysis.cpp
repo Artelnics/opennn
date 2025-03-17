@@ -183,7 +183,7 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<type, 2> error = (outputs - targets);
+    const Tensor<type, 2> error = (targets - outputs);
 
     return error;
 }
@@ -239,7 +239,8 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j, 0, i) = absolute_errors(j,i);
            error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
-       }
+           cout << "--" << j << " " << i << " -> " << error_data(j, 0, i) << " " << error_data(j, 1, i) << " " << error_data(j, 2, i) << endl;
+         }
    }
     return error_data;
 }
