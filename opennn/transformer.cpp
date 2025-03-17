@@ -28,8 +28,8 @@ Transformer::Transformer(const Index& decoder_length,
                          const Index& heads_number,
                          const Index& layers_number)
 {
-    set(decoder_length,                           //Bruno's context was the input
-        input_length,                         //Bruno's input was the decoder
+    set(decoder_length,                           //Bruno's input was the decoder
+        input_length,                             //Bruno's context was the input
         decoder_dimensions_xxx,
         input_dimension_xxx,
         embedding_dimension,
@@ -262,17 +262,36 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
     output_vocabulary = new_output_vocabulary;
 }
 
+void Transformer::set_input_length(const Index& new_input_length)
+{
+    input_length = new_input_length;
+}
+
+void Transformer::set_decoder_length(const Index& new_decoder_length)
+{
+    decoder_length = new_decoder_length;
+}
+
+Index Transformer::get_input_length() const
+{
+    return input_length;
+}
+
+Index Transformer::get_decoder_length() const
+{
+    return decoder_length;
+}
 
 // string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
 // {
-//     //type start_indicator = 1;
-//     //type end_indicator = 2;
+//     type start_indicator = 1;
+//     type end_indicator = 2;
 
-//     //if(imported_vocabulary)
-//     //{
+//     if(imported_vocabulary)
+//     {
 //     type start_indicator = 2;
 //     type end_indicator = 3;
-//     //}
+//     }
 
 //     const Index batch_samples_number = 1;
 
@@ -280,8 +299,8 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
 //     context.setZero();
 //     context(0) = start_indicator;
 
-//     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
-//     //else
+//     if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
+//     else
 //     tokenize_wordpiece(context_tokens[0], context);
 
 //     Tensor<type, 2> input(batch_samples_number, input_length);
@@ -333,7 +352,7 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
 
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
-/*
+
     //if(imported_vocabulary)
     //{
     type start_indicator = 2;
@@ -341,37 +360,40 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
     //}
 
     //@todo
-    vector<vector<string>> context_tokens(input_string.size());
-    for(Index i = 0; i < context_tokens.size(); i++)
-        context_tokens[i] = preprocess_language_document(input_string[i], true);
+    vector<vector<string>> input_tokens(input_string.size());
+    for(size_t i = 0; i <input_tokens.size(); i++)
+        input_tokens[i] = preprocess_language_document(input_string[i], true);
 
     const Index samples_number = 1;
 
-    Tensor<type, 2> context(samples_number, decoder_length);
-    context.setZero();
+    Tensor<type, 2> input(samples_number, input_length);
+    input.setZero();
 
     //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
     //else
-    tokenize_wordpiece(context_tokens[0], context);
+    // tokenize_wordpiece(input_tokens[0], input);
 
-    Tensor<type, 2> input(samples_number, input_length);
+    tokenize_wordpiece(input_tokens[0], input);
+    // tokenize_whitespace(input_tokens[0], input);
 
-    input.setZero();
-    input(0) = start_indicator;
+    Tensor<type, 2> decoder(samples_number, decoder_length);
+
+    decoder.setZero();
+    decoder(0) = start_indicator;
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const pair<type*, dimensions> context_pair(context.data(), { samples_number, decoder_length });
-    const pair<type*, dimensions> input_pair(input.data(), { samples_number, input_length });
+    const pair<type*, dimensions> context_pair(input.data(), { samples_number, input_length });
+    const pair<type*, dimensions> decoder_pair(decoder.data(), { samples_number, decoder_length });
 
-    const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
+    const vector<pair<type*, dimensions>> input_pairs = {decoder_pair, context_pair};
 
     const Index layers_number = get_layers_number();
 
     const pair<type*, dimensions> outputs_pair 
         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    TensorMap <Tensor<type, 2>> outputs(outputs_pair.first,outputs_pair.second[1],outputs_pair.second[2]);
+    TensorMap <Tensor<type, 2>> outputs(outputs_pair.first, outputs_pair.second[1], outputs_pair.second[2]);
     outputs.setZero();
 
     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
@@ -379,6 +401,7 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     Tensor<Index, 0> prediction;
 
+    cout << "Reachs this point (Transformer calculate output)" << endl;
     for(Index i = 1; i < input_length; i++)
     {
         forward_propagate(input_pairs, forward_propagation, false);
@@ -387,22 +410,24 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
         prediction = current_outputs.argmax();
 
-        input(i) = type(prediction(0));
+        decoder(i) = type(prediction(0));
 
         if(prediction(0) == end_indicator)
             break;
     }
 
+    cout << "Reachs this point (Transformer calculate output)" << endl;
     ostringstream output_buffer;
 
     //if(!imported_vocabulary)    
     // detokenize_whitespace(input, output_string);
     //else
 
-    detokenize_wordpiece(input, output_buffer);
+    detokenize_wordpiece(decoder, output_buffer);
+    // detokenize_whitespace(decoder, output_buffer);
 
     return output_buffer.str();   
-*/
+
     return string();
 }
 
@@ -428,23 +453,23 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
 // void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 // {
-//     const Index context_vocabulary_size = context_vocabulary.size();
+//     const Index context_vocabulary_size = input_vocabulary.size();
 
 //     bool line_ended = false;
 
-//     for(Index j = 0; j < decoder_length - 1; j++)
+//     for(Index j = 0; j < input_length - 1; j++)
 //     {
 //         if(j < context_tokens.size())
 //         {
-//             auto it = find(context_vocabulary.data(), context_vocabulary.data() + context_vocabulary_size, context_tokens[j]);
+//             auto it = find(input_vocabulary.data(), input_vocabulary.data() + context_vocabulary_size, context_tokens[j]);
 
-//             const Index word_index = it - context_vocabulary.data();
+//             const Index word_index = it - input_vocabulary.data();
 
 //             context(j + 1) = type(word_index);
 //         }
 //         else
 //         {
-//             if(j == context_tokens.size() || (j == decoder_length - 2 && !line_ended))
+//             if(j == context_tokens.size() || (j == input_length - 2 && !line_ended))
 //             {
 //                 context(j + 1) = 3; // end indicator
 //                 line_ended = true;
@@ -457,13 +482,43 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //     }
 // }
 
-/*
+
+void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
+{
+    bool line_ended = false;
+
+    for(Index j = 0; j < input_length - 1; j++)
+    {
+        if(j < Index(context_tokens.size()))
+        {
+            auto it = input_vocabulary.find(context_tokens[j]);
+
+            const Index word_index = (it != input_vocabulary.end()) ? it->second : 0;
+
+            context(j + 1) = type(word_index);
+        }
+        else
+        {
+            if(j == Index(context_tokens.size()) || (j == input_length - 2 && !line_ended))
+            {
+                context(j + 1) = 3; // end indicator
+                line_ended = true;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+}
+
+
 void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
-    unordered_map<string, type> context_vocabulary_map;
+    // unordered_map<string, type> context_vocabulary_map;
 
-    for(size_t i = 0; i < context_vocabulary.size(); i++)
-        context_vocabulary_map[context_vocabulary[i]] = type(i);
+    // for(Index i = 0; i < input_vocabulary.size(); i++)
+    //     context_vocabulary_map[input_vocabulary[i]] = type(i);
 
     Index token_counter = 1;
     bool line_ended = false;
@@ -472,18 +527,18 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     string wordpiece;
     string rest;
 
-    auto wordpiece_entry = context_vocabulary_map.find("");
+    auto wordpiece_entry = input_vocabulary.find("");
     bool tokenized;
 
-    for(Index j = 0; j < decoder_length - 1; j++)
+    for(Index j = 0; j < input_length - 1; j++)
     {
-        if(j < Index(context_tokens.size()) && token_counter < decoder_length - 1)
+        if(j < Index(context_tokens.size()) && token_counter < input_length - 1)
         {
             word = context_tokens[j];
 
-            wordpiece_entry = context_vocabulary_map.find(word);
+            wordpiece_entry = input_vocabulary.find(word);
 
-            if(wordpiece_entry != context_vocabulary_map.end())
+            if(wordpiece_entry != input_vocabulary.end())
             {
                 context(token_counter++) = wordpiece_entry->second;
                 continue;
@@ -493,16 +548,16 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 
             for(Index wordpiece_length = word.length(); wordpiece_length > 0; wordpiece_length--)
             {
-                if(token_counter == decoder_length - 1)
+                if(token_counter == input_length - 1)
                 {
                     tokenized = true;
                     break;
                 }
 
                 wordpiece = word.substr(0, wordpiece_length);
-                wordpiece_entry = context_vocabulary_map.find(wordpiece);
+                wordpiece_entry = input_vocabulary.find(wordpiece);
 
-                if(wordpiece_entry != context_vocabulary_map.end())
+                if(wordpiece_entry != input_vocabulary.end())
                 {
                     context(token_counter++) = wordpiece_entry->second;
 
@@ -525,7 +580,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         else
         {
             if(j == Index(context_tokens.size())
-            || (token_counter == decoder_length - 1 && !line_ended))
+            || (token_counter == input_length - 1 && !line_ended))
             {
                 context(token_counter++) = 3; // end indicator
                 line_ended = true;
@@ -537,7 +592,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         }
     }
 }
-*/
+
 
 //void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 //{
@@ -551,19 +606,37 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 //    }
 //}
 
+void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
+{
+    for(Index i = 1; i < decoder_length; i++)
+    {
+        if(predictions(i) == 2) break;
+
+        for (const auto& pair : output_vocabulary)
+        {
+            if (pair.second == Index(predictions(i)))
+            {
+                output_string << pair.first << " ";
+                break;
+            }
+        }
+    }
+}
+
+
 /*
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
 {
-    buffer << input_vocabulary[Index(predictions(1))];
+    buffer << output_vocabulary[Index(predictions(1))];
 
     string current_prediction;
 
-    for(Index i = 2; i < input_length; i++)
+    for(Index i = 2; i < output_length; i++)
     {
         if(predictions(i) == 3)
             break;
 
-        current_prediction = input_vocabulary[Index(predictions(i))];
+        current_prediction = output_vocabulary[Index(predictions(i))];
 
         current_prediction.substr(0, 2) == "##"
            ? buffer << current_prediction.substr(2)
@@ -571,6 +644,36 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
     }
 }
 */
+
+void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
+{
+    for (const auto& pair : output_vocabulary) {
+        if (pair.second == Index(predictions(1))) {
+            buffer << pair.first;
+            break;
+        }
+    }
+
+    string current_prediction;
+
+    for(Index i = 2; i < decoder_length; i++)
+    {
+        if(predictions(i) == 3) // [END] token
+            break;
+
+        for (const auto& pair : output_vocabulary) {
+            if (pair.second == Index(predictions(i))) {
+                current_prediction = pair.first;
+                break;
+            }
+        }
+
+        (current_prediction.substr(0, 2) == "##")
+            ? buffer << current_prediction.substr(2)
+            : buffer << " " << current_prediction;
+    }
+}
+
 
 };
 

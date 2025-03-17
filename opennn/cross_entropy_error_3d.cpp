@@ -27,7 +27,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 {
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -70,7 +70,7 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     #pragma omp parallel for collapse(2)
 
-    for(Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 

@@ -2172,20 +2172,20 @@ pair<type*, dimensions> LongShortTermMemoryLayerForwardPropagation::get_outputs_
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {{batch_samples_number, output_dimensions[0]}}};
+    return {(type*)outputs.data(), {{samples_number, output_dimensions[0]}}};
 }
 
 
-void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index outputs_number = layer->get_outputs_number();
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
-    outputs.resize(batch_samples_number, outputs_number);
+    outputs.resize(samples_number, outputs_number);
 
     previous_cell_states.resize(outputs_number);
     previous_hidden_states.resize(outputs_number);
@@ -2207,20 +2207,20 @@ void LongShortTermMemoryLayerForwardPropagation::set(const Index& new_batch_samp
 
     current_hidden_states_activations_derivatives.resize(outputs_number);
 
-    forget_activations.resize(batch_samples_number, outputs_number);
-    input_activations.resize(batch_samples_number, outputs_number);
-    state_activations.resize(batch_samples_number, outputs_number);
-    output_activations.resize(batch_samples_number, outputs_number);
+    forget_activations.resize(samples_number, outputs_number);
+    input_activations.resize(samples_number, outputs_number);
+    state_activations.resize(samples_number, outputs_number);
+    output_activations.resize(samples_number, outputs_number);
 
-    cell_states.resize(batch_samples_number, outputs_number);
-    hidden_states.resize(batch_samples_number, outputs_number);
+    cell_states.resize(samples_number, outputs_number);
+    hidden_states.resize(samples_number, outputs_number);
 
-    forget_activations_derivatives.resize(batch_samples_number, outputs_number);
-    input_activations_derivatives.resize(batch_samples_number, outputs_number);
-    state_activations_derivatives.resize(batch_samples_number, outputs_number);
-    output_activations_derivatives.resize(batch_samples_number, outputs_number);
+    forget_activations_derivatives.resize(samples_number, outputs_number);
+    input_activations_derivatives.resize(samples_number, outputs_number);
+    state_activations_derivatives.resize(samples_number, outputs_number);
+    output_activations_derivatives.resize(samples_number, outputs_number);
 
-    hidden_states_activations_derivatives.resize(batch_samples_number, outputs_number);
+    hidden_states_activations_derivatives.resize(samples_number, outputs_number);
 }
 
 
@@ -2235,11 +2235,11 @@ void LongShortTermMemoryLayerForwardPropagation::print() const
 }
 
 
-void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void LongShortTermMemoryLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 /*
     const Index neurons_number = layer->get_neurons_number();
     const Index inputs_number = layer->get_inputs_number();
@@ -2285,7 +2285,7 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_samples
     state_combinations_biases_derivatives.resize(neurons_number, neurons_number);
     output_combinations_biases_derivatives.resize(neurons_number, neurons_number);
 
-    input_derivatives.resize(batch_samples_number, inputs_number);
+    input_derivatives.resize(samples_number, inputs_number);
 */
 }
 
@@ -2301,7 +2301,7 @@ vector<pair<type*, dimensions>> LongShortTermMemoryLayerBackPropagation::get_inp
 {
     const dimensions input_dimensions = layer->get_input_dimensions();
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, input_dimensions[0]}}};
+    return {{(type*)(input_derivatives.data()), {samples_number, input_dimensions[0]}}};
 }
 
 

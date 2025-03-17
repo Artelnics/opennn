@@ -115,19 +115,19 @@ pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() con
 
     const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
 
-    return {(type*)outputs.data(), {batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
+    return {(type*)outputs.data(), {samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]}};
 }
 
 
-void ScalingLayer4DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ScalingLayer4DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     layer = new_layer;
 
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    outputs.resize(batch_samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
+    outputs.resize(samples_number, output_dimensions[0], output_dimensions[1], output_dimensions[2]);
 }
 
 

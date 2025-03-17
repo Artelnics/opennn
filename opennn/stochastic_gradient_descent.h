@@ -72,7 +72,6 @@ private:
 
    Index batch_samples_number = 1000;
 
-
    type training_loss_goal = type(0);
 
    Index maximum_selection_failures = numeric_limits<Index>::max();

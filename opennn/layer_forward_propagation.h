@@ -18,7 +18,7 @@ struct LayerForwardPropagation
 
     virtual void print() const {}
 
-    Index batch_samples_number = type(0);
+    Index samples_number = type(0);
 
     Layer* layer = nullptr;
 

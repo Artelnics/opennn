@@ -30,9 +30,9 @@ TEST(ProbabilisticLayer3DTest, Combinations)
 {
 /*
     Tensor<type, 1> biases(1);
-    Tensor<type, 2> synaptic_weights(1, 1);
+    Tensor<type, 2> weights(1, 1);
     biases.setConstant(type(1));
-    synaptic_weights.setConstant(type(2));
+    weights.setConstant(type(2));
 
     Tensor<type, 3> inputs(1, 1, 1);
     inputs.setConstant(type(3));
@@ -259,7 +259,7 @@ TEST(ProbabilisticLayer3DTest, ForwardPropagate)
         probabilistic_layer_3d.set(inputs_number, inputs_depth, neurons_number);
 
         Tensor<type, 1> biases(neurons_number);
-        Tensor<type, 2> synaptic_weights(inputs_depth, neurons_number);
+        Tensor<type, 2> weights(inputs_depth, neurons_number);
 
         Tensor<type, 3> inputs(samples_number, inputs_number, inputs_depth);
         inputs.setConstant(type(1));

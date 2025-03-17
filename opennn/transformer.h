@@ -39,12 +39,20 @@ public:
     void set_dropout_rate(const type&);
     void set_input_vocabulary(const unordered_map<string, Index>&);
     void set_output_vocabulary(const unordered_map<string, Index>&);
+    void set_input_length(const Index&);
+    void set_decoder_length(const Index&);
+
+    Index get_input_length() const;
+    Index get_decoder_length() const;
 
     string calculate_outputs(const vector<string>&);
+    string calculate_outputs(const string&, const bool&);
 
     Tensor<type, 3> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
+    void tokenize_whitespace(const vector<string>&, Tensor<type, 2>&);
     void tokenize_wordpiece(const vector<string>&, Tensor<type, 2>&);
+    void detokenize_whitespace(Tensor<type, 2>&, ostringstream&);
     void detokenize_wordpiece(Tensor<type, 2>&, ostringstream&);
 
     vector<string> preprocess_language_document(const string& document, const bool& input)
