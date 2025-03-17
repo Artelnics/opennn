@@ -372,10 +372,13 @@ void ProbabilisticLayer3D::from_XML(const XMLDocument& document)
     if(!probabilistic_layer_element)
         throw runtime_error("Probabilistic3D element is nullptr.\n");
 
+    const Index new_inputs_number = read_xml_index(probabilistic_layer_element, "InputsNumber");
+    const Index new_inputs_depth = read_xml_index(probabilistic_layer_element, "InputsDepth");
+    const Index new_neurons_number = read_xml_index(probabilistic_layer_element, "NeuronsNumber");
+
+    set(new_inputs_number, new_inputs_depth, new_neurons_number);
+
     set_name(read_xml_string(probabilistic_layer_element, "Name"));
-    set_inputs_number(read_xml_index(probabilistic_layer_element, "InputsNumber"));
-    set_inputs_depth(read_xml_index(probabilistic_layer_element, "InputsDepth"));
-    set_output_dimensions({read_xml_index(probabilistic_layer_element, "NeuronsNumber")});
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
 

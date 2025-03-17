@@ -955,12 +955,17 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
+    if(!is_training)
+        cout << "Reachs this point (Forward propagation)" << endl;
 
-    for (Index i = first_layer_index; i <= last_layer_index; i++){
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
+    {
         layers[i]->forward_propagate(layer_input_pairs[i],
             forward_propagation.layers[i],
             is_training);
     }
+    if(!is_training)
+        cout << "Finishes the forward propagation." << endl;
 }
 
 

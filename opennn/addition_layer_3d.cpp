@@ -76,7 +76,13 @@ void AdditionLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map_3(input_pairs[0]);
 
+    // cout << "Is this part? (Addition layer)" << endl;
+
+    // print_vector(input_pairs[1].second);
+
     const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map_3(input_pairs[1]);
+
+    // cout << "Is it this one? (Addition layer)" << endl;
 
     AdditionLayer3DForwardPropagation* addition_layer_3d_forward_propagation =
         static_cast<AdditionLayer3DForwardPropagation*>(layer_forward_propagation.get());
@@ -116,9 +122,11 @@ void AdditionLayer3D::from_XML(const XMLDocument& document)
     if (!addition_layer_element)
         throw runtime_error("Addition3D element is nullptr.\n");
 
-    set_name(read_xml_string(addition_layer_element, "Name"));    
-    set_sequence_length(read_xml_index(addition_layer_element, "SequenceLength"));
-    set_embedding_length(read_xml_index(addition_layer_element, "EmbeddingLength"));
+    const string new_name = read_xml_string(addition_layer_element, "Name");
+    const Index new_sequence_lenght = read_xml_index(addition_layer_element, "SequenceLength");
+    const Index new_embedding_legth = read_xml_index(addition_layer_element, "EmbeddingLength");
+
+    set(new_sequence_lenght, new_embedding_legth, new_name);
 }
 
 

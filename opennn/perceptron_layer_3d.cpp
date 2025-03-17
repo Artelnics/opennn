@@ -113,8 +113,7 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     weights.resize(new_inputs_depth, new_neurons_number);
 
-    // set_parameters_glorot();
-    set_parameters_random();
+    set_parameters_glorot();
 
     activation_function = new_activation_function;
 
@@ -132,12 +131,12 @@ void PerceptronLayer3D::set_inputs_number(Index new_input_number)
 }
 
 
-void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
-{
-/*
-    inputs_number = new_inputs_number;
-*/
-}
+// void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
+// {
+// /*
+//     inputs_number = new_inputs_number;
+// */
+// }
 
 
 void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
@@ -150,21 +149,19 @@ void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 }
 
 
-void PerceptronLayer3D::set_output_dimensions(const dimensions& new_output_dimensions)
+void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
 {
-/*
+
     const Index inputs_depth = get_inputs_depth();
 
     biases.resize(new_neurons_number);
 
     weights.resize(inputs_depth, new_neurons_number);
-*/
-    const Index inputs_depth = get_inputs_depth();
-    const Index neurons_number = new_output_dimensions[1];
 
-    biases.resize(neurons_number);
+    // const Index inputs_depth = get_inputs_depth();
+    // const Index neurons_number = new_output_dimensions[1];
 
-    weights.resize(inputs_depth, neurons_number);
+    // weights.resize(inputs_depth, neurons_number);
 }
 
 
@@ -327,9 +324,6 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-
-    // @TODO EL PRIMER FALLO GRANDE EN EL GRADIENTE SALE EN ESTA CAPA POR ALGÚN MOTIVO (MIRAR)
-
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     if(delta_pairs.size() > 1)     
@@ -411,10 +405,13 @@ void PerceptronLayer3D::from_XML(const XMLDocument& document)
     if(!perceptron_layer_element)
         throw runtime_error("Perceptron3D element is nullptr.\n");
 
+    const Index new_inputs_number = read_xml_index(perceptron_layer_element, "InputsNumber");
+    const Index new_inputs_depth = read_xml_index(perceptron_layer_element, "InputsDepth");
+    const Index new_neurons_number = read_xml_index(perceptron_layer_element, "NeuronsNumber");
+
+    set(new_inputs_number, new_inputs_depth, new_neurons_number);
+
     set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_inputs_number(read_xml_index(perceptron_layer_element, "InputsNumber"));
-    set_inputs_depth(read_xml_index(perceptron_layer_element, "InputsDepth"));
-    set_output_dimensions({read_xml_index(perceptron_layer_element, "NeuronsNumber")});
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
     set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
 

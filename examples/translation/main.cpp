@@ -93,13 +93,21 @@ int main()
         adaptive_moment_estimation->set_display_period(1);
         adaptive_moment_estimation->set_display(false);
 
-        TrainingResults training_results = training_strategy.perform_training();
+        //@TODO CHECK WHY THE NUMERICAL GRADIENT IS 0 EXCEPT FOR THE PROBABILISTIC LAYER TERMS OF THE GRADIENT
+
+        // TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
 
         // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
-        // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
+        transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
+        transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
+
+        transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
+        transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
+        transformer.set_input_length(input_length);
+        transformer.set_decoder_length(decoder_length);
         //Testing
 
         // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
@@ -112,6 +120,14 @@ int main()
         // string prediction = transformer.calculate_outputs({"I want you to return it"});
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
+
+        cout << "LLega bien" << endl;
+
+        string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
+
+        cout << "Sale" << endl;
+
+        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
 /*
 

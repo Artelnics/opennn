@@ -714,7 +714,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
-       cout << "Forward error: " << error_forward << endl;
+       // cout << "Forward error: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -728,7 +728,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_backward = back_propagation.error();
 
-       cout << "Backward error: " << error_backward << endl;
+       // cout << "Backward error: " << error_backward << endl;
 
        parameters_backward(i) += h;
 
