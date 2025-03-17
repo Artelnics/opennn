@@ -31,7 +31,7 @@ Index PerceptronLayer3D::get_inputs_number_xxx() const
 
 Index PerceptronLayer3D::get_inputs_depth() const
 {
-    return synaptic_weights.dimension(0);
+    return weights.dimension(0);
 }
 
 
@@ -55,7 +55,7 @@ dimensions PerceptronLayer3D::get_output_dimensions() const
 
 Index PerceptronLayer3D::get_parameters_number() const
 {
-    return biases.size() + synaptic_weights.size();
+    return biases.size() + weights.size();
 }
 
 
@@ -67,11 +67,11 @@ type PerceptronLayer3D::get_dropout_rate() const
 
 Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 {
-    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+    Tensor<type, 1> parameters(weights.size() + biases.size());
 
-    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
+    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
+    memcpy(parameters.data() + weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
 }
@@ -111,9 +111,10 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(new_inputs_depth, new_neurons_number);
+    weights.resize(new_inputs_depth, new_neurons_number);
 
-    set_parameters_glorot();
+    // set_parameters_glorot();
+    set_parameters_random();
 
     activation_function = new_activation_function;
 
@@ -145,7 +146,7 @@ void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(new_inputs_depth, neurons_number);
+    weights.resize(new_inputs_depth, neurons_number);
 }
 
 
@@ -156,14 +157,14 @@ void PerceptronLayer3D::set_output_dimensions(const dimensions& new_output_dimen
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(inputs_depth, new_neurons_number);
+    weights.resize(inputs_depth, new_neurons_number);
 */
     const Index inputs_depth = get_inputs_depth();
-    const Index neurons_number = new_output_dimensions[0];
+    const Index neurons_number = new_output_dimensions[1];
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(inputs_depth, neurons_number);
+    weights.resize(inputs_depth, neurons_number);
 }
 
 
@@ -172,10 +173,10 @@ void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, co
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights.size()*sizeof(type));
+        memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
 
         #pragma omp section
-        memcpy(biases.data(), new_parameters.data() + index + synaptic_weights.size(), biases.size()*sizeof(type));
+        memcpy(biases.data(), new_parameters.data() + index + weights.size(), biases.size()*sizeof(type));
     }
 }
 
@@ -203,7 +204,7 @@ void PerceptronLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
-    synaptic_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -211,7 +212,7 @@ void PerceptronLayer3D::set_parameters_random()
 {
     set_random(biases);
 
-    set_random(synaptic_weights);
+    set_random(weights);
 }
 
 
@@ -225,15 +226,15 @@ void PerceptronLayer3D::set_parameters_glorot()
     const type maximum = limit;
 
     #pragma omp parallel for
-    for(Index i = 0; i < synaptic_weights.size(); i++)
-        synaptic_weights(i) = get_random_type(minimum, maximum);
+    for(Index i = 0; i < weights.size(); i++)
+        weights(i) = get_random_type(minimum, maximum);
 }
 
 
 void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, contraction_indices);
 
     sum_matrices(thread_pool_device.get(), biases, combinations);
 }
@@ -244,7 +245,7 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
     /*
     type* outputs_data = outputs.data();
 
-    const Index batch_samples_number = outputs.dimension(0);
+    const Index samples_number = outputs.dimension(0);
     const Index inputs_number = outputs.dimension(1);
     const Index outputs_number = outputs.dimension(2);
 
@@ -326,6 +327,9 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+
+    // @TODO EL PRIMER FALLO GRANDE EN EL GRADIENTE SALE EN ESTA CAPA POR ALGÚN MOTIVO (MIRAR)
+
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     if(delta_pairs.size() > 1)     
@@ -362,7 +366,7 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
         = inputs.contract(combination_derivatives, double_contraction_indices);
 
     input_derivatives.device(*thread_pool_device) 
-        = combination_derivatives.contract(synaptic_weights, single_contraction_indices);
+        = combination_derivatives.contract(weights, single_contraction_indices);
 }
 
 
@@ -380,22 +384,22 @@ void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_p
                                       Tensor<type, 1>& gradient) const
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     PerceptronLayer3DBackPropagation* perceptron_layer_back_propagation =
         static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
 
-    const type* synaptic_weights_derivatives_data = perceptron_layer_back_propagation->synaptic_weight_derivatives.data();
+    const type* weight_derivatives_data = perceptron_layer_back_propagation->synaptic_weight_derivatives.data();
     const type* biases_derivatives_data = perceptron_layer_back_propagation->bias_derivatives.data();
     type* gradient_data = gradient.data();
 
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+        memcpy(gradient_data + index, weight_derivatives_data, weights_number * sizeof(type));
 
         #pragma omp section
-        memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+        memcpy(gradient_data + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
     }
 }
 
@@ -456,35 +460,35 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
-    return { (type*)outputs.data(), { batch_samples_number, inputs_number, neurons_number } };
+    return { (type*)outputs.data(), { samples_number, inputs_number, neurons_number } };
 }
 
 
-void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void PerceptronLayer3DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
-    outputs.resize(batch_samples_number, inputs_number, neurons_number);
+    outputs.resize(samples_number, inputs_number, neurons_number);
 
-    activation_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    activation_derivatives.resize(samples_number, inputs_number, neurons_number);
 }
 
 
-void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void PerceptronLayer3DBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
@@ -494,9 +498,9 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_batch_samples_number
 
     synaptic_weight_derivatives.resize(inputs_depth, neurons_number);
 
-    combination_derivatives.resize(batch_samples_number, inputs_number, neurons_number);
+    combination_derivatives.resize(samples_number, inputs_number, neurons_number);
 
-    input_derivatives.resize(batch_samples_number, inputs_number, inputs_depth);
+    input_derivatives.resize(samples_number, inputs_number, inputs_depth);
 }
 
 
@@ -524,7 +528,7 @@ vector<pair<type*, dimensions>> PerceptronLayer3DBackPropagation::get_input_deri
     const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
 
     return {{(type*)(input_derivatives.data()),
-            {batch_samples_number, inputs_number, inputs_depth}}};
+            {samples_number, inputs_number, inputs_depth}}};
 }
 
 

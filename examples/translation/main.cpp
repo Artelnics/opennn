@@ -35,12 +35,15 @@ int main()
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
 
+        cout << "Input length: " << input_length << endl;
+        cerr << "Decoder length: " << decoder_length << endl;
+
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index embedding_dimension = /*1*/64;
-        const Index perceptron_depth = /*1*/128;
-        const Index heads_number = /*1*/4;
+        const Index embedding_dimension = 1/*64*/;
+        const Index perceptron_depth = 1/*128*/;
+        const Index heads_number = 1/*4*/;
         const Index layers_number = 1;
 
         // Neural network
@@ -82,17 +85,19 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        //adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); ???
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); ???
         adaptive_moment_estimation->set_loss_goal(0.5);
         adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(64);
+        adaptive_moment_estimation->set_batch_samples_number(512);
         adaptive_moment_estimation->set_display_period(1);
+        adaptive_moment_estimation->set_display(false);
 
         TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-        transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
+
+        // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
         // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
         //Testing
@@ -106,7 +111,8 @@ int main()
 
         // string prediction = transformer.calculate_outputs({"I want you to return it"});
 
-        // cout << "Target: quiero que me lo devuelvas" << endl << "Prediction: " << prediction << endl;
+        // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
+
 /*
 
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);

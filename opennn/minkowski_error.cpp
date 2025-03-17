@@ -56,7 +56,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -74,7 +74,7 @@ void MinkowskiError::calculate_error(const Batch& batch,
 
     errors.device(*thread_pool_device) = outputs - targets + epsilon;
 
-    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(batch_samples_number);
+    error.device(*thread_pool_device) = errors.abs().pow(minkowski_parameter).sum() / type(samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -84,7 +84,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
                                             ForwardPropagation&,
                                             BackPropagation& back_propagation) const
 {
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
    
@@ -94,7 +94,7 @@ void MinkowskiError::calculate_output_delta(const Batch& batch,
 
     const Tensor<type, 2>& errors = back_propagation.errors;
 
-    const type coefficient = type(1.0 / batch_samples_number);
+    const type coefficient = type(1.0 / samples_number);
 
     deltas.device(*thread_pool_device) = errors*(errors.abs().pow(minkowski_parameter - type(2)))*minkowski_parameter*coefficient;
 }

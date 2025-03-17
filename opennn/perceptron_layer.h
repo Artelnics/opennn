@@ -116,7 +116,7 @@ private:
 
     Tensor<type, 1> biases;
 
-    Tensor<type, 2> synaptic_weights;
+    Tensor<type, 2> weights;
 
     ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
