@@ -459,10 +459,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
     QuasiNewtonMethodData optimization_data(this);
 
     // Main loop
-    if(display)
-        cout << "71" << endl;
-    else
-        cout <<"11" << endl;
+
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;

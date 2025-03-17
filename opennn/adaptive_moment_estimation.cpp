@@ -133,7 +133,6 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    cout << "entrenando ADAM" << endl;
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
@@ -235,12 +234,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
 
     optimization_data.iteration = 1;
-    cout << "sa - "  << maximum_epochs_number << endl;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        cout << "ss-" << epoch << endl;
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         training_error = type(0);
@@ -270,18 +267,18 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            if(epoch == 50)
-            {
-            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            // if(epoch == 50)
+            // {
+            //     Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            //     cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            //     cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            //     cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            //     // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 
-            throw runtime_error("Checking the gradient and numerical gradient.");
-            }
+            //     //throw runtime_error("Checking the gradient and numerical gradient.");
+            // }
             //system("pause");
             training_error += training_back_propagation.error();
 
