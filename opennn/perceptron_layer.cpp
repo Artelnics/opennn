@@ -27,7 +27,7 @@ PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
 
 dimensions PerceptronLayer::get_input_dimensions() const
 {
-    return { synaptic_weights.dimension(0) };
+    return { weights.dimension(0) };
 }
 
 
@@ -45,7 +45,7 @@ void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
 
 Index PerceptronLayer::get_parameters_number() const
 {
-    return biases.size() + synaptic_weights.size();
+    return biases.size() + weights.size();
 }
 
 
@@ -57,14 +57,14 @@ type PerceptronLayer::get_dropout_rate() const
 
 Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
     const Index biases_number = biases.size();
 
-    Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
+    Tensor<type, 1> parameters(weights_number + biases_number);
 
-    memcpy(parameters.data(), synaptic_weights.data(),synaptic_weights_number*sizeof(type));
+    memcpy(parameters.data(), weights.data(),weights_number*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number*sizeof(type));
+    memcpy(parameters.data() + weights_number, biases.data(), biases_number*sizeof(type));
 
     return parameters;
 }
@@ -125,7 +125,7 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
         throw runtime_error("Output dimensions size is not 1");   
 
     biases.resize(new_output_dimensions[0]);    
-    synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
+    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
@@ -144,7 +144,7 @@ void PerceptronLayer::set_input_dimensions(const dimensions& new_input_dimension
 
     biases.resize(outputs_number);
 
-    synaptic_weights.resize(inputs_number, outputs_number);
+    weights.resize(inputs_number, outputs_number);
 }
 
 
@@ -155,22 +155,22 @@ void PerceptronLayer::set_output_dimensions(const dimensions& new_output_dimensi
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(inputs_number, neurons_number);
+    weights.resize(inputs_number, neurons_number);
 }
 
 
 void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
     const type* new_parameters_data = new_parameters.data();
-    type* synaptic_weights_data = synaptic_weights.data();
+    type* weights_data = weights.data();
     type* biases_data = biases.data();
 
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
-    memcpy(synaptic_weights_data, new_parameters_data + index, synaptic_weights_number*sizeof(type));
+    memcpy(weights_data, new_parameters_data + index, weights_number*sizeof(type));
 
-    memcpy(biases_data, new_parameters_data + index + synaptic_weights_number, biases_number*sizeof(type));
+    memcpy(biases_data, new_parameters_data + index + weights_number, biases_number*sizeof(type));
 }
 
 
@@ -209,7 +209,7 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
-    synaptic_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -217,7 +217,7 @@ void PerceptronLayer::set_parameters_random()
 {
     set_random(biases);
 
-    set_random(synaptic_weights);
+    set_random(weights);
 }
 
 
@@ -225,7 +225,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
 
-    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 
@@ -290,7 +290,7 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     // cout << "Input dimensions: " << inputs.dimensions() << endl;
     // cout << "Ouptut dimensions: " << outputs.dimensions() << endl;
-    // cout << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+    // cout << "Synaptic weights dimensions: " << weights.dimensions() << endl;
     // cout << "Biases dimensions: " << biases.dimensions() << endl;
     // throw runtime_error("Checking the perceptron layer dimensions.");
 
@@ -353,7 +353,7 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
     synaptic_weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(synaptic_weights, A_BT);
+        input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
 }
 
 
@@ -368,7 +368,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     // Forward propagation
 
@@ -411,7 +411,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
                 = combinations_derivatives_neuron * input;
         }
 
-        const Index bias_index = synaptic_weights_number + neuron_index;
+        const Index bias_index = weights_number + neuron_index;
 
         TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias 
             = tensor_map(squared_errors_Jacobian, bias_index);
@@ -421,7 +421,7 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     if(!is_first_layer)
         input_derivatives.device(*thread_pool_device)
-        = combination_derivatives.contract(synaptic_weights, A_BT);
+        = combination_derivatives.contract(weights, A_BT);
 }
 
 
@@ -430,7 +430,7 @@ void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_pro
                                       Tensor<type, 1>& gradient) const
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
         static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
@@ -438,17 +438,17 @@ void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_pro
     const Tensor<type, 2>& synaptic_weight_derivatives = perceptron_layer_back_propagation->synaptic_weight_derivatives;
     const Tensor<type, 1>& bias_derivatives = perceptron_layer_back_propagation->bias_derivatives;
 
-    const type* synaptic_weights_derivatives_data = synaptic_weight_derivatives.data();
+    const type* weight_derivatives_data = synaptic_weight_derivatives.data();
     const type* biases_derivatives_data = bias_derivatives.data();
     type* gradient_data = gradient.data();
 
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+        memcpy(gradient_data + index, weight_derivatives_data, weights_number * sizeof(type));
 
         #pragma omp section
-        memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+        memcpy(gradient_data + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
     }
 }
 
@@ -489,7 +489,7 @@ string PerceptronLayer::get_expression(const vector<string>& new_input_names,
 
     for(Index j = 0; j < outputs_number; j++)
     {
-        const TensorMap<Tensor<type, 1>> synaptic_weights_column = tensor_map(synaptic_weights, j);
+        const TensorMap<Tensor<type, 1>> synaptic_weights_column = tensor_map(weights, j);
 
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "(" << biases(j) << "+";
 
@@ -509,12 +509,12 @@ void PerceptronLayer::print() const
          << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
-         << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+         << "Synaptic weights dimensions: " << weights.dimensions() << endl;
 
     cout << "Biases:" << endl;
     cout << biases << endl;
     cout << "Synaptic weights:" << endl;
-    cout << synaptic_weights << endl;
+    cout << weights << endl;
 
     cout << "Activation function:" << endl;
     cout << get_activation_function_string() << endl;

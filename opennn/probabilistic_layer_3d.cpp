@@ -30,7 +30,7 @@ Index ProbabilisticLayer3D::get_inputs_number_xxx() const
 
 Index ProbabilisticLayer3D::get_inputs_depth() const
 {
-    return synaptic_weights.dimension(0);
+    return weights.dimension(0);
 }
 
 
@@ -82,17 +82,17 @@ string ProbabilisticLayer3D::get_activation_function_text() const
 
 Index ProbabilisticLayer3D::get_parameters_number() const
 {
-    return biases.size() + synaptic_weights.size();
+    return biases.size() + weights.size();
 }
 
 
 Tensor<type, 1> ProbabilisticLayer3D::get_parameters() const
 {
-    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+    Tensor<type, 1> parameters(weights.size() + biases.size());
 
-    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights.size()*sizeof(type));
+    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights.size(), biases.data(), biases.size()*sizeof(type));
+    memcpy(parameters.data() + weights.size(), biases.data(), biases.size()*sizeof(type));
 
     return parameters;
 }
@@ -107,7 +107,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(new_inputs_depth, new_neurons_number);
+    weights.resize(new_inputs_depth, new_neurons_number);
 
     set_parameters_glorot();
 
@@ -139,7 +139,7 @@ void ProbabilisticLayer3D::set_inputs_depth(const Index& new_inputs_depth)
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(new_inputs_depth, neurons_number);
+    weights.resize(new_inputs_depth, neurons_number);
 }
 
 
@@ -150,29 +150,29 @@ void ProbabilisticLayer3D::set_output_dimensions(const dimensions& new_output_di
 
     biases.resize(new_neurons_number);
 
-    synaptic_weights.resize(inputs_depth, new_neurons_number);
+    weights.resize(inputs_depth, new_neurons_number);
 */
     const Index inputs_depth = get_inputs_depth();
     const Index neurons_number = new_output_dimensions[0];
 
     biases.resize(neurons_number);
 
-    synaptic_weights.resize(inputs_depth, neurons_number);
+    weights.resize(inputs_depth, neurons_number);
 }
 
 
 void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
+        memcpy(weights.data(), new_parameters.data() + index, weights_number*sizeof(type));
 
         #pragma omp section
-        memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
+        memcpy(biases.data(), new_parameters.data() + index + weights_number, biases_number*sizeof(type));
     }
 }
 
@@ -198,7 +198,7 @@ void ProbabilisticLayer3D::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
-    synaptic_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -206,7 +206,7 @@ void ProbabilisticLayer3D::set_parameters_random()
 {
     set_random(biases);
 
-    set_random(synaptic_weights);
+    set_random(weights);
 }
 
 
@@ -221,15 +221,15 @@ void ProbabilisticLayer3D::set_parameters_glorot()
     
     #pragma omp parallel for
 
-    for(Index i = 0; i < synaptic_weights.size(); i++)
-        synaptic_weights(i) = get_random_type(minimum, maximum);
+    for(Index i = 0; i < weights.size(); i++)
+        weights(i) = get_random_type(minimum, maximum);
 }
 
 
 void ProbabilisticLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, contraction_indices);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, contraction_indices);
     sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
@@ -314,7 +314,7 @@ void ProbabilisticLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
         = inputs.contract(combination_derivatives, double_contraction_indices);
 
     input_derivatives.device(*thread_pool_device) 
-        = combination_derivatives.contract(synaptic_weights, single_contraction_indices);
+        = combination_derivatives.contract(weights, single_contraction_indices);
 }
 
 
@@ -343,12 +343,12 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
                                            Tensor<type, 1>& gradient) const
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     const ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.get());
 
-    const type* synaptic_weights_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weight_derivatives.data();
+    const type* weight_derivatives_data = probabilistic_layer_3d_back_propagation->synaptic_weight_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_3d_back_propagation->bias_derivatives.data();
 
     type* gradient_data = gradient.data();
@@ -356,10 +356,10 @@ void ProbabilisticLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& bac
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(gradient_data + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+        memcpy(gradient_data + index, weight_derivatives_data, weights_number * sizeof(type));
 
         #pragma omp section
-        memcpy(gradient_data + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+        memcpy(gradient_data + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
     }
 }
 

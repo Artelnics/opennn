@@ -203,7 +203,6 @@ void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type
         for(Index input_position = 0; input_position < sequence_length; input_position++)
              outputs.chip(row, 0).chip(input_position, 0)
                 = embedding_weights.chip(inputs(row, input_position), 0);
-
 }
 
 
@@ -394,17 +393,17 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 {
     const EmbeddingLayer* embedding_layer = static_cast<EmbeddingLayer*>(layer);
 
-    const Index inputs_number = embedding_layer->get_sequence_length();
+    const Index sequence_length = embedding_layer->get_sequence_length();
     const Index embedding_dimension = embedding_layer->get_embedding_dimension();
 
-    positional_encoding.resize(inputs_number, embedding_dimension);
+    positional_encoding.resize(sequence_length, embedding_dimension);
 
     positional_encoding.setZero();
 
     const type half_depth = type(embedding_dimension) / 2;
 
     #pragma omp parallel for
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < sequence_length; i++)
         for(Index j = 0; j < Index(embedding_dimension); j++)
             positional_encoding(i, j) = (j < Index(half_depth))
                 ? sin(i / pow(10000, j / half_depth))
