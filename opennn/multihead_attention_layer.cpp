@@ -335,7 +335,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                        Tensor<type, 2>& sample_matrix) const
 {
     // @todo Check if we can do this with transposed matrices in contract.
-    const Index batch_size = input.dimension(0);
+    const Index samples_number = input.dimension(0);
     const Index variables_number = input.dimension(1);
 
     type* transformed_input_data = transformed_input.data();
@@ -350,9 +350,9 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                      hidden_depth);
 
 
-        type* head_transformed_input_data = transformed_input_data + head_index * batch_size * variables_number * hidden_depth;
+        type* head_transformed_input_data = transformed_input_data + head_index * samples_number * variables_number * hidden_depth;
 
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
         {
             sample_matrix = input.chip(sample_index, 0);
 
@@ -373,7 +373,7 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
                                                           Tensor<type, 4>& projection_outputs,
                                                           Tensor<type, 3>& outputs) const
 {
-    const Index batch_size = outputs.dimension(0);
+    const Index samples_number = outputs.dimension(0);
 
     type* attention_outputs_data = (type*)attention_outputs.data();
     type* projection_outputs_data = projection_outputs.data();
@@ -381,14 +381,14 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
-        type* head_projection_output_data = projection_outputs_data + head_index * batch_size * input_size * depth;
+        type* head_projection_output_data = projection_outputs_data + head_index * samples_number * input_size * depth;
         type* head_projection_weights_data = projection_weights_data + head_index * hidden_depth * depth;
-        type* head_attention_output_data = attention_outputs_data + head_index * input_size * hidden_depth * batch_size;
+        type* head_attention_output_data = attention_outputs_data + head_index * input_size * hidden_depth * samples_number;
 
-        TensorMap<Tensor<type, 3>> head_projection_output(head_projection_output_data, batch_size, input_size, depth);
+        TensorMap<Tensor<type, 3>> head_projection_output(head_projection_output_data, samples_number, input_size, depth);
         const TensorMap<Tensor<type, 2>> head_projection_weights(head_projection_weights_data, hidden_depth, depth);
 
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
         {
             type* sample_attention_output_data = head_attention_output_data + sample_index * input_size * hidden_depth;
 

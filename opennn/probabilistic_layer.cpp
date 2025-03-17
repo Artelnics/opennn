@@ -304,7 +304,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index inputs_number          = get_inputs_number();
     const Index outputs_number         = get_outputs_number();
     const Index synaptic_weights_count = weights.size();
-    const Index batch_size             = deltas.dimension(0);
+    const Index samples_number             = deltas.dimension(0);
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
         static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
