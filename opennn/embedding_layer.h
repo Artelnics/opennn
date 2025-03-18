@@ -91,7 +91,7 @@ private:
 
     Index sequence_length;
 
-    Tensor<type, 2> embedding_weights;
+    Tensor<type, 2> weights;
 
     type dropout_rate;
 
