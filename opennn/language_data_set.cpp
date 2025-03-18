@@ -632,6 +632,9 @@ void LanguageDataSet::read_csv()
         }
     }
 
+    // cout << data << endl;
+    // throw runtime_error("Checking the data matrix");
+
     sample_uses.resize(samples_number);
 
     set_default_raw_variables_names();

@@ -48,8 +48,8 @@ public:
     {
         vector<string> tokens;
 
-        if(!input)
-            tokens.push_back("[START]");
+        // if(!input)
+        tokens.push_back("[START]");
 
         string currentToken;
 
@@ -86,8 +86,8 @@ public:
             tokens.push_back(currentToken);
 
         // Add [END] token
-        if(!input)
-            tokens.push_back("[END]");
+        // if(!input)
+        tokens.push_back("[END]");
 
         return tokens;
     }

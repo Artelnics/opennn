@@ -955,8 +955,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
-    if(!is_training)
-        cout << "Reachs this point (Forward propagation)" << endl;
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
@@ -964,8 +962,6 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
             forward_propagation.layers[i],
             is_training);
     }
-    if(!is_training)
-        cout << "Finishes the forward propagation." << endl;
 }
 
 
@@ -1409,13 +1405,14 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         start_element = layer_element;
     }
 
-    // Layers inputs indices
-    /* @todo Not needed?
+    // Layers inputs indices (Needed for transformers)
+
     const XMLElement* layer_input_indices_element = layers_element->FirstChildElement("LayerInputIndices");
     if (!layer_input_indices_element)
         throw runtime_error("LayerInputIndices element is nullptr.\n");
 
     layer_input_indices.resize(layers.size());
+    layer_input_indices.clear();
 
     for (const XMLElement* layer_inputs_indices_element = layer_input_indices_element->FirstChildElement("LayerInputsIndices");
          layer_inputs_indices_element;
@@ -1433,7 +1430,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
         if (layer_index >= layer_input_indices.size())
             layer_input_indices.push_back(input_index);
     }
-    */
 }
 
 
