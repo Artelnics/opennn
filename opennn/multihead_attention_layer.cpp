@@ -827,6 +827,7 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 
 void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 {
+//@TODO PREGUNTAR A RUBÉN CÓMO PUEDO METER LOS LAYER INPUT ÍNDICES EN EL FROM_XML Y TO_XML PARA LAS CAPAS DEL TRANSFORMER PORQUE PROBABLEMENTE SEA LO QUE ESTÁ FALLANDO EN EL LOAD
     const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
 
     if(!multihead_attention_layer_element)
