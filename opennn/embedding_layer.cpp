@@ -45,12 +45,6 @@ Index EmbeddingLayer::get_embedding_dimension() const
 }
 
 
-bool EmbeddingLayer::get_use_positional_encoding() const
-{
-    return use_positional_encoding;
-}
-
-
 dimensions EmbeddingLayer::get_input_dimensions() const
 {
     return { sequence_length };
@@ -93,8 +87,6 @@ void EmbeddingLayer::set(const Index& new_vocabulary_size,
 
     set_parameters_random();
 
-    use_positional_encoding = new_use_positional_encoding;
-
     name = "embedding_layer";
 
     layer_type = Type::Embedding;
@@ -124,12 +116,6 @@ void EmbeddingLayer::set_embedding_size(const Index& new_embedding_dimension)
     weights.resize(vocabulary_size, new_embedding_dimension);
 
     set_parameters_random();
-}
-
-
-void EmbeddingLayer::set_use_positional_encoding(const bool& new_use_positional_encoding)
-{
-    use_positional_encoding = new_use_positional_encoding;
 }
 
 
@@ -247,15 +233,12 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     lookup_embedding(inputs, outputs);
 
-    if(use_positional_encoding)
-    {
-        outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 
-        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+    const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
         
-        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
-            outputs.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
-    }
+    for(Index sample_index = 0; sample_index < samples_number; sample_index++)
+        outputs.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs);
@@ -292,9 +275,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     for(Index i = 0; i < samples_number; i++)
     {
-        use_positional_encoding
-            ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension))
-            : sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
 
         for(Index j = 0; j < inputs_number; j++)
             embedding_weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
@@ -357,7 +338,6 @@ void EmbeddingLayer::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "PositionalEncoding", to_string(use_positional_encoding ? 1 : 0));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();  
@@ -399,8 +379,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_samples_number, Laye
 
     outputs.resize(samples_number, sequence_length, embedding_dimension);
 
-    if(embedding_layer->get_use_positional_encoding())
-        build_positional_encoding_matrix();
+    build_positional_encoding_matrix();
 }
 
 

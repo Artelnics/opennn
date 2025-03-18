@@ -46,6 +46,15 @@ int main()
         const Index heads_number = /*1*/4;
         const Index layers_number = 1;
 
+        NeuralNetwork neural_network;
+
+        neural_network.add_layer(make_unique<EmbeddingLayer>());
+        neural_network.add_layer(make_unique<MultiheadAttentionLayer>());
+        neural_network.add_layer(make_unique<PerceptronLayer3D>());
+
+
+
+/*
         // Neural network
         
         Transformer transformer(decoder_length,
@@ -72,7 +81,7 @@ int main()
         XMLPrinter printer;
         language_data_set.to_XML(printer);
         file << printer.CStr();
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -85,9 +94,9 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); /*???*/
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); 
         adaptive_moment_estimation->set_loss_goal(0.5);
-        adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(512);
         adaptive_moment_estimation->set_display_period(1);
@@ -98,7 +107,7 @@ int main()
         TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-/*
+
         // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
         transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
@@ -122,12 +131,12 @@ int main()
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
 
         cout << "LLega bien" << endl;
-*/
+
         string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
 
         cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
-/*
+
 
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
