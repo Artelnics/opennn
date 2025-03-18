@@ -281,7 +281,7 @@ Index Transformer::get_decoder_length() const
 {
     return decoder_length;
 }
-
+/*
 // string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
 // {
 //     type start_indicator = 1;
@@ -348,7 +348,7 @@ Index Transformer::get_decoder_length() const
 //     return output_string.str();
 
 // }
-
+*/
 
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
@@ -401,7 +401,6 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     Tensor<Index, 0> prediction;
 
-    cout << "Reachs this point (Transformer calculate output)" << endl;
     for(Index i = 1; i < input_length; i++)
     {
         forward_propagate(input_pairs, forward_propagation, false);
@@ -416,7 +415,6 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
             break;
     }
 
-    cout << "Reachs this point (Transformer calculate output)" << endl;
     ostringstream output_buffer;
 
     //if(!imported_vocabulary)    
@@ -450,7 +448,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
     return tensor_map_3(output_pair);
 }
 
-
+/*
 // void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 // {
 //     const Index context_vocabulary_size = input_vocabulary.size();
@@ -481,7 +479,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //         }
 //     }
 // }
-
+*/
 
 void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
@@ -593,7 +591,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     }
 }
 
-
+/*
 //void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 //{
     // @todo prediction is of rank 2 but only one loop. Why?
@@ -605,7 +603,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 //        output_string << input_vocabulary[Index(predictions(i))] << " ";
 //    }
 //}
-
+*/
 void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
     for(Index i = 1; i < decoder_length; i++)

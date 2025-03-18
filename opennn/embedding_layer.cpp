@@ -29,7 +29,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
 
 Index EmbeddingLayer::get_vocabulary_size() const
 {
-    return embedding_weights.dimension(0);
+    return weights.dimension(0);
 }
 
 
@@ -41,7 +41,7 @@ Index EmbeddingLayer::get_sequence_length() const
 
 Index EmbeddingLayer::get_embedding_dimension() const
 {
-    return embedding_weights.dimension(1);
+    return weights.dimension(1);
 }
 
 
@@ -67,7 +67,7 @@ dimensions EmbeddingLayer::get_output_dimensions() const
 
 Index EmbeddingLayer::get_parameters_number() const
 {
-    return embedding_weights.size();
+    return weights.size();
 }
 
 
@@ -75,7 +75,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    memcpy(parameters.data(), embedding_weights.data(), embedding_weights.size()*sizeof(type));
+    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
 
     return parameters;
 }
@@ -89,7 +89,7 @@ void EmbeddingLayer::set(const Index& new_vocabulary_size,
 {
     sequence_length = new_sequence_length;
 
-    embedding_weights.resize(new_vocabulary_size, new_embedding_dimension);
+    weights.resize(new_vocabulary_size, new_embedding_dimension);
 
     set_parameters_random();
 
@@ -105,7 +105,7 @@ void EmbeddingLayer::set_vocabulary_size(const Index& new_vocabulary_size)
 {
     const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(new_vocabulary_size, embedding_dimension);
+    weights.resize(new_vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -121,7 +121,7 @@ void EmbeddingLayer::set_embedding_size(const Index& new_embedding_dimension)
 {
     const Index vocabulary_size = get_vocabulary_size();
 
-    embedding_weights.resize(vocabulary_size, new_embedding_dimension);
+    weights.resize(vocabulary_size, new_embedding_dimension);
 
     set_parameters_random();
 }
@@ -144,7 +144,7 @@ void EmbeddingLayer::set_embedding_weights()
     const Index vocabulary_size = get_vocabulary_size();
     const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(vocabulary_size, embedding_dimension);
+    weights.resize(vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -152,32 +152,32 @@ void EmbeddingLayer::set_embedding_weights()
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    memcpy(embedding_weights.data(), new_parameters.data() + index, embedding_weights.size()*sizeof(type));
+    memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
 }
 
 
 void EmbeddingLayer::set_parameters_random()
 {
-    if (embedding_weights.size() == 0) return;
+    if (weights.size() == 0) return;
 
     const type minimum = type(-0.05);
     const type maximum = type(0.05);
 
     // First row must be 0s because input value 0 is padding
 
-    embedding_weights.chip(0, 0).setConstant(0);
+    weights.chip(0, 0).setConstant(0);
 
     #pragma omp parallel for
 
-    for (Index i = 1; i < embedding_weights.dimension(0); i++)
-        for (Index j = 0; j < embedding_weights.dimension(1); j++)
-            embedding_weights(i, j) = get_random_type(minimum, maximum);
+    for (Index i = 1; i < weights.dimension(0); i++)
+        for (Index j = 0; j < weights.dimension(1); j++)
+            weights(i, j) = get_random_type(minimum, maximum);
 }
 
 
 void EmbeddingLayer::set_parameters_constant(const type& value)
 {
-    embedding_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -185,24 +185,48 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
+    outputs.device(*thread_pool_device) = outputs.unaryExpr([this, scaling_factor](const type& value) {
+        return get_random_type(type(0), type(1)) < dropout_rate 
+            ? type(0) 
+            : value * scaling_factor;
+        });
+/*
     #pragma omp parallel for
 
     for(Index i = 0; i < outputs.size(); i++)
         outputs(i) = get_random_type(type(0), type(1)) < dropout_rate
             ? 0 
             : outputs(i) * scaling_factor;
+*/
 }
 
 
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index samples_number = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index embedding_dim = outputs.dimension(2);
+
+    #pragma omp parallel for
+    for (Index row = 0; row < samples_number; row++)
+    {
+        auto output_slice = outputs.chip(row, 0);
+
+        for (Index input_position = 0; input_position < sequence_length; input_position++)
+        {
+            output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
+        }
+    }
+
+/*
+    const Index samples_number = inputs.dimension(0);
 
     // #pragma omp parallel for collapse(2)
-     for(Index row = 0; row < samples_number; row++)
+     for(Index sample = 0; sample < samples_number; sample++)
         for(Index input_position = 0; input_position < sequence_length; input_position++)
-             outputs.chip(row, 0).chip(input_position, 0)
-                = embedding_weights.chip(inputs(row, input_position), 0);
+             outputs.chip(sample, 0).chip(input_position, 0)
+                = weights.chip(inputs(sample, input_position), 0);
+*/
 }
 
 
