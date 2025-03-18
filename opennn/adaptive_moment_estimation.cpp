@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -234,9 +234,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
 
     optimization_data.iteration = 1;
-
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {  
+    {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -268,15 +267,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            // if(epoch == 500)
+            // if(epoch == 50)
             // {
+
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
             // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
             // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            // // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
 
             // throw runtime_error("Checking the gradient and numerical gradient.");
             // }
@@ -403,7 +403,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-
+    cout << "sa" << endl;
     set_unscaling();
 
     if(display) results.print();

@@ -23,7 +23,7 @@ ProbabilisticLayer::ProbabilisticLayer(const dimensions& new_input_dimensions,
 
 dimensions ProbabilisticLayer::get_input_dimensions() const
 {
-    return { synaptic_weights.dimension(0) };
+    return { weights.dimension(0) };
 }
 
 
@@ -62,20 +62,20 @@ string ProbabilisticLayer::get_activation_function_string() const
 
 Index ProbabilisticLayer::get_parameters_number() const
 {
-    return biases.size() + synaptic_weights.size();
+    return biases.size() + weights.size();
 }
 
 
 Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 {
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
     const Index biases_number = biases.size();
 
-    Tensor<type, 1> parameters(synaptic_weights_number + biases_number);
+    Tensor<type, 1> parameters(weights_number + biases_number);
 
-    memcpy(parameters.data(), synaptic_weights.data(), synaptic_weights_number*sizeof(type));
+    memcpy(parameters.data(), weights.data(), weights_number*sizeof(type));
 
-    memcpy(parameters.data() + synaptic_weights_number, biases.data(), biases_number*sizeof(type));
+    memcpy(parameters.data() + weights_number, biases.data(), biases_number*sizeof(type));
 
     return parameters;
 }
@@ -93,7 +93,7 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
 
     biases.resize(new_output_dimensions[0]);
 
-    synaptic_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
+    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
 
@@ -116,7 +116,7 @@ void ProbabilisticLayer::set_input_dimensions(const dimensions& new_input_dimens
 
     biases.resize(output_dimensions[0]);
 
-    synaptic_weights.resize(new_input_dimensions[0], output_dimensions[0]);
+    weights.resize(new_input_dimensions[0], output_dimensions[0]);
 }
 
 
@@ -126,18 +126,18 @@ void ProbabilisticLayer::set_output_dimensions(const dimensions& new_output_dime
 
     biases.resize(new_output_dimensions[0]);
 
-    synaptic_weights.resize(input_dimensions[0], new_output_dimensions[0]);
+    weights.resize(input_dimensions[0], new_output_dimensions[0]);
 }
 
 
 void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
-    memcpy(synaptic_weights.data(), new_parameters.data() + index, synaptic_weights_number*sizeof(type));
+    memcpy(weights.data(), new_parameters.data() + index, weights_number*sizeof(type));
 
-    memcpy(biases.data(), new_parameters.data() + index + synaptic_weights_number, biases_number*sizeof(type));
+    memcpy(biases.data(), new_parameters.data() + index + weights_number, biases_number*sizeof(type));
 }
 
 
@@ -172,7 +172,7 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
-    synaptic_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -180,14 +180,14 @@ void ProbabilisticLayer::set_parameters_random()
 {
     set_random(biases);
 
-    set_random(synaptic_weights);
+    set_random(weights);
 }
 
 
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                 Tensor<type, 2>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(synaptic_weights, A_B);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 }
@@ -287,7 +287,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     bias_derivatives.device(*thread_pool_device) = combination_derivatives.sum(sum_dimensions);
 
-    input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(synaptic_weights, A_BT);
+    input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
 }
 
 
@@ -303,8 +303,8 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     const Index inputs_number          = get_inputs_number();
     const Index outputs_number         = get_outputs_number();
-    const Index synaptic_weights_count = synaptic_weights.size();
-    const Index batch_size             = deltas.dimension(0);
+    const Index synaptic_weights_count = weights.size();
+    const Index samples_number             = deltas.dimension(0);
 
     const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
         static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
@@ -348,7 +348,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     }
 
     // if(!is_first_layer)
-    // input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(synaptic_weights, A_BT);
+    // input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
 }
 */
 
@@ -357,21 +357,21 @@ void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_
                                          Tensor<type, 1>& gradient) const
 {
     const Index biases_number = biases.size();
-    const Index synaptic_weights_number = synaptic_weights.size();
+    const Index weights_number = weights.size();
 
     const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
         static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
 
-    const type* synaptic_weights_derivatives_data = probabilistic_layer_back_propagation->synaptic_weight_derivatives.data();
+    const type* weight_derivatives_data = probabilistic_layer_back_propagation->synaptic_weight_derivatives.data();
     const type* biases_derivatives_data = probabilistic_layer_back_propagation->bias_derivatives.data();
 
     #pragma omp parallel sections
     {
         #pragma omp section
-        memcpy(gradient.data() + index, synaptic_weights_derivatives_data, synaptic_weights_number * sizeof(type));
+        memcpy(gradient.data() + index, weight_derivatives_data, weights_number * sizeof(type));
 
         #pragma omp section
-        memcpy(gradient.data() + index + synaptic_weights_number, biases_derivatives_data, biases_number * sizeof(type));
+        memcpy(gradient.data() + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
     }
 }
 
@@ -383,14 +383,14 @@ void ProbabilisticLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackP
     ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
         static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
 
-    const Index batch_samples_number = back_propagation->batch_samples_number;
+    const Index samples_number = back_propagation->samples_number;
     const Index parameters_number = get_parameters_number();
 
     type* this_squared_errors_Jacobian_data = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
     memcpy(squared_errors_Jacobian.data() + index,
            this_squared_errors_Jacobian_data,
-           parameters_number * batch_samples_number*sizeof(type));
+           parameters_number * samples_number*sizeof(type));
 }
 
 
@@ -400,12 +400,12 @@ void ProbabilisticLayer::print() const
          << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
-         << "Synaptic weights dimensions: " << synaptic_weights.dimensions() << endl;
+         << "Synaptic weights dimensions: " << weights.dimensions() << endl;
 
     cout << "Biases:" << endl;
     cout << biases << endl;
     cout << "Synaptic weights:" << endl;
-    cout << synaptic_weights << endl;
+    cout << weights << endl;
 
     cout << "Activation function:" << endl;
     cout << get_activation_function_string() << endl;
@@ -501,7 +501,7 @@ string ProbabilisticLayer::write_combinations(const vector<string>& input_names)
         buffer << "probabilistic_layer_combinations_" << to_string(i) << " = " << biases(i);
 
         for(Index j = 0; j < inputs_number; j++)
-            buffer << " +" << synaptic_weights(j, i) << "*" << input_names[j] << "";
+            buffer << " +" << weights(j, i) << "*" << input_names[j] << "";
 
         buffer << " " << endl;
     }
@@ -592,24 +592,24 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 {
     const Index outputs_number = layer->get_outputs_number();
 
-    return pair<type *, dimensions>((type*)outputs.data(), {{batch_samples_number, outputs_number}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{samples_number, outputs_number}});
 }
 
 
-void ProbabilisticLayerForwardPropagation::set(const Index &new_batch_samples_number, Layer *new_layer)
+void ProbabilisticLayerForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    outputs.resize(batch_samples_number, outputs_number);
+    outputs.resize(samples_number, outputs_number);
 
     activation_derivatives.resize(0, 0);
 
     if(outputs_number == 1)
-        activation_derivatives.resize(batch_samples_number, outputs_number);
+        activation_derivatives.resize(samples_number, outputs_number);
 }
 
 
@@ -634,11 +634,11 @@ ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index
 }
 
 
-void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_number, Layer *new_layer)
+void ProbabilisticLayerBackPropagation::set(const Index &new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
@@ -647,9 +647,9 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_batch_samples_numbe
 
     synaptic_weight_derivatives.resize(inputs_number, outputs_number);
 
-    combination_derivatives.resize(batch_samples_number, outputs_number);
+    combination_derivatives.resize(samples_number, outputs_number);
 
-    input_derivatives.resize(batch_samples_number, inputs_number);
+    input_derivatives.resize(samples_number, inputs_number);
 }
 
 
@@ -657,7 +657,7 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_der
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {batch_samples_number, inputs_number}} };
+    return {{(type*)(input_derivatives.data()), {samples_number, inputs_number}} };
 }
 
 
@@ -683,18 +683,18 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagationLM::get_input_d
 }
 
 
-void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ProbabilisticLayerBackPropagationLM::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index parameters_number = layer->get_parameters_number();
 
-    squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+    squared_errors_Jacobian.resize(samples_number, parameters_number);
 
-    combination_derivatives.resize(batch_samples_number, outputs_number);
+    combination_derivatives.resize(samples_number, outputs_number);
 }
 
 

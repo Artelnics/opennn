@@ -210,7 +210,7 @@ struct BackPropagationLM
 
     vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs() const;
 
-    Index batch_samples_number = 0;
+    Index samples_number = 0;
 
     Tensor<type, 1> output_deltas;
     dimensions output_deltas_dimensions;

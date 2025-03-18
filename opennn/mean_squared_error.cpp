@@ -28,7 +28,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
@@ -48,7 +48,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     errors.device(*thread_pool_device) = outputs - targets;
     
-    error.device(*thread_pool_device) = errors.contract(errors, SSE) / type(batch_samples_number * outputs_number);
+    error.device(*thread_pool_device) = errors.contract(errors, SSE) / type(samples_number * outputs_number);
         
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -60,13 +60,13 @@ void MeanSquaredError::calculate_error_lm(const Batch& batch,
 {
     const Index outputs_number = neural_network->get_outputs_number();
     
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     Tensor<type, 1>& squared_errors = back_propagation.squared_errors;
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = squared_errors.square().sum() / type(batch_samples_number * outputs_number);
+    error.device(*thread_pool_device) = squared_errors.square().sum() / type(samples_number * outputs_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -80,7 +80,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
     // Back propagation
 
@@ -90,7 +90,7 @@ void MeanSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * batch_samples_number);
+    output_deltas.device(*thread_pool_device) = errors / type(0.5 * outputs_number * samples_number);
 }
 
 
@@ -116,9 +116,9 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index batch_samples_number = outputs_number * batch.get_samples_number();
+    const Index samples_number = outputs_number * batch.get_samples_number();
 
-    const type coefficient = type(2)/type(batch_samples_number);
+    const type coefficient = type(2)/type(samples_number);
 
     // const Tensor<type, 2>& errors = back_propagation_lm.errors;
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
@@ -139,9 +139,9 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Index outputs_number = neural_network->get_outputs_number();
 
-    const Index batch_samples_number = batch.get_samples_number();
+    const Index samples_number = batch.get_samples_number();
 
-    const type coefficient = type(2.0)/type(outputs_number*batch_samples_number);
+    const type coefficient = type(2.0)/type(outputs_number*samples_number);
 
     Tensor<type, 2>& hessian = back_propagation_lm.hessian;
 

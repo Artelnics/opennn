@@ -19,7 +19,7 @@ struct BackPropagation
 
     void print() const;
 
-    Index batch_samples_number = 0;
+    Index samples_number = 0;
 
     LossIndex* loss_index = nullptr;
 

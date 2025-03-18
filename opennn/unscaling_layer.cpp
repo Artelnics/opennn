@@ -293,8 +293,8 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type, 2>& outputs = unscaling_layer_forward_propagation->outputs;
+
     outputs = inputs;
-    cout << "-" << outputs_number << endl;
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
@@ -459,19 +459,19 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { batch_samples_number, output_dimensions[0]}};
+    return { (type*)outputs.data(), { samples_number, output_dimensions[0]}};
 }
 
 
-void UnscalingLayerForwardPropagation::set(const Index& new_batch_samples_number, Layer* new_layer)
+void UnscalingLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
     const dimensions output_dimensions = static_cast<UnscalingLayer*>(layer)->get_output_dimensions();
 
-    batch_samples_number = new_batch_samples_number;
+    samples_number = new_samples_number;
 
-    outputs.resize(batch_samples_number, output_dimensions[0]);
+    outputs.resize(samples_number, output_dimensions[0]);
 }
 
 
