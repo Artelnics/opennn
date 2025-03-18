@@ -201,6 +201,95 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 }
 
 
+vector<string> LanguageDataSet::tokenize(const string& document, const bool& input)
+{
+    vector<string> tokens;
+
+    // if(!input)
+    tokens.push_back("[START]");
+
+    string currentToken;
+
+    for (char c : document)
+    {
+        if (isalnum(c))
+        {
+            // Add alphanumeric characters to the current token
+            currentToken += tolower(c);
+        }
+        else
+        {
+            // If the current token is not empty, add it to the tokens list
+            if (!currentToken.empty())
+            {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            // Treat punctuation as a separate token
+
+            if (ispunct(c))
+            {
+                tokens.push_back(string(1, c));
+            }
+            else if (isspace(c))
+            {
+                // Ignore spaces, they just delimit tokens
+            }
+        }
+    }
+
+    // Add the last token if it's not empty
+    if (!currentToken.empty())
+        tokens.push_back(currentToken);
+
+    // Add [END] token
+    // if(!input)
+    tokens.push_back("[END]");
+
+    return tokens;
+}
+
+
+unordered_map<string, Index> LanguageDataSet::create_vocabulary(const vector<vector<string>>& document_tokens)
+{
+    unordered_map<string, Index> vocabulary;
+    Index id = 0;
+
+    vocabulary["[PAD]"] = id++;
+    vocabulary["[UNK]"] = id++;
+    vocabulary["[START]"] = id++;
+    vocabulary["[END]"] = id++;
+
+    for (const auto& document : document_tokens)
+        for (const auto& token : document)
+            if (vocabulary.find(token) == vocabulary.end())
+                vocabulary[token] = id++;
+
+    return vocabulary;
+}
+
+
+void LanguageDataSet::print_vocabulary(const unordered_map<string, Index>& vocabulary)
+{
+    for (const auto& entry : vocabulary)
+        cout << entry.first << " : " << entry.second << "\n";
+}
+
+
+void LanguageDataSet::print() const
+{
+    cout << "Language data set" << endl;
+
+    cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
+    cout << "Decoder vocabulary size: " << get_target_vocabulary_size() << endl;
+
+    cout << "Input length: " << get_input_length() << endl;
+    cerr << "Decoder length: " << get_target_length() << endl;
+
+}
+
+
+
 void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
@@ -522,8 +611,6 @@ void LanguageDataSet::read_csv()
 
     Index sample_index = 0;
 
-
-
     while (getline(file, line))
     {
         if (line.empty()) continue;
@@ -540,10 +627,7 @@ void LanguageDataSet::read_csv()
     }
 
     if (sample_index != samples_number)
-    {
-        cerr << "WARNING: Se esperaban " << samples_number << " muestras, pero se procesaron " << sample_index << "." << endl;
-        throw runtime_error("Why?");
-    }
+        throw runtime_error("WARNING: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " were processed.");
 
     maximum_input_length = get_maximum_size(input_documents_tokens);
     maximum_target_length = get_maximum_size(target_documents_tokens);
@@ -558,10 +642,6 @@ void LanguageDataSet::read_csv()
     const Index decoder_variables_number = maximum_target_length - 1;
     const Index target_variables_number = maximum_target_length - 1;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
-
-    // input_dimensions = {input_variables_number};
-    // decoder_dimensions = {decoder_variables_number};
-    // target_dimensions = {target_variables_number};
 
     data.resize(samples_number, variables_number);
     data.setZero();
@@ -632,12 +712,9 @@ void LanguageDataSet::read_csv()
         }
     }
 
-    // cout << data << endl;
-    // throw runtime_error("Checking the data matrix");
-
     sample_uses.resize(samples_number);
 
-    set_default_raw_variables_names();
+    set_default_raw_variable_names();
     split_samples_random();
 }
 

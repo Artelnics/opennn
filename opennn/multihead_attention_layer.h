@@ -19,12 +19,12 @@ namespace opennn
     struct MultiheadAttentionLayerBackPropagationCuda;
 #endif
 
-class MultiheadAttentionLayer : public Layer
+class MultiHeadAttentionLayer : public Layer
 {
 
 public:
 
-    MultiheadAttentionLayer(const Index& = 0,
+    MultiHeadAttentionLayer(const Index& = 0,
                             const Index& = 0,
                             const Index& = 0,
                             const Index& = 0,

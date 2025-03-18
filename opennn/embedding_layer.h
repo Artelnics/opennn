@@ -28,7 +28,6 @@ public:
     EmbeddingLayer(const Index& = 0,
                    const Index& = 0,
                    const Index& = 0,
-                   const bool& = false,
                    const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
@@ -44,7 +43,6 @@ public:
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
-             const bool& = false, 
              const string & = "embedding_layer");
 
     void set_vocabulary_size(const Index&);

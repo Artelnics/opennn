@@ -67,7 +67,6 @@ void Transformer::set(const Index& new_decoder_length,
     add_layer(make_unique<EmbeddingLayer>(new_decoder_dimensions,
                                           new_decoder_length,
                                           new_embedding_dimension,
-                                          true, 
                                           "decoder_embedding"));
 
     set_layer_inputs_indices("decoder_embedding", "decoder");
@@ -76,7 +75,6 @@ void Transformer::set(const Index& new_decoder_length,
     add_layer(make_unique<EmbeddingLayer>(new_input_dimension,
                                           new_input_length,
                                           new_embedding_dimension,
-                                          true,
                                           "input_embedding"));
 
     set_layer_inputs_indices("input_embedding", "input");
@@ -86,7 +84,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiheadAttentionLayer>(new_input_length,
+        add_layer(make_unique<MultiHeadAttentionLayer>(new_input_length,
                                                        new_input_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
@@ -158,11 +156,11 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiheadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttentionLayer>(new_decoder_length,
                                                        new_decoder_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
-                                                       false,
+                                                       false, // chatgpt says that here uses causal mask???
                                                        "decoder_self_attention_" + to_string(i+1)));
 
         i == 0
@@ -184,7 +182,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         set_layer_inputs_indices("decoder_self_attention_normalization_" + to_string(i+1), "decoder_self_attention_addition_" + to_string(i+1));
 
-        add_layer(make_unique<MultiheadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttentionLayer>(new_decoder_length,
                                                        new_input_length,        //previously called context length
                                                        new_embedding_dimension,
                                                        new_heads_number,

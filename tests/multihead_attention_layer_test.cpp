@@ -2,8 +2,8 @@
 
 #include "../opennn/multihead_attention_layer.h"
 
-TEST(MultiheadAttentionLayer, DefaultConstructor) {
-    MultiheadAttentionLayer multihead_attention_layer;
+TEST(MultiHeadAttentionLayer, DefaultConstructor) {
+    MultiHeadAttentionLayer multihead_attention_layer;
 
     EXPECT_EQ(multihead_attention_layer.get_heads_number(), 0);
     EXPECT_EQ(multihead_attention_layer.get_input_size(), 0);
@@ -16,7 +16,7 @@ TEST(MultiheadAttentionLayer, DefaultConstructor) {
 }
 
 
-TEST(MultiheadAttentionLayer, GeneralConstructor)
+TEST(MultiHeadAttentionLayer, GeneralConstructor)
 {
     const Index heads_number = 8;
     const Index input_size = 64;
@@ -24,7 +24,7 @@ TEST(MultiheadAttentionLayer, GeneralConstructor)
     const Index depth = 256;
     const bool use_causal_mask = true;
 
-    MultiheadAttentionLayer multihead_attention_layer(input_size,context_size,depth,heads_number,use_causal_mask);
+    MultiHeadAttentionLayer multihead_attention_layer(input_size,context_size,depth,heads_number,use_causal_mask);
 
     EXPECT_EQ(multihead_attention_layer.get_heads_number(), heads_number);
     EXPECT_EQ(multihead_attention_layer.get_input_size(), input_size);
@@ -36,7 +36,7 @@ TEST(MultiheadAttentionLayer, GeneralConstructor)
 }
 
 
-TEST(MultiheadAttentionLayer, ForwardPropagate)
+TEST(MultiHeadAttentionLayer, ForwardPropagate)
 {
     const Index batch_samples_number = 2;
     const Index input_size = 4;
@@ -48,7 +48,7 @@ TEST(MultiheadAttentionLayer, ForwardPropagate)
     const dimensions input_dimensions = {batch_samples_number, input_size};
     const dimensions context_dimensions = {batch_samples_number, context_size};
 
-    MultiheadAttentionLayer multihead_attention_layer(input_size, context_size, depth, heads_number);
+    MultiHeadAttentionLayer multihead_attention_layer(input_size, context_size, depth, heads_number);
 
     unique_ptr<LayerForwardPropagation> multihead_attention_layer_forward_propagation
         = make_unique<MultiheadAttentionLayerForwardPropagation>(batch_samples_number, &multihead_attention_layer);

@@ -16,10 +16,9 @@ namespace opennn
 EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
                                const Index& new_sequence_length,
                                const Index& new_embedding_dimension,
-                               const bool& new_positional_encoding,
                                const string& new_name) : Layer()
 {
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_positional_encoding, new_name);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
     layer_type = Type::Embedding;
 
@@ -78,7 +77,6 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 void EmbeddingLayer::set(const Index& new_vocabulary_size,
                          const Index& new_sequence_length,
                          const Index& new_embedding_dimension,
-                         const bool& new_use_positional_encoding,
                          const string& new_name)
 {
     sequence_length = new_sequence_length;
@@ -322,9 +320,8 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
     const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
     const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
     const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
-    const bool new_positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_positional_encoding, new_name);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
     set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }

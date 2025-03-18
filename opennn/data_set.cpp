@@ -662,7 +662,7 @@ namespace opennn
     }
 
 
-    void DataSet::set_default_raw_variables_names()
+    void DataSet::set_default_raw_variable_names()
     {
         const Index raw_variables_number = raw_variables.size();
 
@@ -1781,7 +1781,7 @@ namespace opennn
 
         missing_values_label = "NA";
 
-        set_default_raw_variables_names();
+        set_default_raw_variable_names();
     }
 
 
@@ -3929,7 +3929,7 @@ namespace opennn
         else
         {
             samples_number++;
-            set_default_raw_variables_names();
+            set_default_raw_variable_names();
         }
 
         // Rest of lines

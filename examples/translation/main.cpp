@@ -30,8 +30,10 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
-
+        //LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
+        LanguageDataSet language_data_set("C:/sentiment_analysis.csv");
+        language_data_set.print();
+/*
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
 
@@ -41,16 +43,19 @@ int main()
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index embedding_dimension = /*1*/64;
-        const Index perceptron_depth = /*1*/128;
-        const Index heads_number = /*1*/4;
+        cout << "input vocabulary size: " << input_vocabulary_size << endl;
+        cout << "decoder vocabulary size: " << target_vocabulary_size << endl;
+
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
+        const Index heads_number = 4;
         const Index layers_number = 1;
 
         NeuralNetwork neural_network;
 
-        neural_network.add_layer(make_unique<EmbeddingLayer>());
-        neural_network.add_layer(make_unique<MultiheadAttentionLayer>());
-        neural_network.add_layer(make_unique<PerceptronLayer3D>());
+        neural_network.add_layer(make_unique<EmbeddingLayer>(input_vocabulary_size, input_length, embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>());
+        //neural_network.add_layer(make_unique<PerceptronLayer3D>());
 
 
 

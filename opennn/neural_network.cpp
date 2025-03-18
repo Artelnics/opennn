@@ -506,8 +506,8 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
     {
         // Multi head attention
 
-        unique_ptr<MultiheadAttentionLayer> self_attention_layer =
-            make_unique<MultiheadAttentionLayer>(input_dimensions[1],
+        unique_ptr<MultiHeadAttentionLayer> self_attention_layer =
+            make_unique<MultiHeadAttentionLayer>(input_dimensions[1],
                                                  input_dimensions[1],
                                                  embedding_dimension,
                                                  heads_number);
@@ -1374,7 +1374,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"Unscaling", []() -> unique_ptr<Layer> { return make_unique<UnscalingLayer>(); }},
      {"Bounding", []() -> unique_ptr<Layer> { return make_unique<BoundingLayer>(); }},
      {"Embedding", []() -> unique_ptr<Layer> { return make_unique<EmbeddingLayer>(); }},
-     {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiheadAttentionLayer>(); }},
+     {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiHeadAttentionLayer>(); }},
      {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<AdditionLayer3D>(); }},
      {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<NormalizationLayer3D>(); }},
     };

@@ -258,7 +258,7 @@ public:
 
     void set_raw_variables(const vector<RawVariable>&);
 
-    void set_default_raw_variables_names();
+    void set_default_raw_variable_names();
 
     void set_default_raw_variables_uses();
     virtual void set_raw_variable_uses(const vector<string>&);
