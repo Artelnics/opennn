@@ -258,7 +258,7 @@ public:
 
     void set_raw_variables(const vector<RawVariable>&);
 
-    void set_default_raw_variables_names();
+    void set_default_raw_variable_names();
 
     void set_default_raw_variables_uses();
     virtual void set_raw_variable_uses(const vector<string>&);
@@ -371,6 +371,7 @@ public:
     Tensor<type, 1> calculate_means(const SampleUse& , const VariableUse&) const;
 
     Index calculate_used_negatives(const Index&);
+    Index calculate_negatives(const Index&, const SampleUse&) const;
 
     // Distribution
 

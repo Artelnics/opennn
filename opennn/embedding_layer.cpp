@@ -16,10 +16,9 @@ namespace opennn
 EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
                                const Index& new_sequence_length,
                                const Index& new_embedding_dimension,
-                               const bool& new_positional_encoding,
                                const string& new_name) : Layer()
 {
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_positional_encoding, new_name);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
     layer_type = Type::Embedding;
 
@@ -29,7 +28,7 @@ EmbeddingLayer::EmbeddingLayer(const Index& new_vocabulary_size,
 
 Index EmbeddingLayer::get_vocabulary_size() const
 {
-    return embedding_weights.dimension(0);
+    return weights.dimension(0);
 }
 
 
@@ -41,13 +40,7 @@ Index EmbeddingLayer::get_sequence_length() const
 
 Index EmbeddingLayer::get_embedding_dimension() const
 {
-    return embedding_weights.dimension(1);
-}
-
-
-bool EmbeddingLayer::get_use_positional_encoding() const
-{
-    return use_positional_encoding;
+    return weights.dimension(1);
 }
 
 
@@ -67,7 +60,7 @@ dimensions EmbeddingLayer::get_output_dimensions() const
 
 Index EmbeddingLayer::get_parameters_number() const
 {
-    return embedding_weights.size();
+    return weights.size();
 }
 
 
@@ -75,7 +68,7 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    memcpy(parameters.data(), embedding_weights.data(), embedding_weights.size()*sizeof(type));
+    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
 
     return parameters;
 }
@@ -84,16 +77,13 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 void EmbeddingLayer::set(const Index& new_vocabulary_size,
                          const Index& new_sequence_length,
                          const Index& new_embedding_dimension,
-                         const bool& new_use_positional_encoding,
                          const string& new_name)
 {
     sequence_length = new_sequence_length;
 
-    embedding_weights.resize(new_vocabulary_size, new_embedding_dimension);
+    weights.resize(new_vocabulary_size, new_embedding_dimension);
 
     set_parameters_random();
-
-    use_positional_encoding = new_use_positional_encoding;
 
     name = "embedding_layer";
 
@@ -105,7 +95,7 @@ void EmbeddingLayer::set_vocabulary_size(const Index& new_vocabulary_size)
 {
     const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(new_vocabulary_size, embedding_dimension);
+    weights.resize(new_vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -121,15 +111,9 @@ void EmbeddingLayer::set_embedding_size(const Index& new_embedding_dimension)
 {
     const Index vocabulary_size = get_vocabulary_size();
 
-    embedding_weights.resize(vocabulary_size, new_embedding_dimension);
+    weights.resize(vocabulary_size, new_embedding_dimension);
 
     set_parameters_random();
-}
-
-
-void EmbeddingLayer::set_use_positional_encoding(const bool& new_use_positional_encoding)
-{
-    use_positional_encoding = new_use_positional_encoding;
 }
 
 
@@ -144,7 +128,7 @@ void EmbeddingLayer::set_embedding_weights()
     const Index vocabulary_size = get_vocabulary_size();
     const Index embedding_dimension = get_embedding_dimension();
 
-    embedding_weights.resize(vocabulary_size, embedding_dimension);
+    weights.resize(vocabulary_size, embedding_dimension);
 
     set_parameters_random();
 }
@@ -152,32 +136,32 @@ void EmbeddingLayer::set_embedding_weights()
 
 void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    memcpy(embedding_weights.data(), new_parameters.data() + index, embedding_weights.size()*sizeof(type));
+    memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
 }
 
 
 void EmbeddingLayer::set_parameters_random()
 {
-    if (embedding_weights.size() == 0) return;
+    if (weights.size() == 0) return;
 
     const type minimum = type(-0.05);
     const type maximum = type(0.05);
 
     // First row must be 0s because input value 0 is padding
 
-    embedding_weights.chip(0, 0).setConstant(0);
+    weights.chip(0, 0).setConstant(0);
 
     #pragma omp parallel for
 
-    for (Index i = 1; i < embedding_weights.dimension(0); i++)
-        for (Index j = 0; j < embedding_weights.dimension(1); j++)
-            embedding_weights(i, j) = get_random_type(minimum, maximum);
+    for (Index i = 1; i < weights.dimension(0); i++)
+        for (Index j = 0; j < weights.dimension(1); j++)
+            weights(i, j) = get_random_type(minimum, maximum);
 }
 
 
 void EmbeddingLayer::set_parameters_constant(const type& value)
 {
-    embedding_weights.setConstant(value);
+    weights.setConstant(value);
 }
 
 
@@ -185,24 +169,48 @@ void EmbeddingLayer::dropout(Tensor<type, 3>& outputs) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
+    outputs.device(*thread_pool_device) = outputs.unaryExpr([this, scaling_factor](const type& value) {
+        return get_random_type(type(0), type(1)) < dropout_rate 
+            ? type(0) 
+            : value * scaling_factor;
+        });
+/*
     #pragma omp parallel for
 
     for(Index i = 0; i < outputs.size(); i++)
         outputs(i) = get_random_type(type(0), type(1)) < dropout_rate
             ? 0 
             : outputs(i) * scaling_factor;
+*/
 }
 
 
 void EmbeddingLayer::lookup_embedding(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index samples_number = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index embedding_dim = outputs.dimension(2);
+
+    #pragma omp parallel for
+    for (Index row = 0; row < samples_number; row++)
+    {
+        auto output_slice = outputs.chip(row, 0);
+
+        for (Index input_position = 0; input_position < sequence_length; input_position++)
+        {
+            output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
+        }
+    }
+
+/*
+    const Index samples_number = inputs.dimension(0);
 
     // #pragma omp parallel for collapse(2)
-     for(Index row = 0; row < samples_number; row++)
+     for(Index sample = 0; sample < samples_number; sample++)
         for(Index input_position = 0; input_position < sequence_length; input_position++)
-             outputs.chip(row, 0).chip(input_position, 0)
-                = embedding_weights.chip(inputs(row, input_position), 0);
+             outputs.chip(sample, 0).chip(input_position, 0)
+                = weights.chip(inputs(sample, input_position), 0);
+*/
 }
 
 
@@ -223,15 +231,12 @@ void EmbeddingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 
     lookup_embedding(inputs, outputs);
 
-    if(use_positional_encoding)
-    {
-        outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 
-        const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
+    const Tensor<type, 2>& positional_encoding = embedding_layer_forward_propagation->positional_encoding;
         
-        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
-            outputs.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
-    }
+    for(Index sample_index = 0; sample_index < samples_number; sample_index++)
+        outputs.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs);
@@ -268,9 +273,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     for(Index i = 0; i < samples_number; i++)
     {
-        use_positional_encoding
-            ? sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension))
-            : sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
 
         for(Index j = 0; j < inputs_number; j++)
             embedding_weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
@@ -317,9 +320,8 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
     const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
     const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
     const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
-    const bool new_positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
 
-    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_positional_encoding, new_name);
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
     set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }
@@ -333,7 +335,6 @@ void EmbeddingLayer::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "VocabularySize", to_string(get_vocabulary_size()));
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
     add_xml_element(printer, "EmbeddingSize", to_string(get_embedding_dimension()));
-    add_xml_element(printer, "PositionalEncoding", to_string(use_positional_encoding ? 1 : 0));
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();  
@@ -375,8 +376,7 @@ void EmbeddingLayerForwardPropagation::set(const Index& new_samples_number, Laye
 
     outputs.resize(samples_number, sequence_length, embedding_dimension);
 
-    if(embedding_layer->get_use_positional_encoding())
-        build_positional_encoding_matrix();
+    build_positional_encoding_matrix();
 }
 
 

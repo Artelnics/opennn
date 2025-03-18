@@ -30,8 +30,10 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
-
+        //LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
+        LanguageDataSet language_data_set("C:/sentiment_analysis.csv");
+        language_data_set.print();
+/*
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
 
@@ -41,11 +43,23 @@ int main()
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index embedding_dimension = /*1*/64;
-        const Index perceptron_depth = /*1*/128;
-        const Index heads_number = /*1*/4;
+        cout << "input vocabulary size: " << input_vocabulary_size << endl;
+        cout << "decoder vocabulary size: " << target_vocabulary_size << endl;
+
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
+        const Index heads_number = 4;
         const Index layers_number = 1;
 
+        NeuralNetwork neural_network;
+
+        neural_network.add_layer(make_unique<EmbeddingLayer>(input_vocabulary_size, input_length, embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>());
+        //neural_network.add_layer(make_unique<PerceptronLayer3D>());
+
+
+
+/*
         // Neural network
         
         Transformer transformer(decoder_length,
@@ -72,7 +86,7 @@ int main()
         XMLPrinter printer;
         language_data_set.to_XML(printer);
         file << printer.CStr();
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -85,9 +99,9 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); /*???*/
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); 
         adaptive_moment_estimation->set_loss_goal(0.5);
-        adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(512);
         adaptive_moment_estimation->set_display_period(1);
@@ -121,11 +135,16 @@ int main()
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
 
+<<<<<<< HEAD
+=======
+        cout << "LLega bien" << endl;
+
+>>>>>>> c4fb3f76d9c0d269392fbb4c06e849bc95de6ab9
         string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
 
         cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
-/*
+
 
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;

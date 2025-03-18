@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
+MultiHeadAttentionLayer::MultiHeadAttentionLayer(const Index& new_input_size,
                                                  const Index& new_context_size,
                                                  const Index& new_depth,
                                                  const Index& new_heads_number,
@@ -30,53 +30,53 @@ MultiheadAttentionLayer::MultiheadAttentionLayer(const Index& new_input_size,
 }
 
 
-Index MultiheadAttentionLayer::get_input_size() const
+Index MultiHeadAttentionLayer::get_input_size() const
 {
     return input_size;
 }
 
 
-Index MultiheadAttentionLayer::get_context_size() const
+Index MultiHeadAttentionLayer::get_context_size() const
 {
     return context_size;
 }
 
 
-Index MultiheadAttentionLayer::get_depth() const
+Index MultiHeadAttentionLayer::get_depth() const
 {
     return depth;
 }
 
-Index MultiheadAttentionLayer::get_hidden_depth() const
+Index MultiHeadAttentionLayer::get_hidden_depth() const
 {
     return hidden_depth;
 }
 
-Index MultiheadAttentionLayer::get_heads_number() const
+Index MultiHeadAttentionLayer::get_heads_number() const
 {
     return heads_number;
 }
 
 
-Index MultiheadAttentionLayer::get_weights_depth() const
+Index MultiHeadAttentionLayer::get_weights_depth() const
 {
     return hidden_depth;
 }
 
 
-dimensions MultiheadAttentionLayer::get_input_dimensions() const
+dimensions MultiHeadAttentionLayer::get_input_dimensions() const
 {// @todo
     return { input_size};
 }
 
 
-dimensions MultiheadAttentionLayer::get_output_dimensions() const
+dimensions MultiHeadAttentionLayer::get_output_dimensions() const
 {
     return { input_size, depth };
 }
 
 
-Index MultiheadAttentionLayer::get_parameters_number() const
+Index MultiHeadAttentionLayer::get_parameters_number() const
 {
     return query_weights.size() + query_biases.size()
          + key_weights.size() + key_biases.size()
@@ -85,7 +85,7 @@ Index MultiheadAttentionLayer::get_parameters_number() const
 }
 
 
-Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
+Tensor<type, 1> MultiHeadAttentionLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
@@ -125,7 +125,7 @@ Tensor<type, 1> MultiheadAttentionLayer::get_parameters() const
 }
 
 
-void MultiheadAttentionLayer::set(const Index& new_input_size,
+void MultiHeadAttentionLayer::set(const Index& new_input_size,
                                   const Index& new_context_size,
                                   const Index& new_depth,
                                   const Index& new_heads_number, 
@@ -170,7 +170,7 @@ void MultiheadAttentionLayer::set(const Index& new_input_size,
 }
 
 
-void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void MultiHeadAttentionLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const type* new_parameters_data = new_parameters.data();
 
@@ -220,7 +220,7 @@ void MultiheadAttentionLayer::set_parameters(const Tensor<type, 1>& new_paramete
 }
 
 
-void MultiheadAttentionLayer::set_parameters_random()
+void MultiHeadAttentionLayer::set_parameters_random()
 {
     const type minimum = type(-0.2);
     const type maximum = type(0.2);
@@ -236,7 +236,7 @@ void MultiheadAttentionLayer::set_parameters_random()
 }
 
 
-void MultiheadAttentionLayer::set_parameters_glorot()
+void MultiHeadAttentionLayer::set_parameters_glorot()
 {
     query_biases.setZero();
     key_biases.setZero();
@@ -255,7 +255,7 @@ void MultiheadAttentionLayer::set_parameters_glorot()
 }
 
 
-void MultiheadAttentionLayer::set_parameters_constant(const type& value)
+void MultiHeadAttentionLayer::set_parameters_constant(const type& value)
 {
     query_weights.setConstant(value);
     query_biases.setConstant(value);
@@ -270,38 +270,38 @@ void MultiheadAttentionLayer::set_parameters_constant(const type& value)
     projection_biases.setConstant(value);
 }
 
-void MultiheadAttentionLayer::set_input_size(const Index& new_input_size)
+void MultiHeadAttentionLayer::set_input_size(const Index& new_input_size)
 {
     input_size = new_input_size;
 }
 
-void MultiheadAttentionLayer::set_context_size(const Index& new_context_size)
+void MultiHeadAttentionLayer::set_context_size(const Index& new_context_size)
 {
     context_size = new_context_size;
 }
 
-void MultiheadAttentionLayer::set_depth(const Index& new_depth)
+void MultiHeadAttentionLayer::set_depth(const Index& new_depth)
 {
     depth = new_depth;
 }
 
-void MultiheadAttentionLayer::set_hidden_depth(const Index& new_hidden_depth)
+void MultiHeadAttentionLayer::set_hidden_depth(const Index& new_hidden_depth)
 {
     hidden_depth = new_hidden_depth;
 }
 
-void MultiheadAttentionLayer::set_heads_number(const Index& new_heads_number)
+void MultiHeadAttentionLayer::set_heads_number(const Index& new_heads_number)
 {
     heads_number = new_heads_number;
 }
 
-void MultiheadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
+void MultiHeadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
 
-void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
+void MultiHeadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 {
     if(use_causal_mask && input_size != context_size)
 
@@ -315,7 +315,7 @@ void MultiheadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
 }
 
 
-void MultiheadAttentionLayer::build_causal_mask()
+void MultiHeadAttentionLayer::build_causal_mask()
 {
     constexpr type m_inf = -numeric_limits<type>::infinity();
 
@@ -329,7 +329,7 @@ void MultiheadAttentionLayer::build_causal_mask()
 }
 
 
-void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
+void MultiHeadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_scores) const
 {
     const Index samples_number = attention_scores.dimension(2);
 
@@ -354,7 +354,7 @@ void MultiheadAttentionLayer::apply_causal_mask(Tensor<type, 4>& attention_score
 }
 
 
-void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
+void MultiHeadAttentionLayer::calculate_transformation(const Tensor<type, 3>& input,
                                                        Tensor<type, 4>& transformed_input,
                                                        const Tensor<type, 3>& weights,
                                                        const Tensor<type, 2>& biases,
@@ -395,7 +395,7 @@ void MultiheadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
 }
 
 
-void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>& attention_outputs,
+void MultiHeadAttentionLayer::calculate_output_projection(const Tensor<type, 4>& attention_outputs,
                                                           Tensor<type, 4>& projection_outputs,
                                                           Tensor<type, 3>& outputs) const
 {
@@ -431,7 +431,7 @@ void MultiheadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
 }
 
 
-void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
+void MultiHeadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& query,
                                                        const Tensor<type, 4>& key,
                                                        Tensor<type, 4>& attention_scores,
                                                        Tensor<type, 4>& attention_weights) const
@@ -449,7 +449,7 @@ void MultiheadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
 }
 
 
-void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,
+void MultiHeadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& value,
                                                         const Tensor<type, 4>& attention_weights,
                                                         Tensor<type, 4>& attention_outputs) const
 {
@@ -457,7 +457,7 @@ void MultiheadAttentionLayer::compute_attention_outputs(const Tensor<type, 4>& v
 }
 
 
-void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
+void MultiHeadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
@@ -469,7 +469,7 @@ void MultiheadAttentionLayer::dropout(Tensor<type, 4>& attention_scores) const
 }
 
 
-void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void MultiHeadAttentionLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                                 unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                                 const bool& is_training)
 {
@@ -522,7 +522,7 @@ void MultiheadAttentionLayer::forward_propagate(const vector<pair<type*, dimensi
 }
 
 
-void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void MultiHeadAttentionLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                              const vector<pair<type*, dimensions>>& delta_pairs,
                                              unique_ptr<LayerForwardPropagation>& forward_propagation,
                                              unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -770,7 +770,7 @@ void MultiheadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 }
 
 
-void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+void MultiHeadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                               const Index& index,
                                               Tensor<type, 1>& gradient) const
 {
@@ -825,7 +825,7 @@ void MultiheadAttentionLayer::insert_gradient(unique_ptr<LayerBackPropagation>& 
 }
 
 
-void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
+void MultiHeadAttentionLayer::from_XML(const XMLDocument& document)
 {
 //@TODO PREGUNTAR A RUBÉN CÓMO PUEDO METER LOS LAYER INPUT ÍNDICES EN EL FROM_XML Y TO_XML PARA LAS CAPAS DEL TRANSFORMER PORQUE PROBABLEMENTE SEA LO QUE ESTÁ FALLANDO EN EL LOAD
     const XMLElement* multihead_attention_layer_element = document.FirstChildElement("MultiheadAttention");
@@ -846,7 +846,7 @@ void MultiheadAttentionLayer::from_XML(const XMLDocument& document)
 }
 
 
-void MultiheadAttentionLayer::to_XML(XMLPrinter& printer) const
+void MultiHeadAttentionLayer::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("MultiheadAttention");
 
@@ -872,7 +872,7 @@ MultiheadAttentionLayerForwardPropagation::MultiheadAttentionLayerForwardPropaga
 
 pair<type*, dimensions> MultiheadAttentionLayerForwardPropagation::get_outputs_pair() const
 {
-    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+    MultiHeadAttentionLayer* multihead_attention_layer = static_cast<MultiHeadAttentionLayer*>(layer);
 
     const Index input_size = multihead_attention_layer->get_input_size();
 
@@ -886,7 +886,7 @@ void MultiheadAttentionLayerForwardPropagation::set(const Index& new_samples_num
 {
     layer = new_layer;
 
-    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+    MultiHeadAttentionLayer* multihead_attention_layer = static_cast<MultiHeadAttentionLayer*>(layer);
 
     samples_number = new_samples_number;
 
@@ -937,7 +937,7 @@ void MultiheadAttentionLayerBackPropagation::set(const Index& new_samples_number
 {
     layer = new_layer;
 
-    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+    MultiHeadAttentionLayer* multihead_attention_layer = static_cast<MultiHeadAttentionLayer*>(layer);
 
     samples_number = new_samples_number;
 
@@ -989,7 +989,7 @@ MultiheadAttentionLayerBackPropagation::MultiheadAttentionLayerBackPropagation(c
 
 vector<pair<type*, dimensions>> MultiheadAttentionLayerBackPropagation::get_input_derivative_pairs() const
 {
-    MultiheadAttentionLayer* multihead_attention_layer = static_cast<MultiheadAttentionLayer*>(layer);
+    MultiHeadAttentionLayer* multihead_attention_layer = static_cast<MultiHeadAttentionLayer*>(layer);
 
     const Index input_size = multihead_attention_layer->get_input_size();
     const Index context_size = multihead_attention_layer->get_context_size();

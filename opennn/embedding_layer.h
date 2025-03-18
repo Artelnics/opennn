@@ -28,13 +28,11 @@ public:
     EmbeddingLayer(const Index& = 0,
                    const Index& = 0,
                    const Index& = 0,
-                   const bool& = false,
                    const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
-    bool get_use_positional_encoding() const;
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -45,13 +43,11 @@ public:
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
-             const bool& = false, 
              const string & = "embedding_layer");
 
     void set_vocabulary_size(const Index&);
     void set_sequence_length(const Index&);
     void set_embedding_size(const Index&);
-    void set_use_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 
@@ -91,11 +87,9 @@ private:
 
     Index sequence_length;
 
-    Tensor<type, 2> embedding_weights;
+    Tensor<type, 2> weights;
 
     type dropout_rate;
-
-    bool use_positional_encoding;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
