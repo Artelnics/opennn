@@ -664,7 +664,7 @@ type median(const Tensor<type, 1>& vector) {
         if (!isnan(vector(i)))
             new_size++;
 
-    vector<Index> sorted_vector;
+    std::vector<Index> sorted_vector;
 
     for (Index i = 0; i < size; i++)
         if (!isnan(vector(i))) {
@@ -703,7 +703,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
         if (!isnan(vector(i)))
             new_size++;
 
-    vector<type> sorted_vector;
+    std::vector<type> sorted_vector;
 
     for (Index i = 0; i < size; i++)
         if (!isnan(vector(i))) {
@@ -713,8 +713,8 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
     
     // Calculate quartiles
 
-    vector<type> first_sorted_vector;
-    vector<type> last_sorted_vector;
+    std::vector<type> first_sorted_vector;
+    std::vector<type> last_sorted_vector;
 
     if (new_size % 2 == 0)
     {
@@ -938,8 +938,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     if (size == 0 || bins_number <= 0)
         throw invalid_argument("Vector size or number of bins must be positive.");
 
-    vector<type> value_keys;
-    vector<Index> value_frequencies;
+    std::vector<type> value_keys;
+    std::vector<Index> value_frequencies;
 
     for (Index i = 0; i < size; i++) {
         const type val = vector(i);
@@ -957,15 +957,15 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         }
     }
 
-    vector<pair<type, Index>> sorted_values;
+    std::vector<pair<type, Index>> sorted_values;
     for (size_t i = 0; i < value_keys.size(); i++) {
         sorted_values.emplace_back(value_keys[i], value_frequencies[i]);
     }
 
     sort(sorted_values.begin(), sorted_values.end());
 
-    vector<type> unique_values;
-    vector<Index> unique_frequencies;
+    std::vector<type> unique_values;
+    std::vector<Index> unique_frequencies;
     for (const auto& entry : sorted_values) {
         unique_values.push_back(entry.first);
         unique_frequencies.push_back(entry.second);
@@ -1000,9 +1000,9 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
             remaining_values--;
         }
 
-        vector<type> bin_values(unique_values.begin() + current_value_index,
+        std::vector<type> bin_values(unique_values.begin() + current_value_index,
             unique_values.begin() + current_value_index + bin_size);
-        vector<Index> bin_freqs(unique_frequencies.begin() + current_value_index,
+        std::vector<Index> bin_freqs(unique_frequencies.begin() + current_value_index,
             unique_frequencies.begin() + current_value_index + bin_size);
 
         minimums(current_bin) = *std::min_element(bin_values.begin(), bin_values.end());
@@ -1836,7 +1836,7 @@ Index maximal_index(const Tensor<type, 1>& vector)
 
 Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
-    vector<type> vector_(vector.dimension(0));
+    std::vector<type> vector_(vector.dimension(0));
     for (Index i = 0; i < vector.dimension(0); i++) {
         vector_[i] = vector(i);
     }
@@ -1874,7 +1874,7 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 1>& vector, const Index& num
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index& number)
 {
-    vector<type> vector_(vector.dimension(0));
+    std::vector<type> vector_(vector.dimension(0));
     for (Index i = 0; i < vector.dimension(0); i++) {
         vector_[i] = vector(i);
     }
@@ -1983,13 +1983,13 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
     Index index = 0;
     
-    vector<type> new_vector(new_size);
+    std::vector<type> new_vector(new_size);
 
     for (Index i = 0; i < size; i++)
         if (!isnan(vector(i)))
             new_vector[index++] = vector(i);
 
-    vector<type> sorted_vector(new_size);
+    std::vector<type> sorted_vector(new_size);
     sorted_vector = new_vector;
     sort(sorted_vector.begin(), sorted_vector.end());
 

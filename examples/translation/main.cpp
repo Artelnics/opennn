@@ -33,7 +33,7 @@ int main()
         //LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
         LanguageDataSet language_data_set("C:/sentiment_analysis.csv");
         language_data_set.print();
-/*
+
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
 
@@ -46,21 +46,32 @@ int main()
         cout << "input vocabulary size: " << input_vocabulary_size << endl;
         cout << "decoder vocabulary size: " << target_vocabulary_size << endl;
 
-        const Index embedding_dimension = 64;
-        const Index perceptron_depth = 128;
-        const Index heads_number = 4;
-        const Index layers_number = 1;
+        const Index maximum_sequence_length = 8;
+        const Index vocab_size = 50;
+        const Index embedding_dimension = 6;
+        const Index heads_number = 1;
+        const Index num_classes = 2;
 
         NeuralNetwork neural_network;
 
-        neural_network.add_layer(make_unique<EmbeddingLayer>(input_vocabulary_size, input_length, embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>());
-        //neural_network.add_layer(make_unique<PerceptronLayer3D>());
+        neural_network.add_layer(make_unique<EmbeddingLayer>(vocab_size, maximum_sequence_length, embedding_dimension));
+        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
+        neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 64));
+        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
+
+        cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
+
 
 
 
 /*
-        // Neural network
+
+
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
+        const Index heads_number = 4;
+        const Index layers_number = 1;
+      // Neural network
         
         Transformer transformer(decoder_length,
                                 input_length,
@@ -107,8 +118,6 @@ int main()
         adaptive_moment_estimation->set_display_period(1);
         adaptive_moment_estimation->set_display(false);
 
-        //@TODO CHECK WHY THE NUMERICAL GRADIENT IS 0 EXCEPT FOR THE PROBABILISTIC LAYER TERMS OF THE GRADIENT
-
         // TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
@@ -135,11 +144,6 @@ int main()
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
 
-<<<<<<< HEAD
-=======
-        cout << "LLega bien" << endl;
-
->>>>>>> c4fb3f76d9c0d269392fbb4c06e849bc95de6ab9
         string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
 
         cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
