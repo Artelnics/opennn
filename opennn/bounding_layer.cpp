@@ -82,7 +82,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 {
     if(new_method_string == "NoBounding" || new_method_string == "No bounding")
         bounding_method = BoundingMethod::NoBounding;
-    else if(new_method_string == "Bounding")
+    else if(new_method_string == "Positive outputs" || new_method_string == "Data range" || new_method_string == "Bounding")
         bounding_method = BoundingMethod::Bounding;
     else
         throw runtime_error("Unknown bounding method: " + new_method_string + ".\n");
@@ -150,17 +150,18 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       const bool&)
 {
+
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
     BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
         static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
+
     if(bounding_method == BoundingMethod::NoBounding)
     {
-        outputs = inputs.eval();
-        //outputs.device(*thread_pool_device) = inputs;
-
+        //outputs = inputs.eval();
+        outputs.device(*thread_pool_device) = inputs;
         return;
     }
 

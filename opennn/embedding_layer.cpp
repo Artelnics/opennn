@@ -167,7 +167,7 @@ void EmbeddingLayer::set_parameters_random()
 
     weights.chip(0, 0).setConstant(0);
 
-    // #pragma omp parallel for
+    #pragma omp parallel for
 
     for (Index i = 1; i < weights.dimension(0); i++)
         for (Index j = 0; j < weights.dimension(1); j++)
@@ -279,6 +279,7 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
+
     // Back propagation
 
     EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
@@ -336,11 +337,14 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
     if(!embedding_layer_element)
         throw runtime_error("Embedding element is nullptr.\n");
 
-    set_name(read_xml_string(embedding_layer_element, "Name"));
-    set_vocabulary_size(read_xml_index(embedding_layer_element, "VocabularySize"));
-    set_sequence_length(read_xml_index(embedding_layer_element, "SequenceLength"));
-    set_embedding_size(read_xml_index(embedding_layer_element, "EmbeddingSize"));
-    set_use_positional_encoding(read_xml_bool(embedding_layer_element, "PositionalEncoding"));
+    const string new_name = read_xml_string(embedding_layer_element, "Name");
+    const Index new_vocabulary_size = read_xml_index(embedding_layer_element, "VocabularySize");
+    const Index new_sequence_length = read_xml_index(embedding_layer_element, "SequenceLength");
+    const Index new_embedding_dimension = read_xml_index(embedding_layer_element, "EmbeddingSize");
+    const bool new_positional_encoding = read_xml_bool(embedding_layer_element, "PositionalEncoding");
+
+    set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_positional_encoding, new_name);
+
     set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
 }
 

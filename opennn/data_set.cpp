@@ -2190,6 +2190,58 @@ namespace opennn
     }
 
 
+    Index DataSet::calculate_negatives(const Index& target_index, const SampleUse& sample_use) const
+    {
+        Index negatives = 0;
+        vector<Index> indices;
+        Index samples_number = 0;
+        
+        switch (sample_use)
+        {
+        case SampleUse::Training:
+            indices = get_sample_indices(DataSet::SampleUse::Training);
+            samples_number = get_samples_number(DataSet::SampleUse::Training);
+            break;
+        case SampleUse::Selection:
+            indices = get_sample_indices(DataSet::SampleUse::Selection);
+            samples_number = get_samples_number(DataSet::SampleUse::Selection);
+            break;
+        case SampleUse::Testing:
+            indices = get_sample_indices(DataSet::SampleUse::Testing);
+            samples_number = get_samples_number(DataSet::SampleUse::Testing);
+            break;
+        default:
+            throw runtime_error("Invalid SampleUse");
+        }
+
+        for (Index i = 0; i < samples_number; i++)
+        {
+            const Index sample_index = indices[i];
+            type sample_value = data(sample_index, target_index);
+
+            if (sample_use == SampleUse::Testing)
+            {
+                if (sample_value < type(NUMERIC_LIMITS_MIN))
+                    negatives++;
+            }
+            else
+            {
+                if (abs(sample_value) < type(NUMERIC_LIMITS_MIN))
+                    negatives++;
+                else
+                {
+                    type threshold = (sample_use == SampleUse::Training) ? type(1.0e-3) : type(NUMERIC_LIMITS_MIN);
+                    if (abs(sample_value - type(1)) > threshold)
+                        throw runtime_error("Sample is neither a positive nor a negative: "
+                            + to_string(sample_value) + "-" + to_string(target_index) + "-" + to_string(data(sample_value, target_index)));
+                }
+            }
+        }
+
+        return negatives;
+    }
+
+
     vector<Descriptives> DataSet::calculate_variable_descriptives() const
     {
         return descriptives(data);

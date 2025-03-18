@@ -371,6 +371,7 @@ public:
     Tensor<type, 1> calculate_means(const SampleUse& , const VariableUse&) const;
 
     Index calculate_used_negatives(const Index&);
+    Index calculate_negatives(const Index&, const SampleUse&) const;
 
     // Distribution
 

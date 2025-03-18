@@ -61,10 +61,10 @@ public:
             const string & = "perceptron_layer_3d");
 
    void set_inputs_number(Index);
-   void set_input_dimensions(const dimensions&) override;
+   // void set_input_dimensions(const dimensions&) override;
 
    void set_inputs_depth(const Index&);
-   void set_output_dimensions(const dimensions&) override;
+   void set_neurons_number(const Index&);
 
    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
 

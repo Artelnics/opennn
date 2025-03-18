@@ -480,7 +480,7 @@ TrainingResults TrainingStrategy::perform_training()
     || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
 
-    set_display(display);
+    set_display(true);
 
     switch(optimization_method)
     {  

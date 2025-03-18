@@ -30,7 +30,7 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_4.txt");
+        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
 
         const Index input_length = language_data_set.get_input_length();
         const Index decoder_length = language_data_set.get_target_length();
@@ -41,9 +41,9 @@ int main()
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index embedding_dimension = 1/*64*/;
-        const Index perceptron_depth = 1/*128*/;
-        const Index heads_number = 1/*4*/;
+        const Index embedding_dimension = /*1*/64;
+        const Index perceptron_depth = /*1*/128;
+        const Index heads_number = /*1*/4;
         const Index layers_number = 1;
 
         // Neural network
@@ -85,7 +85,7 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); ???
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); /*???*/
         adaptive_moment_estimation->set_loss_goal(0.5);
         adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
         adaptive_moment_estimation->set_maximum_time(59400);
@@ -93,13 +93,21 @@ int main()
         adaptive_moment_estimation->set_display_period(1);
         adaptive_moment_estimation->set_display(false);
 
+        //@TODO CHECK WHY THE NUMERICAL GRADIENT IS 0 EXCEPT FOR THE PROBABILISTIC LAYER TERMS OF THE GRADIENT
+
         TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-
+/*
         // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
-        // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
+        transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
+        transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
+
+        transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
+        transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
+        transformer.set_input_length(input_length);
+        transformer.set_decoder_length(decoder_length);
         //Testing
 
         // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
@@ -112,6 +120,12 @@ int main()
         // string prediction = transformer.calculate_outputs({"I want you to return it"});
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
+
+        cout << "LLega bien" << endl;
+*/
+        string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
+
+        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
 /*
 

@@ -34,6 +34,7 @@ public:
     Index get_input_size() const;
     Index get_context_size() const;
     Index get_depth() const;
+    Index get_hidden_depth() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
@@ -56,6 +57,12 @@ public:
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;
 
+    void set_input_size(const Index&);
+    void set_context_size(const Index&);
+    void set_depth(const Index&);
+    void set_hidden_depth(const Index&);
+    void set_heads_number(const Index&);
+
     void set_dropout_rate(const type&);
     void set_causal_mask(const bool&);
 
@@ -66,8 +73,8 @@ public:
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    //void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    // void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
