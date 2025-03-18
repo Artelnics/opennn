@@ -95,10 +95,10 @@ int main()
 
         //@TODO CHECK WHY THE NUMERICAL GRADIENT IS 0 EXCEPT FOR THE PROBABILISTIC LAYER TERMS OF THE GRADIENT
 
-        TrainingResults training_results = training_strategy.perform_training();
+        // TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
-/*
+
         // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
         transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
@@ -121,11 +121,9 @@ int main()
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
 
-        cout << "LLega bien" << endl;
-*/
         string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
 
-        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
+        cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
 /*
 
