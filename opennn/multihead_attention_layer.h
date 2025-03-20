@@ -33,7 +33,7 @@ public:
 
     Index get_input_size() const;
     Index get_context_size() const;
-    Index get_depth() const;
+    Index get_embedding_dimension() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
 
@@ -59,11 +59,6 @@ public:
     void set_parameters_random() override;
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;
-
-    void set_input_size(const Index&);
-    void set_context_size(const Index&);
-    void set_depth(const Index&);
-    void set_heads_number(const Index&);
 
     void set_dropout_rate(const type&);
     void set_use_causal_mask(const bool&);
@@ -101,13 +96,42 @@ public:
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
     #endif
 
+    Tensor<float, 4> compute_query(
+        const Eigen::Tensor<float, 3>& input,             // (batch, seq_len, embed_dim)
+        const Eigen::Tensor<float, 3>& query_weights)     // (embed_dim, head_dim, num_heads)
+    {
+        const int batch_size = input.dimension(0);
+        const int seq_len = input.dimension(1);
+        const int embed_dim = input.dimension(2);
+
+        const int head_dim = query_weights.dimension(1);
+        const int num_heads = query_weights.dimension(2);
+
+        // Verify embedding dimension matches
+        assert(embed_dim == query_weights.dimension(0));
+
+        // Tensor contraction dimensions:
+        // input: (batch_size, seq_len, embed_dim)
+        // query_weights: (embed_dim, head_dim, num_heads)
+        Eigen::array<Eigen::IndexPair<int>, 1> contract_dims = { Eigen::IndexPair<int>(2, 0) };
+
+        // Perform contraction to get (batch_size, seq_len, head_dim, num_heads)
+        Tensor<float, 4> query(batch_size, seq_len, head_dim, num_heads);
+        query = input.contract(query_weights, contract_dims)
+            .reshape(Eigen::array<int, 4>{batch_size, seq_len, head_dim, num_heads});
+
+        // Optionally, reorder dimensions to (batch_size, seq_len, num_heads, head_dim) for consistency
+        Eigen::array<int, 4> shuffle_dims = { 0, 1, 3, 2 };
+        Eigen::Tensor<float, 4> output = query.shuffle(shuffle_dims);
+
+        return output; // (batch_size, seq_len, num_heads, head_dim)
+    }
+
 private:
 
-    Index input_size = 0;
+    Index query_sequence_length = 0;
 
-    Index context_size = 0;
-
-    Index depth = 0;
+    Index source_sequence_length = 0;
 
     Index heads_number = 0;
 
