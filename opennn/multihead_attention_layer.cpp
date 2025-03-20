@@ -54,7 +54,7 @@ Index MultiHeadAttention::get_embedding_dimension() const
 
 Index MultiHeadAttention::get_heads_number() const
 {
-    return heads_number;
+    return query_weights.dimension(2);
 }
 
 
@@ -76,9 +76,9 @@ type MultiHeadAttention::get_scaling_factor() const
 
 Index MultiHeadAttention::get_hidden_depth() const
 {
-    return (heads_number == 0)
+    return (get_heads_number() == 0)
         ? 0
-        : Index(get_embedding_dimension() / heads_number);
+        : Index(get_embedding_dimension() / get_heads_number());
 }
 
 
@@ -132,8 +132,6 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
 
     source_sequence_length = new_source_sequence_length;
 
-    heads_number = new_heads_number;
-
     name = new_name;
 
     layer_type = Type::MultiheadAttention;
@@ -143,6 +141,8 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     const Index hidden_depth = get_hidden_depth();
 
     const Index embedding_dimension = get_embedding_dimension();
+
+    const Index heads_number = get_heads_number();
 
     query_weights.resize(embedding_dimension, hidden_depth, heads_number);
     query_biases.resize(hidden_depth, heads_number);
@@ -238,6 +238,8 @@ void MultiHeadAttention::set_parameters_glorot()
 
     const Index embedding_dimension = get_embedding_dimension();
 
+    const Index heads_number = get_heads_number();
+
     const type limit = sqrt(6 / type(embedding_dimension + hidden_depth * heads_number));
 
     const type minimum = -limit;
@@ -299,6 +301,8 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
 
     const Index context_input_size = source_sequence_length * query_sequence_length;
 
+    const Index heads_number = get_heads_number();
+
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         for(Index sample_index = 0; sample_index < samples_number; sample_index++)
@@ -333,6 +337,8 @@ void MultiHeadAttention::calculate_transformation(const Tensor<type, 3>& input,
     const Index hidden_depth = get_hidden_depth();
 
     const Index embedding_dimension = get_embedding_dimension();
+
+    const Index heads_number = get_heads_number();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -376,6 +382,8 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
     type* projection_weights_data = (type*)projection_weights.data();
 
     const Index embedding_dimension = get_embedding_dimension();
+
+    const Index heads_number = get_heads_number();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -512,6 +520,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index hidden_depth = get_hidden_depth();
 
     const Index embedding_dimension = get_embedding_dimension();
+
+    const Index heads_number = get_heads_number();
 
     type* query_weights_data = (type*)query_weights.data();
     type* key_weights_data = (type*)key_weights.data();

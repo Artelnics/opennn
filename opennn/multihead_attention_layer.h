@@ -133,10 +133,6 @@ private:
 
     Index source_sequence_length = 0;
 
-    Index heads_number = 0;
-
-    //Index hidden_depth = 0;
-
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
 
