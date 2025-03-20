@@ -55,7 +55,7 @@ int main()
         NeuralNetwork neural_network;
 
         neural_network.add_layer(make_unique<EmbeddingLayer>(vocab_size, maximum_sequence_length, embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
         neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 64));
         neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
 

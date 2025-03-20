@@ -547,7 +547,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<ScalingLayer2D>(dim1));
-    neural_network.add_layer(make_unique<PerceptronLayer>(dim1, dim2, PerceptronLayer::ActivationFunction::Logistic));
+    neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::ActivationFunction::Logistic));
 
     neural_network.set_parameters_constant(type(0.001));
 

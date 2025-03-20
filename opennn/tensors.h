@@ -330,6 +330,15 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
     return true;
 }
 
+
+template <int rank>
+void copy_to_vector(Tensor<type, 1>& vector, const Tensor<type, rank>& source, Index& index)
+{
+    memcpy(vector.data() + index, source.data(), source.size() * sizeof(type));
+
+    index += source.size();
+}
+
 }
 
 #endif

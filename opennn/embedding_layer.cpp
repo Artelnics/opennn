@@ -68,7 +68,9 @@ Tensor<type, 1> EmbeddingLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
+    Index index = 0;
+
+    copy_to_vector(parameters, weights, index);
 
     return parameters;
 }
@@ -263,20 +265,20 @@ void EmbeddingLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     // Back propagation
 
-    EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
-        static_cast<EmbeddingLayerBackPropagation*>(back_propagation.get());
+    EmbeddingBackPropagation* embedding_back_propagation =
+        static_cast<EmbeddingBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 2>& sample_deltas = embedding_layer_back_propagation->sample_deltas;
-    Tensor<type, 2>& embedding_weight_derivatives = embedding_layer_back_propagation->embedding_weight_derivatives;
+    Tensor<type, 2>& sample_deltas = embedding_back_propagation->sample_deltas;
+    Tensor<type, 2>& weight_derivatives = embedding_back_propagation->weight_derivatives;
 
-    embedding_weight_derivatives.setZero();
+    weight_derivatives.setZero();
 
     for(Index i = 0; i < samples_number; i++)
     {
         sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
 
         for(Index j = 0; j < inputs_number; j++)
-            embedding_weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
+            weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
                 += sample_deltas.chip(j, 0);
     }
 }
@@ -292,20 +294,13 @@ void EmbeddingLayer::add_deltas(const vector<pair<type*, dimensions>>& delta_pai
 
 
 void EmbeddingLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                     const Index& index,
+                                     Index& index,
                                      Tensor<type, 1>& gradient) const
 {
-    const Index embedding_weights_number = get_parameters_number();
+    const EmbeddingBackPropagation* embedding_back_propagation =
+        static_cast<EmbeddingBackPropagation*>(back_propagation.get());
 
-    const EmbeddingLayerBackPropagation* embedding_layer_back_propagation =
-        static_cast<EmbeddingLayerBackPropagation*>(back_propagation.get());
-
-    const type* embedding_weights_derivatives_data = embedding_layer_back_propagation->embedding_weight_derivatives.data();
-
-    type* gradient_data = gradient.data();
-
-    memcpy(gradient_data + index, embedding_weights_derivatives_data, embedding_weights_number*sizeof(type));
-
+    copy_to_vector(gradient, embedding_back_propagation->weight_derivatives, index);
 }
 
 
@@ -417,20 +412,20 @@ void EmbeddingLayerForwardPropagation::build_positional_encoding_matrix()
 }
 
 
-EmbeddingLayerBackPropagation::EmbeddingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingBackPropagation::EmbeddingBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> EmbeddingLayerBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> EmbeddingBackPropagation::get_input_derivative_pairs() const
 {
     return vector<pair<type*, dimensions>>();
 }
 
 
-void EmbeddingLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void EmbeddingBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -443,11 +438,11 @@ void EmbeddingLayerBackPropagation::set(const Index& new_samples_number, Layer* 
     const Index vocabulary_size = embedding_layer->get_vocabulary_size();
 
     sample_deltas.resize(sequence_length, embedding_dimension);
-    embedding_weight_derivatives.resize(vocabulary_size, embedding_dimension);
+    weight_derivatives.resize(vocabulary_size, embedding_dimension);
 }
 
 
-void EmbeddingLayerBackPropagation::print() const
+void EmbeddingBackPropagation::print() const
 {
 }
 
