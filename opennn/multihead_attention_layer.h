@@ -34,9 +34,13 @@ public:
     Index get_input_size() const;
     Index get_context_size() const;
     Index get_depth() const;
-    Index get_hidden_depth() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
+
+    type get_scaling_factor() const;
+
+    Index get_hidden_depth() const;
+
 
     dimensions get_input_dimensions() const override;
 
@@ -60,13 +64,11 @@ public:
     void set_input_size(const Index&);
     void set_context_size(const Index&);
     void set_depth(const Index&);
-    void set_hidden_depth(const Index&);
     void set_heads_number(const Index&);
 
     void set_dropout_rate(const type&);
-    void set_causal_mask(const bool&);
+    void set_use_causal_mask(const bool&);
 
-    void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
@@ -102,17 +104,15 @@ public:
 
 private:
 
-    Index input_size;
+    Index input_size = 0;
 
-    Index context_size;
+    Index context_size = 0;
 
-    Index depth;
+    Index depth = 0;
 
-    Index heads_number;
+    Index heads_number = 0;
 
-    Index hidden_depth;
-
-    type scaling_factor = 1;
+    //Index hidden_depth = 0;
 
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
@@ -143,7 +143,6 @@ private:
 
 struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 {
-
     MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
                                               Layer* new_layer = nullptr);
 

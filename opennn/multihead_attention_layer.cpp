@@ -22,7 +22,7 @@ MultiHeadAttentionLayer::MultiHeadAttentionLayer(const Index& new_input_size,
 {
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
-    set_causal_mask(new_use_causal_mask);
+    set_use_causal_mask(new_use_causal_mask);
 
     layer_type = Type::MultiheadAttention;
 
@@ -47,10 +47,6 @@ Index MultiHeadAttentionLayer::get_depth() const
     return depth;
 }
 
-Index MultiHeadAttentionLayer::get_hidden_depth() const
-{
-    return hidden_depth;
-}
 
 Index MultiHeadAttentionLayer::get_heads_number() const
 {
@@ -60,7 +56,25 @@ Index MultiHeadAttentionLayer::get_heads_number() const
 
 Index MultiHeadAttentionLayer::get_weights_depth() const
 {
-    return hidden_depth;
+    return get_hidden_depth();
+}
+
+
+type MultiHeadAttentionLayer::get_scaling_factor() const
+{
+    const Index hidden_depth = get_hidden_depth();
+
+    return (hidden_depth == 0)
+        ? 0.25
+        : type(1) / type(sqrt(hidden_depth));
+}
+
+
+Index MultiHeadAttentionLayer::get_hidden_depth() const
+{
+    return (heads_number == 0)
+        ? 0
+        : Index(depth / heads_number);
 }
 
 
@@ -139,19 +153,13 @@ void MultiHeadAttentionLayer::set(const Index& new_input_size,
 
     heads_number = new_heads_number;
 
-    scaling_factor = (hidden_depth == 0) 
-        ? 0.25 
-        : type(1) / type(sqrt(hidden_depth));
-
     name = new_name;
 
     layer_type = Type::MultiheadAttention;
 
     dropout_rate = 0;
 
-    heads_number == 0
-        ? hidden_depth = 0    
-        : hidden_depth = Index(depth / heads_number); //depth;
+    const Index hidden_depth = get_hidden_depth();
 
     query_weights.resize(depth, hidden_depth, heads_number);
     query_biases.resize(hidden_depth, heads_number);
@@ -243,6 +251,8 @@ void MultiHeadAttentionLayer::set_parameters_glorot()
     value_biases.setZero();
     projection_biases.setZero();
 
+    const Index hidden_depth = get_hidden_depth();
+
     const type limit = sqrt(6 / type(depth + hidden_depth * heads_number));
 
     const type minimum = -limit;
@@ -285,10 +295,6 @@ void MultiHeadAttentionLayer::set_depth(const Index& new_depth)
     depth = new_depth;
 }
 
-void MultiHeadAttentionLayer::set_hidden_depth(const Index& new_hidden_depth)
-{
-    hidden_depth = new_hidden_depth;
-}
 
 void MultiHeadAttentionLayer::set_heads_number(const Index& new_heads_number)
 {
@@ -301,31 +307,24 @@ void MultiHeadAttentionLayer::set_dropout_rate(const type& new_dropout_rate)
 }
 
 
-void MultiHeadAttentionLayer::set_causal_mask(const bool& new_use_causal_mask)
+void MultiHeadAttentionLayer::set_use_causal_mask(const bool& new_use_causal_mask)
 {
     if(use_causal_mask && input_size != context_size)
-
-    throw runtime_error("Causal mask can only be applied to self-attention. "
-                        "In this case, input size (" + to_string(input_size) + ") "
-                        "should be equal to context size (" + to_string(context_size) + ").");
+        throw runtime_error("Causal mask can only be applied to self-attention. "
+                            "In this case, input size (" + to_string(input_size) + ") "
+                            "should be equal to context size (" + to_string(context_size) + ").");
 
     use_causal_mask = new_use_causal_mask;
 
-    build_causal_mask();
-}
-
-
-void MultiHeadAttentionLayer::build_causal_mask()
-{
     constexpr type m_inf = -numeric_limits<type>::infinity();
 
     causal_mask.resize(context_size, input_size);
     causal_mask.setZero();
 
     #pragma omp parallel for
-    for(Index input_index = 0; input_index < input_size; input_index++)
-        for(Index context_index = input_index + 1; context_index < context_size; context_index++)
-            causal_mask(context_index, input_index) = m_inf;
+        for (Index input_index = 0; input_index < input_size; input_index++)
+            for (Index context_index = input_index + 1; context_index < context_size; context_index++)
+                causal_mask(context_index, input_index) = m_inf;
 }
 
 
@@ -361,10 +360,12 @@ void MultiHeadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                        Tensor<type, 2>& sample_matrix) const
 {
     // @todo Check if we can do this with transposed matrices in contract.
-    const Index samples_number = input.dimension(0);
-    const Index variables_number = input.dimension(1);
+    const Index batch_size = input.dimension(0);
+    const Index sequence_length = input.dimension(1);
 
     type* transformed_input_data = transformed_input.data();
+
+    const Index hidden_depth = get_hidden_depth();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -376,14 +377,14 @@ void MultiHeadAttentionLayer::calculate_transformation(const Tensor<type, 3>& in
                                                      hidden_depth);
 
 
-        type* head_transformed_input_data = transformed_input_data + head_index * samples_number * variables_number * hidden_depth;
+        type* head_transformed_input_data = transformed_input_data + head_index * batch_size * sequence_length * hidden_depth;
 
-        for(Index sample_index = 0; sample_index < samples_number; sample_index++)
+        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             sample_matrix = input.chip(sample_index, 0);
 
-            TensorMap<Tensor<type, 2>> sample_transformed_input(head_transformed_input_data + sample_index * variables_number * hidden_depth,
-                                                                variables_number, 
+            TensorMap<Tensor<type, 2>> sample_transformed_input(head_transformed_input_data + sample_index * sequence_length * hidden_depth,
+                                                                sequence_length,
                                                                 hidden_depth);
 
             sample_transformed_input.device(*thread_pool_device)
@@ -400,6 +401,8 @@ void MultiHeadAttentionLayer::calculate_output_projection(const Tensor<type, 4>&
                                                           Tensor<type, 3>& outputs) const
 {
     const Index samples_number = outputs.dimension(0);
+
+    const Index hidden_depth = get_hidden_depth();
 
     type* attention_outputs_data = (type*)attention_outputs.data();
     type* projection_outputs_data = projection_outputs.data();
@@ -437,6 +440,8 @@ void MultiHeadAttentionLayer::compute_attention_scores(const Tensor<type, 4>& qu
                                                        Tensor<type, 4>& attention_weights) const
 {
     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
+
+    const type scaling_factor = get_scaling_factor();
 
     attention_scores.device(*thread_pool_device) = attention_scores * scaling_factor;
 
@@ -534,6 +539,8 @@ void MultiHeadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     const Index batch_samples_number = input_pairs[0].second[0];
+
+    const Index hidden_depth = get_hidden_depth();
 
     type* query_weights_data = (type*)query_weights.data();
     type* key_weights_data = (type*)key_weights.data();
@@ -712,6 +719,8 @@ void MultiHeadAttentionLayer::back_propagate(const vector<pair<type*, dimensions
 
         // head_attention_scores_derivatives.setZero();
 
+        const type scaling_factor = get_scaling_factor();
+
         head_attention_scores_derivatives.device(*thread_pool_device) = head_attention_scores_derivatives * scaling_factor;
 
         // QUERY DERIVATIVES
@@ -841,7 +850,7 @@ void MultiHeadAttentionLayer::from_XML(const XMLDocument& document)
 
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
-    set_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
+    set_use_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
     set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "));
 }
 
