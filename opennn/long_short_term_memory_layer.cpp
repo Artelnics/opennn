@@ -395,7 +395,7 @@ void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimens
                                                  const bool& is_training)
 {
 
-    const Index samples_number = input_pairs[0].second[0];
+    const Index batch_size = input_pairs[0].second[0];
 
     LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.get());
@@ -441,7 +441,7 @@ void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimens
 
     Tensor<type, 2>& outputs = long_short_term_memory_layer_forward_propagation->outputs;
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
     {
         if(i%time_steps == 0)
         {
@@ -2040,10 +2040,10 @@ string LongShortTermMemoryLayer::get_activation_function_string_expression() con
 }
 
 
-LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+LongShortTermMemoryLayerForwardPropagation::LongShortTermMemoryLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -2169,10 +2169,10 @@ void LongShortTermMemoryLayerBackPropagation::set(const Index& new_batch_size, L
 }
 
 
-LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+LongShortTermMemoryLayerBackPropagation::LongShortTermMemoryLayerBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

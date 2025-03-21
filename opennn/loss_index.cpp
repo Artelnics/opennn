@@ -527,9 +527,9 @@ void LossIndex::from_XML(const XMLDocument& document)
 }
 
 
-BackPropagation::BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
+BackPropagation::BackPropagation(const Index& new_batch_size, LossIndex* new_loss_index)
 {
-    set(new_batch_samples_number, new_loss_index);
+    set(new_batch_size, new_loss_index);
 }
 
 
@@ -573,9 +573,9 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
     output_deltas.resize(size);
 
 //    output_deltas_dimensions.resize(output_dimensions.size() + 1);
-//    output_deltas_dimensions[0] = batch_samples_number;
+//    output_deltas_dimensions[0] = batch_size;
 
-//    Index size = batch_samples_number;
+//    Index size = batch_size;
 
 //    for(size_t i = 0; i < output_dimensions.size(); i++)
 //    {
@@ -1328,9 +1328,9 @@ void BackPropagationLM::set(const Index &new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, LossIndex *new_loss_index) 
+BackPropagationLM::BackPropagationLM(const Index &new_batch_size, LossIndex *new_loss_index) 
 {
-    set(new_batch_samples_number, new_loss_index);
+    set(new_batch_size, new_loss_index);
 }
 
 } // namespace opennn

@@ -230,7 +230,7 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 {
     const Index embedding_dimension = get_embedding_dimension();
 
-    const Index samples_number = input_pairs[0].second[0];
+    const Index batch_size = input_pairs[0].second[0];
     const Index inputs_number = input_pairs[0].second[1];
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
@@ -250,7 +250,7 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     weight_derivatives.setZero();
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
     {
         sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
 
@@ -315,10 +315,10 @@ void Embedding::to_XML(XMLPrinter& printer) const
 }
 
 
-EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingForwardPropagation::EmbeddingForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -365,10 +365,10 @@ void EmbeddingForwardPropagation::print() const
 }
 
 
-EmbeddingBackPropagation::EmbeddingBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingBackPropagation::EmbeddingBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

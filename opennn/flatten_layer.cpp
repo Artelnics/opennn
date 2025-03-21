@@ -84,7 +84,7 @@ void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>&,
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    const Index samples_number = input_pairs[0].second[0];
+    const Index batch_size = input_pairs[0].second[0];
     const Index outputs_number = get_outputs_number();
 
     // Back propagation
@@ -96,7 +96,7 @@ void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     memcpy(input_derivatives.data(),
            delta_pairs[0].first,
-           Index(samples_number * outputs_number * sizeof(type)));
+           Index(batch_size * outputs_number * sizeof(type)));
 }
 
 
@@ -139,10 +139,10 @@ void Flatten::print() const
 }
 
 
-FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+FlattenLayerForwardPropagation::FlattenLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -195,10 +195,10 @@ void FlattenLayerBackPropagation::print() const
 }
 
 
-FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

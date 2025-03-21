@@ -85,13 +85,13 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
                                            parameters.convolution_type,
                                            parameters.test_name);
 
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<ConvolutionalLayerForwardPropagation>(batch_samples_number, &convolutional_layer);
+        make_unique<ConvolutionalLayerForwardPropagation>(batch_size, &convolutional_layer);
 
     pair<type*, dimensions> input_pair(parameters.input_data.data(),
-                                       {batch_samples_number,
+                                       {batch_size,
                                         parameters.input_dimensions[0],
                                         parameters.input_dimensions[1],
                                         parameters.input_dimensions[2]});
@@ -102,18 +102,18 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
     EXPECT_EQ(output_pair.second[2], parameters.expected_output.dimension(2));
     EXPECT_EQ(output_pair.second[3], parameters.expected_output.dimension(3));
 
     TensorMap<Tensor<type, 4>> output_tensor(output_pair.first,
-                                             batch_samples_number,
+                                             batch_size,
                                              parameters.expected_output.dimension(1),
                                              parameters.expected_output.dimension(2),
                                              parameters.expected_output.dimension(3));
 
-    for (Index b = 0; b < batch_samples_number; ++b) {
+    for (Index b = 0; b < batch_size; ++b) {
         for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
             for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
                 for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
@@ -140,16 +140,16 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
                                            parameters.convolution_type,
                                            parameters.test_name);
 
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<ConvolutionalLayerForwardPropagation>(batch_samples_number, &convolutional_layer);
+        make_unique<ConvolutionalLayerForwardPropagation>(batch_size, &convolutional_layer);
 
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<ConvolutionalLayerBackPropagation>(batch_samples_number, &convolutional_layer);
+        make_unique<ConvolutionalLayerBackPropagation>(batch_size, &convolutional_layer);
 
     pair<type*, dimensions> input_pair(parameters.input_data.data(),
-                                       {batch_samples_number,
+                                       {batch_size,
                                         parameters.input_dimensions[0],
                                         parameters.input_dimensions[1],
                                         parameters.input_dimensions[2]});
@@ -161,7 +161,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
     // Initialize deltas with ones (mock values for testing backpropagation)
-    Tensor<type, 4> deltas(batch_samples_number,
+    Tensor<type, 4> deltas(batch_size,
                            parameters.expected_output.dimension(1),
                            parameters.expected_output.dimension(2),
                            parameters.expected_output.dimension(3));
@@ -169,7 +169,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     deltas.setConstant(1.0);
 
     pair<type*, dimensions> delta_pair(deltas.data(),
-                                       {batch_samples_number,
+                                       {batch_size,
                                         parameters.expected_output.dimension(1),
                                         parameters.expected_output.dimension(2),
                                         parameters.expected_output.dimension(3)});
@@ -178,13 +178,13 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation->get_input_derivative_pairs();
 
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_samples_number);
+    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
     EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
     EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
     EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));
 
     TensorMap<Tensor<type, 4>> input_derivatives(input_derivatives_pair[0].first,
-                                                 batch_samples_number,
+                                                 batch_size,
                                                  parameters.input_data.dimension(1),
                                                  parameters.input_data.dimension(2),
                                                  parameters.input_data.dimension(3));
@@ -194,13 +194,13 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
 /*
     // Validate input derivatives (mock expected values for now)
-    Tensor<type, 4> expected_input_derivatives(batch_samples_number,
+    Tensor<type, 4> expected_input_derivatives(batch_size,
                                                parameters.input_data.dimension(1),
                                                parameters.input_data.dimension(2),
                                                parameters.input_data.dimension(3));
     expected_input_derivatives.setConstant(1.0);  // Replace with actual expected derivatives logic if known.
 
-    for (Index b = 0; b < batch_samples_number; ++b) {
+    for (Index b = 0; b < batch_size; ++b) {
         for (Index h = 0; h < parameters.input_data.dimension(1); ++h) {
             for (Index w = 0; w < parameters.input_data.dimension(2); ++w) {
                 for (Index c = 0; c < parameters.input_data.dimension(3); ++c) {
@@ -217,7 +217,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     EXPECT_EQ(bias_derivatives.size(), convolutional_layer.get_kernels_number());
     //for (Index k = 0; k < convolutional_layer.get_kernels_number(); ++k)
     //{
-    //    EXPECT_NEAR(bias_derivatives(k), 1.0 * batch_samples_number * parameters.expected_output.dimension(1) * parameters.expected_output.dimension(2), 1e-5)
+    //    EXPECT_NEAR(bias_derivatives(k), 1.0 * batch_size * parameters.expected_output.dimension(1) * parameters.expected_output.dimension(2), 1e-5)
     //        << "Mismatch in bias derivative for kernel=" << k;
     //}
 

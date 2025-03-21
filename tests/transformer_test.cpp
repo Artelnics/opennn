@@ -92,22 +92,22 @@ TEST(Transformer, Outputs)
     Index perceptron_depth = 1;
     Index heads_number = 1;
     Index layers_number = 1;
-    Index batch_samples_number = 1;
+    Index batch_size = 1;
 
     Transformer transformer(input_length, context_length, input_dimensions, context_dimension,
                       embedding_depth, perceptron_depth, heads_number, layers_number);
 
     transformer.set_parameters_constant(type(0));
 
-    inputs.resize(batch_samples_number, input_length);
+    inputs.resize(batch_size, input_length);
     inputs.setConstant(type(0));
 
-    context.resize(batch_samples_number, input_length);
+    context.resize(batch_size, input_length);
     context.setConstant(type(0));
 
     outputs = transformer.calculate_outputs(inputs, context);
 
-    EXPECT_EQ(outputs.dimension(0), batch_samples_number);
+    EXPECT_EQ(outputs.dimension(0), batch_size);
     EXPECT_EQ(outputs.dimension(1), input_length);
     EXPECT_EQ(outputs.dimension(2), input_dimensions);
 
@@ -115,7 +115,7 @@ TEST(Transformer, Outputs)
     
     // Test
 
-    batch_samples_number = 3;
+    batch_size = 3;
     Index inputs_number = 2;
     Index neurons_number = 4;
     Index outputs_number = 5;
@@ -124,12 +124,12 @@ TEST(Transformer, Outputs)
 
     transformer.set_parameters_constant(type(0));
 
-    inputs.resize(batch_samples_number, inputs_number);
+    inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(0));
 
     outputs = transformer.calculate_outputs(inputs);
 
-    EXPECT_EQ(outputs.size() == batch_samples_number * outputs_number);
+    EXPECT_EQ(outputs.size() == batch_size * outputs_number);
     EXPECT_EQ(abs(outputs(0, 0)) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(abs(outputs(0, 1)) < type(NUMERIC_LIMITS_MIN));
     EXPECT_EQ(abs(outputs(0, 2)) < type(NUMERIC_LIMITS_MIN));
@@ -226,11 +226,11 @@ TEST(Transformer, Outputs)
 
     transformer.set(Transformer::ModelType::Approximation, { 1,3,3,3,1 });
 
-    batch_samples_number = 2;
+    batch_size = 2;
     inputs_number = transformer.get_inputs_number();
     outputs_number = transformer.get_outputs_number();
 
-    inputs.resize(batch_samples_number, inputs_number);
+    inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(0));
 
     parameters_number = transformer.get_parameters_number();
@@ -250,7 +250,7 @@ TEST(Transformer, Outputs)
 
 TEST(Transformer, ForwardPropagate)
 {
-    Index batch_samples_number = 1;
+    Index batch_size = 1;
 
     Index input_length = 4;
     Index context_length = 3;
@@ -264,9 +264,9 @@ TEST(Transformer, ForwardPropagate)
 
     bool is_training = true;
 /*
-    data.resize(batch_samples_number, context_length + 2 * input_length);
+    data.resize(batch_size, context_length + 2 * input_length);
 
-    for(Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
     {
         for(Index j = 0; j < context_length; j++)
             data(i, j) = type(rand() % context_dimension);
@@ -293,7 +293,7 @@ TEST(Transformer, ForwardPropagate)
     input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
     target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
-    batch.set(batch_samples_number, &data_set);
+    batch.set(batch_size, &data_set);
 
     batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
@@ -310,7 +310,7 @@ TEST(Transformer, ForwardPropagate)
     Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
         
     EXPECT_EQ(probabilistic_activations.rank() == 3);
-    EXPECT_EQ(probabilistic_activations.dimension(0) == batch_samples_number);
+    EXPECT_EQ(probabilistic_activations.dimension(0) == batch_size);
     EXPECT_EQ(probabilistic_activations.dimension(1) == input_length);
     EXPECT_EQ(probabilistic_activations.dimension(2) == input_dimensions + 1);
 
@@ -319,7 +319,7 @@ TEST(Transformer, ForwardPropagate)
     {
         // Test
 
-        batch_samples_number = 4;
+        batch_size = 4;
 
         input_length = 2;
         context_length = 3;
@@ -333,9 +333,9 @@ TEST(Transformer, ForwardPropagate)
 
         bool is_training = true;
 
-        data.resize(batch_samples_number, context_length + 2 * input_length);
+        data.resize(batch_size, context_length + 2 * input_length);
 
-        for(Index i = 0; i < batch_samples_number; i++)
+        for(Index i = 0; i < batch_size; i++)
         {
             for(Index j = 0; j < context_length; j++)
                 data(i, j) = type(rand() % context_dimension);
@@ -362,7 +362,7 @@ TEST(Transformer, ForwardPropagate)
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
 
-        batch.set(batch_samples_number, &data_set);
+        batch.set(batch_size, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
 
@@ -379,7 +379,7 @@ TEST(Transformer, ForwardPropagate)
         Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 
         EXPECT_EQ(probabilistic_activations.rank() == 3);
-        EXPECT_EQ(probabilistic_activations.dimension(0) == batch_samples_number);
+        EXPECT_EQ(probabilistic_activations.dimension(0) == batch_size);
         EXPECT_EQ(probabilistic_activations.dimension(1) == input_length);
         EXPECT_EQ(probabilistic_activations.dimension(2) == input_dimensions + 1);
 

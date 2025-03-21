@@ -503,10 +503,10 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

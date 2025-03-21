@@ -43,7 +43,7 @@ TEST(Embedding, ForwardPropagate)
         embedding_forward_propagation,
         true);
 
-    EXPECT_EQ(embedding_forward_propagation->batch_samples_number, samples_number);
+    EXPECT_EQ(embedding_forward_propagation->batch_size, samples_number);
     EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[0], samples_number);
     EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[1], sequence_length);
     EXPECT_EQ(embedding_forward_propagation->get_outputs_pair().second[2], embedding_dimension);

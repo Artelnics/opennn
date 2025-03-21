@@ -244,9 +244,9 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
         for(Index sample_index = 0; sample_index < samples_number; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
-            // + (sample_index + head_index) * context_input_size * batch_samples_number;
+            // + (sample_index + head_index) * context_input_size * batch_size;
             + (sample_index + head_index * samples_number) * context_input_size;
-            // + (sample_index * heads_number + head_index) * context_input_size * batch_samples_number;
+            // + (sample_index * heads_number + head_index) * context_input_size * batch_size;
 
             TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data,
                 source_sequence_length,
@@ -342,9 +342,9 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
 
 
 void MultiHeadAttention::calculate_attention_scores(const Tensor<type, 4>& query,
-                                                       const Tensor<type, 4>& key,
-                                                       Tensor<type, 4>& attention_scores,
-                                                       Tensor<type, 4>& attention_weights) const
+                                                    const Tensor<type, 4>& key,
+                                                    Tensor<type, 4>& attention_scores,
+                                                    Tensor<type, 4>& attention_weights) const
 {
     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_scores, A_BT);
 
@@ -355,7 +355,7 @@ void MultiHeadAttention::calculate_attention_scores(const Tensor<type, 4>& query
     if(use_causal_mask)
         apply_causal_mask(attention_scores);
 
-    attention_weights = attention_scores;
+    attention_weights.device(*thread_pool_device) = attention_scores;
 
     softmax(attention_weights);
 }
@@ -377,16 +377,17 @@ void MultiHeadAttention::dropout(Tensor<type, 4>& attention_scores) const
 {
     const type scaling_factor = type(1) / (type(1) - dropout_rate);
 
-    random_device rd;
-    mt19937 gen(rd());
-
-    uniform_real_distribution<type> dis(0, 1);
+    #pragma omp parallel
+    {
+    mt19937 gen(random_device{}() + omp_get_thread_num());  // thread-local RNG
+    uniform_real_distribution<float> dis(0.0f, 1.0f);
 
     #pragma omp parallel for
     for(Index i = 0; i < attention_scores.size(); i++)
         attention_scores(i) = (dis(gen) < dropout_rate)
             ? 0
             : attention_scores(i) * scaling_factor;
+    }
 }
 
 
@@ -772,10 +773,10 @@ void MultiHeadAttention::to_XML(XMLPrinter& printer) const
 }
 
 
-MultiheadAttentionForwardPropagation::MultiheadAttentionForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+MultiheadAttentionForwardPropagation::MultiheadAttentionForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -884,11 +885,11 @@ void MultiheadAttentionBackPropagation::print() const
 }
 
 
-MultiheadAttentionBackPropagation::MultiheadAttentionBackPropagation(const Index& new_batch_samples_number, 
+MultiheadAttentionBackPropagation::MultiheadAttentionBackPropagation(const Index& new_batch_size, 
                                                                      Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

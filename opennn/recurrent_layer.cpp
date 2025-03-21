@@ -292,7 +292,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                        const bool& is_training)
 
 {
-    const Index samples_number = input_pairs[0].second[0];
+    const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
@@ -304,23 +304,23 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
 
-    outputs.resize(samples_number, output_size);
+    outputs.resize(batch_size, output_size);
     outputs.setZero();
 
-    hidden_states.resize(samples_number, output_size);
+    hidden_states.resize(batch_size, output_size);
     hidden_states.setZero();
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
     {
         Tensor<type, 3> current_inputs = inputs.slice(DSizes<Index, 3>{0, time_step, 0},
-                                                      DSizes<Index, 3>{samples_number, 1, input_size})
-                                             .reshape(DSizes<Index, 3>{samples_number, 1, input_size});
+                                                      DSizes<Index, 3>{batch_size, 1, input_size})
+                                             .reshape(DSizes<Index, 3>{batch_size, 1, input_size});
 
         multiply_matrices(thread_pool_device.get(), current_inputs, input_weights);
         sum_matrices(thread_pool_device.get(), biases, current_inputs);
 
         hidden_states = hidden_states * recurrent_weights;
-        hidden_states += current_inputs.reshape(DSizes<Index, 2>{samples_number, input_size});
+        hidden_states += current_inputs.reshape(DSizes<Index, 2>{batch_size, input_size});
 
         calculate_activations(hidden_states, empty);
 
@@ -338,7 +338,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
 /*
-    const Index samples_number = input_pairs[0].second[0];
+    const Index batch_size = input_pairs[0].second[0];
     const Index outputs_number = get_outputs_number();
     const Index inputs_number = get_inputs_number();
 
@@ -557,9 +557,9 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 }
 
 
-RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer) : LayerForwardPropagation()
+RecurrentLayerForwardPropagation::RecurrentLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer) : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -634,10 +634,10 @@ void RecurrentBackPropagation::print() const
 }
 
 
-RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

@@ -539,11 +539,11 @@ void Pooling::from_XML(const XMLDocument& document)
 }
 
 
-PoolingForwardPropagation::PoolingForwardPropagation(const Index& new_batch_samples_number, 
+PoolingForwardPropagation::PoolingForwardPropagation(const Index& new_batch_size, 
                                                                Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -603,10 +603,10 @@ void PoolingForwardPropagation::print() const
 }
 
 
-PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

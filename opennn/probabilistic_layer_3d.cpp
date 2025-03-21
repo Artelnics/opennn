@@ -381,10 +381,10 @@ void ProbabilisticLayer3D::to_XML(XMLPrinter& printer) const
 }
 
 
-ProbabilisticLayer3DForwardPropagation::ProbabilisticLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ProbabilisticLayer3DForwardPropagation::ProbabilisticLayer3DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -455,10 +455,10 @@ void ProbabilisticLayer3DBackPropagation::print() const
 }
 
 
-ProbabilisticLayer3DBackPropagation::ProbabilisticLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ProbabilisticLayer3DBackPropagation::ProbabilisticLayer3DBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

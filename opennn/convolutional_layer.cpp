@@ -151,16 +151,16 @@ void ConvolutionalLayer::shift(LayerForwardPropagation* layer_forward_propagatio
 
     type* outputs_data = convolutional_layer_forward_propagation.outputs.data();
 
-    const Index samples_number = convolutional_layer_forward_propagation.batch_samples_number;
+    const Index samples_number = convolutional_layer_forward_propagation.batch_size;
     const Index output_height = get_output_height();
     const Index output_width = get_output_width();
     const Index kernels_number = get_kernels_number();
-    const Index single_output_size = batch_samples_number * output_height * output_width;
+    const Index single_output_size = batch_size * output_height * output_width;
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         TensorMap<Tensor<type, 4>> kernel_output(outputs_data + kernel_index*single_output_size,
-                                                 batch_samples_number,
+                                                 batch_size,
                                                  output_height,
                                                  output_width,
                                                  1);
@@ -882,10 +882,10 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
 }
 
 
-ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ConvolutionalLayerForwardPropagation::ConvolutionalLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -952,10 +952,10 @@ void ConvolutionalLayerForwardPropagation::print() const
 }
 
 
-ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ConvolutionalLayerBackPropagation::ConvolutionalLayerBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

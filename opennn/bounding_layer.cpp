@@ -283,10 +283,10 @@ void BoundingLayer::from_XML(const XMLDocument& document)
 }
 
 
-BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

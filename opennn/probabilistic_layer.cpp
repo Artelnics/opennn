@@ -569,10 +569,10 @@ string ProbabilisticLayer::get_expression(const vector<string>& input_names,
 
 
 ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
-    const Index& new_batch_samples_number, Layer *new_layer)
+    const Index& new_batch_size, Layer *new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -615,10 +615,10 @@ void ProbabilisticLayerForwardPropagation::print() const
 }
 
 
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
+ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index &new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -658,10 +658,10 @@ void ProbabilisticLayerBackPropagation::print() const
 }
 
 
-ProbabilisticLayerBackPropagationLM::ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer)
+ProbabilisticLayerBackPropagationLM::ProbabilisticLayerBackPropagationLM(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationLM()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

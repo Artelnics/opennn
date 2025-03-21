@@ -592,11 +592,11 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 }
 
 
-PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_samples_number,
+PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_size,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -609,10 +609,10 @@ void PerceptronForwardPropagation::print() const
 }
 
 
-PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
+PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -658,11 +658,11 @@ void PerceptronBackPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_samples_number,
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 

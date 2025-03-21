@@ -19,12 +19,12 @@ namespace opennn
     struct AdditionLayer3DBackPropagationCuda;
 #endif
 
-class AdditionLayer3D : public Layer
+class Addition3d : public Layer
 {
 
 public:
 
-    AdditionLayer3D(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
+    Addition3d(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
 
     Index get_sequence_length() const;
     Index get_embedding_length() const;
@@ -61,9 +61,9 @@ private:
 };
 
 
-struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
+struct Addition3dForwardPropagation : LayerForwardPropagation
 {
-    AdditionLayer3DForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
+    Addition3dForwardPropagation(const Index& = 0, Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -75,9 +75,9 @@ struct AdditionLayer3DForwardPropagation : LayerForwardPropagation
 };
 
 
-struct AdditionLayer3DBackPropagation : LayerBackPropagation
+struct Addition3dBackPropagation : LayerBackPropagation
 {
-    AdditionLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
+    Addition3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

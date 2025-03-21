@@ -149,13 +149,13 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
         parameters.test_name
     );
     
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<PoolingForwardPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
     pair<type*, dimensions> input_pair( parameters.input_data.data(),
-        { batch_samples_number,
+        { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
           parameters.input_dimensions[2] } );
@@ -164,18 +164,18 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
     EXPECT_EQ(output_pair.second[2], parameters.expected_output.dimension(2));
     EXPECT_EQ(output_pair.second[3], parameters.expected_output.dimension(3));
 
     TensorMap<Tensor<type, 4>> output_tensor(output_pair.first,
-                                             batch_samples_number,
+                                             batch_size,
                                              parameters.expected_output.dimension(1),
                                              parameters.expected_output.dimension(2),
                                              parameters.expected_output.dimension(3));
 
-    for (Index b = 0; b < batch_samples_number; ++b) {
+    for (Index b = 0; b < batch_size; ++b) {
         for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
             for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
                 for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
@@ -203,16 +203,16 @@ TEST_P(PoolingLayerTest, BackPropagate) {
         parameters.test_name
     );
 
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<PoolingForwardPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<PoolingLayerBackPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingLayerBackPropagation>(batch_size, &pooling_layer);
 
     pair<type*, dimensions> input_pair( parameters.input_data.data(),
-        { batch_samples_number,
+        { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
           parameters.input_dimensions[2] } );
@@ -225,7 +225,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation.get()->get_input_derivative_pairs();
 
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_samples_number);
+    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
     EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
     EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
     EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));

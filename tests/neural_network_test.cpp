@@ -161,7 +161,7 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
     Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
     
-//    EXPECT_EQ(outputs.size(), batch_samples_number * outputs_number);
+//    EXPECT_EQ(outputs.size(), batch_size * outputs_number);
     //EXPECT_NEAR(outputs(0, 0), 0, NUMERIC_LIMITS_MIN);
     //EXPECT_NEAR(outputs(0, 1), 0, NUMERIC_LIMITS_MIN);
     //EXPECT_NEAR(outputs(0, 2), 0, NUMERIC_LIMITS_MIN);
@@ -260,11 +260,11 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
 
-    Index batch_samples_number = 2;
+    Index batch_size = 2;
     inputs_number = neural_network.get_inputs_number();
     outputs_number = neural_network.get_outputs_number();
 
-    inputs.resize(batch_samples_number, inputs_number);
+    inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(0));
 
     parameters_number = neural_network.get_parameters_number();
@@ -412,13 +412,13 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         Index inputs_number = 2;
         Index outputs_number = 1;
-        Index batch_samples_number = 5;
+        Index batch_size = 5;
 
         bool is_training = false;
 
         Tensor<type, 2> data;
 
-        data.resize(batch_samples_number, inputs_number + outputs_number);
+        data.resize(batch_size, inputs_number + outputs_number);
 
         data.setValues({ {1,1,1},
                         {2,2,2},
@@ -442,7 +442,7 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         Batch batch;
 
-        batch.set(batch_samples_number, &data_set);
+        batch.set(batch_size, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
@@ -480,13 +480,13 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         Index inputs_number = 4;
         Index outputs_number = 2;
-        Index batch_samples_number = 3;
+        Index batch_size = 3;
 
         bool is_training = false;
 
         Tensor<type, 2> data;
 
-        data.resize(batch_samples_number, inputs_number + outputs_number);
+        data.resize(batch_size, inputs_number + outputs_number);
         data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
 
         DataSet data_set;
@@ -507,7 +507,7 @@ TEST(NeuralNetworkTest, test_forward_propagate)
         input_variables_indices = data_set.get_input_variables_indices();
         target_variables_indices = data_set.get_target_variables_indices();
 
-        batch.set(batch_samples_number, &data_set);
+        batch.set(batch_size, &data_set);
         batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
         neural_network.set();

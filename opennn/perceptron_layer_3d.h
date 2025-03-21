@@ -15,11 +15,11 @@ namespace opennn
 {
 
 #ifdef OPENNN_CUDA
-struct PerceptronLayer3DForwardPropagationCuda;
-struct PerceptronLayer3DBackPropagationCuda;
+struct Perceptron3dForwardPropagationCuda;
+struct Perceptron3dBackPropagationCuda;
 #endif
 
-class PerceptronLayer3D : public Layer
+class Perceptron3d : public Layer
 {
 
 public:
@@ -28,15 +28,15 @@ public:
                                   Linear,
                                   RectifiedLinear};
 
-   PerceptronLayer3D(const Index& = 0,
-                     const Index& = 0,
-                     const Index& = 0,
-                     const ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
-                     const string& = "perceptron_layer_3d");
+   Perceptron3d(const Index& = 0,
+                const Index& = 0,
+                const Index& = 0,
+                const ActivationFunction& = Perceptron3d::ActivationFunction::HyperbolicTangent,
+                const string& = "perceptron_layer_3d");
 
-   Index get_inputs_number_xxx() const;
-   Index get_inputs_depth() const;
-   Index get_neurons_number() const;
+   Index get_sequence_length() const;
+   Index get_input_dimension() const;
+   Index get_output_dimension() const;
 
    // @todo
    dimensions get_input_dimensions() const override
@@ -50,21 +50,15 @@ public:
    type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const override;
 
-   const PerceptronLayer3D::ActivationFunction& get_activation_function() const;
+   const Perceptron3d::ActivationFunction& get_activation_function() const;
 
    string get_activation_function_string() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const PerceptronLayer3D::ActivationFunction& = PerceptronLayer3D::ActivationFunction::HyperbolicTangent,
+            const Perceptron3d::ActivationFunction& = Perceptron3d::ActivationFunction::HyperbolicTangent,
             const string & = "perceptron_layer_3d");
-
-   void set_inputs_number(Index);
-   // void set_input_dimensions(const dimensions&) override;
-
-   void set_inputs_depth(const Index&);
-   void set_neurons_number(const Index&);
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
@@ -108,7 +102,7 @@ public:
 
 private:
 
-   Index inputs_number_xxx;
+   Index sequence_length;
 
    Tensor<type, 1> biases;
 
@@ -129,9 +123,9 @@ private:
 };
 
 
-struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
+struct Perceptron3dForwardPropagation : LayerForwardPropagation
 {
-    PerceptronLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Perceptron3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -145,9 +139,9 @@ struct PerceptronLayer3DForwardPropagation : LayerForwardPropagation
 };
 
 
-struct PerceptronLayer3DBackPropagation : LayerBackPropagation
+struct Perceptron3dBackPropagation : LayerBackPropagation
 {
-    PerceptronLayer3DBackPropagation(const Index& = 0, Layer* = 0);
+    Perceptron3dBackPropagation(const Index& = 0, Layer* = 0);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

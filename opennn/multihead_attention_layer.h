@@ -159,7 +159,7 @@ private:
 
 struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 {
-    MultiheadAttentionForwardPropagation(const Index& new_batch_samples_number = 0,
+    MultiheadAttentionForwardPropagation(const Index& new_batch_size = 0,
                                               Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
