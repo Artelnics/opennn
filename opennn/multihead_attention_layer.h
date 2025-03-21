@@ -31,8 +31,8 @@ public:
                        const bool& = false,
                        const string& = "multihead_attention_layer");
 
-    Index get_input_size() const;
-    Index get_context_size() const;
+    Index get_query_sequence_length() const;
+    Index get_source_sequence_length() const;
     Index get_embedding_dimension() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
