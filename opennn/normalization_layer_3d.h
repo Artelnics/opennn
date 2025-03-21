@@ -60,7 +60,7 @@ public:
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                            const Index&,
+                            Index&,
                             Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
@@ -117,8 +117,8 @@ struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 
     void print() const;
 
-    Tensor<type, 1> gammas_derivatives;
-    Tensor<type, 1> betas_derivatives;
+    Tensor<type, 1> gamma_derivatives;
+    Tensor<type, 1> beta_derivatives;
 
     Tensor<type, 3> scaled_deltas;
     Tensor<type, 3> standard_deviation_derivatives;

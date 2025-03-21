@@ -1035,7 +1035,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    std::vector<type> unique_values;
+    vector<type> unique_values;
     unique_values.reserve(min<Index>(size, bins_number));
     unique_values.push_back(vector(0));
     
@@ -1683,7 +1683,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     type median = type(0);
 
-    std::vector<type> sorted_column;
+    vector<type> sorted_column;
 
     Index rows_number = 0;
 

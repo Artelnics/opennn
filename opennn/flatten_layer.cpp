@@ -12,43 +12,43 @@
 namespace opennn
 {
 
-FlattenLayer::FlattenLayer(const dimensions& new_input_dimensions) : Layer()
+Flatten::Flatten(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 }
 
 
-dimensions FlattenLayer::get_input_dimensions() const
+dimensions Flatten::get_input_dimensions() const
 {
     return input_dimensions;
 }
 
 
-dimensions FlattenLayer::get_output_dimensions() const
+dimensions Flatten::get_output_dimensions() const
 {
     return { input_dimensions[0] * input_dimensions[1] * input_dimensions[2] };
 }
 
 
-Index FlattenLayer::get_input_height() const
+Index Flatten::get_input_height() const
 {
     return input_dimensions[0];
 }
 
 
-Index FlattenLayer::get_input_width() const
+Index Flatten::get_input_width() const
 {
     return input_dimensions[1];
 }
 
 
-Index FlattenLayer::get_input_channels() const
+Index Flatten::get_input_channels() const
 {
     return input_dimensions[2];
 }
 
 
-void FlattenLayer::set(const dimensions& new_input_dimensions)
+void Flatten::set(const dimensions& new_input_dimensions)
 {
     layer_type = Type::Flatten;
 
@@ -58,7 +58,7 @@ void FlattenLayer::set(const dimensions& new_input_dimensions)
 }
 
 
-void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool&)
 {
@@ -69,17 +69,17 @@ void FlattenLayer::forward_propagate(const vector<pair<type*, dimensions>>& inpu
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    type* outputs_data = flatten_layer_forward_propagation->outputs.data();
+    //    type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
-    memcpy(outputs_data,
-           input_pairs[0].first,
-           samples_number*outputs_number*sizeof(type));
+//    memcpy(outputs_data,
+//           input_pairs[0].first,
+//           samples_number*outputs_number*sizeof(type));
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, samples_number, outputs_number);
 }
 
 
-void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   const vector<pair<type*, dimensions>>& delta_pairs,
                                   unique_ptr<LayerForwardPropagation>&,
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -100,7 +100,7 @@ void FlattenLayer::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void FlattenLayer::to_XML(XMLPrinter& printer) const
+void Flatten::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Flatten");
 
@@ -112,12 +112,12 @@ void FlattenLayer::to_XML(XMLPrinter& printer) const
 }
 
 
-void FlattenLayer::from_XML(const XMLDocument& document)
+void Flatten::from_XML(const XMLDocument& document)
 {
     const XMLElement* flatten_layer_element = document.FirstChildElement("Flatten");
 
     if (!flatten_layer_element) 
-        throw runtime_error("FlattenLayer element is nullptr.\n");
+        throw runtime_error("Flatten element is nullptr.\n");
 
     const Index input_height = read_xml_index(flatten_layer_element, "InputHeight");
     const Index input_width = read_xml_index(flatten_layer_element, "InputWidth");
@@ -127,7 +127,7 @@ void FlattenLayer::from_XML(const XMLDocument& document)
 }
 
 
-void FlattenLayer::print() const
+void Flatten::print() const
 {
     cout << "Flatten layer" << endl;
 
@@ -179,7 +179,7 @@ void FlattenLayerBackPropagation::set(const Index& new_samples_number, Layer* ne
 
     samples_number = new_samples_number;
 
-    const FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
+    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
@@ -204,7 +204,7 @@ FlattenLayerBackPropagation::FlattenLayerBackPropagation(const Index& new_batch_
 
 vector<pair<type*, dimensions>> FlattenLayerBackPropagation::get_input_derivative_pairs() const
 {
-    const FlattenLayer* flatten_layer = static_cast<FlattenLayer*>(layer);
+    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 

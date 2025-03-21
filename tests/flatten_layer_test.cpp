@@ -27,7 +27,7 @@ public:
 
     void SetUp() override 
     {
-        flatten_layer = make_unique<FlattenLayer>(input_dimensions);
+        flatten_layer = make_unique<Flatten>(input_dimensions);
         flatten_layer_forward_propagation = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, flatten_layer.get());
         flatten_layer_back_propagation = make_unique<FlattenLayerBackPropagation>(batch_samples_number, flatten_layer.get());
 

@@ -26,9 +26,9 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
     read_csv();
     set_raw_variable_scalers(Scaler::None);
 
-   target_dimensions = {get_target_length()/*, get_target_vocabulary_size()*/};
-   decoder_dimensions = {get_target_length()/*, get_target_vocabulary_size()*/};
-   input_dimensions = {get_input_length()/*, get_input_vocabulary_size()*/};
+   target_dimensions = {get_target_length()};
+   decoder_dimensions = {get_target_length()};
+   input_dimensions = {get_input_length()};
 }
 
 
@@ -198,6 +198,109 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     time(&finish);
+}
+
+
+vector<string> LanguageDataSet::tokenize(const string& document, const bool& input)
+{
+    vector<string> tokens;
+
+    // if(!input)
+    tokens.push_back("[START]");
+
+    string currentToken;
+
+    for (char c : document)
+    {
+        if (isalnum(c))
+        {
+            // Add alphanumeric characters to the current token
+            currentToken += tolower(c);
+        }
+        else
+        {
+            // If the current token is not empty, add it to the tokens list
+            if (!currentToken.empty())
+            {
+                tokens.push_back(currentToken);
+                currentToken.clear();
+            }
+            // Treat punctuation as a separate token
+
+            if (ispunct(c))
+            {
+                tokens.push_back(string(1, c));
+            }
+            else if (isspace(c))
+            {
+                // Ignore spaces, they just delimit tokens
+            }
+        }
+    }
+
+    // Add the last token if it's not empty
+    if (!currentToken.empty())
+        tokens.push_back(currentToken);
+
+    // Add [END] token
+    // if(!input)
+    tokens.push_back("[END]");
+
+    // if(tokens.size() == 3 || tokens.size() == 1)
+    //     tokens
+
+    return tokens;
+}
+
+
+unordered_map<string, Index> LanguageDataSet::create_vocabulary(const vector<vector<string>>& document_tokens)
+{
+    unordered_map<string, Index> vocabulary;
+    Index id = 0;
+
+    vocabulary["[PAD]"] = id++;
+    vocabulary["[UNK]"] = id++;
+    vocabulary["[START]"] = id++;
+    vocabulary["[END]"] = id++;
+
+    for (const auto& document : document_tokens)
+        for (const auto& token : document)
+            if (vocabulary.find(token) == vocabulary.end())
+                vocabulary[token] = id++;
+
+    return vocabulary;
+}
+
+
+void LanguageDataSet::print_vocabulary(const unordered_map<string, Index>& vocabulary)
+{
+    for (const auto& entry : vocabulary)
+        cout << entry.first << " : " << entry.second << "\n";
+}
+
+
+void LanguageDataSet::print() const
+{
+    if(has_decoder)
+    {
+        cout << "Language data set" << endl;
+
+        cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
+        cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
+
+        cout << "Input length: " << get_input_length() << endl;
+        cerr << "Target length: " << get_target_length() << endl;
+    }
+    else
+    {
+        cout << "Language data set" << endl;
+
+        cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
+        cout << "Target size: 1" << endl;
+
+        cout << "Input lenght: " << get_input_length() << endl;
+        cout << "Target categories: 0, 1"<<endl;
+    }
 }
 
 
@@ -506,10 +609,17 @@ void LanguageDataSet::read_csv()
 
     const Index samples_number = count_non_empty_lines();
 
+    const vector<string> positive_words = { "yes", "positive", "+", "true", "1"};
+
+    const vector<string> negative_words = { "no", "negative", "-", "false", "0"};
+
     ifstream file(data_path);
 
     if (!file.is_open())
         throw runtime_error("Cannot open data file: " + data_path.string() + "\n");
+
+    if(data_path.extension() == ".csv")
+        separator = Separator::Semicolon;
 
     string line;
 
@@ -522,8 +632,6 @@ void LanguageDataSet::read_csv()
 
     Index sample_index = 0;
 
-
-
     while (getline(file, line))
     {
         if (line.empty()) continue;
@@ -534,16 +642,14 @@ void LanguageDataSet::read_csv()
             throw runtime_error("Tokens number must be two.");
 
         input_documents_tokens[sample_index] = tokenize(tokens[0], true);
+
         target_documents_tokens[sample_index] = tokenize(tokens[1], false);
 
         sample_index++;
     }
 
     if (sample_index != samples_number)
-    {
-        cerr << "WARNING: Se esperaban " << samples_number << " muestras, pero se procesaron " << sample_index << "." << endl;
-        throw runtime_error("Why?");
-    }
+        throw runtime_error("WARNING: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " were processed.");
 
     maximum_input_length = get_maximum_size(input_documents_tokens);
     maximum_target_length = get_maximum_size(target_documents_tokens);
@@ -551,17 +657,18 @@ void LanguageDataSet::read_csv()
     input_vocabulary = create_vocabulary(input_documents_tokens);
     target_vocabulary = create_vocabulary(target_documents_tokens);
 
+    has_decoder = target_vocabulary.size() == 6 ? false
+                                                : true;
+    
     input_vocabulary_size = get_input_vocabulary_size();
     target_vocabulary_size = get_target_vocabulary_size();
 
     const Index input_variables_number = maximum_input_length;
-    const Index decoder_variables_number = maximum_target_length - 1;
-    const Index target_variables_number = maximum_target_length - 1;
+    const Index decoder_variables_number = has_decoder ? maximum_target_length - 1
+                                                       : 0;
+    const Index target_variables_number = has_decoder ? maximum_target_length - 1
+                                                      : 1;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
-
-    // input_dimensions = {input_variables_number};
-    // decoder_dimensions = {decoder_variables_number};
-    // target_dimensions = {target_variables_number};
 
     data.resize(samples_number, variables_number);
     data.setZero();
@@ -600,45 +707,62 @@ void LanguageDataSet::read_csv()
         if(column_index < input_variables_number)
             column_index = input_variables_number;
 
-        // Decoder data
-
-        for (Index j = 0; j < Index(target_document_tokens.size()); j++)
+        if(has_decoder)
         {
-            const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+            // Decoder data
 
-            if(iterator->second == 3)
-                continue;
+            for (Index j = 0; j < Index(target_document_tokens.size()); j++)
+            {
+                const auto iterator = target_vocabulary.find(target_document_tokens[j]);
 
-            iterator != target_vocabulary.end() && iterator->second != 3 // [END]
-                ? data(i, column_index++) = iterator->second
-                : data(i,column_index++) = 1;
+                if(iterator->second == 3)
+                    continue;
+
+                iterator != target_vocabulary.end() && iterator->second != 3 // [END]
+                    ? data(i, column_index++) = iterator->second
+                    : data(i,column_index++) = 1;
+            }
+
+            if(column_index < input_variables_number + decoder_variables_number)
+                column_index = input_variables_number + decoder_variables_number;
+
+            // Target data
+
+            for (Index j = 0; j < Index(target_document_tokens.size()); j++)
+            {
+                const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+
+                if(iterator->second == 2)
+                    continue;
+
+                iterator != target_vocabulary.end() && iterator->second != 2// [START]
+                    ? data(i, column_index++) = iterator->second
+                    : data(i,column_index++) = 1;
+            }
         }
-
-        if(column_index < input_variables_number + decoder_variables_number)
-            column_index = input_variables_number + decoder_variables_number;
-
-        // Target data
-
-        for (Index j = 0; j < Index(target_document_tokens.size()); j++)
+        else
         {
-            const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+            // Target data
 
-            if(iterator->second == 2)
-                continue;
+            for (Index j = 0; j < Index(target_document_tokens.size()); j++)
+            {
+                const auto iterator = target_vocabulary.find(target_document_tokens[j]);
 
-            iterator != target_vocabulary.end() && iterator->second != 2 // [START]
-                ? data(i, column_index++) = iterator->second
-                : data(i,column_index++) = 1;
+                if(iterator->second == 2||iterator->second == 3)
+                    continue;
+
+                iterator != target_vocabulary.end() && contains(negative_words, iterator->first)
+                    ? data(i, column_index) = 0
+                    : data(i,column_index) = 1;
+            }
         }
     }
 
-    // cout << data << endl;
-    // throw runtime_error("Checking the data matrix");
-
     sample_uses.resize(samples_number);
 
-    set_default_raw_variables_names();
+    set_default_raw_variable_names();
     split_samples_random();
+    set_binary_raw_variables();
 }
 
 }

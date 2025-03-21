@@ -117,7 +117,7 @@ TEST(TimeSeriesDataSet, test_transform_time_series) {
 
     data_set.set_data(data);
 
-    std::vector<std::string> variable_names = { "x", "y" };
+    std::vector<string> variable_names = { "x", "y" };
 
     data_set.set_variable_names(variable_names);
 
@@ -135,8 +135,8 @@ TEST(TimeSeriesDataSet, test_transform_time_series) {
     EXPECT_EQ(data_set.get_raw_variables_number(DataSet::VariableUse::Target), 1);
     EXPECT_EQ(data_set.get_variables_number(DataSet::VariableUse::None), 0);
 
-    std::vector<std::string> input_variable_names = data_set.get_variable_names(DataSet::VariableUse::Input);
-    std::vector<std::string> target_variable_names = data_set.get_variable_names(DataSet::VariableUse::Target);
+    std::vector<string> input_variable_names = data_set.get_variable_names(DataSet::VariableUse::Input);
+    std::vector<string> target_variable_names = data_set.get_variable_names(DataSet::VariableUse::Target);
 
     EXPECT_EQ(input_variable_names[0], "x");
     EXPECT_EQ(target_variable_names[0], "y");

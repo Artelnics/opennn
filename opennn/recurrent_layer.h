@@ -18,7 +18,7 @@ namespace opennn
     #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
-class RecurrentLayer : public Layer
+class Recurrent : public Layer
 {
 
 public:
@@ -33,7 +33,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   RecurrentLayer(const dimensions & = {0}, const dimensions& = {0});
+   Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
@@ -43,7 +43,7 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const RecurrentLayer::ActivationFunction& get_activation_function() const;
+   const Recurrent::ActivationFunction& get_activation_function() const;
 
    string get_activation_function_string() const;
 
@@ -73,7 +73,7 @@ public:
                           const bool&) override;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index& ,
+                        Index& ,
                         Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
@@ -134,9 +134,9 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct RecurrentLayerBackPropagation : LayerBackPropagation
+struct RecurrentBackPropagation : LayerBackPropagation
 {
-    RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
