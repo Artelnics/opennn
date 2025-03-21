@@ -989,52 +989,50 @@ string NeuralNetwork::get_expression() const
     for (int i = 0; i < inputs_number; i++)
         input_names[i].empty()
             ? new_input_names[i] = "input_" + to_string(i)
-            : new_input_names[i] = "XXX"/*replace_non_allowed_programming_expressions(input_names[i])*/;
+            : new_input_names[i] = input_names[i];
+            //: new_input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
 
     vector<string> scaled_input_names(inputs_number);
     vector<string> unscaled_output_names(outputs_number);
 
     ostringstream buffer;
 
-    for (Index i = 0; i < layers_number; i++)
-        buffer << layers[i]->get_expression();
+    for (Index i = 0; i < layers_number; i++){
+        if (i == layers_number - 1)
+        {
+            for (int j = 0; j < output_names.size(); j++){
+                if (!output_names[j].empty())
+                    //new_output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
+                    new_output_names[j] = output_names[j];
+                else
+                    new_output_names[j] = "output_" + to_string(i);
+            }
+            buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
+        }
+        else
+        {
+            Index layer_neurons_number = layers[i]->get_outputs_number();
+            new_output_names.resize(layer_neurons_number);
+            for (Index j = 0; j < layer_neurons_number; j++)
+            {
+                if (layer_names[i] == "scaling_layer")
+                {
+                    //new_output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
+                    new_output_names[j] = "scaled_" + input_names[j];
+                    //scaled_input_names[j] = output_names[j];
+                }
+                else
+                {
+                    new_output_names[j] = layer_names[i] + "_output_" + to_string(j);
+                }
+            }
+            buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
+            new_input_names = new_output_names;
+            // unscaled_output_names = input_namess_vector;
+        }
 
-/*
-    if (i == layers_number - 1)
-    {
-    for (int j = 0; j < output_names.size(); j++)
-    if (!output_names[j].empty())
-  ;//  output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
-    else
-    output_names[j] = "output_" + to_string(i);
-
-    //buffer << layers[i]->get_expression(input_names, output_names) << endl;
-    }
-    else
-    {
-
-//    layer_neurons_number = layers[i]->get_neurons_number();
-//    output_namess_vector.resize(layer_neurons_number);
-
-    for (Index j = 0; j < layer_neurons_number; j++)
-    {
-    if (layer_names[i] == "scaling_layer")
-    {
-//    output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
-    scaled_input_names[j] = output_names[j];
-    }
-    else
-    {
-    output_names[j] = layer_names[i] + "_output_" + to_string(j);
-    }
     }
 
-    //            buffer << layers[i]->get_expression(input_names, output_names) << endl;
-    //            input_namess_vector = output_namess_vector;
-    //            unscaled_output_names = input_namess_vector;
-    }
-    }
-*/
     string expression = buffer.str();
 
     //replace(expression, "+-", "-");
@@ -1048,7 +1046,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if (layers_number == 0)
         return Tensor<type, 2>();
-
     const Index samples_number = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
@@ -1086,10 +1083,97 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 }
 
 
-Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(const Tensor<type, 2>&)
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, vector<Index>& inputs_dimensions)
 {
+    const Index inputs_dimensions_number = inputs_dimensions.size();
+    if(inputs_dimensions_number == 2)
+    {
+        Tensor<type, 2> scaled_outputs;
+        Tensor<type, 2> last_layer_outputs;
 
-    return Tensor<type, 2>();
+        Tensor<Index, 1> outputs_dimensions;
+        Tensor<Index, 1> last_layer_outputs_dimensions;
+
+        const Index layers_number = get_layers_number();
+
+        if(layers_number == 0)
+        {
+            const Index inputs_size = accumulate(inputs_dimensions.begin(), inputs_dimensions.end(), 1, multiplies<Index>());
+            scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions[0], inputs_dimensions[1]);
+            return scaled_outputs;
+        }
+
+        scaled_outputs.resize(inputs_dimensions[0], layers[0]->get_outputs_number());
+
+        outputs_dimensions = get_dimensions(scaled_outputs);
+
+        ForwardPropagation forward_propagation(inputs_dimensions[0], this);
+
+        bool is_training = false;
+
+        if(layers[0]->get_type_string() != "Scaling2D")
+        {
+            cout << "scaling - " << layers[0]->get_type_string() << endl;
+            pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, inputs_dimensions);
+
+            const Index size = accumulate(inputs_dimensions.begin(), inputs_dimensions.end(), 1, multiplies<Index>());
+
+            memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size*sizeof(type)) );
+
+            layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
+
+            const pair<type*, dimensions> outputs_pair = forward_propagation.layers[0]->get_outputs_pair();
+            scaled_outputs = tensor_map_2(outputs_pair);
+        }
+        else
+        {
+            scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions[0], inputs_dimensions[1]);
+        }
+
+        last_layer_outputs = scaled_outputs;
+
+        last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+        vector<Index> last_layer_outputs_dimensions_vector(last_layer_outputs_dimensions.data(), last_layer_outputs_dimensions.data() + last_layer_outputs_dimensions.size());
+
+        for(Index i = 1; i < layers_number; i++)
+        {
+            if(layers[i]->get_type_string() != "Unscaling" && layers[i]->get_type_string() != "Scaling2D")
+            {
+            //     cout << "0032 - " << i << " - " << layers[i]->get_outputs_number() << endl;
+            //     scaled_outputs.resize(inputs_dimensions[0], layers[i]->get_outputs_number());
+            //     outputs_dimensions = get_dimensions(scaled_outputs);
+            //     cout << last_layer_outputs_dimensions << " - " << last_layer_outputs << endl;
+            //     pair<type*, dimensions> inputs_tensor(last_layer_outputs.data(), last_layer_outputs_dimensions_vector);
+
+            //     const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
+            //     cout << "00321" << endl;
+            //     memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
+            //     cout << "00322" << endl;
+
+            //     layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
+
+            //     cout << "00323" << endl;
+            //     const pair<type*, dimensions> outputs_pair = forward_propagation.layers[i]->get_outputs_pair();
+            //     scaled_outputs = tensor_map_2(outputs_pair);
+
+            //     last_layer_outputs = scaled_outputs;
+            //     last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
+            //     vector<Index> last_layer_outputs_dimensions_vector(last_layer_outputs_dimensions.data(), last_layer_outputs_dimensions.data() + last_layer_outputs_dimensions.size());
+            //     cout << "0033" <<  endl;
+            }
+        }
+
+        return scaled_outputs;
+    }
+    else if(inputs_dimensions_number == 4)
+    {
+        /// @todo CONV
+    }
+    else
+    {
+        return Tensor<type, 2>();
+    }
+
 }
 
 
@@ -1544,21 +1628,6 @@ void NeuralNetwork::load_parameters_binary(const filesystem::path& file_name)
 
     set_parameters(new_parameters);
 }
-
-
-void NeuralNetwork::save_expression(const ProgrammingLanguage& programming_language,
-                                    const filesystem::path& file_name) const
-{
-    ofstream file(file_name);
-
-    if(!file.is_open())
-        throw runtime_error("Cannot open expression text file.\n");
-    /*
-    file << get_expression_c();
-    */
-    file.close();
-}
-
 
 void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path& file_name)
 {

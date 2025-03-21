@@ -1,0 +1,80 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>9</InputsNumber>
+      <Input Index="1">input_1</Input>
+      <Input Index="2">input_2</Input>
+      <Input Index="3">input_3</Input>
+      <Input Index="4">input_4</Input>
+      <Input Index="5">input_5</Input>
+      <Input Index="6">input_6</Input>
+      <Input Index="7">input_7</Input>
+      <Input Index="8">input_8</Input>
+      <Input Index="9">input_9</Input>
+   </Inputs>
+   <Layers>
+      <LayersNumber>3</LayersNumber>
+      <Scaling2D>
+         <NeuronsNumber>9</NeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="3">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="4">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="5">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="6">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="7">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="8">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+         <ScalingNeuron Index="9">
+            <Descriptives>nan nan nan nan </Descriptives>
+            <Scaler>MeanStandardDeviation</Scaler>
+         </ScalingNeuron>
+      </Scaling2D>
+      <Perceptron>
+         <Name>perceptron_layer_1</Name>
+         <InputsNumber>9</InputsNumber>
+         <NeuronsNumber>30</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>0.0863501 0.0609036 -0.0609368 0.0840368 -0.0201224 -0.0856875 -0.0286615 0.0495075 -0.0954621 0.0896817 0.044768 0.0628006 -0.0397181 0.050854 -0.0407006 0.0476272 0.0512889 0.039261 -0.073227 -0.0798587 -0.0608442 -0.0667916 0.0410291 -0.00484002 -0.0474807 -0.0927805 0.0572479 0.0856885 -0.0225661 0.0601573 -0.0237939 0.074132 0.0213751 -0.0907114 -0.0880404 -0.0156576 0.0912401 -0.0259778 0.076723 0.0748094 0.0968729 0.0953047 0.068026 0.0155988 0.0115672 -0.016781 -0.00420413 0.0880749 -0.0892728 0.0171539 0.0871754 -0.0621878 -0.0978655 -0.0598256 -0.0222853 0.0677939 -0.0468934 -0.00659432 0.0247504 0.0602174 0.0929933 0.0486772 0.0427034 -0.00498118 0.0838696 -0.0121114 0.0593756 0.0625152 0.0375064 -0.0956113 -0.0957613 -0.0463442 -0.0233452 0.0130703 -0.00912482 -0.0381916 -0.0759294 0.0512746 0.0118172 0.0216967 -0.0746778 0.0977118 0.069496 0.024069 -0.0045033 -0.0366774 0.0342286 -0.00487576 0.00489698 -0.0952056 -0.0214171 0.0297395 -0.0903145 -0.0346485 -0.0851255 0.0103991 0.0447172 0.0986307 -0.0998259 -0.0146603 -0.0632161 0.0809676 -0.033061 -0.0459702 -0.0427927 0.0615528 0.0547199 0.0281341 0.0952092 0.0419845 0.00154348 -0.0479676 0.0744194 0.0660265 -0.0933256 -0.0208366 -0.0146435 0.0935287 -0.0852177 -0.0121743 -0.0994656 0.0920666 0.0528624 0.038627 0.0802685 0.0925729 -0.0803299 -0.0763497 -0.0823738 -0.0701412 0.0849098 0.0187546 0.0408124 0.0759774 0.0512239 -0.0979658 -0.0380052 -0.00853052 0.0929195 -0.034697 0.0433804 -0.0836379 0.0198155 -0.0787772 0.0485117 0.0249152 -0.0527107 0.0206769 0.00328465 -0.0613689 0.0836232 -0.0760058 0.00927526 0.0255097 0.0558769 0.0283129 -0.0365121 0.0130529 -0.0427668 -0.0798998 0.0498417 0.0585267 -0.0745136 -0.0322706 0.0518957 0.0507243 -0.0117303 0.058764 -0.0429821 -0.0944812 -0.0392506 -0.096725 -0.0952724 -0.039573 -0.0672081 -0.0804678 -0.0210705 -0.000186846 -0.0709454 -0.0162932 -0.0455542 -0.0595722 -0.0551832 0.023058 -0.0866843 0.012946 0.036046 -0.0671662 0.0973559 0.0260077 0.0235744 0.0791995 0.028125 0.097469 -0.00183104 0.0392614 0.0878541 0.0281459 0.0313936 -0.0690877 0.0930967 -0.0945706 -0.00526193 -0.0381836 0.065876 -0.0458764 0.0408609 0.0871663 0.0801529 0.00567853 0.0921927 -0.000687934 0.0885796 -0.0954266 0.0758153 0.0784495 0.0295874 0.0174483 -0.00735323 0.059156 -0.0864286 0.0490662 0.0183105 -0.0791033 -0.0563013 0.0166066 0.0620269 0.00906606 -0.0820354 -0.0361959 -0.0835579 -0.0373487 -0.0349087 -0.0594882 0.00309274 -0.0572051 0.0274378 0.0300836 0.015015 -0.04615 -0.0202834 0.0841987 -0.065464 0.0155863 -0.0603093 -0.00278907 0.0825881 -0.0542576 -0.099131 -0.00921727 -0.0173841 -0.0141966 -0.0355701 0.0222875 -0.0463692 0.0628679 0.0798675 -0.0818329 -0.08102 0.0508246 0.00390957 -0.0749515 -0.0274995 -0.0393892 0.0117571 -0.0743926 -0.0355981 -0.0379365 0.0262094 0.0802104 0.0060161 0.0549187 -0.0755741 0.0486793 -0.0865601 -0.0291111 -0.0837624 -0.0033503 -0.064869 -0.0842206 -0.0965814 0.0602124 0.0997761 -0.0010169 -0.0781393 0.094209 0.0601724 0.064874 0.0484523 -0.0360873 0.0156246 -0.048142 -0.0811224 -0.0120024 0.0991002 0.0929377 -0.0168555 0.0879433 -0.0432696 -0.00823826 </Parameters>
+      </Perceptron>
+      <Probabilistic>
+         <InputsNumber>30</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-0.0990279 0.0231532 -0.0969394 0.0312835 -0.094231 -0.0188301 0.0414651 -0.0119979 0.00205986 0.0335593 0.0130878 -0.0444349 0.00491123 0.0312094 -0.0441095 -0.0598528 -0.0984249 0.096622 0.0225762 -0.0040321 0.0807093 0.00721946 -0.035228 0.0679935 -0.0838169 -0.0305568 -0.0024984 0.0503594 0.0375721 -0.0141505 -0.0138228 </Parameters>
+         <DecisionThreshold>0.500000</DecisionThreshold>
+      </Probabilistic>
+      <LayerInputIndices>
+         <LayerInputsIndices LayerIndex="0">-1</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="1">0</LayerInputsIndices>
+         <LayerInputsIndices LayerIndex="2">1</LayerInputsIndices>
+      </LayerInputIndices>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">output_1</Output>
+   </Outputs>
+   <Display>1</Display>
+</NeuralNetwork>

@@ -229,7 +229,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
-   const Tensor<type, 2> absolute_errors = calculate_error().abs();
+    const Tensor<type, 2> absolute_errors = (testing_target_data - testing_output_data).abs();
 
    #pragma omp parallel for
    for(Index i = 0; i < outputs_number; i++)
@@ -239,7 +239,6 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j, 0, i) = absolute_errors(j,i);
            error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
-           cout << "--" << j << " " << i << " -> " << error_data(j, 0, i) << " " << error_data(j, 1, i) << " " << error_data(j, 2, i) << endl;
          }
    }
     return error_data;
@@ -286,7 +285,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     unscaling_layer->set_descriptives(descriptives);
 
-    const Tensor<type, 2> errors = calculate_error();
+    const Tensor<type, 2> errors = (testing_target_data - testing_output_data);
 
     // Error data
 

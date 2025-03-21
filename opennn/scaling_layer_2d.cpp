@@ -263,23 +263,21 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
-
     outputs = inputs;
 
-    for(Index i = 0; i < outputs_number; i++){
-        type mean = opennn::mean(outputs,i);
-        Tensor<type,1> col(outputs.dimension(0));
-        for(Index j=0;j<outputs.dimension(0);j++){
-            col(j)=outputs(j,i);
-        }
-        type std_dev = opennn::standard_deviation(col);
-        descriptives[i]={min_range, max_range,mean,std_dev};
-    }
+    // for(Index i = 0; i < outputs_number; i++){
+    //     type mean = opennn::mean(outputs,i);
+    //     Tensor<type,1> col(outputs.dimension(0));
+    //     for(Index j=0;j<outputs.dimension(0);j++){
+    //         col(j)=outputs(j,i);
+    //     }
+    //     type std_dev = opennn::standard_deviation(col);
+    //     descriptives[i]={min_range, max_range,mean,std_dev};
+    // }
 
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
-
         switch(scaler)
         {
         case Scaler::None:
