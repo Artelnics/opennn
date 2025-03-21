@@ -135,6 +135,7 @@ HEADERS += \
 
 SOURCES += \
     auto_associative_data_set.cpp \
+    model_expression.cpp \
     pch.cpp \
     cross_entropy_error_3d.cpp \
     embedding_layer.cpp \

@@ -491,12 +491,12 @@ string PerceptronLayer::get_expression(const vector<string>& new_input_names,
     {
         const TensorMap<Tensor<type, 1>> synaptic_weights_column = tensor_map(weights, j);
 
-        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "(" << biases(j) << "+";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " + ";
 
         for(Index i = 0; i < inputs_number - 1; i++)
-            buffer << synaptic_weights_column(i) << "*" << input_names[i] << "+";
+            buffer << "(" << synaptic_weights_column(i) << "*" << input_names[i] << ") + ";
 
-        buffer << synaptic_weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ");\n";
+        buffer << "("  << synaptic_weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ") );\n";
     }
 
     return buffer.str();
