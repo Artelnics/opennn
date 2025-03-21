@@ -229,44 +229,44 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> current_deltas;
 
-    Tensor<type, 1> forget_weights_derivatives;
-    Tensor<type, 1> input_weights_derivatives;
-    Tensor<type, 1> state_weights_derivatives;
-    Tensor<type, 1> output_weights_derivatives;
+    Tensor<type, 1> forget_weight_derivatives;
+    Tensor<type, 1> input_weight_derivatives;
+    Tensor<type, 1> state_weight_derivatives;
+    Tensor<type, 1> output_weight_derivatives;
 
-    Tensor<type, 2> hidden_states_weights_derivatives;
-    Tensor<type, 2> cell_states_weights_derivatives;
+    Tensor<type, 2> hidden_states_weight_derivatives;
+    Tensor<type, 2> cell_states_weight_derivatives;
 
-    Tensor<type, 1> forget_recurrent_weights_derivatives;
-    Tensor<type, 1> input_recurrent_weights_derivatives;
-    Tensor<type, 1> state_recurrent_weights_derivatives;
-    Tensor<type, 1> output_recurrent_weights_derivatives;
+    Tensor<type, 1> forget_recurrent_weight_derivatives;
+    Tensor<type, 1> input_recurrent_weight_derivatives;
+    Tensor<type, 1> state_recurrent_weight_derivatives;
+    Tensor<type, 1> output_recurrent_weight_derivatives;
 
-    Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2> cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2> hidden_states_recurrent_weight_derivatives;
+    Tensor<type, 2> cell_states_recurrent_weight_derivatives;
 
-    Tensor<type, 1> forget_biases_derivatives;
-    Tensor<type, 1> input_biases_derivatives;
-    Tensor<type, 1> state_biases_derivatives;
-    Tensor<type, 1> output_biases_derivatives;
+    Tensor<type, 1> forget_bias_derivatives;
+    Tensor<type, 1> input_bias_derivatives;
+    Tensor<type, 1> state_bias_derivatives;
+    Tensor<type, 1> output_bias_derivatives;
 
-    Tensor<type, 2> hidden_states_biases_derivatives;
-    Tensor<type, 2> cell_states_biases_derivatives;
+    Tensor<type, 2> hidden_states_bias_derivatives;
+    Tensor<type, 2> cell_states_bias_derivatives;
 
-    Tensor<type, 2> input_combinations_weights_derivatives;
-    Tensor<type, 2> forget_combinations_weights_derivatives;
-    Tensor<type, 2> state_combinations_weights_derivatives;
-    Tensor<type, 2> output_combinations_weights_derivatives;
+    Tensor<type, 2> input_combinations_weight_derivatives;
+    Tensor<type, 2> forget_combinations_weight_derivatives;
+    Tensor<type, 2> state_combinations_weight_derivatives;
+    Tensor<type, 2> output_combinations_weight_derivatives;
 
-    Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> input_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> forget_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> state_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> output_combinations_recurrent_weight_derivatives;
 
-    Tensor<type, 2> input_combinations_biases_derivatives;
-    Tensor<type, 2> forget_combinations_biases_derivatives;
-    Tensor<type, 2> state_combinations_biases_derivatives;
-    Tensor<type, 2> output_combinations_biases_derivatives;
+    Tensor<type, 2> input_combinations_bias_derivatives;
+    Tensor<type, 2> forget_combinations_bias_derivatives;
+    Tensor<type, 2> state_combinations_bias_derivatives;
+    Tensor<type, 2> output_combinations_bias_derivatives;
 
     Tensor<type, 2> input_derivatives;
 };

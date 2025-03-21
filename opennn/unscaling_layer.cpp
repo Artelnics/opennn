@@ -460,19 +460,19 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { samples_number, output_dimensions[0]}};
+    return { (type*)outputs.data(), { batch_size, output_dimensions[0]}};
 }
 
 
-void UnscalingLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void UnscalingLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     const dimensions output_dimensions = static_cast<UnscalingLayer*>(layer)->get_output_dimensions();
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
-    outputs.resize(samples_number, output_dimensions[0]);
+    outputs.resize(batch_size, output_dimensions[0]);
 }
 
 

@@ -157,22 +157,22 @@ pair<type*, dimensions> AdditionLayer3DForwardPropagation::get_outputs_pair() co
     const Index sequence_length = addition_layer_3d->get_sequence_length();
     const Index embedding_length = addition_layer_3d->get_embedding_length();
 
-    return {(type*)outputs.data(), {samples_number, sequence_length, embedding_length}};
+    return {(type*)outputs.data(), {batch_size, sequence_length, embedding_length}};
 }
 
 
-void AdditionLayer3DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void AdditionLayer3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
     const Index embedding_length = addition_layer_3d->get_embedding_length();
 
-    outputs.resize(samples_number, sequence_length, embedding_length);
+    outputs.resize(batch_size, sequence_length, embedding_length);
 }
 
 
@@ -183,19 +183,19 @@ void AdditionLayer3DForwardPropagation::print() const
 }
 
 
-void AdditionLayer3DBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void AdditionLayer3DBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     AdditionLayer3D* addition_layer_3d = static_cast<AdditionLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
     const Index embedding_length = addition_layer_3d->get_embedding_length();
 
-    input_1_derivatives.resize(samples_number, sequence_length, embedding_length);
-    input_2_derivatives.resize(samples_number, sequence_length, embedding_length);
+    input_1_derivatives.resize(batch_size, sequence_length, embedding_length);
+    input_2_derivatives.resize(batch_size, sequence_length, embedding_length);
 }
 
 
@@ -219,8 +219,8 @@ vector<pair<type*, dimensions>> AdditionLayer3DBackPropagation::get_input_deriva
     const Index embedding_length = addition_layer_3d->get_embedding_length();
 
     return
-    {{(type*)input_1_derivatives.data(), {samples_number, sequence_length, embedding_length}},
-     {(type*)input_2_derivatives.data(), {samples_number, sequence_length, embedding_length}}};
+    {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_length}},
+     {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_length}}};
 }
 
 }

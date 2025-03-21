@@ -9,7 +9,7 @@ TEST(MultiHeadAttention, DefaultConstructor) {
     EXPECT_EQ(multihead_attention_layer.get_input_size(), 0);
     EXPECT_EQ(multihead_attention_layer.get_context_size(), 0);
     EXPECT_EQ(multihead_attention_layer.get_depth(), 0);
-    EXPECT_EQ(multihead_attention_layer.get_weights_depth(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_hidden_depth(), 0);
 
     EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{0});
     EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({multihead_attention_layer.get_input_size(), multihead_attention_layer.get_depth()}));

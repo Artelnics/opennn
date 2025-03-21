@@ -16,7 +16,7 @@ struct LayerBackPropagation
 
     virtual void print() const {}
 
-    Index samples_number = 0;
+    Index batch_size = 0;
 
     Layer* layer = nullptr;
 

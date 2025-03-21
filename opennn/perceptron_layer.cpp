@@ -430,11 +430,11 @@ void Perceptron::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagat
 
 
 void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
-                                                        const Index& index,
-                                                        Tensor<type, 2>& squared_errors_Jacobian) const
+                                                   const Index& index,
+                                                   Tensor<type, 2>& squared_errors_Jacobian) const
 {
     const Index parameters_number = get_parameters_number();
-    const Index samples_number = back_propagation->samples_number;
+    const Index batch_size = back_propagation->batch_size;
 
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
         static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
@@ -443,7 +443,7 @@ void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagati
 
     memcpy(squared_errors_Jacobian.data() + index,
            this_squared_errors_Jacobian_data,
-           parameters_number * samples_number * sizeof(type));
+           parameters_number * batch_size * sizeof(type));
 }
 
 
@@ -566,19 +566,19 @@ string Perceptron::get_activation_function_string_expression() const
 }
 
 
-void PerceptronForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
+void PerceptronForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
     layer = new_layer;
     
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    outputs.resize(samples_number, outputs_number);
+    outputs.resize(batch_size, outputs_number);
 
-    activation_derivatives.resize(samples_number, outputs_number);
+    activation_derivatives.resize(batch_size, outputs_number);
 
     activation_derivatives.setConstant((type)NAN);
 }
@@ -588,7 +588,7 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     
-    return pair<type *, dimensions>((type*)outputs.data(), {{samples_number, output_dimensions[0]}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_size, output_dimensions[0]}});
 }
 
 
@@ -616,17 +616,17 @@ PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_samp
 }
 
 
-void PerceptronBackPropagation::set(const Index &new_samples_number,
-                                         Layer *new_layer)
+void PerceptronBackPropagation::set(const Index&new_batch_size,
+                                    Layer *new_layer)
 {
     layer = new_layer;
     
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
     
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    combination_derivatives.resize(samples_number, outputs_number);
+    combination_derivatives.resize(batch_size, outputs_number);
     combination_derivatives.setZero();
 
     bias_derivatives.resize(outputs_number);
@@ -635,7 +635,7 @@ void PerceptronBackPropagation::set(const Index &new_samples_number,
     weight_derivatives.resize(inputs_number, outputs_number);
     weight_derivatives.setZero();
 
-    input_derivatives.resize(samples_number, inputs_number);
+    input_derivatives.resize(batch_size, inputs_number);
 }
 
 
@@ -643,7 +643,7 @@ vector<pair<type*, dimensions>> PerceptronBackPropagation::get_input_derivative_
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return { {(type*)(input_derivatives.data()), {samples_number, inputs_number}} };
+    return { {(type*)(input_derivatives.data()), {batch_size, inputs_number}} };
 }
 
 
@@ -670,17 +670,17 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Laye
 {
     layer = new_layer;
 
-    samples_number = new_samples_number;
+    batch_size = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 
-    combination_derivatives.resize(samples_number, outputs_number);
+    combination_derivatives.resize(batch_size, outputs_number);
 
-    squared_errors_Jacobian.resize(samples_number, parameters_number);
+    squared_errors_Jacobian.resize(batch_size, parameters_number);
 
-    input_derivatives.resize(samples_number, inputs_number);
+    input_derivatives.resize(batch_size, inputs_number);
 }
 
 
@@ -688,7 +688,7 @@ vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_deri
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {samples_number, inputs_number}}};
+    return {{(type*)(input_derivatives.data()), {batch_size, inputs_number}}};
 }
 
 

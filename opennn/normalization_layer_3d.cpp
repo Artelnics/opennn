@@ -20,8 +20,6 @@ NormalizationLayer3D::NormalizationLayer3D(const Index& new_inputs_number,
     set(new_inputs_number, new_inputs_depth, new_name);
 
     layer_type = Type::Normalization3D;
-
-    name = new_name;
 }
 
 
@@ -309,25 +307,25 @@ pair<type*, dimensions> NormalizationLayer3DForwardPropagation::get_outputs_pair
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    return { (type*)outputs.data(), { samples_number, sequence_length, embedding_dimension } };
+    return { (type*)outputs.data(), { batch_size, sequence_length, embedding_dimension } };
 }
 
 
-void NormalizationLayer3DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void NormalizationLayer3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    outputs.resize(samples_number, sequence_length, embedding_dimension);
+    outputs.resize(batch_size, sequence_length, embedding_dimension);
 
-    means.resize(samples_number, sequence_length, embedding_dimension);
-    standard_deviations.resize(samples_number, sequence_length, embedding_dimension);
+    means.resize(batch_size, sequence_length, embedding_dimension);
+    standard_deviations.resize(batch_size, sequence_length, embedding_dimension);
 }
 
 
@@ -338,13 +336,13 @@ void NormalizationLayer3DForwardPropagation::print() const
 }
 
 
-void NormalizationLayer3DBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void NormalizationLayer3DBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     NormalizationLayer3D* normalization_layer_3d = static_cast<NormalizationLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
@@ -352,11 +350,11 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_samples_number, L
     gamma_derivatives.resize(embedding_dimension);
     beta_derivatives.resize(embedding_dimension);
 
-    scaled_deltas.resize(samples_number, sequence_length, embedding_dimension);
-    standard_deviation_derivatives.resize(samples_number, sequence_length, embedding_dimension);
-    aux_2d.resize(samples_number, sequence_length);
+    scaled_deltas.resize(batch_size, sequence_length, embedding_dimension);
+    standard_deviation_derivatives.resize(batch_size, sequence_length, embedding_dimension);
+    aux_2d.resize(batch_size, sequence_length);
 
-    input_derivatives.resize(samples_number, sequence_length, embedding_dimension);
+    input_derivatives.resize(batch_size, sequence_length, embedding_dimension);
 }
 
 
@@ -383,7 +381,7 @@ vector<pair<type*, dimensions>> NormalizationLayer3DBackPropagation::get_input_d
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    return { {(type*)(input_derivatives.data()), {samples_number, sequence_length, embedding_dimension}} };
+    return { {(type*)(input_derivatives.data()), {batch_size, sequence_length, embedding_dimension}} };
 }
 
 }

@@ -35,11 +35,9 @@ public:
     Index get_source_sequence_length() const;
     Index get_embedding_dimension() const;
     Index get_heads_number() const;
-    Index get_weights_depth() const;
+    Index get_hidden_depth() const;
 
     type get_scaling_factor() const;
-
-    Index get_hidden_depth() const;
 
     dimensions get_input_dimensions() const override;
 
@@ -52,16 +50,15 @@ public:
              const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
+             const bool& = false,
              const string& = "multihead_attention_layer");
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
-
     void set_parameters_random() override;
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;
 
     void set_dropout_rate(const type&);
-    void set_use_causal_mask(const bool&);
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
@@ -152,11 +149,11 @@ private:
     type dropout_rate = type(0);
 
     const Eigen::array<Index, 1> projection_sum_index = { 3 };
-    const Eigen::array<Index, 2> biases_derivatives_sum_indices = { 0, 2 };
-    const Eigen::array<Index, 2> projection_biases_derivatives_sum_indices = { 0, 1 };
+    const Eigen::array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };
+    const Eigen::array<Index, 2> projection_bias_derivatives_sum_indices = { 0, 1 };
 
-    const Eigen::array<IndexPair<Index>, 2> projection_weights_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
-    const Eigen::array<IndexPair<Index>, 2> transformation_weights_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
+    const Eigen::array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
+    const Eigen::array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 };
 
 
@@ -188,7 +185,6 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 
 struct MultiheadAttentionBackPropagation : LayerBackPropagation
 {
-
     MultiheadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
@@ -198,7 +194,7 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     void print() const override;
 
     Tensor<type, 4> error_attention_scores_derivatives;
-    Tensor<type, 4> error_attention_weights_derivatives;
+    Tensor<type, 4> error_attention_weight_derivatives;
     Tensor<type, 4> error_attention_output_derivatives;
 
     Tensor<type, 2> sample_deltas;
@@ -207,16 +203,16 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 4> error_key_derivatives;
     Tensor<type, 4> error_value_derivatives;
 
-    Tensor<type, 3> query_weights_derivatives;
-    Tensor<type, 3> key_weights_derivatives;
-    Tensor<type, 3> value_weights_derivatives;
+    Tensor<type, 3> query_weight_derivatives;
+    Tensor<type, 3> key_weight_derivatives;
+    Tensor<type, 3> value_weight_derivatives;
 
-    Tensor<type, 3> projection_weights_derivatives;
+    Tensor<type, 3> projection_weight_derivatives;
 
-    Tensor<type, 2> query_biases_derivatives;
-    Tensor<type, 2> key_biases_derivatives;
-    Tensor<type, 2> value_biases_derivatives;
-    Tensor<type, 1> projection_biases_derivatives;
+    Tensor<type, 2> query_bias_derivatives;
+    Tensor<type, 2> key_bias_derivatives;
+    Tensor<type, 2> value_bias_derivatives;
+    Tensor<type, 1> projection_bias_derivatives;
 
     Tensor<type, 1> aux_rows;
 

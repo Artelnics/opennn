@@ -443,35 +443,35 @@ pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() 
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
-    return { (type*)outputs.data(), { samples_number, inputs_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_size, inputs_number, neurons_number } };
 }
 
 
-void PerceptronLayer3DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void PerceptronLayer3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
 
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
 
-    outputs.resize(samples_number, inputs_number, neurons_number);
+    outputs.resize(batch_size, inputs_number, neurons_number);
 
-    activation_derivatives.resize(samples_number, inputs_number, neurons_number);
+    activation_derivatives.resize(batch_size, inputs_number, neurons_number);
 }
 
 
-void PerceptronLayer3DBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void PerceptronLayer3DBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     const Index neurons_number = perceptron_layer_3d->get_neurons_number();
     const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
@@ -481,9 +481,9 @@ void PerceptronLayer3DBackPropagation::set(const Index& new_samples_number, Laye
 
     weight_derivatives.resize(inputs_depth, neurons_number);
 
-    combination_derivatives.resize(samples_number, inputs_number, neurons_number);
+    combination_derivatives.resize(batch_size, inputs_number, neurons_number);
 
-    input_derivatives.resize(samples_number, inputs_number, inputs_depth);
+    input_derivatives.resize(batch_size, inputs_number, inputs_depth);
 }
 
 
@@ -511,7 +511,7 @@ vector<pair<type*, dimensions>> PerceptronLayer3DBackPropagation::get_input_deri
     const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
 
     return {{(type*)(input_derivatives.data()),
-            {samples_number, inputs_number, inputs_depth}}};
+            {batch_size, inputs_number, inputs_depth}}};
 }
 
 

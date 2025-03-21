@@ -39,7 +39,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     NeuralNetwork neural_network;
 
-//    EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
+//    Embedding* embedding_layer = new Embedding(input_dimensions, inputs_number, depth);
 //    neural_network.add_layer(embedding_layer);
 
 //    ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
@@ -103,7 +103,7 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
 
     neural_network.set();
 
-    EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
+    Embedding* embedding_layer = new Embedding(input_dimensions, inputs_number, depth);
     neural_network.add_layer(embedding_layer);
 
     ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);

@@ -64,7 +64,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     // Embedding Layers
 
-    add_layer(make_unique<EmbeddingLayer>(new_decoder_dimensions,
+    add_layer(make_unique<Embedding>(new_decoder_dimensions,
                                           new_decoder_length,
                                           new_embedding_dimension,
                                           "decoder_embedding"));
@@ -72,7 +72,7 @@ void Transformer::set(const Index& new_decoder_length,
     set_layer_inputs_indices("decoder_embedding", "decoder");
     //decoder_embedding_layer->set_dropout_rate(dropout_rate);
 
-    add_layer(make_unique<EmbeddingLayer>(new_input_dimension,
+    add_layer(make_unique<Embedding>(new_input_dimension,
                                           new_input_length,
                                           new_embedding_dimension,
                                           "input_embedding"));

@@ -484,8 +484,8 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
     const Index heads_number = 2;
     const type dropout_rate = 0;
 
-    unique_ptr<EmbeddingLayer> embedding_layer
-        = make_unique<EmbeddingLayer>(input_dimensions[0],
+    unique_ptr<Embedding> embedding_layer
+        = make_unique<Embedding>(input_dimensions[0],
                                       input_dimensions[1],
                                       embedding_dimension,
                                       true);
@@ -1046,12 +1046,12 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if (layers_number == 0)
         return Tensor<type, 2>();
-    const Index samples_number = inputs.dimension(0);
+    const Index batch_size = inputs.dimension(0);
     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(samples_number, this);
+    ForwardPropagation forward_propagation(batch_size, this);
 
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{samples_number, inputs_number}});
+    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
     forward_propagate({input_pair}, forward_propagation, false);
 
     const pair<type*, dimensions> outputs_pair
@@ -1068,11 +1068,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     if (layers_number == 0) 
         return Tensor<type, 2>();
 
-    const Index samples_number = inputs.dimension(0);
+    const Index batch_size = inputs.dimension(0);
 
-    ForwardPropagation forward_propagation(samples_number, this);
+    ForwardPropagation forward_propagation(batch_size, this);
 
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), { {samples_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
+    const pair<type*, dimensions> input_pair((type*)inputs.data(), { {batch_size, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}});
 
     forward_propagate({input_pair}, forward_propagation);
 
@@ -1450,7 +1450,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"Recurrent", []() -> unique_ptr<Layer> { return make_unique<Recurrent>(); }},
      {"Unscaling", []() -> unique_ptr<Layer> { return make_unique<UnscalingLayer>(); }},
      {"Bounding", []() -> unique_ptr<Layer> { return make_unique<BoundingLayer>(); }},
-     {"Embedding", []() -> unique_ptr<Layer> { return make_unique<EmbeddingLayer>(); }},
+     {"Embedding", []() -> unique_ptr<Layer> { return make_unique<Embedding>(); }},
      {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiHeadAttention>(); }},
      {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<AdditionLayer3D>(); }},
      {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<NormalizationLayer3D>(); }},
@@ -1641,7 +1641,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     //const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
-    const Index samples_number = inputs.dimension(0);
+    const Index batch_size = inputs.dimension(0);
 
     for(size_t i = 0; i < size_t(outputs_number); i++)
     {
@@ -1653,7 +1653,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
 
     file << "\n";
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
     {
         for(Index j = 0; j < outputs_number; j++)
         {
@@ -1887,7 +1887,7 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
         break;
 
         case Layer::Type::Embedding:
-            layers[i] = make_unique<EmbeddingLayerForwardPropagation>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<EmbeddingForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::MultiheadAttention:
