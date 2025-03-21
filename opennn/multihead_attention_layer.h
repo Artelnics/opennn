@@ -54,7 +54,7 @@ public:
              const Index& = 0, 
              const string& = "multihead_attention_layer");
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_parameters_random() override;
     void set_parameters_glorot();

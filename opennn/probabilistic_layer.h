@@ -108,7 +108,7 @@ public:
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_decision_threshold(const type&);
 
     void set_activation_function(const ActivationFunction&);

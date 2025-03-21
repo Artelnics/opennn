@@ -856,16 +856,10 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     const Index layers_number = get_layers_number();
 
-    const vector<Index> layer_parameter_numbers = get_layer_parameter_numbers();
-
     Index index = 0;
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers[i]->set_parameters(new_parameters, index);
-
-        index += layer_parameter_numbers[i];
-    }
 }
 
 

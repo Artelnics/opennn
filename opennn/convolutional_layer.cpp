@@ -726,16 +726,10 @@ void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimens
 }
 
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    #pragma omp parallel sections
-    {
-    #pragma omp section
-    memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
-    
-    #pragma omp section
-    memcpy(biases.data(), new_parameters.data() + index + weights.size(), biases.size()*sizeof(type));
-    }
+    copy_from_vector(weights, new_parameters, index);    
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -882,7 +876,9 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
 
-    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "));
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
 }
 
 

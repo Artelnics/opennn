@@ -103,11 +103,10 @@ void NormalizationLayer3D::set_embedding_dimension(const Index& new_inputs_depth
 }
 
 
-void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    memcpy(gammas.data(), new_parameters.data() + index, gammas.size()*sizeof(type));
-
-    memcpy(betas.data(), new_parameters.data() + index + gammas.size(), betas.size()*sizeof(type));
+    copy_from_vector(gammas, new_parameters, index);
+    copy_from_vector(betas, new_parameters, index);
 }
 
 
@@ -277,7 +276,9 @@ void NormalizationLayer3D::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "));
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
 }
 
 

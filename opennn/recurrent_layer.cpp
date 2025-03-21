@@ -173,32 +173,13 @@ void Recurrent::set_timesteps(const Index& new_timesteps)
 }
 
 
-void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    const Index biases_number = biases.size();
-    const Index input_weights_number = input_weights.size();
-    const Index recurrent_weights_number = recurrent_weights.size();
-    const Index output_biases_number = output_biases.size();
-    const Index output_weights_number = output_weights.size();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-            memcpy(biases.data(), new_parameters.data() + index, biases_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(input_weights.data(), new_parameters.data() + index + biases_number, input_weights_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(recurrent_weights.data(), new_parameters.data() + index + biases_number + input_weights_number, recurrent_weights_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(output_biases.data(), new_parameters.data() + index, output_biases_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(output_weights.data(), new_parameters.data() + index + output_biases_number, output_weights_number * sizeof(type));
-
-    }
+    copy_from_vector(biases, new_parameters, index);
+    copy_from_vector(input_weights, new_parameters, index);
+    copy_from_vector(recurrent_weights, new_parameters, index);
+    copy_from_vector(output_biases, new_parameters, index);
+    copy_from_vector(output_weights, new_parameters, index);
 }
 
 

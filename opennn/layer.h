@@ -84,7 +84,7 @@ public:
 
     Index get_outputs_number() const;
 
-    virtual void set_parameters(const Tensor<type, 1>&, const Index&);
+    virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
 

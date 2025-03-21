@@ -54,7 +54,7 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);

@@ -161,53 +161,16 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
 }
 
 
-void MultiHeadAttention::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void MultiHeadAttention::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    const type* new_parameters_data = new_parameters.data();
-
-    type* query_weights_data = query_weights.data();
-    type* query_biases_data = query_biases.data();
-
-    type* key_weights_data = key_weights.data();
-    type* key_biases_data = key_biases.data();
-
-    type* value_weights_data = value_weights.data();
-    type* value_biases_data = value_biases.data();
-
-    type* projection_weights_data = projection_weights.data();
-    type* projection_biases_data = projection_biases.data();
-
-    Index parameters_index = index;
-
-    memcpy(query_weights_data, new_parameters_data + parameters_index, query_weights.size()*sizeof(type));
-
-    parameters_index += query_weights.size();
-
-    memcpy(query_biases_data, new_parameters_data + parameters_index, query_biases.size()*sizeof(type));
-
-    parameters_index += query_biases.size();
-
-    memcpy(key_weights_data, new_parameters_data + parameters_index, key_weights.size()*sizeof(type));
-
-    parameters_index += key_weights.size();
-
-    memcpy(key_biases_data, new_parameters_data + parameters_index, key_biases.size()*sizeof(type));
-
-    parameters_index += key_biases.size();
-
-    memcpy(value_weights_data, new_parameters_data + parameters_index, value_weights.size()*sizeof(type));
-
-    parameters_index += value_weights.size();
-
-    memcpy(value_biases_data, new_parameters_data + parameters_index, value_biases.size()*sizeof(type));
-
-    parameters_index += value_biases.size();
-
-    memcpy(projection_weights_data, new_parameters_data + parameters_index, projection_weights.size()*sizeof(type));
-
-    parameters_index += projection_weights.size();
-
-    memcpy(projection_biases_data, new_parameters_data + parameters_index, projection_biases.size()*sizeof(type));
+    copy_from_vector(query_weights, new_parameters, index);
+    copy_from_vector(query_biases, new_parameters, index);
+    copy_from_vector(key_weights, new_parameters, index);
+    copy_from_vector(key_biases, new_parameters, index);
+    copy_from_vector(value_weights, new_parameters, index);
+    copy_from_vector(value_biases, new_parameters, index);
+    copy_from_vector(projection_weights, new_parameters, index);
+    copy_from_vector(projection_biases, new_parameters, index);
 }
 
 
@@ -815,7 +778,10 @@ void MultiHeadAttention::from_XML(const XMLDocument& document)
     set(new_input_size, new_context_size, new_depth, new_heads_number, new_name);
 
     set_use_causal_mask(read_xml_bool(multihead_attention_layer_element, "CausalMask"));
-    set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "));
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(multihead_attention_layer_element, "Parameters"), " "), index);
 }
 
 

@@ -289,7 +289,7 @@ void Layer::set_parameters_random()
 }
 
 
-void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
+void Layer::set_parameters(const Tensor<type, 1>&, Index&)
 {
 }
 

@@ -136,9 +136,9 @@ void EmbeddingLayer::set_embedding_weights()
 }
 
 
-void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void EmbeddingLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
+    copy_from_vector(weights, new_parameters, index);
 }
 
 
@@ -318,7 +318,9 @@ void EmbeddingLayer::from_XML(const XMLDocument& document)
 
     set(new_vocabulary_size, new_sequence_length, new_embedding_dimension, new_name);
 
-    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "));
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(embedding_layer_element, "Parameters"), " "), index);
 }
 
 

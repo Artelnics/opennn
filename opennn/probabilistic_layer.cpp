@@ -131,14 +131,10 @@ void ProbabilisticLayer::set_output_dimensions(const dimensions& new_output_dime
 }
 
 
-void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
-
-    memcpy(weights.data(), new_parameters.data() + index, weights_number*sizeof(type));
-
-    memcpy(biases.data(), new_parameters.data() + index + weights_number, biases_number*sizeof(type));
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -428,7 +424,10 @@ void ProbabilisticLayer::from_XML(const XMLDocument& document)
     set({ new_inputs_number }, { new_neurons_number });
 
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
 }
 

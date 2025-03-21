@@ -190,67 +190,20 @@ void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_outpu
 }
 
 
-void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    const Index outputs_number = get_outputs_number();
-    const Index inputs_number = get_inputs_number();
-
-    Index current_index = index;
-
-    const type* new_parameters_data = new_parameters.data();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        {
-            Index size = outputs_number;
-
-            memcpy(forget_biases.data(), new_parameters_data + current_index, size * sizeof(type));
-            current_index += size;
-
-            memcpy(input_biases.data(), new_parameters_data + current_index, size * sizeof(type));
-            current_index += size;
-
-            memcpy(state_biases.data(), new_parameters_data + current_index, size * sizeof(type));
-            current_index += size;
-
-            memcpy(output_biases.data(), new_parameters_data + current_index, size * sizeof(type));
-        }
-
-        #pragma omp section
-        {
-            Index size = inputs_number * outputs_number;
-            Index local_index = current_index + outputs_number * 4;
-
-            memcpy(forget_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(input_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(state_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(output_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-        }
-
-        #pragma omp section
-        {
-            Index size = outputs_number * outputs_number;
-            Index local_index = current_index + outputs_number * 4 + inputs_number * outputs_number * 4;  // Skip bias and weights size
-
-            memcpy(forget_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(input_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(state_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-            local_index += size;
-
-            memcpy(output_recurrent_weights.data(), new_parameters_data + local_index, size * sizeof(type));
-        }
-    }
+    copy_from_vector(forget_biases, new_parameters, index);
+    copy_from_vector(input_biases, new_parameters, index);
+    copy_from_vector(state_biases, new_parameters, index);
+    copy_from_vector(output_biases, new_parameters, index);
+    copy_from_vector(forget_weights, new_parameters, index);
+    copy_from_vector(input_weights, new_parameters, index);
+    copy_from_vector(state_weights, new_parameters, index);
+    copy_from_vector(output_weights, new_parameters, index);
+    copy_from_vector(forget_recurrent_weights, new_parameters, index);
+    copy_from_vector(input_recurrent_weights, new_parameters, index);
+    copy_from_vector(state_recurrent_weights, new_parameters, index);
+    copy_from_vector(output_recurrent_weights, new_parameters, index);
 }
 
 

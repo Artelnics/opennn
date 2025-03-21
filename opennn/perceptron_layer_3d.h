@@ -66,7 +66,7 @@ public:
    void set_inputs_depth(const Index&);
    void set_neurons_number(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);

@@ -40,7 +40,7 @@ public:
     void set_sequence_length(const Index&);
     void set_embedding_dimension(const Index&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_gammas_constant(const type&);
     void set_betas_constant(const type&);

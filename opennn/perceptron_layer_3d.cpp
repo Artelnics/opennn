@@ -166,16 +166,10 @@ void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
 }
 
 
-void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
-
-        #pragma omp section
-        memcpy(biases.data(), new_parameters.data() + index + weights.size(), biases.size()*sizeof(type));
-    }
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -402,7 +396,10 @@ void PerceptronLayer3D::from_XML(const XMLDocument& document)
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
 
 }
 

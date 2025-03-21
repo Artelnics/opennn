@@ -57,10 +57,9 @@ type Perceptron::get_dropout_rate() const
 
 Tensor<type, 1> Perceptron::get_parameters() const
 {
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
+    const Index parameters_number = get_parameters_number();
 
-    Tensor<type, 1> parameters(weights_number + biases_number);
+    Tensor<type, 1> parameters(parameters_number);
 
     Index index = 0;
 
@@ -160,18 +159,10 @@ void Perceptron::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {   
-    const type* new_parameters_data = new_parameters.data();
-    type* weights_data = weights.data();
-    type* biases_data = biases.data();
-
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
-
-    memcpy(weights_data, new_parameters_data + index, weights_number*sizeof(type));
-
-    memcpy(biases_data, new_parameters_data + index + weights_number, biases_number*sizeof(type));
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -517,7 +508,10 @@ void Perceptron::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(perceptron_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), 0);
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
 }
 
 

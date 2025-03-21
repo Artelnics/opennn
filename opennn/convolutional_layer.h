@@ -101,7 +101,7 @@ public:
     void set_convolution_type(const ConvolutionType&);
     void set_convolution_type(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_row_stride(const Index&);
 
