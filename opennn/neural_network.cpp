@@ -1174,6 +1174,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         return Tensor<type, 2>();
     }
 
+    return Tensor<type, 2>();
 }
 
 

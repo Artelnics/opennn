@@ -874,6 +874,8 @@ string ModelExpression::autoassociaton_javascript(const NeuralNetwork& neural_ne
 
     if (index != string::npos)
         expression.erase(index, string::npos);
+
+    return expression;
 }
 
 
@@ -1933,7 +1935,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
         tokens.push_back(token);
     }
 
-    for(Index i = 0; i < tokens.size(); i++)
+    for(Index i = 0; i < static_cast<Index>(tokens.size()); i++)
     {
         string s = tokens[i];
         string word;

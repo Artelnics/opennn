@@ -30,8 +30,8 @@ int main()
 
         // Data set
 
-        // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
-        LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
+        LanguageDataSet language_data_set("../data/ENtoES_dataset_reduced_1.txt");
+        //LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
         // language_data_set.print_raw_variables();
         // language_data_set.print_data();
