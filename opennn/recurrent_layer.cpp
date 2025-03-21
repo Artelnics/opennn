@@ -12,72 +12,60 @@
 namespace opennn
 {
 
-RecurrentLayer::RecurrentLayer(const dimensions& new_input_dimensions, 
+Recurrent::Recurrent(const dimensions& new_input_dimensions, 
                                const dimensions& new_output_dimensions) : Layer()
 {
     set(new_input_dimensions, new_output_dimensions);
 }
 
 
-dimensions RecurrentLayer::get_input_dimensions() const
+dimensions Recurrent::get_input_dimensions() const
 {
     return { input_weights.dimension(0) };
 }
 
 
-dimensions RecurrentLayer::get_output_dimensions() const
+dimensions Recurrent::get_output_dimensions() const
 {
     return { biases.size() };
 }
 
 
-Index RecurrentLayer::get_parameters_number() const
+Index Recurrent::get_parameters_number() const
 {
     return biases.size() + input_weights.size() + recurrent_weights.size();
 }
 
 
-Index RecurrentLayer::get_timesteps() const
+Index Recurrent::get_timesteps() const
 {
     return time_steps;
 }
 
 
-Tensor<type, 1> RecurrentLayer::get_parameters() const
+Tensor<type, 1> Recurrent::get_parameters() const
 {
     const Index parameters_number = get_parameters_number();
 
     Tensor<type, 1> parameters(parameters_number);
 
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(parameters.data(),
-            biases.data(),
-            biases.size() * sizeof(type));
+    Index index = 0;
 
-        #pragma omp section
-        memcpy(parameters.data() + biases.size(),
-            input_weights.data(),
-            input_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + biases.size() + input_weights.size(),
-            recurrent_weights.data(),
-            recurrent_weights.size() * sizeof(type));
-    }
+    copy_to_vector(parameters, biases, index);
+    copy_to_vector(parameters, input_weights, index);
+    copy_to_vector(parameters, recurrent_weights, index);
 
     return parameters;
 }
 
 
-const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_function() const
+const Recurrent::ActivationFunction& Recurrent::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string RecurrentLayer::get_activation_function_string() const
+string Recurrent::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -105,7 +93,7 @@ string RecurrentLayer::get_activation_function_string() const
 }
 
 
-void RecurrentLayer::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
+void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
 
     biases.resize(new_output_dimensions[0]);
@@ -155,7 +143,7 @@ void RecurrentLayer::set(const dimensions& new_input_dimensions, const dimension
 }
 
 
-void RecurrentLayer::set_input_dimensions(const dimensions& new_input_dimensions)
+void Recurrent::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -163,7 +151,7 @@ void RecurrentLayer::set_input_dimensions(const dimensions& new_input_dimensions
 }
 
 
-void RecurrentLayer::set_output_dimensions(const dimensions& new_output_dimensions)
+void Recurrent::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_inputs_number();
 
@@ -179,13 +167,13 @@ void RecurrentLayer::set_output_dimensions(const dimensions& new_output_dimensio
 }
 
 
-void RecurrentLayer::set_timesteps(const Index& new_timesteps)
+void Recurrent::set_timesteps(const Index& new_timesteps)
 {
     time_steps = new_timesteps;
 }
 
 
-void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     const Index biases_number = biases.size();
     const Index input_weights_number = input_weights.size();
@@ -214,13 +202,13 @@ void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters, const
 }
 
 
-void RecurrentLayer::set_activation_function(const RecurrentLayer::ActivationFunction& new_activation_function)
+void Recurrent::set_activation_function(const Recurrent::ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void RecurrentLayer::set_activation_function(const string& new_activation_function_name)
+void Recurrent::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
         activation_function = ActivationFunction::Logistic;
@@ -245,7 +233,7 @@ void RecurrentLayer::set_activation_function(const string& new_activation_functi
 }
 
 
-void RecurrentLayer::set_parameters_constant(const type& value)
+void Recurrent::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
@@ -261,7 +249,7 @@ void RecurrentLayer::set_parameters_constant(const type& value)
 }
 
 
-void RecurrentLayer::set_parameters_random()
+void Recurrent::set_parameters_random()
 {
     set_random(biases);
 
@@ -274,7 +262,7 @@ void RecurrentLayer::set_parameters_random()
     set_random(output_biases);
 }
 
-void RecurrentLayer::calculate_combinations(const Tensor<type, 2>& inputs,
+void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
                                             Tensor<type, 2>& combinations) const
 {
     Index samples_number = inputs.dimension(0);
@@ -291,7 +279,7 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
+void Recurrent::calculate_activations(Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
@@ -318,7 +306,7 @@ void RecurrentLayer::calculate_activations(Tensor<type, 2>& activations,
     }
 }
 
-void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool& is_training)
 
@@ -363,7 +351,7 @@ void RecurrentLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -376,8 +364,8 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-            static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
+    RecurrentBackPropagation* recurrent_back_propagation =
+            static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
     // Forward propagation
 
@@ -393,32 +381,32 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
-    const bool& is_first_layer = recurrent_layer_back_propagation->is_first_layer;
+    const bool& is_first_layer = recurrent_back_propagation->is_first_layer;
 
-    //Tensor<type, 1>& current_deltas = recurrent_layer_back_propagation->current_deltas;
+    //Tensor<type, 1>& current_deltas = recurrent_back_propagation->current_deltas;
 
-    Tensor<type, 2>& combination_derivatives = recurrent_layer_back_propagation->combination_derivatives;
-    Tensor<type, 1>& current_combinations_derivatives = recurrent_layer_back_propagation->current_combinations_derivatives;
+    Tensor<type, 2>& combination_derivatives = recurrent_back_propagation->combination_derivatives;
+    Tensor<type, 1>& current_combinations_derivatives = recurrent_back_propagation->current_combinations_derivatives;
 
-    Tensor<type, 2>& combinations_biases_derivatives = recurrent_layer_back_propagation->combinations_biases_derivatives;
+    Tensor<type, 2>& combinations_biases_derivatives = recurrent_back_propagation->combinations_biases_derivatives;
     combinations_biases_derivatives.setZero();
 
-    Tensor<type, 3>& combinations_input_weights_derivatives = recurrent_layer_back_propagation->combinations_input_weights_derivatives;
+    Tensor<type, 3>& combinations_input_weights_derivatives = recurrent_back_propagation->combinations_input_weights_derivatives;
     combinations_input_weights_derivatives.setZero();
 
-    Tensor<type, 3>& combinations_recurrent_weights_derivatives = recurrent_layer_back_propagation->combinations_recurrent_weights_derivatives;
+    Tensor<type, 3>& combinations_recurrent_weights_derivatives = recurrent_back_propagation->combinations_recurrent_weights_derivatives;
     combinations_recurrent_weights_derivatives.setZero();
 
-    Tensor<type, 1>& bias_derivatives = recurrent_layer_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_derivatives = recurrent_back_propagation->bias_derivatives;
     bias_derivatives.setZero();
 
-    Tensor<type, 2>& input_weights_derivatives = recurrent_layer_back_propagation->input_weights_derivatives;
+    Tensor<type, 2>& input_weights_derivatives = recurrent_back_propagation->input_weights_derivatives;
     input_weights_derivatives.setZero();
 
-    Tensor<type, 2>& recurrent_weights_derivatives = recurrent_layer_back_propagation->recurrent_weights_derivatives;
+    Tensor<type, 2>& recurrent_weights_derivatives = recurrent_back_propagation->recurrent_weights_derivatives;
     recurrent_weights_derivatives.setZero();
 
-    Tensor<type, 3>& input_derivatives = recurrent_layer_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_derivatives = recurrent_back_propagation->input_derivatives;
 
     const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
@@ -512,41 +500,20 @@ void RecurrentLayer::back_propagate(const vector<pair<type*, dimensions>>& input
 }
 
 
-void RecurrentLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                     const Index& index,
-                                     Tensor<type, 1>& gradient) const
+void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+                                Index& index,
+                                Tensor<type, 1>& gradient) const
 {
-/*
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+    RecurrentBackPropagation* recurrent_back_propagation =
+        static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
-    type* gradient_data = gradient.data();
-
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
-        static_cast<RecurrentLayerBackPropagation*>(back_propagation.get());
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-            memcpy(gradient_data + index,
-                recurrent_layer_back_propagation->bias_derivatives.data(),
-                neurons_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(gradient_data + index + neurons_number,
-                recurrent_layer_back_propagation->input_weights_derivatives.data(),
-                inputs_number * neurons_number * sizeof(type));
-
-        #pragma omp section
-            memcpy(gradient_data + index + neurons_number + inputs_number * neurons_number,
-                recurrent_layer_back_propagation->recurrent_weights_derivatives.data(),
-                neurons_number * neurons_number * sizeof(type));
-    }
-*/
+    copy_to_vector(gradient, recurrent_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, recurrent_back_propagation->input_weights_derivatives, index);
+    copy_to_vector(gradient, recurrent_back_propagation->recurrent_weights_derivatives, index);
 }
 
 
-string RecurrentLayer::get_expression(const vector<string>& input_names,
+string Recurrent::get_expression(const vector<string>& input_names,
                                         const vector<string>& output_names) const
 {
     ostringstream buffer;
@@ -567,7 +534,7 @@ string RecurrentLayer::get_expression(const vector<string>& input_names,
 }
 
 
-string RecurrentLayer::get_activation_function_string_expression() const
+string Recurrent::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
@@ -580,7 +547,7 @@ string RecurrentLayer::get_activation_function_string_expression() const
 }
 
 
-void RecurrentLayer::from_XML(const XMLDocument& document)
+void Recurrent::from_XML(const XMLDocument& document)
 {
     const XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");
 
@@ -596,7 +563,7 @@ void RecurrentLayer::from_XML(const XMLDocument& document)
 }
 
 
-void RecurrentLayer::to_XML(XMLPrinter& printer) const
+void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
@@ -648,7 +615,7 @@ void RecurrentLayerForwardPropagation::print() const
 }
 
 
-void RecurrentLayerBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void RecurrentBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -680,20 +647,20 @@ void RecurrentLayerBackPropagation::set(const Index& new_samples_number, Layer* 
 }
 
 
-void RecurrentLayerBackPropagation::print() const
+void RecurrentBackPropagation::print() const
 {
 
 }
 
 
-RecurrentLayerBackPropagation::RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+RecurrentBackPropagation::RecurrentBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> RecurrentLayerBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> RecurrentBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 

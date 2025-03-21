@@ -84,7 +84,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiHeadAttentionLayer>(new_input_length,
+        add_layer(make_unique<MultiHeadAttention>(new_input_length,
                                                        new_input_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
@@ -156,7 +156,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiHeadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
                                                        new_decoder_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
@@ -182,7 +182,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         set_layer_inputs_indices("decoder_self_attention_normalization_" + to_string(i+1), "decoder_self_attention_addition_" + to_string(i+1));
 
-        add_layer(make_unique<MultiHeadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
                                                        new_input_length,        //previously called context length
                                                        new_embedding_dimension,
                                                        new_heads_number,

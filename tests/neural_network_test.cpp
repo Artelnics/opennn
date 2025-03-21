@@ -125,7 +125,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     /*
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{1}, dimensions{1}));
+    neural_network.add_layer(make_unique<Perceptron>(dimensions{1}, dimensions{1}));
 
     ForwardPropagation forward_propagation(1, &neural_network);
     */
@@ -450,20 +450,20 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {outputs_number }, {1});
 
-        //PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer(1));
+        //Perceptron* perceptron_layer = static_cast<Perceptron*>(neural_network.get_layer(1));
         
         Layer::Type perceptron_layer = neural_network.get_layer(1)->get_type();
 
         const Index neurons_number = perceptron_layer->get_neurons_number();
 
-        perceptron_layer=set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+        perceptron_layer=set_activation_function(Perceptron::ActivationFunction::Logistic);
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
         neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
-        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1]);
+        PerceptronForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronForwardPropagation*>(forward_propagation.layers[1]);
 
         Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
@@ -512,8 +512,8 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         neural_network.set();
 
-        PerceptronLayer* perceptron_layer = new PerceptronLayer(inputs_number, outputs_number);
-        perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+        Perceptron* perceptron_layer = new Perceptron(inputs_number, outputs_number);
+        perceptron_layer->set_activation_function(Perceptron::ActivationFunction::Logistic);
         const Index neurons_number_perceptron = perceptron_layer->get_neurons_number();
 
         ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(outputs_number, outputs_number);
@@ -528,8 +528,8 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
-        PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-            = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[0]);
+        PerceptronForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronForwardPropagation*>(forward_propagation.layers[0]);
 
         Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 

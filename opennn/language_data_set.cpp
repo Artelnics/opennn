@@ -763,8 +763,6 @@ void LanguageDataSet::read_csv()
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();
-
-    print_vector(target_documents_tokens);
 }
 
 }

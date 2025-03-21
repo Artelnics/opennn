@@ -4,7 +4,7 @@
 
 TEST(RecurrentLayerTest, DefaultConstructor)
 {
-    RecurrentLayer recurrent_layer;
+    Recurrent recurrent_layer;
 
     EXPECT_EQ(recurrent_layer.get_inputs_number(), 0);
     EXPECT_EQ(recurrent_layer.get_outputs_number(), 0);
@@ -16,7 +16,7 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     const Index inputs_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
 
-    RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
+    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
 
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
     EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
@@ -35,61 +35,61 @@ TEST(RecurrentLayerTest, Activations)
     Index inputs_number = 3;
     Index time_steps = 1;
 
-    RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
+    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
     recurrent_layer.set_parameters_constant(type(1));
 
     Tensor<type, 2> activations(samples_number, neurons_number);
     Tensor<type, 2> activation_derivatives(samples_number, neurons_number);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Logistic);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::Logistic);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(0.731), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::HyperbolicTangent);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(0.761), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::Linear);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::Linear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::RectifiedLinear);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::RectifiedLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::ExponentialLinear);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::ExponentialLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::ScaledExponentialLinear);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::ScaledExponentialLinear);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::SoftPlus);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::SoftPlus);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::SoftSign);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::SoftSign);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HardSigmoid);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::HardSigmoid);
     activations.setConstant(type(1));
     recurrent_layer.calculate_activations(activations, activation_derivatives);
     EXPECT_NEAR(activations(0, 0), type(0.7), 0.001);
@@ -106,9 +106,9 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     Index time_steps = 5;
     bool is_training = true;
 
-    RecurrentLayer recurrent_layer({ inputs_number }, { neurons_number });
+    Recurrent recurrent_layer({ inputs_number }, { neurons_number });
 
-    recurrent_layer.set_activation_function(RecurrentLayer::ActivationFunction::HyperbolicTangent);
+    recurrent_layer.set_activation_function(Recurrent::ActivationFunction::HyperbolicTangent);
     recurrent_layer.set_parameters_constant(type(0.1));
 
     Tensor<type, 3> inputs(samples_number, time_steps, inputs_number);

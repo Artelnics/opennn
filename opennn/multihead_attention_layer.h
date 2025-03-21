@@ -15,28 +15,31 @@ namespace opennn
 {
 
 #ifdef OPENNN_CUDA
-    struct MultiheadAttentionLayerForwardPropagationCuda;
-    struct MultiheadAttentionLayerBackPropagationCuda;
+    struct MultiheadAttentionForwardPropagationCuda;
+    struct MultiheadAttentionBackPropagationCuda;
 #endif
 
-class MultiHeadAttentionLayer : public Layer
+class MultiHeadAttention : public Layer
 {
 
 public:
 
-    MultiHeadAttentionLayer(const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const Index& = 0,
-                            const bool& = false,
-                            const string& = "multihead_attention_layer");
+    MultiHeadAttention(const Index& = 0,
+                       const Index& = 0,
+                       const Index& = 0,
+                       const Index& = 0,
+                       const bool& = false,
+                       const string& = "multihead_attention_layer");
 
     Index get_input_size() const;
     Index get_context_size() const;
-    Index get_depth() const;
-    Index get_hidden_depth() const;
+    Index get_embedding_dimension() const;
     Index get_heads_number() const;
     Index get_weights_depth() const;
+
+    type get_scaling_factor() const;
+
+    Index get_hidden_depth() const;
 
     dimensions get_input_dimensions() const override;
 
@@ -57,26 +60,19 @@ public:
     void set_parameters_glorot();
     void set_parameters_constant(const type&) override;
 
-    void set_input_size(const Index&);
-    void set_context_size(const Index&);
-    void set_depth(const Index&);
-    void set_hidden_depth(const Index&);
-    void set_heads_number(const Index&);
-
     void set_dropout_rate(const type&);
-    void set_causal_mask(const bool&);
+    void set_use_causal_mask(const bool&);
 
-    void build_causal_mask();
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    // void compute_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    // void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void compute_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void dropout(Tensor<type, 4>&) const;
 
@@ -90,7 +86,7 @@ public:
                         unique_ptr<LayerBackPropagation>&) const override;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
@@ -100,19 +96,42 @@ public:
         #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
     #endif
 
+    Tensor<float, 4> compute_query(
+        const Eigen::Tensor<float, 3>& input,             // (batch, seq_len, embed_dim)
+        const Eigen::Tensor<float, 3>& query_weights)     // (embed_dim, head_dim, num_heads)
+    {
+        const int batch_size = input.dimension(0);
+        const int seq_len = input.dimension(1);
+        const int embed_dim = input.dimension(2);
+
+        const int head_dim = query_weights.dimension(1);
+        const int num_heads = query_weights.dimension(2);
+
+        // Verify embedding dimension matches
+        assert(embed_dim == query_weights.dimension(0));
+
+        // Tensor contraction dimensions:
+        // input: (batch_size, seq_len, embed_dim)
+        // query_weights: (embed_dim, head_dim, num_heads)
+        Eigen::array<Eigen::IndexPair<int>, 1> contract_dims = { Eigen::IndexPair<int>(2, 0) };
+
+        // Perform contraction to get (batch_size, seq_len, head_dim, num_heads)
+        Tensor<float, 4> query(batch_size, seq_len, head_dim, num_heads);
+        query = input.contract(query_weights, contract_dims)
+            .reshape(Eigen::array<int, 4>{batch_size, seq_len, head_dim, num_heads});
+
+        // Optionally, reorder dimensions to (batch_size, seq_len, num_heads, head_dim) for consistency
+        Eigen::array<int, 4> shuffle_dims = { 0, 1, 3, 2 };
+        Eigen::Tensor<float, 4> output = query.shuffle(shuffle_dims);
+
+        return output; // (batch_size, seq_len, num_heads, head_dim)
+    }
+
 private:
 
-    Index input_size;
+    Index query_sequence_length = 0;
 
-    Index context_size;
-
-    Index depth;
-
-    Index heads_number;
-
-    Index hidden_depth;
-
-    type scaling_factor = 1;
+    Index source_sequence_length = 0;
 
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
@@ -141,10 +160,9 @@ private:
 };
 
 
-struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
+struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 {
-
-    MultiheadAttentionLayerForwardPropagation(const Index& new_batch_samples_number = 0,
+    MultiheadAttentionForwardPropagation(const Index& new_batch_samples_number = 0,
                                               Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
@@ -168,10 +186,10 @@ struct MultiheadAttentionLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct MultiheadAttentionLayerBackPropagation : LayerBackPropagation
+struct MultiheadAttentionBackPropagation : LayerBackPropagation
 {
 
-    MultiheadAttentionLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    MultiheadAttentionBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

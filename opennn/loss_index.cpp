@@ -431,18 +431,12 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     const Index layers_number = neural_network->get_layers_number();
 
-    const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
-
     Index index = 0;
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
                                    index,
                                    back_propagation.gradient);
-
-        index += layer_parameter_numbers[i];
-    }
 }
 
 

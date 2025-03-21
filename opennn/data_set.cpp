@@ -402,6 +402,7 @@ namespace opennn
         const bool& shuffle,
         const Index& new_buffer_size) const
     {
+
         if (!shuffle) return split_samples(sample_indices, batch_samples_number);
 
         random_device rng;
@@ -418,14 +419,14 @@ namespace opennn
             : batches_number = samples_number / batch_size;
 
         vector<vector<Index>> batches(batches_number);
-
+        
         vector<Index> samples_copy(sample_indices);
 
         // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (Index i = 0; i < batches_number; i++)
         {
             batches[i].resize(batch_size);
@@ -435,7 +436,7 @@ namespace opennn
             for (Index j = 0; j < batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];
         }
-
+        
         return batches;
     }
 

@@ -45,10 +45,10 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
+    ProbabilisticLayer3DBackPropagation* probabilistic_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
-    probabilistic_layer_3d_back_propagation->targets = targets;
+    probabilistic_3d_back_propagation->targets = targets;
 
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;

@@ -73,7 +73,7 @@ public:
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
@@ -115,9 +115,9 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct EmbeddingLayerBackPropagation : LayerBackPropagation
+struct EmbeddingBackPropagation : LayerBackPropagation
 {
-    EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    EmbeddingBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -126,7 +126,7 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
     void print() const override;
 
     Tensor<type, 2> sample_deltas;
-    Tensor<type, 2> embedding_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 };
 
 #ifdef OPENNN_CUDA
