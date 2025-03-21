@@ -222,7 +222,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     //}
 
     // Validate synaptic weight derivatives
-    const Tensor<type, 4>& weight_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->synaptic_weight_derivatives;
+    const Tensor<type, 4>& weight_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->weight_derivatives;
     EXPECT_EQ(weight_derivatives.dimension(0), parameters.kernel_dimensions[3]);
     EXPECT_EQ(weight_derivatives.dimension(1), parameters.kernel_dimensions[0]);
     EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);

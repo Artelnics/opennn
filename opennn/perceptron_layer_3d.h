@@ -24,7 +24,7 @@ class PerceptronLayer3D : public Layer
 
 public:
 
-    enum class ActivationFunction{HyperbolicTangent,
+    enum class ActivationFunction{HyperbolicTangent, Logistic,
                                   Linear,
                                   RectifiedLinear};
 
@@ -96,7 +96,7 @@ public:
    void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index&,
+                        Index&,
                         Tensor<type, 1>&) const override;
 
    void from_XML(const XMLDocument&) override;
@@ -156,7 +156,7 @@ struct PerceptronLayer3DBackPropagation : LayerBackPropagation
     void print() const override;
 
     Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> synaptic_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 
     Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;

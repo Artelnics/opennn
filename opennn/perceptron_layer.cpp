@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
+Perceptron::Perceptron(const dimensions& new_input_dimensions,
                                  const dimensions& new_output_dimensions,
                                  const ActivationFunction& new_activation_function,
                                  const string& new_layer_name) : Layer()
@@ -25,58 +25,59 @@ PerceptronLayer::PerceptronLayer(const dimensions& new_input_dimensions,
 }
 
 
-dimensions PerceptronLayer::get_input_dimensions() const
+dimensions Perceptron::get_input_dimensions() const
 {
     return { weights.dimension(0) };
 }
 
 
-dimensions PerceptronLayer::get_output_dimensions() const
+dimensions Perceptron::get_output_dimensions() const
 {
     return { biases.size() };
 }
 
 
-void PerceptronLayer::set_dropout_rate(const type& new_dropout_rate)
+void Perceptron::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
 
-Index PerceptronLayer::get_parameters_number() const
+Index Perceptron::get_parameters_number() const
 {
     return biases.size() + weights.size();
 }
 
 
-type PerceptronLayer::get_dropout_rate() const
+type Perceptron::get_dropout_rate() const
 {
     return dropout_rate;
 }
 
 
-Tensor<type, 1> PerceptronLayer::get_parameters() const
+Tensor<type, 1> Perceptron::get_parameters() const
 {
     const Index weights_number = weights.size();
     const Index biases_number = biases.size();
 
     Tensor<type, 1> parameters(weights_number + biases_number);
 
-    memcpy(parameters.data(), weights.data(),weights_number*sizeof(type));
+    Index index = 0;
 
-    memcpy(parameters.data() + weights_number, biases.data(), biases_number*sizeof(type));
+    copy_to_vector(parameters, weights, index);
+    copy_to_vector(parameters, biases, index);
 
     return parameters;
 }
 
 
-const PerceptronLayer::ActivationFunction& PerceptronLayer::get_activation_function() const
+const Perceptron::ActivationFunction& Perceptron::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string PerceptronLayer::get_activation_function_string() const
+string Perceptron::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -112,9 +113,9 @@ string PerceptronLayer::get_activation_function_string() const
 }
 
 
-void PerceptronLayer::set(const dimensions& new_input_dimensions,
+void Perceptron::set(const dimensions& new_input_dimensions,
                           const dimensions& new_output_dimensions,
-                          const PerceptronLayer::ActivationFunction& new_activation_function,
+                          const Perceptron::ActivationFunction& new_activation_function,
                           const string& new_name)
 {
 
@@ -137,7 +138,7 @@ void PerceptronLayer::set(const dimensions& new_input_dimensions,
 }
 
 
-void PerceptronLayer::set_input_dimensions(const dimensions& new_input_dimensions)
+void Perceptron::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index inputs_number = new_input_dimensions[0];
     const Index outputs_number = get_outputs_number();
@@ -148,7 +149,7 @@ void PerceptronLayer::set_input_dimensions(const dimensions& new_input_dimension
 }
 
 
-void PerceptronLayer::set_output_dimensions(const dimensions& new_output_dimensions)
+void Perceptron::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = new_output_dimensions[0];
@@ -159,7 +160,7 @@ void PerceptronLayer::set_output_dimensions(const dimensions& new_output_dimensi
 }
 
 
-void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
 {   
     const type* new_parameters_data = new_parameters.data();
     type* weights_data = weights.data();
@@ -174,13 +175,13 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters, cons
 }
 
 
-void PerceptronLayer::set_activation_function(const PerceptronLayer::ActivationFunction& new_activation_function)
+void Perceptron::set_activation_function(const Perceptron::ActivationFunction& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void PerceptronLayer::set_activation_function(const string& new_activation_function_name)
+void Perceptron::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
         activation_function = ActivationFunction::Logistic;
@@ -205,7 +206,7 @@ void PerceptronLayer::set_activation_function(const string& new_activation_funct
 }
 
 
-void PerceptronLayer::set_parameters_constant(const type& value)
+void Perceptron::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
@@ -213,7 +214,7 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 }
 
 
-void PerceptronLayer::set_parameters_random()
+void Perceptron::set_parameters_random()
 {
     set_random(biases);
 
@@ -221,7 +222,7 @@ void PerceptronLayer::set_parameters_random()
 }
 
 
-void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
+void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
                                              Tensor<type, 2>& combinations) const
 {
 
@@ -232,7 +233,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 
-void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
+void Perceptron::dropout(Tensor<type, 2>& outputs) const
 {  
     const Index outputs_number = outputs.dimension(1);
 
@@ -248,7 +249,7 @@ void PerceptronLayer::dropout(Tensor<type, 2>& outputs) const
 }
 
 
-void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
+void Perceptron::calculate_activations(Tensor<type, 2>& activations,
                                             Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
@@ -276,15 +277,15 @@ void PerceptronLayer::calculate_activations(Tensor<type, 2>& activations,
 }
 
 
-void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool& is_training)
 {
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronLayerForwardPropagation*>(layer_forward_propagation.get());
+    PerceptronForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
@@ -316,7 +317,7 @@ void PerceptronLayer::forward_propagate(const vector<pair<type*, dimensions>>& i
 }
 
 
-void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      const vector<pair<type*, dimensions>>& delta_pairs,
                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -326,38 +327,38 @@ void PerceptronLayer::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
+    const PerceptronForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
+    PerceptronBackPropagation* perceptron_back_propagation =
+        static_cast<PerceptronBackPropagation*>(back_propagation.get());
     
-    Tensor<type, 2>& combination_derivatives = perceptron_layer_back_propagation->combination_derivatives;
+    Tensor<type, 2>& combination_derivatives = perceptron_back_propagation->combination_derivatives;
 
-    Tensor<type, 2>& synaptic_weight_derivatives = perceptron_layer_back_propagation->synaptic_weight_derivatives;
+    Tensor<type, 2>& weight_derivatives = perceptron_back_propagation->weight_derivatives;
 
-    Tensor<type, 1>& bias_derivatives = perceptron_layer_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_derivatives = perceptron_back_propagation->bias_derivatives;
 
-    const bool& is_first_layer = perceptron_layer_back_propagation->is_first_layer;
+    const bool& is_first_layer = perceptron_back_propagation->is_first_layer;
 
-    Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation->input_derivatives;
+    Tensor<type, 2>& input_derivatives = perceptron_back_propagation->input_derivatives;
     
     combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
 
     bias_derivatives.device(*thread_pool_device) = combination_derivatives.sum(sum_dimensions_1);
 
-    synaptic_weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
 
     if(!is_first_layer)
         input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
 }
 
 
-void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
+void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& delta_pairs,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagationLM>& back_propagation) const
@@ -372,8 +373,8 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    const PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.get());
+    const PerceptronForwardPropagation* perceptron_layer_forward_propagation =
+        static_cast<PerceptronForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& activation_derivatives
         = perceptron_layer_forward_propagation->activation_derivatives;
@@ -425,35 +426,19 @@ void PerceptronLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& i
 }
 
 
-void PerceptronLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                      const Index& index,
-                                      Tensor<type, 1>& gradient) const
+void Perceptron::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+                                 Index& index,
+                                 Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
+    PerceptronBackPropagation* perceptron_back_propagation =
+        static_cast<PerceptronBackPropagation*>(back_propagation.get());
 
-    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayerBackPropagation*>(back_propagation.get());
-
-    const Tensor<type, 2>& synaptic_weight_derivatives = perceptron_layer_back_propagation->synaptic_weight_derivatives;
-    const Tensor<type, 1>& bias_derivatives = perceptron_layer_back_propagation->bias_derivatives;
-
-    const type* weight_derivatives_data = synaptic_weight_derivatives.data();
-    const type* biases_derivatives_data = bias_derivatives.data();
-    type* gradient_data = gradient.data();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(gradient_data + index, weight_derivatives_data, weights_number * sizeof(type));
-
-        #pragma omp section
-        memcpy(gradient_data + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
-    }
+    copy_to_vector(gradient, perceptron_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, perceptron_back_propagation->bias_derivatives, index);
 }
 
 
-void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
+void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                         const Index& index,
                                                         Tensor<type, 2>& squared_errors_Jacobian) const
 {
@@ -471,7 +456,7 @@ void PerceptronLayer::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackProp
 }
 
 
-string PerceptronLayer::get_expression(const vector<string>& new_input_names,
+string Perceptron::get_expression(const vector<string>& new_input_names,
                                        const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
@@ -503,7 +488,7 @@ string PerceptronLayer::get_expression(const vector<string>& new_input_names,
 }
 
 
-void PerceptronLayer::print() const
+void Perceptron::print() const
 {
     cout << "Perceptron layer" << endl
          << "Input dimensions: " << get_input_dimensions()[0] << endl
@@ -521,12 +506,12 @@ void PerceptronLayer::print() const
 }
 
 
-void PerceptronLayer::from_XML(const XMLDocument& document)
+void Perceptron::from_XML(const XMLDocument& document)
 {
     const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron");
 
     if(!perceptron_layer_element)
-        throw runtime_error("PerceptronLayer element is nullptr.\n");
+        throw runtime_error("Perceptron element is nullptr.\n");
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
@@ -536,7 +521,7 @@ void PerceptronLayer::from_XML(const XMLDocument& document)
 }
 
 
-void PerceptronLayer::to_XML(XMLPrinter& printer) const
+void Perceptron::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Perceptron");
 
@@ -550,7 +535,7 @@ void PerceptronLayer::to_XML(XMLPrinter& printer) const
 }
 
 
-string PerceptronLayer::get_activation_function_string_expression() const
+string Perceptron::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
@@ -587,7 +572,7 @@ string PerceptronLayer::get_activation_function_string_expression() const
 }
 
 
-void PerceptronLayerForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
+void PerceptronForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
     
@@ -605,7 +590,7 @@ void PerceptronLayerForwardPropagation::set(const Index &new_samples_number, Lay
 }
 
 
-pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     
@@ -613,7 +598,7 @@ pair<type *, dimensions> PerceptronLayerForwardPropagation::get_outputs_pair() c
 }
 
 
-PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index &new_batch_samples_number,
+PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_samples_number,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
@@ -621,7 +606,7 @@ PerceptronLayerForwardPropagation::PerceptronLayerForwardPropagation(const Index
 }
 
 
-void PerceptronLayerForwardPropagation::print() const
+void PerceptronForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl
@@ -630,14 +615,14 @@ void PerceptronLayerForwardPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagation::PerceptronLayerBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
+PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-void PerceptronLayerBackPropagation::set(const Index &new_samples_number,
+void PerceptronBackPropagation::set(const Index &new_samples_number,
                                          Layer *new_layer)
 {
     layer = new_layer;
@@ -653,14 +638,14 @@ void PerceptronLayerBackPropagation::set(const Index &new_samples_number,
     bias_derivatives.resize(outputs_number);
     bias_derivatives.setZero();
 
-    synaptic_weight_derivatives.resize(inputs_number, outputs_number);
-    synaptic_weight_derivatives.setZero();
+    weight_derivatives.resize(inputs_number, outputs_number);
+    weight_derivatives.setZero();
 
     input_derivatives.resize(samples_number, inputs_number);
 }
 
 
-vector<pair<type*, dimensions>> PerceptronLayerBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> PerceptronBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -668,14 +653,14 @@ vector<pair<type*, dimensions>> PerceptronLayerBackPropagation::get_input_deriva
 }
 
 
-void PerceptronLayerBackPropagation::print() const
+void PerceptronBackPropagation::print() const
 {
     cout << "Error combinations derivatives:" << endl
          << combination_derivatives << endl
          << "Biases derivatives:" << endl
          << bias_derivatives << endl
          << "Synaptic weights derivatives:" << endl
-         << synaptic_weight_derivatives << endl;
+         << weight_derivatives << endl;
 }
 
 

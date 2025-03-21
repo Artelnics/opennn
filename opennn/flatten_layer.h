@@ -22,12 +22,12 @@ struct FlattenLayerForwardPropagationCuda;
 struct FlattenLayerBackPropagationCuda;
 #endif
 
-class FlattenLayer : public Layer
+class Flatten : public Layer
 {
 
 public:
 
-    FlattenLayer(const dimensions& = {0,0,0});
+    Flatten(const dimensions& = {0,0,0});
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;

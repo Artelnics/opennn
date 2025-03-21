@@ -28,13 +28,11 @@ public:
     EmbeddingLayer(const Index& = 0,
                    const Index& = 0,
                    const Index& = 0,
-                   const bool& = false,
                    const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
-    bool get_use_positional_encoding() const;
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -45,13 +43,11 @@ public:
     void set(const Index& = 0, 
              const Index& = 0, 
              const Index& = 0, 
-             const bool& = false, 
              const string & = "embedding_layer");
 
     void set_vocabulary_size(const Index&);
     void set_sequence_length(const Index&);
     void set_embedding_size(const Index&);
-    void set_use_positional_encoding(const bool&);
 
     void set_dropout_rate(const type&);
 
@@ -77,7 +73,7 @@ public:
     void add_deltas(const vector<pair<type*, dimensions>>&) const;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
@@ -94,8 +90,6 @@ private:
     Tensor<type, 2> weights;
 
     type dropout_rate;
-
-    bool use_positional_encoding;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
@@ -121,9 +115,9 @@ struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct EmbeddingLayerBackPropagation : LayerBackPropagation
+struct EmbeddingBackPropagation : LayerBackPropagation
 {
-    EmbeddingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    EmbeddingBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -132,7 +126,7 @@ struct EmbeddingLayerBackPropagation : LayerBackPropagation
     void print() const override;
 
     Tensor<type, 2> sample_deltas;
-    Tensor<type, 2> embedding_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 };
 
 #ifdef OPENNN_CUDA

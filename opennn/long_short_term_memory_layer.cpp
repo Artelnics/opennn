@@ -60,56 +60,20 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 
     Tensor<type, 1> parameters(parameters_number);
 
-    Index current_position = 0;
+    Index index = 0;
 
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(parameters.data(), forget_biases.data(), forget_biases.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + forget_biases.size(), input_biases.data(), input_biases.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + forget_biases.size() + input_biases.size(), state_biases.data(), state_biases.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + forget_biases.size() + input_biases.size() + state_biases.size(), output_biases.data(), output_biases.size() * sizeof(type));
-    }
-
-    current_position = forget_biases.size() + input_biases.size() + state_biases.size() + output_biases.size();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(parameters.data() + current_position, forget_weights.data(), forget_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_weights.size(), input_weights.data(), input_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_weights.size() + input_weights.size(), state_weights.data(), state_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_weights.size() + input_weights.size() + state_weights.size(), output_weights.data(), output_weights.size() * sizeof(type));
-    }
-
-    current_position += forget_weights.size() + input_weights.size() + state_weights.size() + output_weights.size();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(parameters.data() + current_position, forget_recurrent_weights.data(), forget_recurrent_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_recurrent_weights.size(), input_recurrent_weights.data(), input_recurrent_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_recurrent_weights.size() + input_recurrent_weights.size(), state_recurrent_weights.data(), state_recurrent_weights.size() * sizeof(type));
-
-        #pragma omp section
-        memcpy(parameters.data() + current_position + forget_recurrent_weights.size() + input_recurrent_weights.size() + state_recurrent_weights.size(), output_recurrent_weights.data(), output_recurrent_weights.size() * sizeof(type));
-    }
+    copy_to_vector(parameters, forget_biases, index);
+    copy_to_vector(parameters, input_biases, index);
+    copy_to_vector(parameters, state_biases, index);
+    copy_to_vector(parameters, output_biases, index);
+    copy_to_vector(parameters, forget_weights, index);
+    copy_to_vector(parameters, input_weights, index);
+    copy_to_vector(parameters, state_weights, index);
+    copy_to_vector(parameters, output_weights, index);
+    copy_to_vector(parameters, forget_recurrent_weights, index);
+    copy_to_vector(parameters, input_recurrent_weights, index);
+    copy_to_vector(parameters, state_recurrent_weights, index);
+    copy_to_vector(parameters, output_recurrent_weights, index);
 
     return parameters;
 }
@@ -656,28 +620,28 @@ void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimension
      LongShortTermMemoryLayerForwardPropagation* long_short_term_memory_layer_forward_propagation =
             static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.get());
 
-    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
+    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
 /*
     calculate_forget_parameter_derivatives(inputs,
                                             deltas,
                                             long_short_term_memory_layer_forward_propagation,
-                                            long_short_term_memory_layer_back_propagation);
+                                            long_short_term_memory_back_propagation);
 
     calculate_input_parameter_derivatives(inputs,
                                            deltas,
                                            long_short_term_memory_layer_forward_propagation,
-                                           long_short_term_memory_layer_back_propagation);
+                                           long_short_term_memory_back_propagation);
 
     calculate_state_parameter_derivatives(inputs,
                                            deltas,
                                            long_short_term_memory_layer_forward_propagation,
-                                           long_short_term_memory_layer_back_propagation);
+                                           long_short_term_memory_back_propagation);
 
     calculate_output_parameter_derivatives(inputs,
                                             deltas,
                                             long_short_term_memory_layer_forward_propagation,
-                                            long_short_term_memory_layer_back_propagation);
+                                            long_short_term_memory_back_propagation);
 */
 }
 
@@ -685,7 +649,7 @@ void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimension
 void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tensor<type, 2>& inputs,
                                                                       const Tensor<type, 2>& deltas,
                                                                       unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
-                                                                      unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
+                                                                      unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
 {
 /*
     const Index inputs_number = get_inputs_number();
@@ -735,35 +699,35 @@ void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tens
 
     // Back propagation
 
-    Tensor<type, 1>& current_deltas = long_short_term_memory_layer_back_propagation->current_deltas;
+    Tensor<type, 1>& current_deltas = long_short_term_memory_back_propagation->current_deltas;
 
-    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_biases_derivatives;
+    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_back_propagation->forget_combinations_biases_derivatives;
 
-    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_weights_derivatives;
-    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_biases_derivatives;
+    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_weights_derivatives;
+    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_back_propagation->input_combinations_biases_derivatives;
 
-    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_weights_derivatives;
-    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_biases_derivatives;
+    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_weights_derivatives;
+    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_back_propagation->state_combinations_biases_derivatives;
 
-    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_weights_derivatives;
-    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_biases_derivatives;
+    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_weights_derivatives;
+    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_back_propagation->output_combinations_biases_derivatives;
 
-    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_weights_derivatives;
-    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_layer_back_propagation->cell_states_biases_derivatives;
+    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_back_propagation->cell_states_weights_derivatives;
+    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_back_propagation->cell_states_biases_derivatives;
 
-    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_weights_derivatives;
-    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_biases_derivatives;
+    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_weights_derivatives;
+    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_back_propagation->hidden_states_biases_derivatives;
 
-    Tensor<type, 1>& forget_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_weights_derivatives;
-    Tensor<type, 1>& forget_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives;
-    Tensor<type, 1>& forget_biases_derivatives = long_short_term_memory_layer_back_propagation->forget_biases_derivatives;
+    Tensor<type, 1>& forget_weights_derivatives = long_short_term_memory_back_propagation->forget_weights_derivatives;
+    Tensor<type, 1>& forget_recurrent_weights_derivatives = long_short_term_memory_back_propagation->forget_recurrent_weights_derivatives;
+    Tensor<type, 1>& forget_biases_derivatives = long_short_term_memory_back_propagation->forget_biases_derivatives;
     forget_weights_derivatives.setZero();
     forget_recurrent_weights_derivatives.setZero();
     forget_biases_derivatives.setZero();
@@ -1000,7 +964,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tens
 void LongShortTermMemoryLayer::calculate_input_parameter_derivatives(const Tensor<type, 2>& inputs,
                                                                      const Tensor<type, 2>& deltas,
                                                                      unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
-                                                                     unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
+                                                                     unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
 {
 /*
     const Index inputs_number = get_inputs_number();
@@ -1050,35 +1014,35 @@ void LongShortTermMemoryLayer::calculate_input_parameter_derivatives(const Tenso
 
     // Back propagation
 
-    Tensor<type, 1>& current_deltas = long_short_term_memory_layer_back_propagation->current_deltas;
+    Tensor<type, 1>& current_deltas = long_short_term_memory_back_propagation->current_deltas;
 
-    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_biases_derivatives;
+    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_back_propagation->forget_combinations_biases_derivatives;
 
-    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_weights_derivatives;
-    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_biases_derivatives;
+    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_weights_derivatives;
+    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_back_propagation->input_combinations_biases_derivatives;
 
-    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_weights_derivatives;
-    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_biases_derivatives;
+    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_weights_derivatives;
+    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_back_propagation->state_combinations_biases_derivatives;
 
-    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_weights_derivatives;
-    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_biases_derivatives;
+    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_weights_derivatives;
+    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_back_propagation->output_combinations_biases_derivatives;
 
-    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_weights_derivatives;
-    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_layer_back_propagation->cell_states_biases_derivatives;
+    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_back_propagation->cell_states_weights_derivatives;
+    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_back_propagation->cell_states_biases_derivatives;
 
-    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_weights_derivatives;
-    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_biases_derivatives;
+    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_weights_derivatives;
+    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_back_propagation->hidden_states_biases_derivatives;
 
-    Tensor<type, 1>& input_weights_derivatives = long_short_term_memory_layer_back_propagation->input_weights_derivatives;
-    Tensor<type, 1>& input_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives;
-    Tensor<type, 1>& input_biases_derivatives = long_short_term_memory_layer_back_propagation->input_biases_derivatives;
+    Tensor<type, 1>& input_weights_derivatives = long_short_term_memory_back_propagation->input_weights_derivatives;
+    Tensor<type, 1>& input_recurrent_weights_derivatives = long_short_term_memory_back_propagation->input_recurrent_weights_derivatives;
+    Tensor<type, 1>& input_biases_derivatives = long_short_term_memory_back_propagation->input_biases_derivatives;
 
     input_weights_derivatives.setZero();
     input_recurrent_weights_derivatives.setZero();
@@ -1317,7 +1281,7 @@ void LongShortTermMemoryLayer::calculate_state_parameter_derivatives(
         const Tensor<type, 2>& inputs,
         const Tensor<type, 2>& deltas,
         unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
-        unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
+        unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
 {
 /*
     const Index inputs_number = get_inputs_number();
@@ -1367,35 +1331,35 @@ void LongShortTermMemoryLayer::calculate_state_parameter_derivatives(
 
     // Back propagation
 
-    Tensor<type, 1>& current_deltas = long_short_term_memory_layer_back_propagation->current_deltas;
+    Tensor<type, 1>& current_deltas = long_short_term_memory_back_propagation->current_deltas;
 
-    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_biases_derivatives;
+    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_back_propagation->forget_combinations_biases_derivatives;
 
-    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_weights_derivatives;
-    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_biases_derivatives;
+    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_weights_derivatives;
+    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_back_propagation->input_combinations_biases_derivatives;
 
-    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_weights_derivatives;
-    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_biases_derivatives;
+    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_weights_derivatives;
+    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_back_propagation->state_combinations_biases_derivatives;
 
-    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_weights_derivatives;
-    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_biases_derivatives;
+    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_weights_derivatives;
+    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_back_propagation->output_combinations_biases_derivatives;
 
-    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_weights_derivatives;
-    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_layer_back_propagation->cell_states_biases_derivatives;
+    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_back_propagation->cell_states_weights_derivatives;
+    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_back_propagation->cell_states_biases_derivatives;
 
-    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_weights_derivatives;
-    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_biases_derivatives;
+    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_weights_derivatives;
+    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_back_propagation->hidden_states_biases_derivatives;
 
-    Tensor<type, 1>& state_weights_derivatives = long_short_term_memory_layer_back_propagation->state_weights_derivatives;
-    Tensor<type, 1>& state_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives;
-    Tensor<type, 1>& state_biases_derivatives = long_short_term_memory_layer_back_propagation->state_biases_derivatives;
+    Tensor<type, 1>& state_weights_derivatives = long_short_term_memory_back_propagation->state_weights_derivatives;
+    Tensor<type, 1>& state_recurrent_weights_derivatives = long_short_term_memory_back_propagation->state_recurrent_weights_derivatives;
+    Tensor<type, 1>& state_biases_derivatives = long_short_term_memory_back_propagation->state_biases_derivatives;
     state_weights_derivatives.setZero();
     state_recurrent_weights_derivatives.setZero();
     state_biases_derivatives.setZero();
@@ -1633,7 +1597,7 @@ void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
     const Tensor<type, 2>& inputs,
     const Tensor<type, 2>& deltas,
     unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
-    unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_layer_back_propagation) const
+    unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
 {
 /*
     const Index inputs_number = get_inputs_number();
@@ -1683,35 +1647,35 @@ void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
 
     // Back propagation
 
-    Tensor<type, 1>& current_deltas = long_short_term_memory_layer_back_propagation->current_deltas;
+    Tensor<type, 1>& current_deltas = long_short_term_memory_back_propagation->current_deltas;
 
-    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->forget_combinations_biases_derivatives;
+    Tensor<type, 2>& forget_combinations_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->forget_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& forget_combinations_biases_derivatives = long_short_term_memory_back_propagation->forget_combinations_biases_derivatives;
 
-    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_weights_derivatives;
-    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->input_combinations_biases_derivatives;
+    Tensor<type, 2>& input_combinations_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_weights_derivatives;
+    Tensor<type, 2>& input_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->input_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& input_combinations_biases_derivatives = long_short_term_memory_back_propagation->input_combinations_biases_derivatives;
 
-    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_weights_derivatives;
-    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->state_combinations_biases_derivatives;
+    Tensor<type, 2>& state_combinations_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_weights_derivatives;
+    Tensor<type, 2>& state_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->state_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& state_combinations_biases_derivatives = long_short_term_memory_back_propagation->state_combinations_biases_derivatives;
 
-    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_weights_derivatives;
-    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_layer_back_propagation->output_combinations_biases_derivatives;
+    Tensor<type, 2>& output_combinations_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_weights_derivatives;
+    Tensor<type, 2>& output_combinations_recurrent_weights_derivatives = long_short_term_memory_back_propagation->output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2>& output_combinations_biases_derivatives = long_short_term_memory_back_propagation->output_combinations_biases_derivatives;
 
-    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_weights_derivatives;
-    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->cell_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_layer_back_propagation->cell_states_biases_derivatives;
+    Tensor<type, 2>& cell_states_weights_derivatives = long_short_term_memory_back_propagation->cell_states_weights_derivatives;
+    Tensor<type, 2>& cell_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& cell_states_biases_derivatives = long_short_term_memory_back_propagation->cell_states_biases_derivatives;
 
-    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_weights_derivatives;
-    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_layer_back_propagation->hidden_states_biases_derivatives;
+    Tensor<type, 2>& hidden_states_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_weights_derivatives;
+    Tensor<type, 2>& hidden_states_recurrent_weights_derivatives = long_short_term_memory_back_propagation->hidden_states_recurrent_weights_derivatives;
+    Tensor<type, 2>& hidden_states_biases_derivatives = long_short_term_memory_back_propagation->hidden_states_biases_derivatives;
 
-    Tensor<type, 1>& output_weights_derivatives = long_short_term_memory_layer_back_propagation->output_weights_derivatives;
-    Tensor<type, 1>& output_recurrent_weights_derivatives = long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives;
-    Tensor<type, 1>& output_biases_derivatives = long_short_term_memory_layer_back_propagation->output_biases_derivatives;
+    Tensor<type, 1>& output_weights_derivatives = long_short_term_memory_back_propagation->output_weights_derivatives;
+    Tensor<type, 1>& output_recurrent_weights_derivatives = long_short_term_memory_back_propagation->output_recurrent_weights_derivatives;
+    Tensor<type, 1>& output_biases_derivatives = long_short_term_memory_back_propagation->output_biases_derivatives;
     output_weights_derivatives.setZero();
     output_recurrent_weights_derivatives.setZero();
     output_biases_derivatives.setZero();
@@ -1946,70 +1910,32 @@ void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
 
 
 void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                               const Index& index,
+                                               Index& index,
                                                Tensor<type, 1>& gradient) const
 {    
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_layer_back_propagation =
+    LongShortTermMemoryLayerBackPropagation* long_short_term_memory_back_propagation =
             static_cast<LongShortTermMemoryLayerBackPropagation*>(back_propagation.get());
-
-    type* gradient_data = gradient.data();
 
     // Biases
 
-    copy(long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_biases_derivatives.data() + outputs_number,
-         gradient_data + index);
-
-    copy(long_short_term_memory_layer_back_propagation->input_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_biases_derivatives.data() + outputs_number,
-         gradient_data + index + outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->state_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_biases_derivatives.data() + outputs_number,
-         gradient_data + index + 2*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->output_biases_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_biases_derivatives.data() + outputs_number,
-         gradient_data + index + 3*outputs_number);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->forget_biases_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->input_biases_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->state_biases_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->output_biases_derivatives, index);
 
     // Weights
 
-    copy(long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_weights_derivatives.data() + inputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->input_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_weights_derivatives.data() + inputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + inputs_number*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->state_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_weights_derivatives.data() + inputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 2*inputs_number*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->output_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_weights_derivatives.data() + inputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 3*inputs_number*outputs_number);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->forget_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->input_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->state_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->output_weights_derivatives, index);
 
     // Recurrent weights
 
-    copy(long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->forget_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->input_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + outputs_number*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->state_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + 2*outputs_number*outputs_number);
-
-    copy(long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data(),
-         long_short_term_memory_layer_back_propagation->output_recurrent_weights_derivatives.data() + outputs_number*outputs_number,
-         gradient_data + index + 4*outputs_number + 4*inputs_number*outputs_number + 3*outputs_number*outputs_number);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->forget_recurrent_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->input_recurrent_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->state_recurrent_weights_derivatives, index);
+    copy_to_vector(gradient, long_short_term_memory_back_propagation->output_recurrent_weights_derivatives, index);
 }
 
 

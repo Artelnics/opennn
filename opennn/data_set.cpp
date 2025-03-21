@@ -153,16 +153,18 @@ namespace opennn
     void DataSet::RawVariable::print() const
     {
         cout << "Raw variable" << endl
-            << "Name: " << name << endl
-            << "Use: " << get_use_string() << endl
-            << "Type: " << get_type_string() << endl
-            << "Scaler: " << scaler_to_string(scaler) << endl;
+             << "Name: " << name << endl
+             << "Use: " << get_use_string() << endl
+             << "Type: " << get_type_string() << endl
+             << "Scaler: " << scaler_to_string(scaler) << endl;
 
         if (categories.size() != 0)
         {
             cout << "Categories: " << endl;
             print_vector(categories);
         }
+
+        cout << endl;
     }
 
 
@@ -400,6 +402,7 @@ namespace opennn
         const bool& shuffle,
         const Index& new_buffer_size) const
     {
+
         if (!shuffle) return split_samples(sample_indices, batch_samples_number);
 
         random_device rng;
@@ -416,14 +419,14 @@ namespace opennn
             : batches_number = samples_number / batch_size;
 
         vector<vector<Index>> batches(batches_number);
-
+        
         vector<Index> samples_copy(sample_indices);
 
         // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (Index i = 0; i < batches_number; i++)
         {
             batches[i].resize(batch_size);
@@ -433,7 +436,7 @@ namespace opennn
             for (Index j = 0; j < batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];
         }
-
+        
         return batches;
     }
 
@@ -662,7 +665,7 @@ namespace opennn
     }
 
 
-    void DataSet::set_default_raw_variables_names()
+    void DataSet::set_default_raw_variable_names()
     {
         const Index raw_variables_number = raw_variables.size();
 
@@ -1781,7 +1784,7 @@ namespace opennn
 
         missing_values_label = "NA";
 
-        set_default_raw_variables_names();
+        set_default_raw_variable_names();
     }
 
 
@@ -3033,9 +3036,9 @@ namespace opennn
         print_vector(get_dimensions(DataSet::VariableUse::Target));
 
         cout << "Number of training samples: " << training_samples_number << endl
-            << "Number of selection samples: " << selection_samples_number << endl
-            << "Number of testing samples: " << testing_samples_number << endl
-            << "Number of unused samples: " << unused_samples_number << endl;
+             << "Number of selection samples: " << selection_samples_number << endl
+             << "Number of testing samples: " << testing_samples_number << endl
+             << "Number of unused samples: " << unused_samples_number << endl;
 
         const Index raw_variables_number = get_raw_variables_number();
 
@@ -3929,7 +3932,7 @@ namespace opennn
         else
         {
             samples_number++;
-            set_default_raw_variables_names();
+            set_default_raw_variable_names();
         }
 
         // Rest of lines
