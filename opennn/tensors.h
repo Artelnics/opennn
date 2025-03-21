@@ -256,6 +256,20 @@ void print_vector(const vector<T>& vec)
 }
 
 
+template <typename T>
+void print_vector(const vector<vector<T>>& vec)
+{
+    cout << "[ ";
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+        print_vector(vec[i]);
+        if (i < vec.size() - 1)
+            cout << ";";
+    }
+
+    cout << " ]\n";
+}
+
 void print_pairs(const vector<pair<string, Index>>&);
 
 

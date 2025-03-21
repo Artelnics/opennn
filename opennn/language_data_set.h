@@ -64,6 +64,8 @@ private:
     Index target_vocabulary_size = 0;
     Index input_vocabulary_size = 0;
 
+    bool has_decoder = true;
+
     const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
     struct WordpieceAlgorithmParameters

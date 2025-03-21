@@ -153,16 +153,18 @@ namespace opennn
     void DataSet::RawVariable::print() const
     {
         cout << "Raw variable" << endl
-            << "Name: " << name << endl
-            << "Use: " << get_use_string() << endl
-            << "Type: " << get_type_string() << endl
-            << "Scaler: " << scaler_to_string(scaler) << endl;
+             << "Name: " << name << endl
+             << "Use: " << get_use_string() << endl
+             << "Type: " << get_type_string() << endl
+             << "Scaler: " << scaler_to_string(scaler) << endl;
 
         if (categories.size() != 0)
         {
             cout << "Categories: " << endl;
             print_vector(categories);
         }
+
+        cout << endl;
     }
 
 
@@ -3033,9 +3035,9 @@ namespace opennn
         print_vector(get_dimensions(DataSet::VariableUse::Target));
 
         cout << "Number of training samples: " << training_samples_number << endl
-            << "Number of selection samples: " << selection_samples_number << endl
-            << "Number of testing samples: " << testing_samples_number << endl
-            << "Number of unused samples: " << unused_samples_number << endl;
+             << "Number of selection samples: " << selection_samples_number << endl
+             << "Number of testing samples: " << testing_samples_number << endl
+             << "Number of unused samples: " << unused_samples_number << endl;
 
         const Index raw_variables_number = get_raw_variables_number();
 

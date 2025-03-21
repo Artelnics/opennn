@@ -30,38 +30,35 @@ int main()
 
         // Data set
 
-        //LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
-        LanguageDataSet language_data_set("C:/sentiment_analysis.csv");
-        language_data_set.print();
+        // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
+        LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
-        const Index input_length = language_data_set.get_input_length();
-        const Index decoder_length = language_data_set.get_target_length();
+        // language_data_set.print_raw_variables();
+        language_data_set.print_data();
 
-        cout << "Input length: " << input_length << endl;
-        cerr << "Decoder length: " << decoder_length << endl;
+        // const Index input_length = language_data_set.get_input_length();
+        // const Index decoder_length = language_data_set.get_target_length();
 
-        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
-
-        cout << "input vocabulary size: " << input_vocabulary_size << endl;
-        cout << "decoder vocabulary size: " << target_vocabulary_size << endl;
+        // const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
+        // const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
         const Index maximum_sequence_length = 8;
-        const Index vocab_size = 50;
+        const Index vocabulary_size = 50;
         const Index embedding_dimension = 6;
         const Index heads_number = 1;
         const Index num_classes = 2;
 
         NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<EmbeddingLayer>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding_layer"));
+        //neural_network.add_layer(make_unique<MultiHeadAttentionLayer>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
+        //neural_network.set_layer_inputs_indices("Multihead_attention", { "Embedding_layer", "Embedding_layer" });
+        neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 1, PerceptronLayer3D::ActivationFunction::Logistic));
 
-        neural_network.add_layer(make_unique<EmbeddingLayer>(vocab_size, maximum_sequence_length, embedding_dimension));
-        neural_network.add_layer(make_unique<MultiHeadAttentionLayer>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
-        neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 64));
-        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
+        //neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, neural_network.get_output_dimensions()[1], num_classes));
 
-        cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
+        // cout << "Parameters number: " << neural_network.get_layers()[3]->get_parameters_number() << endl;
 
-
+//        print_vector(neural_network.get_layers()[2]->get_output_dimensions());
 
 
 /*

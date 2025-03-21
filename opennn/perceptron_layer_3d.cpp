@@ -283,6 +283,7 @@ void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tens
     case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
     case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
 
     default: return;
     }
