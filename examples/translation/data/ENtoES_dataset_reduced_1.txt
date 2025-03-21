@@ -48,4 +48,4 @@ This food is too salty.	Esta comida esta muy salada.
 Tom decided.	Tom decidio.
 I assumed you were happy.	Asumi que eras feliz.
 A whale is a mammal.	Las ballenas son mamiferos.
-If I had to say who is the best magician in the whole world I would doubt, it is due to the fact that a lot of magicians are really good doing their job.	Si tuviese que decir quien es el  mejor mago del mundo dudaría, esto se debe al hecho de que muchos magos son muy buenos haciendo su trabajo.
+If I had to say who is the best magician in the whole world I would doubt because a lot of magicians are really good doing their job.	Si tuviese que decir quien es el  mejor mago del mundo dudaria porque muchos magos son muy buenos haciendo su trabajo.

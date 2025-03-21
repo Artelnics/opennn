@@ -48,7 +48,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> combination_derivatives;
 
     Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> synaptic_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 
     Tensor<type, 2> input_derivatives;
 };
@@ -108,7 +108,7 @@ public:
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_decision_threshold(const type&);
 
     void set_activation_function(const ActivationFunction&);
@@ -137,7 +137,7 @@ public:
                            unique_ptr<LayerBackPropagationLM>&) const override;
 */
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,

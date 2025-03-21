@@ -256,6 +256,20 @@ void print_vector(const vector<T>& vec)
 }
 
 
+template <typename T>
+void print_vector(const vector<vector<T>>& vec)
+{
+    cout << "[ ";
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+        print_vector(vec[i]);
+        if (i < vec.size() - 1)
+            cout << ";";
+    }
+
+    cout << " ]\n";
+}
+
 void print_pairs(const vector<pair<string, Index>>&);
 
 
@@ -328,6 +342,22 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
         }
 
     return true;
+}
+
+
+template <int rank>
+void copy_from_vector(Tensor<type, rank>& destination, const Tensor<type, 1>& source, Index& index) {
+    memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
+    index += destination.size();
+}
+
+
+template <int rank>
+void copy_to_vector(Tensor<type, 1>& destination, const Tensor<type, rank>& source, Index& index)
+{
+    memcpy(destination.data() + index, source.data(), source.size() * sizeof(type));
+
+    index += source.size();
 }
 
 }

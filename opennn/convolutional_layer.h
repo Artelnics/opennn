@@ -101,7 +101,7 @@ public:
     void set_convolution_type(const ConvolutionType&);
     void set_convolution_type(const string&);
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_row_stride(const Index&);
 
@@ -141,7 +141,7 @@ public:
                        unique_ptr<LayerBackPropagation>&) const override;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index&,
+                        Index&,
                         Tensor<type, 1>&) const override;
 
    void from_XML(const XMLDocument&) override;
@@ -232,7 +232,7 @@ struct ConvolutionalLayerBackPropagation : LayerBackPropagation
    Tensor<type, 4> input_derivatives;
 
    Tensor<type, 1> bias_derivatives;
-   Tensor<type, 4> synaptic_weight_derivatives;
+   Tensor<type, 4> weight_derivatives;
 
    Tensor<type, 4> rotated_weights;
 

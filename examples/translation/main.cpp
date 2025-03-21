@@ -30,23 +30,61 @@ int main()
 
         // Data set
 
-        LanguageDataSet language_data_set("../data/ENtoES_dataset_reduced_4.txt");
+        // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
+        LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
-        const Index input_length = language_data_set.get_input_length();
-        const Index decoder_length = language_data_set.get_target_length();
+        // language_data_set.print_raw_variables();
+        // language_data_set.print_data();
 
-        cout << "Input length: " << input_length << endl;
-        cerr << "Decoder length: " << decoder_length << endl;
+        // const Index input_length = language_data_set.get_input_length();
+        // const Index decoder_length = language_data_set.get_target_length();
 
-        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
+        // const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
+        // const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index embedding_dimension = 1/*64*/;
-        const Index perceptron_depth = 1/*128*/;
-        const Index heads_number = 1/*4*/;
+        const Index maximum_sequence_length = 8;
+        const Index vocabulary_size = 50;
+        const Index embedding_dimension = 6;
+        const Index heads_number = 1;
+        const Index num_classes = 2;
+
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<EmbeddingLayer>(vocabulary_size, maximum_sequence_length, embedding_dimension));
+        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
+        // neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 64));
+        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
+
+        cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
+
+        // cout << "Parameters number: " << neural_network.get_layers()[3]->get_parameters_number() << endl;
+
+        print_vector(neural_network.get_layers()[0]->get_output_dimensions());
+
+        TrainingStrategy training_strategy(&neural_network, &language_data_set);
+
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+
+        AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
+
+        adaptive_moment_estimation->set_loss_goal(0.5);
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
+        adaptive_moment_estimation->set_maximum_time(59400);
+        adaptive_moment_estimation->set_batch_samples_number(12);
+        adaptive_moment_estimation->set_display_period(1);
+
+        // training_strategy.perform_training();
+/*
+
+
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
+        const Index heads_number = 4;
         const Index layers_number = 1;
-
-        // Neural network
+      // Neural network
         
         Transformer transformer(decoder_length,
                                 input_length,
@@ -72,7 +110,7 @@ int main()
         XMLPrinter printer;
         language_data_set.to_XML(printer);
         file << printer.CStr();
-*/
+
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -85,15 +123,13 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); ???
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); 
         adaptive_moment_estimation->set_loss_goal(0.5);
-        adaptive_moment_estimation->set_maximum_epochs_number(100/*00*/);
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(512);
         adaptive_moment_estimation->set_display_period(1);
         adaptive_moment_estimation->set_display(false);
-
-        //@TODO CHECK WHY THE NUMERICAL GRADIENT IS 0 EXCEPT FOR THE PROBABILISTIC LAYER TERMS OF THE GRADIENT
 
         // TrainingResults training_results = training_strategy.perform_training();
 
@@ -121,15 +157,11 @@ int main()
 
         // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
 
-        cout << "LLega bien" << endl;
-
         string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
 
-        cout << "Sale" << endl;
+        cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
-        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
-/*
 
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;

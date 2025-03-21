@@ -55,7 +55,7 @@ public:
    void set_input_dimensions(const dimensions&) override;
    void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    // Activation functions
 
@@ -95,7 +95,7 @@ public:
    // Back propagation
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index& ,
+                        Index& ,
                         Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,

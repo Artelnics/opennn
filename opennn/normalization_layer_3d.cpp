@@ -63,9 +63,10 @@ Tensor<type, 1> NormalizationLayer3D::get_parameters() const
 {
     Tensor<type, 1> parameters(gammas.size() + betas.size());
 
-    memcpy(parameters.data(), gammas.data(), gammas.size()*sizeof(type));
+    Index index = 0;
 
-    memcpy(parameters.data() + gammas.size(), betas.data(), betas.size()*sizeof(type));
+    copy_to_vector(parameters, gammas, index);
+    copy_to_vector(parameters, betas, index);
 
     return parameters;
 }
@@ -102,11 +103,10 @@ void NormalizationLayer3D::set_embedding_dimension(const Index& new_inputs_depth
 }
 
 
-void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void NormalizationLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    memcpy(gammas.data(), new_parameters.data() + index, gammas.size()*sizeof(type));
-
-    memcpy(betas.data(), new_parameters.data() + index + gammas.size(), betas.size()*sizeof(type));
+    copy_from_vector(gammas, new_parameters, index);
+    copy_from_vector(betas, new_parameters, index);
 }
 
 
@@ -200,23 +200,23 @@ void NormalizationLayer3D::back_propagate(const vector<pair<type*, dimensions>>&
 
     // Back propagation
 
-    NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
+    NormalizationLayer3DBackPropagation* normalization_3d_back_propagation =
         static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.get());
     
-    Tensor<type, 1>& gammas_derivatives = normalization_layer_3d_back_propagation->gammas_derivatives;
-    Tensor<type, 1>& betas_derivatives = normalization_layer_3d_back_propagation->betas_derivatives;
+    Tensor<type, 1>& gamma_derivatives = normalization_3d_back_propagation->gamma_derivatives;
+    Tensor<type, 1>& beta_derivatives = normalization_3d_back_propagation->beta_derivatives;
 
-    Tensor<type, 3>& scaled_deltas = normalization_layer_3d_back_propagation->scaled_deltas;
-    Tensor<type, 3>& standard_deviation_derivatives = normalization_layer_3d_back_propagation->standard_deviation_derivatives;
-    Tensor<type, 2>& aux_2d = normalization_layer_3d_back_propagation->aux_2d;
+    Tensor<type, 3>& scaled_deltas = normalization_3d_back_propagation->scaled_deltas;
+    Tensor<type, 3>& standard_deviation_derivatives = normalization_3d_back_propagation->standard_deviation_derivatives;
+    Tensor<type, 2>& aux_2d = normalization_3d_back_propagation->aux_2d;
 
-    Tensor<type, 3>& input_derivatives = normalization_layer_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_derivatives = normalization_3d_back_propagation->input_derivatives;
     
     // Parameters derivatives
     
-    gammas_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(sum_dimensions_2);
+    gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(sum_dimensions_2);
     
-    betas_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
+    beta_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
 
@@ -252,27 +252,14 @@ void NormalizationLayer3D::add_deltas(const vector<pair<type*, dimensions>>& del
 
 
 void NormalizationLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                           const Index& index,
+                                           Index& index,
                                            Tensor<type, 1>& gradient) const
 {
-    const Index gammas_number = gammas.size();
-    const Index betas_number = betas.size();
-
-    NormalizationLayer3DBackPropagation* normalization_layer_3d_back_propagation =
+    NormalizationLayer3DBackPropagation* normalization_3d_back_propagation =
         static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.get());
 
-    const type* gammas_derivatives_data = normalization_layer_3d_back_propagation->gammas_derivatives.data();
-    const type* betas_derivatives_data = normalization_layer_3d_back_propagation->betas_derivatives.data();
-    type* gradient_data = gradient.data();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(gradient_data + index, gammas_derivatives_data, gammas_number * sizeof(type));
-
-        #pragma omp section
-        memcpy(gradient_data + index + gammas_number, betas_derivatives_data, betas_number * sizeof(type));
-    }
+    copy_to_vector(gradient, normalization_3d_back_propagation->gamma_derivatives, index);
+    copy_to_vector(gradient, normalization_3d_back_propagation->beta_derivatives, index);
 }
 
 
@@ -289,7 +276,9 @@ void NormalizationLayer3D::from_XML(const XMLDocument& document)
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 
-    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "));
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(normalization_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -360,8 +349,8 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_samples_number, L
     const Index sequence_length = normalization_layer_3d->get_sequence_length();
     const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
 
-    gammas_derivatives.resize(embedding_dimension);
-    betas_derivatives.resize(embedding_dimension);
+    gamma_derivatives.resize(embedding_dimension);
+    beta_derivatives.resize(embedding_dimension);
 
     scaled_deltas.resize(samples_number, sequence_length, embedding_dimension);
     standard_deviation_derivatives.resize(samples_number, sequence_length, embedding_dimension);
@@ -374,9 +363,9 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_samples_number, L
 void NormalizationLayer3DBackPropagation::print() const
 {
     cout << "Gammas derivatives:" << endl
-        << gammas_derivatives << endl
+        << gamma_derivatives << endl
         << "Betas derivatives:" << endl
-        << betas_derivatives << endl;
+        << beta_derivatives << endl;
 }
 
 

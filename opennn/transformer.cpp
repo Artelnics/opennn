@@ -67,7 +67,6 @@ void Transformer::set(const Index& new_decoder_length,
     add_layer(make_unique<EmbeddingLayer>(new_decoder_dimensions,
                                           new_decoder_length,
                                           new_embedding_dimension,
-                                          true, 
                                           "decoder_embedding"));
 
     set_layer_inputs_indices("decoder_embedding", "decoder");
@@ -76,7 +75,6 @@ void Transformer::set(const Index& new_decoder_length,
     add_layer(make_unique<EmbeddingLayer>(new_input_dimension,
                                           new_input_length,
                                           new_embedding_dimension,
-                                          true,
                                           "input_embedding"));
 
     set_layer_inputs_indices("input_embedding", "input");
@@ -86,7 +84,7 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiheadAttentionLayer>(new_input_length,
+        add_layer(make_unique<MultiHeadAttention>(new_input_length,
                                                        new_input_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
@@ -158,11 +156,11 @@ void Transformer::set(const Index& new_decoder_length,
 
     for(Index i = 0; i < new_blocks_number; i++)
     {
-        add_layer(make_unique<MultiheadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
                                                        new_decoder_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
-                                                       false,
+                                                       false, // chatgpt says that here uses causal mask???
                                                        "decoder_self_attention_" + to_string(i+1)));
 
         i == 0
@@ -184,7 +182,7 @@ void Transformer::set(const Index& new_decoder_length,
 
         set_layer_inputs_indices("decoder_self_attention_normalization_" + to_string(i+1), "decoder_self_attention_addition_" + to_string(i+1));
 
-        add_layer(make_unique<MultiheadAttentionLayer>(new_decoder_length,
+        add_layer(make_unique<MultiHeadAttention>(new_decoder_length,
                                                        new_input_length,        //previously called context length
                                                        new_embedding_dimension,
                                                        new_heads_number,
@@ -281,7 +279,7 @@ Index Transformer::get_decoder_length() const
 {
     return decoder_length;
 }
-
+/*
 // string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
 // {
 //     type start_indicator = 1;
@@ -348,7 +346,7 @@ Index Transformer::get_decoder_length() const
 //     return output_string.str();
 
 // }
-
+*/
 
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
@@ -401,7 +399,6 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     Tensor<Index, 0> prediction;
 
-    cout << "Reachs this point (Transformer calculate output)" << endl;
     for(Index i = 1; i < input_length; i++)
     {
         forward_propagate(input_pairs, forward_propagation, false);
@@ -416,7 +413,6 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
             break;
     }
 
-    cout << "Reachs this point (Transformer calculate output)" << endl;
     ostringstream output_buffer;
 
     //if(!imported_vocabulary)    
@@ -450,7 +446,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
     return tensor_map_3(output_pair);
 }
 
-
+/*
 // void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 // {
 //     const Index context_vocabulary_size = input_vocabulary.size();
@@ -481,7 +477,7 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 //         }
 //     }
 // }
-
+*/
 
 void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
@@ -593,7 +589,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     }
 }
 
-
+/*
 //void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 //{
     // @todo prediction is of rank 2 but only one loop. Why?
@@ -605,7 +601,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
 //        output_string << input_vocabulary[Index(predictions(i))] << " ";
 //    }
 //}
-
+*/
 void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
     for(Index i = 1; i < decoder_length; i++)

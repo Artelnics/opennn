@@ -73,9 +73,10 @@ Tensor<type, 1> ProbabilisticLayer::get_parameters() const
 
     Tensor<type, 1> parameters(weights_number + biases_number);
 
-    memcpy(parameters.data(), weights.data(), weights_number*sizeof(type));
+    Index index = 0;
 
-    memcpy(parameters.data() + weights_number, biases.data(), biases_number*sizeof(type));
+    copy_to_vector(parameters, weights, index);
+    copy_to_vector(parameters, biases, index);
 
     return parameters;
 }
@@ -130,14 +131,10 @@ void ProbabilisticLayer::set_output_dimensions(const dimensions& new_output_dime
 }
 
 
-void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void ProbabilisticLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
-
-    memcpy(weights.data(), new_parameters.data() + index, weights_number*sizeof(type));
-
-    memcpy(biases.data(), new_parameters.data() + index + weights_number, biases_number*sizeof(type));
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -261,12 +258,12 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Back propagation
 
-    ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+    ProbabilisticLayerBackPropagation* probabilistic_back_propagation =
             static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
+    Tensor<type, 2>& input_derivatives = probabilistic_back_propagation->input_derivatives;
 
-    Tensor<type, 2>& combination_derivatives = probabilistic_layer_back_propagation->combination_derivatives;
+    Tensor<type, 2>& combination_derivatives = probabilistic_back_propagation->combination_derivatives;
 
     if(outputs_number == 1)
     {
@@ -279,11 +276,11 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
         combination_derivatives.device(*thread_pool_device) = deltas;
     }
 
-    Tensor<type, 1>& bias_derivatives = probabilistic_layer_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_derivatives = probabilistic_back_propagation->bias_derivatives;
 
-    Tensor<type, 2>& synaptic_weight_derivatives = probabilistic_layer_back_propagation->synaptic_weight_derivatives;
+    Tensor<type, 2>& weight_derivatives = probabilistic_back_propagation->weight_derivatives;
 
-    synaptic_weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
 
     bias_derivatives.device(*thread_pool_device) = combination_derivatives.sum(sum_dimensions);
 
@@ -353,26 +350,14 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 */
 
 void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         const Index& index,
+                                         Index& index,
                                          Tensor<type, 1>& gradient) const
 {
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
-
-    const ProbabilisticLayerBackPropagation* probabilistic_layer_back_propagation =
+    const ProbabilisticLayerBackPropagation* probabilistic_back_propagation =
         static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
 
-    const type* weight_derivatives_data = probabilistic_layer_back_propagation->synaptic_weight_derivatives.data();
-    const type* biases_derivatives_data = probabilistic_layer_back_propagation->bias_derivatives.data();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(gradient.data() + index, weight_derivatives_data, weights_number * sizeof(type));
-
-        #pragma omp section
-        memcpy(gradient.data() + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
-    }
+    copy_to_vector(gradient, probabilistic_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, probabilistic_back_propagation->bias_derivatives, index);
 }
 
 
@@ -439,7 +424,10 @@ void ProbabilisticLayer::from_XML(const XMLDocument& document)
     set({ new_inputs_number }, { new_neurons_number });
 
     set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "));
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
     set_decision_threshold(read_xml_type(probabilistic_layer_element, "DecisionThreshold"));
 }
 
@@ -645,7 +633,7 @@ void ProbabilisticLayerBackPropagation::set(const Index &new_samples_number, Lay
 
     bias_derivatives.resize(outputs_number);
 
-    synaptic_weight_derivatives.resize(inputs_number, outputs_number);
+    weight_derivatives.resize(inputs_number, outputs_number);
 
     combination_derivatives.resize(samples_number, outputs_number);
 
@@ -666,7 +654,7 @@ void ProbabilisticLayerBackPropagation::print() const
     cout << "Biases derivatives:" << endl
          << bias_derivatives << endl
          << "Synaptic weights derivatives:" << endl
-         << synaptic_weight_derivatives << endl;
+         << weight_derivatives << endl;
 }
 
 

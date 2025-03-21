@@ -153,16 +153,18 @@ namespace opennn
     void DataSet::RawVariable::print() const
     {
         cout << "Raw variable" << endl
-            << "Name: " << name << endl
-            << "Use: " << get_use_string() << endl
-            << "Type: " << get_type_string() << endl
-            << "Scaler: " << scaler_to_string(scaler) << endl;
+             << "Name: " << name << endl
+             << "Use: " << get_use_string() << endl
+             << "Type: " << get_type_string() << endl
+             << "Scaler: " << scaler_to_string(scaler) << endl;
 
         if (categories.size() != 0)
         {
             cout << "Categories: " << endl;
             print_vector(categories);
         }
+
+        cout << endl;
     }
 
 
@@ -400,6 +402,7 @@ namespace opennn
         const bool& shuffle,
         const Index& new_buffer_size) const
     {
+
         if (!shuffle) return split_samples(sample_indices, batch_samples_number);
 
         random_device rng;
@@ -416,14 +419,14 @@ namespace opennn
             : batches_number = samples_number / batch_size;
 
         vector<vector<Index>> batches(batches_number);
-
+        
         vector<Index> samples_copy(sample_indices);
 
         // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
-#pragma omp parallel for
+        #pragma omp parallel for
         for (Index i = 0; i < batches_number; i++)
         {
             batches[i].resize(batch_size);
@@ -433,7 +436,7 @@ namespace opennn
             for (Index j = 0; j < batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];
         }
-
+        
         return batches;
     }
 
@@ -662,7 +665,7 @@ namespace opennn
     }
 
 
-    void DataSet::set_default_raw_variables_names()
+    void DataSet::set_default_raw_variable_names()
     {
         const Index raw_variables_number = raw_variables.size();
 
@@ -1781,7 +1784,7 @@ namespace opennn
 
         missing_values_label = "NA";
 
-        set_default_raw_variables_names();
+        set_default_raw_variable_names();
     }
 
 
@@ -2184,6 +2187,58 @@ namespace opennn
                 || data(training_index, target_index) < type(0))
                 throw runtime_error("Training sample is neither a positive nor a negative: "
                     + to_string(training_index) + "-" + to_string(target_index) + "-" + to_string(data(training_index, target_index)));
+        }
+
+        return negatives;
+    }
+
+
+    Index DataSet::calculate_negatives(const Index& target_index, const SampleUse& sample_use) const
+    {
+        Index negatives = 0;
+        vector<Index> indices;
+        Index samples_number = 0;
+        
+        switch (sample_use)
+        {
+        case SampleUse::Training:
+            indices = get_sample_indices(DataSet::SampleUse::Training);
+            samples_number = get_samples_number(DataSet::SampleUse::Training);
+            break;
+        case SampleUse::Selection:
+            indices = get_sample_indices(DataSet::SampleUse::Selection);
+            samples_number = get_samples_number(DataSet::SampleUse::Selection);
+            break;
+        case SampleUse::Testing:
+            indices = get_sample_indices(DataSet::SampleUse::Testing);
+            samples_number = get_samples_number(DataSet::SampleUse::Testing);
+            break;
+        default:
+            throw runtime_error("Invalid SampleUse");
+        }
+
+        for (Index i = 0; i < samples_number; i++)
+        {
+            const Index sample_index = indices[i];
+            type sample_value = data(sample_index, target_index);
+
+            if (sample_use == SampleUse::Testing)
+            {
+                if (sample_value < type(NUMERIC_LIMITS_MIN))
+                    negatives++;
+            }
+            else
+            {
+                if (abs(sample_value) < type(NUMERIC_LIMITS_MIN))
+                    negatives++;
+                else
+                {
+                    type threshold = (sample_use == SampleUse::Training) ? type(1.0e-3) : type(NUMERIC_LIMITS_MIN);
+                    if (abs(sample_value - type(1)) > threshold)
+                        throw runtime_error("Sample is neither a positive nor a negative: "
+                            + to_string(sample_value) + "-" + to_string(target_index) + "-" + to_string(data(sample_value, target_index)));
+                }
+            }
         }
 
         return negatives;
@@ -2981,9 +3036,9 @@ namespace opennn
         print_vector(get_dimensions(DataSet::VariableUse::Target));
 
         cout << "Number of training samples: " << training_samples_number << endl
-            << "Number of selection samples: " << selection_samples_number << endl
-            << "Number of testing samples: " << testing_samples_number << endl
-            << "Number of unused samples: " << unused_samples_number << endl;
+             << "Number of selection samples: " << selection_samples_number << endl
+             << "Number of testing samples: " << testing_samples_number << endl
+             << "Number of unused samples: " << unused_samples_number << endl;
 
         const Index raw_variables_number = get_raw_variables_number();
 
@@ -3877,7 +3932,7 @@ namespace opennn
         else
         {
             samples_number++;
-            set_default_raw_variables_names();
+            set_default_raw_variable_names();
         }
 
         // Rest of lines

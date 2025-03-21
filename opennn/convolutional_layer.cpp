@@ -262,21 +262,21 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Back propagation
 
-    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+    ConvolutionalLayerBackPropagation* convolutional_back_propagation =
             static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& convolutions_derivatives =
-        convolutional_layer_back_propagation->convolutions_derivatives;    
+        convolutional_back_propagation->convolutions_derivatives;    
 
-    Tensor<type, 1>& bias_derivatives = convolutional_layer_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_derivatives = convolutional_back_propagation->bias_derivatives;
 
-    type* weight_derivatives_data = convolutional_layer_back_propagation->synaptic_weight_derivatives.data();
+    type* weight_derivatives_data = convolutional_back_propagation->weight_derivatives.data();
 
     // type* weights_data = (type*)weights.data();
 
-    Tensor<type, 4>& rotated_weights = convolutional_layer_back_propagation->rotated_weights;
+    Tensor<type, 4>& rotated_weights = convolutional_back_propagation->rotated_weights;
 
-    Tensor<type, 4>& input_derivatives = convolutional_layer_back_propagation->input_derivatives;
+    Tensor<type, 4>& input_derivatives = convolutional_back_propagation->input_derivatives;
 
     input_derivatives.setZero();
 
@@ -392,30 +392,14 @@ void ConvolutionalLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
 
 void ConvolutionalLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                         const Index& index,
+                                         Index& index,
                                          Tensor<type, 1>& gradient) const
 {
-    // Convolutional layer
-
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
-
-    // Back-propagation
-
-    ConvolutionalLayerBackPropagation* convolutional_layer_back_propagation =
+    ConvolutionalLayerBackPropagation* convolutional_back_propagation =
         static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get());
 
-    const type* weight_derivatives_data = convolutional_layer_back_propagation->synaptic_weight_derivatives.data();
-    const type* biases_derivatives_data = convolutional_layer_back_propagation->bias_derivatives.data();
-
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(gradient.data() + index, weight_derivatives_data, weights_number * sizeof(type));
-
-        #pragma omp section
-        memcpy(gradient.data() + index + weights_number, biases_derivatives_data, biases_number * sizeof(type));
-    }
+    copy_to_vector(gradient, convolutional_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, convolutional_back_propagation->bias_derivatives, index);
 }
 
 
@@ -572,9 +556,10 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(get_parameters_number());
 
-    memcpy(parameters.data(), weights.data(), weights.size()*sizeof(type));
+    Index index = 0;
 
-    memcpy(parameters.data() + weights.size(), biases.data(), biases.size()*sizeof(type));
+    copy_to_vector(parameters, weights, index);
+    copy_to_vector(parameters, biases, index);
 
 // @todo add scales and offsets
 
@@ -741,16 +726,10 @@ void ConvolutionalLayer::set_input_dimensions(const dimensions& new_input_dimens
 }
 
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    #pragma omp parallel sections
-    {
-    #pragma omp section
-    memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
-    
-    #pragma omp section
-    memcpy(biases.data(), new_parameters.data() + index + weights.size(), biases.size()*sizeof(type));
-    }
+    copy_from_vector(weights, new_parameters, index);    
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
@@ -897,7 +876,9 @@ void ConvolutionalLayer::from_XML(const XMLDocument& document)
 
     set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
 
-    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "));
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(convolutional_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -1005,7 +986,7 @@ void ConvolutionalLayerBackPropagation::set(const Index& new_samples_number, Lay
 
     bias_derivatives.resize(kernels_number);
 
-    synaptic_weight_derivatives.resize(kernels_number,
+    weight_derivatives.resize(kernels_number,
                                        kernel_height,
                                        kernel_width,
                                        kernel_channels);
@@ -1042,7 +1023,7 @@ void ConvolutionalLayerBackPropagation::print() const
          << "Biases derivatives:\n" << endl
          << bias_derivatives << endl
          << "Synaptic weights derivatives:\n" << endl
-         << synaptic_weight_derivatives << endl;
+         << weight_derivatives << endl;
 }
 
 }

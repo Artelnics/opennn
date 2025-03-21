@@ -19,7 +19,7 @@ namespace opennn
     struct PerceptronLayerBackPropagationCuda;
 #endif
 
-class PerceptronLayer : public Layer
+class Perceptron : public Layer
 {
 
 public:
@@ -36,9 +36,9 @@ public:
         HardSigmoid
     };
 
-    PerceptronLayer(const dimensions& = {0},
+    Perceptron(const dimensions& = {0},
                     const dimensions& = {0},
-                    const ActivationFunction& = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+                    const ActivationFunction& = Perceptron::ActivationFunction::HyperbolicTangent,
                     const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
@@ -49,19 +49,19 @@ public:
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
-    const PerceptronLayer::ActivationFunction& get_activation_function() const;
+    const Perceptron::ActivationFunction& get_activation_function() const;
 
     string get_activation_function_string() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
-             const PerceptronLayer::ActivationFunction & = PerceptronLayer::ActivationFunction::HyperbolicTangent,
+             const Perceptron::ActivationFunction & = Perceptron::ActivationFunction::HyperbolicTangent,
              const string& = "perceptron_layer");
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index&) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
@@ -92,7 +92,7 @@ public:
                            unique_ptr<LayerBackPropagationLM>&) const override;
 
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
@@ -126,9 +126,9 @@ private:
 };
 
 
-struct PerceptronLayerForwardPropagation : LayerForwardPropagation
+struct PerceptronForwardPropagation : LayerForwardPropagation
 {
-    PerceptronLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    PerceptronForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -142,9 +142,9 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct PerceptronLayerBackPropagation : LayerBackPropagation
+struct PerceptronBackPropagation : LayerBackPropagation
 {
-    PerceptronLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    PerceptronBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -156,7 +156,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> input_derivatives;
 
     Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> synaptic_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 };
 
 

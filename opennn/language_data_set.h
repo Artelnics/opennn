@@ -44,79 +44,13 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    vector<string> tokenize(const string& document, const bool& input)
-    {
-        vector<string> tokens;
+    vector<string> tokenize(const string& document, const bool& input);
 
-        if(!input)
-            tokens.push_back("[START]");
+    unordered_map<string, Index> create_vocabulary(const vector<vector<string>>& document_tokens);
 
-        string currentToken;
+    void print() const override;
 
-        for (char c : document)
-        {
-            if (isalnum(static_cast<unsigned char>(c)))
-            {
-                // Add alphanumeric characters to the current token
-                currentToken += tolower(c);
-            }
-            else
-            {
-                // If the current token is not empty, add it to the tokens list
-                if (!currentToken.empty())
-                {
-                    tokens.push_back(currentToken);
-                    currentToken.clear();
-                }
-                // Treat punctuation as a separate token
-
-                if (ispunct(static_cast<unsigned char>(c)))
-                {
-                    tokens.push_back(string(1, c));
-                }
-                else if (isspace(static_cast<unsigned char>(c)))
-                {
-                    // Ignore spaces, they just delimit tokens
-                }
-            }
-        }
-
-        // Add the last token if it's not empty
-        if (!currentToken.empty())
-            tokens.push_back(currentToken);
-
-        // Add [END] token
-        if(!input)
-            tokens.push_back("[END]");
-
-        return tokens;
-    }
-
-
-    unordered_map<string, Index> create_vocabulary(const vector<vector<string>>& document_tokens)
-    {
-        unordered_map<string, Index> vocabulary;
-        Index id = 0;
-
-        vocabulary["[PAD]"] = id++;
-        vocabulary["[UNK]"] = id++;
-        vocabulary["[START]"] = id++;
-        vocabulary["[END]"] = id++;
-
-        for (const auto& document : document_tokens)
-            for (const auto& token : document)
-                if (vocabulary.find(token) == vocabulary.end())
-                    vocabulary[token] = id++;
-
-        return vocabulary;
-    }
-
-
-    void print_vocabulary(const unordered_map<std::string, Index>& vocabulary)
-    {
-        for (const auto& entry : vocabulary)
-            cout << entry.first << " : " << entry.second << "\n";
-    }
+    void print_vocabulary(const unordered_map<string, Index>& vocabulary);
 
 private:
 
@@ -127,8 +61,11 @@ private:
 
     Index maximum_target_length = 0;
 
-    Index target_vocabulary_size = 8000;
-    Index input_vocabulary_size = 8000;
+    Index target_vocabulary_size = 0;
+    Index input_vocabulary_size = 0;
+
+    bool has_decoder = true;
+
     const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 
     struct WordpieceAlgorithmParameters

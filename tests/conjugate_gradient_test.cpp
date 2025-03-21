@@ -32,8 +32,8 @@ TEST(ConjugateGradientTest, PrParameter)
 
     Index size = 2 * (1 + rand() % 10);
 
-    PerceptronLayer* pl = new PerceptronLayer({ 1 }, { size / 2 });
-    neural_network.add_layer(make_unique<PerceptronLayer>({ 1 }, { size / 2 }));
+    Perceptron* pl = new Perceptron({ 1 }, { size / 2 });
+    neural_network.add_layer(make_unique<Perceptron>({ 1 }, { size / 2 }));
 
     // Test
 
@@ -70,7 +70,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 
     Index size = 2*(1 + rand()%10);
 
-    PerceptronLayer *pl = new PerceptronLayer({1}, {size/2});
+    Perceptron *pl = new Perceptron({1}, {size/2});
     neural_network.add_layer(pl);
 
     // Test
