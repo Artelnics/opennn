@@ -39,7 +39,7 @@ const type& ProbabilisticLayer::get_decision_threshold() const
 }
 
 
-const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation_function() const
+const ProbabilisticLayer::Activation& ProbabilisticLayer::get_activation_function() const
 {
     return activation_function;
 }
@@ -47,13 +47,13 @@ const ProbabilisticLayer::ActivationFunction& ProbabilisticLayer::get_activation
 
 string ProbabilisticLayer::get_activation_function_string() const
 {
-    if(activation_function == ActivationFunction::Binary)
+    if(activation_function == Activation::Binary)
         return "Binary";
-    else if(activation_function == ActivationFunction::Logistic)
+    else if(activation_function == Activation::Logistic)
         return "Logistic";
-    else if(activation_function == ActivationFunction::Competitive)
+    else if(activation_function == Activation::Competitive)
         return "Competitive";
-    else if(activation_function == ActivationFunction::Softmax)
+    else if(activation_function == Activation::Softmax)
         return "Softmax";
     else
         throw runtime_error("Unknown probabilistic method.\n");
@@ -101,8 +101,8 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     layer_type = Layer::Type::Probabilistic;
 
     new_output_dimensions[0] == 1
-        ? activation_function = ActivationFunction::Logistic
-        : activation_function = ActivationFunction::Softmax;
+        ? activation_function = Activation::Logistic
+        : activation_function = Activation::Softmax;
 
     decision_threshold = type(0.5);
 
@@ -144,7 +144,7 @@ void ProbabilisticLayer::set_decision_threshold(const type& new_decision_thresho
 }
 
 
-void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_activation_function)
+void ProbabilisticLayer::set_activation_function(const Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -153,13 +153,13 @@ void ProbabilisticLayer::set_activation_function(const ActivationFunction& new_a
 void ProbabilisticLayer::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Binary")
-        set_activation_function(ActivationFunction::Binary);
+        set_activation_function(Activation::Binary);
     else if(new_activation_function == "Logistic")
-        set_activation_function(ActivationFunction::Logistic);
+        set_activation_function(Activation::Logistic);
     else if(new_activation_function == "Competitive")
-        set_activation_function(ActivationFunction::Competitive);
+        set_activation_function(Activation::Competitive);
     else if(new_activation_function == "Softmax")
-        set_activation_function(ActivationFunction::Softmax);
+        set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
 }
@@ -193,13 +193,13 @@ void ProbabilisticLayer::calculate_activations(Tensor<type, 2>& activations,Tens
 {
     switch (activation_function)
     {
-    case ActivationFunction::Softmax:
+    case Activation::Softmax:
         softmax(activations);
         return;
-    case ActivationFunction::Logistic:
+    case Activation::Logistic:
         logistic(activations, activation_derivatives);
         return;
-    case ActivationFunction::Competitive:
+    case Activation::Competitive:
         competitive(activations);
         return;
     default:
@@ -403,7 +403,7 @@ void ProbabilisticLayer::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
     add_xml_element(printer, "DecisionThreshold", to_string(decision_threshold));
 
@@ -423,7 +423,7 @@ void ProbabilisticLayer::from_XML(const XMLDocument& document)
 
     set({ new_inputs_number }, { new_neurons_number });
 
-    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
+    set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
     Index index = 0;
 
@@ -510,15 +510,15 @@ string ProbabilisticLayer::write_activations(const vector<string>& output_names)
     {
         switch(activation_function)
         {
-        case ActivationFunction::Binary:
+        case Activation::Binary:
             buffer << "\tif" << "probabilistic_layer_combinations_" << to_string(i) << " < 0.5, " << output_names[i] << "= 0.0. Else " << output_names[i] << " = 1.0\n";
             break;
 
-        case ActivationFunction::Logistic:
+        case Activation::Logistic:
             buffer <<  output_names[i] << " = 1.0/(1.0 + exp(-" <<  "probabilistic_layer_combinations_" << to_string(i) << "));\n";
             break;
 
-        case ActivationFunction::Competitive:
+        case Activation::Competitive:
             if(i == 0)
                 buffer << "\tfor each probabilistic_layer_combinations_i:" << endl
                        << "\t\tif probabilistic_layer_combinations_i is equal to max(probabilistic_layer_combinations_i):"<<endl
@@ -527,7 +527,7 @@ string ProbabilisticLayer::write_activations(const vector<string>& output_names)
                        << "\t\t\tactivations[i] = 0"<<endl;
             break;
 
-        case ActivationFunction::Softmax:
+        case Activation::Softmax:
 
             if (i == 0)
             {

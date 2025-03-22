@@ -13,13 +13,13 @@
 namespace opennn
 {
 
-Normalization3d::Normalization3d(const Index& new_inputs_number,
-                                 const Index& new_inputs_depth,
+Normalization3d::Normalization3d(const Index& new_sequence_length,
+                                 const Index& new_embedding_dimension,
                                  const string& new_name) : Layer()
 {
     layer_type = Type::Normalization3D;
 
-    set(new_inputs_number, new_inputs_depth, new_name);
+    set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
 
@@ -71,15 +71,15 @@ Tensor<type, 1> Normalization3d::get_parameters() const
 
 
 void Normalization3d::set(const Index& new_sequence_length, 
-                          const Index& new_inputs_depth, 
+                          const Index& new_embedding_dimension, 
                           const string& new_name)
 {
     sequence_length = new_sequence_length;
 
-    gammas.resize(new_inputs_depth);
+    gammas.resize(new_embedding_dimension);
     gammas.setConstant(1);
 
-    betas.resize(new_inputs_depth);
+    betas.resize(new_embedding_dimension);
     betas.setZero();
 
     name = new_name;
@@ -107,14 +107,39 @@ void Normalization3d::set_parameters_random()
 }
 
 
+void Normalization3d::standarization(const Tensor<type, 3>& inputs, 
+                                     Tensor<type, 3>& outputs, 
+                                     Tensor<type, 3>& means, 
+                                     Tensor<type, 3>& standard_deviations) const
+{
+    const Index batch_size = inputs.dimension(0);
+    const Index sequence_length = inputs.dimension(1);
+    const Index embedding_dimension = inputs.dimension(2);
+
+    const Eigen::array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
+    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
+
+    means.device(*thread_pool_device) = inputs.mean(normalization_axis)
+        .reshape(range_3).broadcast(expand_normalization_axis);
+
+    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt()
+        .reshape(range_3).broadcast(expand_normalization_axis);
+
+    outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
+}
+
+
+void Normalization3d::affine_transformation(Tensor<type, 3>& outputs) const
+{
+    multiply_matrices(thread_pool_device.get(), outputs, gammas);
+    sum_matrices(thread_pool_device.get(), betas, outputs);
+}
+
+
 void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool&)
 {
-    const Index batch_size = input_pairs[0].second[0];
-    const Index inputs_number = input_pairs[0].second[1];
-    const Index inputs_depth = input_pairs[0].second[2];
-
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
     Normalization3dForwardPropagation* normalization_3d_forward_propagation =
@@ -124,29 +149,20 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 3>& means = normalization_3d_forward_propagation->means;
     Tensor<type, 3>& standard_deviations = normalization_3d_forward_propagation->standard_deviations;
-    const type& epsilon = normalization_3d_forward_propagation->epsilon;
+ 
+    standarization(inputs, outputs, means, standard_deviations);
 
-    const Eigen::array<Index, 3> range_3{ { batch_size, inputs_number, 1 }};
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, inputs_depth }};
-       
-    means.device(*thread_pool_device) = inputs.mean(normalization_axis)
-                                            .reshape(range_3).broadcast(expand_normalization_axis);
-
-    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt()
-                                           .reshape(range_3).broadcast(expand_normalization_axis);
-
-    outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
-
-    multiply_matrices(thread_pool_device.get(), outputs, gammas);
-    sum_matrices(thread_pool_device.get(), betas, outputs);
+    affine_transformation(outputs);
 }
 
 
 void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          const vector<pair<type*, dimensions>>& delta_pairs,
-                                          unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                          unique_ptr<LayerBackPropagation>& back_propagation) const
+                                     const vector<pair<type*, dimensions>>& delta_pairs,
+                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    // @tod simplify                                                                                                  
+
     const Index batch_size = input_pairs[0].second[0];
 
     const Index embedding_dimension = get_embedding_dimension();
@@ -167,12 +183,10 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 
-    const type& epsilon = normalization_3d_forward_propagation->epsilon;
-
     // Back propagation
 
-    NormalizationLayer3DBackPropagation* normalization_3d_back_propagation =
-        static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.get());
+    Normalization3dBackPropagation* normalization_3d_back_propagation =
+        static_cast<Normalization3dBackPropagation*>(back_propagation.get());
     
     Tensor<type, 1>& gamma_derivatives = normalization_3d_back_propagation->gamma_derivatives;
     Tensor<type, 1>& beta_derivatives = normalization_3d_back_propagation->beta_derivatives;
@@ -213,21 +227,12 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 }
 
 
-void Normalization3d::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-{
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-    for(Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-}
-
-
 void Normalization3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                            Index& index,
                                            Tensor<type, 1>& gradient) const
 {
-    NormalizationLayer3DBackPropagation* normalization_3d_back_propagation =
-        static_cast<NormalizationLayer3DBackPropagation*>(back_propagation.get());
+    Normalization3dBackPropagation* normalization_3d_back_propagation =
+        static_cast<Normalization3dBackPropagation*>(back_propagation.get());
 
     copy_to_vector(gradient, normalization_3d_back_propagation->gamma_derivatives, index);
     copy_to_vector(gradient, normalization_3d_back_propagation->beta_derivatives, index);
@@ -275,10 +280,10 @@ Normalization3dForwardPropagation::Normalization3dForwardPropagation(const Index
 
 pair<type*, dimensions> Normalization3dForwardPropagation::get_outputs_pair() const
 {
-    Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
+    Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 
-    const Index sequence_length = normalization_layer_3d->get_sequence_length();
-    const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
+    const Index sequence_length = normalization_3d->get_sequence_length();
+    const Index embedding_dimension = normalization_3d->get_embedding_dimension();
 
     return { (type*)outputs.data(), { batch_size, sequence_length, embedding_dimension } };
 }
@@ -288,12 +293,12 @@ void Normalization3dForwardPropagation::set(const Index& new_batch_size, Layer* 
 {
     layer = new_layer;
 
-    Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
+    Normalization3d* normalization_3d = static_cast<Normalization3d*>(layer);
 
     batch_size = new_batch_size;
 
-    const Index sequence_length = normalization_layer_3d->get_sequence_length();
-    const Index embedding_dimension = normalization_layer_3d->get_embedding_dimension();
+    const Index sequence_length = normalization_3d->get_sequence_length();
+    const Index embedding_dimension = normalization_3d->get_embedding_dimension();
 
     outputs.resize(batch_size, sequence_length, embedding_dimension);
 
@@ -305,11 +310,11 @@ void Normalization3dForwardPropagation::set(const Index& new_batch_size, Layer* 
 void Normalization3dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
-        << outputs << endl;
+         << outputs << endl;
 }
 
 
-void NormalizationLayer3DBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Normalization3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -331,7 +336,7 @@ void NormalizationLayer3DBackPropagation::set(const Index& new_batch_size, Layer
 }
 
 
-void NormalizationLayer3DBackPropagation::print() const
+void Normalization3dBackPropagation::print() const
 {
     cout << "Gammas derivatives:" << endl
         << gamma_derivatives << endl
@@ -340,14 +345,14 @@ void NormalizationLayer3DBackPropagation::print() const
 }
 
 
-NormalizationLayer3DBackPropagation::NormalizationLayer3DBackPropagation(const Index& new_batch_size, Layer* new_layer)
+Normalization3dBackPropagation::Normalization3dBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> NormalizationLayer3DBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> Normalization3dBackPropagation::get_input_derivative_pairs() const
 {
     Normalization3d* normalization_layer_3d = static_cast<Normalization3d*>(layer);
 

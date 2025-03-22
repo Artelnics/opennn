@@ -16,7 +16,7 @@ namespace opennn
 Perceptron3d::Perceptron3d(const Index& new_sequence_length,
                            const Index& new_input_dimension,
                            const Index& new_output_dimension,
-                           const Perceptron3d::ActivationFunction& new_activation_function,
+                           const Perceptron3d::Activation& new_activation_function,
                            const string& new_name) : Layer()
 {
     layer_type = Type::Perceptron3D;
@@ -80,7 +80,7 @@ Tensor<type, 1> Perceptron3d::get_parameters() const
 }
 
 
-const Perceptron3d::ActivationFunction& Perceptron3d::get_activation_function() const
+const Perceptron3d::Activation& Perceptron3d::get_activation_function() const
 {
     return activation_function;
 }
@@ -90,13 +90,13 @@ string Perceptron3d::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "HyperbolicTangent";
 
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return "Linear";
 
-    case ActivationFunction::RectifiedLinear:
+    case Activation::RectifiedLinear:
         return "RectifiedLinear";
     }
 
@@ -107,7 +107,7 @@ string Perceptron3d::get_activation_function_string() const
 void Perceptron3d::set(const Index& new_sequence_length,
                        const Index& new_input_dimension, 
                        const Index& new_output_dimension,
-                       const Perceptron3d::ActivationFunction& new_activation_function,
+                       const Perceptron3d::Activation& new_activation_function,
                        const string& new_name)
 {
     sequence_length = sequence_length;
@@ -133,7 +133,7 @@ void Perceptron3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& 
 }
 
 
-void Perceptron3d::set_activation_function(const Perceptron3d::ActivationFunction& new_activation_function)
+void Perceptron3d::set_activation_function(const Perceptron3d::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -142,11 +142,11 @@ void Perceptron3d::set_activation_function(const Perceptron3d::ActivationFunctio
 void Perceptron3d::set_activation_function(const string& new_activation_function_name)
 {
     if (new_activation_function_name == "HyperbolicTangent")
-        activation_function = ActivationFunction::HyperbolicTangent;
+        activation_function = Activation::HyperbolicTangent;
     else if (new_activation_function_name == "Linear")
-        activation_function = ActivationFunction::Linear;
+        activation_function = Activation::Linear;
     else if (new_activation_function_name == "RectifiedLinear")
-        activation_function = ActivationFunction::RectifiedLinear;
+        activation_function = Activation::RectifiedLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -226,10 +226,10 @@ void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<ty
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::Linear: linear(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::Logistic: logistic(activations, activation_derivatives); return;
     default: return;
     }
 }
@@ -310,15 +310,6 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
 }
 
 
-void Perceptron3d::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-{
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-    for(Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-}
-
-
 void Perceptron3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                    Index& index,
                                    Tensor<type, 1>& gradient) const
@@ -345,7 +336,7 @@ void Perceptron3d::from_XML(const XMLDocument& document)
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
+    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
 
     Index index = 0;
 
@@ -361,7 +352,7 @@ void Perceptron3d::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
     add_xml_element(printer, "InputsDepth", to_string(get_input_dimension()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimension()));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();

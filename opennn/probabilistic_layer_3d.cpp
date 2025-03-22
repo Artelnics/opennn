@@ -46,7 +46,7 @@ dimensions ProbabilisticLayer3D::get_output_dimensions() const
 }
 
 
-const ProbabilisticLayer3D::ActivationFunction& ProbabilisticLayer3D::get_activation_function() const
+const ProbabilisticLayer3D::Activation& ProbabilisticLayer3D::get_activation_function() const
 {
     return activation_function;
 }
@@ -56,9 +56,9 @@ string ProbabilisticLayer3D::get_activation_function_string() const
 {
     switch (activation_function)
     {
-    case ActivationFunction::Competitive:
+    case Activation::Competitive:
         return "Competitive";
-    case ActivationFunction::Softmax:
+    case Activation::Softmax:
         return "Softmax";
     default:
         throw runtime_error("Unknown probabilistic method.\n");
@@ -70,9 +70,9 @@ string ProbabilisticLayer3D::get_activation_function_text() const
 {
     switch (activation_function)
     {
-    case ActivationFunction::Competitive:
+    case Activation::Competitive:
         return "competitive";
-    case ActivationFunction::Softmax:
+    case Activation::Softmax:
         return "softmax";
     default:
         throw runtime_error("Unknown probabilistic method.\n");
@@ -117,7 +117,7 @@ void ProbabilisticLayer3D::set(const Index& new_inputs_number,
 
     layer_type = Layer::Type::Probabilistic3D;
 
-    activation_function = ActivationFunction::Softmax;
+    activation_function = Activation::Softmax;
 }
 
 
@@ -170,7 +170,7 @@ void ProbabilisticLayer3D::set_parameters(const Tensor<type, 1>& new_parameters,
 }
 
 
-void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new_activation_function)
+void ProbabilisticLayer3D::set_activation_function(const Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -179,9 +179,9 @@ void ProbabilisticLayer3D::set_activation_function(const ActivationFunction& new
 void ProbabilisticLayer3D::set_activation_function(const string& new_activation_function)
 {
     if(new_activation_function == "Competitive")
-        set_activation_function(ActivationFunction::Competitive);
+        set_activation_function(Activation::Competitive);
     else if(new_activation_function == "Softmax")
-        set_activation_function(ActivationFunction::Softmax);
+        set_activation_function(Activation::Softmax);
     else
         throw runtime_error("Unknown probabilistic method: " + new_activation_function + ".\n");
 }
@@ -231,7 +231,7 @@ void ProbabilisticLayer3D::calculate_activations(Tensor<type, 3>& activations) c
 {
     switch(activation_function)
     {
-    case ActivationFunction::Softmax: softmax(activations); 
+    case Activation::Softmax: softmax(activations); 
         return;
 
     default: 
@@ -357,7 +357,7 @@ void ProbabilisticLayer3D::from_XML(const XMLDocument& document)
     set(new_inputs_number, new_inputs_depth, new_neurons_number);
 
     set_name(read_xml_string(probabilistic_layer_element, "Name"));
-    set_activation_function(read_xml_string(probabilistic_layer_element, "ActivationFunction"));
+    set_activation_function(read_xml_string(probabilistic_layer_element, "Activation"));
 
     Index index = 0;
 
@@ -374,7 +374,7 @@ void ProbabilisticLayer3D::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
     add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
     add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();

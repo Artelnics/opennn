@@ -24,14 +24,14 @@ class Perceptron3d : public Layer
 
 public:
 
-    enum class ActivationFunction{HyperbolicTangent, Logistic,
+    enum class Activation{HyperbolicTangent, Logistic,
                                   Linear,
                                   RectifiedLinear};
 
    Perceptron3d(const Index& = 0,
                 const Index& = 0,
                 const Index& = 0,
-                const ActivationFunction& = Perceptron3d::ActivationFunction::HyperbolicTangent,
+                const Activation& = Perceptron3d::Activation::HyperbolicTangent,
                 const string& = "perceptron_layer_3d");
 
    Index get_sequence_length() const;
@@ -50,19 +50,19 @@ public:
    type get_dropout_rate() const;
    Tensor<type, 1> get_parameters() const override;
 
-   const Perceptron3d::ActivationFunction& get_activation_function() const;
+   const Perceptron3d::Activation& get_activation_function() const;
 
    string get_activation_function_string() const;
 
    void set(const Index& = 0,
             const Index& = 0,
             const Index& = 0,
-            const Perceptron3d::ActivationFunction& = Perceptron3d::ActivationFunction::HyperbolicTangent,
+            const Perceptron3d::Activation& = Perceptron3d::Activation::HyperbolicTangent,
             const string & = "perceptron_layer_3d");
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
    void set_dropout_rate(const type&);
 
@@ -87,8 +87,6 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void add_deltas(const vector<pair<type*, dimensions>>&) const;
-
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
                         Index&,
                         Tensor<type, 1>&) const override;
@@ -108,7 +106,7 @@ private:
 
    Tensor<type, 2> weights;
 
-   ActivationFunction activation_function;
+   Activation activation_function;
 
    type dropout_rate = type(0);
 

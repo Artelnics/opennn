@@ -23,7 +23,7 @@ class Recurrent : public Layer
 
 public:
 
-    enum class ActivationFunction{Logistic, 
+    enum class Activation{Logistic, 
                                   HyperbolicTangent,
                                   Linear, 
                                   RectifiedLinear, 
@@ -43,7 +43,7 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const Recurrent::ActivationFunction& get_activation_function() const;
+   const Recurrent::Activation& get_activation_function() const;
 
    string get_activation_function_string() const;
 
@@ -56,7 +56,7 @@ public:
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
    void set_parameters_constant(const type&) override;
@@ -102,7 +102,7 @@ private:
 
    Tensor<type, 2> output_weights;
 
-   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
+   Activation activation_function = Activation::HyperbolicTangent;
 
    Tensor<type, 2> hidden_states;
 

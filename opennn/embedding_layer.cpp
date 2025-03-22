@@ -261,15 +261,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 }
 
 
-void Embedding::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-{
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-    for(Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-}
-
-
 void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                      Index& index,
                                      Tensor<type, 1>& gradient) const

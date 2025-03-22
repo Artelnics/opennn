@@ -84,7 +84,7 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
+    enum class Activation { Binary, Logistic, Competitive, Softmax };
 
     ProbabilisticLayer(const dimensions& = {0},
                        const dimensions& = {0},
@@ -95,7 +95,7 @@ public:
 
     const type& get_decision_threshold() const;
 
-    const ActivationFunction& get_activation_function() const;
+    const Activation& get_activation_function() const;
     string get_activation_function_string() const;
 
     Index get_parameters_number() const override;
@@ -111,7 +111,7 @@ public:
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_decision_threshold(const type&);
 
-    void set_activation_function(const ActivationFunction&);
+    void set_activation_function(const Activation&);
     void set_activation_function(const string&);
 
     void set_parameters_constant(const type&) override;
@@ -164,7 +164,7 @@ private:
 
     Tensor<type, 2> weights;
 
-    ActivationFunction activation_function = ActivationFunction::Logistic;
+    Activation activation_function = Activation::Logistic;
 
     type decision_threshold;
 

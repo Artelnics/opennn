@@ -27,15 +27,12 @@ public:
     Addition3d(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
 
     Index get_sequence_length() const;
-    Index get_embedding_length() const;
+    Index get_embedding_dimension() const;
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
-    void set(const Index& = 0, const Index& = 0, const string & = "addition_layer_3d");
-
-    void set_sequence_length(const Index&);
-    void set_embedding_length(const Index&);
+    void set(const Index& = 0, const Index& = 0, const string& = "addition_layer_3d");
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -57,7 +54,7 @@ private:
 
     Index sequence_length = 0;
 
-    Index embedding_length = 0;
+    Index embedding_dimension = 0;
 };
 
 
