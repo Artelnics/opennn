@@ -56,7 +56,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
+    ProbabilisticLayerBackPropagationLM(const Index& new_batch_size = 0, 
                                                  Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;

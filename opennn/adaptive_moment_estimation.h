@@ -39,7 +39,7 @@ public:
 
    // Set
 
-   void set_batch_samples_number(const Index& new_batch_samples_number);
+   void set_batch_samples_number(const Index& new_batch_size);
 
    void set_default();
 
@@ -109,7 +109,7 @@ private:
 
    type maximum_time = type(360000);
 
-   Index batch_samples_number = 1000;
+   Index batch_size = 1000;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"

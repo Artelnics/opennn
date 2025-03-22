@@ -149,15 +149,15 @@ struct RecurrentBackPropagation : LayerBackPropagation
     Tensor<type, 2> combination_derivatives;
     Tensor<type, 1> current_combinations_derivatives;
 
-    Tensor<type, 2> combinations_biases_derivatives;
-    Tensor<type, 3> combinations_input_weights_derivatives;
-    Tensor<type, 3> combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> combinations_bias_derivatives;
+    Tensor<type, 3> combinations_input_weight_derivatives;
+    Tensor<type, 3> combinations_recurrent_weight_derivatives;
 
     Tensor<type, 1> bias_derivatives;
 
-    Tensor<type, 2> input_weights_derivatives;
+    Tensor<type, 2> input_weight_derivatives;
 
-    Tensor<type, 2> recurrent_weights_derivatives;
+    Tensor<type, 2> recurrent_weight_derivatives;
 
     Tensor<type, 3> input_derivatives;
 };

@@ -398,12 +398,12 @@ namespace opennn
 
 
     vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
-        const Index& batch_samples_number,
+        const Index& batch_size,
         const bool& shuffle,
         const Index& new_buffer_size) const
     {
 
-        if (!shuffle) return split_samples(sample_indices, batch_samples_number);
+        if (!shuffle) return split_samples(sample_indices, batch_size);
 
         random_device rng;
         mt19937 urng(rng());
@@ -412,11 +412,11 @@ namespace opennn
 
         Index batches_number;
 
-        const Index batch_size = min(batch_samples_number, samples_number);
+        const Index new_batch_size = min(batch_size, samples_number);
 
-        samples_number < batch_size
+        samples_number < new_batch_size
             ? batches_number = 1
-            : batches_number = samples_number / batch_size;
+            : batches_number = samples_number / new_batch_size;
 
         vector<vector<Index>> batches(batches_number);
         
@@ -429,11 +429,11 @@ namespace opennn
         #pragma omp parallel for
         for (Index i = 0; i < batches_number; i++)
         {
-            batches[i].resize(batch_size);
+            batches[i].resize(new_batch_size);
 
             const Index offset = i * batches_number;
 
-            for (Index j = 0; j < batch_size; j++)
+            for (Index j = 0; j < new_batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];
         }
         
@@ -4400,11 +4400,11 @@ namespace opennn
     }
 
 
-    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_samples_number) const
+    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
     {
         const Index samples_number = sample_indices.size();
 
-        Index batch_size = new_batch_samples_number;
+        Index batch_size = new_batch_size;
 
         Index batches_number;
 

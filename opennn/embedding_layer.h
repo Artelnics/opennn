@@ -20,15 +20,15 @@ struct EmbeddingLayerBackPropagationCuda;
 #endif
 
 
-class EmbeddingLayer : public Layer
+class Embedding : public Layer
 {
 
 public:
 
-    EmbeddingLayer(const Index& = 0,
-                   const Index& = 0,
-                   const Index& = 0,
-                   const string& = "embedding_layer");
+    Embedding(const Index& = 0,
+              const Index& = 0,
+              const Index& = 0,
+              const string& = "embedding_layer");
 
     Index get_vocabulary_size() const;
     Index get_sequence_length() const;
@@ -45,13 +45,7 @@ public:
              const Index& = 0, 
              const string & = "embedding_layer");
 
-    void set_vocabulary_size(const Index&);
-    void set_sequence_length(const Index&);
-    void set_embedding_size(const Index&);
-
     void set_dropout_rate(const type&);
-
-    void set_embedding_weights();
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_random() override;
@@ -59,7 +53,8 @@ public:
 
     void dropout(Tensor<type, 3>&) const;
 
-    void lookup_embedding(const Tensor<type, 2>&, Tensor<type, 3>&);
+    void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
+    void add_positional_encodings(Tensor<type, 3>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -89,27 +84,23 @@ private:
 
     Tensor<type, 2> weights;
 
+    Tensor<type, 2> positional_encoding;
+
     type dropout_rate;
 
     const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
 
 
-struct EmbeddingLayerForwardPropagation : LayerForwardPropagation
+struct EmbeddingForwardPropagation : LayerForwardPropagation
 {
-    EmbeddingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    EmbeddingForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
-
-    void build_positional_encoding_matrix();
-
-    bool built_positional_encoding_matrix = false;
-
-    Tensor<type, 2> positional_encoding;
 
     Tensor<type, 3> outputs;
 };

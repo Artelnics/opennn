@@ -6,7 +6,7 @@ class FlattenLayerTest : public ::testing::Test
 {
 public:
 
-    const Index batch_samples_number = 2;
+    const Index batch_size = 2;
     const Index height = 4;
     const Index width = 4;
     const Index channels = 3;
@@ -28,12 +28,12 @@ public:
     void SetUp() override 
     {
         flatten_layer = make_unique<Flatten>(input_dimensions);
-        flatten_layer_forward_propagation = make_unique<FlattenLayerForwardPropagation>(batch_samples_number, flatten_layer.get());
-        flatten_layer_back_propagation = make_unique<FlattenLayerBackPropagation>(batch_samples_number, flatten_layer.get());
+        flatten_layer_forward_propagation = make_unique<FlattenLayerForwardPropagation>(batch_size, flatten_layer.get());
+        flatten_layer_back_propagation = make_unique<FlattenLayerBackPropagation>(batch_size, flatten_layer.get());
 
-        inputs.resize(batch_samples_number, height, width, channels);
+        inputs.resize(batch_size, height, width, channels);
         inputs.setRandom();
-        input_pair = { inputs.data(), { batch_samples_number, height, width, channels } };
+        input_pair = { inputs.data(), { batch_size, height, width, channels } };
     }
 };
 
@@ -54,7 +54,7 @@ TEST_F(FlattenLayerTest, ForwardPropagate)
 
     output_pair = flatten_layer_forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], height * width * channels);
 }
 
@@ -67,7 +67,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
 
     input_derivatives_pair = flatten_layer_back_propagation.get()->get_input_derivative_pairs();
 
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_samples_number);
+    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
     EXPECT_EQ(input_derivatives_pair[0].second[1], input_dimensions[0]);
     EXPECT_EQ(input_derivatives_pair[0].second[2], input_dimensions[1]);
     EXPECT_EQ(input_derivatives_pair[0].second[3], input_dimensions[2]);
