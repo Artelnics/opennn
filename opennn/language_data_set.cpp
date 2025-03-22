@@ -212,7 +212,7 @@ vector<string> LanguageDataSet::tokenize(const string& document, const bool& inp
 
     for (char c : document)
     {
-        if (isalnum(c))
+        if (isalnum(static_cast<unsigned char>(c)))
         {
             // Add alphanumeric characters to the current token
             currentToken += tolower(c);
@@ -227,11 +227,11 @@ vector<string> LanguageDataSet::tokenize(const string& document, const bool& inp
             }
             // Treat punctuation as a separate token
 
-            if (ispunct(c))
+            if (ispunct(static_cast<unsigned char>(c)))
             {
                 tokens.push_back(string(1, c));
             }
-            else if (isspace(c))
+            else if (isspace(static_cast<unsigned char>(c)))
             {
                 // Ignore spaces, they just delimit tokens
             }
