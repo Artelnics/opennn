@@ -12,13 +12,13 @@
 namespace opennn
 {
 
-Addition3d::Addition3d(const Index& new_inputs_number, 
-                       const Index& new_inputs_depth, 
+Addition3d::Addition3d(const Index& new_sequence_length, 
+                       const Index& new_embedding_dimension, 
                        const string& new_name) : Layer()
 {
     layer_type = Type::Addition3D;
 
-    set(new_inputs_number, new_inputs_depth, new_name);
+    set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
 

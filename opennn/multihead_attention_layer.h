@@ -53,6 +53,17 @@ public:
              const bool& = false,
              const string& = "multihead_attention_layer");
 
+ 
+    inline TensorMap<Tensor<type, 2>> get_query_weights(const Index& head_index) const 
+    {
+        const Index embedding_dimension = get_embedding_dimension();
+        const Index hidden_depth = get_hidden_depth();
+
+        return TensorMap<Tensor<type, 2>>((type*)query_weights.data() + head_index*embedding_dimension*hidden_depth,
+            embedding_dimension, hidden_depth);
+    }
+    
+
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_random() override;
     void set_parameters_glorot();
