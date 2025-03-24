@@ -435,7 +435,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     {
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
-        const Convolutional::ConvolutionType convolution_type = Convolutional::ConvolutionType::Valid;
+        const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
 
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
                                                   kernel_dimensions,
