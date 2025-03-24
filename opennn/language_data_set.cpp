@@ -81,7 +81,7 @@ void LanguageDataSet::set_data_random()
 {
 /*
 
-    for(Index i = 0; i < batch_samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
     {
         for(Index j = 0; j < decoder_length; j++)
             data(i, j) = type(rand() % context_dimension);

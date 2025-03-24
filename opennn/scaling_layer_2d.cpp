@@ -503,10 +503,10 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -514,19 +514,19 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {samples_number, output_dimensions[0]}};
+    return {(type*)outputs.data(), {batch_size, output_dimensions[0]}};
 }
 
 
-void ScalingLayer2DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
-    outputs.resize(samples_number, outputs_number);
+    outputs.resize(batch_size, outputs_number);
 }
 
 

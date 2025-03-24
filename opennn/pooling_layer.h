@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class ConvolutionalLayer;
+class Convolutional;
 
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;

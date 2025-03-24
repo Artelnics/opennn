@@ -39,7 +39,7 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 
     NeuralNetwork neural_network;
 
-//    EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
+//    Embedding* embedding_layer = new Embedding(input_dimensions, inputs_number, depth);
 //    neural_network.add_layer(embedding_layer);
 
 //    ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
@@ -68,16 +68,16 @@ TEST(CrossEntropyError3DTest, BackPropagateZero)
 TEST(CrossEntropyError3DTest, BackPropagateRandom)
 {
 /*
-    batch_samples_number = type(1) + rand() % 5;
+    batch_size = type(1) + rand() % 5;
     inputs_number = type(1) + rand() % 5;
     input_dimensions = type(1) + rand() % 5;
     depth = type(1) + rand() % 5;
 
     // Data set
 
-    data.resize(batch_samples_number, 2 * inputs_number);
+    data.resize(batch_size, 2 * inputs_number);
 
-    for (Index i = 0; i < batch_samples_number; i++)
+    for (Index i = 0; i < batch_size; i++)
         for (Index j = 0; j < 2 * inputs_number; j++)
             data(i, j) = type(rand() % (input_dimensions + 1));
 
@@ -96,25 +96,25 @@ TEST(CrossEntropyError3DTest, BackPropagateRandom)
     input_variables_indices = data_set.get_input_variables_indices();
     target_variables_indices = data_set.get_target_variables_indices();
 
-    batch.set(batch_samples_number, &data_set);
+    batch.set(batch_size, &data_set);
     batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
 
     // Neural network
 
     neural_network.set();
 
-    EmbeddingLayer* embedding_layer = new EmbeddingLayer(input_dimensions, inputs_number, depth);
+    Embedding* embedding_layer = new Embedding(input_dimensions, inputs_number, depth);
     neural_network.add_layer(embedding_layer);
 
     ProbabilisticLayer3D* probabilistic_layer_3d = new ProbabilisticLayer3D(inputs_number, depth, input_dimensions + 1);
     neural_network.add_layer(probabilistic_layer_3d);
 
-    forward_propagation.set(batch_samples_number, &neural_network);
+    forward_propagation.set(batch_size, &neural_network);
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
     // Loss index
 
-    back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
+    back_propagation.set(batch_size, &cross_entropy_error_3d);
     cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
 
     EXPECT_EQ(back_propagation.gradient.size() == neural_network.get_parameters_number());
@@ -146,7 +146,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
 
     // Test
     {
-        batch_samples_number = 2;
+        batch_size = 2;
         
         inputs_number = 4;
         context_length = 6;
@@ -160,7 +160,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         bool is_training = true;
         
-        data_set.set_data_random_language_model(batch_samples_number, inputs_number, context_length, input_dimensions, context_dimension);
+        data_set.set_data_random_language_model(batch_size, inputs_number, context_length, input_dimensions, context_dimension);
 
         data_set.set(DataSet::SampleUse::Training);
 
@@ -169,7 +169,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         input_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Input);
         target_variables_indices = data_set.get_variable_indices(DataSet::VariableUse::Target);
         
-        batch.set(batch_samples_number, &data_set);
+        batch.set(batch_size, &data_set);
 
         batch.fill(training_samples_indices, input_variables_indices, decoder_variables_indices, target_variables_indices);
         
@@ -182,7 +182,7 @@ void CrossEntropyError3DTest::test_calculate_gradient_transformer()
         
         // Loss index
 
-        back_propagation.set(batch_samples_number, &cross_entropy_error_3d);
+        back_propagation.set(batch_size, &cross_entropy_error_3d);
         cross_entropy_error_3d.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         cross_entropy_error_3d.back_propagate(batch, forward_propagation, back_propagation);
         

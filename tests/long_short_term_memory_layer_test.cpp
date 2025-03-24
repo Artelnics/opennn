@@ -46,7 +46,7 @@ void LongShortTermMemoryLayerTest::test_forward_propagate()
     inputs.setConstant(type(1));
 
     long_short_term_memory_layer.set(inputs_number, neurons_number, time_steps);
-    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::ActivationFunction::HyperbolicTangent);
+    long_short_term_memory_layer.set_activation_function(LongShortTermMemoryLayer::Activation::HyperbolicTangent);
     long_short_term_memory_layer.set_parameters_constant(type(1));
 
     long_short_term_layer_forward_propagation.set(samples_number, &long_short_term_memory_layer);

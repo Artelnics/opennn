@@ -55,7 +55,7 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
     activations.setConstant({ type(-1.55) });
     Tensor<type, 2> activation_derivatives(1, 1);
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Logistic);
 
     probabilistic_layer.calculate_activations(activations,activation_derivatives);
 
@@ -69,13 +69,13 @@ TEST(ProbabilisticLayerTest, CalculateActivations)
     EXPECT_NEAR(abs(activation_derivatives(0, 0)), type(0.1444), type(1e-3));
 
     activations.setConstant({ type(-1.55) });
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Softmax);
     probabilistic_layer.calculate_activations(activations,activation_derivatives);
 
     EXPECT_NEAR(abs(activations(0, 0)), type(1), type(1e-2));
 
     activations.setConstant({ type(-1.55) });
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Competitive);
     probabilistic_layer.calculate_activations(activations,activation_derivatives);
 
     EXPECT_NEAR(abs(activations(0, 0)), type(1), type(1e-2));
@@ -97,7 +97,7 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
     Tensor<type, 2> inputs(samples_number, inputs_number);
     inputs.setConstant(type(1));
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Softmax);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
         make_unique<ProbabilisticLayerForwardPropagation>(samples_number, &probabilistic_layer);
@@ -130,7 +130,7 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
     inputs(samples_number,inputs_number);
     inputs.setConstant(type(1));
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Competitive);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Competitive);
 
     forward_propagation = make_unique<ProbabilisticLayerForwardPropagation>(samples_number, &probabilistic_layer);
 
@@ -165,7 +165,7 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
     inputs(samples_number,inputs_number);
     inputs.setConstant(type(1));
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Activation::Logistic);
 
     forward_propagation = make_unique<ProbabilisticLayerForwardPropagation>(samples_number, &probabilistic_layer);
 
