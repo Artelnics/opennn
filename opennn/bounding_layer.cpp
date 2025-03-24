@@ -283,10 +283,10 @@ void BoundingLayer::from_XML(const XMLDocument& document)
 }
 
 
-BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -294,19 +294,19 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return { (type*)outputs.data(), { samples_number, output_dimensions[0]}};
+    return { (type*)outputs.data(), { batch_size, output_dimensions[0]}};
 }
 
 
-void BoundingLayerForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void BoundingLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_output_dimensions()[0];
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
-    outputs.resize(samples_number, neurons_number);
+    outputs.resize(batch_size, neurons_number);
 }
 
 

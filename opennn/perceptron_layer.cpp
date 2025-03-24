@@ -15,7 +15,7 @@ namespace opennn
 
 Perceptron::Perceptron(const dimensions& new_input_dimensions,
                                  const dimensions& new_output_dimensions,
-                                 const ActivationFunction& new_activation_function,
+                                 const Activation& new_activation_function,
                                  const string& new_layer_name) : Layer()
 {
     set(new_input_dimensions,
@@ -57,10 +57,9 @@ type Perceptron::get_dropout_rate() const
 
 Tensor<type, 1> Perceptron::get_parameters() const
 {
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
+    const Index parameters_number = get_parameters_number();
 
-    Tensor<type, 1> parameters(weights_number + biases_number);
+    Tensor<type, 1> parameters(parameters_number);
 
     Index index = 0;
 
@@ -71,7 +70,7 @@ Tensor<type, 1> Perceptron::get_parameters() const
 }
 
 
-const Perceptron::ActivationFunction& Perceptron::get_activation_function() const
+const Perceptron::Activation& Perceptron::get_activation_function() const
 {
     return activation_function;
 }
@@ -81,31 +80,31 @@ string Perceptron::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic:
+    case Activation::Logistic:
         return "Logistic";
 
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "HyperbolicTangent";
 
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return "Linear";
 
-    case ActivationFunction::RectifiedLinear:
+    case Activation::RectifiedLinear:
         return "RectifiedLinear";
 
-    case ActivationFunction::ScaledExponentialLinear:
+    case Activation::ScaledExponentialLinear:
         return "ScaledExponentialLinear";
 
-    case ActivationFunction::SoftPlus:
+    case Activation::SoftPlus:
         return "SoftPlus";
 
-    case ActivationFunction::SoftSign:
+    case Activation::SoftSign:
         return "SoftSign";
 
-    case ActivationFunction::HardSigmoid:
+    case Activation::HardSigmoid:
         return "HardSigmoid";
 
-    case ActivationFunction::ExponentialLinear:
+    case Activation::ExponentialLinear:
         return "ExponentialLinear";
     }
 
@@ -115,7 +114,7 @@ string Perceptron::get_activation_function_string() const
 
 void Perceptron::set(const dimensions& new_input_dimensions,
                           const dimensions& new_output_dimensions,
-                          const Perceptron::ActivationFunction& new_activation_function,
+                          const Perceptron::Activation& new_activation_function,
                           const string& new_name)
 {
 
@@ -160,22 +159,14 @@ void Perceptron::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
+void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {   
-    const type* new_parameters_data = new_parameters.data();
-    type* weights_data = weights.data();
-    type* biases_data = biases.data();
-
-    const Index biases_number = biases.size();
-    const Index weights_number = weights.size();
-
-    memcpy(weights_data, new_parameters_data + index, weights_number*sizeof(type));
-
-    memcpy(biases_data, new_parameters_data + index + weights_number, biases_number*sizeof(type));
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
-void Perceptron::set_activation_function(const Perceptron::ActivationFunction& new_activation_function)
+void Perceptron::set_activation_function(const Perceptron::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -184,23 +175,23 @@ void Perceptron::set_activation_function(const Perceptron::ActivationFunction& n
 void Perceptron::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-        activation_function = ActivationFunction::Logistic;
+        activation_function = Activation::Logistic;
     else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = ActivationFunction::HyperbolicTangent;
+        activation_function = Activation::HyperbolicTangent;
     else if(new_activation_function_name == "Linear")
-        activation_function = ActivationFunction::Linear;
+        activation_function = Activation::Linear;
     else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = ActivationFunction::RectifiedLinear;
+        activation_function = Activation::RectifiedLinear;
     else if(new_activation_function_name == "ScaledExponentialLinear")
-        activation_function = ActivationFunction::ScaledExponentialLinear;
+        activation_function = Activation::ScaledExponentialLinear;
     else if(new_activation_function_name == "SoftPlus")
-        activation_function = ActivationFunction::SoftPlus;
+        activation_function = Activation::SoftPlus;
     else if(new_activation_function_name == "SoftSign")
-        activation_function = ActivationFunction::SoftSign;
+        activation_function = Activation::SoftSign;
     else if(new_activation_function_name == "HardSigmoid")
-        activation_function = ActivationFunction::HardSigmoid;
+        activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = ActivationFunction::ExponentialLinear;
+        activation_function = Activation::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -254,23 +245,23 @@ void Perceptron::calculate_activations(Tensor<type, 2>& activations,
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
+    case Activation::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activation_derivatives);return;
+    case Activation::Logistic: logistic(activations, activation_derivatives);return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
+    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives);return;
+    case Activation::SoftPlus: soft_plus(activations, activation_derivatives);return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
+    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
+    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
+    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: return;
     }
@@ -439,11 +430,11 @@ void Perceptron::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagat
 
 
 void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
-                                                        const Index& index,
-                                                        Tensor<type, 2>& squared_errors_Jacobian) const
+                                                   const Index& index,
+                                                   Tensor<type, 2>& squared_errors_Jacobian) const
 {
     const Index parameters_number = get_parameters_number();
-    const Index samples_number = back_propagation->samples_number;
+    const Index batch_size = back_propagation->batch_size;
 
     PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
         static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
@@ -452,7 +443,7 @@ void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagati
 
     memcpy(squared_errors_Jacobian.data() + index,
            this_squared_errors_Jacobian_data,
-           parameters_number * samples_number * sizeof(type));
+           parameters_number * batch_size * sizeof(type));
 }
 
 
@@ -476,12 +467,12 @@ string Perceptron::get_expression(const vector<string>& new_input_names,
     {
         const TensorMap<Tensor<type, 1>> synaptic_weights_column = tensor_map(weights, j);
 
-        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "(" << biases(j) << "+";
+        buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " + ";
 
         for(Index i = 0; i < inputs_number - 1; i++)
-            buffer << synaptic_weights_column(i) << "*" << input_names[i] << "+";
+            buffer << "(" << synaptic_weights_column(i) << "*" << input_names[i] << ") + ";
 
-        buffer << synaptic_weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ");\n";
+        buffer << "("  << synaptic_weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ") );\n";
     }
 
     return buffer.str();
@@ -516,8 +507,11 @@ void Perceptron::from_XML(const XMLDocument& document)
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(perceptron_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), 0);
+    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -528,7 +522,7 @@ void Perceptron::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();  
@@ -539,31 +533,31 @@ string Perceptron::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic:
+    case Activation::Logistic:
         return "logistic";
 
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "tanh";
 
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return string();
 
-    case ActivationFunction::RectifiedLinear:
+    case Activation::RectifiedLinear:
         return "ReLU";
 
-    case ActivationFunction::ExponentialLinear:
+    case Activation::ExponentialLinear:
         return "ELU";
 
-    case ActivationFunction::ScaledExponentialLinear:
+    case Activation::ScaledExponentialLinear:
         return "SELU";
 
-    case ActivationFunction::SoftPlus:
+    case Activation::SoftPlus:
         return "soft_plus";
 
-    case ActivationFunction::SoftSign:
+    case Activation::SoftSign:
         return "soft_sign";
 
-    case ActivationFunction::HardSigmoid:
+    case Activation::HardSigmoid:
         return "hard_sigmoid";
 
     default:
@@ -572,19 +566,19 @@ string Perceptron::get_activation_function_string_expression() const
 }
 
 
-void PerceptronForwardPropagation::set(const Index &new_samples_number, Layer *new_layer)
+void PerceptronForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
     layer = new_layer;
     
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
     if (!layer) return;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    outputs.resize(samples_number, outputs_number);
+    outputs.resize(batch_size, outputs_number);
 
-    activation_derivatives.resize(samples_number, outputs_number);
+    activation_derivatives.resize(batch_size, outputs_number);
 
     activation_derivatives.setConstant((type)NAN);
 }
@@ -594,15 +588,15 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     
-    return pair<type *, dimensions>((type*)outputs.data(), {{samples_number, output_dimensions[0]}});
+    return pair<type *, dimensions>((type*)outputs.data(), {{batch_size, output_dimensions[0]}});
 }
 
 
-PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_samples_number,
+PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_size,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -615,24 +609,24 @@ void PerceptronForwardPropagation::print() const
 }
 
 
-PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_samples_number, Layer *new_layer)
+PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void PerceptronBackPropagation::set(const Index &new_samples_number,
-                                         Layer *new_layer)
+void PerceptronBackPropagation::set(const Index&new_batch_size,
+                                    Layer *new_layer)
 {
     layer = new_layer;
     
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
     
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    combination_derivatives.resize(samples_number, outputs_number);
+    combination_derivatives.resize(batch_size, outputs_number);
     combination_derivatives.setZero();
 
     bias_derivatives.resize(outputs_number);
@@ -641,7 +635,7 @@ void PerceptronBackPropagation::set(const Index &new_samples_number,
     weight_derivatives.resize(inputs_number, outputs_number);
     weight_derivatives.setZero();
 
-    input_derivatives.resize(samples_number, inputs_number);
+    input_derivatives.resize(batch_size, inputs_number);
 }
 
 
@@ -649,7 +643,7 @@ vector<pair<type*, dimensions>> PerceptronBackPropagation::get_input_derivative_
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return { {(type*)(input_derivatives.data()), {samples_number, inputs_number}} };
+    return { {(type*)(input_derivatives.data()), {batch_size, inputs_number}} };
 }
 
 
@@ -664,11 +658,11 @@ void PerceptronBackPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_samples_number,
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -676,17 +670,17 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Laye
 {
     layer = new_layer;
 
-    samples_number = new_samples_number;
+    batch_size = new_samples_number;
 
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 
-    combination_derivatives.resize(samples_number, outputs_number);
+    combination_derivatives.resize(batch_size, outputs_number);
 
-    squared_errors_Jacobian.resize(samples_number, parameters_number);
+    squared_errors_Jacobian.resize(batch_size, parameters_number);
 
-    input_derivatives.resize(samples_number, inputs_number);
+    input_derivatives.resize(batch_size, inputs_number);
 }
 
 
@@ -694,7 +688,7 @@ vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_deri
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
-    return {{(type*)(input_derivatives.data()), {samples_number, inputs_number}}};
+    return {{(type*)(input_derivatives.data()), {batch_size, inputs_number}}};
 }
 
 

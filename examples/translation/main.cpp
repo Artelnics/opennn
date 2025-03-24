@@ -49,11 +49,10 @@ int main()
         const Index num_classes = 2;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<EmbeddingLayer>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding_layer"));
-        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        // neural_network.set_layer_inputs_indices("Multihead_attention", {"Embedding_layer", "Embedding_layer"});
-        // neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 1, PerceptronLayer3D::ActivationFunction::RectifiedLinear));
-        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, 2));
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension));
+        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
+        // neural_network.add_layer(make_unique<Perceptron3d>(maximum_sequence_length, embedding_dimension, 64));
+        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 

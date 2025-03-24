@@ -263,23 +263,21 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
     Tensor<type, 2>& outputs = scaling_layer_forward_propagation->outputs;
-
     outputs = inputs;
 
-    for(Index i = 0; i < outputs_number; i++){
-        type mean = opennn::mean(outputs,i);
-        Tensor<type,1> col(outputs.dimension(0));
-        for(Index j=0;j<outputs.dimension(0);j++){
-            col(j)=outputs(j,i);
-        }
-        type std_dev = opennn::standard_deviation(col);
-        descriptives[i]={min_range, max_range,mean,std_dev};
-    }
+    // for(Index i = 0; i < outputs_number; i++){
+    //     type mean = opennn::mean(outputs,i);
+    //     Tensor<type,1> col(outputs.dimension(0));
+    //     for(Index j=0;j<outputs.dimension(0);j++){
+    //         col(j)=outputs(j,i);
+    //     }
+    //     type std_dev = opennn::standard_deviation(col);
+    //     descriptives[i]={min_range, max_range,mean,std_dev};
+    // }
 
     for(Index i = 0; i < outputs_number; i++)
     {
         const Scaler& scaler = scalers[i];
-
         switch(scaler)
         {
         case Scaler::None:
@@ -505,10 +503,10 @@ void ScalingLayer2D::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
@@ -516,19 +514,19 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
-    return {(type*)outputs.data(), {samples_number, output_dimensions[0]}};
+    return {(type*)outputs.data(), {batch_size, output_dimensions[0]}};
 }
 
 
-void ScalingLayer2DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
-    outputs.resize(samples_number, outputs_number);
+    outputs.resize(batch_size, outputs_number);
 }
 
 

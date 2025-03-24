@@ -40,7 +40,7 @@ struct NeuralNetworkBackPropagationLM
         }
     }
 
-    Index batch_samples_number = 0;
+    Index batch_size = 0;
 
     NeuralNetwork* neural_network = nullptr;
 

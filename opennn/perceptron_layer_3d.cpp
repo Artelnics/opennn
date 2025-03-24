@@ -13,59 +13,61 @@
 namespace opennn
 {
 
-PerceptronLayer3D::PerceptronLayer3D(const Index& new_inputs_number,
-                                     const Index& new_inputs_depth,
-                                     const Index& new_neurons_number,
-                                     const PerceptronLayer3D::ActivationFunction& new_activation_function,
-                                     const string& new_name) : Layer()
+Perceptron3d::Perceptron3d(const Index& new_sequence_length,
+                           const Index& new_input_dimension,
+                           const Index& new_output_dimension,
+                           const Perceptron3d::Activation& new_activation_function,
+                           const string& new_name) : Layer()
 {
-    set(new_inputs_number, new_inputs_depth, new_neurons_number, new_activation_function, new_name);
+    layer_type = Type::Perceptron3D;
+
+    set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
 }
 
 
-Index PerceptronLayer3D::get_inputs_number_xxx() const
+Index Perceptron3d::get_sequence_length() const
 {
-    return inputs_number_xxx;
+    return sequence_length;
 }
 
 
-Index PerceptronLayer3D::get_inputs_depth() const
+Index Perceptron3d::get_input_dimension() const
 {
     return weights.dimension(0);
 }
 
 
-void PerceptronLayer3D::set_dropout_rate(const type& new_dropout_rate)
+void Perceptron3d::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
 
-Index PerceptronLayer3D::get_neurons_number() const
+Index Perceptron3d::get_output_dimension() const
 {
     return biases.size();
 }
 
 
-dimensions PerceptronLayer3D::get_output_dimensions() const
+dimensions Perceptron3d::get_output_dimensions() const
 {
-    return { inputs_number_xxx, get_neurons_number() };
+    return { sequence_length, get_output_dimension() };
 }
 
 
-Index PerceptronLayer3D::get_parameters_number() const
+Index Perceptron3d::get_parameters_number() const
 {
     return biases.size() + weights.size();
 }
 
 
-type PerceptronLayer3D::get_dropout_rate() const
+type Perceptron3d::get_dropout_rate() const
 {
     return dropout_rate;
 }
 
 
-Tensor<type, 1> PerceptronLayer3D::get_parameters() const
+Tensor<type, 1> Perceptron3d::get_parameters() const
 {
     Tensor<type, 1> parameters(weights.size() + biases.size());
 
@@ -78,23 +80,23 @@ Tensor<type, 1> PerceptronLayer3D::get_parameters() const
 }
 
 
-const PerceptronLayer3D::ActivationFunction& PerceptronLayer3D::get_activation_function() const
+const Perceptron3d::Activation& Perceptron3d::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string PerceptronLayer3D::get_activation_function_string() const
+string Perceptron3d::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "HyperbolicTangent";
 
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return "Linear";
 
-    case ActivationFunction::RectifiedLinear:
+    case Activation::RectifiedLinear:
         return "RectifiedLinear";
     }
 
@@ -102,17 +104,17 @@ string PerceptronLayer3D::get_activation_function_string() const
 }
 
 
-void PerceptronLayer3D::set(const Index& new_inputs_number, 
-                            const Index& new_inputs_depth, 
-                            const Index& new_neurons_number,
-                            const PerceptronLayer3D::ActivationFunction& new_activation_function,
-                            const string& new_name)
+void Perceptron3d::set(const Index& new_sequence_length,
+                       const Index& new_input_dimension, 
+                       const Index& new_output_dimension,
+                       const Perceptron3d::Activation& new_activation_function,
+                       const string& new_name)
 {
-    inputs_number_xxx = new_inputs_number;
+    sequence_length = sequence_length;
 
-    biases.resize(new_neurons_number);
+    biases.resize(new_output_dimension);
 
-    weights.resize(new_inputs_depth, new_neurons_number);
+    weights.resize(new_input_dimension, new_output_dimension);
 
     set_parameters_glorot();
 
@@ -120,117 +122,62 @@ void PerceptronLayer3D::set(const Index& new_inputs_number,
 
     name = new_name;
 
-    layer_type = Type::Perceptron3D;
-
     dropout_rate = 0;
 }
 
 
-void PerceptronLayer3D::set_inputs_number(Index new_input_number)
+void Perceptron3d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
-    inputs_number_xxx = new_input_number;
+    copy_from_vector(weights, new_parameters, index);
+    copy_from_vector(biases, new_parameters, index);
 }
 
 
-// void PerceptronLayer3D::set_input_dimensions(const dimensions& new_input_dimensions)
-// {
-// /*
-//     inputs_number = new_inputs_number;
-// */
-// }
-
-
-void PerceptronLayer3D::set_inputs_depth(const Index& new_inputs_depth)
-{
-    const Index neurons_number = get_neurons_number();
-
-    biases.resize(neurons_number);
-
-    weights.resize(new_inputs_depth, neurons_number);
-}
-
-
-void PerceptronLayer3D::set_neurons_number(const Index& new_neurons_number)
-{
-
-    const Index inputs_depth = get_inputs_depth();
-
-    biases.resize(new_neurons_number);
-
-    weights.resize(inputs_depth, new_neurons_number);
-
-    // const Index inputs_depth = get_inputs_depth();
-    // const Index neurons_number = new_output_dimensions[1];
-
-    // weights.resize(inputs_depth, neurons_number);
-}
-
-
-void PerceptronLayer3D::set_parameters(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        memcpy(weights.data(), new_parameters.data() + index, weights.size()*sizeof(type));
-
-        #pragma omp section
-        memcpy(biases.data(), new_parameters.data() + index + weights.size(), biases.size()*sizeof(type));
-    }
-}
-
-
-void PerceptronLayer3D::set_activation_function(const PerceptronLayer3D::ActivationFunction& new_activation_function)
+void Perceptron3d::set_activation_function(const Perceptron3d::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void PerceptronLayer3D::set_activation_function(const string& new_activation_function_name)
+void Perceptron3d::set_activation_function(const string& new_activation_function_name)
 {
     if (new_activation_function_name == "HyperbolicTangent")
-        activation_function = ActivationFunction::HyperbolicTangent;
+        activation_function = Activation::HyperbolicTangent;
     else if (new_activation_function_name == "Linear")
-        activation_function = ActivationFunction::Linear;
+        activation_function = Activation::Linear;
     else if (new_activation_function_name == "RectifiedLinear")
-        activation_function = ActivationFunction::RectifiedLinear;
+        activation_function = Activation::RectifiedLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
 
 
-void PerceptronLayer3D::set_parameters_constant(const type& value)
+void Perceptron3d::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
-
     weights.setConstant(value);
 }
 
 
-void PerceptronLayer3D::set_parameters_random()
+void Perceptron3d::set_parameters_random()
 {
     set_random(biases);
-
     set_random(weights);
 }
 
 
-void PerceptronLayer3D::set_parameters_glorot()
+void Perceptron3d::set_parameters_glorot()
 {
     biases.setZero();
 
-    const type limit = sqrt(6 / type(get_inputs_depth() + get_neurons_number()));
+    const type limit = sqrt(6 / type(get_input_dimension() + get_output_dimension()));
 
-    const type minimum = -limit;
-    const type maximum = limit;
-
-    #pragma omp parallel for
-    for(Index i = 0; i < weights.size(); i++)
-        weights(i) = get_random_type(minimum, maximum);
+    set_random(weights, -limit, limit);
 }
 
 
-void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
-                                               Tensor<type, 3>& combinations) const
+void Perceptron3d::calculate_combinations(const Tensor<type, 3>& inputs,
+                                          Tensor<type, 3>& combinations) const
 {
     combinations.device(*thread_pool_device) = inputs.contract(weights, contraction_indices);
 
@@ -238,7 +185,7 @@ void PerceptronLayer3D::calculate_combinations(const Tensor<type, 3>& inputs,
 }
 
 
-void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const 
+void Perceptron3d::dropout(Tensor<type, 3>& outputs) const 
 {
     /*
     type* outputs_data = outputs.data();
@@ -253,8 +200,8 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        TensorMap<Tensor<type, 2>> matrix(outputs_data + neuron_index*batch_samples_number*inputs_number,
-                                          batch_samples_number, inputs_number);
+        TensorMap<Tensor<type, 2>> matrix(outputs_data + neuron_index*batch_size*inputs_number,
+                                          batch_size, inputs_number);
 
         random = get_random(type(0), type(1));
 
@@ -275,31 +222,27 @@ void PerceptronLayer3D::dropout(Tensor<type, 3>& outputs) const
 }
 
 
-void PerceptronLayer3D::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
+void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
-
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
-    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
-
+    case Activation::Linear: linear(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::Logistic: logistic(activations, activation_derivatives); return;
     default: return;
     }
 }
 
 
-void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                          unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                          const bool& is_training)
+void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                     const bool& is_training)
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-        static_cast<PerceptronLayer3DForwardPropagation*>(layer_forward_propagation.get());
+    Perceptron3dForwardPropagation* perceptron_layer_3d_forward_propagation =
+        static_cast<Perceptron3dForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
 
@@ -328,10 +271,10 @@ void PerceptronLayer3D::forward_propagate(const vector<pair<type*, dimensions>>&
 }
 
 
-void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       const vector<pair<type*, dimensions>>& delta_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       unique_ptr<LayerBackPropagation>& back_propagation) const
+void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                                  const vector<pair<type*, dimensions>>& delta_pairs,
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
@@ -342,22 +285,22 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 
     // Forward propagation
 
-    const PerceptronLayer3DForwardPropagation* perceptron_layer_3d_forward_propagation =
-            static_cast<PerceptronLayer3DForwardPropagation*>(forward_propagation.get());
+    const Perceptron3dForwardPropagation* perceptron_layer_3d_forward_propagation =
+            static_cast<Perceptron3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    PerceptronLayer3DBackPropagation* perceptron_layer_3d_back_propagation =
-            static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
+    Perceptron3dBackPropagation* perceptron_3d_back_propagation =
+            static_cast<Perceptron3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 3>& combination_derivatives = perceptron_layer_3d_back_propagation->combination_derivatives;
+    Tensor<type, 3>& combination_derivatives = perceptron_3d_back_propagation->combination_derivatives;
 
-    Tensor<type, 1>& bias_derivatives = perceptron_layer_3d_back_propagation->bias_derivatives;
-    Tensor<type, 2>& weight_derivatives = perceptron_layer_3d_back_propagation->weight_derivatives;
+    Tensor<type, 1>& bias_derivatives = perceptron_3d_back_propagation->bias_derivatives;
+    Tensor<type, 2>& weight_derivatives = perceptron_3d_back_propagation->weight_derivatives;
 
-    Tensor<type, 3>& input_derivatives = perceptron_layer_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_derivatives = perceptron_3d_back_propagation->input_derivatives;
 
     combination_derivatives.device(*thread_pool_device) 
         = deltas * activation_derivatives;
@@ -373,63 +316,56 @@ void PerceptronLayer3D::back_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void PerceptronLayer3D::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
+void Perceptron3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+                                   Index& index,
+                                   Tensor<type, 1>& gradient) const
 {
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-    for(Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-}
-
-
-void PerceptronLayer3D::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                        Index& index,
-                                        Tensor<type, 1>& gradient) const
-{
-    PerceptronLayer3DBackPropagation* perceptron_back_propagation =
-        static_cast<PerceptronLayer3DBackPropagation*>(back_propagation.get());
+    Perceptron3dBackPropagation* perceptron_back_propagation =
+        static_cast<Perceptron3dBackPropagation*>(back_propagation.get());
 
     copy_to_vector(gradient, perceptron_back_propagation->weight_derivatives, index);
     copy_to_vector(gradient, perceptron_back_propagation->bias_derivatives, index);
 }
 
 
-void PerceptronLayer3D::from_XML(const XMLDocument& document)
+void Perceptron3d::from_XML(const XMLDocument& document)
 {
     const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3D");
 
     if(!perceptron_layer_element)
         throw runtime_error("Perceptron3D element is nullptr.\n");
 
-    const Index new_inputs_number = read_xml_index(perceptron_layer_element, "InputsNumber");
-    const Index new_inputs_depth = read_xml_index(perceptron_layer_element, "InputsDepth");
-    const Index new_neurons_number = read_xml_index(perceptron_layer_element, "NeuronsNumber");
+    const Index new_sequence_length = read_xml_index(perceptron_layer_element, "InputsNumber");
+    const Index new_input_dimension = read_xml_index(perceptron_layer_element, "InputsDepth");
+    const Index new_output_dimension = read_xml_index(perceptron_layer_element, "NeuronsNumber");
 
-    set(new_inputs_number, new_inputs_depth, new_neurons_number);
+    set(new_sequence_length, new_input_dimension, new_output_dimension);
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_activation_function(read_xml_string(perceptron_layer_element, "ActivationFunction"));
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "));
+    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
 
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
 }
 
 
-void PerceptronLayer3D::to_XML(XMLPrinter& printer) const
+void Perceptron3d::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Perceptron3D");
 
     add_xml_element(printer, "Name", name);
-    add_xml_element(printer, "InputsNumber", to_string(get_inputs_number_xxx()));
-    add_xml_element(printer, "InputsDepth", to_string(get_inputs_depth()));
-    add_xml_element(printer, "NeuronsNumber", to_string(get_neurons_number()));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));
+    add_xml_element(printer, "InputsDepth", to_string(get_input_dimension()));
+    add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimension()));
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();
 }
 
 
-void PerceptronLayer3DForwardPropagation::print() const
+void Perceptron3dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl
@@ -438,66 +374,62 @@ void PerceptronLayer3DForwardPropagation::print() const
 }
 
 
-PerceptronLayer3DForwardPropagation::PerceptronLayer3DForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+Perceptron3dForwardPropagation::Perceptron3dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> PerceptronLayer3DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Perceptron3dForwardPropagation::get_outputs_pair() const
 {
-    PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
+    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
 
-    const Index neurons_number = perceptron_layer_3d->get_neurons_number();
+    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
+    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
 
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
-
-    return { (type*)outputs.data(), { samples_number, inputs_number, neurons_number } };
+    return { (type*)outputs.data(), { batch_size, sequence_length, output_dimension } };
 }
 
 
-void PerceptronLayer3DForwardPropagation::set(const Index& new_samples_number, Layer* new_layer)
-{
-    layer = new_layer;
-
-    PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
-
-    samples_number = new_samples_number;
-
-    const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
-
-    outputs.resize(samples_number, inputs_number, neurons_number);
-
-    activation_derivatives.resize(samples_number, inputs_number, neurons_number);
-}
-
-
-void PerceptronLayer3DBackPropagation::set(const Index& new_samples_number, Layer* new_layer)
+void Perceptron3dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
-    PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
+    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
 
-    samples_number = new_samples_number;
+    batch_size = new_batch_size;
 
-    const Index neurons_number = perceptron_layer_3d->get_neurons_number();
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
-    const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
+    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
 
-    bias_derivatives.resize(neurons_number);
+    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
 
-    weight_derivatives.resize(inputs_depth, neurons_number);
+    outputs.resize(batch_size, sequence_length, output_dimension);
 
-    combination_derivatives.resize(samples_number, inputs_number, neurons_number);
-
-    input_derivatives.resize(samples_number, inputs_number, inputs_depth);
+    activation_derivatives.resize(batch_size, sequence_length, output_dimension);
 }
 
 
-void PerceptronLayer3DBackPropagation::print() const
+void Perceptron3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+{
+    layer = new_layer;
+
+    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
+
+    batch_size = new_batch_size;
+
+    const Index output_dimension = perceptron_layer_3d->get_output_dimension();
+    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
+    const Index input_dimension = perceptron_layer_3d->get_input_dimension();
+
+    bias_derivatives.resize(output_dimension);
+    weight_derivatives.resize(input_dimension, output_dimension);
+    combination_derivatives.resize(batch_size, sequence_length, output_dimension);
+    input_derivatives.resize(batch_size, sequence_length, input_dimension);
+}
+
+
+void Perceptron3dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
          << bias_derivatives << endl
@@ -506,24 +438,23 @@ void PerceptronLayer3DBackPropagation::print() const
 }
 
 
-PerceptronLayer3DBackPropagation::PerceptronLayer3DBackPropagation(const Index& new_batch_samples_number, Layer* new_layer)
+Perceptron3dBackPropagation::Perceptron3dBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> PerceptronLayer3DBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> Perceptron3dBackPropagation::get_input_derivative_pairs() const
 {
-    PerceptronLayer3D* perceptron_layer_3d = static_cast<PerceptronLayer3D*>(layer);
+    Perceptron3d* perceptron_layer_3d = static_cast<Perceptron3d*>(layer);
 
-    const Index inputs_number = perceptron_layer_3d->get_inputs_number_xxx();
-    const Index inputs_depth = perceptron_layer_3d->get_inputs_depth();
+    const Index sequence_length = perceptron_layer_3d->get_sequence_length();
+    const Index inputs_depth = perceptron_layer_3d->get_input_dimension();
 
     return {{(type*)(input_derivatives.data()),
-            {samples_number, inputs_number, inputs_depth}}};
+            {batch_size, sequence_length, inputs_depth}}};
 }
-
 
 }
 

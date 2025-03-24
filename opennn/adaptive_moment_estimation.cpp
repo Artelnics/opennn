@@ -23,7 +23,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
 
 Index AdaptiveMomentEstimation::get_samples_number() const
 {
-    return batch_samples_number;
+    return batch_size;
 }
 
 
@@ -63,9 +63,9 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
+void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_size)
 {
-    batch_samples_number = new_batch_samples_number;
+    batch_size = new_batch_size;
 }
 
 
@@ -163,10 +163,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
+    const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
     const Index selection_batch_samples_number = (selection_samples_number != 0)
-                                                 ? min(selection_samples_number, batch_samples_number)
+                                                 ? min(selection_samples_number, batch_size)
                                                  : 0;
 
 
@@ -429,7 +429,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     {"Training loss goal", to_string(double(training_loss_goal))},
     {"Maximum epochs number", to_string(maximum_epochs_number)},
     {"Maximum time", write_time(maximum_time)},
-    {"Batch samples number", to_string(batch_samples_number)}});
+    {"Batch samples number", to_string(batch_size)}});
 
     return string_matrix;
 }
@@ -491,7 +491,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
 
-    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
+    add_xml_element(printer, "BatchSize", to_string(batch_size));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));

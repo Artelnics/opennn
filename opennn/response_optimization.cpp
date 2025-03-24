@@ -46,7 +46,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
         input_maximums = scaling_layer_2d->get_maximums();
     }
 
-    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification) 
+    if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification || neural_network->get_model_type() == NeuralNetwork::ModelType::Default)
     {
         output_minimums.resize(outputs_number);
         output_minimums.setZero();
@@ -288,7 +288,6 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
     Tensor<Tensor<type, 1>, 1> values_conditions(conditions_size);
 
     Index index = 0;
-
     for(Index i = 0; i < conditions_size; i++)
     {
         Tensor<type, 1> current_values;
@@ -329,6 +328,8 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
             }
             else
             {
+                cout << "adri - " << i << endl;
+                cout << output_maximums(i) << "-" << output_minimums(i) << endl;
                 current_values[0] = output_minimums(i);
                 current_values[1] = output_maximums(i);
             }
@@ -369,7 +370,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             if(raw_variable_type == DataSet::RawVariableType::Numeric
             || raw_variable_type == DataSet::RawVariableType::Constant)
             {
-                inputs(i, index++) = get_random_type(input_minimums[index], input_maximums[index]);
+                inputs(i, index) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
             else if(raw_variable_type == DataSet::RawVariableType::Binary)

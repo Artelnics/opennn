@@ -28,10 +28,10 @@ int main()
 
         // Neural network
 
-        const Index neurons_number = 30;
+        const Index neurons_number = 3;
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                    { input_variables_number }, { neurons_number }, { target_variables_number });
+                                    { input_variables_number }, { neurons_number, neurons_number }, { target_variables_number });
 
         // Training strategy
 

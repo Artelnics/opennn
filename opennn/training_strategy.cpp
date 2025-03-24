@@ -516,21 +516,21 @@ void TrainingStrategy::fix_forecasting()
     else
         return;
 
-    Index batch_samples_number = 0;
+    Index batch_size = 0;
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        batch_samples_number = adaptive_moment_estimation.get_samples_number();
+        batch_size = adaptive_moment_estimation.get_samples_number();
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        batch_samples_number = stochastic_gradient_descent.get_samples_number();
+        batch_size = stochastic_gradient_descent.get_samples_number();
     else
         return;
 
-    if(batch_samples_number%time_steps == 0)
+    if(batch_size%time_steps == 0)
         return;
 
-    const Index constant = time_steps > batch_samples_number
+    const Index constant = time_steps > batch_size
         ? 1
-        : Index(batch_samples_number/time_steps);
+        : Index(batch_size/time_steps);
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         adaptive_moment_estimation.set_batch_samples_number(constant*time_steps);
