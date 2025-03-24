@@ -119,7 +119,7 @@ void Perceptron::set(const dimensions& new_input_dimensions,
                           const string& new_name)
 {
 
-    if (new_input_dimensions.size() != 1) 
+    if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
 
     if (new_output_dimensions.size() != 1)

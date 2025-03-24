@@ -24,7 +24,8 @@ class PerceptronLayer3D : public Layer
 
 public:
 
-    enum class ActivationFunction{HyperbolicTangent, Logistic,
+    enum class ActivationFunction{HyperbolicTangent,
+                                  Logistic,
                                   Linear,
                                   RectifiedLinear};
 

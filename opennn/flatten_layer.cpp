@@ -69,11 +69,11 @@ void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
-    //    type* outputs_data = flatten_layer_forward_propagation->outputs.data();
+   //     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
 
-//    memcpy(outputs_data,
-//           input_pairs[0].first,
-//           samples_number*outputs_number*sizeof(type));
+   // memcpy(outputs_data,
+   //        input_pairs[0].first,
+   //        samples_number*outputs_number*sizeof(type));
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, samples_number, outputs_number);
 }

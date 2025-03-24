@@ -49,16 +49,17 @@ int main()
         const Index num_classes = 2;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<EmbeddingLayer>(vocabulary_size, maximum_sequence_length, embedding_dimension));
-        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
-        // neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 64));
-        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
+        neural_network.add_layer(make_unique<EmbeddingLayer>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding_layer"));
+        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
+        // neural_network.set_layer_inputs_indices("Multihead_attention", {"Embedding_layer", "Embedding_layer"});
+        // neural_network.add_layer(make_unique<PerceptronLayer3D>(maximum_sequence_length, embedding_dimension, 1, PerceptronLayer3D::ActivationFunction::RectifiedLinear));
+        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, 2));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 
         // cout << "Parameters number: " << neural_network.get_layers()[3]->get_parameters_number() << endl;
 
-        print_vector(neural_network.get_layers()[0]->get_output_dimensions());
+        print_vector(neural_network.get_layers()[1]->get_output_dimensions());
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
@@ -76,7 +77,7 @@ int main()
         adaptive_moment_estimation->set_batch_samples_number(12);
         adaptive_moment_estimation->set_display_period(1);
 
-        // training_strategy.perform_training();
+        training_strategy.perform_training();
 /*
 
 

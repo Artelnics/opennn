@@ -261,11 +261,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
+            cout << "Does the FPROP (ADAM)" << endl;
+
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+
+            cout << "Does the BACKPROP (ADAM)" << endl;
 
             // if(epoch == 50)
             // {

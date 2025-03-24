@@ -48,13 +48,13 @@ Index MultiHeadAttention::get_context_size() const
 
 Index MultiHeadAttention::get_embedding_dimension() const
 {
-    return query_weights.dimension(0);
+    return embedding_dimension;
 }
 
 
 Index MultiHeadAttention::get_heads_number() const
 {
-    return query_weights.dimension(2);
+    return heads_number;
 }
 
 
@@ -132,6 +132,10 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
 
     source_sequence_length = new_source_sequence_length;
 
+    heads_number = new_heads_number;
+
+    embedding_dimension = new_embedding_dimension;
+
     name = new_name;
 
     layer_type = Type::MultiheadAttention;
@@ -139,10 +143,6 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     dropout_rate = 0;
 
     const Index hidden_depth = get_hidden_depth();
-
-    const Index embedding_dimension = get_embedding_dimension();
-
-    const Index heads_number = get_heads_number();
 
     query_weights.resize(embedding_dimension, hidden_depth, heads_number);
     query_biases.resize(hidden_depth, heads_number);
