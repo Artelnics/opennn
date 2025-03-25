@@ -110,7 +110,7 @@ void Perceptron3d::set(const Index& new_sequence_length,
                        const Perceptron3d::Activation& new_activation_function,
                        const string& new_name)
 {
-    sequence_length = sequence_length;
+    sequence_length = new_sequence_length;
 
     biases.resize(new_output_dimension);
 
@@ -121,6 +121,8 @@ void Perceptron3d::set(const Index& new_sequence_length,
     activation_function = new_activation_function;
 
     name = new_name;
+
+    layer_type = Type::Perceptron3D;
 
     dropout_rate = 0;
 }

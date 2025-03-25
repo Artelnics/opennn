@@ -27,7 +27,8 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
     set_raw_variable_scalers(Scaler::None);
 
    target_dimensions = {get_target_length()};
-   decoder_dimensions = {get_target_length()};
+   has_decoder ? decoder_dimensions = {get_target_length()}
+               : decoder_dimensions = {};
    input_dimensions = {get_input_length()};
 }
 
@@ -296,7 +297,7 @@ void LanguageDataSet::print() const
         cout << "Language data set" << endl;
 
         cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-        cout << "Target size: 1" << endl;
+        cout << "Target size: " << get_target_length() << endl;
 
         cout << "Input lenght: " << get_input_length() << endl;
         cout << "Target categories: 0, 1"<<endl;
@@ -665,9 +666,10 @@ void LanguageDataSet::read_csv()
                                         : 1;
 
     const Index input_variables_number = maximum_input_length;
-    const Index decoder_variables_number = maximum_target_length - 1;
+    const Index decoder_variables_number = has_decoder ? maximum_target_length - 1
+                                                       : 0;
     const Index target_variables_number = has_decoder ? maximum_target_length - 1
-                                                      : 1;
+                                                      : maximum_target_length;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
     data.resize(samples_number, variables_number);

@@ -261,30 +261,23 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
-            cout << "Does the FPROP (ADAM)" << endl;
-
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            cout << "Does the BACKPROP (ADAM)" << endl;
-
             // if(epoch == 50)
             // {
 
-            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
-
-            // throw runtime_error("Checking the gradient and numerical gradient.");
+            throw runtime_error("Checking the gradient and numerical gradient.");
             // }
-            //system("pause");
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -407,7 +400,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-    cout << "sa" << endl;
+
     set_unscaling();
 
     if(display) results.print();

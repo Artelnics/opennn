@@ -42,6 +42,7 @@
 #include "auto_associative_neural_network.h"
 #include "transformer.h"
 #include "forward_propagation.h"
+#include "flatten_layer_3d.h"
 
 // Training strategy
 
