@@ -435,8 +435,6 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
     Tensor<type, 4>& projection_outputs = multihead_attention_forward_propagation->projection_outputs;
     Tensor<type, 3>& outputs = multihead_attention_forward_propagation->outputs;
 
-    calculate_query(query_input, query);
-
     calculate_transformation(query_input, query, query_weights, query_biases, sample_matrix);
 
     calculate_transformation(source_input, key, key_weights, key_biases, sample_matrix);

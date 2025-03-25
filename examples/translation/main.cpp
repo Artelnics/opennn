@@ -42,27 +42,30 @@ int main()
         // const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         // const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
-        const Index maximum_sequence_length = 8;
+        const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
         const Index embedding_dimension = 6;
         const Index heads_number = 1;
         const Index num_classes = 2;
 
         NeuralNetwork neural_network;
-        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension));
-        // neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, "Multihead_attention"));
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
+        neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
         // neural_network.add_layer(make_unique<Perceptron3d>(maximum_sequence_length, embedding_dimension, 64));
-        neural_network.add_layer(make_unique<ProbabilisticLayer3D>(maximum_sequence_length, embedding_dimension, num_classes));
+        neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
+        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 
         // cout << "Parameters number: " << neural_network.get_layers()[3]->get_parameters_number() << endl;
 
+        cout << "Output dimensions: ";
         print_vector(neural_network.get_layers()[1]->get_output_dimensions());
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -70,13 +73,14 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        adaptive_moment_estimation->set_loss_goal(0.5);
-        adaptive_moment_estimation->set_maximum_epochs_number(100);
+        // language_data_set.set(DataSet::SampleUse::Training);
+        adaptive_moment_estimation->set_loss_goal(0.1);
+        // adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(12);
         adaptive_moment_estimation->set_display_period(1);
 
-        training_strategy.perform_training();
+        training_strategy.perform_training();        
 /*
 
 
