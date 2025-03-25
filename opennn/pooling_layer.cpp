@@ -13,11 +13,11 @@ namespace opennn
 {
 
 Pooling::Pooling(const dimensions& new_input_dimensions, 
-                           const dimensions& new_pool_dimensions,
-                           const dimensions& new_stride_dimensions,
-                           const dimensions& new_padding_dimensions,
-                           const PoolingMethod& new_pooling_method,
-                           const string new_name) : Layer()
+                 const dimensions& new_pool_dimensions,
+                 const dimensions& new_stride_dimensions,
+                 const dimensions& new_padding_dimensions,
+                 const PoolingMethod& new_pooling_method,
+                 const string new_name) : Layer()
 {
     layer_type = Layer::Type::Pooling;
 

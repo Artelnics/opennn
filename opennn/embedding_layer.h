@@ -65,8 +65,6 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void add_deltas(const vector<pair<type*, dimensions>>&) const;
-
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          Index&,
                          Tensor<type, 1>&) const override;

@@ -100,7 +100,7 @@ void Embedding::set(const Index& new_vocabulary_size,
             ? sin(i / pow(10000, j / half_depth))
             : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-    name = "embedding_layer";
+    name = new_name;
 }
 
 
@@ -164,38 +164,34 @@ void Embedding::dropout(Tensor<type, 3>& outputs) const
 void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = outputs.dimension(2);
 
-    outputs.setConstant(sqrt(type(embedding_dimension)));
-
-    #pragma omp parallel for collapse(2)
-    for (int b = 0; b < batch_size; b++)
+    #pragma omp parallel for
+    for (Index row = 0; row < batch_size; row++)
     {
-        for (int t = 0; t < sequence_length; ++t)
-        {
-            const int token_id = inputs(b, t);
+        auto output_slice = outputs.chip(row, 0);
 
-            for (int d = 0; d < embedding_dimension; d++)
-                outputs(b, t, d) *= weights(token_id, d);
+        for (Index input_position = 0; input_position < sequence_length; input_position++)
+        {
+            output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
         }
     }
 
-    //outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 }
 
 
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 { 
-    const int batch_size = embeddings.dimension(0);
-    const int sequence_length = embeddings.dimension(1);
-    const int embedding_dimension = embeddings.dimension(2);
+    const Index batch_size = embeddings.dimension(0);
+    // const Index sequence_length = embeddings.dimension(1);
+    const Index embedding_dimension = embeddings.dimension(2);
 
-    const Eigen::array<int, 3> broadcast_dimensions = { batch_size, 1, 1 };
+    const Eigen::array<Index, 3> broadcast_dimensions = { batch_size, 1, 1 };
 
-    const Eigen::array<int, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
+    const Eigen::array<Index, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
 
-    embeddings.device(*thread_pool_device) 
+    embeddings.device(*thread_pool_device)
         += positional_encoding.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
 
     //for (Index sample_index = 0; sample_index < batch_size; sample_index++)
@@ -235,6 +231,9 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
+    if (delta_pairs.size() > 1)
+        add_deltas(delta_pairs);
+
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Back propagation
@@ -244,9 +243,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2>& sample_deltas = embedding_back_propagation->sample_deltas;
     Tensor<type, 2>& weight_derivatives = embedding_back_propagation->weight_derivatives;
-
-    if (delta_pairs.size() > 1)
-        add_deltas(delta_pairs);
 
     weight_derivatives.setZero();
 
@@ -258,15 +254,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
                 += sample_deltas.chip(j, 0);
     }
-}
-
-
-void Embedding::add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-{
-    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-    for(Index i = 1; i < Index(delta_pairs.size()); i++)
-        deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
 }
 
 

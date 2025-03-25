@@ -24,7 +24,7 @@ class Perceptron : public Layer
 
 public:
 
-    enum class ActivationFunction {
+    enum class Activation {
         Logistic,
         HyperbolicTangent,
         Linear,
@@ -38,7 +38,7 @@ public:
 
     Perceptron(const dimensions& = {0},
                     const dimensions& = {0},
-                    const ActivationFunction& = Perceptron::ActivationFunction::HyperbolicTangent,
+                    const Activation& = Perceptron::Activation::HyperbolicTangent,
                     const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
@@ -49,13 +49,13 @@ public:
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
-    const Perceptron::ActivationFunction& get_activation_function() const;
+    const Perceptron::Activation& get_activation_function() const;
 
     string get_activation_function_string() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
-             const Perceptron::ActivationFunction & = Perceptron::ActivationFunction::HyperbolicTangent,
+             const Perceptron::Activation & = Perceptron::Activation::HyperbolicTangent,
              const string& = "perceptron_layer");
 
     void set_input_dimensions(const dimensions&) override;
@@ -65,7 +65,7 @@ public:
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
-    void set_activation_function(const ActivationFunction&);
+    void set_activation_function(const Activation&);
     void set_activation_function(const string&);
     void set_dropout_rate(const type&);
 
@@ -118,7 +118,7 @@ private:
 
     Tensor<type, 2> weights;
 
-    ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
+    Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
 

@@ -24,7 +24,7 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
-    enum class ActivationFunction{Logistic, 
+    enum class Activation{Logistic, 
                                   HyperbolicTangent,
                                   Linear, 
                                   RectifiedLinear, 
@@ -44,8 +44,8 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
-   const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
+   const LongShortTermMemoryLayer::Activation& get_activation_function() const;
+   const LongShortTermMemoryLayer::Activation& get_recurrent_activation_function() const;
 
    string get_activation_function_string() const;
    string write_recurrent_activation_function() const;
@@ -59,10 +59,10 @@ public:
 
    // Activation functions
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   void set_recurrent_activation_function(const ActivationFunction&);
+   void set_recurrent_activation_function(const Activation&);
    void set_recurrent_activation_function(const string&);
 
    void set_timesteps(const Index&);
@@ -156,8 +156,8 @@ private:
    Tensor<type, 2> state_recurrent_weights;
    Tensor<type, 2> output_recurrent_weights;
 
-   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
-   ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
+   Activation activation_function = Activation::HyperbolicTangent;
+   Activation recurrent_activation_function = Activation::HardSigmoid;
 
    Tensor<type, 1> empty;
 

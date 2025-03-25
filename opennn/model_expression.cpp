@@ -7,6 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "model_expression.h"
+#include "descriptives.h"
+#include "scaling_layer_2d.h"
 
 namespace opennn {
 
@@ -375,57 +377,55 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 string ModelExpression::write_header_api()
 {
     return
-        "<!DOCTYPE html>"
-        "<!--"
-        "Artificial Intelligence Techniques SL\t"
-        "artelnics@artelnics.com\t"
-        ""
-        "Your model has been exported to this php file."
-        "You can manage it writting your parameters in the url of your browser.\t"
-        "Example:"
-        ""
-        "\turl = http://localhost/API_example/\t"
-        "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\t"
-        "\tTo see the ouput refresh the page"
-        ""
-        "\tInputs Names: \t"
-        ""
-        "-->\t"
-        ""
-        "<html lang = \"en\">\n"
-        "<head>\n"
-        "<title>Rest API Client Side Demo</title>\n "
-        "<meta charset = \"utf-8\">"
-        "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">"
-        "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">"
-        "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>"
-        "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>"
-        "</head>"
-        "<style>"
-        ".btn{"
-        "background-color: #7393B3"
-        "border: none;"
-        "color: white;"
-        "padding: 15px 32px;"
-        "text-align: center;"
-        "font-size: 16px;"
-        "}"
-        "</style>"
-        "<body>"
-        "<div class = \"container\">"
+        "<!DOCTYPE html> \n"
+        "<!--\n"
+        "Artificial Intelligence Techniques SL\n"
+        "artelnics@artelnics.com\n\n"
+        "Your model has been exported to this php file.\n"
+        "You can manage it writting your parameters in the url of your browser.\n"
+        "Example:\n\n"
+        "\turl = http://localhost/API_example/\n"
+        "\tparameters in the url = http://localhost/API_example/?num=5&num=2&...\n"
+        "\tTo see the ouput refresh the page\n\n"
+        "\tInputs Names: ";
+
+}
+string ModelExpression::write_subheader_api(){
+    return
+        "\n-->\n \n\n"
+        "<html lang = \"en\">\n\n"
+        "<head>\n\n"
+        "<title>Rest API Client Side Demo</title>\n\n"
+        "<meta charset = \"utf-8\">\n"
+        "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">\n"
+        "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">\n"
+        "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>\n"
+        "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>\n"
+        "</head>\n"
+        "<style>\n"
+        ".btn{\n"
+        "\tbackground-color: #7393B3\n"
+        "\tborder: none;\n"
+        "\tcolor: white;\n"
+        "\tpadding: 15px 32px;\n"
+        "\ttext-align: center;\n"
+        "\tfont-size: 16px;\n"
+        "}\n"
+        "</style>\n"
+        "<body>\n"
+        "<div class = \"container\">\n"
         "<br></br>"
-        "<div class = \"form-group\">"
+        "<div class = \"form-group\">\n"
         "<p>"
         "follow the steps defined in the \"index.php\" file"
-        "</p>"
+        "</p>\n"
         "<p>"
         "Refresh the page to see the prediction"
-        "</p>"
-        "</div>"
-        "<h4>"
-        "<?php\n";
+        "</p>\n"
+        "</div>\n"
+        "<h4>\n"
+       "<?php\n\n";
 }
-
 
 void ModelExpression::lstm_api()
 {
@@ -624,13 +624,12 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    // vector<vector<string>> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer);
+    buffer << write_header_api();
 
-    // for(Index i = 0; i < inputs_outputs_buffer[0].size();i++)
-    //     input_names[i] = inputs_outputs_buffer[0][i];
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\n\t\t" << i << ")  " << input_names[i];
 
-    // for(Index i = 0; i < inputs_outputs_buffer[1].size();i++)
-    //     output_names[i] = inputs_outputs_buffer[1][i];
+    buffer << write_subheader_api();
 
     string line;
     string expression = neural_network.get_expression();
@@ -772,7 +771,7 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     if(LSTM_number>0)
         buffer << "$nn->time_step_counter += 1;" << endl;
 
-    buffer << "$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl
+    buffer << "\n$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl
            << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");" << endl
            << "}else{" << endl
            << "echo \"New page\";" << endl
@@ -961,16 +960,15 @@ string ModelExpression::softsign_javascript()
 string ModelExpression::header_javascript()
 {
     return
-        "<!--"
+        "<!--\n"
         "Artificial Intelligence Techniques SL\n"
-        "artelnics@artelnics.com\n"
+        "artelnics@artelnics.com\n\n"
         "Your model has been exported to this JavaScript file.\n"
         "You can manage it with the main method, where you \n"
         "can change the values of your inputs. For example:\n"
         "if we want to add these 3 values (0.3, 2.5 and 1.8)\n"
         "to our 3 inputs (Input_1, Input_2 and Input_1), the\n"
-        "main program has to look like this:\n"
-        "\n"
+        "main program has to look like this:\n\n"
         "int neuralNetwork(){\n "
         "\t vector<float> inputs(3);\n"
         "\t const float asdas  = 0.3;\n"
@@ -980,14 +978,95 @@ string ModelExpression::header_javascript()
         "\t const float input3 = 1.8;\n"
         "\t inputs[2] = input3;\n"
         "\t . . .\n\n"
-        "Inputs Names:\n";
+        "Inputs Names:";
 }
 
-
+string ModelExpression::subheader_javascript()
+{
+    return
+        "\n-->\n\n\n"
+        "<!DOCTYPE HTML>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "\t<link href=\"https://www.neuraldesigner.com/assets/css/neuraldesigner.css\" rel=\"stylesheet\" />\n"
+        "\t<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />\n"
+        "</head>\n\n"
+        "<style>\n\n"
+        "body {\n"
+        "\tdisplay: flex;\n"
+        "\tjustify-content: center;\n"
+        "\talign-items: center;\n"
+        "\tmin-height: 100vh;\n"
+        "\tmargin: 0;\n"
+        "\tbackground-color: #f0f0f0;\n"
+        "\tfont-family: Arial, sans-serif;\n"
+        "}\n\n"
+        ".form {\n"
+        "\tborder-collapse: collapse;\n"
+        "\twidth: 80%; \n"
+        "\tmax-width: 600px; \n"
+        "\tmargin: 0 auto; \n"
+        "\tbackground-color: #fff; \n"
+        "\tbox-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); \n"
+        "\tborder: 1px solid #777; \n"
+        "\tborder-radius: 5px; \n"
+        "}\n\n"
+        "input[type=\"number\"] {\n"
+        "\twidth: 60px; \n"
+        "\ttext-align: center; \n"
+        "}\n\n"
+        ".form th,\n"
+        ".form td {\n"
+        "\tpadding: 10px;\n"
+        "\ttext-align: center\n;"
+        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; \n"
+        "}\n\n"
+        ".btn {\n"
+        "\tbackground-color: #5da9e9;\n"
+        "\tborder: none;\n"
+        "\tcolor: white;\n"
+        "\ttext-align: center;\n"
+        "\tfont-size: 16px;\n"
+        "\tmargin: 4px;\n"
+        "\tcursor: pointer;\n"
+        "\tpadding: 10px 20px;\n"
+        "\tborder-radius: 5px;\n"
+        "\ttransition: background-color 0.3s ease;\n"
+        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "}\n\n"
+        ".btn:hover {\n"
+        "\tbackground-color: #4b92d3; \n"
+        "}\n\n"
+        "input[type=\"range\"]::-webkit-slider-runnable-track {\n"
+        "\tbackground: #5da9e9;\n"
+        "\theight: 0.5rem;\n"
+        "}\n\n"
+        "input[type=\"range\"]::-moz-range-track {\n"
+        "\tbackground: #5da9e9;\n"
+        "\theight: 0.5rem;\n"
+        "}\n\n"
+        ".tabla {\n"
+        "\twidth: 100%;\n"
+        "\tpadding: 5px;\n"
+        "\tmargin: 0; \n"
+        "}\n\n"
+        ".form th {\n"
+        "\tbackground-color: #f2f2f2;\n"
+        "\tfont-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n"
+        "}\n"
+        "</style>\n\n"
+        "<body>\n\n"
+        "<section>\n"
+        "<br/>\n\n"
+        "<div align=\"center\" style=\"display:block;text-align: center;\">\n"
+        "<!-- MENU OPTIONS HERE  -->\n"
+        "<form style=\"display: inline-block;margin-left: auto; margin-right: auto;\">\n\n"
+        "<table border=\"1px\" class=\"form\">\n\n"
+        "<h4>INPUTS</h4>\n";
+}
 
 string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network)
 {
-    cout << "escribiendo javscript" << endl;
     vector<string> lines;
     vector<string> found_tokens;
     vector<string> found_mathematical_expressions;
@@ -1021,110 +1100,26 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     bool SoftPlus     = false;
     bool SoftSign     = false;
 
-    buffer_to_fix << header_javascript();
-
-    // vector<vector<string>> inputs_outputs_buffer = fix_input_output_variables(input_names, output_names, buffer_to_fix);
-
-    // for(Index i = 0; i < inputs_number;i++)
-    //     input_names[i] = inputs_outputs_buffer[0][i];
-
-    // for(Index i = 0; i < outputs_number;i++)
-    //     output_names[i] = inputs_outputs_buffer[1][i];
-
     ostringstream buffer;
 
-    buffer //<< inputs_outputs_buffer[2][0]
-        //<< "-->\n" << endl
-        << "<!DOCTYPE HTML>" << endl
-        << "<html lang=\"en\">\n" << endl
-        << "<head>" << endl
-        << "<link href=\"https://www.neuraldesigner.com/assets/css/neuraldesigner.css\" rel=\"stylesheet\" />" << endl
-        << "<link href=\"https://www.neuraldesigner.com/images/fav.ico\" rel=\"shortcut icon\" type=\"image/x-icon\" />" << endl
-        << "</head>\n" << endl
-        << "<style>\n" << endl
-        << "body {" << endl
-        << "display: flex;" << endl
-        << "justify-content: center;" << endl
-        << "align-items: center;" << endl
-        << "min-height: 100vh;" << endl
-        << "margin: 0;" << endl
-        << "background-color: #f0f0f0;" << endl
-        << "font-family: Arial, sans-serif;" << endl
-        << "}\n" << endl
-        << ".form {" << endl
-        << "border-collapse: collapse;" << endl
-        << "width: 80%; " << endl
-        << "max-width: 600px; " << endl
-        << "margin: 0 auto; " << endl
-        << "background-color: #fff; " << endl
-        << "box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); " << endl
-        << "border: 1px solid #777; " << endl
-        << "border-radius: 5px; " << endl
-        << "}\n\n" << endl
-        << "input[type=\"number\"] {" << endl
-        << "width: 60px; " << endl
-        << "text-align: center; " << endl
-        << "}\n" << endl
-        << ".form th," << endl
-        << ".form td {" << endl
-        << "padding: 10px;" << endl
-        << "text-align: center;" << endl
-        << "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; " << endl
-        << "}\n" << endl
-        << ".btn {" << endl
-        << "background-color: #5da9e9;" << endl
-        << "border: none;" << endl
-        << "color: white;" << endl
-        << "text-align: center;" << endl
-        << "font-size: 16px;" << endl
-        << "margin: 4px;" << endl
-        << "cursor: pointer;" << endl
-        << "padding: 10px 20px;" << endl
-        << "border-radius: 5px;" << endl
-        << "transition: background-color 0.3s ease;" << endl
-        << "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;" << endl
-        << "}\n" << endl
-        << ".btn:hover {" << endl
-        << "background-color: #4b92d3; " << endl
-        << "}\n" << endl
-        << "input[type=\"range\"]::-webkit-slider-runnable-track {" << endl
-        << "background: #5da9e9;" << endl
-        << "height: 0.5rem;" << endl
-        << "}\n" << endl
-        << "input[type=\"range\"]::-moz-range-track {" << endl
-        << "background: #5da9e9;" << endl
-        << "height: 0.5rem;" << endl
-        << "}\n" << endl
-        << ".tabla {" << endl
-        << "width: 100%;" << endl
-        << "padding: 5px;" << endl
-        << "margin: 0; " << endl
-        << "}\n" << endl
-        << ".form th {" << endl
-        << "background-color: #f2f2f2;" << endl
-        << "font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;" << endl
-        << "}" << endl
-        << "</style>\n" << endl
-        << "<body>\n" << endl
-        << "<section>" << endl
-        << "<br/>\n" << endl
-        << "<div align=\"center\" style=\"display:block;text-align: center;\">" << endl
-        << "<!-- MENU OPTIONS HERE  -->" << endl
-        << "<form style=\"display: inline-block;margin-left: auto; margin-right: auto;\">\n" << endl
-        << "<table border=\"1px\" class=\"form\">\n" << endl
-        << "INPUTS" << endl;
-    /*
-    if(has_scaling_layer_2d())
+    buffer << header_javascript();
+
+    for(int i = 0; i < inputs_number; i++)
+        buffer << "\n\t " << i << ")  " << input_names[i];
+
+    buffer << subheader_javascript();
+
+    if(neural_network.has(Layer::Type::Scaling2D) || neural_network.has(Layer::Type::Scaling4D))
     {
-        const vector<Descriptives> inputs_descriptives = neural_network.get_scaling_layer_2d()->get_descriptives();
+        const vector<Descriptives> inputs_descriptives= static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D))->get_descriptives();
 
         for(int i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << input_names[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "_text')\" />" << endl
+                   << "<input class=\"tabla\" type=\"number\" id=\"" << input_names[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
     }
@@ -1135,12 +1130,12 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << inputs[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << inputs[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << inputs[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << input_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "_text')\" />" << endl
+                   << "<input class=\"tabla\" type=\"number\" id=\"" << input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
     }
-*/
+
     buffer << "</table>" << endl
            << "</form>\n" << endl;
 
@@ -1160,8 +1155,8 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
            << "</div>\n" << endl
            << "<br/>\n" << endl
            << "<table border=\"1px\" class=\"form\">" << endl
-           << "OUTPUTS" << endl;
-    /*
+           << "<h4> OUTPUTS </h4>" << endl;
+
     if(outputs_number > maximum_output_variable_numbers)
     {
         buffer << "<tr style=\"height:3.5em\">" << endl
@@ -1170,7 +1165,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "<select id=\"category_select\" onchange=\"updateSelectedCategory()\">" << endl;
 
         for(int i = 0; i < outputs_number; i++)
-            buffer << "<option value=\"" << outputs[i] << "\">" << output_names[i] << "</option>" << endl;
+            buffer << "<option value=\"" << output_names[i] << "\">" << output_names[i] << "</option>" << endl;
 
         buffer << "</select>" << endl
                << "</td>" << endl
@@ -1188,11 +1183,11 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
                    << "<td>" << endl
-                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << outputs[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
+                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
     }
-*/
+
     buffer << "</table>\n" << endl
            << "</form>" << endl
            << "</div>\n" << endl
@@ -1229,14 +1224,14 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
-    //else
-    //{
-    //    for(int i = 0; i < outputs_number; i++)
-    //    {
-    //        buffer << "\t" << "var " << outputs[i] << " = document.getElementById(\"" << outputs[i] << "\");" << endl;
-    //        buffer << "\t" << outputs[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-    //    }
-    //}
+    else
+    {
+       for(int i = 0; i < outputs_number; i++)
+       {
+           buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl;
+           buffer << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+       }
+    }
 
     buffer << "\t" << "update_LSTM();" << endl
            << "}\n" << endl;
@@ -1414,6 +1409,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     return out;
 }
+
 string ModelExpression::write_header_python()
 {
     return "\'\'\' \n"

@@ -79,13 +79,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 }
 
 
-const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::get_activation_function() const
+const LongShortTermMemoryLayer::Activation& LongShortTermMemoryLayer::get_activation_function() const
 {
     return activation_function;
 }
 
 
-const LongShortTermMemoryLayer::ActivationFunction& LongShortTermMemoryLayer::get_recurrent_activation_function() const
+const LongShortTermMemoryLayer::Activation& LongShortTermMemoryLayer::get_recurrent_activation_function() const
 {
     return recurrent_activation_function;
 }
@@ -95,23 +95,23 @@ string LongShortTermMemoryLayer::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic: return "Logistic";
+    case Activation::Logistic: return "Logistic";
 
-    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
 
-    case ActivationFunction::Linear: return "Linear";
+    case Activation::Linear: return "Linear";
 
-    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
 
-    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case ActivationFunction::SoftPlus: return "SoftPlus";
+    case Activation::SoftPlus: return "SoftPlus";
 
-    case ActivationFunction::SoftSign: return "SoftSign";
+    case Activation::SoftSign: return "SoftSign";
 
-    case ActivationFunction::HardSigmoid: return "HardSigmoid";
+    case Activation::HardSigmoid: return "HardSigmoid";
 
-    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
+    case Activation::ExponentialLinear: return "ExponentialLinear";
 
     default: return string();
     }
@@ -122,23 +122,23 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Logistic: return "Logistic";
+    case Activation::Logistic: return "Logistic";
 
-    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
 
-    case ActivationFunction::Linear: return "Linear";
+    case Activation::Linear: return "Linear";
 
-    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
 
-    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case ActivationFunction::SoftPlus: return "SoftPlus";
+    case Activation::SoftPlus: return "SoftPlus";
 
-    case ActivationFunction::SoftSign: return "SoftSign";
+    case Activation::SoftSign: return "SoftSign";
 
-    case ActivationFunction::HardSigmoid: return "HardSigmoid";
+    case Activation::HardSigmoid: return "HardSigmoid";
 
-    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
+    case Activation::ExponentialLinear: return "ExponentialLinear";
 
     default: return string();
     }
@@ -207,7 +207,7 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 }
 
 
-void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemoryLayer::ActivationFunction& new_activation_function)
+void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemoryLayer::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -216,29 +216,29 @@ void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemory
 void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-        activation_function = ActivationFunction::Logistic;
+        activation_function = Activation::Logistic;
     else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = ActivationFunction::HyperbolicTangent;
+        activation_function = Activation::HyperbolicTangent;
     else if(new_activation_function_name == "Linear")
-        activation_function = ActivationFunction::Linear;
+        activation_function = Activation::Linear;
     else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = ActivationFunction::RectifiedLinear;
+        activation_function = Activation::RectifiedLinear;
     else if(new_activation_function_name == "ScaledExponentialLinear")
-        activation_function = ActivationFunction::ScaledExponentialLinear;
+        activation_function = Activation::ScaledExponentialLinear;
     else if(new_activation_function_name == "SoftPlus")
-        activation_function = ActivationFunction::SoftPlus;
+        activation_function = Activation::SoftPlus;
     else if(new_activation_function_name == "SoftSign")
-        activation_function = ActivationFunction::SoftSign;
+        activation_function = Activation::SoftSign;
     else if(new_activation_function_name == "HardSigmoid")
-        activation_function = ActivationFunction::HardSigmoid;
+        activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = ActivationFunction::ExponentialLinear;
+        activation_function = Activation::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
 
 
-void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShortTermMemoryLayer::ActivationFunction& new_recurrent_activation_function)
+void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShortTermMemoryLayer::Activation& new_recurrent_activation_function)
 {
     recurrent_activation_function = new_recurrent_activation_function;
 }
@@ -247,23 +247,23 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShort
 void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
 {
     if(new_recurrent_activation_function_name == "Logistic")
-        recurrent_activation_function = ActivationFunction::Logistic;
+        recurrent_activation_function = Activation::Logistic;
     else if(new_recurrent_activation_function_name == "HyperbolicTangent")
-        recurrent_activation_function = ActivationFunction::HyperbolicTangent;
+        recurrent_activation_function = Activation::HyperbolicTangent;
     else if(new_recurrent_activation_function_name == "Linear")
-        recurrent_activation_function = ActivationFunction::Linear;
+        recurrent_activation_function = Activation::Linear;
     else if(new_recurrent_activation_function_name == "RectifiedLinear")
-        recurrent_activation_function = ActivationFunction::RectifiedLinear;
+        recurrent_activation_function = Activation::RectifiedLinear;
     else if(new_recurrent_activation_function_name == "ScaledExponentialLinear")
-        recurrent_activation_function = ActivationFunction::ScaledExponentialLinear;
+        recurrent_activation_function = Activation::ScaledExponentialLinear;
     else if(new_recurrent_activation_function_name == "SoftPlus")
-        recurrent_activation_function = ActivationFunction::SoftPlus;
+        recurrent_activation_function = Activation::SoftPlus;
     else if(new_recurrent_activation_function_name == "SoftSign")
-        recurrent_activation_function = ActivationFunction::SoftSign;
+        recurrent_activation_function = Activation::SoftSign;
     else if(new_recurrent_activation_function_name == "HardSigmoid")
-        recurrent_activation_function = ActivationFunction::HardSigmoid;
+        recurrent_activation_function = Activation::HardSigmoid;
     else if(new_recurrent_activation_function_name == "ExponentialLinear")
-        recurrent_activation_function = ActivationFunction::ExponentialLinear;
+        recurrent_activation_function = Activation::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_recurrent_activation_function_name + ".\n");
 }
@@ -340,23 +340,23 @@ void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activation
 {
     switch(activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
+    case Activation::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
+    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
+    case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
+    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
+    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
+    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
@@ -367,23 +367,23 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& 
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
+    case Activation::Linear: linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::Logistic: logistic(activations, activation_derivatives); return;
 
-    case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-    case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
+    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
+    case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-    case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
+    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-    case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
+    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-    case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
+    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
     default: throw runtime_error("Unknown activation function");
     }
@@ -1988,7 +1988,7 @@ void LongShortTermMemoryLayer::from_XML(const XMLDocument& document)
     set_input_dimensions({ read_xml_index(lstm_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(lstm_layer_element, "NeuronsNumber") });
     set_timesteps(read_xml_index(lstm_layer_element, "TimeStep"));
-    set_activation_function(read_xml_string(lstm_layer_element, "ActivationFunction"));
+    set_activation_function(read_xml_string(lstm_layer_element, "Activation"));
     set_recurrent_activation_function(read_xml_string(lstm_layer_element, "RecurrentActivationFunction"));
 /*
     set_parameters(to_type_vector(read_xml_string(lstm_layer_element, "Parameters"), " "));
@@ -2004,7 +2004,7 @@ void LongShortTermMemoryLayer::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "TimeStep", to_string(get_timesteps()));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "RecurrentActivationFunction", write_recurrent_activation_function());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
@@ -2016,9 +2016,9 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function_expression(
 {
     switch(recurrent_activation_function)
     {
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "tanh";
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return string();
     default:
         return write_recurrent_activation_function();
@@ -2030,9 +2030,9 @@ string LongShortTermMemoryLayer::get_activation_function_string_expression() con
 {
     switch(activation_function)
     {
-    case ActivationFunction::HyperbolicTangent:
+    case Activation::HyperbolicTangent:
         return "tanh";
-    case ActivationFunction::Linear:
+    case Activation::Linear:
         return string();
     default:
         return get_activation_function_string();

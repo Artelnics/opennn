@@ -18,7 +18,7 @@ TEST(PerceptronLayerTest, DefaultConstructor)
 
 TEST(PerceptronLayerTest, GeneralConstructor)
 {
-    Perceptron perceptron_layer({10}, {3}, Perceptron::ActivationFunction::Linear);
+    Perceptron perceptron_layer({10}, {3}, Perceptron::Activation::Linear);
     
     EXPECT_EQ(perceptron_layer.get_activation_function_string(), "Linear");
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 10 });
@@ -57,63 +57,63 @@ TEST(PerceptronLayerTest, Activations)
     Tensor<type, 2> activations(1, 1);
     Tensor<type, 2> activation_derivatives(1, 1);
 
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::Logistic);
+    perceptron_layer.set_activation_function(Perceptron::Activation::Logistic);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(0.731), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::HyperbolicTangent);
+    perceptron_layer.set_activation_function(Perceptron::Activation::HyperbolicTangent);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(0.761), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::Linear);
+    perceptron_layer.set_activation_function(Perceptron::Activation::Linear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::RectifiedLinear);
+    perceptron_layer.set_activation_function(Perceptron::Activation::RectifiedLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::ExponentialLinear);
+    perceptron_layer.set_activation_function(Perceptron::Activation::ExponentialLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::ScaledExponentialLinear);
+    perceptron_layer.set_activation_function(Perceptron::Activation::ScaledExponentialLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
 
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::SoftPlus);
+    perceptron_layer.set_activation_function(Perceptron::Activation::SoftPlus);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::SoftSign);
+    perceptron_layer.set_activation_function(Perceptron::Activation::SoftSign);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
     
     EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::ActivationFunction::HardSigmoid);
+    perceptron_layer.set_activation_function(Perceptron::Activation::HardSigmoid);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
@@ -126,7 +126,7 @@ TEST(PerceptronLayerTest, Activations)
 TEST(PerceptronLayerTest, ForwardPropagateZero)
 {
     
-    Perceptron perceptron_layer({ 1 }, { 1 }, Perceptron::ActivationFunction::Linear);
+    Perceptron perceptron_layer({ 1 }, { 1 }, Perceptron::Activation::Linear);
     perceptron_layer.set_parameters_constant(type(0));
     
     unique_ptr<LayerForwardPropagation> perceptron_layer_forward_propagation
@@ -190,7 +190,7 @@ TEST(PerceptronLayerTest, ForwardPropagate)
 
     Perceptron perceptron_layer({ inputs_number }, 
                                      { neurons_number }, 
-                                     Perceptron::ActivationFunction::Linear);
+                                     Perceptron::Activation::Linear);
     perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);

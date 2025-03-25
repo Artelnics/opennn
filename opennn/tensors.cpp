@@ -924,12 +924,33 @@ type round_to_precision(type x, const int& precision)
 }
 
 
-TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
+TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& tensor, const Index& index_1)
 {
-    const TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0),
-                                            matrix.dimension(0));
+    const TensorMap<Tensor<type, 1>> column((type*)tensor.data() + tensor.dimension(0)*index_1,
+        tensor.dimension(0));
 
     return column;
+}
+
+
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>& tensor, const Index& index_2)
+{
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() +  tensor.dimension(0) * tensor.dimension(1)* index_2,
+        tensor.dimension(0), tensor.dimension(1));
+}
+
+
+TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3)
+{
+    return TensorMap<Tensor<type, 3>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
+        tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
+}
+
+
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3, const Index& index_2)
+{
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_2 * tensor.dimension(3) + index_3),
+        tensor.dimension(0), tensor.dimension(1));
 }
 
 

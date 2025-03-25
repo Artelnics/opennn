@@ -24,11 +24,6 @@ LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSe
     separator = DataSet::Separator::Tab;
 
     read_csv();
-    set_raw_variable_scalers(Scaler::None);
-
-   target_dimensions = {get_target_length()};
-   decoder_dimensions = {get_target_length()};
-   input_dimensions = {get_input_length()};
 }
 
 
@@ -201,11 +196,10 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 }
 
 
-vector<string> LanguageDataSet::tokenize(const string& document, const bool& input)
+vector<string> LanguageDataSet::tokenize(const string& document)
 {
     vector<string> tokens;
 
-    // if(!input)
     tokens.push_back("[START]");
 
     string currentToken;
@@ -243,7 +237,6 @@ vector<string> LanguageDataSet::tokenize(const string& document, const bool& inp
         tokens.push_back(currentToken);
 
     // Add [END] token
-    // if(!input)
     tokens.push_back("[END]");
 
     // if(tokens.size() == 3 || tokens.size() == 1)
@@ -296,7 +289,7 @@ void LanguageDataSet::print() const
         cout << "Language data set" << endl;
 
         cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-        cout << "Target size: 1" << endl;
+        cout << "Target size: " << get_target_length() << endl;
 
         cout << "Input lenght: " << get_input_length() << endl;
         cout << "Target categories: 0, 1"<<endl;
@@ -609,9 +602,9 @@ void LanguageDataSet::read_csv()
 
     const Index samples_number = count_non_empty_lines();
 
-    const vector<string> positive_words = { "yes", "positive", "+", "true", "1"};
+    const vector<string> positive_words = { "yes", "positive", "+", "true", "1", "good"};
 
-    const vector<string> negative_words = { "no", "negative", "-", "false", "0"};
+    const vector<string> negative_words = { "no", "negative", "-", "false", "0", "bad"};
 
     ifstream file(data_path);
 
@@ -641,18 +634,15 @@ void LanguageDataSet::read_csv()
         if (tokens.size() != 2)
             throw runtime_error("Tokens number must be two.");
 
-        input_documents_tokens[sample_index] = tokenize(tokens[0], true);
+        input_documents_tokens[sample_index] = tokenize(tokens[0]);
 
-        target_documents_tokens[sample_index] = tokenize(tokens[1], false);
+        target_documents_tokens[sample_index] = tokenize(tokens[1]);
 
         sample_index++;
     }
 
     if (sample_index != samples_number)
         throw runtime_error("WARNING: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " were processed.");
-
-    maximum_input_length = get_maximum_size(input_documents_tokens);
-    maximum_target_length = get_maximum_size(target_documents_tokens);
 
     input_vocabulary = create_vocabulary(input_documents_tokens);
     target_vocabulary = create_vocabulary(target_documents_tokens);
@@ -663,11 +653,14 @@ void LanguageDataSet::read_csv()
     input_vocabulary_size = get_input_vocabulary_size();
     target_vocabulary_size = get_target_vocabulary_size();
 
+    maximum_input_length = get_maximum_size(input_documents_tokens);
+    maximum_target_length = has_decoder ? get_maximum_size(target_documents_tokens)
+                                        : 1;
+
     const Index input_variables_number = maximum_input_length;
-    const Index decoder_variables_number = has_decoder ? maximum_target_length - 1
-                                                       : 0;
+    const Index decoder_variables_number = maximum_target_length - 1;
     const Index target_variables_number = has_decoder ? maximum_target_length - 1
-                                                      : 1;
+                                                      : maximum_target_length;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
     data.resize(samples_number, variables_number);
@@ -760,6 +753,13 @@ void LanguageDataSet::read_csv()
 
     sample_uses.resize(samples_number);
 
+
+    target_dimensions = {get_target_length()};
+    has_decoder ? decoder_dimensions = {get_target_length()}
+                : decoder_dimensions = {};
+    input_dimensions = {get_input_length()};
+
+    set_raw_variable_scalers(Scaler::None);
     set_default_raw_variable_names();
     split_samples_random();
     set_binary_raw_variables();

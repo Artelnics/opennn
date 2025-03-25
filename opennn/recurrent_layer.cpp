@@ -59,7 +59,7 @@ Tensor<type, 1> Recurrent::get_parameters() const
 }
 
 
-const Recurrent::ActivationFunction& Recurrent::get_activation_function() const
+const Recurrent::Activation& Recurrent::get_activation_function() const
 {
     return activation_function;
 }
@@ -69,23 +69,23 @@ string Recurrent::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case ActivationFunction::Logistic: return "Logistic";
+    case Activation::Logistic: return "Logistic";
 
-    case ActivationFunction::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
 
-    case ActivationFunction::Linear: return "Linear";
+    case Activation::Linear: return "Linear";
 
-    case ActivationFunction::RectifiedLinear: return "RectifiedLinear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
 
-    case ActivationFunction::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
 
-    case ActivationFunction::SoftPlus: return "SoftPlus";
+    case Activation::SoftPlus: return "SoftPlus";
 
-    case ActivationFunction::SoftSign: return "SoftSign";
+    case Activation::SoftSign: return "SoftSign";
 
-    case ActivationFunction::HardSigmoid: return "HardSigmoid";
+    case Activation::HardSigmoid: return "HardSigmoid";
 
-    case ActivationFunction::ExponentialLinear: return "ExponentialLinear";
+    case Activation::ExponentialLinear: return "ExponentialLinear";
 
     default:
         return string();
@@ -183,7 +183,7 @@ void Recurrent::set_parameters(const Tensor<type, 1>& new_parameters, Index& ind
 }
 
 
-void Recurrent::set_activation_function(const Recurrent::ActivationFunction& new_activation_function)
+void Recurrent::set_activation_function(const Recurrent::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
@@ -192,23 +192,23 @@ void Recurrent::set_activation_function(const Recurrent::ActivationFunction& new
 void Recurrent::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
-        activation_function = ActivationFunction::Logistic;
+        activation_function = Activation::Logistic;
     else if(new_activation_function_name == "HyperbolicTangent")
-        activation_function = ActivationFunction::HyperbolicTangent;
+        activation_function = Activation::HyperbolicTangent;
     else if(new_activation_function_name == "Linear")
-        activation_function = ActivationFunction::Linear;
+        activation_function = Activation::Linear;
     else if(new_activation_function_name == "RectifiedLinear")
-        activation_function = ActivationFunction::RectifiedLinear;
+        activation_function = Activation::RectifiedLinear;
     else if(new_activation_function_name == "ScaledExponentialLinear")
-        activation_function = ActivationFunction::ScaledExponentialLinear;
+        activation_function = Activation::ScaledExponentialLinear;
     else if(new_activation_function_name == "SoftPlus")
-        activation_function = ActivationFunction::SoftPlus;
+        activation_function = Activation::SoftPlus;
     else if(new_activation_function_name == "SoftSign")
-        activation_function = ActivationFunction::SoftSign;
+        activation_function = Activation::SoftSign;
     else if(new_activation_function_name == "HardSigmoid")
-        activation_function = ActivationFunction::HardSigmoid;
+        activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
-        activation_function = ActivationFunction::ExponentialLinear;
+        activation_function = Activation::ExponentialLinear;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -265,23 +265,23 @@ void Recurrent::calculate_activations(Tensor<type, 2>& activations,
 {
     switch(activation_function)
     {
-        case ActivationFunction::Linear: linear(activations, activation_derivatives); return;
+        case Activation::Linear: linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::Logistic: logistic(activations, activation_derivatives); return;
+        case Activation::Logistic: logistic(activations, activation_derivatives); return;
 
-        case ActivationFunction::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+        case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
 
-        case ActivationFunction::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+        case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
+        case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftPlus: soft_plus(activations, activation_derivatives); return;
+        case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
 
-        case ActivationFunction::SoftSign: soft_sign(activations, activation_derivatives); return;
+        case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
 
-        case ActivationFunction::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
+        case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
 
-        case ActivationFunction::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
+        case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
 
         default: throw runtime_error("Unknown activation function");
     }
@@ -519,9 +519,9 @@ string Recurrent::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
-        case ActivationFunction::HyperbolicTangent: return "tanh";
+        case Activation::HyperbolicTangent: return "tanh";
 
-        case ActivationFunction::Linear: return string();
+        case Activation::Linear: return string();
 
         default: return get_activation_function_string();
     }
@@ -537,7 +537,7 @@ void Recurrent::from_XML(const XMLDocument& document)
 
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(recurrent_layer_element, "ActivationFunction"));
+    set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
 /*
     set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "));
 */
@@ -550,7 +550,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
-    add_xml_element(printer, "ActivationFunction", get_activation_function_string());
+    add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();

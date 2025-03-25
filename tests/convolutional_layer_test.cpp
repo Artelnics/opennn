@@ -22,8 +22,8 @@ struct ConvolutionalLayerConfig {
     dimensions input_dimensions;
     dimensions kernel_dimensions;
     dimensions stride_dimensions;
-    ConvolutionalLayer::ActivationFunction activation_function;
-    ConvolutionalLayer::ConvolutionType convolution_type;
+    Convolutional::Activation activation_function;
+    Convolutional::ConvolutionType convolution_type;
     string test_name;
     Tensor<type, 4> input_data;
     Tensor<type, 4> expected_output;
@@ -33,7 +33,7 @@ class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLaye
 
 INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
-        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, ConvolutionalLayer::ActivationFunction::Linear, ConvolutionalLayer::ConvolutionType::Valid, "ConvolutionLayer",
+        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, Convolutional::Activation::Linear, Convolutional::ConvolutionType::Valid, "ConvolutionLayer",
         ([] {
             Tensor<type, 2> data(1, 16);
             data.setValues({
@@ -56,7 +56,7 @@ INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testi
 TEST_P(ConvolutionalLayerTest, Constructor) {
     ConvolutionalLayerConfig parameters = GetParam();
 
-    ConvolutionalLayer conv_layer(parameters.input_dimensions,
+    Convolutional conv_layer(parameters.input_dimensions,
                                   parameters.kernel_dimensions,
                                   parameters.activation_function,
                                   parameters.stride_dimensions,
@@ -78,7 +78,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
 /*
     ConvolutionalLayerConfig parameters = GetParam();
 
-    ConvolutionalLayer convolutional_layer(parameters.input_dimensions,
+    Convolutional convolutional_layer(parameters.input_dimensions,
                                            parameters.kernel_dimensions,
                                            parameters.activation_function,
                                            parameters.stride_dimensions,
@@ -88,7 +88,7 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
     const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<ConvolutionalLayerForwardPropagation>(batch_size, &convolutional_layer);
+        make_unique<ConvolutionalForwardPropagation>(batch_size, &convolutional_layer);
 
     pair<type*, dimensions> input_pair(parameters.input_data.data(),
                                        {batch_size,
@@ -133,7 +133,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
 
     ConvolutionalLayerConfig parameters = GetParam();
 
-    ConvolutionalLayer convolutional_layer(parameters.input_dimensions,
+    Convolutional convolutional_layer(parameters.input_dimensions,
                                            parameters.kernel_dimensions,
                                            parameters.activation_function,
                                            parameters.stride_dimensions,
@@ -143,10 +143,10 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<ConvolutionalLayerForwardPropagation>(batch_size, &convolutional_layer);
+        make_unique<ConvolutionalForwardPropagation>(batch_size, &convolutional_layer);
 
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<ConvolutionalLayerBackPropagation>(batch_size, &convolutional_layer);
+        make_unique<ConvolutionalBackPropagation>(batch_size, &convolutional_layer);
 
     pair<type*, dimensions> input_pair(parameters.input_data.data(),
                                        {batch_size,
@@ -213,7 +213,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     }
 */
     // Validate bias derivatives
-    const Tensor<type, 1>& bias_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->bias_derivatives;
+    const Tensor<type, 1>& bias_derivatives = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->bias_derivatives;
     EXPECT_EQ(bias_derivatives.size(), convolutional_layer.get_kernels_number());
     //for (Index k = 0; k < convolutional_layer.get_kernels_number(); ++k)
     //{
@@ -222,7 +222,7 @@ TEST_P(ConvolutionalLayerTest, BackPropagate)
     //}
 
     // Validate synaptic weight derivatives
-    const Tensor<type, 4>& weight_derivatives = static_cast<ConvolutionalLayerBackPropagation*>(back_propagation.get())->weight_derivatives;
+    const Tensor<type, 4>& weight_derivatives = static_cast<ConvolutionalBackPropagation*>(back_propagation.get())->weight_derivatives;
     EXPECT_EQ(weight_derivatives.dimension(0), parameters.kernel_dimensions[3]);
     EXPECT_EQ(weight_derivatives.dimension(1), parameters.kernel_dimensions[0]);
     EXPECT_EQ(weight_derivatives.dimension(2), parameters.kernel_dimensions[1]);

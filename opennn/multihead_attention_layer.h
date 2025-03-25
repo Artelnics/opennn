@@ -62,6 +62,8 @@ public:
 
     void apply_causal_mask(Tensor<type, 4>&) const;
 
+    void calculate_query(const Tensor<type, 3>&, Tensor<type, 4>&) const;
+
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
@@ -130,6 +132,9 @@ private:
 
     Index source_sequence_length = 0;
 
+    Index heads_number = 0;
+    Index embedding_dimension = 0;
+
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
 
@@ -154,6 +159,8 @@ private:
 
     const Eigen::array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
     const Eigen::array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
+
+    const type minus_inf = -numeric_limits<float>::infinity();
 };
 
 

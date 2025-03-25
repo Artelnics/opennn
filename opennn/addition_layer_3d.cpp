@@ -12,13 +12,13 @@
 namespace opennn
 {
 
-Addition3d::Addition3d(const Index& new_inputs_number, 
-                       const Index& new_inputs_depth, 
+Addition3d::Addition3d(const Index& new_sequence_length, 
+                       const Index& new_embedding_dimension, 
                        const string& new_name) : Layer()
 {
     layer_type = Type::Addition3D;
 
-    set(new_inputs_number, new_inputs_depth, new_name);
+    set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
 
@@ -28,45 +28,33 @@ Index Addition3d::get_sequence_length() const
 }
 
 
-Index Addition3d::get_embedding_length() const
+Index Addition3d::get_embedding_dimension() const
 {
-    return embedding_length;
+    return embedding_dimension;
 }
 
 
 dimensions Addition3d::get_input_dimensions() const
 {
-    return { sequence_length, embedding_length };
+    return { sequence_length, embedding_dimension };
 }
 
 
 dimensions Addition3d::get_output_dimensions() const
 {
-    return { sequence_length, embedding_length };
+    return { sequence_length, embedding_dimension };
 }
 
 
 void Addition3d::set(const Index& new_sequence_length, 
-                     const Index& new_embedding_length, 
+                     const Index& new_embedding_dimension, 
                      const string& new_name)
 {
     sequence_length = new_sequence_length;
 
-    embedding_length = new_embedding_length;
+    embedding_dimension = new_embedding_dimension;
 
     name = new_name;
-}
-
-
-void Addition3d::set_sequence_length(const Index& new_sequence_length)
-{
-    sequence_length = new_sequence_length;
-}
-
-
-void Addition3d::set_embedding_length(const Index& new_embedding_length)
-{
-    embedding_length = new_embedding_length;
 }
 
 
@@ -76,13 +64,7 @@ void Addition3d::forward_propagate(const vector<pair<type*, dimensions>>& input_
 {
     const TensorMap<Tensor<type, 3>> positional_encodings = tensor_map_3(input_pairs[0]);
 
-    // cout << "Is this part? (Addition layer)" << endl;
-
-    // print_vector(input_pairs[1].second);
-
     const TensorMap<Tensor<type, 3>> input_embeddings = tensor_map_3(input_pairs[1]);
-
-    // cout << "Is it this one? (Addition layer)" << endl;
 
     Addition3dForwardPropagation* addition_3d_forward_propagation =
         static_cast<Addition3dForwardPropagation*>(layer_forward_propagation.get());
@@ -135,7 +117,7 @@ void Addition3d::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));
-    add_xml_element(printer, "EmbeddingLength", to_string(get_embedding_length()));
+    add_xml_element(printer, "EmbeddingLength", to_string(get_embedding_dimension()));
 
     printer.CloseElement();
 }
@@ -151,12 +133,12 @@ Addition3dForwardPropagation::Addition3dForwardPropagation(const Index& new_batc
 
 pair<type*, dimensions> Addition3dForwardPropagation::get_outputs_pair() const
 {
-    Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
+    Addition3d* addition_3d = static_cast<Addition3d*>(layer);
 
-    const Index sequence_length = addition_layer_3d->get_sequence_length();
-    const Index embedding_length = addition_layer_3d->get_embedding_length();
+    const Index sequence_length = addition_3d->get_sequence_length();
+    const Index embedding_dimension = addition_3d->get_embedding_dimension();
 
-    return {(type*)outputs.data(), {batch_size, sequence_length, embedding_length}};
+    return {(type*)outputs.data(), {batch_size, sequence_length, embedding_dimension}};
 }
 
 
@@ -169,9 +151,9 @@ void Addition3dForwardPropagation::set(const Index& new_batch_size, Layer* new_l
     batch_size = new_batch_size;
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
-    const Index embedding_length = addition_layer_3d->get_embedding_length();
+    const Index embedding_dimension = addition_layer_3d->get_embedding_dimension();
 
-    outputs.resize(batch_size, sequence_length, embedding_length);
+    outputs.resize(batch_size, sequence_length, embedding_dimension);
 }
 
 
@@ -191,10 +173,10 @@ void Addition3dBackPropagation::set(const Index& new_batch_size, Layer* new_laye
     batch_size = new_batch_size;
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
-    const Index embedding_length = addition_layer_3d->get_embedding_length();
+    const Index embedding_dimension = addition_layer_3d->get_embedding_dimension();
 
-    input_1_derivatives.resize(batch_size, sequence_length, embedding_length);
-    input_2_derivatives.resize(batch_size, sequence_length, embedding_length);
+    input_1_derivatives.resize(batch_size, sequence_length, embedding_dimension);
+    input_2_derivatives.resize(batch_size, sequence_length, embedding_dimension);
 }
 
 
@@ -215,11 +197,11 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
     Addition3d* addition_layer_3d = static_cast<Addition3d*>(layer);
 
     const Index sequence_length = addition_layer_3d->get_sequence_length();
-    const Index embedding_length = addition_layer_3d->get_embedding_length();
+    const Index embedding_dimension = addition_layer_3d->get_embedding_dimension();
 
     return
-    {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_length}},
-     {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_length}}};
+    {{(type*)input_1_derivatives.data(), {batch_size, sequence_length, embedding_dimension}},
+     {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_dimension}}};
 }
 
 }

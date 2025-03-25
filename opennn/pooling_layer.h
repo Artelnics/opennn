@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class ConvolutionalLayer;
+class Convolutional;
 
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;
@@ -28,7 +28,7 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    Pooling(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+    Pooling(const dimensions& = {2, 2, 1},      // Input dimensions {height,width,channels}
                  const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
                  const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
                  const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
