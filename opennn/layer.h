@@ -45,6 +45,7 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
+                    Flatten3D,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
@@ -84,7 +85,7 @@ public:
 
     Index get_outputs_number() const;
 
-    virtual void set_parameters(const Tensor<type, 1>&, const Index&);
+    virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
 
@@ -107,7 +108,7 @@ public:
                                    unique_ptr<LayerBackPropagationLM>&) const {}
 
     virtual void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                                 const Index&,
+                                 Index&,
                                  Tensor<type, 1>&) const {}
 
     virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
@@ -129,6 +130,15 @@ public:
     vector<string> get_default_input_names() const;
 
     vector<string> get_default_output_names() const;
+
+    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
+    {
+        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+
+        for (Index i = 1; i < Index(delta_pairs.size()); i++)
+            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
+    }
+
 
 protected:
 

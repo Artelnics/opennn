@@ -222,6 +222,9 @@ type round_to_precision(type, const int&);
 //Tensor<type, 1> round_to_precision_tensor(Tensor<type, 1> tensor, const int& precision);
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>&, const Index&);
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>&, const Index&);
+TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>&, const Index&);
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>&, const Index&, const Index&);
 
 TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);
 TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair);
@@ -255,6 +258,20 @@ void print_vector(const vector<T>& vec)
     cout << " ]\n";
 }
 
+
+template <typename T>
+void print_vector(const vector<vector<T>>& vec)
+{
+    cout << "[ ";
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+        print_vector(vec[i]);
+        if (i < vec.size() - 1)
+            cout << ";";
+    }
+
+    cout << " ]\n";
+}
 
 void print_pairs(const vector<pair<string, Index>>&);
 
@@ -328,6 +345,22 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
         }
 
     return true;
+}
+
+
+template <int rank>
+void copy_from_vector(Tensor<type, rank>& destination, const Tensor<type, 1>& source, Index& index) {
+    memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
+    index += destination.size();
+}
+
+
+template <int rank>
+void copy_to_vector(Tensor<type, 1>& destination, const Tensor<type, rank>& source, Index& index)
+{
+    memcpy(destination.data() + index, source.data(), source.size() * sizeof(type));
+
+    index += source.size();
 }
 
 }

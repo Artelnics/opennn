@@ -59,7 +59,7 @@ TEST(AdaptiveMomentEstimationTest, TrainApproximation)
 
 TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 {
-    const Index batch_samples_number = 1;
+    const Index batch_size = 1;
 
     const Index input_length = 2;
     const Index decoder_length = 3;
@@ -73,7 +73,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 /*
     LanguageDataSet language_data_set;
 
-    language_data_set.set_data_random_language_model(batch_samples_number,
+    language_data_set.set_data_random_language_model(batch_size,
         input_length,
         decoder_length,
         input_dimensions,

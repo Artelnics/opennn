@@ -7,7 +7,6 @@
 #include "../opennn/data_set.h"
 #include "../opennn/batch.h"
 #include "probabilistic_layer.h"
-#include "scaling_layer_2d.h"
 
 
 TEST(NeuralNetworkTest, DefaultConstructor)
@@ -152,15 +151,15 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
 
-    PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_first(Layer::Type::Perceptron));
-    perceptron_layer->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+    Perceptron* perceptron_layer = static_cast<Perceptron*>(neural_network.get_first(Layer::Type::Perceptron));
+    perceptron_layer->set_activation_function(Perceptron::Activation::Logistic);
 
     ForwardPropagation forward_propagation(data_set.get_samples_number(), &neural_network);
 
     neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
-    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation
-        = static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers[1].get());
+    PerceptronForwardPropagation* perceptron_layer_forward_propagation
+        = static_cast<PerceptronForwardPropagation*>(forward_propagation.layers[1].get());
 
     Tensor <type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
@@ -176,7 +175,7 @@ TEST(NeuralNetworkTest, ForwardPropagate)
     NeuralNetwork neural_network_0(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
 
     ProbabilisticLayer* probabilistic_layer =static_cast<ProbabilisticLayer*>(neural_network_0.get_first(Layer::Type::Probabilistic));
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
 
     ForwardPropagation forward_propagation_0(data_set.get_samples_number(), &neural_network_0);
 
@@ -225,6 +224,7 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
     Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
     
     EXPECT_EQ(outputs.size(), samples_number * outputs_number);
+//    EXPECT_EQ(outputs.size(), batch_size * outputs_number);
     //EXPECT_NEAR(outputs(0, 0), 0, NUMERIC_LIMITS_MIN);
     //EXPECT_NEAR(outputs(0, 1), 0, NUMERIC_LIMITS_MIN);
     //EXPECT_NEAR(outputs(0, 2), 0, NUMERIC_LIMITS_MIN);
@@ -323,11 +323,11 @@ TEST(NeuralNetworkTest, CalculateOutputsZero)
 
     neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
 
-    Index batch_samples_number = 2;
+    Index batch_size = 2;
     inputs_number = neural_network.get_inputs_number();
     outputs_number = neural_network.get_outputs_number();
 
-    inputs.resize(batch_samples_number, inputs_number);
+    inputs.resize(batch_size, inputs_number);
     inputs.setConstant(type(0));
 
     parameters_number = neural_network.get_parameters_number();
@@ -462,3 +462,149 @@ TEST(NeuralNetworkTest, test_load)
     neural_network.load(file_name);
     */
 }
+/*
+TEST(NeuralNetworkTest, test_forward_propagate)
+{
+    {
+        // Test
+
+        Index inputs_number = 2;
+        Index outputs_number = 1;
+        Index batch_size = 5;
+
+        bool is_training = false;
+
+        Tensor<type, 2> data;
+
+        data.resize(batch_size, inputs_number + outputs_number);
+
+        data.setValues({ {1,1,1},
+                        {2,2,2},
+                        {3,3,3},
+                        {0,0,0},
+                        {0,0,0} });
+
+        DataSet data_set;
+
+        data_set.set_data(data);
+
+        data_set.set(DataSet::SampleUse::Training);
+
+        //training_samples_indices = data_set.get_sample_indices(SampleUse::Training);
+        //input_variables_indices = data_set.get_input_variables_indices();
+        //target_variables_indices = data_set.get_target_variables_indices();
+
+        vector<Index> training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        vector<Index> input_variables_indices = data_set.get_used_variable_indices();
+        vector<Index> target_variables_indices = data_set.get_used_raw_variables_indices();
+
+        Batch batch;
+
+        batch.set(batch_size, &data_set);
+
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+
+        NeuralNetwork neural_network;
+
+        neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {outputs_number }, {1});
+
+        //Perceptron* perceptron_layer = static_cast<Perceptron*>(neural_network.get_layer(1));
+        
+        Layer::Type perceptron_layer = neural_network.get_layer(1)->get_type();
+
+        const Index neurons_number = perceptron_layer->get_neurons_number();
+
+        perceptron_layer=set_activation_function(Perceptron::Activation::Logistic);
+
+        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+
+        PerceptronForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronForwardPropagation*>(forward_propagation.layers[1]);
+
+        Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
+
+        EXPECT_EQ(perceptron_activations.dimension(0), 5);
+        EXPECT_EQ(abs(perceptron_activations(0, 0)), type(0.952), type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(1, 0)), type(0.993), type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(2, 0)), type(0.999), type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(3, 0)), type(0.731), type(1e-3));
+        EXPECT_EQ(abs(perceptron_activations(4, 0)), type(0.731), type(1e-3));
+    }
+
+    {
+        // Test
+
+        Index inputs_number = 4;
+        Index outputs_number = 2;
+        Index batch_size = 3;
+
+        bool is_training = false;
+
+        Tensor<type, 2> data;
+
+        data.resize(batch_size, inputs_number + outputs_number);
+        data.setValues({{-1,1,-1,1,1,0},{-2,2,3,1,1,0},{-3,3,5,1,1,0} });
+
+        DataSet data_set;
+
+        data_set.set_data(data);
+        data_set.set_target();
+        data_set.set(DataSet::SampleUse::Training);
+
+        Tensor<Index, 1> input_raw_variable_indices(inputs_number);
+        input_raw_variable_indices.setValues({ 0,1,2,3 });
+
+        Tensor<bool, 1> input_raw_variables_use(4);
+        input_raw_variables_use.setConstant(true);
+
+        data_set.set_input_raw_variables(input_raw_variable_indices, input_raw_variables_use);
+
+        training_samples_indices = data_set.get_sample_indices(DataSet::SampleUse::Training);
+        input_variables_indices = data_set.get_input_variables_indices();
+        target_variables_indices = data_set.get_target_variables_indices();
+
+        batch.set(batch_size, &data_set);
+        batch.fill(training_samples_indices, input_variables_indices, {}, target_variables_indices);
+
+        neural_network.set();
+
+        Perceptron* perceptron_layer = new Perceptron(inputs_number, outputs_number);
+        perceptron_layer->set_activation_function(Perceptron::Activation::Logistic);
+        const Index neurons_number_perceptron = perceptron_layer->get_neurons_number();
+
+        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(outputs_number, outputs_number);
+        probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
+        const Index neurons_number_probabilistic = probabilistic_layer->get_neurons_number();
+
+        Tensor<unique_ptr<Layer>, 1> layers(2);
+        layers.setValues({ perceptron_layer, probabilistic_layer });
+        neural_network.set_layers(layers);
+
+        ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+
+        neural_network.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
+
+        PerceptronForwardPropagation* perceptron_layer_forward_propagation
+            = static_cast<PerceptronForwardPropagation*>(forward_propagation.layers[0]);
+
+        Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
+
+        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
+            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[1]);
+
+        Tensor<type, 2> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
+
+        EXPECT_EQ(perceptron_activations.dimension(0) == 3);
+        EXPECT_EQ(abs(perceptron_activations(0, 0) - type(0.993)) < type(1e-3)
+            && abs(perceptron_activations(1, 0) - type(0.731)) < type(1e-3)
+            && abs(perceptron_activations(2, 0) - type(0.268)) < type(1e-3));
+
+        EXPECT_EQ(probabilistic_activations.dimension(0) == 3);
+        EXPECT_EQ(abs(probabilistic_activations(0, 0) - 0.5) < type(1e-3)
+            && abs(probabilistic_activations(1, 0) - 0.5) < type(1e-3)
+            && abs(probabilistic_activations(2, 0) - 0.5) < type(1e-3));
+    }
+}
+*/

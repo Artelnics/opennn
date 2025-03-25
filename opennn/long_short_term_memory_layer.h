@@ -24,7 +24,7 @@ class LongShortTermMemoryLayer : public Layer
 
 public:
 
-    enum class ActivationFunction{Logistic, 
+    enum class Activation{Logistic, 
                                   HyperbolicTangent,
                                   Linear, 
                                   RectifiedLinear, 
@@ -44,8 +44,8 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const LongShortTermMemoryLayer::ActivationFunction& get_activation_function() const;
-   const LongShortTermMemoryLayer::ActivationFunction& get_recurrent_activation_function() const;
+   const LongShortTermMemoryLayer::Activation& get_activation_function() const;
+   const LongShortTermMemoryLayer::Activation& get_recurrent_activation_function() const;
 
    string get_activation_function_string() const;
    string write_recurrent_activation_function() const;
@@ -55,14 +55,14 @@ public:
    void set_input_dimensions(const dimensions&) override;
    void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
    // Activation functions
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
-   void set_recurrent_activation_function(const ActivationFunction&);
+   void set_recurrent_activation_function(const Activation&);
    void set_recurrent_activation_function(const string&);
 
    void set_timesteps(const Index&);
@@ -95,7 +95,7 @@ public:
    // Back propagation
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index& ,
+                        Index& ,
                         Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
@@ -156,8 +156,8 @@ private:
    Tensor<type, 2> state_recurrent_weights;
    Tensor<type, 2> output_recurrent_weights;
 
-   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
-   ActivationFunction recurrent_activation_function = ActivationFunction::HardSigmoid;
+   Activation activation_function = Activation::HyperbolicTangent;
+   Activation recurrent_activation_function = Activation::HardSigmoid;
 
    Tensor<type, 1> empty;
 
@@ -229,44 +229,44 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> current_deltas;
 
-    Tensor<type, 1> forget_weights_derivatives;
-    Tensor<type, 1> input_weights_derivatives;
-    Tensor<type, 1> state_weights_derivatives;
-    Tensor<type, 1> output_weights_derivatives;
+    Tensor<type, 1> forget_weight_derivatives;
+    Tensor<type, 1> input_weight_derivatives;
+    Tensor<type, 1> state_weight_derivatives;
+    Tensor<type, 1> output_weight_derivatives;
 
-    Tensor<type, 2> hidden_states_weights_derivatives;
-    Tensor<type, 2> cell_states_weights_derivatives;
+    Tensor<type, 2> hidden_states_weight_derivatives;
+    Tensor<type, 2> cell_states_weight_derivatives;
 
-    Tensor<type, 1> forget_recurrent_weights_derivatives;
-    Tensor<type, 1> input_recurrent_weights_derivatives;
-    Tensor<type, 1> state_recurrent_weights_derivatives;
-    Tensor<type, 1> output_recurrent_weights_derivatives;
+    Tensor<type, 1> forget_recurrent_weight_derivatives;
+    Tensor<type, 1> input_recurrent_weight_derivatives;
+    Tensor<type, 1> state_recurrent_weight_derivatives;
+    Tensor<type, 1> output_recurrent_weight_derivatives;
 
-    Tensor<type, 2> hidden_states_recurrent_weights_derivatives;
-    Tensor<type, 2> cell_states_recurrent_weights_derivatives;
+    Tensor<type, 2> hidden_states_recurrent_weight_derivatives;
+    Tensor<type, 2> cell_states_recurrent_weight_derivatives;
 
-    Tensor<type, 1> forget_biases_derivatives;
-    Tensor<type, 1> input_biases_derivatives;
-    Tensor<type, 1> state_biases_derivatives;
-    Tensor<type, 1> output_biases_derivatives;
+    Tensor<type, 1> forget_bias_derivatives;
+    Tensor<type, 1> input_bias_derivatives;
+    Tensor<type, 1> state_bias_derivatives;
+    Tensor<type, 1> output_bias_derivatives;
 
-    Tensor<type, 2> hidden_states_biases_derivatives;
-    Tensor<type, 2> cell_states_biases_derivatives;
+    Tensor<type, 2> hidden_states_bias_derivatives;
+    Tensor<type, 2> cell_states_bias_derivatives;
 
-    Tensor<type, 2> input_combinations_weights_derivatives;
-    Tensor<type, 2> forget_combinations_weights_derivatives;
-    Tensor<type, 2> state_combinations_weights_derivatives;
-    Tensor<type, 2> output_combinations_weights_derivatives;
+    Tensor<type, 2> input_combinations_weight_derivatives;
+    Tensor<type, 2> forget_combinations_weight_derivatives;
+    Tensor<type, 2> state_combinations_weight_derivatives;
+    Tensor<type, 2> output_combinations_weight_derivatives;
 
-    Tensor<type, 2> input_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> forget_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> state_combinations_recurrent_weights_derivatives;
-    Tensor<type, 2> output_combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> input_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> forget_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> state_combinations_recurrent_weight_derivatives;
+    Tensor<type, 2> output_combinations_recurrent_weight_derivatives;
 
-    Tensor<type, 2> input_combinations_biases_derivatives;
-    Tensor<type, 2> forget_combinations_biases_derivatives;
-    Tensor<type, 2> state_combinations_biases_derivatives;
-    Tensor<type, 2> output_combinations_biases_derivatives;
+    Tensor<type, 2> input_combinations_bias_derivatives;
+    Tensor<type, 2> forget_combinations_bias_derivatives;
+    Tensor<type, 2> state_combinations_bias_derivatives;
+    Tensor<type, 2> output_combinations_bias_derivatives;
 
     Tensor<type, 2> input_derivatives;
 };

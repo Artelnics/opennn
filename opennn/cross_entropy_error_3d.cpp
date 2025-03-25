@@ -31,6 +31,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
+    cout << "Targets dimensions:\n";
+    print_vector(targets_pair.second);
+
     const Index outputs_number = targets_pair.second[1];
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
@@ -41,20 +44,27 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
 
+    // cout << "Outputs:\n" << outputs << endl;
+    // cout << "Outputs dimensions: " << outputs.dimensions() << endl;
+
+    cout << "Targets:\n" << targets << endl;
+
     // Back propagation
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
-    ProbabilisticLayer3DBackPropagation* probabilistic_layer_3d_back_propagation =
+    ProbabilisticLayer3DBackPropagation* probabilistic_3d_back_propagation =
         static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
-    probabilistic_layer_3d_back_propagation->targets = targets;
+    probabilistic_3d_back_propagation->targets = targets;
 
     Tensor<type, 2>& errors = back_propagation.errors;
     Tensor<type, 2>& predictions = back_propagation.predictions;
     Tensor<bool, 2>& matches = back_propagation.matches;
     Tensor<bool, 2>& mask = back_propagation.mask;
     bool& built_mask = back_propagation.built_mask;
+
+    errors.resize(samples_number, outputs_number);
 
     Tensor<type, 0>& accuracy = back_propagation.accuracy;
 
@@ -74,19 +84,23 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
-    // cout << "Errors dimensions: " << errors.dimensions() << endl << "Mask dimensions: " << mask.dimensions() << endl << "Targets dimensions: " << targets.dimensions() << endl;
+    cout << "Errors dimensions: " << errors.dimensions() << endl << "Mask dimensions: " << mask.dimensions() << endl << "Targets dimensions: " << targets.dimensions() << endl;
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
     error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
 
     // Masked accuracy
-    
+
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
+
+    cout << "Predictions\n" << predictions << endl;
 
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
+
+    cout << "Does this" << endl;
 
     if(isnan(error())) throw runtime_error("Error is NAN");
 }

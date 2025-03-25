@@ -183,7 +183,7 @@ Tensor<type, 2> TestingAnalysis::calculate_error() const
 
     const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-    const Tensor<type, 2> error = (outputs - targets);
+    const Tensor<type, 2> error = (targets - outputs);
 
     return error;
 }
@@ -229,7 +229,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     Tensor<type, 3> error_data(testing_samples_number, 3, outputs_number);
 
-   const Tensor<type, 2> absolute_errors = calculate_error().abs();
+    const Tensor<type, 2> absolute_errors = (testing_target_data - testing_output_data).abs();
 
    #pragma omp parallel for
    for(Index i = 0; i < outputs_number; i++)
@@ -239,7 +239,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
            error_data(j, 0, i) = absolute_errors(j,i);
            error_data(j, 1, i) = absolute_errors(j,i)/abs(output_maximums(i)-output_minimums(i));
            error_data(j, 2, i) = absolute_errors(j,i)*type(100.0)/abs(output_maximums(i)-output_minimums(i));
-       }
+         }
    }
     return error_data;
 }
@@ -285,7 +285,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     unscaling_layer->set_descriptives(descriptives);
 
-    const Tensor<type, 2> errors = calculate_error();
+    const Tensor<type, 2> errors = (testing_target_data - testing_output_data);
 
     // Error data
 
@@ -2098,8 +2098,8 @@ pair<type, type> TestingAnalysis::test_transformer() const
     Transformer* transformer = static_cast<Transformer*>(neural_network);
     LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
 
-    const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
+    const Tensor<type, 2> context = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);
+    const Tensor<type, 2> input = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Decoder);
     const Tensor<type, 2> target = language_data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);

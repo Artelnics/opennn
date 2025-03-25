@@ -19,12 +19,12 @@ struct NormalizationLayer3DForwardPropagationCuda;
 struct NormalizationLayer3DBackPropagationCuda;
 #endif
 
-class NormalizationLayer3D : public Layer
+class Normalization3d : public Layer
 {
 
 public:
 
-    NormalizationLayer3D(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
+    Normalization3d(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
     Index get_sequence_length() const;
     Index get_embedding_dimension() const;
@@ -37,31 +37,26 @@ public:
 
     void set(const Index& = 0, const Index& = 0, const string& = "normalization_layer_3d");
 
-    void set_sequence_length(const Index&);
-    void set_embedding_dimension(const Index&);
-
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
-
-    void set_gammas_constant(const type&);
-    void set_betas_constant(const type&);
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
 
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
+    void standarization(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void affine_transformation(Tensor<type, 3>&) const;
+
     void forward_propagate(const vector<pair<type*, dimensions>>&,
-                            unique_ptr<LayerForwardPropagation>&,
-                            const bool&) override;
+                           unique_ptr<LayerForwardPropagation>&,
+                           const bool&) override;
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-    void add_deltas(const vector<pair<type*, dimensions>>&) const;
-
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                            const Index&,
-                            Tensor<type, 1>&) const override;
+                         Index&,
+                         Tensor<type, 1>&) const override;
 
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
@@ -83,12 +78,13 @@ private:
 
     const Eigen::array<Index, 1> normalization_axis{{2}};
 
+    const type epsilon = type(0.001);
 };
 
 
-struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
+struct Normalization3dForwardPropagation : LayerForwardPropagation
 {        
-    NormalizationLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Normalization3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -100,16 +96,13 @@ struct NormalizationLayer3DForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 3> means;
     Tensor<type, 3> standard_deviations;
-
-    type epsilon = type(0.001);
 };
 
 
-struct NormalizationLayer3DBackPropagation : LayerBackPropagation
+struct Normalization3dBackPropagation : LayerBackPropagation
 {
-
-    NormalizationLayer3DBackPropagation(const Index& new_batch_samples_number = 0,
-                                                 Layer* new_layer = nullptr);
+    Normalization3dBackPropagation(const Index& new_batch_size = 0,
+                                   Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const;
 
@@ -117,8 +110,8 @@ struct NormalizationLayer3DBackPropagation : LayerBackPropagation
 
     void print() const;
 
-    Tensor<type, 1> gammas_derivatives;
-    Tensor<type, 1> betas_derivatives;
+    Tensor<type, 1> gamma_derivatives;
+    Tensor<type, 1> beta_derivatives;
 
     Tensor<type, 3> scaled_deltas;
     Tensor<type, 3> standard_deviation_derivatives;

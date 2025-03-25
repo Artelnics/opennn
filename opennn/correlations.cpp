@@ -547,7 +547,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<ScalingLayer2D>(dim1));
-    neural_network.add_layer(make_unique<PerceptronLayer>(dim1, dim2, PerceptronLayer::ActivationFunction::Logistic));
+    neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::Activation::Logistic));
 
     neural_network.set_parameters_constant(type(0.001));
 
@@ -557,7 +557,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
 //    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-//    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+//    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -647,7 +647,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Logistic);
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -753,7 +753,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    // probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    // probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
     // scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -873,7 +873,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::ActivationFunction::Softmax);
+    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
 
     scaling_layer_2d->set_display(false);
 

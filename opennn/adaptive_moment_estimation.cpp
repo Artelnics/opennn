@@ -23,7 +23,7 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(LossIndex* new_loss_index)
 
 Index AdaptiveMomentEstimation::get_samples_number() const
 {
-    return batch_samples_number;
+    return batch_size;
 }
 
 
@@ -63,9 +63,9 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
+void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_size)
 {
-    batch_samples_number = new_batch_samples_number;
+    batch_size = new_batch_size;
 }
 
 
@@ -163,10 +163,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
     const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
 
-    const Index training_batch_samples_number = min(training_samples_number, batch_samples_number);
+    const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
     const Index selection_batch_samples_number = (selection_samples_number != 0)
-                                                 ? min(selection_samples_number, batch_samples_number)
+                                                 ? min(selection_samples_number, batch_size)
                                                  : 0;
 
 
@@ -234,9 +234,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     // Main loop
 
     optimization_data.iteration = 1;
-
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {  
+    {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -268,19 +267,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            if(epoch == 50)
-            {
-            Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
+            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // // cerr << "numerical input derivatives:\n" << loss_index->calculate_numerical_inputs_derivatives() << endl;
+            // throw runtime_error("Checking the gradient and numerical gradient.");
 
-            throw runtime_error("Checking the gradient and numerical gradient.");
-            }
-            //system("pause");
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -425,7 +419,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     {"Training loss goal", to_string(double(training_loss_goal))},
     {"Maximum epochs number", to_string(maximum_epochs_number)},
     {"Maximum time", write_time(maximum_time)},
-    {"Batch samples number", to_string(batch_samples_number)}});
+    {"Batch samples number", to_string(batch_size)}});
 
     return string_matrix;
 }
@@ -487,7 +481,7 @@ void AdaptiveMomentEstimation::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("AdaptiveMomentEstimation");
 
-    add_xml_element(printer, "BatchSize", to_string(batch_samples_number));
+    add_xml_element(printer, "BatchSize", to_string(batch_size));
     add_xml_element(printer, "LossGoal", to_string(training_loss_goal));
     add_xml_element(printer, "MaximumEpochsNumber", to_string(maximum_epochs_number));
     add_xml_element(printer, "MaximumTime", to_string(maximum_time));

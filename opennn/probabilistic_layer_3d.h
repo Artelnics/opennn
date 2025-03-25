@@ -25,7 +25,7 @@ class ProbabilisticLayer3D : public Layer
 
 public:
 
-   enum class ActivationFunction { Softmax, Competitive };
+   enum class Activation { Softmax, Competitive };
 
    ProbabilisticLayer3D(const Index& = 0, 
                         const Index& = 0, 
@@ -46,7 +46,7 @@ public:
 
    dimensions get_output_dimensions() const override;
 
-   const ActivationFunction& get_activation_function() const;
+   const Activation& get_activation_function() const;
    string get_activation_function_string() const;
    string get_activation_function_text() const;
 
@@ -58,9 +58,9 @@ public:
    void set_inputs_depth(const Index&);
    void set_output_dimensions(const dimensions&) override;
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
    // Parameters
@@ -100,7 +100,7 @@ public:
                                                  Tensor<type, 3>&) const;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index&, 
+                        Index&, 
                         Tensor<type, 1>&) const override;
 
    // Serialization
@@ -120,7 +120,7 @@ private:
 
    Tensor<type, 2> weights;
 
-   ActivationFunction activation_function = ActivationFunction::Softmax;
+   Activation activation_function = Activation::Softmax;
 
    Tensor<type, 3> empty;
 
@@ -164,7 +164,7 @@ struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
     Tensor<type, 3> input_derivatives;
 
     Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> synaptic_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 };
 
 #ifdef OPENNN_CUDA

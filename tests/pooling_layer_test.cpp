@@ -26,7 +26,7 @@ struct PoolingLayerConfig {
     dimensions pool_dimensions;
     dimensions stride_dimensions;
     dimensions padding_dimensions;
-    PoolingLayer::PoolingMethod pooling_method;
+    Pooling::PoolingMethod pooling_method;
     string test_name;
     Tensor<type, 4> input_data;
     Tensor<type, 4> expected_output;
@@ -39,7 +39,7 @@ class PoolingLayerTest : public ::testing::TestWithParam<PoolingLayerConfig> {};
 INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
     PoolingLayerConfig
     {
-        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, Pooling::PoolingMethod::MaxPooling, "MaxPoolingNoPadding1Channel",
         ([] {
         Tensor<type, 2> data(4, 16);
         data.setValues({
@@ -74,7 +74,7 @@ INSTANTIATE_TEST_CASE_P(PoolingLayerTests, PoolingLayerTest, ::testing::Values(
     },
     PoolingLayerConfig
     {
-        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, PoolingLayer::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
+        {4, 4, 1}, {2, 2}, {2, 2}, {0, 0}, Pooling::PoolingMethod::AveragePooling, "AveragePoolingNoPadding1Channel",
         ([] {
         Tensor<type, 2> data(4, 16);
         data.setValues({
@@ -116,7 +116,7 @@ TEST_P(PoolingLayerTest, Constructor)
 {
     PoolingLayerConfig parameters = GetParam();
 
-    PoolingLayer pooling_layer(parameters.input_dimensions,
+    Pooling pooling_layer(parameters.input_dimensions,
                                parameters.pool_dimensions,
                                parameters.stride_dimensions,
                                parameters.padding_dimensions,
@@ -140,7 +140,7 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
     /*
     PoolingLayerConfig parameters = GetParam();
 
-    PoolingLayer pooling_layer(
+    Pooling pooling_layer(
         parameters.input_dimensions,
         parameters.pool_dimensions,
         parameters.stride_dimensions,
@@ -149,13 +149,13 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
         parameters.test_name
     );
     
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<PoolingLayerForwardPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
     pair<type*, dimensions> input_pair( parameters.input_data.data(),
-        { batch_samples_number,
+        { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
           parameters.input_dimensions[2] } );
@@ -164,18 +164,18 @@ TEST_P(PoolingLayerTest, ForwardPropagate)
 
     pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
 
-    EXPECT_EQ(output_pair.second[0], batch_samples_number);
+    EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], parameters.expected_output.dimension(1));
     EXPECT_EQ(output_pair.second[2], parameters.expected_output.dimension(2));
     EXPECT_EQ(output_pair.second[3], parameters.expected_output.dimension(3));
 
     TensorMap<Tensor<type, 4>> output_tensor(output_pair.first,
-                                             batch_samples_number,
+                                             batch_size,
                                              parameters.expected_output.dimension(1),
                                              parameters.expected_output.dimension(2),
                                              parameters.expected_output.dimension(3));
 
-    for (Index b = 0; b < batch_samples_number; ++b) {
+    for (Index b = 0; b < batch_size; ++b) {
         for (Index h = 0; h < parameters.expected_output.dimension(1); ++h) {
             for (Index w = 0; w < parameters.expected_output.dimension(2); ++w) {
                 for (Index c = 0; c < parameters.expected_output.dimension(3); ++c) {
@@ -194,7 +194,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
     /*
     PoolingLayerConfig parameters = GetParam();
 
-    PoolingLayer pooling_layer(
+    Pooling pooling_layer(
         parameters.input_dimensions,
         parameters.pool_dimensions,
         parameters.stride_dimensions,
@@ -203,16 +203,16 @@ TEST_P(PoolingLayerTest, BackPropagate) {
         parameters.test_name
     );
 
-    const Index batch_samples_number = parameters.input_data.dimension(0);
+    const Index batch_size = parameters.input_data.dimension(0);
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<PoolingLayerForwardPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<PoolingLayerBackPropagation>(batch_samples_number, &pooling_layer);
+        make_unique<PoolingLayerBackPropagation>(batch_size, &pooling_layer);
 
     pair<type*, dimensions> input_pair( parameters.input_data.data(),
-        { batch_samples_number,
+        { batch_size,
           parameters.input_dimensions[0],
           parameters.input_dimensions[1],
           parameters.input_dimensions[2] } );
@@ -225,7 +225,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
 
     vector<pair<type*, dimensions>> input_derivatives_pair = back_propagation.get()->get_input_derivative_pairs();
 
-    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_samples_number);
+    EXPECT_EQ(input_derivatives_pair[0].second[0], batch_size);
     EXPECT_EQ(input_derivatives_pair[0].second[1], parameters.input_data.dimension(1));
     EXPECT_EQ(input_derivatives_pair[0].second[2], parameters.input_data.dimension(2));
     EXPECT_EQ(input_derivatives_pair[0].second[3], parameters.input_data.dimension(3));

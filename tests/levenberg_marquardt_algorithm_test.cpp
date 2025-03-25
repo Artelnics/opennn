@@ -52,9 +52,9 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
 
     NeuralNetwork neural_network;
 
-    neural_network.add_layer(make_unique<PerceptronLayer>(dimensions{ 1 },
+    neural_network.add_layer(make_unique<Perceptron>(dimensions{ 1 },
         dimensions{ 1 },
-        PerceptronLayer::ActivationFunction::Linear));
+        Perceptron::Activation::Linear));
 
     MeanSquaredError mean_squared_error(&neural_network, &data_set);
     

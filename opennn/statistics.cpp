@@ -1035,7 +1035,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    std::vector<type> unique_values;
+    vector<type> unique_values;
     unique_values.reserve(min<Index>(size, bins_number));
     unique_values.push_back(vector(0));
     
@@ -1310,13 +1310,16 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
 
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
+
+    const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
     vector<Descriptives> descriptives(columns_number);
+    Tensor<type, 1> column(rows_number);
 
     for (Index i = 0; i < columns_number; i++) {
         // Acceder directamente a la columna sin usar TensorMap
-        const Tensor<type, 1> column = matrix.chip(i, 1); // Chip devuelve un tensor con la columna
+        column = matrix.chip(i, 1); // Chip devuelve un tensor con la columna
 
         if (i >= 0 && i < descriptives.size()) {
             descriptives[i] = vector_descriptives(column);
@@ -1680,7 +1683,7 @@ type median(const Tensor<type, 2>& matrix, const Index& column_index)
 
     type median = type(0);
 
-    std::vector<type> sorted_column;
+    vector<type> sorted_column;
 
     Index rows_number = 0;
 

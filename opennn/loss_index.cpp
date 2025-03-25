@@ -431,18 +431,12 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     const Index layers_number = neural_network->get_layers_number();
 
-    const vector<Index> layer_parameter_numbers = neural_network->get_layer_parameter_numbers();
-
     Index index = 0;
 
     for(Index i = 0; i < layers_number; i++)
-    {
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
                                    index,
                                    back_propagation.gradient);
-
-        index += layer_parameter_numbers[i];
-    }
 }
 
 
@@ -533,9 +527,9 @@ void LossIndex::from_XML(const XMLDocument& document)
 }
 
 
-BackPropagation::BackPropagation(const Index& new_batch_samples_number, LossIndex* new_loss_index)
+BackPropagation::BackPropagation(const Index& new_batch_size, LossIndex* new_loss_index)
 {
-    set(new_batch_samples_number, new_loss_index);
+    set(new_batch_size, new_loss_index);
 }
 
 
@@ -579,9 +573,9 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
     output_deltas.resize(size);
 
 //    output_deltas_dimensions.resize(output_dimensions.size() + 1);
-//    output_deltas_dimensions[0] = batch_samples_number;
+//    output_deltas_dimensions[0] = batch_size;
 
-//    Index size = batch_samples_number;
+//    Index size = batch_size;
 
 //    for(size_t i = 0; i < output_dimensions.size(); i++)
 //    {
@@ -714,7 +708,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
-       cout << "Forward error: " << error_forward << endl;
+       // cout << "Forward error: " << error_forward << endl;
 
        parameters_forward(i) -= h;
 
@@ -728,7 +722,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_backward = back_propagation.error();
 
-       cout << "Backward error: " << error_backward << endl;
+       // cout << "Backward error: " << error_backward << endl;
 
        parameters_backward(i) += h;
 
@@ -1334,9 +1328,9 @@ void BackPropagationLM::set(const Index &new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index &new_batch_samples_number, LossIndex *new_loss_index) 
+BackPropagationLM::BackPropagationLM(const Index &new_batch_size, LossIndex *new_loss_index) 
 {
-    set(new_batch_samples_number, new_loss_index);
+    set(new_batch_size, new_loss_index);
 }
 
 } // namespace opennn

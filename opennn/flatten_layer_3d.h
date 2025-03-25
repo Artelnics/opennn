@@ -1,42 +1,36 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   F L A T T E N   L A Y E R   C L A S S   H E A D E R
+//   F L A T T E N   L A Y E R   3D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef FLATTENLAYER_H
-#define FLATTENLAYER_H
+#ifndef FLATTEN_LAYER_3D_H
+#define FLATTEN_LAYER_3D_H
 
 #include "layer.h"
 
 namespace opennn
 {
 
-struct FlattenLayerForwardPropagation;
-struct FlattenLayerBackPropagation;
+struct FlattenLayer3DForwardPropagation;
+struct FlattenLayer3DBackPropagation;
 
-#ifdef OPENNN_CUDA
-struct FlattenLayerForwardPropagationCuda;
-struct FlattenLayerBackPropagationCuda;
-#endif
-
-class Flatten : public Layer
+class Flatten3D : public Layer
 {
 
 public:
 
-    Flatten(const dimensions& = {0,0,0});
+    Flatten3D(const dimensions& = {0,0});
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
 
     Index get_input_height() const;
     Index get_input_width() const;
-    Index get_input_channels() const;
 
-    void set(const dimensions & = {0,0,0});
+    void set(const dimensions & = {0,0});
 
     // Forward propagation
 
@@ -59,33 +53,29 @@ public:
 
     void print() const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
-    #endif
-
 private:
 
     dimensions input_dimensions;
 };
 
 
-struct FlattenLayerForwardPropagation : LayerForwardPropagation
+struct FlattenLayer3DForwardPropagation : LayerForwardPropagation
 {
-   FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
-      
-   pair<type*, dimensions> get_outputs_pair() const override;
+    FlattenLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
 
-   void set(const Index& = 0, Layer* = nullptr);
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-   void print() const override;
+    void set(const Index& = 0, Layer* = nullptr);
 
-   Tensor<type, 2> outputs;
+    void print() const override;
+
+    Tensor<type, 2> outputs;
 };
 
 
-struct FlattenLayerBackPropagation : LayerBackPropagation
+struct FlattenLayer3DBackPropagation : LayerBackPropagation
 {
-    FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    FlattenLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -93,20 +83,13 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 4> input_derivatives;
+    Tensor<type, 3> input_derivatives;
 };
-
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/flatten_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/flatten_layer_back_propagation_cuda.h"
-#endif
 
 
 }
 
-#endif
-
+#endif // FLATTEN_LAYER_3D_H
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

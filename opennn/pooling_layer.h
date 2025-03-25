@@ -14,26 +14,26 @@
 namespace opennn
 {
 
-class ConvolutionalLayer;
+class Convolutional;
 
 #ifdef OPENNN_CUDA
 struct PoolingLayerForwardPropagationCuda;
 struct PoolingLayerBackPropagationCuda;
 #endif
 
-class PoolingLayer : public Layer
+class Pooling : public Layer
 {
 
 public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    PoolingLayer(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
-                          const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
-                          const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
-                          const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
-                          const PoolingMethod& = PoolingMethod::MaxPooling,
-                          const string = "pooling_layer");
+    Pooling(const dimensions& = {2, 2, 1},      // Input dimensions {height,width,channels}
+                 const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
+                 const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
+                 const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
+                 const PoolingMethod& = PoolingMethod::MaxPooling,
+                 const string = "pooling_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -136,9 +136,9 @@ private:
 };
 
 
-struct PoolingLayerForwardPropagation : LayerForwardPropagation
+struct PoolingForwardPropagation : LayerForwardPropagation
 {   
-    PoolingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    PoolingForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const override;
 

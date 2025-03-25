@@ -126,10 +126,10 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
 
 
 void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
-    TensorMap<Tensor<type, 3>>& A,
-    const TensorMap<Tensor<type, 3>>& B,
-    TensorMap<Tensor<type, 3>>& C,
-    const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 TensorMap<Tensor<type, 3>>& A,
+                                 const TensorMap<Tensor<type, 3>>& B,
+                                 TensorMap<Tensor<type, 3>>& C,
+                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -277,7 +277,6 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
         column.device(*thread_pool_device) = column + vector(i);
     }
 }
-
 
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
@@ -925,12 +924,33 @@ type round_to_precision(type x, const int& precision)
 }
 
 
-TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& matrix, const Index& column_index)
+TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& tensor, const Index& index_1)
 {
-    const TensorMap<Tensor<type, 1>> column((type*) matrix.data() + column_index * matrix.dimension(0),
-                                            matrix.dimension(0));
+    const TensorMap<Tensor<type, 1>> column((type*)tensor.data() + tensor.dimension(0)*index_1,
+        tensor.dimension(0));
 
     return column;
+}
+
+
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>& tensor, const Index& index_2)
+{
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() +  tensor.dimension(0) * tensor.dimension(1)* index_2,
+        tensor.dimension(0), tensor.dimension(1));
+}
+
+
+TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3)
+{
+    return TensorMap<Tensor<type, 3>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
+        tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
+}
+
+
+TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3, const Index& index_2)
+{
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_2 * tensor.dimension(3) + index_3),
+        tensor.dimension(0), tensor.dimension(1));
 }
 
 
@@ -957,9 +977,8 @@ TensorMap<Tensor<type, 2>> tensor_map_2(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 {
-    if(x_pair.second.size() != 3){
-        cout<<x_pair.second.size()<<endl;
-        throw runtime_error("Dimensions must be 3");}
+    if(x_pair.second.size() != 3)
+        throw runtime_error("Dimensions must be 3");
 
     return TensorMap<Tensor<type, 3>>(x_pair.first,
                                       x_pair.second[0],
@@ -970,6 +989,9 @@ TensorMap<Tensor<type, 3>> tensor_map_3(const pair<type*, dimensions>& x_pair)
 
 TensorMap<Tensor<type, 4>> tensor_map_4(const pair<type*, dimensions>& x_pair)
 {
+    if(x_pair.second.size() != 4)
+        throw runtime_error("Dimensions must be 4");
+
     return TensorMap<Tensor<type, 4>>(x_pair.first,
                                       x_pair.second[0],
                                       x_pair.second[1],

@@ -48,7 +48,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> combination_derivatives;
 
     Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> synaptic_weight_derivatives;
+    Tensor<type, 2> weight_derivatives;
 
     Tensor<type, 2> input_derivatives;
 };
@@ -56,7 +56,7 @@ struct ProbabilisticLayerBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    ProbabilisticLayerBackPropagationLM(const Index& new_batch_samples_number = 0, 
+    ProbabilisticLayerBackPropagationLM(const Index& new_batch_size = 0, 
                                                  Layer* new_layer = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
@@ -84,7 +84,7 @@ class ProbabilisticLayer : public Layer
 
 public:
 
-    enum class ActivationFunction { Binary, Logistic, Competitive, Softmax };
+    enum class Activation { Binary, Logistic, Competitive, Softmax };
 
     ProbabilisticLayer(const dimensions& = {0},
                        const dimensions& = {0},
@@ -95,7 +95,7 @@ public:
 
     const type& get_decision_threshold() const;
 
-    const ActivationFunction& get_activation_function() const;
+    const Activation& get_activation_function() const;
     string get_activation_function_string() const;
 
     Index get_parameters_number() const override;
@@ -108,10 +108,10 @@ public:
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
 
-    void set_parameters(const Tensor<type, 1>&, const Index& index = 0) override;
+    void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_decision_threshold(const type&);
 
-    void set_activation_function(const ActivationFunction&);
+    void set_activation_function(const Activation&);
     void set_activation_function(const string&);
 
     void set_parameters_constant(const type&) override;
@@ -137,7 +137,7 @@ public:
                            unique_ptr<LayerBackPropagationLM>&) const override;
 */
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                         const Index&,
+                         Index&,
                          Tensor<type, 1>&) const override;
 
     void insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>&,
@@ -164,7 +164,7 @@ private:
 
     Tensor<type, 2> weights;
 
-    ActivationFunction activation_function = ActivationFunction::Logistic;
+    Activation activation_function = Activation::Logistic;
 
     type decision_threshold;
 

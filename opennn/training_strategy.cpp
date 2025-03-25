@@ -480,7 +480,7 @@ TrainingResults TrainingStrategy::perform_training()
     || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();
 
-    set_display(display);
+    set_display(true);
 
     switch(optimization_method)
     {  
@@ -510,27 +510,27 @@ void TrainingStrategy::fix_forecasting()
     Index time_steps = 0;
 
     if(neural_network->has(Layer::Type::Recurrent))
-        time_steps = static_cast<RecurrentLayer*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
+        time_steps = static_cast<Recurrent*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
     else if(neural_network->has(Layer::Type::LongShortTermMemory))
         time_steps = static_cast<LongShortTermMemoryLayer*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
     else
         return;
 
-    Index batch_samples_number = 0;
+    Index batch_size = 0;
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
-        batch_samples_number = adaptive_moment_estimation.get_samples_number();
+        batch_size = adaptive_moment_estimation.get_samples_number();
     else if(optimization_method == OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT)
-        batch_samples_number = stochastic_gradient_descent.get_samples_number();
+        batch_size = stochastic_gradient_descent.get_samples_number();
     else
         return;
 
-    if(batch_samples_number%time_steps == 0)
+    if(batch_size%time_steps == 0)
         return;
 
-    const Index constant = time_steps > batch_samples_number
+    const Index constant = time_steps > batch_size
         ? 1
-        : Index(batch_samples_number/time_steps);
+        : Index(batch_size/time_steps);
 
     if(optimization_method == OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION)
         adaptive_moment_estimation.set_batch_samples_number(constant*time_steps);

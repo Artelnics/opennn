@@ -18,12 +18,12 @@ namespace opennn
     #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
 #endif
 
-class RecurrentLayer : public Layer
+class Recurrent : public Layer
 {
 
 public:
 
-    enum class ActivationFunction{Logistic, 
+    enum class Activation{Logistic, 
                                   HyperbolicTangent,
                                   Linear, 
                                   RectifiedLinear, 
@@ -33,7 +33,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   RecurrentLayer(const dimensions & = {0}, const dimensions& = {0});
+   Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
@@ -43,7 +43,7 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const RecurrentLayer::ActivationFunction& get_activation_function() const;
+   const Recurrent::Activation& get_activation_function() const;
 
    string get_activation_function_string() const;
 
@@ -54,9 +54,9 @@ public:
 
    void set_timesteps(const Index&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index&) override;
+   void set_parameters(const Tensor<type, 1>&, Index&) override;
 
-   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const Activation&);
    void set_activation_function(const string&);
 
    void set_parameters_constant(const type&) override;
@@ -73,7 +73,7 @@ public:
                           const bool&) override;
 
    void insert_gradient(unique_ptr<LayerBackPropagation>&,
-                        const Index& ,
+                        Index& ,
                         Tensor<type, 1>&) const override;
 
    void back_propagate(const vector<pair<type*, dimensions>>&,
@@ -102,7 +102,7 @@ private:
 
    Tensor<type, 2> output_weights;
 
-   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
+   Activation activation_function = Activation::HyperbolicTangent;
 
    Tensor<type, 2> hidden_states;
 
@@ -134,9 +134,9 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct RecurrentLayerBackPropagation : LayerBackPropagation
+struct RecurrentBackPropagation : LayerBackPropagation
 {
-    RecurrentLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    RecurrentBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -149,15 +149,15 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
     Tensor<type, 2> combination_derivatives;
     Tensor<type, 1> current_combinations_derivatives;
 
-    Tensor<type, 2> combinations_biases_derivatives;
-    Tensor<type, 3> combinations_input_weights_derivatives;
-    Tensor<type, 3> combinations_recurrent_weights_derivatives;
+    Tensor<type, 2> combinations_bias_derivatives;
+    Tensor<type, 3> combinations_input_weight_derivatives;
+    Tensor<type, 3> combinations_recurrent_weight_derivatives;
 
     Tensor<type, 1> bias_derivatives;
 
-    Tensor<type, 2> input_weights_derivatives;
+    Tensor<type, 2> input_weight_derivatives;
 
-    Tensor<type, 2> recurrent_weights_derivatives;
+    Tensor<type, 2> recurrent_weight_derivatives;
 
     Tensor<type, 3> input_derivatives;
 };

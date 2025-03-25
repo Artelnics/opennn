@@ -70,6 +70,9 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Flatten:
         return "Flatten";
 
+    case Type::Flatten3D:
+        return "Flatten3D";
+
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
 
@@ -132,6 +135,9 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 
     if(this_layer_type == "Flatten")
         return Type::Flatten;
+
+    if(this_layer_type == "Flatten3D")
+        return Type::Flatten3D;
 
     if(this_layer_type == "NonMaxSuppression")
         return Type::NonMaxSuppression;
@@ -206,6 +212,9 @@ string Layer::get_type_string() const
 
     case Type::Flatten:
         return "Flatten";
+
+    case Type::Flatten3D:
+        return "Flatten3D";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
@@ -289,7 +298,7 @@ void Layer::set_parameters_random()
 }
 
 
-void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
+void Layer::set_parameters(const Tensor<type, 1>&, Index&)
 {
 }
 
