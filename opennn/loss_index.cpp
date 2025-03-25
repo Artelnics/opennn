@@ -165,11 +165,7 @@ void LossIndex::back_propagate(const Batch& batch,
 
     calculate_error(batch, forward_propagation, back_propagation);
 
-    cout << "Calculates error" << endl;
-
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-
-    cout << "Calculates layers error gradient" << endl;
 
     assemble_layers_error_gradient(back_propagation);
 

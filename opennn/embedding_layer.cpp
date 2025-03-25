@@ -164,7 +164,6 @@ void Embedding::dropout(Tensor<type, 3>& outputs) const
 void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = outputs.dimension(2);
 
     #pragma omp parallel for
@@ -184,15 +183,15 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 { 
-    const int batch_size = embeddings.dimension(0);
-    const int sequence_length = embeddings.dimension(1);
-    const int embedding_dimension = embeddings.dimension(2);
+    const Index batch_size = embeddings.dimension(0);
+    // const Index sequence_length = embeddings.dimension(1);
+    const Index embedding_dimension = embeddings.dimension(2);
 
-    const Eigen::array<int, 3> broadcast_dimensions = { batch_size, 1, 1 };
+    const Eigen::array<Index, 3> broadcast_dimensions = { batch_size, 1, 1 };
 
-    const Eigen::array<int, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
+    const Eigen::array<Index, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
 
-    embeddings.device(*thread_pool_device) 
+    embeddings.device(*thread_pool_device)
         += positional_encoding.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
 
     //for (Index sample_index = 0; sample_index < batch_size; sample_index++)
@@ -232,6 +231,9 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
+    if (delta_pairs.size() > 1)
+        add_deltas(delta_pairs);
+
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Back propagation
@@ -241,9 +243,6 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2>& sample_deltas = embedding_back_propagation->sample_deltas;
     Tensor<type, 2>& weight_derivatives = embedding_back_propagation->weight_derivatives;
-
-    if (delta_pairs.size() > 1)
-        add_deltas(delta_pairs);
 
     weight_derivatives.setZero();
 

@@ -26,6 +26,7 @@
 #include "probabilistic_layer_3d.h"
 #include "convolutional_layer.h"
 #include "flatten_layer.h"
+#include "flatten_layer_3d.h"
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
@@ -443,7 +444,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                                   stride_dimensions,
                                                   convolution_type,
                                                   "convolutional_layer_" + to_string(i+1)));
-
+        
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
@@ -455,7 +456,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        padding_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
-
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));
@@ -952,8 +952,8 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     for (Index i = first_layer_index; i <= last_layer_index; i++)
     {
         layers[i]->forward_propagate(layer_input_pairs[i],
-            forward_propagation.layers[i],
-            is_training);
+                                     forward_propagation.layers[i],
+                                     is_training);
     }
 }
 
@@ -1166,8 +1166,9 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
-    {
+    { 
         /// @todo CONV
+        return Tensor<type, 2>();
     }
     else
     {
@@ -1454,6 +1455,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"MultiheadAttention", []() -> unique_ptr<Layer> { return make_unique<MultiHeadAttention>(); }},
      {"Addition3D", []() -> unique_ptr<Layer> { return make_unique<Addition3d>(); }},
      {"Normalization3D", []() -> unique_ptr<Layer> { return make_unique<Normalization3d>(); }},
+     {"Flatten3D", []() -> unique_ptr<Layer> {return make_unique<Flatten3D>();}},
     };
 
     const XMLElement* start_element = layers_element->FirstChildElement("LayersNumber");
@@ -1773,6 +1775,10 @@ void NeuralNetworkBackPropagation::set(const Index& new_samples_number, NeuralNe
             layers[i] = make_unique < Normalization3dBackPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
+        case Layer::Type::Flatten3D:
+            layers[i] = make_unique<FlattenLayer3DBackPropagation>(samples_number, neural_network_layers[i].get());
+        break;
+
         default: break;
         }
     }
@@ -1900,6 +1906,10 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
 
         case Layer::Type::Normalization3D:
             layers[i] = make_unique<Normalization3dForwardPropagation>(samples_number, neural_network_layers[i].get());
+        break;
+
+        case Layer::Type::Flatten3D:
+            layers[i] = make_unique<FlattenLayer3DForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
         default: cout << "Default" << endl; break;

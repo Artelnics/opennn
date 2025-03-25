@@ -56,6 +56,7 @@ INCLUDEPATH += ../eigen
 
 HEADERS += \
     auto_associative_data_set.h \
+    flatten_layer_3d.h \
     pch.h \
     codification.h \
     cross_entropy_error_3d.h \
@@ -131,10 +132,12 @@ HEADERS += \
     unscaling_layer_forward_propagation.h \
     word_bag.h \
     addition_layer_3d.h \
-    normalization_layer_3d.h
+    normalization_layer_3d.h \
+    flatten_layer_3d.h \
 
 SOURCES += \
     auto_associative_data_set.cpp \
+    flatten_layer_3d.cpp \
     model_expression.cpp \
     pch.cpp \
     cross_entropy_error_3d.cpp \
@@ -193,4 +196,5 @@ SOURCES += \
     response_optimization.cpp \
     flatten_layer.cpp \
     addition_layer_3d.cpp \
-    normalization_layer_3d.cpp
+    normalization_layer_3d.cpp \
+    flatten_layer_3d.cpp \

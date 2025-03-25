@@ -228,8 +228,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
                                    unique_ptr<LayerForwardPropagation>& forward_propagation,
                                    unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    //cout << "Calculando tiempo convolution backward..." << endl;
-    //auto start = chrono::high_resolution_clock::now();
     // Convolutional layer
 
     const Index batch_size = back_propagation->batch_size;
@@ -289,31 +287,30 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Eigen::array<pair<Index, Index>, 2> paddings
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
-    auto map_convolution_derivatives = [&](Index kernel_index) -> TensorMap<Tensor<type, 3>> 
-    {
-        return TensorMap<Tensor<type, 3>>(
-            convolution_derivatives.data() + kernel_index * batch_size * output_height * output_width,
-            batch_size, output_height, output_width);
-    };
+    auto map_convolution_derivatives = [&](Index kernel_index) -> TensorMap<Tensor<type, 3>>
+        {
+            return TensorMap<Tensor<type, 3>>(
+                convolution_derivatives.data() + kernel_index * batch_size * output_height * output_width,
+                batch_size, output_height, output_width);
+        };
 
     auto map_weigth_derivatives = [&](Index kernel_index) -> TensorMap<Tensor<type, 4>>
-    {
-        return TensorMap<Tensor<type, 4>>(
-            weight_derivatives_data + kernel_index*kernel_size,
-            1, kernel_height, kernel_width, kernel_channels);
-    };
+        {
+            return TensorMap<Tensor<type, 4>>(
+                weight_derivatives_data + kernel_index * kernel_size,
+                1, kernel_height, kernel_width, kernel_channels);
+        };
 
     auto map_rotated_weigths = [&](Index kernel_index) -> TensorMap<Tensor<type, 3>>
-    {
-        return TensorMap<Tensor<type, 3>>(
-            rotated_weights.data() + kernel_index * kernel_size,
-            kernel_height, kernel_width, kernel_channels);
-    };
-
+        {
+            return TensorMap<Tensor<type, 3>>(
+                rotated_weights.data() + kernel_index * kernel_size,
+                kernel_height, kernel_width, kernel_channels);
+        };
 
     // Inputs
     
-    //preprocess_inputs(inputs, preprocessed_inputs); Already calculated?
+    preprocess_inputs(inputs, preprocessed_inputs); //Needed for padding Same
 
     // Convolutions derivatives
 
@@ -336,33 +333,35 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     }
 
     // Input derivatives
-
-    rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
     
+    rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
+
+    vector<vector<Tensor<type,2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type,2>>(input_channels));
+
+    #pragma omp parallel for
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
+
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+            precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
+    }
+
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
 
-        // @todo Can we do the rotation, rotated slices, etc. at once in an auxiliary function
-        // and store direclty a vector slice[kernel_index, channel_index]?
-
-        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
-
-        #pragma omp parallel for
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            rotated_slices[channel_index] = kernel_rotated_weights.chip(channel_index, 2);
-        
         for (Index image_index = 0; image_index < batch_size; image_index++)
         {
-            image_kernel_convolutions_derivatives_padded
-                = kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
-
+            image_kernel_convolutions_derivatives_padded =
+                kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
+            
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             {
-                channel_convolution.device(*thread_pool_device)
-                    = image_kernel_convolutions_derivatives_padded.convolve(rotated_slices[channel_index], convolution_dimensions_2d);
-
-                #pragma omp parallel for collapse(2)
+                channel_convolution.device(*thread_pool_device) =
+                    image_kernel_convolutions_derivatives_padded.convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
+                
+                #pragma omp parallel for
                 for (Index height = 0; height < input_height; ++height)
                     for (Index width = 0; width < input_width; ++width)
                         input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
@@ -590,7 +589,6 @@ void Convolutional::set(const dimensions& new_input_dimensions,
     set_random(biases);
 
     weights.resize(kernel_height, kernel_width, kernel_channels, kernels_number);
-
     set_random(weights);
 
     moving_means.resize(kernels_number);
