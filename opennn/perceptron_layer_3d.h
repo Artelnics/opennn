@@ -24,9 +24,10 @@ class Perceptron3d : public Layer
 
 public:
 
-    enum class Activation{HyperbolicTangent, Logistic,
-                                  Linear,
-                                  RectifiedLinear};
+    enum class Activation{HyperbolicTangent,
+                          Logistic,
+                          Linear,
+                          RectifiedLinear};
 
    Perceptron3d(const Index& = 0,
                 const Index& = 0,

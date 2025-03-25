@@ -110,7 +110,7 @@ void Perceptron3d::set(const Index& new_sequence_length,
                        const Perceptron3d::Activation& new_activation_function,
                        const string& new_name)
 {
-    sequence_length = sequence_length;
+    sequence_length = new_sequence_length;
 
     biases.resize(new_output_dimension);
 
@@ -121,6 +121,8 @@ void Perceptron3d::set(const Index& new_sequence_length,
     activation_function = new_activation_function;
 
     name = new_name;
+
+    layer_type = Type::Perceptron3D;
 
     dropout_rate = 0;
 }
@@ -257,6 +259,12 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
         Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
         calculate_activations(outputs, activation_derivatives);
+
+        cout << "Perceptron layer outputs dimensions: " << outputs.dimensions() << endl;
+        cout << "Perceptron layer activation_derivatives dimensions: " << activation_derivatives.dimensions() << endl;
+
+        cout << "Outputs:\n" << outputs.chip(0,2) << endl;
+
     }
     else
     {

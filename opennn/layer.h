@@ -45,6 +45,7 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
+                    Flatten3D,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
