@@ -22,22 +22,22 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
-        
+        /*
         const Index samples_number = 2;
 
         const Index image_height = 4;
         const Index image_width = 4;
-        const Index channels = 1;
+        const Index channels = 3;
         const Index targets = 2;
 
         ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
 
-        // image_data_set.set_data_random();
+        image_data_set.set_data_random();
+        */
         
-        //ImageDataSet image_data_set(0, {0,0,0}, {0});
+        ImageDataSet image_data_set;
 
-        //image_data_set.set_data_path("C:/binary_mnist_test");
-        image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
+        image_data_set.set_data_path("data");
 
         image_data_set.read_bmp();
 
@@ -45,10 +45,10 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 3 },
+            { 1 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
-        neural_network.print();
+        //neural_network.print();
 
         // Training strategy
 
@@ -64,24 +64,13 @@ int main()
         training_strategy.perform_training();
 
         // Testing analysis
-        /*
-        neural_network.save("C:/xmltest/outputs.xml");
-
-        NeuralNetwork imported_neural_network;
-        imported_neural_network.load("C:/xmltest/outputs.xml");
-
-        Index prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/1/3.bmp");
-        cout << "C:/binary_mnist/1/3.bmp is a : " << prediction << endl;
-        prediction = imported_neural_network.calculate_image_output("C:/binary_mnist/0/1.bmp");
-        cout << "C:/binary_mnist/0/1.bmp is a : " << prediction << endl;
-        */
 
         const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
+
         cout << "Bye!" << endl;
         
         return 0;

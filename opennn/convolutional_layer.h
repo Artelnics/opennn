@@ -9,7 +9,6 @@
 #ifndef CONVOLUTIONALLAYER_H
 #define CONVOLUTIONALLAYER_H
 
-
 #define EIGEN_USE_THREADS
 
 #include "layer.h"
@@ -27,24 +26,24 @@ class Convolutional : public Layer
 {
 
 public:
+    enum class Convolution{Valid, 
+                           Same};
 
     enum class Activation{Logistic,
-                                  HyperbolicTangent,
-                                  Linear,
-                                  RectifiedLinear,
-                                  ExponentialLinear,
-                                  ScaledExponentialLinear,
-                                  SoftPlus,
-                                  SoftSign,
-                                  HardSigmoid};
-
-    enum class ConvolutionType{Valid, Same};
+                          HyperbolicTangent,
+                          Linear,
+                          RectifiedLinear,
+                          ExponentialLinear,
+                          ScaledExponentialLinear,
+                          SoftPlus,
+                          SoftSign,
+                          HardSigmoid};
 
     Convolutional(const dimensions& = {3, 3, 1},                    // Input dimensions {height,width,channels}
                   const dimensions& = {3, 3, 1, 1},                 // Kernel dimensions {kernel_height,kernel_width,channels,kernels_number}
                   const Activation& = Activation::Linear,
                   const dimensions& = { 1, 1 },                     // Stride dimensions {row_stride,column_stride}
-                  const ConvolutionType& = ConvolutionType::Valid,  // Convolution type (Valid || Same)
+                  const Convolution& = Convolution::Valid,  // Convolution type (Valid || Same)
                   const string = "convolutional_layer");
 
     bool get_batch_normalization() const;
@@ -65,7 +64,7 @@ public:
     Index get_output_height() const;
     Index get_output_width() const;
 
-    ConvolutionType get_convolution_type() const;
+    Convolution get_convolution_type() const;
     string write_convolution_type() const;
 
     Index get_column_stride() const;
@@ -93,7 +92,7 @@ public:
              const dimensions& = {3, 3, 1, 1},
              const Activation& = Activation::Linear,
              const dimensions& = {1, 1},
-             const ConvolutionType& = ConvolutionType::Valid,
+             const Convolution& = Convolution::Valid,
              const string = "convolutional_layer");
 
     void set_activation_function(const Activation&);
@@ -101,7 +100,7 @@ public:
 
     void set_batch_normalization(const bool&);
 
-    void set_convolution_type(const ConvolutionType&);
+    void set_convolution_type(const Convolution&);
     void set_convolution_type(const string&);
 
     void set_parameters(const Tensor<type, 1>&, Index&) override;
@@ -168,7 +167,7 @@ private:
 
    dimensions input_dimensions;
 
-   ConvolutionType convolution_type = ConvolutionType::Valid;
+   Convolution convolution_type = Convolution::Valid;
 
    Activation activation_function = Activation::Linear;
 
