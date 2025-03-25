@@ -1082,8 +1082,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
-
-Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, vector<Index>& inputs_dimensions)
+Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
     const Index inputs_dimensions_number = inputs_dimensions.size();
     if(inputs_dimensions_number == 2)
@@ -1098,7 +1097,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         if(layers_number == 0)
         {
-            const Index inputs_size = accumulate(inputs_dimensions.begin(), inputs_dimensions.end(), 1, multiplies<Index>());
+            const Tensor<Index, 0> inputs_size = inputs_dimensions.prod();
             scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions[0], inputs_dimensions[1]);
             return scaled_outputs;
         }
@@ -1111,14 +1110,13 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
         bool is_training = false;
 
-        if(layers[0]->get_type_string() != "Scaling2D")
+        if(layers[0]->get_type_string() == "Scaling2D")
         {
-            cout << "scaling - " << layers[0]->get_type_string() << endl;
-            pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, inputs_dimensions);
+            pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, {inputs_dimensions[0], inputs_dimensions[1]});
 
-            const Index size = accumulate(inputs_dimensions.begin(), inputs_dimensions.end(), 1, multiplies<Index>());
+            // const Tensor<Index, 0> size = inputs_dimensions.prod();
 
-            memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size*sizeof(type)) );
+            // memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
 
             layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
 
@@ -1129,41 +1127,33 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         {
             scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions[0], inputs_dimensions[1]);
         }
-
         last_layer_outputs = scaled_outputs;
 
         last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
-        vector<Index> last_layer_outputs_dimensions_vector(last_layer_outputs_dimensions.data(), last_layer_outputs_dimensions.data() + last_layer_outputs_dimensions.size());
 
         for(Index i = 1; i < layers_number; i++)
         {
             if(layers[i]->get_type_string() != "Unscaling" && layers[i]->get_type_string() != "Scaling2D")
             {
-                // error en cuanto se deja de tener 5 outputs la perceptronlayer - ¿porque?
-                cout << "001 - " << i << " - " << layers[i]->get_name() << endl;
-                scaled_outputs.resize(inputs_dimensions[0], layers[i]->get_outputs_number());
-                outputs_dimensions = get_dimensions(scaled_outputs);
-                pair<type*, dimensions> inputs_tensor(last_layer_outputs.data(), last_layer_outputs_dimensions_vector);
+                scaled_outputs.resize(inputs_dimensions[0], layers[0]->get_outputs_number());
 
-                const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
-                cout << "002" << endl;
-                cout << last_layer_outputs_dimensions << endl;
-                memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
-                cout << "003" << endl;
+                outputs_dimensions = get_dimensions(scaled_outputs);
+
+                pair<type*, dimensions> inputs_tensor(last_layer_outputs.data(), {last_layer_outputs_dimensions[0], last_layer_outputs_dimensions[1]});
+
+                // const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
+
+                // memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
 
                 layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
 
-                cout << "004" << endl;
-                const pair<type*, dimensions> outputs_pair = forward_propagation.layers[i]->get_outputs_pair();
-                scaled_outputs = tensor_map_2(outputs_pair);
+                scaled_outputs = tensor_map_2(forward_propagation.layers[i]->get_outputs_pair());
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
-                vector<Index> last_layer_outputs_dimensions_vector(last_layer_outputs_dimensions.data(), last_layer_outputs_dimensions.data() + last_layer_outputs_dimensions.size());
-                cout << "005" <<  endl;
+
             }
         }
-
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
