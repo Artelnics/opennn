@@ -34,7 +34,6 @@ int main()
 
         image_data_set.set_data_random();
         */
-        
         ImageDataSet image_data_set;
 
         image_data_set.set_data_path("data");

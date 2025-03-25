@@ -272,10 +272,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     input_derivatives.setZero();
 
     const Index kernel_size = kernel_height*kernel_width*kernel_channels;
-
-    vector<Tensor<type, 2>> rotated_slices(input_channels);
-    Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
-    Tensor<type, 2> channel_convolution(input_height, input_width);
     
     const Index pad_height = (input_height + kernel_height - 1) - output_height;
     const Index pad_width = (input_width + kernel_width - 1) - output_width;
@@ -315,6 +311,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     // Convolutions derivatives
 
     convolution_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
+    //convolution_derivatives.setRandom();
     
     // Biases derivatives
 
@@ -333,41 +330,44 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     }
 
     // Input derivatives
-    
+
     rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
 
-    vector<vector<Tensor<type,2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type,2>>(input_channels));
+    vector<vector<Tensor<type, 2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type, 2>>(input_channels));
 
-    #pragma omp parallel for
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    #pragma omp parallel
+    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
-        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
-
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
+        {
+            const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
+        }
     }
 
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
         const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
 
-        for (Index image_index = 0; image_index < batch_size; image_index++)
+        #pragma omp parallel for
+        for (Index image_index = 0; image_index < batch_size; ++image_index) 
         {
-            image_kernel_convolutions_derivatives_padded =
-                kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
-            
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
-            {
-                channel_convolution.device(*thread_pool_device) =
-                    image_kernel_convolutions_derivatives_padded.convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
-                
-                #pragma omp parallel for
-                for (Index height = 0; height < input_height; ++height)
-                    for (Index width = 0; width < input_width; ++width)
-                        input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
+            const Tensor<type, 2> image_kernel_convolutions_derivatives_padded = kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
+
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index) {
+                const Tensor<type, 2> convolution_result = image_kernel_convolutions_derivatives_padded
+                    .convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
+
+                for (Index h = 0; h < input_height; ++h) 
+                    for (Index w = 0; w < input_width; ++w) 
+                        input_derivatives(image_index, h, w, channel_index) += convolution_result(h, w);
             }
         }
     }
+
+    //cout << "input derivatives:\n" << input_derivatives << endl;
+    //system("pause");
+
 }
 
 
@@ -587,9 +587,11 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     biases.resize(kernels_number);
     set_random(biases);
+    //biases.setRandom();
 
     weights.resize(kernel_height, kernel_width, kernel_channels, kernels_number);
     set_random(weights);
+    //weights.setRandom();
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);
