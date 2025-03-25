@@ -109,9 +109,10 @@ void Normalization3d::set_parameters_random()
 
 void Normalization3d::standarization(const Tensor<type, 3>& inputs, 
                                      Tensor<type, 3>& outputs, 
-                                     Tensor<type, 3>& means, 
-                                     Tensor<type, 3>& standard_deviations) const
+                                     Tensor<type, 2>& means, 
+                                     Tensor<type, 2>& standard_deviations) const
 {
+
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = inputs.dimension(2);
@@ -119,11 +120,11 @@ void Normalization3d::standarization(const Tensor<type, 3>& inputs,
     const Eigen::array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
-    means.device(*thread_pool_device) = inputs.mean(normalization_axis)
-        .reshape(range_3).broadcast(expand_normalization_axis);
+    means.device(*thread_pool_device) = inputs.mean(normalization_axis);
+    //    .reshape(range_3).broadcast(expand_normalization_axis);
 
-    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt()
-        .reshape(range_3).broadcast(expand_normalization_axis);
+    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt();
+//        .reshape(range_3).broadcast(expand_normalization_axis);
 
     outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
 }
@@ -147,8 +148,8 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
-    Tensor<type, 3>& means = this_forward_propagation->means;
-    Tensor<type, 3>& standard_deviations = this_forward_propagation->standard_deviations;
+    Tensor<type, 2>& means = this_forward_propagation->means;
+    Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
  
     standarization(inputs, outputs, means, standard_deviations);
 
@@ -161,10 +162,9 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                      unique_ptr<LayerForwardPropagation>& forward_propagation,
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    // @tod simplify                                                                                                  
+    // @todo simplify                                                                                                  
 
     const Index batch_size = input_pairs[0].second[0];
-
     const Index embedding_dimension = get_embedding_dimension();
 
     if(delta_pairs.size() > 1)     
@@ -178,29 +178,27 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
-
-    const Tensor<type, 3>& standard_deviations = this_forward_propagation->standard_deviations;
-
-    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
+    const Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
+//    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 
     // Back propagation
 
-    Normalization3dBackPropagation* normalization_3d_back_propagation =
+    Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
     
-    Tensor<type, 1>& gamma_derivatives = normalization_3d_back_propagation->gamma_derivatives;
-    Tensor<type, 1>& beta_derivatives = normalization_3d_back_propagation->beta_derivatives;
+    Tensor<type, 1>& gamma_derivatives = this_back_propagation->gamma_derivatives;
+    Tensor<type, 1>& beta_derivatives = this_back_propagation->beta_derivatives;
 
-    Tensor<type, 3>& scaled_deltas = normalization_3d_back_propagation->scaled_deltas;
-    Tensor<type, 3>& standard_deviation_derivatives = normalization_3d_back_propagation->standard_deviation_derivatives;
-    Tensor<type, 2>& aux_2d = normalization_3d_back_propagation->aux_2d;
+    Tensor<type, 3>& scaled_deltas = this_back_propagation->scaled_deltas;
+    Tensor<type, 3>& standard_deviation_derivatives = this_back_propagation->standard_deviation_derivatives;
 
-    Tensor<type, 3>& input_derivatives = normalization_3d_back_propagation->input_derivatives;
-    
+    Tensor<type, 3>& input_derivatives = this_back_propagation->input_derivatives;
+
+    Tensor<type, 2>& aux_2d = this_back_propagation->aux_2d;
+
     // Parameters derivatives
     
-    gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(sum_dimensions_2);
-    
+    gamma_derivatives.device(*thread_pool_device) = (outputs * deltas).sum(sum_dimensions_2);    
     beta_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
@@ -208,12 +206,9 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     standard_deviation_derivatives.device(*thread_pool_device) = outputs;
 
     scaled_deltas.device(*thread_pool_device) = deltas;
-
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    //aux_2d.device(*thread_pool_device) = 1 / type(inputs_depth) * (scaled_deltas * outputs).sum(sum_dimensions_1) / (standard_deviations_matrix + epsilon);
-
-    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(embedding_dimension) * (standard_deviations_matrix + epsilon));
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(embedding_dimension) * (standard_deviations + epsilon));
 
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
@@ -224,18 +219,19 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
+
 }
 
 
 void Normalization3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
-                                           Index& index,
-                                           Tensor<type, 1>& gradient) const
+                                      Index& index,
+                                      Tensor<type, 1>& gradient) const
 {
-    Normalization3dBackPropagation* normalization_3d_back_propagation =
+    Normalization3dBackPropagation* this_back_propagation =
         static_cast<Normalization3dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, normalization_3d_back_propagation->gamma_derivatives, index);
-    copy_to_vector(gradient, normalization_3d_back_propagation->beta_derivatives, index);
+    copy_to_vector(gradient, this_back_propagation->gamma_derivatives, index);
+    copy_to_vector(gradient, this_back_propagation->beta_derivatives, index);
 }
 
 
@@ -302,8 +298,8 @@ void Normalization3dForwardPropagation::set(const Index& new_batch_size, Layer* 
 
     outputs.resize(batch_size, sequence_length, embedding_dimension);
 
-    means.resize(batch_size, sequence_length, embedding_dimension);
-    standard_deviations.resize(batch_size, sequence_length, embedding_dimension);
+    means.resize(batch_size, sequence_length);
+    standard_deviations.resize(batch_size, sequence_length);
 }
 
 

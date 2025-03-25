@@ -49,15 +49,11 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
                        Tensor<type, 3>& tensor,
                        const Tensor<type, 1>& vector)
 {
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
     const Index channels = tensor.dimension(2);
 
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type, 2>> matrix(tensor.data() + i * rows_number * columns_number, 
-                                          rows_number, 
-                                          columns_number);
+        TensorMap<Tensor<type, 2>> matrix = tensor_map(tensor, i);
 
         matrix.device(*thread_pool_device) = matrix * vector(i);
     }
@@ -66,15 +62,11 @@ void multiply_matrices(const ThreadPoolDevice* thread_pool_device,
 
 void multiply_matrices(const ThreadPoolDevice* thread_pool_device, Tensor<type, 3>& tensor, const Tensor<type, 2>& matrix)
 {
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
     const Index channels = tensor.dimension(2);
 
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, 
-                                         rows_number, 
-                                         columns_number);
+        TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
 
         slice.device(*thread_pool_device) = slice * matrix;
     }
@@ -280,17 +272,11 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
     const Index channels = tensor.dimension(2);
-
-    type* tensor_data = tensor.data();
-
-    const Index slice_size = rows_number * columns_number;
 
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type,2>> matrix(tensor_data + i*slice_size, rows_number, columns_number);
+        TensorMap<Tensor<type,2>> matrix = tensor_map(tensor, i);
 
         matrix.device(*thread_pool_device) = matrix + vector(i);
     }
@@ -299,15 +285,11 @@ void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type,
 
 void substract_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& matrix, Tensor<type, 3>& tensor)
 {
-    const Index rows_number = tensor.dimension(0);
-    const Index columns_number = tensor.dimension(1);
     const Index channels = tensor.dimension(2);
 
     for(Index i = 0; i < channels; i++)
     {
-        TensorMap<Tensor<type, 2>> slice(tensor.data() + i * rows_number * columns_number, 
-                                         rows_number, 
-                                         columns_number);
+        TensorMap<Tensor<type, 2>> slice = tensor_map(tensor, i);
 
         slice.device(*thread_pool_device) = slice - matrix;
     }
@@ -926,10 +908,8 @@ type round_to_precision(type x, const int& precision)
 
 TensorMap<Tensor<type, 1>> tensor_map(const Tensor<type, 2>& tensor, const Index& index_1)
 {
-    const TensorMap<Tensor<type, 1>> column((type*)tensor.data() + tensor.dimension(0)*index_1,
+    return TensorMap<Tensor<type, 1>>((type*)tensor.data() + tensor.dimension(0)*index_1,
         tensor.dimension(0));
-
-    return column;
 }
 
 
