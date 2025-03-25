@@ -18,6 +18,7 @@
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
+#include "normalization_layer_3d.h"
 
 using namespace std;
 using namespace opennn;
@@ -49,9 +50,9 @@ int main()
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
+        neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
-        // neural_network.add_layer(make_unique<Perceptron3d>(maximum_sequence_length, embedding_dimension, 64));
+        neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
 

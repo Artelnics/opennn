@@ -38,6 +38,7 @@ int main()
         ImageDataSet image_data_set;
 
         image_data_set.set_data_path("data");
+        // image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
         image_data_set.read_bmp();
 
