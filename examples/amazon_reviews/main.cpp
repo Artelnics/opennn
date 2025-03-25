@@ -28,58 +28,75 @@ int main()
         LanguageDataSet text_data_set;
 
         // text_data_set.set_data_path("../data/amazon_cells_reduced.txt");
-        text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
+        // text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
+        text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
+
         text_data_set.set_separator(DataSet::Separator::Tab);
 
         text_data_set.read_csv();
 
-        text_data_set.split_samples_random();
+        // const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
+        // const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Target);
 
-        const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
-        const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Input);
+        // const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
+        // const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
+        // cout<<words_number<<endl;
+        // cout<<target_variables_number<<endl;
 
-        cout<<words_number<<endl;
-        cout<<target_variables_number<<endl;
+        // // Neural Network
+
+        // const Index hidden_neurons_number = 6;
+
+        // NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
+        //                              { words_number }, { hidden_neurons_number }, { target_variables_number });
+
+        // neural_network.print();
 
         // Neural Network
 
-        const Index hidden_neurons_number = 6;
+        const Index maximum_sequence_length = text_data_set.get_input_length();
+        const Index vocabulary_size = text_data_set.get_input_vocabulary_size();
+        const Index embedding_dimension = 32;
+        const Index heads_number = 4;
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-                                     { words_number }, { hidden_neurons_number }, { target_variables_number });
-
-        neural_network.print();
+        NeuralNetwork neural_network;
+        neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
+        neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
+        neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
+        // neural_network.add_layer(make_unique<Perceptron3d>(maximum_sequence_length, embedding_dimension, 64));
+        neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
+        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
 
         // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &text_data_set);
 
-        // // Training strategy
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
-        // TrainingStrategy training_strategy(&transformer, &language_data_set);
+        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        // training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
-
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.99);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
-        // training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
-        // training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
+        training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.4);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
 
-        // training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        // training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
+        training_strategy.get_adaptive_moment_estimation()->set_display(true);
+        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
 
-        // TrainingResults training_results = training_strategy.perform_training();
+        TrainingResults training_results = training_strategy.perform_training();
 
-        // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &text_data_set);
+
+        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
+
+        cout << "TESTING ANALYSIS:" << endl;
+        cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
+
 
         // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
 

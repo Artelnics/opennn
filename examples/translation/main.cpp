@@ -44,9 +44,8 @@ int main()
 
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
-        const Index embedding_dimension = 6;
-        const Index heads_number = 1;
-        const Index num_classes = 2;
+        const Index embedding_dimension = 6/*32*/;
+        const Index heads_number = 1/*4*/;
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));

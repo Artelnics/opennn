@@ -623,9 +623,9 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
         set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
     }
-*/
-// };
 
+};
+*/
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -1972,7 +1972,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagation::get_layer_input_pair
                 continue;
             }
         } else {
-            if (i == first_trainable_layer_index && is_training)
+            if ((i == first_trainable_layer_index && is_training) || i == 0)
             {
                 layer_input_pairs[i] = batch_input_pairs;
                 continue;
