@@ -58,7 +58,7 @@ int main()
 
         // cout << "Parameters number: " << neural_network.get_layers()[3]->get_parameters_number() << endl;
 
-        print_vector(neural_network.get_layers()[0]->get_output_dimensions());
+        print_vector(neural_network.get_layers()[1]->get_output_dimensions());
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
@@ -76,7 +76,7 @@ int main()
         adaptive_moment_estimation->set_batch_samples_number(12);
         adaptive_moment_estimation->set_display_period(1);
 
-        // training_strategy.perform_training();
+        training_strategy.perform_training();
 /*
 
 

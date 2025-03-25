@@ -100,7 +100,7 @@ void Embedding::set(const Index& new_vocabulary_size,
             ? sin(i / pow(10000, j / half_depth))
             : cos(i / pow(10000, (j - Index(half_depth)) / half_depth));
 
-    name = "embedding_layer";
+    name = new_name;
 }
 
 
@@ -167,21 +167,18 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
     const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = outputs.dimension(2);
 
-    outputs.setConstant(sqrt(type(embedding_dimension)));
-
-    #pragma omp parallel for collapse(2)
-    for (int b = 0; b < batch_size; b++)
+    #pragma omp parallel for
+    for (Index row = 0; row < batch_size; row++)
     {
-        for (int t = 0; t < sequence_length; ++t)
-        {
-            const int token_id = inputs(b, t);
+        auto output_slice = outputs.chip(row, 0);
 
-            for (int d = 0; d < embedding_dimension; d++)
-                outputs(b, t, d) *= weights(token_id, d);
+        for (Index input_position = 0; input_position < sequence_length; input_position++)
+        {
+            output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
         }
     }
 
-    //outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 }
 
 

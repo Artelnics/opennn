@@ -17,7 +17,7 @@ Convolutional::Convolutional(const dimensions& new_input_dimensions,
                              const dimensions& new_kernel_dimensions,
                              const Convolutional::Activation& new_activation_function,
                              const dimensions& new_stride_dimensions,
-                             const Convolutional::ConvolutionType& new_convolution_type,
+                             const Convolutional::Convolution& new_convolution_type,
                              const string new_name) : Layer()
 {
     layer_type = Layer::Type::Convolutional;
@@ -40,7 +40,7 @@ bool Convolutional::get_batch_normalization() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == ConvolutionType::Same
+    convolution_type == Convolution::Same
         ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
         : preprocessed_inputs.device(*thread_pool_device) = inputs;
 
@@ -53,8 +53,6 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& convolutions) const
 {
     type* convolutions_data = convolutions.data();
-
-    type* weights_data = (type*)weights.data();
 
     const Index kernels_number = get_kernels_number();
     const Index kernel_height = get_kernel_height();
@@ -71,10 +69,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel(weights_data + kernel_index*kernel_size,
-                                                kernel_height,
-                                                kernel_width,
-                                                kernel_channels);
+        const TensorMap<Tensor<type, 3>> kernel_weights = tensor_map(weights, kernel_index);
 
         TensorMap<Tensor<type, 4>> convolution(convolutions_data + kernel_index*output_size,
                                                batch_size,
@@ -82,7 +77,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
                                                output_width,
                                                1);
 
-        convolution.device(*thread_pool_device) = inputs.convolve(kernel, convolutions_dimensions) + biases(kernel_index);
+        convolution.device(*thread_pool_device) = inputs.convolve(kernel_weights, convolutions_dimensions) + biases(kernel_index);
     } 
 }
 
@@ -330,7 +325,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = map_convolution_derivatives(kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
 
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives = map_weigth_derivatives(kernel_index);
         
@@ -354,7 +349,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = map_convolution_derivatives(kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
 
         for (Index image_index = 0; image_index < batch_size; image_index++)
         {
@@ -449,7 +444,7 @@ dimensions Convolutional::get_output_dimensions() const
 }
 
 
-Convolutional::ConvolutionType Convolutional::get_convolution_type() const
+Convolutional::Convolution Convolutional::get_convolution_type() const
 {
     return convolution_type;
 }
@@ -459,8 +454,8 @@ string Convolutional::write_convolution_type() const
 {
     switch(convolution_type)
     {
-    case ConvolutionType::Valid: return "Valid";
-    case ConvolutionType::Same: return "Same";
+    case Convolution::Valid: return "Valid";
+    case Convolution::Same: return "Same";
     }
 
     return string();
@@ -507,10 +502,10 @@ Index Convolutional::get_padding_height() const
 {
     switch (convolution_type)
     {
-    case ConvolutionType::Valid:
+    case Convolution::Valid:
         return 0;
 
-    case ConvolutionType::Same:
+    case Convolution::Same:
         return row_stride * (input_dimensions[1] - 1) - input_dimensions[1] + get_kernel_height();
     }
 
@@ -522,10 +517,10 @@ Index Convolutional::get_padding_width() const
 {
     switch(convolution_type)
     {
-    case ConvolutionType::Valid:
+    case Convolution::Valid:
         return 0;
 
-    case ConvolutionType::Same:
+    case Convolution::Same:
         return column_stride*(input_dimensions[2] - 1) - input_dimensions[2] + get_kernel_width();
     }
 
@@ -558,7 +553,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
                         const dimensions& new_kernel_dimensions,
                         const Convolutional::Activation& new_activation_function,
                         const dimensions& new_stride_dimensions,
-                        const ConvolutionType& new_convolution_type,
+                        const Convolution& new_convolution_type,
                         const string new_name)
 {
     if(new_kernel_dimensions.size() != 4)
@@ -657,7 +652,7 @@ void Convolutional::set_batch_normalization(const bool& new_batch_normalization)
 }
 
 
-void Convolutional::set_convolution_type(const Convolutional::ConvolutionType& new_convolution_type)
+void Convolutional::set_convolution_type(const Convolutional::Convolution& new_convolution_type)
 {
     convolution_type = new_convolution_type;
 }
@@ -666,9 +661,9 @@ void Convolutional::set_convolution_type(const Convolutional::ConvolutionType& n
 void Convolutional::set_convolution_type(const string& new_convolution_type)
 {
     if(new_convolution_type == "Valid")
-        convolution_type = ConvolutionType::Valid;
+        convolution_type = Convolution::Valid;
     else if(new_convolution_type == "Same")
-        convolution_type = ConvolutionType::Same;
+        convolution_type = Convolution::Same;
     else
         throw runtime_error("Unknown convolution type: " + new_convolution_type + ".\n");
 }
@@ -712,9 +707,9 @@ pair<Index, Index> Convolutional::get_padding() const
 {
     switch (convolution_type)
     {
-    case ConvolutionType::Valid:
+    case Convolution::Valid:
         return make_pair(0, 0);
-    case ConvolutionType::Same:
+    case Convolution::Same:
     {
         const Index input_height = get_input_height();
         const Index input_width = get_input_width();
@@ -810,7 +805,7 @@ void Convolutional::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "KernelsChannels", to_string(get_kernel_channels()));
     add_xml_element(printer, "Activation", get_activation_function_string());
     add_xml_element(printer, "StrideDimensions", dimensions_to_string({ get_column_stride(), get_row_stride() }));
-    add_xml_element(printer, "ConvolutionType", write_convolution_type());
+    add_xml_element(printer, "Convolution", write_convolution_type());
     add_xml_element(printer, "Parameters", tensor_to_string(get_parameters()));
 
     printer.CloseElement();
@@ -845,7 +840,7 @@ void Convolutional::from_XML(const XMLDocument& document)
     set_column_stride(stride_dimensions[0]);
     set_row_stride(stride_dimensions[1]);
 
-    set_convolution_type(read_xml_string(convolutional_layer_element, "ConvolutionType"));
+    set_convolution_type(read_xml_string(convolutional_layer_element, "Convolution"));
 
     Index index = 0;
 

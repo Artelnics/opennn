@@ -142,13 +142,13 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    Normalization3dForwardPropagation* normalization_3d_forward_propagation =
+    Normalization3dForwardPropagation* this_forward_propagation =
         static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 3>& outputs = normalization_3d_forward_propagation->outputs;
+    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
-    Tensor<type, 3>& means = normalization_3d_forward_propagation->means;
-    Tensor<type, 3>& standard_deviations = normalization_3d_forward_propagation->standard_deviations;
+    Tensor<type, 3>& means = this_forward_propagation->means;
+    Tensor<type, 3>& standard_deviations = this_forward_propagation->standard_deviations;
  
     standarization(inputs, outputs, means, standard_deviations);
 
@@ -174,12 +174,12 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    const Normalization3dForwardPropagation* normalization_3d_forward_propagation =
-        static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
+    const Normalization3dForwardPropagation* this_forward_propagation 
+        = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& outputs = normalization_3d_forward_propagation->outputs;
+    const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
-    const Tensor<type, 3>& standard_deviations = normalization_3d_forward_propagation->standard_deviations;
+    const Tensor<type, 3>& standard_deviations = this_forward_propagation->standard_deviations;
 
     const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 

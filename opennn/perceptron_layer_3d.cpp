@@ -257,6 +257,12 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
         Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
         calculate_activations(outputs, activation_derivatives);
+
+        cout << "Perceptron layer outputs dimensions: " << outputs.dimensions() << endl;
+        cout << "Perceptron layer activation_derivatives dimensions: " << activation_derivatives.dimensions() << endl;
+
+        cout << "Outputs:\n" << outputs.chip(0,2) << endl;
+
     }
     else
     {

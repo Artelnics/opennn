@@ -53,17 +53,6 @@ public:
              const bool& = false,
              const string& = "multihead_attention_layer");
 
- 
-    inline TensorMap<Tensor<type, 2>> get_query_weights(const Index& head_index) const 
-    {
-        const Index embedding_dimension = get_embedding_dimension();
-        const Index hidden_depth = get_hidden_depth();
-
-        return TensorMap<Tensor<type, 2>>((type*)query_weights.data() + head_index*embedding_dimension*hidden_depth,
-            embedding_dimension, hidden_depth);
-    }
-    
-
     void set_parameters(const Tensor<type, 1>&, Index&) override;
     void set_parameters_random() override;
     void set_parameters_glorot();
@@ -72,6 +61,8 @@ public:
     void set_dropout_rate(const type&);
 
     void apply_causal_mask(Tensor<type, 4>&) const;
+
+    void calculate_query(const Tensor<type, 3>&, Tensor<type, 4>&) const;
 
     void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
@@ -141,6 +132,9 @@ private:
 
     Index source_sequence_length = 0;
 
+    Index heads_number = 0;
+    Index embedding_dimension = 0;
+
     Tensor<type, 3> query_weights;
     Tensor<type, 2> query_biases;
 
@@ -165,6 +159,8 @@ private:
 
     const Eigen::array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
     const Eigen::array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
+
+    const type minus_inf = -numeric_limits<float>::infinity();
 };
 
 
