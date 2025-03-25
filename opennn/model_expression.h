@@ -46,6 +46,7 @@ public:
 
     // php
     string write_header_api();
+    string write_subheader_api();
     void lstm_api();
     void autoassociation_api(const NeuralNetwork& );
     string logistic_api();
@@ -67,6 +68,7 @@ public:
     string soft_plus_javascript();
     string softsign_javascript();
     string header_javascript();
+    string subheader_javascript();
     string get_expression_javascript(const NeuralNetwork& );
 
     // other functions
