@@ -36,7 +36,7 @@ int main()
         */
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_path("data");
+        image_data_set.set_data_path("../mnist/data");
 
         image_data_set.read_bmp();
 
@@ -44,7 +44,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 1 },
+            { 16,8 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         //neural_network.print();

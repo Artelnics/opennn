@@ -311,7 +311,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     // Convolutions derivatives
 
     convolution_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
-    //convolution_derivatives.setRandom();
     
     // Biases derivatives
 
@@ -322,7 +321,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = map_convolution_derivatives(kernel_index);
 
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives = map_weigth_derivatives(kernel_index);
         
@@ -330,24 +329,24 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     }
 
     // Input derivatives
-
+    
     rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
 
     vector<vector<Tensor<type, 2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type, 2>>(input_channels));
+    precomputed_rotated_slices.resize(kernels_number);
 
-    #pragma omp parallel
+    #pragma omp parallel for //schedule(static)
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
-        for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
-        {
-            const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
+
+        for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
-        }
     }
 
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = map_convolution_derivatives(kernel_index);
 
         #pragma omp parallel for
         for (Index image_index = 0; image_index < batch_size; ++image_index) 
@@ -364,10 +363,6 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
             }
         }
     }
-
-    //cout << "input derivatives:\n" << input_derivatives << endl;
-    //system("pause");
-
 }
 
 
@@ -587,11 +582,9 @@ void Convolutional::set(const dimensions& new_input_dimensions,
 
     biases.resize(kernels_number);
     set_random(biases);
-    //biases.setRandom();
 
     weights.resize(kernel_height, kernel_width, kernel_channels, kernels_number);
     set_random(weights);
-    //weights.setRandom();
 
     moving_means.resize(kernels_number);
     moving_standard_deviations.resize(kernels_number);
