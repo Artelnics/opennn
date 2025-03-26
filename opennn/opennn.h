@@ -43,6 +43,7 @@
 #include "transformer.h"
 #include "forward_propagation.h"
 #include "flatten_layer_3d.h"
+#include "normalization_layer_3d.h"
 
 // Training strategy
 

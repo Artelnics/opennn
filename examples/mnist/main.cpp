@@ -38,6 +38,8 @@ int main()
 
         image_data_set.set_data_path("../mnist/data");
 
+        image_data_set.set_data_path("data");
+
         image_data_set.read_bmp();
 
         // Neural network

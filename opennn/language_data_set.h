@@ -44,7 +44,7 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    vector<string> tokenize(const string& document, const bool& input);
+    vector<string> tokenize(const string& document);
 
     unordered_map<string, Index> create_vocabulary(const vector<vector<string>>& document_tokens);
 
