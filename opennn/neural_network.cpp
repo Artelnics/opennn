@@ -444,7 +444,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                                   stride_dimensions,
                                                   convolution_type,
                                                   "convolutional_layer_" + to_string(i+1)));
-        
+
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
