@@ -66,6 +66,10 @@ private:
 
     Index group_raw_variable_index = 0;
 
+    RawVariable* time_series_raw_variables;
+
+    bool display = true;
+
 };
 
 }

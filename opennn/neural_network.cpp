@@ -267,20 +267,23 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                            1, 
                                            multiplies<Index>());
 
-    input_names.resize(inputs_number);
+    if(input_names.size() == 0){
+        input_names.resize(inputs_number);
+        for(Index i = 0; i < inputs_number; i++)
+            input_names[i] = "input_" + to_string(i+1);
+    }
 
-    for(Index i = 0; i < inputs_number; i++)
-        input_names[i] = "input_" + to_string(i+1);
 
     const Index outputs_number = accumulate(output_dimensions.begin(),
                                             output_dimensions.end(),
                                             1,
                                             multiplies<Index>());
 
-    output_names.resize(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-        output_names[i] = "output_" + to_string(i+1);
+    if(output_names.size() == 0){
+        output_names.resize(outputs_number);
+        for(Index i = 0; i < outputs_number; i++)
+            output_names[i] = "output_" + to_string(i+1);
+    }
 
     switch(model_type)
     {    
