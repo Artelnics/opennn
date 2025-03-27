@@ -63,17 +63,17 @@ public:
     void apply_causal_mask(Tensor<type, 4>&) const;
 
     void calculate_query(const Tensor<type, 3>&, Tensor<type, 4>&) const;
+    void calculate_key(const Tensor<type, 3>&, Tensor<type, 4>&) const;
+    void calculate_value(const Tensor<type, 3>&, Tensor<type, 4>&) const;
 
-    void calculate_transformation(const Tensor<type, 3>&, Tensor<type, 4>&, const Tensor<type, 3>&, const Tensor<type, 2>&, Tensor<type, 2>&) const;
-
-    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_heads(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
 
     void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
     // void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-    void dropout(Tensor<type, 4>&) const;
+    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,

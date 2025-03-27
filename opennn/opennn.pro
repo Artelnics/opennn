@@ -134,6 +134,7 @@ HEADERS += \
     addition_layer_3d.h \
     normalization_layer_3d.h \
     flatten_layer_3d.h \
+    opennn.h
 
 SOURCES += \
     auto_associative_data_set.cpp \

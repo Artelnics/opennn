@@ -214,29 +214,12 @@ void Perceptron::set_parameters_random()
 
 
 void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
-                                             Tensor<type, 2>& combinations) const
+                                        Tensor<type, 2>& combinations) const
 {
-
     combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 
-}
-
-
-void Perceptron::dropout(Tensor<type, 2>& outputs) const
-{  
-    const Index outputs_number = outputs.dimension(1);
-
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
-    {
-        TensorMap<Tensor<type, 1>> column = tensor_map(outputs, neuron_index);
-
-        get_random_type(type(0), type(1)) < dropout_rate ? column.setZero()
-                              : column = column*scaling_factor;
-    }
 }
 
 

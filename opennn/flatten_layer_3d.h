@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   F L A T T E N   L A Y E R   3D   C L A S S   H E A D E R
+//   F L A T T E N   L A Y E R   3 D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -14,8 +14,8 @@
 namespace opennn
 {
 
-struct FlattenLayer3DForwardPropagation;
-struct FlattenLayer3DBackPropagation;
+//struct Flatten3dForwardPropagation;
+//struct Flatten3dBackPropagation;
 
 class Flatten3D : public Layer
 {
@@ -59,9 +59,9 @@ private:
 };
 
 
-struct FlattenLayer3DForwardPropagation : LayerForwardPropagation
+struct Flatten3dForwardPropagation : LayerForwardPropagation
 {
-    FlattenLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Flatten3dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -73,9 +73,9 @@ struct FlattenLayer3DForwardPropagation : LayerForwardPropagation
 };
 
 
-struct FlattenLayer3DBackPropagation : LayerBackPropagation
+struct Flatten3dBackPropagation : LayerBackPropagation
 {
-    FlattenLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
+    Flatten3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
