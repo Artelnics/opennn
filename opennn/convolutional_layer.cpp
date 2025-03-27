@@ -65,7 +65,7 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 }
 
 
-void Convolutional::normalize(unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                               const bool& is_training)
 {
     ConvolutionalForwardPropagation* convolutional_forward_propagation =
@@ -115,7 +115,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation> layer_forward_
 }
 
 
-void Convolutional::shift(unique_ptr<LayerForwardPropagation> layer_forward_propagation)
+void Convolutional::shift(unique_ptr<LayerForwardPropagation>& layer_forward_propagation)
 {
     ConvolutionalForwardPropagation* convolutional_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
@@ -170,9 +170,9 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     if(batch_normalization)
     {
-        normalize(move(layer_forward_propagation), is_training);
+        normalize(layer_forward_propagation, is_training);
 
-        shift(move(layer_forward_propagation));
+        shift(layer_forward_propagation);
     }
 
     is_training
