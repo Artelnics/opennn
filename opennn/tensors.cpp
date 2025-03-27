@@ -94,23 +94,11 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
 
     const Index channels = A.dimension(2);
 
-    type* A_data = (type*)A.data();
-    type* B_data = (type*)B.data();
-    type* C_data = C.data();
-
-    type* a_matrix_data = nullptr;
-    type* b_matrix_data = nullptr;
-    type* c_matrix_data = nullptr;
-
     for(Index i = 0; i < channels; i++)
     {
-        a_matrix_data = A_data + A_rows * A_columns * i;
-        b_matrix_data = B_data + B_rows * B_columns * i;
-        c_matrix_data = C_data + C_rows * C_columns * i;
-
-        const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
-        const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
-        TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
+        const TensorMap<Tensor<type, 2>> A_matrix(A.data() + A_rows * A_columns * i, A_rows, A_columns);
+        const TensorMap<Tensor<type, 2>> B_matrix(B.data() + B_rows * B_columns * i, B_rows, B_columns);
+        TensorMap<Tensor<type, 2>>       C_matrix(C.data() + C_rows * C_columns * i, C_rows, C_columns);
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
     }
@@ -137,23 +125,11 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
 
     const Index channels = A.dimension(2);
 
-    type* A_data = (type*)A.data();
-    type* B_data = (type*)B.data();
-    type* C_data = C.data();
-
-    type* a_matrix_data = nullptr;
-    type* b_matrix_data = nullptr;
-    type* c_matrix_data = nullptr;
-
     for(Index i = 0; i < channels; i++)
     {
-        a_matrix_data = A_data + A_rows * A_columns * i;
-        b_matrix_data = B_data + B_rows * B_columns * i;
-        c_matrix_data = C_data + C_rows * C_columns * i;
-
-        const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
-        const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
-        TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
+        const TensorMap<Tensor<type, 2>> A_matrix(A.data() + A_rows * A_columns * i, A_rows, A_columns);
+        const TensorMap<Tensor<type, 2>> B_matrix(B.data() + B_rows * B_columns * i, B_rows, B_columns);
+        TensorMap<Tensor<type, 2>> C_matrix(C.data() + C_rows * C_columns * i, C_rows, C_columns);
 
         C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
     }
@@ -181,25 +157,13 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
     const Index channels = A.dimension(2);
     const Index blocks_number = A.dimension(3);
 
-    type* A_data = (type*)A.data();
-    type* B_data = (type*)B.data();
-    type* C_data = C.data();
-
-    type* a_matrix_data = nullptr;
-    type* b_matrix_data = nullptr;
-    type* c_matrix_data = nullptr;
-
     for(Index i = 0; i < blocks_number; i++)
     {
         for(Index j = 0; j < channels; j++)
         {
-            a_matrix_data = A_data + A_rows * A_columns * (i * channels + j);
-            b_matrix_data = B_data + B_rows * B_columns * (i * channels + j);
-            c_matrix_data = C_data + C_rows * C_columns * (i * channels + j);
-
-            const TensorMap<Tensor<type, 2>> A_matrix(a_matrix_data, A_rows, A_columns);
-            const TensorMap<Tensor<type, 2>> B_matrix(b_matrix_data, B_rows, B_columns);
-            TensorMap<Tensor<type, 2>> C_matrix(c_matrix_data, C_rows, C_columns);
+            const TensorMap<Tensor<type, 2>> A_matrix((type*)A.data() + A_rows * A_columns * (i * channels + j), A_rows, A_columns);
+            const TensorMap<Tensor<type, 2>> B_matrix((type*)B.data() + B_rows * B_columns * (i * channels + j), B_rows, B_columns);
+            TensorMap<Tensor<type, 2>> C_matrix(C.data() + C_rows * C_columns * (i * channels + j), C_rows, C_columns);
 
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
         }

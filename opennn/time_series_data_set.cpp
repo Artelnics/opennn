@@ -10,6 +10,7 @@
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -370,7 +371,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
 
 void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
-/*
+    /*
     // Data set element
 
     const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
@@ -595,7 +596,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     {
         time_series_new_raw_variables_number = Index(atoi(time_series_raw_variables_number_element->GetText()));
 
-        set_time_series_raw_variables_number(time_series_new_raw_variables_number);
+        set_raw_variables_number(time_series_new_raw_variables_number);
     }
 
     // Time series raw_variables

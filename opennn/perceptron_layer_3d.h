@@ -74,8 +74,6 @@ public:
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
 
-   void dropout(Tensor<type, 3>&) const;
-
    void calculate_activations(Tensor<type, 3>&,
                               Tensor<type, 3>&) const;
 

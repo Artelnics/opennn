@@ -53,8 +53,8 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const Index layers_number = back_propagation.neural_network.layers.size();
     
-    ProbabilisticLayer3DBackPropagation* probabilistic_3d_back_propagation =
-        static_cast<ProbabilisticLayer3DBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
+    Probabilistic3dBackPropagation* probabilistic_3d_back_propagation =
+        static_cast<Probabilistic3dBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
 
     probabilistic_3d_back_propagation->targets = targets;
 
@@ -110,7 +110,7 @@ void CrossEntropyError3D::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
-    // ProbabilisticLayer3D does not have deltas. 
+    // Probabilistic3d does not have deltas. 
     // Error combinations derivatives are calculated directly.
 }
 

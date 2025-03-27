@@ -18,7 +18,7 @@ struct NeuralNetworkBackPropagation
 
     void print() const;
 
-    Index samples_number = 0;
+    Index batch_size = 0;
 
     NeuralNetwork* neural_network = nullptr;
 

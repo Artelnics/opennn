@@ -2838,7 +2838,6 @@ namespace opennn
         set_random(data);
     }
 
-
     void DataSet::to_XML(XMLPrinter& printer) const
     {
         if (model_type == ModelType::Forecasting)
@@ -2892,6 +2891,32 @@ namespace opennn
             add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
             add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
             add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
+        }
+
+        printer.CloseElement();
+
+        printer.OpenElement("PreviewData");
+
+        add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
+
+        vector<string> data_file_preview_result;
+
+        for (const auto& subvec : data_file_preview) {
+            stringstream ss;
+            for (size_t i = 0; i < subvec.size(); ++i) {
+                ss << subvec[i];
+                if (i != subvec.size() - 1) {
+                    ss << ",";
+                }
+            }
+            data_file_preview_result.push_back(ss.str());
+        }
+
+        for(int i = 0; i < data_file_preview.size(); i++){
+            printer.OpenElement("Row");
+            printer.PushAttribute("Item", to_string(i + 1).c_str());
+            printer.PushText(data_file_preview_result[i].data());
+            printer.CloseElement();
         }
 
         printer.CloseElement();
@@ -3001,6 +3026,38 @@ namespace opennn
 
             rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
         }
+
+        //preview data
+        const XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
+
+        if (!preview_data_element)
+            throw runtime_error("Preview data element is nullptr. \n ");
+
+        const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
+
+        if (!preview_size_element)
+            throw runtime_error("Preview size element is nullptr. \n ");
+
+        Index preview_size = 0;
+        if (preview_size_element->GetText())
+            preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
+
+        start_element = preview_size_element;
+        if(preview_size > 0){
+            data_file_preview.resize(preview_size);
+
+            for (Index i = 0; i < preview_size; ++i) {
+                const XMLElement* row_data = start_element->NextSiblingElement("Row");
+                start_element = row_data;
+
+                if (row_data->Attribute("Item") != to_string(i + 1))
+                    throw runtime_error("Row item number (" + to_string(i + 1) + ") does not match (" + row_data->Attribute("Item") + ").\n");
+
+                if(row_data->GetText())
+                    data_file_preview[i] = get_tokens(row_data->GetText(), ",");
+            }
+        }
+
 
         set_display(read_xml_bool(data_set_element, "Display"));
 
@@ -3927,14 +3984,13 @@ namespace opennn
                 for (Index i = 0; i < raw_variables_number; i++)
                     raw_variables[i].name = tokens[i + 1];
             else
-                set_raw_variable_names(tokens);
+                set_raw_variable_names(tokens);   
         }
         else
         {
             samples_number++;
             set_default_raw_variable_names();
         }
-
         // Rest of lines
 
         while (getline(file, line))
@@ -3964,6 +4020,15 @@ namespace opennn
         sample_uses.resize(samples_number);
 
         sample_ids.resize(samples_number);
+
+        // if(samples_number > 3 && has_header)
+        //     data_file_preview.resize(4);
+        // else if(samples_number < 3 && has_header)
+        //     data_file_preview.resize(samples_number + 1);
+        // else if(samples_number > 3 && !has_header)
+        //     data_file_preview.resize(3);
+        // else if(samples_number < 3 && !has_header)
+        //     data_file_preview.resize(samples_number);
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
@@ -4087,6 +4152,10 @@ namespace opennn
             sample_index++;
         }
 
+        file.clear();
+        file.seekg(0);
+        read_data_file_preview(file);
+
         file.close();
 
         unuse_constant_raw_variables();
@@ -4130,6 +4199,7 @@ namespace opennn
         data_file_preview.resize(lines_number);
 
         string line;
+        string lastLine;
 
         Index lines_count = 0;
 
@@ -4142,10 +4212,19 @@ namespace opennn
             check_separators(line);
 
             data_file_preview[lines_count] = get_tokens(line, separator_string);
-
             lines_count++;
 
             if (lines_count == lines_number) break;
+        }
+
+        while (getline(file, line)) {
+            lastLine = line;
+        }
+
+        if (!lastLine.empty()) {
+            prepare_line(lastLine);
+            check_separators(lastLine);
+            data_file_preview[lines_count - 1] = get_tokens(lastLine, separator_string);
         }
 
         file.close();
