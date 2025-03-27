@@ -34,8 +34,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Perceptron:
         return "Perceptron";
 
-    case Type::Perceptron3D:
-        return "Perceptron3D";
+    case Type::Perceptron3d:
+        return "Perceptron3d";
 
     case Type::Bounding:
         return "Bounding";
@@ -46,8 +46,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Probabilistic:
         return "Probabilistic";
 
-    case Type::Probabilistic3D:
-        return "Probabilistic3D";
+    case Type::Probabilistic3d:
+        return "Probabilistic3d";
 
     case Type::Convolutional:
         return "Convolutional";
@@ -100,8 +100,8 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Perceptron")
         return Type::Perceptron;
 
-    if(this_layer_type == "Perceptron3D")
-        return Type::Perceptron3D;
+    if(this_layer_type == "Perceptron3d")
+        return Type::Perceptron3d;
 
     if(this_layer_type == "Bounding")
         return Type::Bounding;
@@ -112,8 +112,8 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Probabilistic")
         return Type::Probabilistic;
 
-    if(this_layer_type == "Probabilistic3D")
-        return Type::Probabilistic3D;
+    if(this_layer_type == "Probabilistic3d")
+        return Type::Probabilistic3d;
 
     if(this_layer_type == "Convolutional")
         return Type::Convolutional;
@@ -177,8 +177,8 @@ string Layer::get_type_string() const
     case Type::Perceptron:
         return "Perceptron";
 
-    case Type::Perceptron3D:
-        return "Perceptron3D";
+    case Type::Perceptron3d:
+        return "Perceptron3d";
 
     case Type::Bounding:
         return "Bounding";
@@ -189,8 +189,8 @@ string Layer::get_type_string() const
     case Type::Probabilistic:
         return "Probabilistic";
 
-    case Type::Probabilistic3D:
-        return "Probabilistic3D";
+    case Type::Probabilistic3d:
+        return "Probabilistic3d";
 
     case Type::Convolutional:
         return "Convolutional";
@@ -441,7 +441,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
                                              const Tensor<type, 3>& tensor, 
                                              TensorMap<Tensor<type, 3>>& result, 
                                              Tensor<type, 1>& aux_rows) const
-{
+{   
     const Index rows_number = softmax.dimension(0);
     const Index columns_number = softmax.dimension(1);
     const Index channels = softmax.dimension(2);

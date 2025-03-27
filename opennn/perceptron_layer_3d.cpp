@@ -19,7 +19,7 @@ Perceptron3d::Perceptron3d(const Index& new_sequence_length,
                            const Perceptron3d::Activation& new_activation_function,
                            const string& new_name) : Layer()
 {
-    layer_type = Type::Perceptron3D;
+    layer_type = Type::Perceptron3d;
 
     set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
 }
@@ -122,7 +122,7 @@ void Perceptron3d::set(const Index& new_sequence_length,
 
     name = new_name;
 
-    layer_type = Type::Perceptron3D;
+    layer_type = Type::Perceptron3d;
 
     dropout_rate = 0;
 }
@@ -187,43 +187,6 @@ void Perceptron3d::calculate_combinations(const Tensor<type, 3>& inputs,
 }
 
 
-void Perceptron3d::dropout(Tensor<type, 3>& outputs) const 
-{
-    /*
-    type* outputs_data = outputs.data();
-
-    const Index samples_number = outputs.dimension(0);
-    const Index inputs_number = outputs.dimension(1);
-    const Index outputs_number = outputs.dimension(2);
-
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    type random;
-
-    for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
-    {
-        TensorMap<Tensor<type, 2>> matrix(outputs_data + neuron_index*batch_size*inputs_number,
-                                          batch_size, inputs_number);
-
-        random = get_random(type(0), type(1));
-
-        if(random < dropout_rate)
-            matrix.setZero();
-        else
-            matrix.device(*thread_pool_device) = matrix * scaling_factor;
-    }
-    */
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < outputs.size(); i++)
-        outputs(i) = (get_random_type(type(0), type(1)) < dropout_rate)
-            ? 0 
-            : outputs(i) * scaling_factor;
-}
-
-
 void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<type, 3>& activation_derivatives) const
 {
     switch(activation_function)
@@ -254,7 +217,7 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
     if(is_training)
     {
         if(dropout_rate > type(0))
-            dropout(outputs);
+            dropout(outputs, dropout_rate);
 
         Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
@@ -332,10 +295,10 @@ void Perceptron3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propag
 
 void Perceptron3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3D");
+    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron3d");
 
     if(!perceptron_layer_element)
-        throw runtime_error("Perceptron3D element is nullptr.\n");
+        throw runtime_error("Perceptron3d element is nullptr.\n");
 
     const Index new_sequence_length = read_xml_index(perceptron_layer_element, "InputsNumber");
     const Index new_input_dimension = read_xml_index(perceptron_layer_element, "InputsDepth");
@@ -354,7 +317,7 @@ void Perceptron3d::from_XML(const XMLDocument& document)
 
 void Perceptron3d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Perceptron3D");
+    printer.OpenElement("Perceptron3d");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_sequence_length()));

@@ -234,7 +234,7 @@ void Transformer::set(const Index& new_decoder_length,
         set_layer_inputs_indices("decoder_perceptron_normalization_" + to_string(i+1), "decoder_perceptron_addition_" + to_string(i+1));
     }
     
-    add_layer(make_unique<ProbabilisticLayer3D>(new_decoder_length,
+    add_layer(make_unique<Probabilistic3d>(new_decoder_length,
                                                 new_embedding_dimension,
                                                 new_decoder_dimensions,
                                                 "probabilistic"));

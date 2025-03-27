@@ -141,26 +141,6 @@ void Embedding::set_parameters_constant(const type& value)
 }
 
 
-void Embedding::dropout(Tensor<type, 3>& outputs) const
-{
-    const type scaling_factor = type(1) / (type(1) - dropout_rate);
-
-    outputs.device(*thread_pool_device) = outputs.unaryExpr([this, scaling_factor](const type& value) {
-        return get_random_type(type(0), type(1)) < dropout_rate 
-            ? type(0) 
-            : value * scaling_factor;
-        });
-/*
-    #pragma omp parallel for
-
-    for(Index i = 0; i < outputs.size(); i++)
-        outputs(i) = get_random_type(type(0), type(1)) < dropout_rate
-            ? 0 
-            : outputs(i) * scaling_factor;
-*/
-}
-
-
 void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>& outputs)
 {
     const Index batch_size = inputs.dimension(0);
@@ -215,7 +195,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     add_positional_encodings(outputs);
 
     if(dropout_rate > 0 && is_training)
-        dropout(outputs);
+        dropout(outputs, dropout_rate);
 }
 
 

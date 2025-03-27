@@ -254,6 +254,7 @@
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
+    <ClInclude Include="flatten_layer_3d.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="layer_back_propagation.h" />
     <ClInclude Include="layer_back_propagation_lm.h" />
@@ -280,6 +281,7 @@
     <ClInclude Include="flatten_layer.h" />
     <ClCompile Include="flatten_layer.cpp" />
     <ClInclude Include="genetic_algorithm.h" />
+    <ClCompile Include="flatten_layer_3d.cpp" />
     <ClCompile Include="genetic_algorithm.cpp" />
     <ClInclude Include="growing_inputs.h" />
     <ClCompile Include="growing_inputs.cpp" />
