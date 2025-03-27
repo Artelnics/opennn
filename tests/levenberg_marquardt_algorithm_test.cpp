@@ -23,17 +23,6 @@ TEST(LevenbergMarquardtAlgorithmTest, GeneralConstructor)
     EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
 }
 
-
-TEST(LevenbergMarquardtAlgorithmTest, TrainEmpty)
-{
-    LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm;
-
-    levenberg_marquardt_algorithm.perform_training();
-
-//    EXPECT_EQ(levenberg_marquardt_algorithm.has_loss_index(), true);
-}
-
-
 TEST(LevenbergMarquardtAlgorithmTest, Train)
 {
     /*
@@ -60,12 +49,12 @@ TEST(LevenbergMarquardtAlgorithmTest, Train)
     
     LevenbergMarquardtAlgorithm levenberg_marquardt_algorithm(&mean_squared_error);
     levenberg_marquardt_algorithm.set_maximum_epochs_number(1);
-    //levenberg_marquardt_algorithm.set_display(false);
+    levenberg_marquardt_algorithm.set_display(false);
 
-    //TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
+    TrainingResults training_results = levenberg_marquardt_algorithm.perform_training();
 
     //system("pause");
-/*
+
     EXPECT_LE(training_results.get_epochs_number(), 1);
 
     // Test
