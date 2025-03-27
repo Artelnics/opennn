@@ -68,29 +68,23 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                               const bool& is_training)
 {
+/*
     ConvolutionalForwardPropagation* convolutional_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
-<<<<<<< HEAD
 
     if (is_training)
     {
         Tensor<type, 1>& means = convolutional_forward_propagation->means;
         Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
-=======
-    Tensor<type, 1>& means = convolutional_forward_propagation->means;
-    Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
->>>>>>> 247cb35ebf8cacc34423d00e2687473296c041d6
 
         means.device(*thread_pool_device) = outputs.mean(means_dimensions);
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
-<<<<<<< HEAD
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
 
-=======
     const Index kernels_number = get_kernels_number();
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -119,7 +113,6 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
     if(is_training)
     {
->>>>>>> 247cb35ebf8cacc34423d00e2687473296c041d6
         moving_means.device(*thread_pool_device)
             = momentum * moving_means + (type(1) - momentum) * means;
 
@@ -132,6 +125,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
             = (outputs - moving_means)
             / (moving_standard_deviations + epsilon);
     }
+*/
 }
 
 
