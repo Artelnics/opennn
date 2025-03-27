@@ -29,6 +29,15 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
+        Tensor<type, 2> a(3, 3);
+        a.setConstant(1);
+
+        Tensor<type, 1> b(3);
+        b.setConstant(2);
+
+        cout << a + b << endl;
+
+/*
         // Data set
 
         // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");

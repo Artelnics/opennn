@@ -69,15 +69,15 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
                               const bool& is_training)
 {
 /*
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     if (is_training)
     {
-        Tensor<type, 1>& means = convolutional_forward_propagation->means;
-        Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
+        Tensor<type, 1>& means = this_forward_propagation->means;
+        Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
         means.device(*thread_pool_device) = outputs.mean(means_dimensions);
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
@@ -131,10 +131,10 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
 void Convolutional::shift(unique_ptr<LayerForwardPropagation>& layer_forward_propagation)
 {
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     const Index kernels_number = get_kernels_number();
 
@@ -171,12 +171,12 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& preprocessed_inputs = convolutional_forward_propagation->preprocessed_inputs;
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
-    Tensor<type, 4>& activation_derivatives = convolutional_forward_propagation->activation_derivatives;
+    Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
+    Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs);
     
@@ -191,7 +191,7 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     is_training
         ? calculate_activations(outputs, activation_derivatives)
-        : calculate_activations(outputs, empty);
+        : calculate_activations(outputs, empty_4);
 }
 
 
@@ -218,12 +218,12 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 
     // Forward propagation
 
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
             static_cast<ConvolutionalForwardPropagation*>(forward_propagation.get());
 
-    Tensor<type, 4>& preprocessed_inputs = convolutional_forward_propagation->preprocessed_inputs;
+    Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
 
-    const Tensor<type, 4>& activation_derivatives = convolutional_forward_propagation->activation_derivatives;
+    const Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
 
     // Back propagation
 

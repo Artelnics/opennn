@@ -222,9 +222,32 @@ void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
 
 }
 
+/*
+void Perceptron::batch_normalization(Tensor<type, 1>& means, 
+    Tensor<type, 1>& standard_deviations,
+    const Tensor<type, 2>& inputs,
+    Tensor<type, 2>& outputs) const
+{
+
+    const Eigen::array<Index, 2> rows({outputs.dimension(0), 1 });
+
+    const Eigen::array<int, 1> axis_x({ 0 });
+
+    means.device(*thread_pool_device) = outputs.mean(axis_x);
+
+    standard_deviations.device(*thread_pool_device) 
+        = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+    
+
+    outputs = 
+        shifts.broadcast(rows) 
+        + (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);               
+
+}
+*/
 
 void Perceptron::calculate_activations(Tensor<type, 2>& activations,
-                                            Tensor<type, 2>& activation_derivatives) const
+                                       Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
@@ -263,18 +286,9 @@ void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
-    // cout << "Input dimensions: " << inputs.dimensions() << endl;
-    // cout << "Ouptut dimensions: " << outputs.dimensions() << endl;
-    // cout << "Synaptic weights dimensions: " << weights.dimensions() << endl;
-    // cout << "Biases dimensions: " << biases.dimensions() << endl;
-    // throw runtime_error("Checking the perceptron layer dimensions.");
 
     calculate_combinations(inputs,
                            outputs);
-
-    // @todo
-    // if(is_training && dropout_rate > type(0))
-    //     dropout(outputs);
 
     if(is_training)
     {
@@ -284,10 +298,14 @@ void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_
     }
     else
     {
-        Tensor<type, 2> empty;
-
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_2);
     }
+
+    // @todo
+// if(is_training && dropout_rate > type(0))
+//     dropout(outputs);
+
+
 }
 
 

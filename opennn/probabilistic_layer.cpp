@@ -224,7 +224,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     if (outputs_number == 1 && !is_training)
     {
-        logistic(outputs, empty);
+        logistic(outputs, empty_2);
     }
     else if (outputs_number == 1 && is_training)
     {
@@ -237,7 +237,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
         softmax(outputs);
     }
     else
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_2);
 }
 
 

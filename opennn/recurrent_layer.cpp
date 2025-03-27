@@ -322,11 +322,11 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         hidden_states = hidden_states * recurrent_weights;
         hidden_states += current_inputs.reshape(DSizes<Index, 2>{batch_size, input_size});
 
-        calculate_activations(hidden_states, empty);
+        calculate_activations(hidden_states, empty_2);
 
         outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}}) + output_biases;
 
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_2);
 
     }
 }

@@ -131,14 +131,6 @@ public:
 
     vector<string> get_default_output_names() const;
 
-    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-    {
-        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-        for (Index i = 1; i < Index(delta_pairs.size()); i++)
-            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-    }
-
 protected:
 
     unique_ptr<ThreadPool> thread_pool;
@@ -147,6 +139,11 @@ protected:
     string name = "layer";
 
     Type layer_type = Type::None;
+
+    Tensor<type, 2> empty_2;
+    Tensor<type, 3> empty_3;
+    Tensor<type, 4> empty_4;
+
 
     bool display = true;
 
@@ -278,6 +275,23 @@ protected:
     }
 
 
+    void competitive(Tensor<type, 2>&) const;
+
+    void softmax(Tensor<type, 2>&) const;
+    void softmax(Tensor<type, 3>&) const;
+    void softmax(Tensor<type, 4>&) const;
+
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
+
+    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
+    {
+        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+
+        for (Index i = 1; i < Index(delta_pairs.size()); i++)
+            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
+    }
+
+
     template <int Rank>
     void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const
     {
@@ -296,18 +310,10 @@ protected:
         }
     }
 
-
-    void competitive(Tensor<type, 2>&) const;
-
-    void softmax(Tensor<type, 2>&) const;
-    void softmax(Tensor<type, 3>&) const;
-    void softmax(Tensor<type, 4>&) const;
-
-    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
-
+    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"

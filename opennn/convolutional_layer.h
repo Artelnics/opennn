@@ -191,8 +191,6 @@ private:
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
-
-   Tensor<type, 4> empty;
 };
 
 

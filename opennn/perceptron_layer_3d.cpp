@@ -231,7 +231,7 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
     }
     else
     {
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_3);
     }
 }
 

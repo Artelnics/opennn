@@ -122,8 +122,6 @@ private:
 
    Activation activation_function = Activation::Softmax;
 
-   Tensor<type, 3> empty;
-
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
