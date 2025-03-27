@@ -62,20 +62,13 @@ void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool&)
 {
-    const Index samples_number = layer_forward_propagation->batch_size;
-
+    const Index batch_size = layer_forward_propagation->batch_size;
     const Index outputs_number = get_outputs_number();
 
     FlattenLayerForwardPropagation* flatten_layer_forward_propagation =
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
-   //     type* outputs_data = flatten_layer_forward_propagation->outputs.data();
-
-   // memcpy(outputs_data,
-   //        input_pairs[0].first,
-   //        samples_number*outputs_number*sizeof(type));
-
-    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, samples_number, outputs_number);
+    flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
 }
 
 
@@ -85,18 +78,15 @@ void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
-    const Index outputs_number = get_outputs_number();
-
-    // Back propagation
+    const Index height = input_pairs[0].second[1];
+    const Index width = input_pairs[0].second[2];
+    const Index channels = input_pairs[0].second[3];
 
     FlattenLayerBackPropagation* flatten_layer_back_propagation =
         static_cast<FlattenLayerBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 4>& input_derivatives = flatten_layer_back_propagation->input_derivatives;
-
-    memcpy(input_derivatives.data(),
-           delta_pairs[0].first,
-           Index(batch_size * outputs_number * sizeof(type)));
+    flatten_layer_back_propagation->input_derivatives = TensorMap<Tensor<type, 4>>(delta_pairs[0].first,
+        batch_size, height, width, channels);
 }
 
 

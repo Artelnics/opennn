@@ -44,7 +44,7 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 16,8 },
+            { 8,4 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
