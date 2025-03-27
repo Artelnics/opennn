@@ -52,55 +52,74 @@ void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
 void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& convolutions) const
 {
-    type* convolutions_data = convolutions.data();
-
     const Index kernels_number = get_kernels_number();
-    const Index kernel_height = get_kernel_height();
-    const Index kernel_width = get_kernel_width();
-    const Index kernel_channels = get_kernel_channels();
 
-    const Index kernel_size = kernel_channels*kernel_height*kernel_width;
-
-    const Index batch_size = inputs.dimension(0);
-    const Index output_height = get_output_height();
-    const Index output_width = get_output_width();
-
-    const Index output_size = batch_size*output_height*output_width;
-
-    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
         const TensorMap<Tensor<type, 3>> kernel_weights = tensor_map(weights, kernel_index);
 
-        TensorMap<Tensor<type, 4>> convolution(convolutions_data + kernel_index*output_size,
-                                               batch_size,
-                                               output_height,
-                                               output_width,
-                                               1);
+        TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
-        convolution.device(*thread_pool_device) = inputs.convolve(kernel_weights, convolutions_dimensions) + biases(kernel_index);
-    } 
+        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, convolutions_dimensions) + biases(kernel_index);
+    }
 }
 
 
-void Convolutional::normalize(unique_ptr<LayerForwardPropagation> layer_forward_propagation,
+void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                               const bool& is_training)
 {
     ConvolutionalForwardPropagation* convolutional_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
+<<<<<<< HEAD
 
     if (is_training)
     {
         Tensor<type, 1>& means = convolutional_forward_propagation->means;
         Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
+=======
+    Tensor<type, 1>& means = convolutional_forward_propagation->means;
+    Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
+>>>>>>> 247cb35ebf8cacc34423d00e2687473296c041d6
 
         means.device(*thread_pool_device) = outputs.mean(means_dimensions);
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
+<<<<<<< HEAD
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
 
+=======
+    const Index kernels_number = get_kernels_number();
+
+    for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    {
+        TensorMap<Tensor<type, 3>> kernel_output = tensor_map(outputs, kernel_index);
+
+        if(is_training)
+        {
+            TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
+
+            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
+
+            mean.device(*thread_pool_device) = kernel_output.mean();
+
+            standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
+
+            kernel_output.device(*thread_pool_device)
+                = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
+        }
+        else
+        {
+            kernel_output.device(*thread_pool_device) 
+                = (kernel_output - moving_means(kernel_index)) / (moving_standard_deviations(kernel_index) + epsilon);
+        }
+    }
+
+    if(is_training)
+    {
+>>>>>>> 247cb35ebf8cacc34423d00e2687473296c041d6
         moving_means.device(*thread_pool_device)
             = momentum * moving_means + (type(1) - momentum) * means;
 
@@ -115,33 +134,24 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation> layer_forward_
     }
 }
 
-/*
-void Convolutional::shift(LayerForwardPropagation* layer_forward_propagation)
+
+void Convolutional::shift(unique_ptr<LayerForwardPropagation>& layer_forward_propagation)
 {
-    ConvolutionalForwardPropagation convolutional_forward_propagation =
-            static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
+    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+        static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    type* outputs_data = convolutional_forward_propagation.outputs.data();
+    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
 
-    const Index samples_number = convolutional_forward_propagation.batch_size;
-    const Index output_height = get_output_height();
-    const Index output_width = get_output_width();
     const Index kernels_number = get_kernels_number();
-    const Index single_output_size = batch_size * output_height * output_width;
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        TensorMap<Tensor<type, 4>> kernel_output(outputs_data + kernel_index*single_output_size,
-                                                 batch_size,
-                                                 output_height,
-                                                 output_width,
-                                                 1);
+        TensorMap<Tensor<type, 3>> kernel_output = tensor_map(outputs, kernel_index);
 
-        kernel_output.device(*thread_pool_device) 
-            = kernel_output * scales(kernel_index) + offsets(kernel_index);
+        kernel_output.device(*thread_pool_device) = kernel_output * scales(kernel_index) + offsets(kernel_index);
     }
 }
-*/
+
 
 void Convolutional::calculate_activations(Tensor<type, 4>& activations, Tensor<type, 4>& activation_derivatives) const
 {
@@ -180,12 +190,9 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     if(batch_normalization)
     {
-/*
-        normalize(layer_forward_propagation,
-                  is_training);
+        normalize(layer_forward_propagation, is_training);
 
         shift(layer_forward_propagation);
-*/
     }
 
     is_training
@@ -210,9 +217,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index kernel_height = get_kernel_height();
     const Index kernel_width = get_kernel_width();
     const Index kernel_channels = get_kernel_channels();
-
-    const Index output_height = get_output_height();
-    const Index output_width = get_output_width();
+    const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
     const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
@@ -239,17 +244,14 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 
     Tensor<type, 4>& rotated_weights = convolutional_back_propagation->rotated_weights;
 
+    vector<vector<Tensor<type, 2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type, 2>>(input_channels));
+    precomputed_rotated_slices.resize(kernels_number);
+
     Tensor<type, 4>& input_derivatives = convolutional_back_propagation->input_derivatives;
     input_derivatives.setZero();
-
-    const Index kernel_size = kernel_height*kernel_width*kernel_channels;
-
-    vector<Tensor<type, 2>> rotated_slices(input_channels);
-    Tensor<type, 2> image_kernel_convolutions_derivatives_padded;
-    Tensor<type, 2> channel_convolution(input_height, input_width);
     
-    const Index pad_height = (input_height + kernel_height - 1) - output_height;
-    const Index pad_width = (input_width + kernel_width - 1) - output_width;
+    const Index pad_height = (input_height + kernel_height - 1) - get_output_height();
+    const Index pad_width = (input_width + kernel_width - 1) - get_output_width();
     const Index pad_top = pad_height / 2;
     const Index pad_bottom = pad_height - pad_top;
     const Index pad_left = pad_width / 2;
@@ -258,30 +260,9 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Eigen::array<pair<Index, Index>, 2> paddings
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
-    auto map_convolution_derivatives = [&](Index kernel_index) -> TensorMap<Tensor<type, 3>>
-        {
-            return TensorMap<Tensor<type, 3>>(
-                convolution_derivatives.data() + kernel_index * batch_size * output_height * output_width,
-                batch_size, output_height, output_width);
-        };
-
-    auto map_weigth_derivatives = [&](Index kernel_index) -> TensorMap<Tensor<type, 4>>
-        {
-            return TensorMap<Tensor<type, 4>>(
-                weight_derivatives_data + kernel_index * kernel_size,
-                1, kernel_height, kernel_width, kernel_channels);
-        };
-
-    auto map_rotated_weigths = [&](Index kernel_index) -> TensorMap<Tensor<type, 3>>
-        {
-            return TensorMap<Tensor<type, 3>>(
-                rotated_weights.data() + kernel_index * kernel_size,
-                kernel_height, kernel_width, kernel_channels);
-        };
-
-    // Inputs
+    // Inputs (for padding same)
     
-    preprocess_inputs(inputs, preprocessed_inputs); //Needed for padding Same
+    preprocess_inputs(inputs, preprocessed_inputs);
 
     // Convolutions derivatives
 
@@ -296,10 +277,11 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives,kernel_index);
 
-        TensorMap<Tensor<type, 4>> kernel_weight_derivatives = map_weigth_derivatives(kernel_index);
-        
+        TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
+                                   1, kernel_height,kernel_width, kernel_channels);
+
         kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_derivatives, convolutions_dimensions_3d);
     }
 
@@ -307,35 +289,32 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     
     rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
 
-    vector<vector<Tensor<type,2>>> precomputed_rotated_slices(kernels_number, vector<Tensor<type,2>>(input_channels));
-
-    #pragma omp parallel for
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    #pragma omp parallel for //schedule(static)
+    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
-        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = map_rotated_weigths(kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_rotated_weights = tensor_map(rotated_weights,kernel_index);
 
         for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
     }
 
-    for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
+    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
         const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
 
-        for (Index image_index = 0; image_index < batch_size; image_index++)
+        #pragma omp parallel for
+        for (Index image_index = 0; image_index < batch_size; ++image_index) 
         {
-            image_kernel_convolutions_derivatives_padded =
-                kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
-            
-            for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
+            const Tensor<type, 2> image_kernel_convolutions_derivatives_padded = kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
+
+            for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             {
-                channel_convolution.device(*thread_pool_device) =
-                    image_kernel_convolutions_derivatives_padded.convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
-                
-                #pragma omp parallel for
-                for (Index height = 0; height < input_height; ++height)
-                    for (Index width = 0; width < input_width; ++width)
-                        input_derivatives(image_index, height, width, channel_index) += channel_convolution(height, width);
+                const Tensor<type, 2> convolution_result = image_kernel_convolutions_derivatives_padded
+                    .convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
+
+                for (Index h = 0; h < input_height; ++h) 
+                    for (Index w = 0; w < input_width; ++w) 
+                        input_derivatives(image_index, h, w, channel_index) += convolution_result(h, w);
             }
         }
     }
