@@ -125,9 +125,9 @@ public:
     void calculate_convolutions(const Tensor<type, 4>&,
                                 Tensor<type, 4>&) const;
 
-    void normalize(unique_ptr<LayerForwardPropagation>, const bool&);
+    void normalize(unique_ptr<LayerForwardPropagation>&, const bool&);
 
-    void shift(unique_ptr<LayerForwardPropagation>);
+    void shift(unique_ptr<LayerForwardPropagation>&);
 
     void calculate_activations(Tensor<type, 4>&, Tensor<type, 4>&) const;
 
