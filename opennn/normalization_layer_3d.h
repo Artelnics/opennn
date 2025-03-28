@@ -94,7 +94,7 @@ struct Normalization3dForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 3> outputs;
 
-    Tensor<type, 3> means;
+    Tensor<type, 2> means;
     Tensor<type, 3> standard_deviations;
 };
 

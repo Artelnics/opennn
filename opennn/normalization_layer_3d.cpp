@@ -177,6 +177,8 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     const Normalization3dForwardPropagation* this_forward_propagation 
         = static_cast<Normalization3dForwardPropagation*>(forward_propagation.get());
 
+    // @TODO PREGUNTAR SI CAMBIAR EL OUTPUTS Y STDS A 2 DIMENSIONES AUNQUE LUEGO TOQUE HACER VARIOS BROADCAST PARA PODER TRABAJAR CON ELLOS (TEMA DE QUE CUADREN DIMENSIONES)
+
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     const Tensor<type, 3>& standard_deviations = this_forward_propagation->standard_deviations;
