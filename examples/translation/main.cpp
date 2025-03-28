@@ -29,6 +29,15 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
+        Tensor<type, 2> a(3, 3);
+        a.setConstant(1);
+
+        Tensor<type, 1> b(3);
+        b.setConstant(2);
+
+        cout << a + b << endl;
+
+/*
         // Data set
 
         LanguageDataSet language_data_set("../data/ENtoES_dataset_reduced_1.txt");
@@ -47,14 +56,15 @@ int main()
         const Index vocabulary_size = 50;
         const Index embedding_dimension = 6/*32*/;
         const Index heads_number = 1/*4*/;
-
+        const dimensions outputs_number = { 1 };
+/*
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
         neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
+        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 

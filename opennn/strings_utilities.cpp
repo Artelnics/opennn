@@ -77,7 +77,6 @@ vector<string> get_tokens(const string& text, const string& separator)
 
         index++;
     }
-
     return tokens;
 }
 

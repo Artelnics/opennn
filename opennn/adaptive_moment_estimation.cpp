@@ -267,13 +267,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
+
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
             // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
             // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
 
-            // throw runtime_error("Checking the gradient and numerical gradient.");
+            //throw runtime_error("Checking the gradient and numerical gradient.");
 
             training_error += training_back_propagation.error();
 

@@ -51,8 +51,6 @@ public:
     void set_parameters_random() override;
     void set_parameters_constant(const type&) override;
 
-    void dropout(Tensor<type, 3>&) const;
-
     void embedding_lookup(const Tensor<type, 2>&, Tensor<type, 3>&);
     void add_positional_encodings(Tensor<type, 3>&) const;
 
