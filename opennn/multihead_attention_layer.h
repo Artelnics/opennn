@@ -199,14 +199,14 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 4> error_attention_weight_derivatives_xxx;
-    Tensor<type, 4> error_attention_output_derivatives;
+    Tensor<type, 4> attention_weight_deltas_xxx;
+    Tensor<type, 4> attention_output_deltas;
 
     Tensor<type, 2> sample_deltas;
 
-    Tensor<type, 4> error_query_derivatives;
-    Tensor<type, 4> error_key_derivatives;
-    Tensor<type, 4> error_value_derivatives;
+    Tensor<type, 4> query_deltas;
+    Tensor<type, 4> key_deltas;
+    Tensor<type, 4> value_deltas;
 
     Tensor<type, 3> query_weight_derivatives;
     Tensor<type, 3> key_weight_derivatives;

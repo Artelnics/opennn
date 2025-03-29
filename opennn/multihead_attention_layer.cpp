@@ -547,12 +547,12 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         // Back propagation
 
-        TensorMap<Tensor<type, 3>> head_attention_weight_derivatives_xxx = tensor_map(this_back_propagation->error_attention_weight_derivatives_xxx, head_index);
-        TensorMap<Tensor<type, 3>> head_attention_output_derivatives = tensor_map(this_back_propagation->error_attention_output_derivatives, head_index);
+        TensorMap<Tensor<type, 3>> head_attention_weight_derivatives_xxx = tensor_map(this_back_propagation->attention_weight_deltas_xxx, head_index);
+        TensorMap<Tensor<type, 3>> head_attention_output_derivatives = tensor_map(this_back_propagation->attention_output_deltas, head_index);
 
-        TensorMap<Tensor<type, 3>> head_query_derivatives = tensor_map(this_back_propagation->error_query_derivatives, head_index);
-        TensorMap<Tensor<type, 3>> head_key_derivatives = tensor_map(this_back_propagation->error_key_derivatives, head_index);
-        TensorMap<Tensor<type, 3>> head_value_derivatives = tensor_map(this_back_propagation->error_value_derivatives, head_index);
+        TensorMap<Tensor<type, 3>> head_query_derivatives = tensor_map(this_back_propagation->query_deltas, head_index);
+        TensorMap<Tensor<type, 3>> head_key_derivatives = tensor_map(this_back_propagation->key_deltas, head_index);
+        TensorMap<Tensor<type, 3>> head_value_derivatives = tensor_map(this_back_propagation->value_deltas, head_index);
 
         // 
 
@@ -576,7 +576,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
-            TensorMap<Tensor<type, 2>> sample_attention_output_derivatives = tensor_map(this_back_propagation->error_attention_output_derivatives, head_index, sample_index);
+            TensorMap<Tensor<type, 2>> sample_attention_output_derivatives = tensor_map(this_back_propagation->attention_output_deltas, head_index, sample_index);
 
             sample_attention_output_derivatives.device(*thread_pool_device)
                 = deltas.chip(sample_index, 0).contract(head_projection_weights, A_BT);
@@ -637,9 +637,9 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
-            const TensorMap<Tensor<type, 2>> sample_query_derivatives = tensor_map(this_back_propagation->error_query_derivatives, head_index, sample_index);
-            const TensorMap<Tensor<type, 2>> sample_key_derivatives = tensor_map(this_back_propagation->error_key_derivatives, head_index, sample_index);
-            const TensorMap<Tensor<type, 2>> sample_value_derivatives = tensor_map(this_back_propagation->error_value_derivatives, head_index, sample_index);
+            const TensorMap<Tensor<type, 2>> sample_query_derivatives = tensor_map(this_back_propagation->query_deltas, head_index, sample_index);
+            const TensorMap<Tensor<type, 2>> sample_key_derivatives = tensor_map(this_back_propagation->key_deltas, head_index, sample_index);
+            const TensorMap<Tensor<type, 2>> sample_value_derivatives = tensor_map(this_back_propagation->value_deltas, head_index, sample_index);
 
             // INPUT QUERY DERIVATIVES
 
@@ -810,14 +810,14 @@ void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
 
     // Auxiliar
 
-    error_attention_weight_derivatives.resize(source_sequence_length, query_sequence_length, batch_size, heads_number);
+//    attention_weight_deltas.resize(source_sequence_length, query_sequence_length, batch_size, heads_number);
 
-    error_attention_output_derivatives.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
+    attention_output_deltas.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
 
-    error_query_derivatives.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
+    query_deltas.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
 
-    error_key_derivatives.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
-    error_value_derivatives.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
+    key_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
+    value_deltas.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
 
     sample_deltas.resize(query_sequence_length, embedding_dimension);
     aux_rows.resize(source_sequence_length);
