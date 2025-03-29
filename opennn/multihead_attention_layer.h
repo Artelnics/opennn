@@ -68,7 +68,7 @@ public:
 
     void calculate_heads(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
 
-    void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
     // void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
@@ -181,7 +181,6 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 2> sample_matrix;
 
-    Tensor<type, 4> attention_scores;
     Tensor<type, 4> attention_weights;
     Tensor<type, 4> attention_outputs;
 
@@ -200,8 +199,7 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    Tensor<type, 4> error_attention_scores_derivatives;
-    Tensor<type, 4> error_attention_weight_derivatives;
+    Tensor<type, 4> error_attention_weight_derivatives_xxx;
     Tensor<type, 4> error_attention_output_derivatives;
 
     Tensor<type, 2> sample_deltas;
@@ -223,8 +221,8 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> aux_rows;
 
-    Tensor<type, 3> input_derivatives;
-    Tensor<type, 3> context_derivatives;
+    Tensor<type, 3> input_query_derivatives;
+    Tensor<type, 3> input_source_derivatives;
 };
 
 #ifdef OPENNN_CUDA

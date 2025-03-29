@@ -14,9 +14,9 @@ namespace opennn
 {
 
 Perceptron::Perceptron(const dimensions& new_input_dimensions,
-                                 const dimensions& new_output_dimensions,
-                                 const Activation& new_activation_function,
-                                 const string& new_layer_name) : Layer()
+                       const dimensions& new_output_dimensions,
+                       const Activation& new_activation_function,
+                       const string& new_layer_name) : Layer()
 {
     set(new_input_dimensions,
         new_output_dimensions,
@@ -117,7 +117,6 @@ void Perceptron::set(const dimensions& new_input_dimensions,
                           const Perceptron::Activation& new_activation_function,
                           const string& new_name)
 {
-
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
 
@@ -125,7 +124,7 @@ void Perceptron::set(const dimensions& new_input_dimensions,
         throw runtime_error("Output dimensions size is not 1");   
 
     biases.resize(new_output_dimensions[0]);    
-    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
+    weights.resize(new_input_dimensions[0], new_output_dimensions[0]);    
 
     set_parameters_random();
 

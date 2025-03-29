@@ -181,6 +181,9 @@ struct PerceptronBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> bias_derivatives;
     Tensor<type, 2> weight_derivatives;
+
+    Tensor<type, 1> scale_derivatives;
+    Tensor<type, 1> shift_derivatives;
 };
 
 

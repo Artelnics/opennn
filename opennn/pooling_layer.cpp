@@ -382,7 +382,6 @@ void Pooling::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        back_propagation);
         break;
     }
-
 }
 
 
@@ -418,7 +417,7 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
     
     input_derivatives.setZero();
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse (2)
     for (Index channel_index = 0; channel_index < channels; channel_index++)
         for (Index batch_index = 0; batch_index < batch_size; batch_index++)
             for (Index output_height_index = 0; output_height_index < output_height; output_height_index++)
