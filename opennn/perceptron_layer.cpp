@@ -215,10 +215,11 @@ void Perceptron::set_parameters_random()
 void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
                                         Tensor<type, 2>& combinations) const
 {
+    const Eigen::array<Index, 2> rows({1, combinations.dimension(0)});
+
     combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
 
     sum_columns(thread_pool_device.get(), biases, combinations);
-
 }
 
 /*
@@ -227,7 +228,6 @@ void Perceptron::batch_normalization(Tensor<type, 1>& means,
     const Tensor<type, 2>& inputs,
     Tensor<type, 2>& outputs) const
 {
-
     const Eigen::array<Index, 2> rows({outputs.dimension(0), 1 });
 
     const Eigen::array<int, 1> axis_x({ 0 });

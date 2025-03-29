@@ -265,11 +265,11 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     bias_derivatives.device(*thread_pool_device) = deltas.sum(convolutions_dimensions_3d);
 
     // Weigth derivatives
- /*
+/*
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map(deltas, kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map_(deltas, kernel_index);
 
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);

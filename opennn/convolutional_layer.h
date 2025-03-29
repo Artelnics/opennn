@@ -226,10 +226,9 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
    void print() const override;
 
-   Tensor<type, 4> input_derivatives;
-
    Tensor<type, 1> bias_derivatives;
    Tensor<type, 4> weight_derivatives;
+   Tensor<type, 4> input_derivatives;
 
    Tensor<type, 4> rotated_weights;
 
