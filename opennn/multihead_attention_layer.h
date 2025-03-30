@@ -179,13 +179,14 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
     Tensor<type, 4> key;
     Tensor<type, 4> value;
 
-    Tensor<type, 2> sample_matrix;
-
     Tensor<type, 4> attention_weights;
     Tensor<type, 4> attention_outputs;
 
     Tensor<type, 4> projection_outputs;
+
     Tensor<type, 3> outputs;
+
+    Tensor<type, 2> sample_matrix;
 };
 
 

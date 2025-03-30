@@ -164,13 +164,12 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 {
     // @todo simplify                                                                                                  
 
-    const Index batch_size = input_pairs[0].second[0];
-    const Index embedding_dimension = get_embedding_dimension();
-
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
 
     const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+
+    const Index embedding_dimension = get_embedding_dimension();
 
     // Forward propagation
 
@@ -179,7 +178,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
     const Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
-//    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 
     // Back propagation
 
@@ -203,13 +201,13 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     
     // Input derivatives
 
-    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
-
     scaled_deltas.device(*thread_pool_device) = deltas;
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(embedding_dimension) * (standard_deviations + epsilon));
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) 
+        / (embedding_dimension * (standard_deviations + epsilon));
 
+    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
     scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations + epsilon);
@@ -219,7 +217,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
-
 }
 
 

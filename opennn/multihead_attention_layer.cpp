@@ -373,7 +373,6 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
     if(use_causal_mask)
         apply_causal_mask(attention_weights);
 
-
     //attention_weights += causal_mask.broadcast();
 
     softmax(attention_weights);
@@ -417,8 +416,6 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
                                                      Tensor<type, 3>& outputs) const
 {
     // @todo The heads are first concatenated and then the contraction (at least in ChatGpt -> check again)
-
-    
 
     const Index samples_number = outputs.dimension(0);
     const Index heads_number = get_heads_number();
