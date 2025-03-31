@@ -42,7 +42,7 @@ public:
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
-    void standarization(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 3>&) const;
+    void standarization(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void affine_transformation(Tensor<type, 3>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
@@ -95,7 +95,7 @@ struct Normalization3dForwardPropagation : LayerForwardPropagation
     Tensor<type, 3> outputs;
 
     Tensor<type, 2> means;
-    Tensor<type, 3> standard_deviations;
+    Tensor<type, 2> standard_deviations;
 };
 
 

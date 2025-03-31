@@ -267,6 +267,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
+
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;

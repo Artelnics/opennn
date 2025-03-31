@@ -20,14 +20,14 @@ struct ProbabilisticLayer3DBackPropagationCuda;
 #endif
 
 
-class ProbabilisticLayer3D : public Layer
+class Probabilistic3d : public Layer
 {
 
 public:
 
    enum class Activation { Softmax, Competitive };
 
-   ProbabilisticLayer3D(const Index& = 0, 
+   Probabilistic3d(const Index& = 0, 
                         const Index& = 0, 
                         const Index& = 0,
                         const string& = "probabilistic_layer_3d");
@@ -122,8 +122,6 @@ private:
 
    Activation activation_function = Activation::Softmax;
 
-   Tensor<type, 3> empty;
-
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
 
@@ -146,9 +144,9 @@ struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
 };
 
 
-struct ProbabilisticLayer3DBackPropagation : LayerBackPropagation
+struct Probabilistic3dBackPropagation : LayerBackPropagation
 {
-    ProbabilisticLayer3DBackPropagation(const Index& = 0, Layer* = nullptr);
+    Probabilistic3dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

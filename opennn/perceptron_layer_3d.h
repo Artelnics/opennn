@@ -74,8 +74,6 @@ public:
    void calculate_combinations(const Tensor<type, 3>&,
                                Tensor<type, 3>&) const;
 
-   void dropout(Tensor<type, 3>&) const;
-
    void calculate_activations(Tensor<type, 3>&,
                               Tensor<type, 3>&) const;
 
@@ -110,8 +108,6 @@ private:
    Activation activation_function;
 
    type dropout_rate = type(0);
-
-   Tensor<type, 3> empty;
 
    const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };
 

@@ -5,7 +5,7 @@
 TEST(ProbabilisticLayer3DTest, DefaultConstructor)
 {
 
-    ProbabilisticLayer3D probabilistic_layer_3d;
+    Probabilistic3d probabilistic_layer_3d;
 
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_number(), 0);
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_depth(), 0);
@@ -17,7 +17,7 @@ TEST(ProbabilisticLayer3DTest, DefaultConstructor)
 TEST(ProbabilisticLayer3DTest, GeneralConstructor)
 {
 
-    ProbabilisticLayer3D probabilistic_layer_3d(1, 2, 3);
+    Probabilistic3d probabilistic_layer_3d(1, 2, 3);
 
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_number(), 1);
 //    EXPECT_EQ(probabilistic_layer_3d.get_inputs_depth(), 2);

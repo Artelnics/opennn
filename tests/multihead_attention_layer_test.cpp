@@ -50,7 +50,7 @@ TEST(MultiHeadAttention, ForwardPropagate)
 
     MultiHeadAttention multihead_attention_layer(input_size, context_size, depth, heads_number);
 
-    unique_ptr<LayerForwardPropagation> multihead_attention_forward_propagation
+    unique_ptr<LayerForwardPropagation> this_forward_propagation
         = make_unique<MultiheadAttentionForwardPropagation>(batch_size, &multihead_attention_layer);
 
     Tensor<type, 3> input(batch_size, input_size, depth);
@@ -63,10 +63,10 @@ TEST(MultiHeadAttention, ForwardPropagate)
     pair<type*, dimensions> context_pair = {context.data(), {batch_size, context_size, depth}};
 
     multihead_attention_layer.forward_propagate({input_pair, context_pair},
-                                                multihead_attention_forward_propagation,
+                                                this_forward_propagation,
                                                 is_training);
 
-    pair<type*, dimensions> output_pair = multihead_attention_forward_propagation->get_outputs_pair();
+    pair<type*, dimensions> output_pair = this_forward_propagation->get_outputs_pair();
 
     EXPECT_EQ(output_pair.second[0], batch_size);
     EXPECT_EQ(output_pair.second[1], input_size);

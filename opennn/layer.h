@@ -36,10 +36,10 @@ public:
                     Normalization3D,
                     Convolutional,
                     Perceptron,
-                    Perceptron3D,
+                    Perceptron3d,
                     Pooling,
                     Probabilistic,
-                    Probabilistic3D,
+                    Probabilistic3d,
                     LongShortTermMemory,
                     Recurrent,
                     Unscaling,
@@ -131,15 +131,6 @@ public:
 
     vector<string> get_default_output_names() const;
 
-    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
-    {
-        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
-
-        for (Index i = 1; i < Index(delta_pairs.size()); i++)
-            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
-    }
-
-
 protected:
 
     unique_ptr<ThreadPool> thread_pool;
@@ -149,10 +140,15 @@ protected:
 
     Type layer_type = Type::None;
 
+    Tensor<type, 2> empty_2;
+    Tensor<type, 3> empty_3;
+    Tensor<type, 4> empty_4;
+
+
     bool display = true;
 
-    template <int rank>
-    void binary(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type threshold) const
+    template <int Rank>
+    void binary(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type threshold) const
     {
         y.device(*thread_pool_device) = (y < threshold).select(type(0), type(1));
 
@@ -162,8 +158,8 @@ protected:
     }
 
 
-    template <int rank>
-    void linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         if (dy_dx.size() == 0) return;
 
@@ -171,8 +167,8 @@ protected:
     }
 
 
-    template <int rank>
-    void exponential_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         const type alpha = type(1);
 
@@ -184,8 +180,8 @@ protected:
     }
 
 
-    template <int rank>
-    void hard_sigmoid(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void hard_sigmoid(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         y.device(*thread_pool_device) = ((y*type(0.2) + type(0.5)).cwiseMin(type(2.5)).cwiseMax(type(-2.5))).eval();
 
@@ -196,8 +192,8 @@ protected:
     }
 
 
-    template <int rank>
-    void hyperbolic_tangent(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void hyperbolic_tangent(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         y.device(*thread_pool_device) = y.tanh();
 
@@ -207,8 +203,8 @@ protected:
     }
 
 
-    template <int rank>
-    void logistic(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void logistic(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         y.device(*thread_pool_device) = (type(1) + (-y).exp()).inverse();
 
@@ -218,8 +214,8 @@ protected:
     }
 
 
-    template <int rank>
-    void rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         y.device(*thread_pool_device) = y.cwiseMax(type(0));
 
@@ -229,8 +225,8 @@ protected:
     }
 
 
-    template <int rank>
-    void leaky_rectified_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx, type slope) const
+    template <int Rank>
+    void leaky_rectified_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx, type slope) const
     {
         y.device(*thread_pool_device) = (y > type(0)).select(y, slope * y);
 
@@ -240,8 +236,8 @@ protected:
     }
 
 
-    template <int rank>
-    void scaled_exponential_linear(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void scaled_exponential_linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         const type lambda = type(1.0507);
 
@@ -255,8 +251,8 @@ protected:
     }
 
 
-    template <int rank>
-    void soft_plus(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void soft_plus(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
         y.device(*thread_pool_device) = (type(1) + y.exp()).log();
 
@@ -266,10 +262,10 @@ protected:
     }
 
 
-    template <int rank>
-    void soft_sign(Tensor<type, rank>& y, Tensor<type, rank>& dy_dx) const
+    template <int Rank>
+    void soft_sign(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
     {
-        Tensor<type, rank> x = y;
+        Tensor<type, Rank> x = y;
 
         y.device(*thread_pool_device) = (x / (1 + x.abs())).eval();
 
@@ -287,9 +283,37 @@ protected:
 
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
+    void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
+    {
+        TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+
+        for (Index i = 1; i < Index(delta_pairs.size()); i++)
+            deltas.device(*thread_pool_device) += tensor_map_3(delta_pairs[i]);
+    }
+
+
+    template <int Rank>
+    void dropout(Tensor<type, Rank>& tensor, const type& dropout_rate) const
+    {
+        const type scaling_factor = type(1) / (type(1) - dropout_rate);
+
+        #pragma omp parallel
+        {
+            mt19937 gen(random_device{}() + omp_get_thread_num());  // thread-local RNG
+            uniform_real_distribution<float> dis(0.0f, 1.0f);
+
+            #pragma omp parallel for
+            for (Index i = 0; i < tensor.size(); i++)
+                tensor(i) = (dis(gen) < dropout_rate)
+                ? 0
+                : tensor(i) * scaling_factor;
+        }
+    }
+
+    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"

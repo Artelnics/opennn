@@ -34,11 +34,9 @@ int main()
 
         image_data_set.set_data_random();
         */
-        
         ImageDataSet image_data_set;
 
         image_data_set.set_data_path("data");
-        // image_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/mnist/data");
 
         image_data_set.read_bmp();
 
@@ -46,10 +44,8 @@ int main()
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 1 },
+            { 8,4 },
             image_data_set.get_dimensions(DataSet::VariableUse::Target));
-
-        //neural_network.print();
 
         // Training strategy
 

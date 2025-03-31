@@ -106,8 +106,6 @@ private:
 
    Tensor<type, 2> hidden_states;
 
-   Tensor<type, 2> empty;
-
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
 #endif
