@@ -318,12 +318,12 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index output_width = outputs.dimension(1);
     const Index output_height = outputs.dimension(2);
     const Index channels = outputs.dimension(3);
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({samples_number,
+    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({ batch_size,
                                                                output_width,
                                                                output_height,
                                                                channels});
@@ -351,7 +351,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
     
     #pragma omp parallel for
-    for (Index batch_index = 0; batch_index < samples_number; batch_index++)
+    for (Index batch_index = 0; batch_index < batch_size; batch_index++)
     { 
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0).reshape(reshape_dimensions);
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
