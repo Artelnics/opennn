@@ -594,15 +594,12 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         // ATTENTION WEIGHT DERIVATIVES
 
         batch_matrix_multiplication(thread_pool_device.get(), 
-                                    head_value, 
-                                    head_attention_output_derivatives, 
-                                    head_attention_weight_derivatives_xxx, 
+                                    head_value,
+                                    head_attention_output_derivatives,
+                                    head_attention_weight_derivatives_xxx,
                                     A_BT);
 
-        const Tensor<type, 3> temp = head_attention_weight_derivatives_xxx;
-
         softmax_derivatives_times_tensor(head_attention_weights,
-                                         temp,
                                          head_attention_weight_derivatives_xxx,
                                          aux_rows);
 
