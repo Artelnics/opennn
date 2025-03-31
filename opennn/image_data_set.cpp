@@ -356,19 +356,19 @@ void ImageDataSet::from_XML(const XMLDocument& data_set_document)
 
     Index target_count = 0;
 
-    for (Index i = 0; i < raw_variables_number; i++)
+    for (auto& raw_variable : raw_variables)
     {
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
-        raw_variables[i].name = read_xml_string(start_element, "Name");
-        raw_variables[i].set_scaler(read_xml_string(start_element, "Scaler"));
-        raw_variables[i].set_use(read_xml_string(start_element, "Use"));
-        raw_variables[i].set_type(read_xml_string(start_element, "Type"));
+        raw_variable.name = read_xml_string(start_element, "Name");
+        raw_variable.set_scaler(read_xml_string(start_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(start_element, "Use"));
+        raw_variable.set_type(read_xml_string(start_element, "Type"));
 
-        if (raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
+        if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
         {
-            raw_variables[i].categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
+            raw_variable.categories = get_tokens(read_xml_string(start_element, "Categories"), ";");
             target_count++;
         }
     }

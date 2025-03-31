@@ -235,11 +235,9 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 
 Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
 {
-    const Index layers_number = get_layers_number();
-
-    for(Index i = 0; i < layers_number; i++)
-        if(layers[i]->get_type() == layer_type)
-            return layers[i].get();
+    for(const auto& layer : layers)
+        if(layer->get_type() == layer_type)
+            return layer.get();
 
     throw runtime_error("Neural network does not have layer type.");
 }
@@ -857,12 +855,10 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
     if (new_parameters.size() != get_parameters_number())
         throw runtime_error("New parameters size is not equal to parameters size.");
 
-    const Index layers_number = get_layers_number();
-
     Index index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
-        layers[i]->set_parameters(new_parameters, index);
+    for(auto& layer : layers)
+        layer->set_parameters(new_parameters, index);
 }
 
 
@@ -1063,6 +1059,29 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
+Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
+{
+    const Index layers_number = get_layers_number();
+
+    if (layers_number == 0)
+        return Tensor<type, 3>();
+
+    const Index batch_size = inputs.dimension(0);
+
+    ForwardPropagation forward_propagation(batch_size, this);
+
+    const vector<pair<type*, dimensions>> input_pairs = {{(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}, {(type*)inputs.data(), {batch_size, inputs.dimension(1),inputs.dimension(2)}}};
+    forward_propagate({input_pairs}, forward_propagation, false);
+
+    const pair<type*, dimensions> outputs_pair
+        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
+    cout << "Outputs dimensions:" << endl;
+    print_vector(outputs_pair.second);
+
+    return tensor_map_3(outputs_pair);
+}
+
 
 Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
 {
@@ -1130,6 +1149,7 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         {
             scaled_outputs = TensorMap<Tensor<type,2>>(scaled_inputs_data, inputs_dimensions[0], inputs_dimensions[1]);
         }
+
         last_layer_outputs = scaled_outputs;
 
         last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
@@ -1338,8 +1358,8 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for (Index i = 0; i < layers_number; i++)
-        layers[i]->to_XML(printer);
+    for (const auto& layer : layers)
+        layer->to_XML(printer);
 
     // Layer input indices
 

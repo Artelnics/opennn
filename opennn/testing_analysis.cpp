@@ -545,7 +545,7 @@ Tensor<type, 2> TestingAnalysis::calculate_multiple_classification_errors() cons
 Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets,
                                                   const Tensor<type, 2>& outputs) const
 {
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
 
     Tensor<type, 1> errors(4);
 
@@ -553,7 +553,7 @@ Tensor<type, 1> TestingAnalysis::calculate_errors(const Tensor<type, 2>& targets
     mean_squared_error.device(*thread_pool_device) = (outputs - targets).square().sum().sqrt();
 
     errors(0) = mean_squared_error(0);
-    errors(1) = errors(0)/type(samples_number);
+    errors(1) = errors(0)/type(batch_size);
     errors(2) = sqrt(errors(1));
     errors(3) = calculate_normalized_squared_error(targets, outputs);
 
@@ -693,13 +693,13 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
 
 type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
 {
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
-    Tensor<type, 2> errors(samples_number, outputs_number);
-    Tensor<type, 2> predictions(samples_number, outputs_number);
-    Tensor<bool, 2> matches(samples_number, outputs_number);
-    Tensor<bool, 2> mask(samples_number, outputs_number);
+    Tensor<type, 2> errors(batch_size, outputs_number);
+    Tensor<type, 2> predictions(batch_size, outputs_number);
+    Tensor<bool, 2> matches(batch_size, outputs_number);
+    Tensor<bool, 2> mask(batch_size, outputs_number);
 
     Tensor<type, 0> cross_entropy_error;
     mask = targets != targets.constant(0);
@@ -707,7 +707,7 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     Tensor<type, 0> mask_sum;
     mask_sum = mask.cast<type>().sum();
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
@@ -787,12 +787,12 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets,
 
 type TestingAnalysis::calculate_masked_accuracy(const Tensor<type, 3>& outputs, const Tensor<type, 2>& targets) const
 {
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
-    Tensor<type, 2> predictions(samples_number, outputs_number);
-    Tensor<bool, 2> matches(samples_number, outputs_number);
-    Tensor<bool, 2> mask(samples_number, outputs_number);
+    Tensor<type, 2> predictions(batch_size, outputs_number);
+    Tensor<bool, 2> matches(batch_size, outputs_number);
+    Tensor<bool, 2> mask(batch_size, outputs_number);
 
     Tensor<type, 0> accuracy;
 
