@@ -109,8 +109,6 @@ private:
 
    type dropout_rate = type(0);
 
-   Tensor<type, 3> empty;
-
    const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };
 
    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
@@ -149,7 +147,6 @@ struct Perceptron3dBackPropagation : LayerBackPropagation
     Tensor<type, 1> bias_derivatives;
     Tensor<type, 2> weight_derivatives;
 
-    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 };
 

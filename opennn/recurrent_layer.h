@@ -106,8 +106,6 @@ private:
 
    Tensor<type, 2> hidden_states;
 
-   Tensor<type, 2> empty;
-
 #ifdef OPENNN_CUDA
     #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
 #endif
@@ -146,7 +144,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
 
     //Tensor<type, 1> current_deltas;
 
-    Tensor<type, 2> combination_derivatives;
+    Tensor<type, 2> combination_deltas;
     Tensor<type, 1> current_combinations_derivatives;
 
     Tensor<type, 2> combinations_bias_derivatives;

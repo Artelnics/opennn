@@ -14,9 +14,9 @@ namespace opennn
 {
 
 Probabilistic3d::Probabilistic3d(const Index& new_inputs_number, 
-                                           const Index& new_inputs_depth, 
-                                           const Index& new_neurons_number,
-                                           const string& new_name)
+                                 const Index& new_inputs_depth, 
+                                 const Index& new_neurons_number,
+                                 const string& new_name) : Layer()
 {
     set(new_inputs_number, new_inputs_depth, new_neurons_number, new_name);
 }
@@ -274,8 +274,6 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     Tensor<type, 2>& mask = probabilistic_3d_back_propagation->mask;
     bool& built_mask = probabilistic_3d_back_propagation->built_mask;
 
-    Tensor<type, 3>& combination_derivatives = probabilistic_3d_back_propagation->combination_derivatives;
-
     Tensor<type, 1>& bias_derivatives = probabilistic_3d_back_propagation->bias_derivatives;
     Tensor<type, 2>& weight_derivatives = probabilistic_3d_back_propagation->weight_derivatives;
 
@@ -291,37 +289,35 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         
         built_mask = true;
     }
+/*
+    calculate_combination_deltas(outputs, targets, mask, deltas);
 
-    calculate_combinations_derivatives(outputs, targets, mask, combination_derivatives);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
 
-    bias_derivatives.device(*thread_pool_device) 
-        = combination_derivatives.sum(sum_dimensions);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, double_contraction_indices);
 
-    weight_derivatives.device(*thread_pool_device) 
-        = inputs.contract(combination_derivatives, double_contraction_indices);
-
-    input_derivatives.device(*thread_pool_device) 
-        = combination_derivatives.contract(weights, single_contraction_indices);
+    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, single_contraction_indices);
+*/
 }
 
 
-void Probabilistic3d::calculate_combinations_derivatives(const Tensor<type, 3>& outputs, 
-                                                              const Tensor<type, 2>& targets,
-                                                              const Tensor<type, 2>& mask,
-                                                              Tensor<type, 3>& combination_derivatives) const
+void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& outputs, 
+                                                   const Tensor<type, 2>& targets,
+                                                   const Tensor<type, 2>& mask,
+                                                   Tensor<type, 3>& combination_deltas) const
 {
     const Index samples_number = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
-    combination_derivatives.device(*thread_pool_device) = outputs;
+    combination_deltas.device(*thread_pool_device) = outputs;
 
     #pragma omp parallel for collapse(2)
 
     for(Index i = 0; i < samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
-            combination_derivatives(i, j, Index(targets(i, j)))--;
+            combination_deltas(i, j, Index(targets(i, j)))--;
 
-    multiply_matrices(thread_pool_device.get(), combination_derivatives, mask);
+    multiply_matrices(thread_pool_device.get(), combination_deltas, mask);
 }
 
 
@@ -433,8 +429,6 @@ void Probabilistic3dBackPropagation::set(const Index& new_batch_size, Layer* new
     bias_derivatives.resize(neurons_number);
 
     weight_derivatives.resize(inputs_depth, neurons_number);
-
-    combination_derivatives.resize(batch_size, inputs_number, neurons_number);
 
     input_derivatives.resize(batch_size, inputs_number, inputs_depth);
 }

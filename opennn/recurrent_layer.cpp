@@ -323,11 +323,11 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         hidden_states = hidden_states * recurrent_weights;
         hidden_states += current_inputs.reshape(DSizes<Index, 2>{batch_size, input_size});
 
-        calculate_activations(hidden_states, empty);
+        calculate_activations(hidden_states, empty_2);
 
         outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}}) + output_biases;
 
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_2);
 
     }
 }
@@ -367,7 +367,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     //Tensor<type, 1>& current_deltas = recurrent_back_propagation->current_deltas;
 
-    Tensor<type, 2>& combination_derivatives = recurrent_back_propagation->combination_derivatives;
+    Tensor<type, 2>& combination_deltas = recurrent_back_propagation->combination_deltas;
     Tensor<type, 1>& current_combinations_derivatives = recurrent_back_propagation->current_combinations_derivatives;
 
     Tensor<type, 2>& combinations_bias_derivatives = recurrent_back_propagation->combinations_bias_derivatives;
@@ -434,7 +434,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
         current_combinations_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
 
-        combination_derivatives.chip(sample_index, 0).device(*thread_pool_device) = current_combinations_derivatives;
+        combination_deltas.chip(sample_index, 0).device(*thread_pool_device) = current_combinations_derivatives;
 
         sum_diagonal(combinations_bias_derivatives, type(1));
 
@@ -477,7 +477,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     // Input derivatives
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(input_weights, A_BT);
+        input_derivatives.device(*thread_pool_device) = combination_deltas.contract(input_weights, A_BT);
 */
 }
 
@@ -618,7 +618,7 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     combinations_recurrent_weight_derivatives.resize(outputs_number, outputs_number, outputs_number);
 
-    combination_derivatives.resize(batch_size, outputs_number);
+    combination_deltas.resize(batch_size, outputs_number);
     current_combinations_derivatives.resize(outputs_number);
 
     bias_derivatives.resize(outputs_number);

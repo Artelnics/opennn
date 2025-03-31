@@ -94,7 +94,7 @@ public:
                        unique_ptr<LayerForwardPropagation>&,
                        unique_ptr<LayerBackPropagation>&) const override;
 
-   void calculate_combinations_derivatives(const Tensor<type, 3>&,
+   void calculate_combination_deltas(const Tensor<type, 3>&,
                                                  const Tensor<type, 2>&,
                                                  const Tensor<type, 2>&,
                                                  Tensor<type, 3>&) const;
@@ -121,8 +121,6 @@ private:
    Tensor<type, 2> weights;
 
    Activation activation_function = Activation::Softmax;
-
-   Tensor<type, 3> empty;
 
    const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
    const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
@@ -160,7 +158,6 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     Tensor<type, 2> mask;
     bool built_mask = false;
 
-    Tensor<type, 3> combination_derivatives;
     Tensor<type, 3> input_derivatives;
 
     Tensor<type, 1> bias_derivatives;

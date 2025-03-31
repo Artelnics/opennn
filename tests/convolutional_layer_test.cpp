@@ -23,7 +23,7 @@ struct ConvolutionalLayerConfig {
     dimensions kernel_dimensions;
     dimensions stride_dimensions;
     Convolutional::Activation activation_function;
-    Convolutional::ConvolutionType convolution_type;
+    Convolutional::Convolution convolution_type;
     string test_name;
     Tensor<type, 4> input_data;
     Tensor<type, 4> expected_output;
@@ -31,9 +31,9 @@ struct ConvolutionalLayerConfig {
 
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
 
-INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
+INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
-        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, Convolutional::Activation::Linear, Convolutional::ConvolutionType::Valid, "ConvolutionLayer",
+        {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, Convolutional::Activation::Linear, Convolutional::Convolution::Valid, "ConvolutionLayer",
         ([] {
             Tensor<type, 2> data(1, 16);
             data.setValues({
@@ -74,8 +74,8 @@ TEST_P(ConvolutionalLayerTest, Constructor) {
 }
 
 
-TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
-/*
+TEST_P(ConvolutionalLayerTest, ForwardPropagate)
+{
     ConvolutionalLayerConfig parameters = GetParam();
 
     Convolutional convolutional_layer(parameters.input_dimensions,
@@ -124,7 +124,6 @@ TEST_P(ConvolutionalLayerTest, ForwardPropagate) {
             }
         }
     }
-*/
 }
 
 

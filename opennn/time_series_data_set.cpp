@@ -32,7 +32,6 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
 {
 }
 
-
 const Index& TimeSeriesDataSet::get_time_raw_variable_index() const
 {
     return time_raw_variable_index;
@@ -162,25 +161,24 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     printer.CloseElement();
 
     // Time series raw_variables
-
     //const Index time_series_raw_variables_number = get_time_series_raw_variables_number();
-    const Index time_series_raw_variables_number = get_time_raw_variable_index();
+    // const Index time_series_raw_variables_number = get_time_raw_variable_index();
 
-    //if(time_series_raw_variables_number > 0) - descomentar
-    {
-        printer.OpenElement("TimeSeriesRawVariables");
-        add_xml_element(printer, "TimeSeriesRawVariablesNumber", to_string(get_time_raw_variable_index()));
+    // if(time_series_raw_variables_number > 0) - descomentar
+    // {
+    //     printer.OpenElement("TimeSeriesRawVariables");
+    //     add_xml_element(printer, "TimeSeriesRawVariablesNumber", to_string(get_time_raw_variable_index()));
 
 
-        for(Index i = 0; i < time_series_raw_variables_number; i++)
-        {
-            printer.OpenElement("TimeSeriesRawVariable");
-            printer.PushAttribute("Item", to_string(i+1).c_str());
-            raw_variables[i].to_XML(printer);
-            printer.CloseElement();
-        }
-        printer.CloseElement();
-    }
+    //     for(Index i = 0; i < time_series_raw_variables_number; i++)
+    //     {
+    //         printer.OpenElement("TimeSeriesRawVariable");
+    //         printer.PushAttribute("Item", to_string(i+1).c_str());
+    //         raw_variables[i].to_XML(printer);
+    //         printer.CloseElement();
+    //     }
+    //     printer.CloseElement();
+    // }
 
     // Samples
 
@@ -304,45 +302,45 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     // Time series raw_variables
 
-    const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
+    // const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
-    if(!time_series_raw_variables_element)
-        throw runtime_error("time series raw variable element is nullptr");
+    // if(!time_series_raw_variables_element)
+    //     throw runtime_error("time series raw variable element is nullptr");
 
-    set_time_raw_variable_index(stoi(read_xml_string(time_series_raw_variables_element, "TimeSeriesRawVariablesNumber")));
+    // set_time_raw_variable_index(stoi(read_xml_string(time_series_raw_variables_element, "TimeSeriesRawVariablesNumber")));
 
-    const XMLElement* time_series_start_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
+    // const XMLElement* time_series_start_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
-    if(time_raw_variable_index > 0)
-    {
-        for(Index i = 0; i < time_raw_variable_index; i++)
-        {
-            RawVariable& time_raw_variable = time_series_raw_variables[i];
-            const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
-            time_series_start_element = time_series_raw_variable_element;
+    // if(time_raw_variable_index > 0)
+    // {
+    //     for(Index i = 0; i < time_raw_variable_index; i++)
+    //     {
+    //         RawVariable& time_raw_variable = time_series_raw_variables[i];
+    //         const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
+    //         time_series_start_element = time_series_raw_variable_element;
 
-            if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
-                throw runtime_error("Time series raw_variable item number (" + to_string(i+1) + ") "
-                                    "does not match (" + time_series_raw_variable_element->Attribute("Item") + ").\n");
+    //         if(time_series_raw_variable_element->Attribute("Item") != to_string(i+1))
+    //             throw runtime_error("Time series raw_variable item number (" + to_string(i+1) + ") "
+    //                                 "does not match (" + time_series_raw_variable_element->Attribute("Item") + ").\n");
 
-            time_raw_variable.name = read_xml_string(time_series_raw_variable_element, "Name");
-            time_raw_variable.set_scaler(read_xml_string(time_series_raw_variable_element, "Scaler"));
-            time_raw_variable.set_use(read_xml_string(time_series_raw_variable_element, "Use"));
-            time_raw_variable.set_type(read_xml_string(time_series_raw_variable_element, "Type"));
+    //         time_raw_variable.name = read_xml_string(time_series_raw_variable_element, "Name");
+    //         time_raw_variable.set_scaler(read_xml_string(time_series_raw_variable_element, "Scaler"));
+    //         time_raw_variable.set_use(read_xml_string(time_series_raw_variable_element, "Use"));
+    //         time_raw_variable.set_type(read_xml_string(time_series_raw_variable_element, "Type"));
 
-            if (time_raw_variable.type == RawVariableType::Categorical || time_raw_variable.type == RawVariableType::Binary)
-            {
-                const XMLElement* categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
+    //         if (time_raw_variable.type == RawVariableType::Categorical || time_raw_variable.type == RawVariableType::Binary)
+    //         {
+    //             const XMLElement* categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
 
-                if (categories_element)
-                    time_raw_variable.categories = get_tokens(read_xml_string(time_series_raw_variable_element, "Categories"), ";");
-                else if (time_raw_variable.type == RawVariableType::Binary)
-                    time_raw_variable.categories = { "0", "1" };
-                else
-                    throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
-            }
-        }
-    }
+    //             if (categories_element)
+    //                 time_raw_variable.categories = get_tokens(read_xml_string(time_series_raw_variable_element, "Categories"), ";");
+    //             else if (time_raw_variable.type == RawVariableType::Binary)
+    //                 time_raw_variable.categories = { "0", "1" };
+    //             else
+    //                 throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
+    //         }
+    //     }
+    // }
 
     // Samples
 

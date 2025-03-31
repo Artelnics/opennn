@@ -224,7 +224,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
 
     if (outputs_number == 1 && !is_training)
     {
-        logistic(outputs, empty);
+        logistic(outputs, empty_2);
     }
     else if (outputs_number == 1 && is_training)
     {
@@ -237,7 +237,7 @@ void ProbabilisticLayer::forward_propagate(const vector<pair<type*, dimensions>>
         softmax(outputs);
     }
     else
-        calculate_activations(outputs, empty);
+        calculate_activations(outputs, empty_2);
 }
 
 
@@ -249,7 +249,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
     const Index outputs_number = get_outputs_number();
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
+    TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
 
     // Forward propagation
 
@@ -263,91 +263,24 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& input_derivatives = probabilistic_back_propagation->input_derivatives;
 
-    Tensor<type, 2>& combination_derivatives = probabilistic_back_propagation->combination_derivatives;
-
     if(outputs_number == 1)
     {
         const Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
 
-        combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
-    }
-    else
-    {
-        combination_derivatives.device(*thread_pool_device) = deltas;
+        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
     }
 
     Tensor<type, 1>& bias_derivatives = probabilistic_back_propagation->bias_derivatives;
 
     Tensor<type, 2>& weight_derivatives = probabilistic_back_propagation->weight_derivatives;
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(combination_derivatives, AT_B);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, AT_B);
 
-    bias_derivatives.device(*thread_pool_device) = combination_derivatives.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
 
-    input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
+    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
 }
 
-
-/* void ProbabilisticLayer::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
-                                            const vector<pair<type*, dimensions>>& delta_pairs,
-                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                             unique_ptr<LayerBackPropagationLM>& back_propagation) const
-{
-    const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
-
-    const TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
-
-
-    const Index inputs_number          = get_inputs_number();
-    const Index outputs_number         = get_outputs_number();
-    const Index synaptic_weights_count = weights.size();
-    const Index samples_number             = deltas.dimension(0);
-
-    const ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
-
-    const Tensor<type, 2>& activation_derivatives = probabilistic_layer_forward_propagation->activation_derivatives;
-
-    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
-        static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation.get());
-
-    Tensor<type, 2>& combination_derivatives = probabilistic_layer_back_propagation_lm->combination_derivatives;
-
-    Tensor<type, 2>& squared_errors_Jacobian = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian;
-
-    const bool& is_first_layer = probabilistic_layer_back_propagation_lm->is_first_layer;
-
-
-    Tensor<type, 2>& input_derivatives = probabilistic_layer_back_propagation_lm->input_derivatives;
-
-    if(outputs_number == 1)
-        combination_derivatives.device(*thread_pool_device) = deltas * activation_derivatives;
-
-    else
-        combination_derivatives.device(*thread_pool_device) = deltas;
-
-
-    #pragma omp parallel for
-    for(Index i = 0; i < batch_size; i++)
-    {
-        for(Index j = 0; j < outputs_number; j++)
-        {
-            for(Index k = 0; k < inputs_number; k++)
-            {
-                const Index param_index = j*inputs_number + k;
-                squared_errors_Jacobian(i, param_index) = combination_derivatives(i, j)* inputs(i, k);
-            }
-
-            const Index bias_index = synaptic_weights_count + j;
-
-            squared_errors_Jacobian(i, bias_index) = combination_derivatives(i, j);
-        }
-    }
-
-    // if(!is_first_layer)
-    // input_derivatives.device(*thread_pool_device) = combination_derivatives.contract(weights, A_BT);
-}
-*/
 
 void ProbabilisticLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                          Index& index,
@@ -635,8 +568,6 @@ void ProbabilisticLayerBackPropagation::set(const Index& new_batch_size, Layer *
 
     weight_derivatives.resize(inputs_number, outputs_number);
 
-    combination_derivatives.resize(batch_size, outputs_number);
-
     input_derivatives.resize(batch_size, inputs_number);
 }
 
@@ -681,8 +612,6 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_size, Layer
     const Index parameters_number = layer->get_parameters_number();
 
     squared_errors_Jacobian.resize(batch_size, parameters_number);
-
-    combination_derivatives.resize(batch_size, outputs_number);
 }
 
 

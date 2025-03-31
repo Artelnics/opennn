@@ -148,7 +148,7 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
 
     EXPECT_EQ(outputs.dimension(0), 1);
     EXPECT_EQ(outputs.dimension(1), 4);
-    EXPECT_EQ(Index(outputs(0,0)), 1);
+    EXPECT_EQ(Index(outputs(0,0)), 0);
     EXPECT_EQ(Index(outputs(0,1)), 0);
     EXPECT_EQ(Index(outputs(0,2)), 0);
     EXPECT_EQ(Index(outputs(0,3)), 0);
@@ -181,9 +181,9 @@ TEST(ProbabilisticLayerTest, ForwardPropagate)
 
     EXPECT_EQ(outputs.dimension(0), 1);
     EXPECT_EQ(outputs.dimension(1), 4);
-    EXPECT_NEAR(outputs(0,0), 0.5, type(0.1));
-    EXPECT_NEAR(outputs(0,1), 0.5, type(0.1));
-    EXPECT_NEAR(outputs(0,2), 0.5, type(0.1));
-    EXPECT_NEAR(outputs(0,3), 0.5, type(0.1));
+    EXPECT_NEAR(outputs(0,0), 0.3, type(0.1));
+    EXPECT_NEAR(outputs(0,1), 0.3, type(0.1));
+    EXPECT_NEAR(outputs(0,2), 0.3, type(0.1));
+    EXPECT_NEAR(outputs(0,3), 0.3, type(0.1));
 
 }

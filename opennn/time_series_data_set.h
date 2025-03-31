@@ -70,6 +70,8 @@ private:
 
     string time_column;
 
+    Tensor<type, 2> time_series_data;
+
     RawVariable* time_series_raw_variables;
 
     bool display = true;

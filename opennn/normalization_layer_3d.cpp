@@ -6,9 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "strings_utilities.h"
 #include "tensors.h"
 #include "normalization_layer_3d.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -107,9 +107,9 @@ void Normalization3d::set_parameters_random()
 }
 
 
-void Normalization3d::standarization(const Tensor<type, 3>& inputs, 
-                                     Tensor<type, 3>& outputs, 
-                                     Tensor<type, 2>& means, 
+void Normalization3d::standarization(const Tensor<type, 3>& inputs,
+                                     Tensor<type, 3>& outputs,
+                                     Tensor<type, 2>& means,
                                      Tensor<type, 2>& standard_deviations) const
 {
 
@@ -121,12 +121,12 @@ void Normalization3d::standarization(const Tensor<type, 3>& inputs,
     const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
     means.device(*thread_pool_device) = inputs.mean(normalization_axis);
-    //    .reshape(range_3).broadcast(expand_normalization_axis);
+       // .reshape(range_3).broadcast(expand_normalization_axis);
 
-    standard_deviations.device(*thread_pool_device) = (inputs - means).square().mean(normalization_axis).sqrt();
-//        .reshape(range_3).broadcast(expand_normalization_axis);
+    standard_deviations.device(*thread_pool_device) = (inputs - means.reshape(range_3).broadcast(expand_normalization_axis)).square().mean(normalization_axis).sqrt();
+       // .reshape(range_3).broadcast(expand_normalization_axis);
 
-    outputs.device(*thread_pool_device) = (inputs - means) / (standard_deviations + epsilon);
+    outputs.device(*thread_pool_device) = (inputs - means.reshape(range_3).broadcast(expand_normalization_axis)) / (standard_deviations.reshape(range_3).broadcast(expand_normalization_axis) + epsilon);
 }
 
 
@@ -163,9 +163,11 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     // @todo simplify                                                                                                  
-
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
+
+    const Eigen::array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
+    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
@@ -179,7 +181,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
     const Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
-//    const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 
     // Back propagation
 
@@ -202,24 +203,24 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     beta_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
-
-    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
+    //@TODO REVISAR LA NUEVA FUNCIÓN DE SOFTMAX DERIVATIVES TIMES TENSOR PARA PODER QUITAR LOS ATTENTION SCORES
 
     scaled_deltas.device(*thread_pool_device) = deltas;
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(embedding_dimension) * (standard_deviations + epsilon));
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) 
+        / (embedding_dimension * (standard_deviations + epsilon));
 
+    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
-    scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations + epsilon);
+    scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations.reshape(range_3).broadcast(expand_normalization_axis) + epsilon);
 
     input_derivatives.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
-
 }
 
 

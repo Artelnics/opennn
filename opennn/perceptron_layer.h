@@ -1,4 +1,5 @@
 //   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R             
@@ -72,6 +73,29 @@ public:
     void calculate_combinations(const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const;
 
+    void normalization(Tensor<type, 1>& means, 
+        Tensor<type, 1>& standard_deviations, 
+        const Tensor<type, 2>& inputs, 
+        Tensor<type, 2>& outputs) const
+    {
+
+        const Eigen::array<Index, 2> rows({ outputs.dimension(0), 1 });
+
+        const Eigen::array<int, 1> axis_x({ 0 });
+
+        means.device(*thread_pool_device) = outputs.mean(axis_x);
+
+        standard_deviations.device(*thread_pool_device)
+            = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
+        
+       
+        outputs = inputs;// -means.broadcast(Eigen::array<Index, 2>({ outputs.dimension(0), 1 }));
+            //shifts.broadcast(rows);
+                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
+        
+    }
+
+
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
@@ -116,6 +140,9 @@ private:
 
     Tensor<type, 2> weights;
 
+    Tensor<type, 1> scales;
+    Tensor<type, 1> shifts;
+
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
@@ -133,6 +160,9 @@ struct PerceptronForwardPropagation : LayerForwardPropagation
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
+
+    Tensor<type, 1> means;
+    Tensor<type, 1> standard_deviations;
 
     Tensor<type, 2> outputs;
 
@@ -155,6 +185,9 @@ struct PerceptronBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> bias_derivatives;
     Tensor<type, 2> weight_derivatives;
+
+    Tensor<type, 1> scale_derivatives;
+    Tensor<type, 1> shift_derivatives;
 };
 
 

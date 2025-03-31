@@ -69,15 +69,15 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
                               const bool& is_training)
 {
 /*
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     if (is_training)
     {
-        Tensor<type, 1>& means = convolutional_forward_propagation->means;
-        Tensor<type, 1>& standard_deviations = convolutional_forward_propagation->standard_deviations;
+        Tensor<type, 1>& means = this_forward_propagation->means;
+        Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
         means.device(*thread_pool_device) = outputs.mean(means_dimensions);
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
@@ -131,10 +131,10 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
 void Convolutional::shift(unique_ptr<LayerForwardPropagation>& layer_forward_propagation)
 {
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
     const Index kernels_number = get_kernels_number();
 
@@ -171,12 +171,12 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 4>& preprocessed_inputs = convolutional_forward_propagation->preprocessed_inputs;
-    Tensor<type, 4>& outputs = convolutional_forward_propagation->outputs;
-    Tensor<type, 4>& activation_derivatives = convolutional_forward_propagation->activation_derivatives;
+    Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
+    Tensor<type, 4>& outputs = this_forward_propagation->outputs;
+    Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
 
     preprocess_inputs(inputs, preprocessed_inputs);
     
@@ -191,7 +191,7 @@ void Convolutional::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     is_training
         ? calculate_activations(outputs, activation_derivatives)
-        : calculate_activations(outputs, empty);
+        : calculate_activations(outputs, empty_4);
 }
 
 
@@ -214,23 +214,21 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index kernel_size = kernel_height * kernel_width * kernel_channels;
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
-    const TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
+    TensorMap<Tensor<type, 4>> deltas = tensor_map_4(delta_pairs[0]);
 
     // Forward propagation
 
-    ConvolutionalForwardPropagation* convolutional_forward_propagation =
+    ConvolutionalForwardPropagation* this_forward_propagation =
             static_cast<ConvolutionalForwardPropagation*>(forward_propagation.get());
 
-    Tensor<type, 4>& preprocessed_inputs = convolutional_forward_propagation->preprocessed_inputs;
+    Tensor<type, 4>& preprocessed_inputs = this_forward_propagation->preprocessed_inputs;
 
-    const Tensor<type, 4>& activation_derivatives = convolutional_forward_propagation->activation_derivatives;
+    const Tensor<type, 4>& activation_derivatives = this_forward_propagation->activation_derivatives;
 
     // Back propagation
 
     ConvolutionalBackPropagation* convolutional_back_propagation =
             static_cast<ConvolutionalBackPropagation*>(back_propagation.get());
-
-    Tensor<type, 4>& convolution_derivatives = convolutional_back_propagation->convolution_derivatives;    
 
     Tensor<type, 1>& bias_derivatives = convolutional_back_propagation->bias_derivatives;
 
@@ -258,25 +256,25 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     
     preprocess_inputs(inputs, preprocessed_inputs);
 
-    // Convolutions derivatives
+    // Convolution deltas
 
-    convolution_derivatives.device(*thread_pool_device) = deltas*activation_derivatives;
+    deltas.device(*thread_pool_device) = deltas*activation_derivatives;
     
     // Biases derivatives
 
-    bias_derivatives.device(*thread_pool_device) = convolution_derivatives.sum(convolutions_dimensions_3d);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(convolutions_dimensions_3d);
 
     // Weigth derivatives
-    
+/*
     #pragma omp parallel for
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives,kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map_(deltas, kernel_index);
 
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);
 
-        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_derivatives, convolutions_dimensions_3d);
+        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, convolutions_dimensions_3d);
     }
 
     // Input derivatives
@@ -294,12 +292,12 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
 
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
-        const TensorMap<Tensor<type, 3>> kernel_convolution_derivatives = tensor_map(convolution_derivatives, kernel_index);
+        const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map(deltas, kernel_index);
 
         #pragma omp parallel for
         for (Index image_index = 0; image_index < batch_size; ++image_index) 
         {
-            const Tensor<type, 2> image_kernel_convolutions_derivatives_padded = kernel_convolution_derivatives.chip(image_index, 0).pad(paddings);
+            const Tensor<type, 2> image_kernel_convolutions_derivatives_padded = kernel_convolution_deltas.chip(image_index, 0).pad(paddings);
 
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             {
@@ -312,6 +310,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
             }
         }
     }
+*/
 }
 
 
@@ -888,11 +887,6 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
 
     const Index output_height = convolutional_layer->get_output_height();
     const Index output_width = convolutional_layer->get_output_width();
-
-    convolution_derivatives.resize(batch_size,
-                                   output_height,
-                                   output_width,
-                                   kernels_number);
 
     bias_derivatives.resize(kernels_number);
 
