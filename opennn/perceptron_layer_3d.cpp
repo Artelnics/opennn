@@ -246,7 +246,7 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
 
-    const TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
+    TensorMap<Tensor<type, 3>> deltas = tensor_map_3(delta_pairs[0]);
 
     // Forward propagation
 
@@ -260,24 +260,18 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
     Perceptron3dBackPropagation* perceptron_3d_back_propagation =
             static_cast<Perceptron3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 3>& combination_derivatives = perceptron_3d_back_propagation->combination_derivatives;
-
     Tensor<type, 1>& bias_derivatives = perceptron_3d_back_propagation->bias_derivatives;
     Tensor<type, 2>& weight_derivatives = perceptron_3d_back_propagation->weight_derivatives;
 
     Tensor<type, 3>& input_derivatives = perceptron_3d_back_propagation->input_derivatives;
 
-    combination_derivatives.device(*thread_pool_device) 
-        = deltas * activation_derivatives;
+    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device)
-        = combination_derivatives.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
 
-    weight_derivatives.device(*thread_pool_device)
-        = inputs.contract(combination_derivatives, double_contraction_indices);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, double_contraction_indices);
 
-    input_derivatives.device(*thread_pool_device) 
-        = combination_derivatives.contract(weights, single_contraction_indices);
+    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, single_contraction_indices);
 }
 
 
@@ -389,7 +383,6 @@ void Perceptron3dBackPropagation::set(const Index& new_batch_size, Layer* new_la
 
     bias_derivatives.resize(output_dimension);
     weight_derivatives.resize(input_dimension, output_dimension);
-    combination_derivatives.resize(batch_size, sequence_length, output_dimension);
     input_derivatives.resize(batch_size, sequence_length, input_dimension);
 }
 

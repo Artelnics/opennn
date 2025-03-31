@@ -684,12 +684,12 @@ namespace opennn
 
         Index index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].type == RawVariableType::Categorical)
-                for (size_t j = 0; j < raw_variables[i].categories.size(); j++)
-                    variable_names[index++] = raw_variables[i].categories[j];
+        for (const auto& raw_variable : raw_variables)
+            if (raw_variable.type == RawVariableType::Categorical)
+                for (size_t j = 0; j < raw_variable.categories.size(); j++)
+                    variable_names[index++] = raw_variable.categories[j];
             else
-                variable_names[index++] = raw_variables[i].name;
+                variable_names[index++] = raw_variable.name;
 
         return variable_names;
     }
@@ -705,16 +705,16 @@ namespace opennn
 
         Index index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            if (raw_variables[i].use != variable_use)
+            if (raw_variable.use != variable_use)
                 continue;
 
-            if (raw_variables[i].type == RawVariableType::Categorical)
-                for (Index j = 0; j < raw_variables[i].get_categories_number(); j++)
-                    variable_names[index++] = raw_variables[i].categories[j];
+            if (raw_variable.type == RawVariableType::Categorical)
+                for (Index j = 0; j < raw_variable.get_categories_number(); j++)
+                    variable_names[index++] = raw_variable.categories[j];
             else
-                variable_names[index++] = raw_variables[i].name;
+                variable_names[index++] = raw_variable.name;
         }
 
         return variable_names;
@@ -780,25 +780,23 @@ namespace opennn
         const Index this_variables_number = get_variables_number(variable_use);
         vector<Index> this_variable_indices(this_variables_number);
 
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index variable_index = 0;
         Index this_variable_index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            if (raw_variables[i].use != variable_use)
+            if (raw_variable.use != variable_use)
             {
-                raw_variables[i].type == RawVariableType::Categorical
-                    ? variable_index += raw_variables[i].get_categories_number()
+                raw_variable.type == RawVariableType::Categorical
+                    ? variable_index += raw_variable.get_categories_number()
                     : variable_index++;
 
                 continue;
             }
 
-            if (raw_variables[i].type == RawVariableType::Categorical)
+            if (raw_variable.type == RawVariableType::Categorical)
             {
-                const Index categories_number = raw_variables[i].get_categories_number();
+                const Index categories_number = raw_variable.get_categories_number();
 
                 for (Index j = 0; j < categories_number; j++)
                     this_variable_indices[this_variable_index++] = variable_index++;
@@ -896,12 +894,12 @@ namespace opennn
 
         Index index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            if (raw_variables[i].use != variable_use)
+            if (raw_variable.use != variable_use)
                 continue;
 
-            names[index++] = raw_variables[i].name;
+            names[index++] = raw_variable.name;
         }
 
         return names;
@@ -910,12 +908,10 @@ namespace opennn
 
     Index DataSet::get_raw_variables_number(const VariableUse& variable_use) const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index count = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].use == variable_use)
+        for (const auto& raw_variable : raw_variables)
+            if (raw_variable.use == variable_use)
                 count++;
 
         return count;
@@ -924,12 +920,10 @@ namespace opennn
 
     Index DataSet::get_used_raw_variables_number() const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index used_raw_variables_number = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].use != VariableUse::None)
+        for (const auto& raw_variable : raw_variables)
+            if (raw_variable.use != VariableUse::None)
                 used_raw_variables_number++;
 
         return used_raw_variables_number;
@@ -944,16 +938,14 @@ namespace opennn
 
     vector<DataSet::RawVariable> DataSet::get_raw_variables(const VariableUse& variable_use) const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         const Index count = get_raw_variables_number(variable_use);
 
         vector<RawVariable> this_raw_variables(count);
         Index index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].use == variable_use)
-                this_raw_variables[index++] = raw_variables[i];
+        for (const auto& raw_variable : raw_variables)
+            if (raw_variable.use == variable_use)
+                this_raw_variables[index++] = raw_variable;
 
         return this_raw_variables;
     }
@@ -961,13 +953,11 @@ namespace opennn
 
     Index DataSet::get_variables_number() const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index count = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            count += raw_variables[i].type == RawVariableType::Categorical
-            ? raw_variables[i].get_categories_number()
+        for (const auto& raw_variable : raw_variables)
+            count += raw_variable.type == RawVariableType::Categorical
+            ? raw_variable.get_categories_number()
             : 1;
 
         return count;
@@ -976,17 +966,15 @@ namespace opennn
 
     Index DataSet::get_variables_number(const VariableUse& variable_use) const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index count = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            if (raw_variables[i].use != variable_use)
+            if (raw_variable.use != variable_use)
                 continue;
 
-            count += (raw_variables[i].type == RawVariableType::Categorical)
-                ? raw_variables[i].get_categories_number()
+            count += (raw_variable.type == RawVariableType::Categorical)
+                ? raw_variable.get_categories_number()
                 : 1;
         }
 
@@ -999,16 +987,14 @@ namespace opennn
         const Index used_variables_number = get_used_variables_number();
         vector<Index> used_variable_indices(used_variables_number);
 
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index variable_index = 0;
         Index used_variable_index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            const Index categories_number = raw_variables[i].get_categories_number();
+            const Index categories_number = raw_variable.get_categories_number();
 
-            if (raw_variables[i].use == VariableUse::None)
+            if (raw_variable.use == VariableUse::None)
             {
                 variable_index += categories_number;
                 continue;
@@ -1136,16 +1122,14 @@ namespace opennn
 
     void DataSet::set_variable_names(const vector<string>& new_variables_names)
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         Index index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].type == RawVariableType::Categorical)
-                for (Index j = 0; j < raw_variables[i].get_categories_number(); j++)
-                    raw_variables[i].categories[j] = new_variables_names[index++];
+        for (auto& raw_variable : raw_variables)
+            if (raw_variable.type == RawVariableType::Categorical)
+                for (Index j = 0; j < raw_variable.get_categories_number(); j++)
+                    raw_variable.categories[j] = new_variables_names[index++];
             else
-                raw_variables[i].name = new_variables_names[index++];
+                raw_variable.name = new_variables_names[index++];
     }
 
 
@@ -1165,14 +1149,12 @@ namespace opennn
 
     void DataSet::set(const VariableUse& variable_use)
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (auto& raw_variable : raw_variables)
         {
-            if (raw_variables[i].type == RawVariableType::Constant)
+            if (raw_variable.type == RawVariableType::Constant)
                 continue;
 
-            raw_variables[i].set_use(variable_use);
+            raw_variable.set_use(variable_use);
         }
     }
 
@@ -1185,10 +1167,8 @@ namespace opennn
 
     void DataSet::set_raw_variable_scalers(const Scaler& scalers)
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
-        for (Index i = 0; i < raw_variables_number; i++)
-            raw_variables[i].scaler = scalers;
+        for (auto& raw_variable : raw_variables)
+            raw_variable.scaler = scalers;
     }
 
 
@@ -2038,10 +2018,8 @@ namespace opennn
         Index variable_index = 0;
         Index used_raw_variable_index = 0;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            const RawVariable& raw_variable = raw_variables[i];
-
             if (raw_variable.use == VariableUse::None)
             {
                 variable_index += (raw_variable.type == RawVariableType::Categorical)
@@ -2132,7 +2110,6 @@ namespace opennn
 
         vector<BoxPlot> box_plots(raw_variables_number);
 
-        //Index used_raw_variable_index = 0;
         Index variable_index = 0;
 
         for (Index i = 0; i < raw_variables_number; i++)
@@ -2687,13 +2664,11 @@ namespace opennn
 
     void DataSet::set_default_raw_variables_scalers()
     {
-        const Index raw_variables_number = raw_variables.size();
-
         if (model_type == ModelType::ImageClassification)
             set_raw_variable_scalers(Scaler::ImageMinMax);
         else
-            for (Index i = 0; i < raw_variables_number; i++)
-                raw_variables[i].scaler = (raw_variables[i].type == RawVariableType::Numeric)
+            for (auto& raw_variable : raw_variables)
+                raw_variable.scaler = (raw_variable.type == RawVariableType::Numeric)
                 ? Scaler::MeanStandardDeviation
                 : Scaler::MinimumMaximum;
     }
@@ -3096,10 +3071,8 @@ namespace opennn
              << "Number of testing samples: " << testing_samples_number << endl
              << "Number of unused samples: " << unused_samples_number << endl;
 
-        const Index raw_variables_number = get_raw_variables_number();
-
-        for (Index i = 0; i < raw_variables_number; i++)
-            raw_variables[i].print();
+        for (const auto& raw_variable : raw_variables)
+            raw_variable.print();
     }
 
 
@@ -3131,10 +3104,8 @@ namespace opennn
 
     void DataSet::print_raw_variables() const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
-        for (Index i = 0; i < raw_variables_number; i++)
-            raw_variables[i].print();
+        for (const auto& raw_variable : raw_variables)
+            raw_variable.print();
 
         cout << endl;
     }
@@ -4011,10 +3982,10 @@ namespace opennn
             samples_number++;
         }
 
-        for (Index i = 0; i < raw_variables_number; i++)
-            if (raw_variables[i].type == RawVariableType::Categorical
-                && raw_variables[i].get_categories_number() == 2)
-                raw_variables[i].type = RawVariableType::Binary;
+        for (auto& raw_variable : raw_variables)
+            if (raw_variable.type == RawVariableType::Categorical
+                && raw_variable.get_categories_number() == 2)
+                raw_variable.type = RawVariableType::Binary;
 
         sample_uses.resize(samples_number);
 
@@ -4409,13 +4380,11 @@ namespace opennn
 
     void DataSet::fix_repeated_names()
     {
-        const Index raw_variables_number = raw_variables.size();
-
         map<string, Index> raw_variables_count_map;
 
-        for (Index i = 0; i < raw_variables_number; i++)
+        for (const auto& raw_variable : raw_variables)
         {
-            auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variables[i].name, 1));
+            auto result = raw_variables_count_map.insert(pair<string, Index>(raw_variable.name, 1));
 
             if (!result.second)
                 result.first->second++;
@@ -4429,9 +4398,9 @@ namespace opennn
 
                 Index repeated_index = 1;
 
-                for (Index i = 0; i < raw_variables_number; i++)
-                    if (raw_variables[i].name == repeated_name)
-                        raw_variables[i].name = raw_variables[i].name + "_" + to_string(repeated_index++);
+                for (auto& raw_variable : raw_variables)
+                    if (raw_variable.name == repeated_name)
+                        raw_variable.name = raw_variable.name + "_" + to_string(repeated_index++);
             }
         }
 
