@@ -274,7 +274,6 @@ protected:
         dy_dx.device(*thread_pool_device) = (type(1)/ (type(1) + x.abs()).pow(type(2)));
     }
 
-
     void competitive(Tensor<type, 2>&) const;
 
     void softmax(Tensor<type, 2>&) const;
@@ -282,6 +281,7 @@ protected:
     void softmax(Tensor<type, 4>&) const;
 
     void softmax_derivatives_times_tensor(const Tensor<type, 3>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
+    void softmax_derivatives_times_tensor(const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, Tensor<type, 1>&) const;
 
     void add_deltas(const vector<pair<type*, dimensions>>& delta_pairs) const
     {

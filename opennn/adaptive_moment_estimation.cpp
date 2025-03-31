@@ -250,10 +250,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // Data set
 
+            cout << "Enters the fill" << endl;
+
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 decoder_variable_indices,
                                 target_variable_indices);
+
+            cout << "Leaves the fill" << endl;
 
             // Neural network
             
@@ -261,12 +265,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
+            cout << "Leaves the FPROP" << endl;
+
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
+            cout << "Leaves the BACKPROP" << endl;
 
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 

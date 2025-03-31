@@ -321,14 +321,10 @@ void EmbeddingForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
 void EmbeddingForwardPropagation::print() const
 {
-    cout << "Attention scores:" << endl;
-    //       cout << attention_scores.dimensions() << endl;
     cout << "Outputs dimensions:" << endl;
     //       cout << output_dimensions << endl;
     cout << "Outputs:" << endl;
     //       cout << TensorMap<Tensor<type,3>>(outputs_data, output_dimensions(0), output_dimensions(1), output_dimensions(2)) << endl;
-    cout << "Attention scores:" << endl;
-    //       cout << attention_scores << endl;
 }
 
 

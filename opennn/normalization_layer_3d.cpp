@@ -182,7 +182,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
     const Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
-    // const TensorMap<Tensor<type, 2>> standard_deviations_matrix((type*)standard_deviations.data(), batch_size, sequence_length);
 
     // Back propagation
 
@@ -205,7 +204,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     beta_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
-
     //@TODO REVISAR LA NUEVA FUNCIÓN DE SOFTMAX DERIVATIVES TIMES TENSOR PARA PODER QUITAR LOS ATTENTION SCORES
 
     standard_deviation_derivatives.device(*thread_pool_device) = outputs;
@@ -213,8 +211,10 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     scaled_deltas.device(*thread_pool_device) = deltas;
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);
 
-    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) / (type(embedding_dimension) * (standard_deviations + epsilon));
+    aux_2d.device(*thread_pool_device) = (scaled_deltas * outputs).sum(sum_dimensions_1) 
+        / (embedding_dimension * (standard_deviations + epsilon));
 
+    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
     scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations.reshape(range_3).broadcast(expand_normalization_axis) + epsilon);
@@ -224,7 +224,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     aux_2d.device(*thread_pool_device) = 1 / type(embedding_dimension) * scaled_deltas.sum(sum_dimensions_1);
 
     substract_matrices(thread_pool_device.get(), aux_2d, input_derivatives);
-
 }
 
 

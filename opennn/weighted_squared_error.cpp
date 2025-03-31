@@ -209,7 +209,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     // Batch
 
-    const Index samples_number = batch.target_dimensions[0];
+    const Index batch_size = batch.target_dimensions[0];
 
     // Back propagation
 
@@ -221,7 +221,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs);
 
-    const type coefficient = type(2*total_samples_number)/(type(samples_number)*normalization_coefficient);
+    const type coefficient = type(2*total_samples_number)/(type(batch_size)*normalization_coefficient);
 
     deltas.device(*thread_pool_device) = coefficient * (errors_weights * errors);
 }

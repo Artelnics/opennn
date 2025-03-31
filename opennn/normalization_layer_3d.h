@@ -113,11 +113,12 @@ struct Normalization3dBackPropagation : LayerBackPropagation
     Tensor<type, 1> gamma_derivatives;
     Tensor<type, 1> beta_derivatives;
 
+    Tensor<type, 3> input_derivatives;
+
     Tensor<type, 3> scaled_deltas;
     Tensor<type, 3> standard_deviation_derivatives;
     Tensor<type, 2> aux_2d;
         
-    Tensor<type, 3> input_derivatives;
 };
 
 
