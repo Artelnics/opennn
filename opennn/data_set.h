@@ -517,6 +517,8 @@ public:
     virtual void transform_associative_dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
 
+    // convert
+
 protected:
 
     DataSet::ModelType model_type;

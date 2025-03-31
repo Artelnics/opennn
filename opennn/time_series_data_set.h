@@ -38,8 +38,10 @@ public:
 
     const Index& get_group_raw_variable_index() const;
 
+
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
+    void set_time_raw_variable_index(const Index&);
 
     void set_time_raw_variable(const string&);
     void set_group_by_raw_variable(const string&);
@@ -65,6 +67,8 @@ private:
     Index time_raw_variable_index = 0;
 
     Index group_raw_variable_index = 0;
+
+    string time_column;
 
     RawVariable* time_series_raw_variables;
 

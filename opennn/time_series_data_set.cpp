@@ -56,7 +56,6 @@ const Index& TimeSeriesDataSet::get_steps_ahead() const
     return steps_ahead;
 }
 
-
 void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
 {
     lags_number = new_lags_number;
@@ -68,10 +67,14 @@ void TimeSeriesDataSet::set_steps_ahead_number(const Index& new_steps_ahead_numb
     steps_ahead = new_steps_ahead_number;
 }
 
+void TimeSeriesDataSet::set_time_raw_variable_index(const Index& new_time_raw_variable_number)
+{
+    time_raw_variable_index = new_time_raw_variable_number;
+}
 
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
-//    time_column = new_time_column;
+    time_column = new_time_column;
 }
 
 
@@ -105,376 +108,161 @@ void TimeSeriesDataSet::print() const
 }
 
 
-void TimeSeriesDataSet::to_XML(XMLPrinter& file_stream) const
+void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
 {
-    /*
-    file_stream.OpenElement("TimeSeriesDataSet");
+    // if(model_type != ModelType::Forecasting)
+    //     throw runtime_error("No forecasting model type");
 
-    // Data file
+    printer.OpenElement("DataSet");
 
-    file_stream.OpenElement("DataSource");
-
-    // File type
-
-    file_stream.OpenElement("FileType");
-    file_stream.PushText("csv");
-    file_stream.CloseElement();
-
-    // Data source path
-
-    file_stream.OpenElement("Path");
-    file_stream.PushText(data_path.c_str());
-    file_stream.CloseElement();
-
-    // Separator
-
-    file_stream.OpenElement("Separator");
-    file_stream.PushText(get_separator_string().c_str());
-    file_stream.CloseElement();
-
-    // Has header
-
-    file_stream.OpenElement("HasHeader");
-    file_stream.PushText(to_string(has_header).c_str());
-    file_stream.CloseElement();
-
-    // Samples id
-
-    file_stream.OpenElement("HasSamplesId");
-    file_stream.PushText(to_string(has_sample_ids).c_str());
-    file_stream.CloseElement();
-
-    // Missing values label
-
-    file_stream.OpenElement("MissingValuesLabel");
-    file_stream.PushText(missing_values_label.c_str());
-    file_stream.CloseElement();
-
-    // Lags number
-
-    file_stream.OpenElement("LagsNumber");
-    file_stream.PushText(to_string(get_lags_number()).c_str());
-    file_stream.CloseElement();
-
-    // Steps Ahead
-
-    file_stream.OpenElement("StepsAhead");
-    file_stream.PushText(to_string(get_steps_ahead()).c_str());
-    file_stream.CloseElement();
-
-    // Time raw variable
-
-    file_stream.OpenElement("TimeRawVariable");
-    file_stream.PushText(get_time_raw_variable().c_str());
-    file_stream.CloseElement();
+    printer.OpenElement("DataSource");
+    add_xml_element(printer, "FileType", "csv");
+    add_xml_element(printer, "Path", data_path.string());
+    add_xml_element(printer, "Separator", get_separator_name());
+    add_xml_element(printer, "HasHeader", to_string(has_header));
+    add_xml_element(printer, "HasSamplesId", to_string(has_sample_ids));
+    add_xml_element(printer, "MissingValuesLabel", missing_values_label);
+    add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
+    add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
+    //add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
+    add_xml_element(printer, "TimeRawVariable", "");
+    add_xml_element(printer, "GroupByRawVariable", "");
+    add_xml_element(printer, "Codification", get_codification_string());
+    printer.CloseElement();
 
     // Group by raw_variable
-    {
-        file_stream.OpenElement("GroupByRawVariable");
+    // {
+    //     file_stream.OpenElement("GroupByRawVariable");
 
-        buffer.str("");
-        buffer << get_time_raw_variable();
+    //     buffer.str("");
+    //     buffer << get_time_raw_variable();
 
-        file_stream.PushText(buffer.str().c_str());
+    //     file_stream.PushText(buffer.str().c_str());
 
-        file_stream.CloseElement();
-    }
-
-    // Codification
-
-    file_stream.OpenElement("Codification");
-    file_stream.PushText(get_codification_string().c_str());
-    file_stream.CloseElement();
-
-    // Close DataFile
-
-    file_stream.CloseElement();
+    //     file_stream.CloseElement();
+    // }
 
     // Raw variables
 
-    file_stream.OpenElement("RawVariables");
-
-    // Raw variables number
-
-    file_stream.OpenElement("RawVariablesNumber");
-    file_stream.PushText(to_string(get_raw_variables_number()).c_str());
-    file_stream.CloseElement();
+    printer.OpenElement("RawVariables");
+    add_xml_element(printer, "RawVariablesNumber", to_string(get_raw_variables_number()));
 
     const Index raw_variables_number = get_raw_variables_number();
 
-    // Raw variables items
+    cout << raw_variables_number << endl;
 
     for(Index i = 0; i < raw_variables_number; i++)
     {
-        file_stream.OpenElement("RawVariable");
-        file_stream.PushAttribute("Item", to_string(i+1).c_str());
-        raw_variables[i].to_XML(file_stream);
-        file_stream.CloseElement();
+        printer.OpenElement("RawVariable");
+        printer.PushAttribute("Item", to_string(i+1).c_str());
+        time_series_raw_variables[i].to_XML(printer);
+        printer.CloseElement();
     }
 
-    // Close raw_variables
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Time series raw_variables
 
-    const Index time_series_raw_variables_number = get_time_series_raw_variables_number();
+    //const Index time_series_raw_variables_number = get_time_series_raw_variables_number();
+    const Index time_series_raw_variables_number = get_time_raw_variable_index();
 
-    if(time_series_raw_variables_number != 0)
+    //if(time_series_raw_variables_number > 0) - descomentar
     {
-        file_stream.OpenElement("TimeSeriesRawVariables");
+        printer.OpenElement("TimeSeriesRawVariables");
+        add_xml_element(printer, "TimeSeriesRawVariablesNumber", to_string(get_time_raw_variable_index()));
 
-        // Time series raw_variables number
-
-            file_stream.OpenElement("TimeSeriesRawVariablesNumber");
-            file_stream.PushText(to_string(get_time_series_raw_variables_number()).c_str());
-            file_stream.CloseElement();
-
-        // Time series raw_variables items
 
         for(Index i = 0; i < time_series_raw_variables_number; i++)
         {
-            file_stream.OpenElement("TimeSeriesRawVariable");
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-            //time_series_raw_variables[i].to_XML(file_stream);
-            file_stream.CloseElement();
+            printer.OpenElement("TimeSeriesRawVariable");
+            printer.PushAttribute("Item", to_string(i+1).c_str());
+            raw_variables[i].to_XML(printer);
+            printer.CloseElement();
         }
-
-        // Close time series raw variables
-
-        file_stream.CloseElement();
-    }
-
-    // Ids
-
-    if(has_sample_ids)
-    {
-        file_stream.OpenElement("HasSamplesId");
-        file_stream.PushText(string_tensor_to_string(get_sample_ids()).c_str());
-        file_stream.CloseElement();
+        printer.CloseElement();
     }
 
     // Samples
 
-    file_stream.OpenElement("Samples");
+    printer.OpenElement("Samples");
 
-    // Samples number
+    add_xml_element(printer, "SamplesNumber", to_string(get_samples_number()));
 
-    file_stream.OpenElement("SamplesNumber");
-    file_stream.PushText(to_string(get_samples_number()).c_str());
-    file_stream.CloseElement();
+    if(has_sample_ids)
+        add_xml_element(printer, "SamplesId", vector_to_string(sample_ids));
 
-    // Samples uses
+    add_xml_element(printer, "SampleUses", vector_to_string(get_sample_uses_vector()));
 
-    file_stream.OpenElement("SampleUses");
-    file_stream.PushText(tensor_to_string(get_sample_uses_vector()).c_str());
-    file_stream.CloseElement();
-
-    // Close samples
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Missing values
 
-    file_stream.OpenElement("MissingValues");
-    file_stream.PushText(get_missing_values_method_string().c_str());
-    file_stream.CloseElement();
-
-    // Missing values number
-
-    file_stream.OpenElement("MissingValuesNumber");
-    file_stream.PushText(to_string(missing_values_number).c_str());
-    file_stream.CloseElement();
+    printer.OpenElement("MissingValues");
+    add_xml_element(printer, "MissingValuesNumber", to_string(missing_values_number));
 
     if(missing_values_number > 0)
     {
-        // Raw variables missing values number
-        {
-            file_stream.OpenElement("RawVariablesMissingValuesNumber");
-
-            const Index raw_variables_number = raw_variables_missing_values_number.size();
-
-            buffer.str("");
-
-            for(Index i = 0; i < raw_variables_number; i++)
-            {
-                buffer << raw_variables_missing_values_number(i);
-
-                if(i != (raw_variables_number-1)) buffer << " ";
-            }
-
-            file_stream.PushText(buffer.str().c_str());
-
-            file_stream.CloseElement();
-        }
-
-        // Rows missing values number
-        {
-            file_stream.OpenElement("RowsMissingValuesNumber");
-
-            buffer.str("");
-            buffer << rows_missing_values_number;
-
-            file_stream.PushText(buffer.str().c_str());
-
-            file_stream.CloseElement();
-        }
+        add_xml_element(printer, "MissingValuesMethod", get_missing_values_method_string());
+        add_xml_element(printer, "RawVariablesMissingValuesNumber", tensor_to_string(raw_variables_missing_values_number));
+        add_xml_element(printer, "RowsMissingValuesNumber", to_string(rows_missing_values_number));
     }
 
-    // Missing values
-
-    file_stream.CloseElement();
+    printer.CloseElement();
 
     // Preview data
 
-    file_stream.OpenElement("PreviewData");
+    printer.OpenElement("PreviewData");
 
-    file_stream.OpenElement("PreviewSize");
+    add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
-    buffer.str("");
+    vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
+    for(int i = 0; i < data_file_preview.size(); i++){
+        printer.OpenElement("Row");
+        printer.PushAttribute("Item", to_string(i + 1).c_str());
+        printer.PushText(vector_data_file_preview[i].data());
+        printer.CloseElement();
+    }
 
-        buffer << data_file_preview.size();
+    printer.CloseElement();
 
-        file_stream.PushText(buffer.str().c_str());
+    // Display
 
-        file_stream.CloseElement();
-
-        for(Index i = 0; i < data_file_preview.size(); i++)
-        {
-            file_stream.OpenElement("Row");
-
-            file_stream.PushAttribute("Item", to_string(i+1).c_str());
-
-            for(Index j = 0; j < data_file_preview[i].size(); j++)
-            {
-                file_stream.PushText(data_file_preview[i][j].c_str());
-
-                if(j != data_file_preview[i].size()-1)
-                {
-                    file_stream.PushText(",");
-                }
-            }
-
-            file_stream.CloseElement();
-        }
-
-    // Close preview data
-
-    file_stream.CloseElement();
+    add_xml_element(printer, "Display", to_string(display));
 
     // Close data set
 
-    file_stream.CloseElement();
-*/
+    printer.CloseElement();
+
 }
 
 
 void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
-    /*
-    // Data set element
-
     const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
-
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
     // Data file
 
     const XMLElement* data_source_element = data_set_element->FirstChildElement("DataSource");
-
     if(!data_source_element)
         throw runtime_error("Data file element is nullptr.\n");
 
-    // Data file name
+    const XMLElement* file_type_element = data_source_element->FirstChildElement("FileType");
+    if(!file_type_element)
+        throw runtime_error("File Type element is nullptr.\n");
 
-    const XMLElement* data_source_path_element = data_source_element->FirstChildElement("Path");
+    set_data_path(read_xml_string(data_source_element, "Path"));
+    set_separator_name(read_xml_string(data_source_element, "Separator"));
+    set_has_header(read_xml_bool(data_source_element, "HasHeader"));
+    set_has_ids(read_xml_bool(data_source_element, "HasSamplesId"));
+    set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
+    set_lags_number(stoi(read_xml_string(data_source_element, "LagsNumber")));
+    set_steps_ahead_number(stoi(read_xml_string(data_source_element, "StepsAhead")));
+    //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
+    //set_group_by_raw_variable(read_xml_string(data_source_element, "GroupByRawVariable"));
+    set_codification(read_xml_string(data_source_element, "Codification"));
 
-    if(!data_source_path_element)
-        throw runtime_error("Path element is nullptr.\n");
-
-    if(data_source_path_element->GetText())
-        set_data_path(data_source_path_element->GetText());
-
-    // Separator
-
-    const XMLElement* separator_element = data_source_element->FirstChildElement("Separator");
-
-    if(separator_element)
-        if(separator_element->GetText())
-            set_separator_name(separator_element->GetText());
-
-    // Has raw_variables names
-
-    const XMLElement* raw_variables_names_element = data_source_element->FirstChildElement("HasHeader");
-
-    if(raw_variables_names_element)
-        set_has_header(raw_variables_names_element->GetText() == string("1"));
-
-    // Samples id
-
-    const XMLElement* rows_label_element = data_source_element->FirstChildElement("HasSamplesId");
-
-    if(rows_label_element)
-        set_has_ids(rows_label_element->GetText() == string("1"));
-
-    // Missing values label
-
-    const XMLElement* missing_values_label_element = data_source_element->FirstChildElement("MissingValuesLabel");
-
-    if(missing_values_label_element)
-        if(missing_values_label_element->GetText())
-            set_missing_values_label(missing_values_label_element->GetText());
-
-    // Forecasting
-
-    // Lags number
-
-    const XMLElement* lags_number_element = data_source_element->FirstChildElement("LagsNumber");
-
-    if(!lags_number_element)
-        throw runtime_error("Lags number element is nullptr.\n");
-
-    if(lags_number_element->GetText())
-        set_lags_number(Index(atoi(lags_number_element->GetText())));
-
-    // Steps ahead
-
-    const XMLElement* steps_ahead_element = data_source_element->FirstChildElement("StepsAhead");
-
-    if(!steps_ahead_element)
-        throw runtime_error("Steps ahead element is nullptr.\n");
-
-    if(steps_ahead_element->GetText())
-        set_steps_ahead_number(Index(atoi(steps_ahead_element->GetText())));
-
-    // Time raw_variable
-
-    const XMLElement* time_raw_variable_element = data_source_element->FirstChildElement("TimeRawVariable");
-
-    if(!time_raw_variable_element)
-        throw runtime_error("Time raw_variable element is nullptr.\n");
-
-    if(time_raw_variable_element->GetText())
-        set_time_raw_variable(time_raw_variable_element->GetText());
-
-    // Group by raw_variable
-
-    const XMLElement* group_by_raw_variable_element = data_source_element->FirstChildElement("GroupByRawVariable");
-
-    if(!group_by_raw_variable_element)
-        throw runtime_error("Group by raw_variable element is nullptr.\n");
-
-    if(group_by_raw_variable_element->GetText())
-        set_group_by_raw_variable(group_by_raw_variable_element->GetText());
-
-    // Codification
-
-    const XMLElement* codification_element = data_source_element->FirstChildElement("Codification");
-
-    if(codification_element)
-        if(codification_element->GetText())
-            set_codification(codification_element->GetText());
 
     // Raw variables
 
@@ -483,99 +271,34 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     if(!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
 
-    // Raw variables number
+    set_raw_variables_number(read_xml_index(raw_variables_element, "RawVariablesNumber"));
 
-    const XMLElement* raw_variables_number_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
+    const XMLElement* start_element = raw_variables_element->FirstChildElement("RawVariablesNumber");
 
-    if(!raw_variables_number_element)
-        throw runtime_error("RawVariablesNumber element is nullptr.\n");
-
-    if(raw_variables_number_element->GetText())
-        set_raw_variables_number(Index(atoi(raw_variables_number_element->GetText())));
-
-    // Raw variables
-
-    const XMLElement* start_element = raw_variables_number_element;
-
-    for(Index i = 0; i < raw_variables.size(); i++)
+    for(size_t i = 0; i < raw_variables.size(); i++)
     {
+        RawVariable& raw_variable = raw_variables[i];
         const XMLElement* raw_variable_element = start_element->NextSiblingElement("RawVariable");
         start_element = raw_variable_element;
 
         if(raw_variable_element->Attribute("Item") != to_string(i+1))
             throw runtime_error("Raw variable item number (" + to_string(i+1) + ") does not match (" + raw_variable_element->Attribute("Item") + ").\n");
 
-        // Name
+        raw_variable.name = read_xml_string(raw_variable_element, "Name");
+        raw_variable.set_scaler(read_xml_string(raw_variable_element, "Scaler"));
+        raw_variable.set_use(read_xml_string(raw_variable_element, "Use"));
+        raw_variable.set_type(read_xml_string(raw_variable_element, "Type"));
 
-        const XMLElement* name_element = raw_variable_element->FirstChildElement("Name");
-
-        if(!name_element)
-            throw runtime_error("Name element is nullptr.\n");
-
-        if(name_element->GetText())
+        if (raw_variable.type == RawVariableType::Categorical || raw_variable.type == RawVariableType::Binary)
         {
-            const string new_name = name_element->GetText();
-
-            raw_variables[i].name = new_name;
-        }
-
-        // Scaler
-
-        const XMLElement* scaler_element = raw_variable_element->FirstChildElement("Scaler");
-
-        if(!scaler_element)
-            throw runtime_error("Scaler element is nullptr.\n");
-
-        if(scaler_element->GetText())
-        {
-            const string new_scaler = scaler_element->GetText();
-
-            raw_variables[i].set_scaler(new_scaler);
-        }
-
-        // raw_variable use
-
-        const XMLElement* use_element = raw_variable_element->FirstChildElement("Use");
-
-        if(!use_element)
-            throw runtime_error("Raw variable use element is nullptr.\n");
-
-        if(use_element->GetText())
-        {
-            const string new_raw_variable_use = use_element->GetText();
-
-            raw_variables[i].set_use(new_raw_variable_use);
-        }
-
-        // Type
-
-        const XMLElement* type_element = raw_variable_element->FirstChildElement("Type");
-
-        if(!type_element)
-            throw runtime_error("Type element is nullptr.\n");
-
-        if(type_element->GetText())
-        {
-            const string new_type = type_element->GetText();
-
-            raw_variables[i].set_type(new_type);
-        }
-
-        if(raw_variables[i].type == RawVariableType::Categorical || raw_variables[i].type == RawVariableType::Binary)
-        {
-            // Categories
-
             const XMLElement* categories_element = raw_variable_element->FirstChildElement("Categories");
 
-            if(!categories_element)
-                throw runtime_error("Categories element is nullptr.\n");
-
-            if(categories_element->GetText())
-            {
-                const string new_categories = categories_element->GetText();
-
-                raw_variables[i].categories = get_tokens(new_categories, " ");
-            }
+            if (categories_element)
+                raw_variable.categories = get_tokens(read_xml_string(raw_variable_element, "Categories"), ";");
+            else if (raw_variable.type == RawVariableType::Binary)
+                raw_variable.categories = { "0", "1" };
+            else
+                throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
         }
     }
 
@@ -583,30 +306,18 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* time_series_raw_variables_element = data_set_element->FirstChildElement("TimeSeriesRawVariables");
 
-    // Time series raw_variables number
+    if(!time_series_raw_variables_element)
+        throw runtime_error("time series raw variable element is nullptr");
 
-    const XMLElement* time_series_raw_variables_number_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
+    set_time_raw_variable_index(stoi(read_xml_string(time_series_raw_variables_element, "TimeSeriesRawVariablesNumber")));
 
-    if(!time_series_raw_variables_number_element)
-        throw runtime_error("Time seires raw_variables number element is nullptr.\n");
+    const XMLElement* time_series_start_element = time_series_raw_variables_element->FirstChildElement("TimeSeriesRawVariablesNumber");
 
-    Index time_series_new_raw_variables_number = 0;
-
-    if(time_series_raw_variables_number_element->GetText())
+    if(time_raw_variable_index > 0)
     {
-        time_series_new_raw_variables_number = Index(atoi(time_series_raw_variables_number_element->GetText()));
-
-        set_raw_variables_number(time_series_new_raw_variables_number);
-    }
-
-    // Time series raw_variables
-
-    const XMLElement* time_series_start_element = time_series_raw_variables_number_element;
-
-    if(time_series_new_raw_variables_number > 0)
-    {
-        for(Index i = 0; i < time_series_new_raw_variables_number; i++)
+        for(Index i = 0; i < time_raw_variable_index; i++)
         {
+            RawVariable& time_raw_variable = time_series_raw_variables[i];
             const XMLElement* time_series_raw_variable_element = time_series_start_element->NextSiblingElement("TimeSeriesRawVariable");
             time_series_start_element = time_series_raw_variable_element;
 
@@ -614,105 +325,22 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
                 throw runtime_error("Time series raw_variable item number (" + to_string(i+1) + ") "
                                     "does not match (" + time_series_raw_variable_element->Attribute("Item") + ").\n");
 
-            // Name
+            time_raw_variable.name = read_xml_string(time_series_raw_variable_element, "Name");
+            time_raw_variable.set_scaler(read_xml_string(time_series_raw_variable_element, "Scaler"));
+            time_raw_variable.set_use(read_xml_string(time_series_raw_variable_element, "Use"));
+            time_raw_variable.set_type(read_xml_string(time_series_raw_variable_element, "Type"));
 
-            const XMLElement* time_series_name_element = time_series_raw_variable_element->FirstChildElement("Name");
-
-            if(!time_series_name_element)
-                throw runtime_error("Time series name element is nullptr.\n");
-
-            if(time_series_name_element->GetText())
+            if (time_raw_variable.type == RawVariableType::Categorical || time_raw_variable.type == RawVariableType::Binary)
             {
-                const string time_series_new_name = time_series_name_element->GetText();
+                const XMLElement* categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
 
-                time_series_raw_variables[i].name = time_series_new_name;
+                if (categories_element)
+                    time_raw_variable.categories = get_tokens(read_xml_string(time_series_raw_variable_element, "Categories"), ";");
+                else if (time_raw_variable.type == RawVariableType::Binary)
+                    time_raw_variable.categories = { "0", "1" };
+                else
+                    throw runtime_error("Categorical RawVariable Element is nullptr: Categories");
             }
-
-            // Scaler
-
-            const XMLElement* time_series_scaler_element = time_series_raw_variable_element->FirstChildElement("Scaler");
-
-            if(!time_series_scaler_element)
-                throw runtime_error("Time series scaler element is nullptr.\n");
-
-            if(time_series_scaler_element->GetText())
-            {
-                const string time_series_new_scaler = time_series_scaler_element->GetText();
-
-                time_series_raw_variables[i].set_scaler(time_series_new_scaler);
-            }
-
-            // raw_variable use
-
-            const XMLElement* time_series_raw_variable_use_element = time_series_raw_variable_element->FirstChildElement("Use");
-
-            if(!time_series_raw_variable_use_element)
-                throw runtime_error("Time series raw_variable use element is nullptr.\n");
-
-            if(time_series_raw_variable_use_element->GetText())
-            {
-                const string time_series_new_raw_variable_use = time_series_raw_variable_use_element->GetText();
-
-                time_series_raw_variables[i].set_use(time_series_new_raw_variable_use);
-            }
-
-            // Type
-
-            const XMLElement* time_series_type_element = time_series_raw_variable_element->FirstChildElement("Type");
-
-            if(!time_series_type_element)
-                throw runtime_error("Time series type element is nullptr.\n");
-
-            if(time_series_type_element->GetText())
-            {
-                const string time_series_new_type = time_series_type_element->GetText();
-                time_series_raw_variables[i].set_type(time_series_new_type);
-            }
-
-            if(time_series_raw_variables[i].type == RawVariableType::Categorical || time_series_raw_variables[i].type == RawVariableType::Binary)
-            {
-                // Categories
-
-                const XMLElement* time_series_categories_element = time_series_raw_variable_element->FirstChildElement("Categories");
-
-                if(!time_series_categories_element)
-                    throw runtime_error("Time series categories element is nullptr.\n");
-
-                if(time_series_categories_element->GetText())
-                {
-                    const string time_series_new_categories = time_series_categories_element->GetText();
-
-                    time_series_raw_variables[i].categories = get_tokens(time_series_new_categories, ";");
-                }
-            }
-        }
-    }
-
-    // Rows label
-
-    if(has_sample_ids)
-    {
-        // Samples id begin tag
-
-        const XMLElement* has_ids_element = data_set_element->FirstChildElement("HasSamplesId");
-
-        if(!has_ids_element)
-            throw runtime_error("Rows labels element is nullptr.\n");
-
-        // Samples id
-
-        if(has_ids_element->GetText())
-        {
-            const string new_rows_labels = has_ids_element->GetText();
-
-            string separator = ",";
-
-            if(new_rows_labels.find(",") == string::npos
-                    && new_rows_labels.find(";") != string::npos) {
-                separator = ';';
-            }
-
-            sample_ids = get_tokens(new_rows_labels, separator);
         }
     }
 
@@ -723,31 +351,23 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     if(!samples_element)
         throw runtime_error("Samples element is nullptr.\n");
 
-    // Samples number
+    const Index samples_number = read_xml_index(samples_element, "SamplesNumber");
 
-    const XMLElement* samples_number_element = samples_element->FirstChildElement("SamplesNumber");
+    if (has_sample_ids)
+        sample_ids = get_tokens(read_xml_string(samples_element, "SamplesId"), " ");
 
-    if(!samples_number_element)
-        throw runtime_error("Samples number element is nullptr.\n");
-
-    if(samples_number_element->GetText())
+    if (raw_variables.size() != 0)
     {
-        const Index new_samples_number = Index(atoi(samples_number_element->GetText()));
+        const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
-        sample_uses.resize(new_samples_number);
+        data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
+        data.setZero();
 
-        set(DataSet::SampleUse::Training);
+        sample_uses.resize(samples_number);
+        set_sample_uses(get_tokens(read_xml_string(samples_element, "SampleUses"), " "));
     }
-
-    // Samples uses
-
-    const XMLElement* samples_uses_element = samples_element->FirstChildElement("SampleUses");
-
-    if(!samples_uses_element)
-        throw runtime_error("Samples uses element is nullptr.\n");
-
-    if(samples_uses_element->GetText())
-        set_sample_uses(get_tokens(samples_uses_element->GetText(), " "));
+    else
+        data.resize(0, 0);
 
     // Missing values
 
@@ -756,57 +376,18 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     if(!missing_values_element)
         throw runtime_error("Missing values element is nullptr.\n");
 
-    // Missing values method
+    missing_values_number = read_xml_index(missing_values_element, "MissingValuesNumber");
 
-    const XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
-
-    if(!missing_values_method_element)
-        throw runtime_error("Missing values method element is nullptr.\n");
-
-    if(missing_values_method_element->GetText())
-        set_missing_values_method(missing_values_method_element->GetText());
-
-    // Missing values number
-
-    const XMLElement* missing_values_number_element = missing_values_element->FirstChildElement("MissingValuesNumber");
-
-    if(!missing_values_number_element)
-        throw runtime_error("Missing values number element is nullptr.\n");
-
-    if(missing_values_number_element->GetText())
-        missing_values_number = Index(atoi(missing_values_number_element->GetText()));
-
-    if(missing_values_number > 0)
+    if (missing_values_number > 0)
     {
-        // Raw variables Missing values number
+        set_missing_values_method(read_xml_string(missing_values_element, "MissingValuesMethod"));
 
-        const XMLElement* raw_variables_missing_values_number_element = missing_values_element->FirstChildElement("RawVariablesMissingValuesNumber");
+        raw_variables_missing_values_number.resize(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ").size());
 
-        if(!raw_variables_missing_values_number_element)
-            throw runtime_error("RawVariablesMissingValuesNumber element is nullptr.\n");
+        for (Index i = 0; i < raw_variables_missing_values_number.size(); i++)
+            raw_variables_missing_values_number(i) = stoi(get_tokens(read_xml_string(missing_values_element, "RawVariablesMissingValuesNumber"), " ")[i]);
 
-        if(raw_variables_missing_values_number_element->GetText())
-        {
-            const vector<string> new_raw_variables_missing_values_number = get_tokens(raw_variables_missing_values_number_element->GetText(), " ");
-
-            raw_variables_missing_values_number.resize(new_raw_variables_missing_values_number.size());
-
-            for(Index i = 0; i < new_raw_variables_missing_values_number.size(); i++)
-            {
-                raw_variables_missing_values_number(i) = atoi(new_raw_variables_missing_values_number[i].c_str());
-            }
-        }
-
-        // Rows missing values number
-
-        const XMLElement* rows_missing_values_number_element
-            = missing_values_element->FirstChildElement("RowsMissingValuesNumber");
-
-        if(!rows_missing_values_number_element)
-            throw runtime_error("Rows missing values number element is nullptr.\n");
-
-        if(rows_missing_values_number_element->GetText())
-            rows_missing_values_number = Index(atoi(rows_missing_values_number_element->GetText()));
+        rows_missing_values_number = read_xml_index(missing_values_element, "RowsMissingValuesNumber");
     }
 
     // Preview data
@@ -816,43 +397,38 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     if(!preview_data_element)
         throw runtime_error("Preview data element is nullptr.\n");
 
-    // Preview size
-
     const XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
         throw runtime_error("Preview size element is nullptr.\n");
 
-    Index new_preview_size = 0;
-
-    if(preview_size_element->GetText())
-    {
-        new_preview_size = Index(atoi(preview_size_element->GetText()));
-
-        if(new_preview_size > 0) data_file_preview.resize(new_preview_size);
-    }
-
-    // Preview data
+    Index preview_size = 0;
+    if (preview_size_element->GetText())
+        preview_size = static_cast<Index>(atoi(preview_size_element->GetText()));
 
     start_element = preview_size_element;
+    if(preview_size > 0){
+        data_file_preview.resize(preview_size);
 
-    for(Index i = 0; i < new_preview_size; i++)
-    {
-        const XMLElement* row_element = start_element->NextSiblingElement("Row");
-        start_element = row_element;
+        for (Index i = 0; i < preview_size; ++i) {
+            const XMLElement* row_data = start_element->NextSiblingElement("Row");
+            start_element = row_data;
 
-        if(row_element->Attribute("Item") != to_string(i+1))
-            throw runtime_error("Row item number (" + to_string(i+1) + ") "
-                                "does not match (" + row_element->Attribute("Item") + ").\n");
+            if (row_data->Attribute("Item") != to_string(i + 1))
+                throw runtime_error("Row item number (" + to_string(i + 1) + ") does not match (" + row_data->Attribute("Item") + ").\n");
 
-        if(row_element->GetText())
-            data_file_preview[i] = get_tokens(row_element->GetText(), " ");
+            if(row_data->GetText())
+                data_file_preview[i] = get_tokens(row_data->GetText(), ",");
+        }
     }
 
     // Display
 
-    set_display(read_xml_bool(neural_network_element, "Display"));
-*/
+    set_display(read_xml_bool(data_set_element, "Display"));
+
+    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
+    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
+
 }
 
 

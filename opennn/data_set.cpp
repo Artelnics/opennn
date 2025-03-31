@@ -2899,23 +2899,11 @@ namespace opennn
 
         add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
-        vector<string> data_file_preview_result;
-
-        for (const auto& subvec : data_file_preview) {
-            stringstream ss;
-            for (size_t i = 0; i < subvec.size(); ++i) {
-                ss << subvec[i];
-                if (i != subvec.size() - 1) {
-                    ss << ",";
-                }
-            }
-            data_file_preview_result.push_back(ss.str());
-        }
-
+        vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
         for(int i = 0; i < data_file_preview.size(); i++){
             printer.OpenElement("Row");
             printer.PushAttribute("Item", to_string(i + 1).c_str());
-            printer.PushText(data_file_preview_result[i].data());
+            printer.PushText(vector_data_file_preview[i].data());
             printer.CloseElement();
         }
 
@@ -4020,15 +4008,6 @@ namespace opennn
         sample_uses.resize(samples_number);
 
         sample_ids.resize(samples_number);
-
-        // if(samples_number > 3 && has_header)
-        //     data_file_preview.resize(4);
-        // else if(samples_number < 3 && has_header)
-        //     data_file_preview.resize(samples_number + 1);
-        // else if(samples_number > 3 && !has_header)
-        //     data_file_preview.resize(3);
-        // else if(samples_number < 3 && !has_header)
-        //     data_file_preview.resize(samples_number);
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
