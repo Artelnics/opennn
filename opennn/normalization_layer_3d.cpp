@@ -163,7 +163,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                      unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     // @todo simplify                                                                                                  
-
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
 
@@ -205,8 +204,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     
     // Input derivatives
     //@TODO REVISAR LA NUEVA FUNCIÓN DE SOFTMAX DERIVATIVES TIMES TENSOR PARA PODER QUITAR LOS ATTENTION SCORES
-
-    standard_deviation_derivatives.device(*thread_pool_device) = outputs;
 
     scaled_deltas.device(*thread_pool_device) = deltas;
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);

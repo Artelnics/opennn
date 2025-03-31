@@ -518,6 +518,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 */
 
 
+
 }
  // namespace opennn
 // OpenNN: Open Neural Networks Library.

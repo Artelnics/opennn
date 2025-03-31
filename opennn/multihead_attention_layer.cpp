@@ -608,6 +608,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         head_attention_weight_derivatives_xxx.device(*thread_pool_device) = head_attention_weight_derivatives_xxx * scaling_factor;
 
+
         // QUERY DERIVATIVES
 
         batch_matrix_multiplication(thread_pool_device.get(), 
