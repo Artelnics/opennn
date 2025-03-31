@@ -112,7 +112,29 @@ private:
    Index batch_size = 1000;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+
+    public:
+
+        TrainingResults perform_training_cuda();
+
+        void update_parameteres_cuda(LossIndex::BackPropagationCuda&, ADAMOptimizationDataCuda&);
+
+        type beta_1 = 0.9;
+        type beta_2 = 0.999;
+
+        bool use_custom_learning_rate = false;
+
+        type learning_rate = 0.001;
+
+    private:
+
+        void initialize_cuda_context();
+
+        void cleanup_cuda_context();
+
+        cublasHandle_t cublas_handle;
+        cudnnHandle_t cudnn_handle;
+
 #endif
 
 };
@@ -139,7 +161,47 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_adaptive_moment_estimation_cuda.h"
+
+    struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
+    {
+        explicit ADAMOptimizationDataCuda(OptimizationAlgorithm*);
+        virtual ~ADAMOptimizationDataCuda();
+
+        void allocate();
+
+        void free();
+
+        void print_parameters() const;
+
+        void print() const;
+
+        OptimizationAlgorithm* optimization_algorithm;
+
+        float* square_gradient;
+
+        float* gradient_exponential_decay;
+
+        float* square_gradient_exponential_decay;
+
+        float* last_gradient_exponential_decay;
+
+        float* last_square_gradient_exponential_decay;
+
+        float* numerator;
+
+        float* denominator;
+
+        float epsilon;
+
+        float* epsilon_device;
+
+        cudnnTensorDescriptor_t epsilon_device_tensor_descriptor;
+
+        Index iteration;
+
+        type step;
+    };
+
 #endif
 
 }

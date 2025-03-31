@@ -162,12 +162,74 @@ public:
    Tensor<type, 2> calculate_inverse_hessian();
 
     #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
 
-        #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
-    #endif
+protected:
+
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+
+public:
+
+    virtual ~LossIndexCuda() = default;
+
+    void create_cuda();
+    void destroy_cuda();
+    cudnnHandle_t get_cudnn_handle();
+
+    void back_propagate_cuda(const BatchCuda& batch_cuda,
+                             NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
+                             LossIndex::BackPropagationCuda& back_propagation_cuda);
+
+    void add_regularization_cuda(BackPropagationCuda& back_propagation_cuda) const;
+
+    void assemble_layers_error_gradient(BackPropagationCuda& back_propagation_cuda) const;
+
+    float calculate_regularization_cuda(Index parameters_number, float* parameters);
+
+    void calculate_regularization_gradient_cuda(const Index parameters_number,
+                                                float regularization,
+                                                float* parameters,
+                                                float* aux_vector,
+                                                float* gradient);
+
+    float l1_norm_cuda(Index parameters_number, float* parameters);
+
+    float l2_norm_cuda(Index parameters_number, float* parameters);
+
+    void l1_norm_gradient_cuda(const Index parameters_number,
+                               float regularization,
+                               float* parameters,
+                               float* aux_vector,
+                               float* gradient);
+
+    void l2_norm_gradient_cuda(const Index parameters_number,
+                               float regularization,
+                               float* parameters,
+                               float* aux_vector,
+                               float* gradient);
+
+    void calculate_errors_cuda(const BatchCuda& batch_cuda,
+                               const NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
+                               BackPropagationCuda& back_propagation_cuda) const;
+
+    void calculate_layers_error_gradient_cuda(const BatchCuda& batch_cuda,
+                                              NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
+                                              BackPropagationCuda& back_propagation_cuda) const;
+
+    virtual std::string get_error_type() const = 0;
+    virtual void calculate_mean_square_error_cuda(const BatchCuda&, NeuralNetwork::ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_cross_entropy_error_cuda(const BatchCuda&, NeuralNetwork::ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_mean_square_output_delta_cuda(const BatchCuda&, NeuralNetwork::ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_cross_entropy_output_delta_cuda(const BatchCuda&, NeuralNetwork::ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+
+protected:
+
+    enum class RegularizationMethod { NoRegularization, L1, L2 };
+
+    RegularizationMethod regularization_method = RegularizationMethod::NoRegularization;
+    float regularization_weight = 0.0f;
+
+#endif
 
 protected:
 
@@ -195,7 +257,69 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/loss_index_back_propagation_cuda.h"
+
+struct BackPropagationCuda
+{
+    explicit BackPropagationCuda();
+
+    explicit BackPropagationCuda(const Index& new_batch_samples_number, LossIndex* new_loss_index);
+
+    void set(const Index& new_batch_samples_number, LossIndex* new_loss_index);
+
+    void set_layers_outputs_indices(const Tensor<Tensor<Index, 1>, 1>& layer_inputs_indices);
+
+    std::pair<type*, dimensions> get_output_deltas_pair_device() const;
+
+    void print();
+    void free();
+
+    Tensor<Tensor<Index, 1>, 1> layers_outputs_indices;
+
+    Index batch_samples_number = 0;
+
+    LossIndex* loss_index = nullptr;
+
+    NeuralNetwork::NeuralNetworkBackPropagationCuda neural_network;
+
+    type error = type(0);
+    type regularization = type(0);
+    type loss = type(0);
+
+    cudnnReduceTensorDescriptor_t reduce_tensor_descriptor;
+    void* workspace = nullptr;
+    size_t workspaceSize = 0;
+
+    float* numerator = nullptr;
+    float* numerator_reduce = nullptr;
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
+
+    float* errors = nullptr;
+
+    float* output_deltas = nullptr;
+    dimensions output_deltas_dimensions;
+
+    float* parameters = nullptr;
+    float* parameters_square = nullptr;
+    cudnnTensorDescriptor_t parameters_tensor_descriptor = nullptr;
+    Tensor<type, 1> parameters_host;
+
+    float* gradient = nullptr;
+    cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
+    float* regularization_gradient = nullptr;
+
+    // @todo
+    type accuracy = type(0);
+    float* predictions = nullptr;
+    float* matches = nullptr;
+    float* mask = nullptr;
+    bool built_mask = false;
+
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_square_root_descriptor = nullptr;
+};
+
 #endif
 
 struct BackPropagationLM

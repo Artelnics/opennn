@@ -169,7 +169,11 @@ private:
     bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/training_strategy_cuda.h"
+
+public:
+
+    TrainingResults perform_training_cuda();
+
 #endif
 
 };

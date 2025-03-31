@@ -16,10 +16,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct ConvolutionalForwardPropagationCuda;
-struct ConvolutionalBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//struct ConvolutionalForwardPropagationCuda;
+//struct ConvolutionalBackPropagationCuda;
+//#endif
 
 
 class Convolutional : public Layer
@@ -152,8 +152,45 @@ public:
    void print() const override;
 
     #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
-    #endif
+
+    public:
+
+    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagationCuda*,
+                                const bool&) final;
+
+    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                             const Tensor<pair<type*, dimensions>, 1>&,
+                             LayerForwardPropagationCuda*,
+                             LayerBackPropagationCuda*) const final;
+
+    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+
+    void set_parameters_cuda(const float*, const Index&);
+
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+
+    void allocate_parameters_device();
+    void free_parameters_device();
+    void copy_parameters_device();
+    void copy_parameters_host();
+
+    float* get_synaptic_weights_device() const;
+    float* get_biases_device() const;
+
+    void print_cuda_parameters();
+
+    void reverse_cuda(Index, Index, Index, float*);
+
+    private:
+
+    float* biases_device = nullptr;
+    float* synaptic_weights_device = nullptr;
+
+    cudnnHandle_t cudnn_handle;
+    cublasHandle_t cublas_handle;
+
+#endif
 
 private:
 
@@ -238,9 +275,65 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
 };
 
+
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/convolutional_layer_back_propagation_cuda.h"
+
+struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit ConvolutionalLayerForwardPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    pair<type*, dimensions> get_outputs_pair() const;
+
+    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    cudnnConvolutionFwdAlgo_t convolution_algorithm;
+    vector<cudnnConvolutionFwdAlgoPerf_t> perfResults;
+    int returnedAlgoCount = 0;
+
+    type* convolutions = nullptr;
+    void* workspace = nullptr;
+    size_t workspace_bytes = 0;
+
+    int output_batch_size = 0, output_channels = 0, output_height = 0, output_width = 0;
+};
+
+
+struct ConvolutionalLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit ConvolutionalLayerBackPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    cudnnTensorDescriptor_t deltas_device_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_synaptic_weights_derivatives_tensor_descriptor = nullptr;
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+
+    type* error_combinations_derivatives = nullptr;
+    type* biases_derivatives = nullptr;
+    type* kernel_synaptic_weights_derivatives = nullptr;
+    void* backward_data_workspace = nullptr;
+    void* backward_filter_workspace = nullptr;
+    size_t backward_data_workspace_bytes = 0;
+    size_t backward_filter_workspace_bytes = 0;
+};
+
 #endif
 
 }

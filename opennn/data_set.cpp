@@ -1657,12 +1657,11 @@ namespace opennn
 
         set_codification(new_codification);
 
-        read_csv();
+        //read_csv();
 
         set_default_raw_variables_scalers();
 
         set_default_raw_variables_uses();
-
 
         missing_values_method = MissingValuesMethod::Median;
         scrub_missing_values();
@@ -4152,9 +4151,9 @@ namespace opennn
             sample_index++;
         }
 
-        file.clear();
-        file.seekg(0);
-        read_data_file_preview(file);
+        //file.clear();
+        //file.seekg(0);
+        //read_data_file_preview(file);
 
         file.close();
 

@@ -19,10 +19,10 @@ using namespace tinyxml2;
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct LayerForwardPropagationCuda;
-struct LayerBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//struct LayerForwardPropagationCuda;
+//struct LayerBackPropagationCuda;
+//#endif
 
 class Layer
 {
@@ -316,15 +316,107 @@ protected:
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"
+
+protected:
+
+        cublasHandle_t cublas_handle = nullptr;
+        cudnnHandle_t cudnn_handle = nullptr;
+
+        cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+        cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+
+public:
+
+    virtual ~Layer() = default;
+
+    void create_cuda();
+    void destroy_cuda();
+
+    cudnnHandle_t get_cudnn_handle();
+
+    virtual void allocate_parameters_device();
+    virtual void free_parameters_device();
+    virtual void copy_parameters_device();
+
+    virtual void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                        LayerForwardPropagationCuda*,
+                                        const bool&);
+
+    virtual void copy_parameters_host();
+    virtual void print_parameters_cuda();
+
+    virtual void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                     const Tensor<pair<type*, dimensions>, 1>&,
+                                     LayerForwardPropagationCuda*,
+                                     LayerBackPropagationCuda*) const;
+
+    virtual void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+
+    virtual void set_parameters_cuda(const float*, const Index&);
+
+    virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&);
+
+    virtual string get_type_string() const = 0;
 #endif
 
 };
 
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
-#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
+
+struct LayerForwardPropagationCuda
+{
+    explicit LayerForwardPropagationCuda();
+
+    explicit LayerForwardPropagationCuda(const Index&, Layer*);
+
+    virtual ~LayerForwardPropagationCuda();
+
+    virtual void set(const Index&, Layer*) = 0;
+
+    virtual void free() = 0;
+
+    virtual void print() const;
+
+    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+
+    Index batch_samples_number = 0;
+
+    Layer* layer = nullptr;
+
+    type* outputs = nullptr;
+
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+};
+
+
+struct LayerBackPropagationCuda
+{
+    explicit LayerBackPropagationCuda();
+
+    explicit LayerBackPropagationCuda(const Index&, Layer*);
+
+    virtual ~LayerBackPropagationCuda();
+
+    virtual void set(const Index&, Layer*) = 0;
+
+    virtual void free() = 0;
+
+    virtual void print() const;
+
+    Tensor<pair<type*, dimensions>, 1>& get_inputs_derivatives_pair_device();
+
+    Index batch_samples_number = 0;
+
+    Layer* layer = nullptr;
+
+    type* inputs_derivatives = nullptr;
+
+    Tensor<pair<type*, dimensions>, 1> inputs_derivatives_pair_device;
+
+    cudnnTensorDescriptor_t inputs_derivatives_tensor_descriptor = nullptr;
+};
+
 #endif
 
 }

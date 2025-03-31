@@ -115,7 +115,20 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
+
+protected:
+
+    cublasHandle_t cublas_handle;
+    cudnnHandle_t cudnn_handle;
+
+public:
+
+    struct OptimizationDataCuda;
+
+    void create_cuda();
+
+    void destroy_cuda();
+
 #endif
 
 };

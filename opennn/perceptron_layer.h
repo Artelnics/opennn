@@ -14,10 +14,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    struct PerceptronLayerForwardPropagationCuda;
-    struct PerceptronLayerBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//    struct PerceptronLayerForwardPropagationCuda;
+//    struct PerceptronLayerBackPropagationCuda;
+//#endif
 
 class Perceptron : public Layer
 {
@@ -126,9 +126,51 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+
+public:
+
+    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagationCuda*,
+                                const bool&) final;
+
+    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                             const Tensor<pair<type*, dimensions>, 1>&,
+                             LayerForwardPropagationCuda*,
+                             LayerBackPropagationCuda*) const final;
+
+            void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+
+            void set_parameters_cuda(const float*, const Index&);
+
+            void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+
+            void allocate_parameters_device();
+            void free_parameters_device();
+            void copy_parameters_device();
+            void copy_parameters_host();
+
+            float* get_synaptic_weights_device() const;
+            float* get_biases_device() const;
+
+            Index get_neurons_number() const;
+            Index get_inputs_number() const;
+            Index get_synaptic_weights_number() const;
+            Index get_biases_number() const;
+            ActivationFunction get_activation_function() const;
+
+protected:
+
+    cublasHandle_t cublas_handle;
+    cudnnHandle_t cudnn_handle;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor;
+
+private:
+
+    float* biases_device = nullptr;
+    float* synaptic_weights_device = nullptr;
+
+#endif
 
 private:
 
@@ -202,8 +244,49 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_back_propagation_cuda.h"
+
+struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit PerceptronLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void print() const override;
+
+    void free() override;
+
+    std::pair<type*, dimensions> get_outputs_pair() const override;
+
+    type* combinations_cuda = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+};
+
+
+struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit PerceptronLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void print() const override;
+
+    void free() override;
+
+    float* biases_derivatives_cuda = nullptr;
+    float* synaptic_weights_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_cuda = nullptr;
+    float* ones = nullptr;
+    float one = 1.0f;
+
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
+};
+
 #endif
 
 

@@ -14,10 +14,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct Perceptron3dForwardPropagationCuda;
-struct Perceptron3dBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//struct Perceptron3dForwardPropagationCuda;
+//struct Perceptron3dBackPropagationCuda;
+//#endif
 
 class Perceptron3d : public Layer
 {
@@ -93,9 +93,9 @@ public:
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
-    #endif
+    //#ifdef OPENNN_CUDA
+    //    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_cuda.h"
+    //#endif
 
 private:
 
@@ -152,10 +152,10 @@ struct Perceptron3dBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_back_propagation_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_forward_propagation_cuda.h"
+//    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_3d_back_propagation_cuda.h"
+//#endif
 
 
 }

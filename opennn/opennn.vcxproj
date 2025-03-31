@@ -383,6 +383,10 @@
     <ClInclude Include="weighted_squared_error.h" />
     <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="kernel.cu" />
+    <None Include="kernel.cuh" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

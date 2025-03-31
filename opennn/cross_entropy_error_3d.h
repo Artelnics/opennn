@@ -19,25 +19,39 @@ class CrossEntropyError3D : public LossIndex
 
 public:
 
-   CrossEntropyError3D(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    CrossEntropyError3D(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
-   void calculate_error(const Batch&,
-                        const ForwardPropagation&,
-                        BackPropagation&) const override;
+    void calculate_error(const Batch&,
+                         const ForwardPropagation&,
+                         BackPropagation&) const override;
 
-   void calculate_output_delta(const Batch&,
-                               ForwardPropagation&,
-                               BackPropagation&) const override;
+    void calculate_output_delta(const Batch&,
+                                ForwardPropagation&,
+                                BackPropagation&) const override;
 
-   string get_loss_method() const override;
-   string get_error_type_text() const override;
+    string get_loss_method() const override;
+    string get_error_type_text() const override;
 
-   virtual void from_XML(const XMLDocument&);
+    virtual void from_XML(const XMLDocument&);
 
-   void to_XML(XMLPrinter&) const override;
+    void to_XML(XMLPrinter&) const override;
 
     #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_3d_cuda.h"
+
+    void calculate_error_cuda(const BatchCuda& batch_cuda,
+                              const NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
+                              BackPropagationCuda& back_propagation_cuda) const
+    {
+
+    }
+
+    void calculate_output_delta_cuda(const BatchCuda& batch_cuda,
+                                     const NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
+                                     BackPropagationCuda& back_propagation_cuda) const
+    {
+
+    }
+
     #endif
 };
 

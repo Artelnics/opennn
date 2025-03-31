@@ -47,7 +47,54 @@ struct Batch
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/batch_cuda.h"
+
+    struct BatchCuda
+    {
+        explicit BatchCuda();
+        BatchCuda(const Index&, DataSet*);
+        virtual ~BatchCuda();
+
+        void set(const Index&, DataSet*);
+
+        void copy_device();
+
+        Tensor<type, 2> get_inputs_device() const;
+
+        Tensor<pair<type*, dimensions>, 1> get_inputs_pair_device() const;
+
+        Tensor<type, 2> get_targets_device() const;
+
+        void allocate();
+
+        void free();
+
+        void fill(const Tensor<Index, 1>&,
+            const Tensor<Index, 1>&,
+            const Tensor<Index, 1>&,
+            const Tensor<Index, 1>&);
+
+        Index get_batch_samples_number() const;
+
+        void print();
+
+        DataSet* data_set = nullptr;
+        Index batch_size = 0;
+
+        dimensions input_dimensions;
+        dimensions target_dimensions;
+        dimensions context_dimensions;
+
+        float* inputs_host = nullptr;
+        float* targets_host = nullptr;
+        float* context_host = nullptr;
+
+        float* inputs_device = nullptr;
+        float* targets_device = nullptr;
+        float* context_device = nullptr;
+
+        bool has_context = false;
+    };
+
 #endif
 
 }

@@ -14,10 +14,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    struct ProbabilisticLayerForwardPropagationCuda;
-    struct ProbabilisticLayerBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//    struct ProbabilisticLayerForwardPropagationCuda;
+//    struct ProbabilisticLayerBackPropagationCuda;
+//#endif
 
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
@@ -74,8 +74,53 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_back_propagation_cuda.h"
+
+struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit ProbabilisticLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void print() const override;
+
+    void free() override;
+
+    std::pair<type*, dimensions> get_outputs_pair() const override;
+
+    type* combinations_cuda = nullptr;
+    type* outputs = nullptr;
+
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+};
+
+
+struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit ProbabilisticLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void print() const override;
+
+    void free() override;
+
+    float* targets = nullptr;
+    float* error_combinations_derivatives_cuda = nullptr;
+    float* ones = nullptr;
+    float* biases_derivatives_cuda = nullptr;
+    float* synaptic_weights_derivatives_cuda = nullptr;
+    float* inputs_derivatives = nullptr;
+    float one = 1.0f;
+
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+};
+
 #endif
 
 
@@ -171,7 +216,35 @@ private:
     const Eigen::array<Index, 1> sum_dimensions = {0};
 
 #ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
+
+public:
+
+    void forward_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
+                                LayerForwardPropagationCuda* forward_propagation_cuda,
+                                const bool& is_training) override;
+
+    void back_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
+                             const Tensor<std::pair<type*, dimensions>, 1>& deltas_pair_device,
+                             LayerForwardPropagationCuda* forward_propagation_cuda,
+                             LayerBackPropagationCuda* back_propagation_cuda) const override;
+
+    void insert_gradient_cuda(LayerBackPropagationCuda* back_propagation_cuda, const Index& index, float* gradient) const override;
+
+    void set_parameters_cuda(const float* new_parameters, const Index& index) override;
+    void get_parameters_cuda(Tensor<type, 1>& new_parameters, const Index& index) override;
+    void allocate_parameters_device() override;
+    void free_parameters_device() override;
+    void copy_parameters_device() override;
+    void copy_parameters_host() override;
+
+    float* get_synaptic_weights_device() const;
+    float* get_biases_device() const;
+
+protected:
+
+    float* biases_device = nullptr;
+    float* synaptic_weights_device = nullptr;
+
 #endif
 
 };

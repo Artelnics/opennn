@@ -67,7 +67,15 @@ protected:
    type normalization_coefficient = type(1);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/normalized_squared_error_cuda.h"
+
+   void calculate_error_cuda(const BatchCuda&,
+                             const NeuralNetwork::ForwardPropagationCuda&,
+                             BackPropagationCuda&) const;
+
+   void calculate_output_delta_cuda(const BatchCuda&,
+                                    const NeuralNetwork::ForwardPropagationCuda&,
+                                    BackPropagationCuda&) const;
+
 #endif
 
 };
