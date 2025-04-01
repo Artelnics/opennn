@@ -76,7 +76,7 @@ int main()
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
         // language_data_set.set(DataSet::SampleUse::Training);
-        adaptive_moment_estimation->set_loss_goal(0.1);
+        adaptive_moment_estimation->set_loss_goal(static_cast<type>(0.1));
         // adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(12);
