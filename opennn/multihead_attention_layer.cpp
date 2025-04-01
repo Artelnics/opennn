@@ -551,20 +551,26 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 1>& aux_rows = this_back_propagation->aux_rows;
 
     Tensor<type, 1>& projection_bias_derivatives = this_back_propagation->projection_bias_derivatives;
-    projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(projection_bias_derivatives_sum_indices);
 
     const Tensor<type,3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
     Tensor<type, 2>& projection_weights_derivatives = this_back_propagation->projection_weight_derivatives;
-    Tensor<type,3>& concatenated_attention_output_derivatives = this_back_propagation->concatenated_attention_output_deltas;
+    Tensor<type,3>& concatenated_attention_output_deltas = this_back_propagation->concatenated_attention_output_deltas;
 
+    // Calculation
+
+    projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(projection_bias_derivatives_sum_indices);
     projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, projection_weight_derivatives_contraction_indices);
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
-        TensorMap<Tensor<type, 2>> sample_concatenated_attention_output_derivatives = tensor_map(concatenated_attention_output_derivatives, sample_index);
+        TensorMap<Tensor<type, 2>> sample_concatenated_attention_output_deltas = tensor_map(concatenated_attention_output_deltas, sample_index);
 
-        sample_concatenated_attention_output_derivatives.device(*thread_pool_device) = deltas.chip(sample_index,0).contract(projection_weights, A_BT);
+        sample_concatenated_attention_output_deltas.device(*thread_pool_device) = deltas.chip(sample_index,0).contract(projection_weights, A_BT);
     }
+
+    // Attention output deltas
+
+    //attention_output_deltas.device(*thread_pool_device) = concatenated_attention_output_deltas.reshape();
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -585,7 +591,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         // Back propagation
 
         TensorMap<Tensor<type, 3>> head_attention_weight_derivatives_xxx = tensor_map(this_back_propagation->attention_weight_deltas_xxx, head_index);
-        TensorMap<Tensor<type, 3>> head_attention_output_derivatives = tensor_map(this_back_propagation->attention_output_deltas, head_index);
+        TensorMap<Tensor<type, 3>> head_attention_output_deltas = tensor_map(this_back_propagation->attention_output_deltas, head_index);
 
         TensorMap<Tensor<type, 3>> head_query_derivatives = tensor_map(this_back_propagation->query_deltas, head_index);
         TensorMap<Tensor<type, 3>> head_key_derivatives = tensor_map(this_back_propagation->key_deltas, head_index);
@@ -602,18 +608,18 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         TensorMap<Tensor<type, 1>> head_value_bias_derivatives = tensor_map(this_back_propagation->value_bias_derivatives, head_index);
         TensorMap<Tensor<type, 2>> head_value_weight_derivatives = tensor_map(this_back_propagation->value_weight_derivatives, head_index);
 
-
         // ATTENTION OUTPUT DERIVATIVES
+        
+        //head_attention_output_deltas.device(*thread_pool_device) =
+        //    concatenated_attention_output_deltas.slice(Eigen::array<Index, 3> {0, head_index*hidden_depth, 0},
+        //                                               Eigen::array<Index, 3> {query_sequence_length, hidden_depth, batch_size});
 
-        head_attention_output_derivatives.device(*thread_pool_device) =
-            concatenated_attention_output_derivatives.slice(Eigen::array<Index, 3> {0, head_index*hidden_depth, 0},
-                                                            Eigen::array<Index, 3> {query_sequence_length, hidden_depth, batch_size});
  // para depurar
 //         cout << "Conc att... dim: " << concatenated_attention_outputs.dimensions() << "\nHead att... dimensions: " << this_forward_propagation->attention_outputs.dimensions() << endl;
 //         if(head_index == 1){
 //         cerr << "Conc:\n" << concatenated_attention_outputs << endl;
 //         cout << "Att:\n" << this_forward_propagation->attention_outputs.chip(head_index,3) << endl;
-//         cerr << "Conc dervs:\n" << concatenated_attention_output_derivatives << endl;
+//         cerr << "Conc dervs:\n" << concatenated_attention_output_deltas << endl;
 //         cout << "Att derv: \n" << this_back_propagation->attention_output_deltas.chip(head_index,3) << endl;
 //         throw runtime_error("");
         // }
@@ -621,7 +627,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         batch_matrix_multiplication(thread_pool_device.get(),
                                     head_attention_weights,
-                                    head_attention_output_derivatives,
+                                    head_attention_output_deltas,
                                     head_value_derivatives,
                                     A_B);
 
@@ -634,7 +640,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         batch_matrix_multiplication(thread_pool_device.get(),
                                     head_value,
-                                    head_attention_output_derivatives,
+                                    head_attention_output_deltas,
                                     head_attention_weight_derivatives_xxx,
                                     A_BT);
 
