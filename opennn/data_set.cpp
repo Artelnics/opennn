@@ -630,7 +630,7 @@ namespace opennn
     void DataSet::set_default_raw_variables_uses()
     {
         const Index raw_variables_number = raw_variables.size();
-
+        cout << "raw_variables_number: " << raw_variables_number << endl;
         bool target = false;
 
         if (raw_variables_number == 0)
@@ -641,9 +641,9 @@ namespace opennn
             raw_variables[0].set_use(VariableUse::None);
             return;
         }
-
+        
         set(VariableUse::Input);
-
+        /*
         for (Index i = raw_variables.size() - 1; i >= 0; i--)
         {
             if (raw_variables[i].type == RawVariableType::Constant
@@ -662,6 +662,7 @@ namespace opennn
                 continue;
             }
         }
+        */
     }
 
 
@@ -1149,12 +1150,23 @@ namespace opennn
 
     void DataSet::set(const VariableUse& variable_use)
     {
-        for (auto& raw_variable : raw_variables)
+        /*
+        for (DataSet::RawVariable& raw_variable : raw_variables)
         {
             if (raw_variable.type == RawVariableType::Constant)
                 continue;
 
             raw_variable.set_use(variable_use);
+        }
+        */
+        const Index raw_variables_number = get_raw_variables_number();
+
+        for (Index i = 0; i < raw_variables_number; i++)
+        {
+            if (raw_variables[i].type == RawVariableType::Constant)
+                continue;
+
+            raw_variables[i].set_use(variable_use);
         }
     }
 
@@ -1167,7 +1179,7 @@ namespace opennn
 
     void DataSet::set_raw_variable_scalers(const Scaler& scalers)
     {
-        for (auto& raw_variable : raw_variables)
+        for (DataSet::RawVariable& raw_variable : raw_variables)
             raw_variable.scaler = scalers;
     }
 
@@ -1637,11 +1649,11 @@ namespace opennn
 
         set_codification(new_codification);
 
-        //read_csv();
+        read_csv();
 
         set_default_raw_variables_scalers();
 
-        set_default_raw_variables_uses();
+        //set_default_raw_variables_uses();
 
         missing_values_method = MissingValuesMethod::Median;
         scrub_missing_values();
@@ -2667,7 +2679,7 @@ namespace opennn
         if (model_type == ModelType::ImageClassification)
             set_raw_variable_scalers(Scaler::ImageMinMax);
         else
-            for (auto& raw_variable : raw_variables)
+            for (DataSet::RawVariable& raw_variable : raw_variables)
                 raw_variable.scaler = (raw_variable.type == RawVariableType::Numeric)
                 ? Scaler::MeanStandardDeviation
                 : Scaler::MinimumMaximum;
@@ -3907,7 +3919,7 @@ namespace opennn
 
         if (!file.is_open())
             throw runtime_error("Error: Cannot open file " + data_path.string() + "\n");
-
+        
         const string separator_string = get_separator_string();
 
         const vector<string> positive_words = { "yes", "positive", "+", "true" };
@@ -3936,15 +3948,15 @@ namespace opennn
 
             if (columns_number != 0) break;
         }
-
+  
         const Index raw_variables_number = has_sample_ids
             ? columns_number - 1
             : columns_number;
-
+    
         raw_variables.resize(raw_variables_number);
 
         Index samples_number = 0;
-
+        
         if (has_header)
         {
             if (has_numbers(tokens))
@@ -3962,7 +3974,7 @@ namespace opennn
             set_default_raw_variable_names();
         }
         // Rest of lines
-
+        
         while (getline(file, line))
         {
             prepare_line(line);
@@ -3981,7 +3993,7 @@ namespace opennn
 
             samples_number++;
         }
-
+        
         for (auto& raw_variable : raw_variables)
             if (raw_variable.type == RawVariableType::Categorical
                 && raw_variable.get_categories_number() == 2)
@@ -3990,15 +4002,6 @@ namespace opennn
         sample_uses.resize(samples_number);
 
         sample_ids.resize(samples_number);
-
-        // if(samples_number > 3 && has_header)
-        //     data_file_preview.resize(4);
-        // else if(samples_number < 3 && has_header)
-        //     data_file_preview.resize(samples_number + 1);
-        // else if(samples_number > 3 && !has_header)
-        //     data_file_preview.resize(3);
-        // else if(samples_number < 3 && !has_header)
-        //     data_file_preview.resize(samples_number);
 
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
