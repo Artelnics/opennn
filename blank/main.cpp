@@ -49,7 +49,7 @@ int main()
 
         nn.add_layer(make_unique<MultiHeadAttention>(seq_len,seq_len,embed_dim, num_heads, false));
 
-        nn.set_parameters_constant(0.1);
+        nn.set_parameters_constant(static_cast<type>(0.1));
 
 
 

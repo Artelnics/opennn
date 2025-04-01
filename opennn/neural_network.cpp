@@ -806,7 +806,7 @@ Index NeuralNetwork::get_parameters_number() const
 
     #pragma omp parallel for reduction(+: parameters_number)
 
-    for(Index i = 0; i < layers.size(); i++)
+    for(Index i = 0; i < Index(layers.size()); i++)
         parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
