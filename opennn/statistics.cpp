@@ -653,6 +653,7 @@ type standard_deviation(const Tensor<type, 1>& vector)
     return sqrt(variance(vector));
 }
 
+
 type median(const Tensor<type, 1>& vector) {
     const Index size = vector.dimension(0);
 

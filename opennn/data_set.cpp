@@ -4202,7 +4202,7 @@ namespace opennn
 
         // Check empty file
 
-        if (data_file_preview[0].size() == 0)
+        if (data_file_preview[0].empty())
             throw runtime_error("File " + data_path.string() + " is empty.\n");
 
         // Resize data file preview to original

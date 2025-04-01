@@ -265,7 +265,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                            1, 
                                            multiplies<Index>());
 
-    if(input_names.size() == 0){
+    if(input_names.empty()){
         input_names.resize(inputs_number);
         for(Index i = 0; i < inputs_number; i++)
             input_names[i] = "input_" + to_string(i+1);
@@ -277,7 +277,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                             1,
                                             multiplies<Index>());
 
-    if(output_names.size() == 0){
+    if(output_names.empty())
+    {
         output_names.resize(outputs_number);
         for(Index i = 0; i < outputs_number; i++)
             output_names[i] = "output_" + to_string(i+1);
@@ -805,7 +806,7 @@ Index NeuralNetwork::get_parameters_number() const
 
     #pragma omp parallel for reduction(+: parameters_number)
 
-    for(Index i = 0; i < Index(layers.size()); i++)
+    for(Index i = 0; i < layers.size(); i++)
         parameters_number += layers[i]->get_parameters_number();
 
     return parameters_number;
