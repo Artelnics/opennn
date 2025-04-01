@@ -203,7 +203,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     beta_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_2);
     
     // Input derivatives
-    //@TODO REVISAR LA NUEVA FUNCIÓN DE SOFTMAX DERIVATIVES TIMES TENSOR PARA PODER QUITAR LOS ATTENTION SCORES
 
     scaled_deltas.device(*thread_pool_device) = deltas;
     multiply_matrices(thread_pool_device.get(), scaled_deltas, gammas);

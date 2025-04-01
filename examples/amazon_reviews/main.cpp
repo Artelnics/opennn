@@ -68,6 +68,8 @@ int main()
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
 
+        // neural_network.set_parameters_constant(0.1);
+
         // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &text_data_set);

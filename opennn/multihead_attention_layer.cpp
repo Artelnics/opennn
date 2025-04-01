@@ -20,14 +20,14 @@ MultiHeadAttention::MultiHeadAttention(const Index& new_query_sequence_length,
                                        const bool& new_use_causal_mask,
                                        const string& new_name) : Layer()
 {
-    set(new_query_sequence_length, 
-        new_source_sequence_length, 
-        new_embedding_dimension, 
-        new_heads_number, 
+    set(new_query_sequence_length,
+        new_source_sequence_length,
+        new_embedding_dimension,
+        new_heads_number,
         new_use_causal_mask,
         new_name);
 
-    layer_type = Type::MultiheadAttention;   
+    layer_type = Type::MultiheadAttention;
 }
 
 
@@ -60,16 +60,16 @@ type MultiHeadAttention::get_scaling_factor() const
     const Index hidden_depth = get_hidden_depth();
 
     return (hidden_depth == 0)
-        ? 0.25
-        : type(1) / type(sqrt(hidden_depth));
+               ? 0.25
+               : type(1) / type(sqrt(hidden_depth));
 }
 
 
 Index MultiHeadAttention::get_hidden_depth() const
 {
     return (get_heads_number() == 0)
-        ? 0
-        : Index(get_embedding_dimension() / get_heads_number());
+               ? 0
+               : Index(get_embedding_dimension() / get_heads_number());
 }
 
 
@@ -88,9 +88,9 @@ dimensions MultiHeadAttention::get_output_dimensions() const
 Index MultiHeadAttention::get_parameters_number() const
 {
     return query_weights.size() + query_biases.size()
-         + key_weights.size() + key_biases.size()
-         + value_weights.size() + value_biases.size()
-         + projection_weights.size() + projection_biases.size();
+           + key_weights.size() + key_biases.size()
+           + value_weights.size() + value_biases.size()
+           + projection_weights.size() + projection_biases.size();
 }
 
 
@@ -143,7 +143,8 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     value_weights.resize(embedding_dimension, hidden_depth, heads_number);
     value_biases.resize(hidden_depth, heads_number);
 
-    projection_weights.resize(hidden_depth, embedding_dimension, heads_number);
+    //projection_weights.resize(hidden_depth, embedding_dimension, heads_number);
+    projection_weights.resize(embedding_dimension, embedding_dimension);
     projection_biases.resize(embedding_dimension);
 
     set_parameters_random();
@@ -153,13 +154,13 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     if (!use_causal_mask) return;
 
     causal_mask.resize(query_sequence_length, source_sequence_length);
-    causal_mask.setZero();  
+    causal_mask.setZero();
 
-    #pragma omp parallel for
+#pragma omp parallel for
 
     for (Index i = 0; i < query_sequence_length; i++)
         for (Index j = i + 1; j < source_sequence_length; j++)
-            causal_mask(i, j) = minus_inf; 
+            causal_mask(i, j) = minus_inf;
 }
 
 
@@ -245,13 +246,13 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             type* sample_attention_scores_data = attention_scores.data()
-            // + (sample_index + head_index) * context_input_size * batch_size;
-            + (sample_index + head_index * batch_size) * context_input_size;
+                                                 // + (sample_index + head_index) * context_input_size * batch_size;
+                                                 + (sample_index + head_index * batch_size) * context_input_size;
             // + (sample_index * heads_number + head_index) * context_input_size * batch_size;
 
             TensorMap<Tensor<type, 2>> sample_attention_scores(sample_attention_scores_data,
-                source_sequence_length,
-                query_sequence_length);
+                                                               source_sequence_length,
+                                                               query_sequence_length);
 
             sample_attention_scores.device(*thread_pool_device) += causal_mask;
         }
@@ -272,7 +273,7 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
         for (Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             TensorMap<Tensor<type, 2>> head_sample_query = tensor_map(query, head_index, sample_index);
-            
+
             head_sample_query.device(*thread_pool_device)
                 = query_input.chip(sample_index, 0).contract(head_query_weights, A_B);
 
@@ -280,7 +281,7 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
         }
     }
 
-/*
+    /*
     Arguments
 
         const Eigen::Tensor<float, 3>& input,             // (batch, seq_len, embed_dim)
@@ -374,8 +375,6 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
     if(use_causal_mask)
         apply_causal_mask(attention_weights);
 
-    //attention_weights += causal_mask.broadcast();
-
     softmax(attention_weights);
 }
 
@@ -384,31 +383,31 @@ void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& valu
                                                      const Tensor<type, 4>& attention_weights,
                                                      Tensor<type, 4>& attention_outputs) const
 {
-    batch_matrix_multiplication(thread_pool_device.get(), 
-                                attention_weights, 
-                                value, 
-                                attention_outputs, 
+    batch_matrix_multiplication(thread_pool_device.get(),
+                                attention_weights,
+                                value,
+                                attention_outputs,
                                 AT_B);
 }
 
-
-void MultiHeadAttention::calculate_heads(const Tensor<type, 4>& query, 
-                                         const Tensor<type, 4>& key, 
-                                         const Tensor<type, 4>& value, 
-                                         Tensor<type, 4>& heads)
+void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outputs,
+                                           Tensor<type, 3>& concatenated_atention_outputs) const
 {
-/*
-    calculate_attention_weights(query,
-        key,
-        attention_weights);
+    const Index batch_size = attention_outputs.dimension(2);
 
-    if (is_training && dropout_rate > type(0))
-        dropout(attention_weights);
+    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    {
+        TensorMap<Tensor<type, 2>> sample_concatenated_attention_outputs = tensor_map(concatenated_atention_outputs, sample_index);
 
-    calculate_attention_outputs(value,
-        attention_weights,
-        attention_outputs);
-*/
+        const Tensor<type, 3> sample_attention_outputs = attention_outputs.chip(sample_index,2);
+
+        for(Index head_index = 0; head_index < heads_number; head_index++)
+        {
+            const TensorMap<Tensor<type, 2>> head_sample_attention_outputs = tensor_map(sample_attention_outputs, head_index);
+
+            memcpy(sample_concatenated_attention_outputs.data() + head_sample_attention_outputs.size()*head_index, head_sample_attention_outputs.data(), head_sample_attention_outputs.size() * sizeof(type));
+        }
+    }
 }
 
 
@@ -418,15 +417,15 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
 {
     // @todo The heads are first concatenated and then the contraction (at least in ChatGpt -> check again)
 
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index heads_number = get_heads_number();
 
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
-        const TensorMap<Tensor<type, 2>> head_projection_weights = tensor_map(projection_weights, head_index);
+        const Tensor<type, 2> head_projection_weights = projection_weights.slice(Eigen::array<Index,2>{head_index*get_hidden_depth(),0},Eigen::array<Index,2>{get_hidden_depth(),embedding_dimension});
         TensorMap<Tensor<type, 3>> head_projection_outputs = tensor_map(projection_outputs, head_index);
 
-        for (Index sample_index = 0; sample_index < samples_number; sample_index++)
+        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(attention_outputs, head_index, sample_index);
 
@@ -438,8 +437,32 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
     outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
 
     sum_matrices(thread_pool_device.get(), projection_biases, outputs);
+
 }
 
+void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& concatenated_attention_outputs,
+                                                     Tensor<type, 4>& projection_outputs,
+                                                     Tensor<type, 3>& outputs) const
+{
+    // @todo The heads are first concatenated and then the contraction (at least in ChatGpt -> check again)
+
+    const Index batch_size = outputs.dimension(0);
+    const Index heads_number = get_heads_number();
+
+
+    for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+    {
+        const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(concatenated_attention_outputs, sample_index);
+
+        outputs.chip(sample_index, 0).device(*thread_pool_device)
+            = sample_attention_output.contract(projection_weights, A_B);
+    }
+
+    // outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
+
+    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
+
+}
 
 void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
@@ -461,6 +484,8 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 4>& attention_outputs = this_forward_propagation->attention_outputs;
 
+    Tensor<type, 3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
+
     Tensor<type, 4>& projection_outputs = this_forward_propagation->projection_outputs;
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -480,11 +505,15 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
                                 attention_weights,
                                 attention_outputs);
 
-    calculate_output_projection(attention_outputs,
+    concatenate_heads(attention_outputs,
+                      concatenated_attention_outputs);
+
+    calculate_output_projection(concatenated_attention_outputs,
                                 projection_outputs,
                                 outputs);
 
-    // cout << "Attention weights:\n" << attention_weights << endl;
+    // cout << "Outputs:\n" << outputs << endl;
+    // throw runtime_error("");
 }
 
 
@@ -499,6 +528,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     const Index batch_size = input_pairs[0].second[0];
     const Index heads_number = get_heads_number();
+    const Index hidden_depth = get_hidden_depth();
 
     const type scaling_factor = get_scaling_factor();
 
@@ -523,6 +553,19 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 1>& projection_bias_derivatives = this_back_propagation->projection_bias_derivatives;
     projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(projection_bias_derivatives_sum_indices);
 
+    const Tensor<type,3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
+    Tensor<type, 2>& projection_weights_derivatives = this_back_propagation->projection_weight_derivatives;
+    Tensor<type,3>& concatenated_attention_output_derivatives = this_back_propagation->concatenated_attention_output_deltas;
+
+    projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, projection_weight_derivatives_contraction_indices);
+
+    for(Index sample_index = 0; sample_index < batch_size; sample_index++)
+    {
+        TensorMap<Tensor<type, 2>> sample_concatenated_attention_output_derivatives = tensor_map(concatenated_attention_output_derivatives, sample_index);
+
+        sample_concatenated_attention_output_derivatives.device(*thread_pool_device) = deltas.chip(sample_index,0).contract(projection_weights, A_BT);
+    }
+
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         // Class
@@ -530,7 +573,6 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         const TensorMap<Tensor<type, 2>> head_query_weights = tensor_map(query_weights, head_index);
         const TensorMap<Tensor<type, 2>> head_key_weights = tensor_map(key_weights, head_index);
         const TensorMap<Tensor<type, 2>> head_value_weights = tensor_map(value_weights, head_index);
-        const TensorMap<Tensor<type, 2>> head_projection_weights = tensor_map(projection_weights, head_index);
 
         // Forward propagation
 
@@ -539,7 +581,6 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         const TensorMap<Tensor<type, 3>> head_value = tensor_map(this_forward_propagation->value, head_index);
 
         const TensorMap<Tensor<type, 3>> head_attention_weights = tensor_map(this_forward_propagation->attention_weights, head_index);
-        const TensorMap<Tensor<type, 3>> head_attention_outputs = tensor_map(this_forward_propagation->attention_outputs, head_index);
 
         // Back propagation
 
@@ -550,7 +591,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         TensorMap<Tensor<type, 3>> head_key_derivatives = tensor_map(this_back_propagation->key_deltas, head_index);
         TensorMap<Tensor<type, 3>> head_value_derivatives = tensor_map(this_back_propagation->value_deltas, head_index);
 
-        // 
+        //
 
         TensorMap<Tensor<type, 1>> head_query_bias_derivatives = tensor_map(this_back_propagation->query_bias_derivatives, head_index);
         TensorMap<Tensor<type, 2>> head_query_weight_derivatives = tensor_map(this_back_propagation->query_weight_derivatives, head_index);
@@ -561,29 +602,27 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         TensorMap<Tensor<type, 1>> head_value_bias_derivatives = tensor_map(this_back_propagation->value_bias_derivatives, head_index);
         TensorMap<Tensor<type, 2>> head_value_weight_derivatives = tensor_map(this_back_propagation->value_weight_derivatives, head_index);
 
-        TensorMap<Tensor<type, 2>> head_projection_weight_derivatives = tensor_map(this_back_propagation->projection_weight_derivatives, head_index);
-
-        // PROJECTION WEIGHTS DERIVATIVES
-
-        head_projection_weight_derivatives.device(*thread_pool_device)
-            = head_attention_outputs.contract(deltas, projection_weight_derivatives_contraction_indices);
 
         // ATTENTION OUTPUT DERIVATIVES
 
-        for(Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> sample_attention_output_derivatives = tensor_map(this_back_propagation->attention_output_deltas, head_index, sample_index);
-
-            sample_attention_output_derivatives.device(*thread_pool_device)
-                = deltas.chip(sample_index, 0).contract(head_projection_weights, A_BT);
-        }
-
+        head_attention_output_derivatives.device(*thread_pool_device) =
+            concatenated_attention_output_derivatives.slice(Eigen::array<Index, 3> {0, head_index*hidden_depth, 0},
+                                                            Eigen::array<Index, 3> {query_sequence_length, hidden_depth, batch_size});
+ // para depurar
+//         cout << "Conc att... dim: " << concatenated_attention_outputs.dimensions() << "\nHead att... dimensions: " << this_forward_propagation->attention_outputs.dimensions() << endl;
+//         if(head_index == 1){
+//         cerr << "Conc:\n" << concatenated_attention_outputs << endl;
+//         cout << "Att:\n" << this_forward_propagation->attention_outputs.chip(head_index,3) << endl;
+//         cerr << "Conc dervs:\n" << concatenated_attention_output_derivatives << endl;
+//         cout << "Att derv: \n" << this_back_propagation->attention_output_deltas.chip(head_index,3) << endl;
+//         throw runtime_error("");
+        // }
         // VALUE DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device.get(), 
-                                    head_attention_weights, 
-                                    head_attention_output_derivatives, 
-                                    head_value_derivatives, 
+        batch_matrix_multiplication(thread_pool_device.get(),
+                                    head_attention_weights,
+                                    head_attention_output_derivatives,
+                                    head_value_derivatives,
                                     A_B);
 
         // VALUE WEIGHT DERIVATIVES
@@ -593,7 +632,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         // ATTENTION WEIGHT DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device.get(), 
+        batch_matrix_multiplication(thread_pool_device.get(),
                                     head_value,
                                     head_attention_output_derivatives,
                                     head_attention_weight_derivatives_xxx,
@@ -608,18 +647,18 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         // QUERY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device.get(), 
+        batch_matrix_multiplication(thread_pool_device.get(),
                                     head_attention_weight_derivatives_xxx,
-                                    head_key, 
-                                    head_query_derivatives, 
+                                    head_key,
+                                    head_query_derivatives,
                                     AT_B);
 
         // KEY DERIVATIVES
 
-        batch_matrix_multiplication(thread_pool_device.get(), 
+        batch_matrix_multiplication(thread_pool_device.get(),
                                     head_attention_weight_derivatives_xxx,
-                                    head_query, 
-                                    head_key_derivatives, 
+                                    head_query,
+                                    head_key_derivatives,
                                     A_B);
 
         // QUERY WEIGHTS DERIVATIVES
@@ -656,6 +695,15 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         head_key_bias_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(bias_derivatives_sum_indices);
         head_value_bias_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(bias_derivatives_sum_indices);
     }
+
+    // para depurar
+//     cout << /*"Parameters of the MHA:\n" << "\tQuery weight derivatives:\n" << this_back_propagation->query_weight_derivatives <<
+//         "\n\tQuery bias derivatives:\n" << this_back_propagation->query_bias_derivatives << endl*/
+// /*        "\tkey_weight_derivatives:\n" << this_back_propagation->key_weight_derivatives << "\n\tKey bias derivatives:\n" << this_back_propagation->key_bias_derivatives <<
+//         "\n\tValue weight derivatives:\n" << this_back_propagation->value_weight_derivatives << "\n\tValue bias derivatives:\n"<<this_back_propagation->value_bias_derivatives <<*/
+//         "\n\tProjection weight derivatives:\n" << this_back_propagation->projection_weight_derivatives <<
+//         "\n\tProjection bias derivatives:\n" << this_back_propagation->projection_bias_derivatives << endl;
+//     throw runtime_error(".");
 }
 
 
@@ -750,22 +798,23 @@ void MultiheadAttentionForwardPropagation::set(const Index& new_batch_size, Laye
     const Index heads_number = multihead_attention_layer->get_heads_number();
     const Index hidden_depth = multihead_attention_layer->get_hidden_depth();
 
-    // Outputs
-
-    outputs.resize(batch_size, query_sequence_length, embedding_dimension);
-
-    // Rest of quantities
-
     query.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
     key.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
     value.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
 
-    sample_matrix.resize(query_sequence_length, hidden_depth);
-
     attention_weights.resize(source_sequence_length, query_sequence_length, batch_size, heads_number);
     attention_outputs.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
 
+    concatenated_attention_outputs.resize(query_sequence_length, embedding_dimension, batch_size);
+
     projection_outputs.resize(batch_size, query_sequence_length, embedding_dimension, heads_number);
+
+    outputs.resize(batch_size, query_sequence_length, embedding_dimension);
+
+    // Auxiliar
+
+    sample_matrix.resize(query_sequence_length, hidden_depth);
+
 }
 
 
@@ -795,7 +844,7 @@ void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
     query_weight_derivatives.resize(embedding_dimension, hidden_depth, heads_number);
     key_weight_derivatives.resize(embedding_dimension, hidden_depth, heads_number);
     value_weight_derivatives.resize(embedding_dimension, hidden_depth, heads_number);
-    projection_weight_derivatives.resize(hidden_depth, embedding_dimension, heads_number);
+    projection_weight_derivatives.resize(embedding_dimension, embedding_dimension);
 
     query_bias_derivatives.resize(hidden_depth, heads_number);
     key_bias_derivatives.resize(hidden_depth, heads_number);
@@ -810,6 +859,8 @@ void MultiheadAttentionBackPropagation::set(const Index& new_batch_size, Layer* 
     attention_weight_deltas_xxx.resize(source_sequence_length, query_sequence_length, batch_size, heads_number);
 
     attention_output_deltas.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
+
+    concatenated_attention_output_deltas.resize(query_sequence_length, embedding_dimension, batch_size);
 
     query_deltas.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
 
@@ -826,7 +877,7 @@ void MultiheadAttentionBackPropagation::print() const
 }
 
 
-MultiheadAttentionBackPropagation::MultiheadAttentionBackPropagation(const Index& new_batch_size, 
+MultiheadAttentionBackPropagation::MultiheadAttentionBackPropagation(const Index& new_batch_size,
                                                                      Layer* new_layer)
     : LayerBackPropagation()
 {
@@ -843,8 +894,8 @@ vector<pair<type*, dimensions>> MultiheadAttentionBackPropagation::get_input_der
     const Index embedding_dimension = multihead_attention_layer->get_embedding_dimension();
 
     return
-    {{(type*)(input_query_derivatives.data()), {batch_size, query_sequence_length, embedding_dimension}},
-     {(type*)(input_source_derivatives.data()), {batch_size, source_sequence_length, embedding_dimension}} };
+        {{(type*)(input_query_derivatives.data()), {batch_size, query_sequence_length, embedding_dimension}},
+         {(type*)(input_source_derivatives.data()), {batch_size, source_sequence_length, embedding_dimension}} };
 }
 
 }

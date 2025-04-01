@@ -284,7 +284,6 @@ void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_
 
     Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
 
-
     calculate_combinations(inputs,
                            outputs);
 
