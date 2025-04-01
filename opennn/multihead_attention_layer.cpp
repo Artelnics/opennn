@@ -143,7 +143,8 @@ void MultiHeadAttention::set(const Index& new_query_sequence_length,
     value_weights.resize(embedding_dimension, hidden_depth, heads_number);
     value_biases.resize(hidden_depth, heads_number);
 
-    projection_weights.resize(hidden_depth, embedding_dimension, heads_number);
+    //projection_weights.resize(hidden_depth, embedding_dimension, heads_number);
+    projection_weights.resize(embedding_dimension, embedding_dimension);
     projection_biases.resize(embedding_dimension);
 
     set_parameters_random();
@@ -418,15 +419,15 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
 {
     // @todo The heads are first concatenated and then the contraction (at least in ChatGpt -> check again)
 
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index heads_number = get_heads_number();
-
+/*
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 2>> head_projection_weights = tensor_map(projection_weights, head_index);
         TensorMap<Tensor<type, 3>> head_projection_outputs = tensor_map(projection_outputs, head_index);
 
-        for (Index sample_index = 0; sample_index < samples_number; sample_index++)
+        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(attention_outputs, head_index, sample_index);
 
@@ -438,6 +439,7 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& atte
     outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
 
     sum_matrices(thread_pool_device.get(), projection_biases, outputs);
+*/
 }
 
 
@@ -530,8 +532,9 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         const TensorMap<Tensor<type, 2>> head_query_weights = tensor_map(query_weights, head_index);
         const TensorMap<Tensor<type, 2>> head_key_weights = tensor_map(key_weights, head_index);
         const TensorMap<Tensor<type, 2>> head_value_weights = tensor_map(value_weights, head_index);
+        /*
         const TensorMap<Tensor<type, 2>> head_projection_weights = tensor_map(projection_weights, head_index);
-
+        */
         // Forward propagation
 
         const TensorMap<Tensor<type, 3>> head_query = tensor_map(this_forward_propagation->query, head_index);
@@ -573,9 +576,10 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         for(Index sample_index = 0; sample_index < batch_size; sample_index++)
         {
             TensorMap<Tensor<type, 2>> sample_attention_output_derivatives = tensor_map(this_back_propagation->attention_output_deltas, head_index, sample_index);
-
+            /*
             sample_attention_output_derivatives.device(*thread_pool_device)
                 = deltas.chip(sample_index, 0).contract(head_projection_weights, A_BT);
+            */
         }
 
         // VALUE DERIVATIVES
@@ -753,22 +757,21 @@ void MultiheadAttentionForwardPropagation::set(const Index& new_batch_size, Laye
     const Index heads_number = multihead_attention_layer->get_heads_number();
     const Index hidden_depth = multihead_attention_layer->get_hidden_depth();
 
-    // Outputs
-
-    outputs.resize(batch_size, query_sequence_length, embedding_dimension);
-
-    // Rest of quantities
-
     query.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
     key.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
     value.resize(source_sequence_length, hidden_depth, batch_size, heads_number);
-
-    sample_matrix.resize(query_sequence_length, hidden_depth);
 
     attention_weights.resize(source_sequence_length, query_sequence_length, batch_size, heads_number);
     attention_outputs.resize(query_sequence_length, hidden_depth, batch_size, heads_number);
 
     projection_outputs.resize(batch_size, query_sequence_length, embedding_dimension, heads_number);
+
+    outputs.resize(batch_size, query_sequence_length, embedding_dimension);
+
+    // Auxiliar 
+
+    sample_matrix.resize(query_sequence_length, hidden_depth);
+
 }
 
 

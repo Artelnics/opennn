@@ -306,14 +306,14 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
                                                    const Tensor<type, 2>& mask,
                                                    Tensor<type, 3>& combination_deltas) const
 {
-    const Index samples_number = outputs.dimension(0);
+    const Index batch_size = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
     combination_deltas.device(*thread_pool_device) = outputs;
 
     #pragma omp parallel for collapse(2)
 
-    for(Index i = 0; i < samples_number; i++)
+    for(Index i = 0; i < batch_size; i++)
         for(Index j = 0; j < outputs_number; j++)
             combination_deltas(i, j, Index(targets(i, j)))--;
 
