@@ -21,7 +21,8 @@ int main()
 
         // Data set
 
-        DataSet data_set("data/breast_cancer.csv", ";", true, false);
+        // DataSet data_set("data/breast_cancer.csv", ";", true, false);
+        DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);

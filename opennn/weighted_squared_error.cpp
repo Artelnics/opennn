@@ -97,7 +97,7 @@ void WeightedSquaredError::set_weights()
     const vector<DataSet::RawVariable>& target_raw_variables 
         = data_set->get_raw_variables(DataSet::VariableUse::Target);
 
-    if(target_raw_variables.size() == 0)
+    if(target_raw_variables.empty() == 0)
     {
         positives_weight = type(1);
         negatives_weight = type(1);
@@ -130,7 +130,7 @@ void WeightedSquaredError::set_normalization_coefficient()
     const vector<DataSet::RawVariable>& target_raw_variables
         = data_set->get_raw_variables(DataSet::VariableUse::Target);
 
-    if(target_raw_variables.size() == 0)
+    if(target_raw_variables.empty())
         normalization_coefficient = type(1);
     else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == DataSet::RawVariableType::Binary)
     {
