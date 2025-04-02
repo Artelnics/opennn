@@ -18,7 +18,7 @@ struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
@@ -196,12 +196,9 @@ public:
    string get_expression() const;
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
-
-    NeuralNetworkCuda();
-    ~NeuralNetworkCuda();
 
     void create_cuda();
     void destroy_cuda();
@@ -211,9 +208,9 @@ public:
     void copy_parameters_device();
     void copy_parameters_host();
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                NeuralNetwork::ForwardPropagationCuda&,
-                                const bool&) const;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                ForwardPropagationCuda&,
+                                const bool& = false) const;
 
     void get_parameters_cuda(Tensor<type, 1>&);
     void set_parameters_cuda(float*);
@@ -222,25 +219,6 @@ protected:
 
     cublasHandle_t cublas_handle;
     cudnnHandle_t cudnn_handle;
-
-    Index get_first_trainable_layer_index() const;
-
-    Index get_last_trainable_layer_index() const;
-
-    Tensor<Layer*, 1> get_trainable_layers() const;
-
-    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
-
-    Tensor<Tensor<Index, 1>, 1> get_layers_inputs_indices() const;
-
-    bool is_input_layer(const Tensor<Index, 1>&) const;
-
-    bool is_context_layer(const Tensor<Index, 1>&) const;
-
-private:
-
-    NeuralNetworkCuda(const NeuralNetworkCuda&) = delete;
-    NeuralNetworkCuda& operator=(const NeuralNetworkCuda&) = delete;
 
 #endif
 
@@ -261,49 +239,6 @@ protected:
    bool display = true;
 
 };
-
-#ifdef OPENNN_CUDA
-
-struct ForwardPropagationCuda
-{
-    ForwardPropagationCuda();
-
-    ForwardPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
-
-    virtual ~ForwardPropagationCuda();
-
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
-
-    void print();
-
-    void free();
-
-    Index batch_samples_number = 0;
-    NeuralNetwork* neural_network = nullptr;
-    Tensor<LayerForwardPropagationCuda*, 1> layers;
-};
-
-
-struct NeuralNetworkBackPropagationCuda
-{
-    NeuralNetworkBackPropagationCuda();
-
-    NeuralNetworkBackPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
-
-    virtual ~NeuralNetworkBackPropagationCuda();
-
-    void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network);
-
-    void print();
-
-    void free();
-
-    Index batch_samples_number = 0;
-    NeuralNetwork* neural_network = nullptr;
-    Tensor<LayerBackPropagationCuda*, 1> layers;
-};
-
-#endif
 
 }
 

@@ -115,6 +115,9 @@ public:
     // Training
 
     TrainingResults perform_training();
+#ifdef OPENNN_CUDA
+    TrainingResults perform_training_cuda();
+#endif
 
     // Check
 
@@ -167,14 +170,6 @@ private:
     OptimizationMethod optimization_method;
 
     bool display = true;
-
-#ifdef OPENNN_CUDA
-
-public:
-
-    TrainingResults perform_training_cuda();
-
-#endif
 
 };
 

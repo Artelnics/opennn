@@ -236,6 +236,231 @@ pair<type*, dimensions> Batch::get_target_pair() const
     return { (type*)target_tensor.data() , target_dimensions};
 }
 
+
+#ifdef OPENNN_CUDA_test
+
+void BatchCuda::fill(const vector<Index>& sample_indices,
+                     const vector<Index>& input_indices,
+                     const vector<Index>& decoder_indices,
+                     const vector<Index>& target_indices)
+{
+    const Tensor<type, 2>& data = data_set->get_data();
+
+    if (is_instance_of<ImageDataSet>(data_set))
+    {
+        ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+
+        if (image_data_set->get_augmentation())
+        {
+            // @todo
+
+            //Tensor<type, 2> augmented_data = perform_augmentation(data);
+
+            //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
+        }
+        else
+        {
+            fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+        }
+    }
+    else
+    {
+        fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
+    }
+
+    if (is_instance_of<LanguageDataSet>(data_set))
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+
+    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+
+    copy_device();
+}
+
+
+BatchCuda::BatchCuda(const Index& new_samples_number, DataSet* new_data_set)
+{
+    set(new_samples_number, new_data_set);
+}
+
+
+void BatchCuda::set(const Index& new_samples_number, DataSet* new_data_set)
+{
+    if (!new_data_set) return;
+
+    samples_number = new_samples_number;
+    data_set = new_data_set;
+
+    const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
+    const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
+    const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
+
+    if (!data_set_input_dimensions.empty())
+    {
+        input_dimensions = { samples_number };
+        input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
+
+        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+        input_tensor.resize(input_size);
+    }
+
+    if (!data_set_decoder_dimensions.empty())
+    {
+        decoder_dimensions = { samples_number };
+        decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
+
+        const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
+        decoder_tensor.resize(decoder_size);
+    }
+
+    if (!data_set_target_dimensions.empty())
+    {
+        target_dimensions = { samples_number };
+        target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
+
+        const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
+        target_tensor.resize(target_size);
+    }
+
+    allocate();
+}
+
+
+void BatchCuda::copy_device()
+{
+    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+
+    if (cudaMemcpy(inputs_device, inputs_host, samples_number * inputs_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "Inputs copy error" << endl;
+
+    if (cudaMemcpy(targets_device, targets_host, samples_number * targets_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "Targets copy error" << endl;
+}
+
+
+Tensor<type, 2> BatchCuda::get_inputs_device() const
+{
+    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+
+    Tensor<type, 2> inputs_host(samples_number, inputs_number);
+
+    inputs_host.setZero();
+
+    if (cudaMemcpy(inputs_host.data(), inputs_device, samples_number * inputs_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda matrix memcpy error" << endl;
+
+    return inputs_host;
+}
+
+
+Tensor<type, 2> BatchCuda::get_targets_device() const
+{
+    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+
+    Tensor<type, 2> targets_host(samples_number, targets_number);
+
+    targets_host.setZero();
+
+    if (cudaMemcpy(targets_host.data(), targets_device, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda matrix memcpy error" << endl;
+
+    return targets_host;
+}
+
+
+vector<pair<type*, dimensions>> BatchCuda::get_input_pairs_device() const
+{
+    vector<pair<type*, dimensions>> inputs;
+
+    if (!decoder_dimensions.empty())
+    {
+        inputs.resize(1);
+        inputs[0].first = inputs_device;
+        inputs[0].second = input_dimensions;
+    }
+    else
+    {
+        inputs.resize(2);
+
+        inputs[0].first = inputs_device;
+        inputs[0].second = input_dimensions;
+
+        inputs[1].first = decoder_device;
+        inputs[1].second = decoder_dimensions;
+    }
+
+    return inputs;
+}
+
+
+pair<type*, dimensions> BatchCuda::get_target_pair_device() const
+{
+    
+    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+
+    pair<type*, dimensions> target_host;
+
+    if (cudaMemcpy(target_host.first, targets_device, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Cuda matrix memcpy error" << endl;
+
+    target_host.second = target_dimensions;
+
+    return target_host;
+    
+}
+
+
+void BatchCuda::allocate()
+{
+    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+
+    if (cudaMallocHost(&inputs_host, samples_number * inputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Inputs host allocation error" << endl;
+
+    if (cudaMallocHost(&targets_host, samples_number * targets_number * sizeof(float)) != cudaSuccess)
+        cout << "Targets host allocation error" << endl;
+
+    if (cudaMalloc(&inputs_device, samples_number * inputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Inputs allocation error" << endl;
+
+    if (cudaMalloc(&targets_device, samples_number * targets_number * sizeof(float)) != cudaSuccess)
+        cout << "Targets allocation error" << endl;
+}
+
+
+Index BatchCuda::get_samples_number() const
+{
+    return samples_number;
+}
+
+
+void BatchCuda::print()
+{
+    cout << "get_inputs_device" << endl;
+    cout << get_inputs_device() << endl;
+
+    cout << "get_targets_device" << endl;
+    cout << get_targets_device() << endl;
+}
+
+
+void BatchCuda::free()
+{
+    cudaFreeHost(inputs_host);
+    cudaFreeHost(targets_host);
+    cudaFree(inputs_device);
+    cudaFree(targets_device);
+
+    inputs_device = nullptr;
+    targets_device = nullptr;
+    inputs_host = nullptr;
+    targets_host = nullptr;
+}
+
+#endif
+
+
 } // namespace opennn
 
 // OpenNN: Open Neural Networks Library.

@@ -11,7 +11,6 @@ struct Batch
     Batch(const Index& = 0, DataSet* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_pairs() const;
-
     pair<type*, dimensions> get_target_pair() const;
 
     Index get_samples_number() const;
@@ -46,53 +45,55 @@ struct Batch
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 };
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
     struct BatchCuda
     {
-        explicit BatchCuda();
-        BatchCuda(const Index&, DataSet*);
-        virtual ~BatchCuda();
+        BatchCuda(const Index& = 0, DataSet* = nullptr);
+
+        vector<pair<type*, dimensions>> get_input_pairs_device() const;
+        pair<type*, dimensions> get_target_pair_device() const;
+
+        Index get_samples_number() const;
+
+        Tensor<type, 2> get_inputs_device() const;
+        Tensor<type, 2> get_targets_device() const;
 
         void set(const Index&, DataSet*);
 
         void copy_device();
 
-        Tensor<type, 2> get_inputs_device() const;
-
-        Tensor<pair<type*, dimensions>, 1> get_inputs_pair_device() const;
-
-        Tensor<type, 2> get_targets_device() const;
-
         void allocate();
 
         void free();
 
-        void fill(const Tensor<Index, 1>&,
-            const Tensor<Index, 1>&,
-            const Tensor<Index, 1>&,
-            const Tensor<Index, 1>&);
-
-        Index get_batch_samples_number() const;
+        void fill(const vector<Index>&,
+                  const vector<Index>&,
+                  const vector<Index>&,
+                  const vector<Index> & = vector<Index>());
 
         void print();
 
+        Index samples_number = 0;
+
         DataSet* data_set = nullptr;
-        Index batch_size = 0;
 
         dimensions input_dimensions;
+        Tensor<type, 1> input_tensor;
+
+        dimensions decoder_dimensions;
+        Tensor<type, 1> decoder_tensor;
+
         dimensions target_dimensions;
-        dimensions context_dimensions;
+        Tensor<type, 1> target_tensor;
 
         float* inputs_host = nullptr;
+        float* decoder_host = nullptr;
         float* targets_host = nullptr;
-        float* context_host = nullptr;
 
         float* inputs_device = nullptr;
+        float* decoder_device = nullptr;
         float* targets_device = nullptr;
-        float* context_device = nullptr;
-
-        bool has_context = false;
     };
 
 #endif

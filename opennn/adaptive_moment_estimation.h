@@ -16,7 +16,7 @@ namespace opennn
 
 struct AdaptiveMomentEstimationData;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct ADAMOptimizationDataCuda;
 #endif
 
@@ -111,26 +111,15 @@ private:
 
    Index batch_size = 1000;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
     public:
 
         TrainingResults perform_training_cuda();
 
-        void update_parameteres_cuda(LossIndex::BackPropagationCuda&, ADAMOptimizationDataCuda&);
-
-        type beta_1 = 0.9;
-        type beta_2 = 0.999;
-
-        bool use_custom_learning_rate = false;
-
-        type learning_rate = 0.001;
+        //void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 
     private:
-
-        void initialize_cuda_context();
-
-        void cleanup_cuda_context();
 
         cublasHandle_t cublas_handle;
         cudnnHandle_t cudnn_handle;
@@ -160,7 +149,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Index learning_rate_iteration = 0;
 };
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
     struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
     {
