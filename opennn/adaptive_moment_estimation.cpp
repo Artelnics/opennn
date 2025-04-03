@@ -547,7 +547,6 @@ void AdaptiveMomentEstimationData::print() const
 
 TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 {
-    
     if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
         return TrainingResults();
 
@@ -627,9 +626,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     Index selection_failures = 0;
 
     // Optimization algorithm
-    /*
+    
     ADAMOptimizationDataCuda optimization_data(this);
-
+    
     bool stop_training = false;
     bool is_training = true;
 
@@ -834,7 +833,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     
 }
 
-/*
+
 void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
                                                        ADAMOptimizationDataCuda& optimization_data_cuda) const
 {
@@ -846,7 +845,7 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
         sqrt(type(1) - pow(beta_2, type(iteration))) /
         (type(1) - pow(beta_1, type(iteration)));
 
-    const Index parameters_number = optimization_data_cuda.optimization_algorithm->get_loss_index()->get_neural_network()->get_parameters_number();
+    const Index parameters_number = optimization_data_cuda.adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
     type* gradient = back_propagation_cuda.gradient;
 
@@ -975,7 +974,88 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
 
     neural_network->set_parameters_cuda(parameters);
 }
-*/
+
+
+ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
+{
+    set();
+}
+
+
+void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
+{
+    adaptive_moment_estimation = new_adaptive_moment_estimation;
+
+    allocate();
+}
+
+void ADAMOptimizationDataCuda::allocate()
+{
+    const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    if (cudaMalloc(&square_gradient, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Square gradient allocation error" << endl;
+
+    if (cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "gradient_exponential_decay allocation error" << endl;
+
+    if (cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "square_gradient_exponential_decay allocation error" << endl;
+
+    if (cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&numerator, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&denominator, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    // Epsilon device
+
+    if (cudaMalloc(&epsilon_device, sizeof(float)) != cudaSuccess)
+        cout << "epsilon_device allocation error" << endl;
+
+    cudaMemcpy(epsilon_device, &epsilon, sizeof(float), cudaMemcpyHostToDevice);
+
+    cudnnCreateTensorDescriptor(&epsilon_device_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(epsilon_device_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        1,
+        1,
+        1,
+        1);
+
+}
+
+
+void ADAMOptimizationDataCuda::free()
+{
+    cudaFree(square_gradient);
+    cudaFree(gradient_exponential_decay);
+    cudaFree(square_gradient_exponential_decay);
+    cudaFree(last_gradient_exponential_decay);
+    cudaFree(last_square_gradient_exponential_decay);
+    cudaFree(numerator);
+    cudaFree(denominator);
+    cudaFree(epsilon_device);
+}
+
+
+void ADAMOptimizationDataCuda::print() const
+{
+    const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    const Tensor<type, 1> gradient_exponential_decay_host = vector_from_device(gradient_exponential_decay, parameters_number);
+
+    cout << "gradient_exponential_decay_host:" << endl;
+    cout << gradient_exponential_decay_host << endl;
+}
 
 #endif
 

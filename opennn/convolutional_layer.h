@@ -175,7 +175,7 @@ public:
     void copy_parameters_device();
     void copy_parameters_host();
 
-    float* get_synaptic_weights_device() const;
+    float* get_weights_device() const;
     float* get_biases_device() const;
 
     void print_cuda_parameters();
@@ -185,7 +185,7 @@ public:
     private:
 
     float* biases_device = nullptr;
-    float* synaptic_weights_device = nullptr;
+    float* weights_device = nullptr;
 
     cudnnHandle_t cudnn_handle;
     cublasHandle_t cublas_handle;

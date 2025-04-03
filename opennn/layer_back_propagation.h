@@ -23,5 +23,29 @@ struct LayerBackPropagation
     bool is_first_layer = false;
 };
 
+#ifdef OPENNN_CUDA_test
+
+struct LayerBackPropagationCuda
+{
+    LayerBackPropagationCuda() {}
+
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const {}
+
+    virtual void free() {}
+
+    virtual void print() const {}
+
+    Index batch_size = 0;
+
+    Layer* layer = nullptr;
+
+    bool is_first_layer = false;
+
+    float* inputs_derivatives = nullptr;
+    cudnnTensorDescriptor_t inputs_derivatives_tensor_descriptor = nullptr;
+};
+
+#endif
+
 }
 #endif

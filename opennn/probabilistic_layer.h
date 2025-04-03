@@ -234,13 +234,13 @@ public:
     void copy_parameters_device() override;
     void copy_parameters_host() override;
 
-    float* get_synaptic_weights_device() const;
+    float* get_weights_device() const;
     float* get_biases_device() const;
 
 protected:
 
     float* biases_device = nullptr;
-    float* synaptic_weights_device = nullptr;
+    float* weights_device = nullptr;
 
 #endif
 
