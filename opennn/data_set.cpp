@@ -4111,6 +4111,7 @@ namespace opennn
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();
+
     }
 
 
@@ -4262,6 +4263,13 @@ namespace opennn
                 return true;
 
         return false;
+    }
+
+
+    bool DataSet::has_time_raw_variable() const
+    {
+        return any_of(raw_variables.begin(), raw_variables.end(),
+                      [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::DateTime; });
     }
 
 

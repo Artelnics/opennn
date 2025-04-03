@@ -154,7 +154,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     {
         printer.OpenElement("RawVariable");
         printer.PushAttribute("Item", to_string(i+1).c_str());
-        time_series_raw_variables[i].to_XML(printer);
+        raw_variables[i].to_XML(printer);
         printer.CloseElement();
     }
 
@@ -368,7 +368,6 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
         data.resize(0, 0);
 
     // Missing values
-
     const XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
 
     if(!missing_values_element)
@@ -427,6 +426,17 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
     target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
 
+}
+
+
+Index TimeSeriesDataSet::get_time_series_time_raw_variable_index() const
+{
+    for(size_t i = 0; i < raw_variables.size(); i++)
+    {
+        if(raw_variables[i].type == RawVariableType::DateTime) return i;
+    }
+
+    return static_cast<Index>(NAN);
 }
 
 

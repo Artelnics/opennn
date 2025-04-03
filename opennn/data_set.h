@@ -325,8 +325,8 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
-
     bool has_binary_or_categorical_raw_variables() const;
+    bool has_time_raw_variable() const;
 
     bool has_selection() const;
 
