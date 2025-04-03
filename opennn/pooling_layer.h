@@ -110,9 +110,33 @@ public:
 
     void print() const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/pooling_layer_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+
+public:
+
+    void forward_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
+                                LayerForwardPropagationCuda* forward_propagation_cuda,
+                                const bool& is_training) final;
+
+    void back_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
+                             const Tensor<std::pair<type*, dimensions>, 1>& deltas_pair_device,
+                             LayerForwardPropagationCuda* forward_propagation_cuda,
+                             LayerBackPropagationCuda* back_propagation_cuda) const final;
+
+    void insert_gradient_cuda(LayerBackPropagationCuda* back_propagation_cuda, const Index& index, float* gradient) const override;
+
+    void set_parameters_cuda(const float* new_parameters, const Index& index) override;
+
+    void get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index) override;
+
+    void allocate_parameters_device() override;
+    void free_parameters_device() override;
+    void copy_parameters_device() override;
+    void copy_parameters_host() override;
+
+    void print_cuda_parameters() override;
+
+#endif
 
 private:
 
@@ -171,8 +195,39 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/pooling_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/pooling_layer_back_propagation_cuda.h"
+
+struct PoolingLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit PoolingLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void free() override;
+
+    float* inputs_derivatives = nullptr;
+};
+
+
+struct PoolingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit PoolingLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer);
+
+    void free() override;
+
+    std::pair<type*, dimensions> get_outputs_pair() const override;
+
+    cudnnPoolingMode_t pooling_mode;
+    bool no_pooling = false;
+
+    float* outputs = nullptr;
+
+    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+};
+
 #endif
 
 }

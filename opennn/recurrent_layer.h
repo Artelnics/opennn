@@ -14,9 +14,9 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
+//#endif
 
 class Recurrent : public Layer
 {
@@ -106,9 +106,9 @@ private:
 
    Tensor<type, 2> hidden_states;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
+//#endif
 
 };
 

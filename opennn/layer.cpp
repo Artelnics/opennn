@@ -479,7 +479,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 }
 
 
-/*void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
+void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
     TensorMap<Tensor<type, 3>>& result,
     Tensor<type, 1>& aux_rows) const
 {
@@ -515,7 +515,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
         }
     }
 }
-*/
+
 
 
 

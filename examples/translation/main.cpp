@@ -66,6 +66,8 @@ int main()
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
 
+        // neural_network.set_parameters_constant(0.1);
+
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
@@ -76,11 +78,11 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // language_data_set.set(DataSet::SampleUse::Training);
+        language_data_set.set(DataSet::SampleUse::Training);
         adaptive_moment_estimation->set_loss_goal(0.1);
         // adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(12);
+        adaptive_moment_estimation->set_batch_samples_number(/*12*/2);
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();        

@@ -15,8 +15,8 @@ namespace opennn
 {
 
 #ifdef OPENNN_CUDA
-    struct MultiheadAttentionForwardPropagationCuda;
-    struct MultiheadAttentionBackPropagationCuda;
+struct MultiheadAttentionForwardPropagationCuda;
+struct MultiheadAttentionBackPropagationCuda;
 #endif
 
 class MultiHeadAttention : public Layer
@@ -46,10 +46,10 @@ public:
     Index get_parameters_number() const override;
     Tensor<type, 1> get_parameters() const override;
 
-    void set(const Index& = 0, 
-             const Index& = 0, 
-             const Index& = 0, 
-             const Index& = 0, 
+    void set(const Index& = 0,
+             const Index& = 0,
+             const Index& = 0,
+             const Index& = 0,
              const bool& = false,
              const string& = "multihead_attention_layer");
 
@@ -66,14 +66,16 @@ public:
     void calculate_key(const Tensor<type, 3>&, Tensor<type, 4>&) const;
     void calculate_value(const Tensor<type, 3>&, Tensor<type, 4>&) const;
 
-    void calculate_heads(const Tensor<type, 4>&, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&);
-
     void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
     // void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
+    void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;
+
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
+
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -91,9 +93,9 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
-    #endif
+    //#ifdef OPENNN_CUDA
+    //    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
+    //#endif
 
 private:
 
@@ -136,7 +138,7 @@ private:
 struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 {
     MultiheadAttentionForwardPropagation(const Index& new_batch_size = 0,
-                                              Layer* new_layer = nullptr);
+                                         Layer* new_layer = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -150,6 +152,8 @@ struct MultiheadAttentionForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 4> attention_weights;
     Tensor<type, 4> attention_outputs;
+
+    Tensor<type, 3> concatenated_attention_outputs;
 
     Tensor<type, 4> projection_outputs;
 
@@ -171,6 +175,7 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
 
     Tensor<type, 4> attention_weight_deltas_xxx;
     Tensor<type, 4> attention_output_deltas;
+    Tensor<type, 3> concatenated_attention_output_deltas;
 
     Tensor<type, 2> sample_deltas;
 
@@ -182,7 +187,7 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 3> key_weight_derivatives;
     Tensor<type, 3> value_weight_derivatives;
 
-    Tensor<type, 3> projection_weight_derivatives;
+    Tensor<type, 2> projection_weight_derivatives;
 
     Tensor<type, 2> query_bias_derivatives;
     Tensor<type, 2> key_bias_derivatives;
@@ -195,10 +200,10 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 3> input_source_derivatives;
 };
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
-#endif
+//#ifdef OPENNN_CUDA
+//    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
+//    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
+//#endif
 
 }
 

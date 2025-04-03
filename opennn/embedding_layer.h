@@ -14,10 +14,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct EmbeddingLayerForwardPropagationCuda;
-struct EmbeddingLayerBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//struct EmbeddingLayerForwardPropagationCuda;
+//struct EmbeddingLayerBackPropagationCuda;
+//#endif
 
 
 class Embedding : public Layer
@@ -70,9 +70,45 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/embedding_layer_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+
+public:
+
+    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagationCuda*,
+                                const bool&) final;
+
+    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                             const Tensor<pair<type*, dimensions>, 1>&,
+                             LayerForwardPropagationCuda*,
+                             LayerBackPropagationCuda*) const final;
+
+    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+
+    void set_parameters_cuda(const float*, const Index&);
+
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+
+    void allocate_parameters_device();
+    void free_parameters_device();
+    void copy_parameters_device();
+    void copy_parameters_host();
+
+    float* get_embedding_weights_device() const;
+
+    bool positional_encoding = false;
+
+private:
+
+    float* embedding_weights_device = nullptr;
+
+    Index get_inputs_number() const;
+    Index get_neurons_number() const;
+    Index get_depth() const;
+    Index get_input_dimension() const;
+    Index get_parameters_number() const;
+
+#endif
 
 private:
 
@@ -117,8 +153,38 @@ struct EmbeddingBackPropagation : LayerBackPropagation
 };
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/embedding_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/embedding_layer_back_propagation_cuda.h"
+
+struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit EmbeddingLayerForwardPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    pair<type*, dimensions> get_outputs_pair() const;
+
+    type* outputs = nullptr;
+    type* positional_encoding_cuda = nullptr;
+    bool built_positional_encoding_matrix = false;
+};
+
+struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit EmbeddingLayerBackPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    type* sample_deltas_cuda = nullptr;
+    type* embedding_weights_derivatives_cuda = nullptr;
+};
+
 #endif
 
 }

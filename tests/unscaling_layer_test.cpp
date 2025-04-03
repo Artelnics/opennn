@@ -102,7 +102,8 @@ TEST(UnscalingLayerTest, ForwardPropagate)
     Descriptives desc;
     vector<Descriptives> descriptives;
 
-    for(Index i = 0; i < inputs_number; i++){
+    for(Index i = 0; i < inputs_number; i++)
+    {
         type mean=means[i];
         type std_dev=std_devs[i];
         type min_range=minimuns[i];

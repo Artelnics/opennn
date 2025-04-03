@@ -18,7 +18,7 @@ struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
@@ -196,8 +196,30 @@ public:
    string get_expression() const;
 
 
-#ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+public:
+
+    void create_cuda();
+    void destroy_cuda();
+
+    void allocate_parameters_device();
+    void free_parameters_device();
+    void copy_parameters_device();
+    void copy_parameters_host();
+
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                ForwardPropagationCuda&,
+                                const bool& = false) const;
+
+    void get_parameters_cuda(Tensor<type, 1>&);
+    void set_parameters_cuda(float*);
+
+protected:
+
+    cublasHandle_t cublas_handle;
+    cudnnHandle_t cudnn_handle;
+
 #endif
 
 protected:
@@ -217,11 +239,6 @@ protected:
    bool display = true;
 
 };
-
-#ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/forward_propagation_cuda.h"
-#include "../../opennn_cuda/opennn_cuda/neural_network_back_propagation_cuda.h"
-#endif
 
 }
 
