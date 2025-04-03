@@ -617,7 +617,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
     BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
-    /*
+    
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -627,7 +627,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     Index selection_failures = 0;
 
     // Optimization algorithm
-
+    /*
     ADAMOptimizationDataCuda optimization_data(this);
 
     bool stop_training = false;
@@ -647,7 +647,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     // Main loop
   
     optimization_data.iteration = 1;
-
+    /*
     for (Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
