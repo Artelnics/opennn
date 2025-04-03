@@ -11,6 +11,7 @@
 #include "image_data_set.h"
 #include "language_data_set.h"
 #include "images.h"
+#include "time_series_data_set.h"
 
 namespace opennn
 {
@@ -21,6 +22,19 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& target_indices)
 {
     const Tensor<type, 2>& data = data_set->get_data();
+
+    const Index rows_number = data.dimension(0);
+    const Index columns_number = data.dimension(1);
+
+    const Index batch_size = static_cast<Index>(ceil(rows_number * 0.1));
+    const Index sequence_length = rows_number / batch_size;
+    const Index input_size = columns_number;
+
+    input_tensor.resize(batch_size * sequence_length * input_size);
+    target_tensor.resize(batch_size * sequence_length * target_indices.size());
+
+    if (!decoder_indices.empty())
+        decoder_tensor.resize(batch_size * sequence_length * decoder_indices.size());
 
     if(is_instance_of<ImageDataSet>(data_set))
     {
@@ -35,22 +49,18 @@ void Batch::fill(const vector<Index>& sample_indices,
             //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
         }
         else
-        {
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
-        }
     }
+    else if(is_instance_of<TimeSeriesDataSet>(data_set))
+        fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
     else
-    {
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
-    }
 
     if (is_instance_of<LanguageDataSet>(data_set))
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+            fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
     fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
-
 }
-
 
 Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
@@ -142,7 +152,7 @@ void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
 
     if (!data_set_input_dimensions.empty())
     {
-        input_dimensions = { samples_number };
+        input_dimensions = { samples_number};
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
 
         const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
@@ -160,7 +170,7 @@ void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
 
     if (!data_set_target_dimensions.empty())
     {
-        target_dimensions = { samples_number };
+        target_dimensions = { samples_number};
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
 
         const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
