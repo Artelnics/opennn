@@ -29,7 +29,7 @@ struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
 
-    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const {}
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const { return vector<pair<type*, dimensions>>(); } // change it to = 0; when implemented in all layers
 
     virtual void free() {}
 

@@ -15,11 +15,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    struct PerceptronLayerForwardPropagationCuda;
-//    struct PerceptronLayerBackPropagationCuda;
-//#endif
-
 class Perceptron : public Layer
 {
 
@@ -286,7 +281,7 @@ struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
     void free() override;
 
     float* biases_derivatives_cuda = nullptr;
-    float* synaptic_weights_derivatives_cuda = nullptr;
+    float* weights_derivatives_cuda = nullptr;
     float* error_combinations_derivatives_cuda = nullptr;
     float* ones = nullptr;
     float one = 1.0f;

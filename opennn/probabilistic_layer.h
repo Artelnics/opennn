@@ -14,113 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    struct ProbabilisticLayerForwardPropagationCuda;
-//    struct ProbabilisticLayerBackPropagationCuda;
-//#endif
-
-
-struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
-{
-    ProbabilisticLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
-
-    pair<type *, dimensions> get_outputs_pair() const override;
-
-    void set(const Index& = 0, Layer* = nullptr);
-
-    void print() const override;
-
-    Tensor<type, 2> outputs;
-    Tensor<type, 2> activation_derivatives;
-};
-
-
-struct ProbabilisticLayerBackPropagation : LayerBackPropagation
-{
-    ProbabilisticLayerBackPropagation(const Index& = 0, Layer* = nullptr);
-
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
-
-    void set(const Index& = 0, Layer* = nullptr);
-
-    void print() const override;
-
-    Tensor<type, 1> bias_derivatives;
-    Tensor<type, 2> weight_derivatives;
-
-    Tensor<type, 2> input_derivatives;
-};
-
-
-struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
-{
-    ProbabilisticLayerBackPropagationLM(const Index& new_batch_size = 0, 
-                                                 Layer* new_layer = nullptr);
-
-    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
-
-    void set(const Index& = 0, Layer* = nullptr);
-
-    void print() const override;
-
-    Tensor<type, 2> input_derivatives;
-
-    Tensor<type, 2> squared_errors_Jacobian;
-
-};
-
-
-#ifdef OPENNN_CUDA
-
-struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagationCuda
-{
-    explicit ProbabilisticLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer);
-
-    void print() const override;
-
-    void free() override;
-
-    std::pair<type*, dimensions> get_outputs_pair() const override;
-
-    type* combinations_cuda = nullptr;
-    type* outputs = nullptr;
-
-    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
-
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-};
-
-
-struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
-{
-    explicit ProbabilisticLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
-
-    void set(const Index& new_batch_samples_number, Layer* new_layer);
-
-    void print() const override;
-
-    void free() override;
-
-    float* targets = nullptr;
-    float* error_combinations_derivatives_cuda = nullptr;
-    float* ones = nullptr;
-    float* biases_derivatives_cuda = nullptr;
-    float* synaptic_weights_derivatives_cuda = nullptr;
-    float* inputs_derivatives = nullptr;
-    float one = 1.0f;
-
-    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
-    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
-};
-
-#endif
-
-
 class ProbabilisticLayer : public Layer
 {
 
@@ -212,27 +105,34 @@ private:
 
     const Eigen::array<Index, 1> sum_dimensions = {0};
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
 
-    void forward_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
-                                LayerForwardPropagationCuda* forward_propagation_cuda,
-                                const bool& is_training) override;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    void back_propagate_cuda(const Tensor<std::pair<type*, dimensions>, 1>& inputs_pair_device,
-                             const Tensor<std::pair<type*, dimensions>, 1>& deltas_pair_device,
-                             LayerForwardPropagationCuda* forward_propagation_cuda,
-                             LayerBackPropagationCuda* back_propagation_cuda) const override;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(LayerBackPropagationCuda* back_propagation_cuda, const Index& index, float* gradient) const override;
+    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                              Index&,
+                              float*) const override;
 
-    void set_parameters_cuda(const float* new_parameters, const Index& index) override;
-    void get_parameters_cuda(Tensor<type, 1>& new_parameters, const Index& index) override;
-    void allocate_parameters_device() override;
-    void free_parameters_device() override;
-    void copy_parameters_device() override;
-    void copy_parameters_host() override;
+    void set_parameters_cuda(const float*, const Index&);
+
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+
+    void copy_parameters_host();
+
+    void copy_parameters_device();
+
+    void allocate_parameters_device();
+
+    void free_parameters_device();
 
     float* get_weights_device() const;
     float* get_biases_device() const;
@@ -246,6 +146,106 @@ protected:
 
 };
 
+
+struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
+{
+    ProbabilisticLayerForwardPropagation(const Index & = 0, Layer* = nullptr);
+
+    pair<type*, dimensions> get_outputs_pair() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    Tensor<type, 2> outputs;
+    Tensor<type, 2> activation_derivatives;
+};
+
+
+struct ProbabilisticLayerBackPropagation : LayerBackPropagation
+{
+    ProbabilisticLayerBackPropagation(const Index & = 0, Layer* = nullptr);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    Tensor<type, 1> bias_derivatives;
+    Tensor<type, 2> weight_derivatives;
+
+    Tensor<type, 2> input_derivatives;
+};
+
+
+struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
+{
+    ProbabilisticLayerBackPropagationLM(const Index & = 0, Layer* = nullptr);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    Tensor<type, 2> input_derivatives;
+
+    Tensor<type, 2> squared_errors_Jacobian;
+};
+
+
+#ifdef OPENNN_CUDA_test
+
+struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit ProbabilisticLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    void set(const Index& = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    void free() override;
+
+    std::pair<type*, dimensions> get_outputs_pair() const override;
+
+    type* combinations_cuda = nullptr;
+    type* outputs = nullptr;
+
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+};
+
+
+struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit ProbabilisticLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index& = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    void free() override;
+
+    float* targets = nullptr;
+    float* error_combinations_derivatives_cuda = nullptr;
+    float* ones = nullptr;
+    float* biases_derivatives_cuda = nullptr;
+    float* weights_derivatives_cuda = nullptr;
+    float* inputs_derivatives = nullptr;
+    float one = 1.0f;
+
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+};
+
+#endif
 }
 
 #endif

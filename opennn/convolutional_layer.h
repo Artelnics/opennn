@@ -318,12 +318,12 @@ struct ConvolutionalLayerBackPropagationCuda : public LayerBackPropagationCuda
     cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnFilterDescriptor_t kernel_synaptic_weights_derivatives_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_weights_derivatives_tensor_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
     type* error_combinations_derivatives = nullptr;
     type* biases_derivatives = nullptr;
-    type* kernel_synaptic_weights_derivatives = nullptr;
+    type* kernel_weights_derivatives = nullptr;
     void* backward_data_workspace = nullptr;
     void* backward_filter_workspace = nullptr;
     size_t backward_data_workspace_bytes = 0;

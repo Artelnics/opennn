@@ -459,14 +459,14 @@ string Perceptron::get_expression(const vector<string>& new_input_names,
 
     for(Index j = 0; j < outputs_number; j++)
     {
-        const TensorMap<Tensor<type, 1>> synaptic_weights_column = tensor_map(weights, j);
+        const TensorMap<Tensor<type, 1>> weights_column = tensor_map(weights, j);
 
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " + ";
 
         for(Index i = 0; i < inputs_number - 1; i++)
-            buffer << "(" << synaptic_weights_column(i) << "*" << input_names[i] << ") + ";
+            buffer << "(" << weights_column(i) << "*" << input_names[i] << ") + ";
 
-        buffer << "("  << synaptic_weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ") );\n";
+        buffer << "("  << weights_column(inputs_number - 1) << "*" << input_names[inputs_number - 1]  << ") );\n";
     }
 
     return buffer.str();
@@ -819,7 +819,7 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     float* ones = perceptron_layer_back_propagation->ones;
     float* error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives_cuda;
     float* biases_derivatives = perceptron_layer_back_propagation->biases_derivatives_cuda;
-    float* synaptic_weights_derivatives = perceptron_layer_back_propagation->synaptic_weights_derivatives_cuda;
+    float* weights_derivatives = perceptron_layer_back_propagation->weights_derivatives_cuda;
     float* inputs_derivatives = perceptron_layer_back_propagation->inputs_derivatives;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = perceptron_layer_back_propagation->deltas_tensor_descriptor;
@@ -878,7 +878,7 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         error_combinations_derivatives,
         batch_samples_number,
         &beta,
-        synaptic_weights_derivatives,
+        weights_derivatives,
         inputs_number);
 
     // Input derivatives
@@ -907,7 +907,7 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
     /*
     // Perceptron layer
 
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index weights_number = get_weights_number();
     const Index biases_number = get_biases_number();
 
     // Perceptron layer back propagation cuda
@@ -915,17 +915,17 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
     PerceptronLayerBackPropagationCuda* perceptron_layer_back_propagation =
         static_cast<PerceptronLayerBackPropagationCuda*>(back_propagation_cuda);
 
-    type* synaptic_weights_derivatives_cuda = perceptron_layer_back_propagation->synaptic_weights_derivatives_cuda;
+    type* weights_derivatives_cuda = perceptron_layer_back_propagation->weights_derivatives_cuda;
 
     type* biases_derivatives_cuda = perceptron_layer_back_propagation->biases_derivatives_cuda;
 
     if (cudaMemcpy(gradient + index,
-        synaptic_weights_derivatives_cuda,
-        size_t(synaptic_weights_number) * sizeof(type),
+        weights_derivatives_cuda,
+        size_t(weights_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient (synaptic_weights) copy error" << endl;
+        cout << "gradient (weights) copy error" << endl;
 
-    if (cudaMemcpy(gradient + index + synaptic_weights_number,
+    if (cudaMemcpy(gradient + index + weights_number,
         biases_derivatives_cuda,
         size_t(biases_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
@@ -937,17 +937,17 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
 void Perceptron::set_parameters_cuda(const float* new_parameters, const Index& index)
 {
     /*
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index weights_number = get_weights_number();
     const Index biases_number = get_biases_number();
 
     if (cudaMemcpy(weights_device,
         new_parameters + index,
-        size_t(synaptic_weights_number) * sizeof(type),
+        size_t(weights_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
         cout << "biases copy error" << endl;
 
     if (cudaMemcpy(biases_device,
-        new_parameters + synaptic_weights_number + index,
+        new_parameters + weights_number + index,
         size_t(biases_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
         cout << "synaptic weights copy error" << endl;
@@ -958,11 +958,11 @@ void Perceptron::set_parameters_cuda(const float* new_parameters, const Index& i
 void Perceptron::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
 {
     /*
-    const Index synaptic_weights_number = get_synaptic_weights_number();
+    const Index weights_number = get_weights_number();
     const Index biases_number = get_biases_number();
 
     if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + index)),
-        weights_device, size_t(synaptic_weights_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
+        weights_device, size_t(weights_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
         cout << "new_parameters copy error" << endl;
 
     if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + biases_number + index)),
@@ -1051,6 +1051,7 @@ PerceptronLayerForwardPropagationCuda::PerceptronLayerForwardPropagationCuda(con
 {
     set(new_batch_samples_number, new_layer);
 }
+
 
 void PerceptronLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -1148,6 +1149,7 @@ void PerceptronLayerForwardPropagationCuda::print() const
     // @todo
 }
 
+
 void PerceptronLayerForwardPropagationCuda::free()
 {
     cudaFree(outputs);
@@ -1159,6 +1161,7 @@ void PerceptronLayerForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
 }
+
 
 pair<type*, dimensions> PerceptronLayerForwardPropagationCuda::get_outputs_pair() const
 {
@@ -1173,6 +1176,7 @@ PerceptronLayerBackPropagationCuda::PerceptronLayerBackPropagationCuda(const Ind
 {
     set(new_batch_samples_number, new_layer);
 }
+
 
 void PerceptronLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
@@ -1197,10 +1201,10 @@ void PerceptronLayerBackPropagationCuda::set(const Index& new_batch_samples_numb
     if (cudaMalloc(&biases_derivatives_cuda, outputs_number * sizeof(float)) != cudaSuccess)
         cout << "biases_derivatives perceptron allocation error" << endl;
 
-    // synaptic_weights_derivatives_cuda
+    // weights_derivatives_cuda
 
-    if (cudaMalloc(&synaptic_weights_derivatives_cuda, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "synaptic_weights_derivatives allocation error" << endl;
+    if (cudaMalloc(&weights_derivatives_cuda, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "weights_derivatives allocation error" << endl;
 
     // Inputs derivatives
 
@@ -1236,6 +1240,7 @@ void PerceptronLayerBackPropagationCuda::set(const Index& new_batch_samples_numb
 
 }
 
+
 vector<pair<type*, dimensions>> PerceptronLayerBackPropagationCuda::get_input_derivative_pairs_device() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
@@ -1249,10 +1254,11 @@ void PerceptronLayerBackPropagationCuda::print() const
     // @todo
 }
 
+
 void PerceptronLayerBackPropagationCuda::free()
 {
     cudaFree(biases_derivatives_cuda);
-    cudaFree(synaptic_weights_derivatives_cuda);
+    cudaFree(weights_derivatives_cuda);
     cudaFree(error_combinations_derivatives_cuda);
     cudaFree(inputs_derivatives);
     cudaFree(ones);
@@ -1261,6 +1267,7 @@ void PerceptronLayerBackPropagationCuda::free()
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 
 }
+
 #endif
 
 } // namespace opennn

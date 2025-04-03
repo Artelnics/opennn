@@ -353,11 +353,11 @@ public:
   
 protected:
 
-        cublasHandle_t cublas_handle = nullptr;
-        cudnnHandle_t cudnn_handle = nullptr;
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
 
-        cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
-        cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 
 #endif
 
