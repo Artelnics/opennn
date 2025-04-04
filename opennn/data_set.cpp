@@ -4112,9 +4112,9 @@ namespace opennn
             sample_index++;
         }
 
-        //file.clear();
-        //file.seekg(0);
-        //read_data_file_preview(file);
+        file.clear();
+        file.seekg(0);
+        read_data_file_preview(file);
 
         file.close();
 

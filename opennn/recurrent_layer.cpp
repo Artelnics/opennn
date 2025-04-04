@@ -96,7 +96,6 @@ string Recurrent::get_activation_function_string() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-
     biases.resize(new_output_dimensions[0]);
 
     input_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
