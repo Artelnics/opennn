@@ -1830,8 +1830,7 @@ void NeuralNetworkBackPropagation::print() const
 }
 
 
-ForwardPropagation::ForwardPropagation(const Index& new_batch_size,
-                                       NeuralNetwork* new_neural_network)
+ForwardPropagation::ForwardPropagation(const Index& new_batch_size, NeuralNetwork* new_neural_network)
 {
     set(new_batch_size, new_neural_network);
 }
@@ -2058,8 +2057,451 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_size,
         }
     }
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+void NeuralNetwork::allocate_parameters_device()
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->allocate_parameters_device();
+    }
+    */
 }
-// Namespace
+
+
+void NeuralNetwork::free_parameters_device()
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->free_parameters_device();
+    }
+    */
+}
+
+
+void NeuralNetwork::copy_parameters_device()
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->copy_parameters_device();
+    }
+    */
+}
+
+
+void NeuralNetwork::copy_parameters_host()
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->copy_parameters_host();
+    }
+    */
+}
+
+
+void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pair_device,
+                                           ForwardPropagationCuda& forward_propagation_cuda,
+                                           const bool& is_training) const
+{
+    /*
+    const Index layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> layers = get_layers();
+
+    const Tensor<Tensor<Index, 1>, 1> layers_inputs_indices = get_layers_inputs_indices();
+
+    const Index first_trainable_layer_index = get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = get_last_trainable_layer_index();
+
+    Index first_layer_index;
+    Index last_layer_index;
+
+    if (is_training)
+    {
+        first_layer_index = first_trainable_layer_index;
+        last_layer_index = last_trainable_layer_index;
+    }
+    else
+    {
+        first_layer_index = 0;
+        last_layer_index = layers_number - 1;
+    }
+
+    Tensor<pair<type*, dimensions>, 1> layer_inputs;
+
+    for (Index i = first_layer_index; i <= last_layer_index; i++)
+    {
+        if (i == first_layer_index || is_input_layer(layers_inputs_indices(i)))
+        {
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair_device(0);
+        }
+        else if (is_context_layer(layers_inputs_indices(i)))
+        {
+            layer_inputs.resize(1);
+
+            layer_inputs(0) = inputs_pair_device(1);
+        }
+        else
+        {
+            layer_inputs.resize(layers_inputs_indices(i).size());
+
+            for (Index j = 0; j < layers_inputs_indices(i).size(); j++)
+            {
+                layer_inputs(j) = forward_propagation_cuda.layers(layers_inputs_indices(i)(j))->get_outputs_pair();
+            }
+        }
+
+        layers(i)->forward_propagate_cuda(layer_inputs,
+            forward_propagation_cuda.layers(i),
+            is_training);
+    }
+    */
+}
+
+void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    const Tensor<Index, 1> trainable_layers_parameters_numbers = get_trainable_layers_parameters_numbers();
+
+    Index index = 0;
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->get_parameters_cuda(parameters, index);
+
+        index += trainable_layers_parameters_numbers(i);
+    }
+    */
+}
+
+
+void NeuralNetwork::set_parameters_cuda(float* new_parameters)
+{
+    /*
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
+
+    const Tensor<Index, 1> trainable_layers_parameters_numbers = get_trainable_layers_parameters_numbers();
+
+    Index index = 0;
+
+    for (Index i = 0; i < trainable_layers_number; i++)
+    {
+        trainable_layers(i)->set_parameters_cuda(new_parameters, index);
+
+        index += trainable_layers_parameters_numbers(i);
+    }
+    */
+}
+
+
+void NeuralNetwork::create_cuda()
+{
+    /*
+    const Index layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> layers = get_layers();
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        layers(i)->create_cuda();
+    }
+    */
+}
+
+
+void NeuralNetwork::destroy_cuda()
+{
+    /*
+    const Index layers_number = get_layers_number();
+
+    const Tensor<Layer*, 1> layers = get_layers();
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        layers(i)->destroy_cuda();
+    }
+    */
+}
+
+
+// CUDA structs
+
+ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+{
+    set(new_batch_samples_number, new_neural_network);
+}
+
+
+void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork* new_neural_network)
+{
+    samples_number = new_samples_number;
+
+    neural_network = new_neural_network;
+
+    if (!neural_network) throw runtime_error("There is no neural network.");
+
+    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+
+    const Index layers_number = neural_network_layers.size();
+
+    layers.resize(layers_number);
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        switch (neural_network_layers[i]->get_type())
+        {
+        case Layer::Type::Perceptron:
+            //layers[i] = make_unique<PerceptronForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Perceptron3d:
+            //layers[i] = make_unique<Perceptron3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Probabilistic:
+            //layers[i] = make_unique<ProbabilisticLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Probabilistic3d:
+            //layers[i] = make_unique<ProbabilisticLayer3DForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Recurrent:
+            //layers[i] = make_unique<RecurrentLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::LongShortTermMemory:
+            //layers[i] = make_unique<LongShortTermMemoryLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Convolutional:
+            //layers[i] = make_unique<ConvolutionalForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Pooling:
+            //layers[i] = make_unique<PoolingForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Flatten:
+            //layers[i] = make_unique<FlattenLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Scaling2D:
+            layers[i] = nullptr;
+            break;
+
+        case Layer::Type::Scaling4D:
+            layers[i] = nullptr;
+            break;
+
+        case Layer::Type::Unscaling:
+            layers[i] = nullptr;
+            break;
+
+        case Layer::Type::Bounding:
+            layers[i] = nullptr;
+            break;
+
+        case Layer::Type::Embedding:
+            //layers[i] = make_unique<EmbeddingForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::MultiheadAttention:
+            //layers[i] = make_unique<MultiheadAttentionForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Addition3D:
+            //layers[i] = make_unique<Addition3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Normalization3D:
+            //layers[i] = make_unique<Normalization3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Flatten3D:
+            layers[i] = nullptr;
+            break;
+
+        default: cout << "Default" << endl; break;
+        }
+    }
+}
+
+
+void ForwardPropagationCuda::print()
+{
+    const Index layers_number = layers.size();
+
+    cout << "Layers number: " << layers_number << endl;
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        cout << "Layer " << i + 1 << endl;
+
+        layers[i]->print();
+    }
+}
+
+
+void ForwardPropagationCuda::free()
+{
+    const Index layers_number = layers.size();
+    /*
+    for (Index i = 0; i < layers_number; i++)
+    {
+        if (layers[i] != nullptr)
+            layers[i]->free();
+    }
+    */
+}
+
+
+NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+{
+    set(new_batch_samples_number, new_neural_network);
+}
+
+
+void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNetwork* new_neural_network)
+{
+    batch_size = new_batch_size;
+
+    neural_network = new_neural_network;
+
+    if (!neural_network) return;
+
+    const vector<unique_ptr<Layer>>& neural_network_layers = neural_network->get_layers();
+
+    const Index layers_number = neural_network_layers.size();
+
+    layers.resize(layers_number);
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        switch (neural_network_layers[i]->get_type())
+        {
+        case Layer::Type::Perceptron:
+            //layers[i] = make_unique<PerceptronBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Perceptron3d:
+            //layers[i] = make_unique <Perceptron3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Probabilistic:
+            //layers[i] = make_unique <ProbabilisticLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Probabilistic3d:
+            //layers[i] = make_unique <Probabilistic3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Recurrent:
+            //layers[i] = make_unique <RecurrentBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::LongShortTermMemory:
+            //layers[i] = make_unique <LongShortTermMemoryLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Convolutional:
+            //layers[i] = make_unique <ConvolutionalBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Pooling:
+            //layers[i] = make_unique <PoolingLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Flatten:
+            //layers[i] = make_unique <FlattenLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Embedding:
+            //layers[i] = make_unique <EmbeddingBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::MultiheadAttention:
+            //layers[i] = make_unique <MultiheadAttentionBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Addition3D:
+            //layers[i] = make_unique <Addition3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Normalization3D:
+            //layers[i] = make_unique <Normalization3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            break;
+
+        case Layer::Type::Flatten3D:
+            layers[i] = nullptr;
+            break;
+
+        default: break;
+        }
+    }
+}
+
+
+void NeuralNetworkBackPropagationCuda::print()
+{
+    const Index layers_number = layers.size();
+
+    cout << "Layers number: " << layers_number << endl;
+
+    for (Index i = 0; i < layers_number; i++)
+    {
+        cout << "Layer " << i + 1 << endl;
+
+        layers[i]->print();
+    }
+}
+
+
+void NeuralNetworkBackPropagationCuda::free()
+{
+    const Index layers_number = layers.size();
+    /*
+    for (Index i = 0; i < layers_number; i++)
+    {
+        if (layers[i] != nullptr)
+            layers[i]->free();
+    }
+    */
+}
+
+#endif
+
+} // Namespace
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

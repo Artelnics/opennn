@@ -46,9 +46,11 @@
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
 
-#ifdef OPENNN_CUDA
+//#define OPENNN_CUDA_test // Comment this line to disable cuda files
 
-#include "../../opennn_cuda/CudaOpennn/kernel.cuh"
+#ifdef OPENNN_CUDA_test
+
+#include "kernel.cuh"
 #include "cuda.h"
 #include "cuda_runtime.h"
 #include "cublas_v2.h"

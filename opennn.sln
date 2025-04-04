@@ -46,6 +46,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests.vcxproj", "{8E374B5C-F35D-4110-8198-D58D254D67BE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blank_cuda", "blank_cuda\blank_cuda.vcxproj", "{51D3AD57-1C6F-44C7-9810-6DCA85556242}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{3BC94DD3-CDB8-47E5-9B12-4B66C819FD07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -218,6 +222,22 @@ Global
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.RelWithDebInfo|x64.Build.0 = Release|x64
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.RelWithDebInfo|x86.ActiveCfg = Release|Win32
 		{8E374B5C-F35D-4110-8198-D58D254D67BE}.RelWithDebInfo|x86.Build.0 = Release|Win32
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Debug|x64.ActiveCfg = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Debug|x64.Build.0 = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Debug|x86.ActiveCfg = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Debug|x86.Build.0 = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.MinSizeRel|x64.ActiveCfg = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.MinSizeRel|x64.Build.0 = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.MinSizeRel|x86.ActiveCfg = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.MinSizeRel|x86.Build.0 = Debug|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Release|x64.ActiveCfg = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Release|x64.Build.0 = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Release|x86.ActiveCfg = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.Release|x86.Build.0 = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x64.Build.0 = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x86.ActiveCfg = Release|x64
+		{51D3AD57-1C6F-44C7-9810-6DCA85556242}.RelWithDebInfo|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

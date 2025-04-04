@@ -10,20 +10,42 @@ class Layer;
 
 struct LayerForwardPropagation
 {
-    LayerForwardPropagation()
-    {
-    }
+    LayerForwardPropagation() {}
 
     virtual ~LayerForwardPropagation() {}
 
     virtual void print() const {}
 
+    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+
+    Index batch_size = type(0);
+
+    Layer* layer = nullptr;
+};
+
+#ifdef OPENNN_CUDA_test
+
+struct LayerForwardPropagationCuda
+{
+    explicit LayerForwardPropagationCuda() {}
+
+    virtual ~LayerForwardPropagationCuda() {}
+
+    virtual void free() {}
+
+    virtual void print() const {}
+
+    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+
     Index batch_size = type(0);
 
     Layer* layer = nullptr;
 
-    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+    float* outputs = nullptr;
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
 };
+
+#endif
 
 }
 

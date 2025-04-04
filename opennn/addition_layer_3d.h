@@ -14,10 +14,10 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    struct AdditionLayer3DForwardPropagationCuda;
-    struct AdditionLayer3DBackPropagationCuda;
-#endif
+//#ifdef OPENNN_CUDA
+//    struct AdditionLayer3DForwardPropagationCuda;
+//    struct AdditionLayer3DBackPropagationCuda;
+//#endif
 
 class Addition3d : public Layer
 {
@@ -46,9 +46,22 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+
+    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagationCuda*,
+                                const bool&) final;
+
+    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                             const Tensor<pair<type*, dimensions>, 1>&,
+                             LayerForwardPropagationCuda*,
+                             LayerBackPropagationCuda*) const final;
+
+    Index get_inputs_number() const;
+
+    Index get_inputs_depth() const;
+
+#endif
 
 private:
 
@@ -86,9 +99,39 @@ struct Addition3dBackPropagation : LayerBackPropagation
     Tensor<type, 3> input_2_derivatives;
 };
 
+
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/addition_layer_3d_back_propagation_cuda.h"
+
+    struct AdditionLayer3DForwardPropagationCuda : public LayerForwardPropagationCuda
+    {
+        explicit AdditionLayer3DForwardPropagationCuda(const Index&, Layer*);
+
+        void set(const Index&, Layer*) override;
+
+        void print() const override;
+
+        void free() override;
+
+        pair<type*, dimensions> get_outputs_pair() const;
+
+        type* outputs = nullptr;
+    };
+
+
+    struct AdditionLayer3DBackPropagationCuda : public LayerBackPropagationCuda
+    {
+        explicit AdditionLayer3DBackPropagationCuda(const Index&, Layer*);
+
+        void set(const Index&, Layer*) override;
+
+        void print() const override;
+
+        void free() override;
+
+        type* inputs_1_derivatives = nullptr;
+        type* inputs_2_derivatives = nullptr;
+    };
+
 #endif
 }
 

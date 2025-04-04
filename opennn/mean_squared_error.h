@@ -53,7 +53,15 @@ public:
    string get_error_type_text() const override;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
+
+   void calculate_mean_square_error_cuda(const BatchCuda&,
+                                         const NeuralNetwork::ForwardPropagationCuda&,
+                                         BackPropagationCuda&) const override;
+
+   void calculate_mean_square_output_delta_cuda(const BatchCuda&,
+                                                const NeuralNetwork::ForwardPropagationCuda&,
+                                                BackPropagationCuda&) const override;
+
 #endif
 
 };

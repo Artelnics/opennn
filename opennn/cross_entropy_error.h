@@ -57,7 +57,17 @@ public:
    void to_XML(XMLPrinter&) const override;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
+
+public:
+
+    void calculate_cross_entropy_error_cuda(const BatchCuda&,
+                                            const NeuralNetwork::ForwardPropagationCuda&,
+                                            BackPropagationCuda&) const;
+
+    void calculate_cross_entropy_output_delta_cuda(const BatchCuda&,
+                                                   const NeuralNetwork::ForwardPropagationCuda&,
+                                                   BackPropagationCuda&) const;
+
 #endif
 
 };

@@ -114,8 +114,28 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+protected:
+
+    cublasHandle_t cublas_handle;
+    cudnnHandle_t cudnn_handle;
+
+public:
+
+    void create_cuda()
+    {
+        cublasCreate(&cublas_handle);
+        cudnnCreate(&cudnn_handle);
+    }
+
+
+    void destroy_cuda()
+    {
+        cublasDestroy(cublas_handle);
+        cudnnDestroy(cudnn_handle);
+    }
+
 #endif
 
 };

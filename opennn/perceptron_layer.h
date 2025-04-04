@@ -15,11 +15,6 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-    struct PerceptronLayerForwardPropagationCuda;
-    struct PerceptronLayerBackPropagationCuda;
-#endif
-
 class Perceptron : public Layer
 {
 
@@ -130,9 +125,50 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA_test
+
+public:
+
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
+
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
+
+    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                              Index&,
+                              float*) const override;
+
+    void set_parameters_cuda(const float*, const Index&);
+
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+
+    void copy_parameters_host();
+
+    void copy_parameters_device();
+
+    void allocate_parameters_device();
+
+    void free_parameters_device();
+
+    float* get_weights_device() const;
+    float* get_biases_device() const;
+
+protected:
+
+    cublasHandle_t cublas_handle;
+    cudnnHandle_t cudnn_handle;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor;
+
+private:
+
+    float* biases_device = nullptr;
+    float* weights_device = nullptr;
+
+#endif
 
 private:
 
@@ -208,9 +244,52 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 };
 
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/perceptron_layer_back_propagation_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    PerceptronLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    void set(const Index& = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    void free() override;
+
+    pair<type*, dimensions> get_outputs_pair() const override;
+
+    type* combinations_cuda = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+};
+
+
+struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    PerceptronLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index& = 0, Layer* = nullptr);
+
+    void print() const override;
+
+    void free() override;
+
+    float* biases_derivatives_cuda = nullptr;
+    float* weights_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_cuda = nullptr;
+    float* ones = nullptr;
+    float one = 1.0f;
+
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
+};
+
 #endif
 
 

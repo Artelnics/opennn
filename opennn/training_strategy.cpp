@@ -783,6 +783,52 @@ void TrainingStrategy::load(const filesystem::path& file_name)
     from_XML(document);
 }
 
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults TrainingStrategy::perform_training_cuda()
+{
+    if (!has_neural_network())
+        throw runtime_error("Neural network is null.");
+
+    if (!has_data_set())
+        throw runtime_error("Data set is null.");
+
+    neural_network->create_cuda();
+
+    get_loss_index()->create_cuda();
+
+    if (neural_network->has(Layer::Type::Recurrent)
+        || neural_network->has(Layer::Type::LongShortTermMemory))
+        fix_forecasting();
+
+    set_display(true);
+
+    switch (optimization_method)
+    {
+    //case OptimizationMethod::CONJUGATE_GRADIENT:
+    //    return conjugate_gradient.perform_training();
+
+    //case OptimizationMethod::QUASI_NEWTON_METHOD:
+    //    return quasi_Newton_method.perform_training();
+
+    //case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
+    //    return Levenberg_Marquardt_algorithm.perform_training();
+
+    case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
+        //return stochastic_gradient_descent.perform_training_cuda();
+
+    case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION:
+        return adaptive_moment_estimation.perform_training_cuda();
+
+    default:
+        return TrainingResults(0);
+    }
+}
+
+#endif
+
+
 }
 
 // OpenNN: Open Neural Networks Library.

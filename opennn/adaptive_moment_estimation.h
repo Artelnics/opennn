@@ -16,7 +16,7 @@ namespace opennn
 
 struct AdaptiveMomentEstimationData;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct ADAMOptimizationDataCuda;
 #endif
 
@@ -111,8 +111,19 @@ private:
 
    Index batch_size = 1000;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+    public:
+
+        TrainingResults perform_training_cuda();
+
+        void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
+
+    private:
+
+        cublasHandle_t cublas_handle;
+        cudnnHandle_t cudnn_handle;
+
 #endif
 
 };
@@ -138,8 +149,47 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Index learning_rate_iteration = 0;
 };
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/struct_adaptive_moment_estimation_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+    struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
+    {
+        ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
+
+        void set(AdaptiveMomentEstimation* = nullptr);
+
+        void allocate();
+
+        void free();
+
+        void print() const;
+
+        AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
+
+        float* square_gradient;
+
+        float* gradient_exponential_decay;
+
+        float* square_gradient_exponential_decay;
+
+        float* last_gradient_exponential_decay;
+
+        float* last_square_gradient_exponential_decay;
+
+        float* numerator;
+
+        float* denominator;
+
+        float epsilon;
+
+        float* epsilon_device;
+
+        cudnnTensorDescriptor_t epsilon_device_tensor_descriptor;
+
+        Index iteration;
+
+        type step;
+    };
+
 #endif
 
 }

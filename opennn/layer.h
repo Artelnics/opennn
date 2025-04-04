@@ -19,11 +19,6 @@ using namespace tinyxml2;
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct LayerForwardPropagationCuda;
-struct LayerBackPropagationCuda;
-#endif
-
 class Layer
 {
 
@@ -315,17 +310,59 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
 
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/layer_cuda.h"
+#ifdef OPENNN_CUDA_test
+
+public:
+
+    void create_cuda();
+    void destroy_cuda();
+
+    cudnnHandle_t get_cudnn_handle();
+
+    /*
+    virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                        unique_ptr<LayerForwardPropagationCuda>&,
+                                        const bool&) = 0;
+                                        */
+    virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+        unique_ptr<LayerForwardPropagationCuda>&,
+        const bool&) {}
+
+    virtual void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                     const vector<pair<type*, dimensions>>&,
+                                     unique_ptr<LayerForwardPropagationCuda>&,
+                                     unique_ptr<LayerBackPropagationCuda>&) const {}
+
+    virtual void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                                      Index&,
+                                      float*) const {}
+
+    virtual void set_parameters_cuda(const float*, const Index&) {}
+
+    virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&) {}
+
+    virtual void copy_parameters_host() {}
+
+    virtual void copy_parameters_device() {}
+
+    virtual void allocate_parameters_device() {}
+
+    virtual void free_parameters_device() {}
+    
+    virtual void print_parameters_cuda() {}
+  
+protected:
+
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+
+    cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
+    cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+
 #endif
 
 };
 
-
-#ifdef OPENNN_CUDA
-#include "../../opennn_cuda/opennn_cuda/layer_forward_propagation_cuda.h"
-#include "../../opennn_cuda/opennn_cuda/layer_back_propagation_cuda.h"
-#endif
 
 }
 

@@ -59,9 +59,41 @@ public:
 
     void print() const override;
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/flatten_layer_cuda.h"
-    #endif
+#ifdef OPENNN_CUDA
+
+public:
+
+    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                                LayerForwardPropagationCuda*,
+                                const bool&) final;
+
+    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
+                             const Tensor<pair<type*, dimensions>, 1>&,
+                             LayerForwardPropagationCuda*,
+                             LayerBackPropagationCuda*) const final;
+
+    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const {}
+    void set_parameters_cuda(const float*, const Index&) {}
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&) {}
+
+    void allocate_parameters_device() {}
+    void free_parameters_device() {}
+    void copy_parameters_device() {}
+    void copy_parameters_host() {}
+
+    void reorganize_inputs_cuda(const type* inputs, type* outputs,
+                                const Index batch_size, 
+                                const Index neurons_number) const;
+
+    void reorganize_deltas_cuda(const type* deltas, type* inputs_derivatives,
+                                const Index batch_size, 
+                                const Index neurons_number) const;
+
+    dimensions get_input_dimensions() const;
+
+    Index get_neurons_number() const;
+
+#endif
 
 private:
 
@@ -98,8 +130,36 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/flatten_layer_forward_propagation_cuda.h"
-    #include "../../opennn_cuda/opennn_cuda/flatten_layer_back_propagation_cuda.h"
+
+struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+{
+    explicit FlattenLayerForwardPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    pair<type*, dimensions> get_outputs_pair() const;
+
+    type* outputs = nullptr;
+};
+
+
+struct FlattenLayerBackPropagationCuda : public LayerBackPropagationCuda
+{
+    explicit FlattenLayerBackPropagationCuda(const Index&, Layer*);
+
+    void set(const Index&, Layer*) override;
+
+    void print() const override;
+
+    void free() override;
+
+    type* inputs_derivatives = nullptr;
+};
+
 #endif
 
 
