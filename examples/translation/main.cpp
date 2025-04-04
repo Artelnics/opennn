@@ -54,8 +54,8 @@ int main()
 
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
-        const Index embedding_dimension = 6/*32*/;
-        const Index heads_number = 2/*4*/;
+        const Index embedding_dimension = 32;
+        const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
@@ -66,7 +66,7 @@ int main()
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
 
-        // neural_network.set_parameters_constant(0.1);
+        // neural_network.set_parameters_constant(0.01);
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
@@ -82,7 +82,7 @@ int main()
         adaptive_moment_estimation->set_loss_goal(0.1);
         // adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(/*12*/2);
+        adaptive_moment_estimation->set_batch_samples_number(12/*20*/);
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();        

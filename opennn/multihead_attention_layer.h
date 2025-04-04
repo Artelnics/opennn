@@ -67,7 +67,6 @@ public:
     void calculate_value(const Tensor<type, 3>&, Tensor<type, 4>&) const;
 
     void calculate_attention_weights(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    // void calculate_attention_scores(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
     void calculate_attention_outputs(const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&) const;
 
@@ -75,7 +74,6 @@ public:
 
     void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
     void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
-
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -123,6 +121,8 @@ private:
     Tensor<type, 2> causal_mask;
 
     type dropout_rate = type(0);
+
+    // type iteration = 0;
 
     const Eigen::array<Index, 1> projection_sum_index = { 3 };
     const Eigen::array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };

@@ -59,6 +59,7 @@ int main()
         const Index vocabulary_size = text_data_set.get_input_vocabulary_size();
         const Index embedding_dimension = 32;
         const Index heads_number = 4;
+        const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
@@ -66,9 +67,7 @@ int main()
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), (dimensions){ 1 }));
-
-        // neural_network.set_parameters_constant(0.1);
+        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
 
         // Training Strategy
 
@@ -82,6 +81,7 @@ int main()
 
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
+        // text_data_set.set(DataSet::SampleUse::Training);
         training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.4);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
@@ -91,6 +91,8 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
 
         TrainingResults training_results = training_strategy.perform_training();
+
+        // text_data_set.set(DataSet::SampleUse::Testing);
 
         const TestingAnalysis testing_analysis(&neural_network, &text_data_set);
 
