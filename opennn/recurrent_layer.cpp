@@ -501,14 +501,14 @@ string Recurrent::get_expression(const vector<string>& input_names,
 
     for(size_t j = 0; j < output_names.size(); j++)
     {
-        const Tensor<type, 1> synaptic_weights_column =  recurrent_weights.chip(j,1);
+        const Tensor<type, 1> weights_column =  recurrent_weights.chip(j,1);
 
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(size_t i = 0; i < input_names.size() - 1; i++)
-           buffer << " (" << input_names[i] << "*" << synaptic_weights_column(i) << ") +";
+           buffer << " (" << input_names[i] << "*" << weights_column(i) << ") +";
 
-        buffer << " (" << input_names[input_names.size() - 1] << "*" << synaptic_weights_column[input_names.size() - 1] << "));\n";
+        buffer << " (" << input_names[input_names.size() - 1] << "*" << weights_column[input_names.size() - 1] << "));\n";
     }
 
     return buffer.str();

@@ -117,7 +117,7 @@ private:
 
         TrainingResults perform_training_cuda();
 
-        //void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
+        void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 
     private:
 
@@ -153,18 +153,17 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
     struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
     {
-        explicit ADAMOptimizationDataCuda(OptimizationAlgorithm*);
-        virtual ~ADAMOptimizationDataCuda();
+        ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
+
+        void set(AdaptiveMomentEstimation* = nullptr);
 
         void allocate();
 
         void free();
 
-        void print_parameters() const;
-
         void print() const;
 
-        OptimizationAlgorithm* optimization_algorithm;
+        AdaptiveMomentEstimation* adaptive_moment_estimation = nullptr;
 
         float* square_gradient;
 

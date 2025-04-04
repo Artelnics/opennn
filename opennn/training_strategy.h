@@ -115,7 +115,7 @@ public:
     // Training
 
     TrainingResults perform_training();
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
     TrainingResults perform_training_cuda();
 #endif
 

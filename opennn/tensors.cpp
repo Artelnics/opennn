@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "../eigen/Eigen/Dense"
+#include <Eigen/Dense>
 
 #include "tensors.h"
 
@@ -41,7 +42,8 @@ type get_random_type(const type& minimum, const type& maximum)
 
 bool get_random_bool()
 {
-    return rand() % 2 == 1;
+    //return arc4random() % 2 == 1;
+    return 0;
 }
 
 
@@ -642,6 +644,34 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
     }
 }
 
+void fill_tensor_3D(const Tensor<type, 2>& matrix,
+                   const vector<Index>& rows_indices,
+                   const vector<Index>& columns_indices,
+                   type* tensor_data)
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const Index batch_size = static_cast<Index>(ceil(rows_number * 0.1));
+    const Index sequence_length = rows_number / batch_size;
+    const Index input_size = columns_number;
+
+    TensorMap<Tensor<type, 3>> batch(tensor_data, batch_size, sequence_length, input_size);
+
+    //#pragma omp parallel for collapse(3)
+    for (Index i = 0; i < batch_size; i++)
+    {
+        for (Index j = 0; j < sequence_length; j++)
+        {
+            Index actual_row = i + j * batch_size;
+
+            for (Index k = 0; k <= input_size; k++)
+            {
+                batch(i, j, k) = matrix(actual_row, k);
+            }
+        }
+    }
+}
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {

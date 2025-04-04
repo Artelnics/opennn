@@ -784,12 +784,10 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 }
 
 
-#ifdef OPENNN_CUDA
-
+#ifdef OPENNN_CUDA_test
 
 TrainingResults TrainingStrategy::perform_training_cuda()
 {
-    /*
     if (!has_neural_network())
         throw runtime_error("Neural network is null.");
 
@@ -826,8 +824,6 @@ TrainingResults TrainingStrategy::perform_training_cuda()
     default:
         return TrainingResults(0);
     }
-    */
-    return adaptive_moment_estimation.perform_training_cuda();
 }
 
 #endif

@@ -114,7 +114,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 protected:
 
@@ -123,11 +123,18 @@ protected:
 
 public:
 
-    struct OptimizationDataCuda;
+    void create_cuda()
+    {
+        cublasCreate(&cublas_handle);
+        cudnnCreate(&cudnn_handle);
+    }
 
-    void create_cuda();
 
-    void destroy_cuda();
+    void destroy_cuda()
+    {
+        cublasDestroy(cublas_handle);
+        cudnnDestroy(cudnn_handle);
+    }
 
 #endif
 

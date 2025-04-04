@@ -175,7 +175,7 @@ public:
     void copy_parameters_device();
     void copy_parameters_host();
 
-    float* get_synaptic_weights_device() const;
+    float* get_weights_device() const;
     float* get_biases_device() const;
 
     void print_cuda_parameters();
@@ -185,7 +185,7 @@ public:
     private:
 
     float* biases_device = nullptr;
-    float* synaptic_weights_device = nullptr;
+    float* weights_device = nullptr;
 
     cudnnHandle_t cudnn_handle;
     cublasHandle_t cublas_handle;
@@ -318,12 +318,12 @@ struct ConvolutionalLayerBackPropagationCuda : public LayerBackPropagationCuda
     cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnFilterDescriptor_t kernel_synaptic_weights_derivatives_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_weights_derivatives_tensor_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 
     type* error_combinations_derivatives = nullptr;
     type* biases_derivatives = nullptr;
-    type* kernel_synaptic_weights_derivatives = nullptr;
+    type* kernel_weights_derivatives = nullptr;
     void* backward_data_workspace = nullptr;
     void* backward_filter_workspace = nullptr;
     size_t backward_data_workspace_bytes = 0;

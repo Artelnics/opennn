@@ -15,11 +15,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    struct PerceptronLayerForwardPropagationCuda;
-//    struct PerceptronLayerBackPropagationCuda;
-//#endif
-
 class Perceptron : public Layer
 {
 
@@ -130,38 +125,37 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
-            void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                              Index&,
+                              float*) const override;
 
-            void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, const Index&);
 
-            void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
+    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 
-            void allocate_parameters_device();
-            void free_parameters_device();
-            void copy_parameters_device();
-            void copy_parameters_host();
+    void copy_parameters_host();
 
-            float* get_synaptic_weights_device() const;
-            float* get_biases_device() const;
+    void copy_parameters_device();
 
-            Index get_neurons_number() const;
-            Index get_inputs_number() const;
-            Index get_synaptic_weights_number() const;
-            Index get_biases_number() const;
-            ActivationFunction get_activation_function() const;
+    void allocate_parameters_device();
+
+    void free_parameters_device();
+
+    float* get_weights_device() const;
+    float* get_biases_device() const;
 
 protected:
 
@@ -172,7 +166,7 @@ protected:
 private:
 
     float* biases_device = nullptr;
-    float* synaptic_weights_device = nullptr;
+    float* weights_device = nullptr;
 
 #endif
 
@@ -250,19 +244,19 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    explicit PerceptronLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+    PerceptronLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    std::pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
     type* combinations_cuda = nullptr;
 
@@ -276,16 +270,18 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
 struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
-    explicit PerceptronLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer);
+    PerceptronLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index& new_batch_samples_number, Layer* new_layer);
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
     float* biases_derivatives_cuda = nullptr;
-    float* synaptic_weights_derivatives_cuda = nullptr;
+    float* weights_derivatives_cuda = nullptr;
     float* error_combinations_derivatives_cuda = nullptr;
     float* ones = nullptr;
     float one = 1.0f;
