@@ -269,6 +269,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             // if(epoch == 50)
             // {
+
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
             // cout << "gradient:\n" << training_back_propagation.gradient << endl;
@@ -540,6 +541,523 @@ void AdaptiveMomentEstimationData::print() const
          << "Square gradient exponential decay:" << endl
          << square_gradient_exponential_decay << endl;
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
+{
+    if (!loss_index || !loss_index->has_neural_network() || !loss_index->has_data_set())
+        return TrainingResults();
+
+    TrainingResults results(maximum_epochs_number + 1);
+    
+    check();
+
+    if (display) cout << "Training with adaptive moment estimation \"Adam\" CUDA ...\n";
+
+    // Data set
+
+    DataSet* data_set = loss_index->get_data_set();
+
+    if (!data_set)
+        throw runtime_error("Data set is null.");
+
+    const bool has_selection = data_set->has_selection();
+
+    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
+
+    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
+
+    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
+    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+
+    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
+    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+
+    const Index training_batch_samples_number = min(training_samples_number, batch_size);
+
+    const Index selection_batch_samples_number = (selection_samples_number != 0)
+        ? min(selection_samples_number, batch_size)
+        : 0;
+
+    const Index training_batches_number = (training_batch_samples_number != 0)
+        ? training_samples_number / training_batch_samples_number
+        : 0;
+
+    const Index selection_batches_number = (selection_batch_samples_number != 0)
+        ? selection_samples_number / selection_batch_samples_number
+        : 0;
+
+    vector<vector<Index>> training_batches(training_batches_number);
+    vector<vector<Index>> selection_batches(selection_batches_number);
+
+    // Neural network
+
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    set_names();
+
+    set_scaling();
+
+    set_vocabularies();
+    
+    BatchCuda training_batch_cuda(training_batch_samples_number, data_set);
+    BatchCuda selection_batch_cuda(selection_batch_samples_number, data_set);
+    
+    ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
+    ForwardPropagationCuda selection_forward_propagation_cuda(selection_batch_samples_number, neural_network);
+    
+    // Loss Index
+
+    loss_index->set_normalization_coefficient();
+    
+    BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
+    BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
+    
+    type training_error = type(0);
+    type training_accuracy = type(0);
+
+    type selection_error = type(0);
+    type selection_accuracy = type(0);
+
+    Index selection_failures = 0;
+
+    // Optimization algorithm
+    
+    ADAMOptimizationDataCuda optimization_data(this);
+    
+    bool stop_training = false;
+    bool is_training = true;
+
+    time_t beginning_time;
+    time(&beginning_time);
+
+    type elapsed_time = type(0);
+
+    bool shuffle = false;
+
+    if (neural_network->has(Layer::Type::LongShortTermMemory)
+        || neural_network->has(Layer::Type::Recurrent))
+        shuffle = false;
+
+    // Main loop
+  
+    optimization_data.iteration = 1;
+    /*
+    for (Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    {
+        if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
+
+        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+
+        training_error = type(0);
+
+        if (is_classification_model) training_accuracy = type(0);
+
+        for (Index iteration = 0; iteration < training_batches_number; iteration++)
+        {
+            // Data set
+
+            training_batch_cuda.fill(training_batches[iteration],
+                                     input_variable_indices,
+                                     decoder_variable_indices,
+                                     target_variable_indices);
+
+            // Neural network
+
+            neural_network->forward_propagate_cuda(training_batch_cuda.get_input_pairs_device(),
+                                                   training_forward_propagation_cuda,
+                                                   is_training);
+
+            // Loss index
+
+            loss_index->back_propagate_cuda(training_batch_cuda,
+                                            training_forward_propagation_cuda,
+                                            training_back_propagation_cuda);
+
+            training_error += training_back_propagation_cuda.error();
+
+            if (is_classification_model)   training_accuracy += training_back_propagation_cuda.accuracy();
+
+            // Optimization algorithm
+
+            update_parameteres_cuda(training_back_propagation_cuda, optimization_data);
+
+        }
+
+        // Loss
+
+        training_error /= type(training_batches_number);
+
+        if (is_classification_model)
+            training_accuracy /= type(training_batches_number);
+
+        results.training_error_history(epoch) = training_error;
+
+        if (has_selection)
+        {
+            selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+
+            selection_error = type(0);
+            if (is_classification_model)    selection_accuracy = type(0);
+
+            for (Index iteration = 0; iteration < selection_batches_number; iteration++)
+            {
+                // Data set
+
+                selection_batch_cuda.fill(selection_batches[iteration],
+                                          input_variable_indices,
+                                          decoder_variable_indices,
+                                          target_variable_indices);
+
+                // Neural network
+
+                neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_pairs_device(),
+                                                       selection_forward_propagation_cuda,
+                                                       is_training);
+
+                //Loss @todo use virtual functions
+
+                const string error_type = loss_index->get_error_type();
+
+                if (error_type == "MEAN_SQUARED_ERROR") {
+                    loss_index->calculate_errors_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
+                    loss_index->calculate_mean_square_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
+                }
+                else if (error_type == "NORMALIZED_SQUARED_ERROR") {
+
+                }
+                else if (error_type == "MINKOWSKI_ERROR") {
+
+                }
+                else if (error_type == "CROSS_ENTROPY_ERROR") {
+                    loss_index->calculate_cross_entropy_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
+                }
+                else if (error_type == "WEIGHTED_SQUARED_ERROR") {
+
+                }
+                else if (error_type == "SUM_SQUARED_ERROR") {
+
+                }
+                //loss_index->calculate_error_cuda(selection_batch_cuda,
+                //                                 selection_forward_propagation_cuda,
+                //                                 training_selection_back_propagation_cuda);
+
+                selection_error += selection_back_propagation_cuda.error();
+                if (is_classification_model)    selection_accuracy += selection_back_propagation_cuda.accuracy();
+            }
+
+            selection_error /= type(selection_batches_number);
+            if (is_classification_model) selection_accuracy /= type(selection_batches_number);
+
+            results.selection_error_history(epoch) = selection_error;
+
+            if (epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch - 1)) selection_failures++;
+        }
+
+        // Elapsed time
+
+        elapsed_time = get_elapsed_time(beginning_time);
+
+        if (display && epoch % display_period == 0)
+        {
+            cout << "Training error: " << training_error << endl;
+            if (is_classification_model) cout << "Training accuracy: " << training_accuracy << endl;
+            if (has_selection) cout << "Selection error: " << selection_error << endl;
+            if (has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
+        }
+
+        // @todo loss and error missmatch
+
+        stop_training = true;
+
+        if (epoch == maximum_epochs_number)
+        {
+            if (display) cout << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch << endl;
+            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
+        }
+        else if (elapsed_time >= maximum_time)
+        {
+            if (display) cout << "Epoch " << epoch << "\nMaximum training time reached: " << write_time(elapsed_time) << endl;
+            results.stopping_condition = StoppingCondition::MaximumTime;
+        }
+        else if (results.training_error_history(epoch) < training_loss_goal)
+        {
+            results.stopping_condition = StoppingCondition::LossGoal;
+            if (display) cout << "Epoch " << epoch << "\nLoss goal reached: " << results.training_error_history(epoch) << endl;
+        }
+        else if (training_accuracy >= training_accuracy_goal)
+        {
+            results.stopping_condition = StoppingCondition::LossGoal;
+            if (display) cout << "Epoch " << epoch << "\nAccuracy goal reached: " << training_accuracy << endl;
+        }
+        else if (selection_failures >= maximum_selection_failures)
+        {
+            if (display) cout << "Epoch " << epoch << "\nMaximum selection failures reached: " << selection_failures << endl;
+            results.stopping_condition = StoppingCondition::MaximumSelectionErrorIncreases;
+        }
+        else
+        {
+            stop_training = false;
+        }
+
+        if (stop_training)
+        {
+            results.loss = training_back_propagation_cuda.loss;
+
+            results.selection_failures = selection_failures;
+
+            results.resize_training_error_history(epoch + 1);
+
+            results.resize_selection_error_history(has_selection ? epoch + 1 : 0);
+
+            results.elapsed_time = write_time(elapsed_time);
+
+            break;
+        }
+
+        if (epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
+    }
+
+    set_unscaling();
+
+    neural_network->copy_parameters_host();
+
+    if (display) results.print();
+    */
+    return results;
+    
+}
+
+
+void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
+                                                       ADAMOptimizationDataCuda& optimization_data_cuda) const
+{
+    NeuralNetwork* neural_network = loss_index->get_neural_network();
+
+    Index& iteration = optimization_data_cuda.iteration;
+
+    const type bias_correction =
+        sqrt(type(1) - pow(beta_2, type(iteration))) /
+        (type(1) - pow(beta_1, type(iteration)));
+
+    const Index parameters_number = optimization_data_cuda.adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    type* gradient = back_propagation_cuda.gradient;
+
+    type* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay;
+
+    type* square_gradient = optimization_data_cuda.square_gradient;
+
+    type* square_gradient_exponential_decay = optimization_data_cuda.square_gradient_exponential_decay;
+
+    type* parameters = back_propagation_cuda.parameters;
+
+    const cudnnTensorDescriptor_t& gradient_tensor_descriptor = back_propagation_cuda.gradient_tensor_descriptor;
+
+    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
+
+    const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
+
+    const cudnnOpTensorDescriptor_t& operator_square_root_descriptor = back_propagation_cuda.operator_square_root_descriptor;
+
+    // Gradients
+
+    float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    cudnnOpTensor(cudnn_handle,
+        operator_multiplication_descriptor,
+        &alpha,
+        gradient_tensor_descriptor,
+        gradient,
+        &alpha,
+        gradient_tensor_descriptor,
+        gradient,
+        &beta,
+        gradient_tensor_descriptor,
+        square_gradient);
+
+    alpha = (type(1) - beta_2);
+
+    cublasSscal(cublas_handle, parameters_number, &alpha, square_gradient, 1);
+
+    alpha = (type(1) - beta_1);
+
+    cublasSscal(cublas_handle, parameters_number, &alpha, gradient, 1);
+
+    alpha = beta_1;
+
+    cublasSscal(cublas_handle, parameters_number, &alpha, gradient_exponential_decay, 1);
+
+    alpha = beta_2;
+
+    cublasSscal(cublas_handle, parameters_number, &alpha, square_gradient_exponential_decay, 1);
+
+    alpha = 1.0f;
+
+    cublasSaxpy(cublas_handle, parameters_number, &alpha, gradient, 1, gradient_exponential_decay, 1);
+
+    cublasSaxpy(cublas_handle, parameters_number, &alpha, square_gradient, 1, square_gradient_exponential_decay, 1);
+
+    // Parameters
+
+    const cudnnTensorDescriptor_t& epsilon_device_tensor_descriptor = optimization_data_cuda.epsilon_device_tensor_descriptor;
+
+    // Numerator -> (learning_rate * bias_correction) * gradient_exponential_decay
+
+    float* numerator = optimization_data_cuda.numerator;
+
+    cudaMemcpy(numerator, gradient_exponential_decay, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice);
+
+    if (!use_custom_learning_rate)
+    {
+        alpha = bias_correction * learning_rate;
+
+        cublasSscal(cublas_handle, parameters_number, &alpha, numerator, 1);
+    }
+    else
+    {
+        const type warmup_steps = 4000;
+        type& step = optimization_data_cuda.step;
+
+        alpha = (learning_rate * min(pow(step, -0.5), step * pow(warmup_steps, -1.5))) * bias_correction;
+
+        cublasSscal(cublas_handle, parameters_number, &alpha, numerator, 1);
+
+        step++;
+    }
+
+    // Denominator -> (square_gradient_exponential_decay.sqrt() + epsilon)
+
+    float* denominator = optimization_data_cuda.denominator;
+
+    float* epsilon_device = optimization_data_cuda.epsilon_device;
+
+    alpha = 1.0f;
+
+    cudnnOpTensor(cudnn_handle,
+        operator_square_root_descriptor,
+        &alpha,
+        gradient_tensor_descriptor,
+        square_gradient_exponential_decay,
+        &alpha,
+        gradient_tensor_descriptor,
+        square_gradient_exponential_decay,
+        &beta,
+        gradient_tensor_descriptor,
+        denominator);
+
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha,
+        gradient_tensor_descriptor,
+        denominator,
+        &alpha,
+        epsilon_device_tensor_descriptor,
+        epsilon_device,
+        &beta,
+        gradient_tensor_descriptor,
+        denominator);
+
+    // parameters -= numerator / denominator
+
+    divide_subtract(parameters_number, parameters, numerator, denominator);
+
+    optimization_data_cuda.iteration++;
+
+    // Update parameters
+
+    neural_network->set_parameters_cuda(parameters);
+}
+
+
+ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
+{
+    set();
+}
+
+
+void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
+{
+    adaptive_moment_estimation = new_adaptive_moment_estimation;
+
+    allocate();
+}
+
+void ADAMOptimizationDataCuda::allocate()
+{
+    const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    if (cudaMalloc(&square_gradient, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Square gradient allocation error" << endl;
+
+    if (cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "gradient_exponential_decay allocation error" << endl;
+
+    if (cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "square_gradient_exponential_decay allocation error" << endl;
+
+    if (cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&numerator, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&denominator, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    // Epsilon device
+
+    if (cudaMalloc(&epsilon_device, sizeof(float)) != cudaSuccess)
+        cout << "epsilon_device allocation error" << endl;
+
+    cudaMemcpy(epsilon_device, &epsilon, sizeof(float), cudaMemcpyHostToDevice);
+
+    cudnnCreateTensorDescriptor(&epsilon_device_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(epsilon_device_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        1,
+        1,
+        1,
+        1);
+
+}
+
+
+void ADAMOptimizationDataCuda::free()
+{
+    cudaFree(square_gradient);
+    cudaFree(gradient_exponential_decay);
+    cudaFree(square_gradient_exponential_decay);
+    cudaFree(last_gradient_exponential_decay);
+    cudaFree(last_square_gradient_exponential_decay);
+    cudaFree(numerator);
+    cudaFree(denominator);
+    cudaFree(epsilon_device);
+}
+
+
+void ADAMOptimizationDataCuda::print() const
+{
+    const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    const Tensor<type, 1> gradient_exponential_decay_host = vector_from_device(gradient_exponential_decay, parameters_number);
+
+    cout << "gradient_exponential_decay_host:" << endl;
+    cout << gradient_exponential_decay_host << endl;
+}
+
+#endif
 
 }
 

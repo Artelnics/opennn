@@ -20,7 +20,7 @@ namespace opennn
 struct BackPropagation;
 struct BackPropagationLM;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct BackPropagationCuda;
 #endif
 
@@ -161,13 +161,68 @@ public:
    Tensor<type, 2> calculate_numerical_hessian();
    Tensor<type, 2> calculate_inverse_hessian();
 
-    #ifdef OPENNN_CUDA
-        #include "../../opennn_cuda/opennn_cuda/neural_network_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/loss_index_cuda.h"
+#ifdef OPENNN_CUDA_test
 
-        #include "../../opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
-        #include "../../opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
-    #endif
+public:
+
+    void create_cuda();
+    void destroy_cuda();
+
+    cudnnHandle_t get_cudnn_handle();
+
+    void back_propagate_cuda(const BatchCuda&,
+                             ForwardPropagationCuda&,
+                             BackPropagationCuda&);
+
+    void add_regularization_cuda(BackPropagationCuda&) const;
+
+    void assemble_layers_error_gradient(BackPropagationCuda&) const;
+
+    float calculate_regularization_cuda(Index, float*);
+
+    void calculate_regularization_gradient_cuda(const Index parameters_number,
+                                                float regularization,
+                                                float* parameters,
+                                                float* aux_vector,
+                                                float* gradient);
+
+    float l1_norm_cuda(Index, float*);
+
+    float l2_norm_cuda(Index, float*);
+
+    void l1_norm_gradient_cuda(const Index parameters_number,
+                               float regularization,
+                               float* parameters,
+                               float* aux_vector,
+                               float* gradient);
+
+    void l2_norm_gradient_cuda(const Index parameters_number,
+                               float regularization,
+                               float* parameters,
+                               float* aux_vector,
+                               float* gradient);
+    /*
+    void calculate_errors_cuda(const BatchCuda&,
+                               const ForwardPropagationCuda&,
+                               BackPropagationCuda&) const;
+
+    void calculate_layers_error_gradient_cuda(const BatchCuda&,
+                                              ForwardPropagationCuda&,
+                                              BackPropagationCuda&) const;
+    
+    virtual string get_error_type() const = 0;
+
+    virtual void calculate_mean_square_error_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_cross_entropy_error_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_mean_square_output_delta_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    virtual void calculate_cross_entropy_output_delta_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
+    */
+protected:
+
+    cublasHandle_t cublas_handle = nullptr;
+    cudnnHandle_t cudnn_handle = nullptr;
+
+#endif
 
 protected:
 
@@ -193,10 +248,6 @@ protected:
 
 };
 
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/loss_index_back_propagation_cuda.h"
-#endif
 
 struct BackPropagationLM
 {

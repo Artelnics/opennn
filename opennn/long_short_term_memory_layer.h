@@ -162,7 +162,7 @@ private:
    Tensor<type, 1> empty;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn_cuda/opennn_cuda/long_short_term_memory_layer_cuda.h"
+    // Empty @todo
 #endif
 
 };

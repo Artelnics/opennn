@@ -26,7 +26,7 @@ int main()
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
-
+        
         // Neural network
 
         const Index neurons_number = 3;
@@ -47,7 +47,7 @@ int main()
         const Tensor<string, 2> final_results = results.write_override_results(4);
 
         cout << "Final results:\n" << final_results << endl;
-
+        
         cout << "Good bye!" << endl;
 
         return 0;
