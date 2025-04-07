@@ -408,7 +408,6 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
                                 Eigen::array<Index,2>{query_sequence_length, hidden_depth}) = head_output;
         }
     }
-
 }
 
 //No borrar
@@ -574,10 +573,14 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
         // Attention output deltas
 
-        attention_output_deltas.chip(sample_index,2) =
-            sample_concatenated_attention_output_deltas.reshape(Eigen::array<Index,3>{query_sequence_length, hidden_depth, heads_number});
-    }
+        for(Index head_index = 0; head_index < heads_number; head_index++)
+        {
+            TensorMap<Tensor<type, 2>> head_attention_output_deltas = tensor_map(attention_output_deltas, head_index, sample_index);
 
+            head_attention_output_deltas.device(*thread_pool_device) = sample_concatenated_attention_output_deltas.slice(Eigen::array<Index,2>{0, head_index * hidden_depth},
+                                                                                                        Eigen::array<Index,2>{query_sequence_length, hidden_depth});
+        }
+    }
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {

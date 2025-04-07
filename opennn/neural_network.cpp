@@ -31,6 +31,7 @@
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
 #include "long_short_term_memory_layer.h"
+#include "transformer.h"
 
 namespace opennn
 {
@@ -1269,7 +1270,6 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
 
     return predicted_index;
 }
-
 
 Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 {

@@ -110,7 +110,6 @@ int main()
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
 
-
         cout << "Good bye!" << endl;
 
         return 0;
