@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "../eigen/Eigen/Dense"
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
 
 #include "tensors.h"
 
