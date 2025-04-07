@@ -29,17 +29,21 @@ int main()
 
         // Data set
         
-        DataSet data_set("C:/Users/davidgonzalez/Documents/breast_cancer.csv", ";", true, false);
+        DataSet data_set("C:/Users/davidgonzalez/Documents/iris_plant_original.csv", ";", true, false);
 
         const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
         const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
+        data_set.print_data();
+
         // Neural network
 
-        const Index neurons_number = 2;
+        const Index neurons_number = 1;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
             { input_variables_number }, { neurons_number }, { target_variables_number });
+
+        //neural_network.print();
 
         // Training strategy
         
@@ -49,14 +53,14 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         
-        TrainingResults results = training_strategy.perform_training();
-        //TrainingResults results = training_strategy.perform_training_cuda();
+        //TrainingResults results = training_strategy.perform_training();
+        TrainingResults results = training_strategy.perform_training_cuda();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        //const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
+        //cout << "Confusion matrix:\n" << testing_analysis.calculate_confusion() << endl;
         
         /*
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;

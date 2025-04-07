@@ -33,9 +33,9 @@ public:
     };
 
     Perceptron(const dimensions& = {0},
-                    const dimensions& = {0},
-                    const Activation& = Perceptron::Activation::HyperbolicTangent,
-                    const string& = "perceptron_layer");
+               const dimensions& = {0},
+               const Activation& = Perceptron::Activation::HyperbolicTangent,
+               const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -157,12 +157,6 @@ public:
     float* get_weights_device() const;
     float* get_biases_device() const;
 
-protected:
-
-    cublasHandle_t cublas_handle;
-    cudnnHandle_t cudnn_handle;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor;
-
 private:
 
     float* biases_device = nullptr;
@@ -258,11 +252,8 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    type* combinations_cuda = nullptr;
-
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
-    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
 };

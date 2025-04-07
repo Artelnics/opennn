@@ -157,8 +157,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
 
         void set(AdaptiveMomentEstimation* = nullptr);
 
-        void allocate();
-
         void free();
 
         void print() const;

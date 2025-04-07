@@ -93,10 +93,11 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
         throw runtime_error("Output dimensions rank is not 1");
 
     biases.resize(new_output_dimensions[0]);
-
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    set_parameters_random();
+    //set_parameters_random();
+    biases.setRandom();
+    weights.setRandom();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -628,25 +629,23 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
                                                 unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                                 const bool& is_training) //final
 {
-    /*
     // Probabilistic layer
 
-    const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device(0).second[0];
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
 
-    const type* inputs_device = inputs_pair_device(0).first;
+    const type* inputs_device = inputs_pair_device[0].first;
 
     // Forward propagation
 
     ProbabilisticLayerForwardPropagationCuda* probabilistic_layer_forward_propagation_cuda =
-        static_cast<ProbabilisticLayerForwardPropagationCuda*>(layer_forward_propagation_cuda);
+        static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     type* outputs = probabilistic_layer_forward_propagation_cuda->outputs;
-    type* combinations = probabilistic_layer_forward_propagation_cuda->combinations_cuda;
 
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation_cuda->activation_descriptor;
 
@@ -655,31 +654,25 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
-    // Combinations
-    //cout << "GPU inputs:\n" << matrix_from_device(inputs_device, batch_samples_number, inputs_number) << endl;
-    //cout << "GPU weights:\n" << matrix_from_device(weights_device, inputs_number, neurons_number) << endl;
-    //cout << "biases probabilistic forward CUDA:\n" << vector_from_device(biases_device, neurons_number) << endl;
-    //system("pause");
     const float alpha = 1.0f;
     float beta = 0.0f;
 
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
-        batch_samples_number, neurons_number, inputs_number,
+        batch_samples_number, outputs_number, inputs_number,
         &alpha,
         inputs_device,
         batch_samples_number,
         weights_device,
         inputs_number,
         &beta,
-        combinations,
+        outputs,
         batch_samples_number);
 
-
     // @todo Improve by using cudnnAddTensor
-    for (Index biases_index = 0; biases_index < neurons_number; biases_index++)
+    for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = combinations + biases_index * batch_samples_number;
+        type* outputs_batch = outputs + biases_index * batch_samples_number;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -695,38 +688,35 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
             outputs_batch);
     }
 
-    //cout << "GPU outputs:\n" << matrix_from_device(combinations, batch_samples_number, neurons_number) << endl;
-    //system("pause");
     // Activations
 
     switch (activation_function)
     {
-    case ActivationFunction::Logistic:
+    case Activation::Logistic:
         cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
             outputs_tensor_descriptor,
-            combinations,
+            outputs,
             &beta,
             outputs_tensor_descriptor,
             outputs);
 
         break;
 
-    case ActivationFunction::Softmax:
+    case Activation::Softmax:
         cudnnSoftmaxForward(cudnn_handle,
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
             &alpha,
             outputs_softmax_tensor_descriptor,
-            combinations,
+            outputs,
             &beta,
             outputs_softmax_tensor_descriptor,
             outputs);
 
         break;
     }
-    */
 }
 
 
@@ -739,7 +729,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
     // Probabilistic layer
 
     const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+    const Index outputs_number = get_outputs_number();
 
     // Inputs
 
@@ -781,7 +771,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
 
     // Error combinations
 
-    if (neurons_number == 1)
+    if (outputs_number == 1)
     {
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
@@ -815,7 +805,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
 
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
-        neurons_number,
+        outputs_number,
         batch_samples_number,
         &alpha,
         inputs_device,
@@ -830,7 +820,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
     // @todo use cudnn reduce tensor instead of contract of ones
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
-        neurons_number,
+        outputs_number,
         1,
         batch_samples_number,
         &alpha,
@@ -840,7 +830,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
         batch_samples_number,
         &beta,
         biases_derivatives,
-        neurons_number);
+        outputs_number);
 
     // Inputs derivatives
 
@@ -848,7 +838,7 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
         CUBLAS_OP_N, CUBLAS_OP_T,
         batch_samples_number,
         inputs_number,
-        neurons_number,
+        outputs_number,
         &alpha,
         error_combinations_derivatives,
         batch_samples_number,
@@ -919,71 +909,57 @@ void ProbabilisticLayer::set_parameters_cuda(const float* new_parameters, const 
 
 void ProbabilisticLayer::allocate_parameters_device()
 {
-    const Index outputs_number = get_outputs_number();
     const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
 
     if (cudaMalloc(&biases_device, outputs_number * sizeof(float)) != cudaSuccess)
         cout << "Biases allocation error" << endl;
 
     if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+        cout << "Weights allocation error" << endl;
 
 }
 
 
 void ProbabilisticLayer::copy_parameters_device()
 {
-    // Biases
-
     if (biases_device == nullptr)
         cout << "Biases is null" << endl;
+
+    if (weights_device == nullptr)
+        cout << "Weights is null" << endl;
 
     if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Biases copy error" << endl;
 
-    // Synaptic weights
-
-    if (weights_device == nullptr)
-        cout << "Synaptic weights is null" << endl;
-
     if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Synaptic weights copy error" << endl;
-
+        cout << "Weights copy error" << endl;
 }
 
 
 void ProbabilisticLayer::copy_parameters_host()
 {
-    // Biases
-
     if (biases_device == nullptr)
-        cout << "Biases is null" << endl;
+        cout << "Biases device is null" << endl;
+
+    if (weights_device == nullptr)
+        cout << "Weights device is null" << endl;
 
     if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(float), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Biases copy error" << endl;
 
-    // Synaptic weights
-
-
-    if (weights_device == nullptr)
-        cout << "Synaptic weights is null" << endl;
-
     if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(float), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Synaptic weights copy error" << endl;
+        cout << "Weights copy error" << endl;
 }
 
 
 void ProbabilisticLayer::free_parameters_device()
 {
-    // Biases
-
     cudaFree(biases_device);
-    biases_device = nullptr;
-
-    // Synaptic weights
-
-    weights_device = nullptr;
     cudaFree(weights_device);
+
+    biases_device = nullptr;
+    weights_device = nullptr;
 }
 
 
@@ -1035,11 +1011,6 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
 
     const Index inputs_number = layer->get_inputs_number();
 
-    // Combinations
-
-    if (cudaMalloc(&combinations_cuda, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "combinations allocation error" << endl;
-
     // Biases
 
     cudnnCreateTensorDescriptor(&biases_batch_tensor_descriptor);
@@ -1070,7 +1041,7 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
     cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
-        CUDNN_TENSOR_NHWC,
+        CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
         outputs_number,
@@ -1080,7 +1051,7 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
     cudnnCreateTensorDescriptor(&outputs_batch_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(outputs_batch_tensor_descriptor,
-        CUDNN_TENSOR_NHWC,
+        CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
         1,
@@ -1090,7 +1061,11 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
     // Activations
 
     if (outputs_number == 1)
+    {
+        cudnnCreateActivationDescriptor(&activation_descriptor);
+
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
+    }
 }
 
 
@@ -1101,9 +1076,6 @@ void ProbabilisticLayerForwardPropagationCuda::print() const
 
     cout << layer->get_type_string() + " forward propagation" << endl;
 
-    cout << "Combinations" << endl;
-    cout << matrix_from_device(combinations_cuda, batch_size, outputs_number) << endl;
-
     cout << "Outputs (Softmax forward)" << endl;
     cout << matrix_from_device(outputs, batch_size, outputs_number) << endl;
 
@@ -1113,7 +1085,6 @@ void ProbabilisticLayerForwardPropagationCuda::print() const
 void ProbabilisticLayerForwardPropagationCuda::free()
 {
     cudaFree(outputs);
-    cudaFree(combinations_cuda);
 
     cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_softmax_tensor_descriptor);

@@ -42,7 +42,7 @@ struct NeuralNetworkBackPropagationCuda
 
     NeuralNetwork* neural_network = nullptr;
     
-    vector<unique_ptr<LayerBackPropagation>> layers;
+    vector<unique_ptr<LayerBackPropagationCuda>> layers;
 };
 
 #endif

@@ -1766,13 +1766,12 @@ BackPropagationCuda::BackPropagationCuda(const Index& new_samples_number, LossIn
 
 void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_loss_index)
 {
-    /*
     samples_number = new_samples_number;
 
     loss_index = new_loss_index;
 
     if (!loss_index) return;
-
+    
     // Neural network
 
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
@@ -1782,14 +1781,72 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     const dimensions output_dimensions = neural_network_ptr->get_output_dimensions();
 
     const Index outputs_number = output_dimensions[0];
-
+    
     // First order loss
 
     neural_network.set(samples_number, neural_network_ptr);
 
-    error = type(0);
-    regularization = type(0);
     loss = type(0);
+    error(0) = type(0);
+    regularization = type(0);
+
+    // Errors
+
+    if (cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Errors allocation error" << endl;
+
+    // Parameters
+
+    if (cudaMalloc(&parameters, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Parameters allocation error" << endl;
+
+    if (cudaMalloc(&parameters_square, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "parameters_square allocation error" << endl;
+
+    cudnnCreateTensorDescriptor(&parameters_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(parameters_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        parameters_number,
+        1,
+        1,
+        1);
+
+    parameters_host = neural_network_ptr->get_parameters();
+
+    if (cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "parameters copy error" << endl;
+
+    // Gradient
+
+    cudnnCreateTensorDescriptor(&gradient_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(gradient_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        parameters_number,
+        1,
+        1,
+        1);
+
+    if (cudaMalloc(&gradient, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "Gradient allocation error" << endl;
+
+    // Regularization gradient
+
+    if (cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "regularization_gradient allocation error" << endl;
+
+    // Outputs_delta
+
+    output_deltas_dimensions = { samples_number };
+    output_deltas_dimensions.insert(output_deltas_dimensions.end(), output_dimensions.begin(), output_dimensions.end());
+
+    const Index size = accumulate(output_dimensions.begin(), output_dimensions.end(), samples_number, multiplies<>());
+
+    if (cudaMalloc(&output_deltas, size * sizeof(float)) != cudaSuccess)
+        cout << "output_deltas allocation error" << endl;
 
     // Sum
 
@@ -1860,70 +1917,6 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     cudaMalloc(&workspace, workspaceSize);
 
-    // Errors
-
-    if (cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Errors allocation error" << endl;
-
-    // Gradient
-
-    cudnnCreateTensorDescriptor(&gradient_tensor_descriptor);
-
-    cudnnSetTensor4dDescriptor(gradient_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        parameters_number,
-        1,
-        1,
-        1);
-
-    if (cudaMalloc(&gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Gradient allocation error" << endl;
-
-    // Regularization gradient
-
-    if (cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "regularization_gradient allocation error" << endl;
-
-    // Parameters
-
-    if (cudaMalloc(&parameters, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
-
-    if (cudaMalloc(&parameters_square, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_square allocation error" << endl;
-
-    cudnnCreateTensorDescriptor(&parameters_tensor_descriptor);
-
-    cudnnSetTensor4dDescriptor(parameters_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        parameters_number,
-        1,
-        1,
-        1);
-
-    parameters_host = neural_network_ptr->get_parameters();
-
-    if (cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "parameters copy error" << endl;
-
-    // Outputs_delta
-
-    output_deltas_dimensions.resize(output_dimensions.size() + 1);
-    output_deltas_dimensions[0] = samples_number;
-
-    Index size = samples_number;
-    for (int i = 0; i < output_dimensions.size(); i++)
-    {
-        output_deltas_dimensions[i + 1] = output_dimensions[i];
-        size *= output_dimensions[i];
-    }
-
-    if (cudaMalloc(&output_deltas, size * sizeof(float)) != cudaSuccess)
-        cout << "output_deltas allocation error" << endl;
-
-
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{
         /* @todo CudaMalloc GPU
@@ -1931,16 +1924,16 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         matches (batch_samples_number, outputs_number);
         mask (batch_samples_number, outputs_number);
         */
-        //}
+    //}
 
-        // Regularization @todo
-        /*
-        if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
-        {
-            if (cudaMalloc(&aux_regularization, parameters_number * sizeof(float)) != cudaSuccess)
-                cout << "Aux_regularization allocation error" << endl;
-        }
-        */
+    // Regularization @todo
+    /*
+    if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
+    {
+        if (cudaMalloc(&aux_regularization, parameters_number * sizeof(float)) != cudaSuccess)
+            cout << "Aux_regularization allocation error" << endl;
+    }
+    */
 }
 
 
