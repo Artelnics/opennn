@@ -267,17 +267,19 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            // if(epoch == 50)
-            // {
-
+            // // if(epoch == 50)
+            // // {
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // // cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // cout << "MHA Gradient - numerical gradient:" << endl;
+            // for(Index i = numerical_gradient.size()-229; i < numerical_gradient.size()-61;i++)
+            //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
-            // throw runtime_error("Checking the gradient and numerical gradient.");
-            // }
+            // throw runtime_error("\nChecking the gradient and numerical gradient.");
+            // // }
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
