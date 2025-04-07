@@ -17,6 +17,8 @@ namespace opennn
 
     vector<string> get_tokens(const string&, const string&);
 
+    vector<string> convert_string_vector(const vector<vector<string>>&, const string&);
+
     Tensor<type, 1> to_type_vector(const string&, const string&);
 
     bool is_numeric_string(const string&);

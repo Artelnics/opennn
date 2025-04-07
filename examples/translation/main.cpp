@@ -54,8 +54,8 @@ int main()
 
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
-        const Index embedding_dimension = 6/*32*/;
-        const Index heads_number = 2/*4*/;
+        const Index embedding_dimension = 32;
+        const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
@@ -65,8 +65,6 @@ int main()
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
-
-        // neural_network.set_parameters_constant(0.1);
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
@@ -79,13 +77,53 @@ int main()
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
         language_data_set.set(DataSet::SampleUse::Training);
-        adaptive_moment_estimation->set_loss_goal(0.1);
+        adaptive_moment_estimation->set_loss_goal(0.3);
         // adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(/*12*/2);
+        adaptive_moment_estimation->set_batch_samples_number(12);
         adaptive_moment_estimation->set_display_period(1);
 
-        training_strategy.perform_training();        
+        training_strategy.perform_training();
+/*
+
+        // Prediction test
+        cout << "Vocabulary:" << endl;
+        language_data_set.print_vocabulary(language_data_set.get_input_vocabulary());
+
+        Tensor<type,2> testing_data(3,10);
+        testing_data(0,0) = 2;
+        testing_data(0,1) = 4;
+        testing_data(0,2) = 29;
+        testing_data(0,3) = 12;
+        testing_data(0,4) = 13;
+        testing_data(0,5) = 17;
+        testing_data(0,6) = 3;
+        testing_data(0,7) = 0;
+        testing_data(0,8) = 0;
+        testing_data(0,9) = 0;
+        testing_data(1,0) = 2;
+        testing_data(1,1) = 4;
+        testing_data(1,2) = 5;
+        testing_data(1,3) = 6;
+        testing_data(1,4) = 7;
+        testing_data(1,5) = 8;
+        testing_data(1,6) = 3;
+        testing_data(1,7) = 0;
+        testing_data(1,8) = 0;
+        testing_data(1,9) = 0;
+        testing_data(2,0) = 2;
+        testing_data(2,1) = 4;
+        testing_data(2,2) = 29;
+        testing_data(2,3) = 12;
+        testing_data(2,4) = 30;
+        testing_data(2,5) = 31;
+        testing_data(2,6) = 17;
+        testing_data(2,7) = 3;
+        testing_data(2,8) = 0;
+        testing_data(2,9) = 0;
+
+        cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
+
 /*
 
 

@@ -59,7 +59,6 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     const bool y_binary = is_binary(y);
 
     const Eigen::array<Index, 1> vector{{x_rows}};
-
     if(x_columns == 1 && y_columns == 1)
     {
         const Tensor<type, 1> x_vector = x.reshape(vector);

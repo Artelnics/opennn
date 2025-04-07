@@ -328,8 +328,6 @@ Tensor<Tensor<type, 1>, 1> ResponseOptimization::get_values_conditions(const Ten
             }
             else
             {
-                cout << "adri - " << i << endl;
-                cout << output_maximums(i) << "-" << output_minimums(i) << endl;
                 current_values[0] = output_minimums(i);
                 current_values[1] = output_maximums(i);
             }

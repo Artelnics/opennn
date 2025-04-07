@@ -325,8 +325,8 @@ public:
 
     bool has_binary_raw_variables() const;
     bool has_categorical_raw_variables() const;
-
     bool has_binary_or_categorical_raw_variables() const;
+    bool has_time_raw_variable() const;
 
     bool has_selection() const;
 
@@ -516,6 +516,8 @@ public:
 
     virtual void transform_associative_dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
+
+    // convert
 
 protected:
 
