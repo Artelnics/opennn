@@ -196,6 +196,229 @@ void CrossEntropyError::from_XML(const XMLDocument& document)
     */
 }
 
+
+#ifdef OPENNN_CUDA_test
+
+void CrossEntropyError::calculate_error_cuda(const BatchCuda& batch_cuda,
+                                             const ForwardPropagationCuda& forward_propagation_cuda,
+                                             BackPropagationCuda& back_propagation_cuda) const
+{
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    (outputs_number == 1)
+        ? calculate_binary_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda)
+        : calculate_multiple_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
+}
+
+
+void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
+                                                    const ForwardPropagationCuda& forward_propagation_cuda,
+                                                    BackPropagationCuda& back_propagation_cuda) const
+{
+    // Batch
+
+    const Index samples_number = batch_cuda.get_samples_number();
+
+    const type* targets = batch_cuda.targets_device;
+
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation_cuda.get_last_trainable_layer_outputs_pair_device();
+
+    const type* outputs = outputs_pair.first;
+
+    // Back propagation
+
+    Tensor<type, 0>& error = back_propagation_cuda.error;
+
+    const Index size = samples_number * outputs_pair.second[1];
+
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
+
+    const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
+    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
+
+    const cudnnReduceTensorDescriptor_t& reduce_tensor_descriptor = back_propagation_cuda.reduce_tensor_descriptor;
+    void* workspace = back_propagation_cuda.workspace;
+    size_t workspaceSize = back_propagation_cuda.workspaceSize;
+
+    type* numerator = back_propagation_cuda.numerator;
+    type* numerator_2 = back_propagation_cuda.numerator_2;
+    type* numerator_3 = back_propagation_cuda.numerator_3;
+    type* numerator_reduce = back_propagation_cuda.numerator_reduce;
+    type* ones = back_propagation_cuda.ones;
+
+    float alpha = 1.0f;
+    float alpha_minus_one = -1.0f;
+    const float beta = 0.0f;
+
+    // 1 - targets
+
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha_minus_one,
+        outputs_tensor_descriptor,
+        targets,
+        &alpha,
+        outputs_tensor_descriptor,
+        ones,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator_3);
+
+    // 1 - outputs
+
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha_minus_one,
+        outputs_tensor_descriptor,
+        outputs,
+        &alpha,
+        outputs_tensor_descriptor,
+        ones,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator_2);
+
+    // (1 - outputs).log()
+
+    log_in_place(size, numerator_2);
+
+    // (1 - targets) * (1 - outputs).log()
+
+    cudnnOpTensor(cudnn_handle,
+        operator_multiplication_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator_3,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator_2,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator);
+
+    // outputs.log()
+
+    log(size, outputs, numerator_2);
+
+    // target * outputs.log()
+
+    cudnnOpTensor(cudnn_handle,
+        operator_multiplication_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        targets,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator_2,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator_3);
+
+    // (target * outputs.log()) + ((1 - targets) * (1 - outputs).log())
+
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator_3,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator_2);
+
+    // (target * outputs.log()) + ((1 - targets) * (1 - outputs).log()).sum()
+
+    cudnnReduceTensor(cudnn_handle,
+        reduce_tensor_descriptor,
+        nullptr, 0,
+        workspace, workspaceSize,
+        &alpha,
+        outputs_tensor_descriptor, numerator_2,
+        &beta,
+        output_reduce_tensor_descriptor, numerator_reduce);
+
+    cudaMemcpy(error.data(), numerator_reduce, sizeof(type), cudaMemcpyDeviceToHost);
+
+    error = error / type(-samples_number);
+
+    if (isnan(error())) throw runtime_error("\nError is NAN.");
+}
+
+
+void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cuda,
+                                                      const ForwardPropagationCuda& forward_propagation_cuda,
+                                                      BackPropagationCuda& back_propagation_cuda) const
+{
+    // Batch
+
+    const Index samples_number = batch_cuda.get_samples_number();
+
+    const type* targets = batch_cuda.targets_device;
+
+    // Forward propagation
+
+    const pair<type*, dimensions> outputs_pair = forward_propagation_cuda.get_last_trainable_layer_outputs_pair_device();
+
+    const type* outputs = outputs_pair.first;
+
+    // Back propagation
+
+    Tensor<type, 0>& error = back_propagation_cuda.error;
+
+    const Index size = samples_number * outputs_pair.second[1];
+
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
+
+    const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
+
+    const cudnnReduceTensorDescriptor_t& reduce_tensor_descriptor = back_propagation_cuda.reduce_tensor_descriptor;
+    void* workspace = back_propagation_cuda.workspace;
+    size_t workspaceSize = back_propagation_cuda.workspaceSize;
+
+    type* numerator = back_propagation_cuda.numerator;
+    type* numerator_reduce = back_propagation_cuda.numerator_reduce;
+
+    float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    log(size, outputs, numerator);
+
+    cudnnOpTensor(cudnn_handle,
+        operator_multiplication_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        numerator,
+        &alpha,
+        outputs_tensor_descriptor,
+        targets,
+        &beta,
+        outputs_tensor_descriptor,
+        numerator);
+
+    cudnnReduceTensor(cudnn_handle,
+        reduce_tensor_descriptor,
+        nullptr, 0,
+        workspace, workspaceSize,
+        &alpha,
+        outputs_tensor_descriptor, numerator,
+        &beta,
+        output_reduce_tensor_descriptor, numerator_reduce);
+
+    cudaMemcpy(error.data(), numerator_reduce, sizeof(type), cudaMemcpyDeviceToHost);
+
+    error = error / type(-samples_number);
+
+    if (isnan(error())) throw runtime_error("\nError is NAN.");
+}
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

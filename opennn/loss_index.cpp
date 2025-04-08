@@ -1340,46 +1340,23 @@ void LossIndex::back_propagate_cuda(const BatchCuda& batch_cuda,
                                     ForwardPropagationCuda& forward_propagation_cuda,
                                     BackPropagationCuda& back_propagation_cuda)
 {
-    /*
-    const Index trainable_layers_number = neural_network->get_trainable_layers_number();
+    if (batch_cuda.is_empty()) return;
 
     // Loss index
 
-    // @todo change to virtual
-    const string error_type = this->get_error_type();
+    calculate_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
 
-    if (error_type == "MEAN_SQUARED_ERROR") {
-        calculate_errors_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
-        calculate_mean_square_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
-    }
-    else if (error_type == "NORMALIZED_SQUARED_ERROR") {
+    // calculate_layers_error_gradient_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
 
-    }
-    else if (error_type == "MINKOWSKI_ERROR") {
+    //assemble_layers_error_gradient(back_propagation);
 
-    }
-    else if (error_type == "CROSS_ENTROPY_ERROR") {
-        calculate_cross_entropy_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
-    }
-    else if (error_type == "WEIGHTED_SQUARED_ERROR") {
+    // Loss
 
-    }
-    else if (error_type == "SUM_SQUARED_ERROR") {
-
-    }
-
-    calculate_layers_error_gradient_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
-
-    assemble_layers_error_gradient(back_propagation_cuda);
-
-    // Loss index
-
-    back_propagation_cuda.loss = back_propagation_cuda.error();
+    //back_propagation_cuda.loss = back_propagation_cuda.error();
 
     // Regularization
 
-    add_regularization_cuda(back_propagation_cuda);
-    */
+    //add_regularization_cuda(back_propagation_cuda);
 }
 
 
@@ -1890,6 +1867,10 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     if (cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "Numerator allocation error" << endl;
+    if (cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Numerator 2 allocation error" << endl;
+    if (cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Numerator 3 allocation error" << endl;
     if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
         cout << "Numerator reduce allocation error" << endl;
 
@@ -1916,6 +1897,15 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, outputs_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
 
     cudaMalloc(&workspace, workspaceSize);
+
+    // Aux ones vector
+
+    if (cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "aux ones allocation error" << endl;
+
+    for (Index i = 0; i < samples_number; i++) {
+        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
+    }
 
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{

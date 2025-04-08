@@ -52,15 +52,12 @@ public:
    string get_loss_method() const override;
    string get_error_type_text() const override;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
-   void calculate_mean_square_error_cuda(const BatchCuda&,
-                                         const NeuralNetwork::ForwardPropagationCuda&,
-                                         BackPropagationCuda&) const override;
+   void calculate_error_cuda(const BatchCuda&,
+                             const ForwardPropagationCuda&,
+                             BackPropagationCuda&) const override;
 
-   void calculate_mean_square_output_delta_cuda(const BatchCuda&,
-                                                const NeuralNetwork::ForwardPropagationCuda&,
-                                                BackPropagationCuda&) const override;
 
 #endif
 

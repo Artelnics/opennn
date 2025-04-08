@@ -470,6 +470,12 @@ void BatchCuda::print()
 }
 
 
+bool BatchCuda::is_empty() const
+{
+    return input_dimensions.empty();
+}
+
+
 void BatchCuda::free()
 {
     cudaFreeHost(inputs_host);

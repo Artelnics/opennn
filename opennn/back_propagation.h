@@ -79,6 +79,8 @@ struct BackPropagationCuda
     size_t workspaceSize = 0;
 
     float* numerator = nullptr;
+    float* numerator_2 = nullptr;
+    float* numerator_3 = nullptr;
     float* numerator_reduce = nullptr;
     cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;
@@ -96,6 +98,9 @@ struct BackPropagationCuda
     float* gradient = nullptr;
     cudnnTensorDescriptor_t gradient_tensor_descriptor = nullptr;
     float* regularization_gradient = nullptr;
+
+    float* ones = nullptr;
+    float one = 1.0f;
 
     // @todo
     Tensor<type, 0> accuracy;

@@ -75,6 +75,8 @@ struct Batch
 
         void print();
 
+        bool is_empty() const;
+
         Index samples_number = 0;
 
         DataSet* data_set = nullptr;

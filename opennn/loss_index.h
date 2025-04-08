@@ -170,6 +170,10 @@ public:
 
     cudnnHandle_t get_cudnn_handle();
 
+    virtual void calculate_error_cuda(const BatchCuda&,
+                                      const ForwardPropagationCuda&,
+                                      BackPropagationCuda&) const {}
+
     void back_propagate_cuda(const BatchCuda&,
                              ForwardPropagationCuda&,
                              BackPropagationCuda&);
@@ -201,6 +205,8 @@ public:
                                float* parameters,
                                float* aux_vector,
                                float* gradient);
+    
+
     /*
     void calculate_errors_cuda(const BatchCuda&,
                                const ForwardPropagationCuda&,

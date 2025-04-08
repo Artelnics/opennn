@@ -2321,6 +2321,16 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
 }
 
 
+pair<type*, dimensions> ForwardPropagationCuda::get_last_trainable_layer_outputs_pair_device() const
+{
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+
+    const unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation = layers[last_trainable_layer_index];
+
+    return layer_forward_propagation->get_outputs_pair();
+}
+
+
 vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_pairs_device(const vector<pair<type*, dimensions>>& batch_input_pairs_device, const bool& is_training) const
 {
     const Index layers_number = neural_network->get_layers_number();

@@ -37,7 +37,7 @@ struct ForwardPropagationCuda
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 
-    //pair<type*, dimensions> get_last_trainable_layer_outputs_pair_device() const;
+    pair<type*, dimensions> get_last_trainable_layer_outputs_pair_device() const;
 
     vector<vector<pair<type*, dimensions>>> get_layer_input_pairs_device(const vector<pair<type*, dimensions>>&, const bool&) const;
 
