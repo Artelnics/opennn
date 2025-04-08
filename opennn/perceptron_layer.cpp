@@ -353,7 +353,7 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
-
+    
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
@@ -377,25 +377,24 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
     const bool& is_first_layer = perceptron_layer_back_propagation_lm->is_first_layer;
 
     Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation_lm->input_derivatives;
-/*
-    //combination_deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    Index synaptic_weight_index = 0;
+    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+
+    Index weight_index = 0;
 
     for(Index neuron_index = 0; neuron_index < outputs_number; neuron_index++)
     {
-        const Tensor<type, 1> combinations_derivatives_neuron
-            = tensor_map(combination_deltas, neuron_index);
+        const Tensor<type, 1> combination_delta_neuron = tensor_map_(deltas, neuron_index);
 
         for(Index input_index = 0; input_index < inputs_number; input_index++)
         {
             const Tensor<type, 1> input = inputs.chip(input_index,1);
 
             TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight 
-                = tensor_map(squared_errors_Jacobian, synaptic_weight_index++);
+                = tensor_map(squared_errors_Jacobian, weight_index++);
 
             squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) 
-                = combinations_derivatives_neuron * input;
+                = combination_delta_neuron * input;
         }
 
         const Index bias_index = weights_number + neuron_index;
@@ -403,13 +402,11 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
         TensorMap<Tensor<type, 1>> squared_errors_jacobian_bias 
             = tensor_map(squared_errors_Jacobian, bias_index);
 
-        squared_errors_jacobian_bias.device(*thread_pool_device) = combinations_derivatives_neuron;
+        squared_errors_jacobian_bias.device(*thread_pool_device) = combination_delta_neuron;
     }
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device)
-        = combination_deltas.contract(weights, A_BT);
-*/
+        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
 }
 
 

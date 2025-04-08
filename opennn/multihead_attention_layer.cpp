@@ -278,12 +278,11 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
             sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
         }
     }
-
     /*
     Arguments
 
-        const Eigen::Tensor<float, 3>& input,             // (batch, seq_len, embed_dim)
-        const Eigen::Tensor<float, 3>& query_weights)     // (embed_dim, head_dim, num_heads)
+    const Eigen::Tensor<float, 3>& input,             // (batch, seq_len, embed_dim)
+    const Eigen::Tensor<float, 3>& query_weights)     // (embed_dim, head_dim, num_heads)
 
     const int batch_size = input.dimension(0);
     const int seq_len = input.dimension(1);

@@ -1356,8 +1356,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for (const auto& layer : layers)
-        layer->to_XML(printer);
+    for (Index i = 0; i < layers_number; i++)
+        layers[i]->to_XML(printer);
+
 
     // Layer input indices
 

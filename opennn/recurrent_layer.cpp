@@ -8,6 +8,7 @@
 
 #include "tensors.h"
 #include "recurrent_layer.h"
+#include "strings_utilities.h"
 
 namespace opennn
 {
@@ -95,7 +96,6 @@ string Recurrent::get_activation_function_string() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-
     biases.resize(new_output_dimensions[0]);
 
     input_weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
@@ -535,12 +535,15 @@ void Recurrent::from_XML(const XMLDocument& document)
     if(!recurrent_layer_element)
         throw runtime_error("Recurrent layer element is nullptr.\n");
 
+    set_name(read_xml_string(recurrent_layer_element,"Name"));
     set_input_dimensions({ read_xml_index(recurrent_layer_element, "InputsNumber") });
     set_output_dimensions({ read_xml_index(recurrent_layer_element, "NeuronsNumber") });
     set_activation_function(read_xml_string(recurrent_layer_element, "Activation"));
-/*
-    set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "));
-*/
+
+    Index index = 0;
+
+    set_parameters(to_type_vector(read_xml_string(recurrent_layer_element, "Parameters"), " "), index);
+
 }
 
 
@@ -548,6 +551,7 @@ void Recurrent::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Recurrent");
 
+    add_xml_element(printer, "Name", get_name());
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
     add_xml_element(printer, "Activation", get_activation_function_string());
