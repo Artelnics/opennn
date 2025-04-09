@@ -31,6 +31,7 @@
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
 #include "long_short_term_memory_layer.h"
+#include "transformer.h"
 
 namespace opennn
 {
@@ -1271,7 +1272,6 @@ Index NeuralNetwork::calculate_image_output(const filesystem::path& image_path)
     return predicted_index;
 }
 
-
 Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
 {
     const Index layers_number = get_layers_number();
@@ -1359,8 +1359,9 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "LayersNumber", to_string(layers_number));
 
-    for (const auto& layer : layers)
-        layer->to_XML(printer);
+    for (Index i = 0; i < layers_number; i++)
+        layers[i]->to_XML(printer);
+
 
     // Layer input indices
 

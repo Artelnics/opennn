@@ -2884,23 +2884,11 @@ namespace opennn
 
         add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
-        vector<string> data_file_preview_result;
-
-        for (const auto& subvec : data_file_preview) {
-            stringstream ss;
-            for (size_t i = 0; i < subvec.size(); ++i) {
-                ss << subvec[i];
-                if (i != subvec.size() - 1) {
-                    ss << ",";
-                }
-            }
-            data_file_preview_result.push_back(ss.str());
-        }
-
+        vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
         for(int i = 0; i < data_file_preview.size(); i++){
             printer.OpenElement("Row");
             printer.PushAttribute("Item", to_string(i + 1).c_str());
-            printer.PushText(data_file_preview_result[i].data());
+            printer.PushText(vector_data_file_preview[i].data());
             printer.CloseElement();
         }
 
@@ -4001,7 +3989,7 @@ namespace opennn
         sample_uses.resize(samples_number);
 
         sample_ids.resize(samples_number);
-        
+
         const vector<vector<Index>> all_variable_indices = get_variable_indices();
 
         data.resize(samples_number, all_variable_indices[all_variable_indices.size() - 1][all_variable_indices[all_variable_indices.size() - 1].size() - 1] + 1);
@@ -4124,15 +4112,16 @@ namespace opennn
             sample_index++;
         }
 
-        //file.clear();
-        //file.seekg(0);
-        //read_data_file_preview(file);
+        file.clear();
+        file.seekg(0);
+        read_data_file_preview(file);
 
         file.close();
 
         unuse_constant_raw_variables();
         set_binary_raw_variables();
         split_samples_random();
+
     }
 
 
@@ -4277,7 +4266,6 @@ namespace opennn
             [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::Categorical; });
     }
 
-
     bool DataSet::has_binary_or_categorical_raw_variables() const
     {
         for (const DataSet::RawVariable& raw_variable : raw_variables)
@@ -4285,6 +4273,13 @@ namespace opennn
                 return true;
 
         return false;
+    }
+
+
+    bool DataSet::has_time_raw_variable() const
+    {
+        return any_of(raw_variables.begin(), raw_variables.end(),
+                      [](const RawVariable& raw_variable) { return raw_variable.type == RawVariableType::DateTime; });
     }
 
 

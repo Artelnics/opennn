@@ -80,6 +80,24 @@ vector<string> get_tokens(const string& text, const string& separator)
     return tokens;
 }
 
+vector<string> convert_string_vector(const vector<vector<string>>& inputVector, const string& separator){
+
+    vector<string> vector_result;
+
+    for (const auto& subvec : inputVector) {
+        stringstream ss;
+        for (size_t i = 0; i < subvec.size(); ++i) {
+            ss << subvec[i];
+            if (i != subvec.size() - 1) {
+                ss << separator.c_str();
+            }
+        }
+        vector_result.push_back(ss.str());
+    }
+
+    return vector_result;
+}
+
 
 Tensor<type, 1> to_type_vector(const string& text, const string& separator)
 {
