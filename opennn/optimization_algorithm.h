@@ -129,7 +129,6 @@ public:
         cudnnCreate(&cudnn_handle);
     }
 
-
     void destroy_cuda()
     {
         cublasDestroy(cublas_handle);
