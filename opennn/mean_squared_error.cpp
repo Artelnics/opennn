@@ -224,9 +224,35 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
 
     const type coefficient = type(2.0)/type(samples_number * outputs_number);
 
-    error = mean_square_error * coefficient;
+    error(0) = mean_square_error * coefficient;
 
     if (isnan(error())) throw runtime_error("\nError is NAN.");
+}
+
+
+void MeanSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
+                                                   ForwardPropagationCuda& forward_propagation_cuda,
+                                                   BackPropagationCuda& back_propagation_cuda) const
+{
+    const Index outputs_number = neural_network->get_outputs_number();
+
+    // Batch
+
+    const Index samples_number = batch_cuda.get_samples_number();
+
+    // Back propagation
+
+    type* errors_device = back_propagation_cuda.errors;
+
+    const pair<type*, dimensions> output_deltas_pair_device = back_propagation_cuda.get_output_deltas_pair_device();
+
+    type* output_deltas_device = output_deltas_pair_device.first;
+
+    const type coefficient = type(2.0) / type(outputs_number * samples_number);
+
+    cudaMemcpy(output_deltas_device, errors_device, outputs_number * samples_number * sizeof(float), cudaMemcpyDeviceToDevice);
+
+    cublasSscal(cublas_handle, outputs_number * samples_number, &coefficient, output_deltas_device, 1);
 }
 
 #endif

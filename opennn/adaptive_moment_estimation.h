@@ -119,11 +119,6 @@ private:
 
         void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 
-    private:
-
-        cublasHandle_t cublas_handle;
-        cudnnHandle_t cudnn_handle;
-
 #endif
 
 };

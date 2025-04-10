@@ -254,6 +254,8 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    float* combinations = nullptr;
 };
 
 

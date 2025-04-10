@@ -62,8 +62,6 @@ struct Batch
 
         void set(const Index&, DataSet*);
 
-        void allocate();
-
         void copy_device();
 
         void free();
@@ -73,7 +71,7 @@ struct Batch
                   const vector<Index>&,
                   const vector<Index> & = vector<Index>());
 
-        void print();
+        void print() const;
 
         bool is_empty() const;
 

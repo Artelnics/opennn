@@ -314,37 +314,60 @@ void BatchCuda::set(const Index& new_samples_number, DataSet* new_data_set)
     {
         input_dimensions = { samples_number };
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
+
+        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+
+        if (cudaMallocHost(&inputs_host, input_size * sizeof(float)) != cudaSuccess)
+            cout << "Inputs host allocation error" << endl;
+
+        if (cudaMalloc(&inputs_device, input_size * sizeof(float)) != cudaSuccess)
+            cout << "Inputs allocation error" << endl;
     }
 
     if (!data_set_decoder_dimensions.empty())
     {
         decoder_dimensions = { samples_number };
         decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
+
+        const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
+
+        if (cudaMallocHost(&decoder_host, decoder_size * sizeof(float)) != cudaSuccess)
+            cout << "Decoder host allocation error" << endl;
+
+        if (cudaMalloc(&decoder_device, decoder_size * sizeof(float)) != cudaSuccess)
+            cout << "Decoder allocation error" << endl;
     }
 
     if (!data_set_target_dimensions.empty())
     {
         target_dimensions = { samples_number };
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
-    }
 
-    allocate();
+        const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
+
+        if (cudaMallocHost(&targets_host, target_size * sizeof(float)) != cudaSuccess)
+            cout << "Targets host allocation error" << endl;
+
+        if (cudaMalloc(&targets_device, target_size * sizeof(float)) != cudaSuccess)
+            cout << "Targets allocation error" << endl;
+    }
 }
 
 
 void BatchCuda::copy_device()
 {
-    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
-    const Index decoder_number = data_set->get_raw_variables_number(DataSet::VariableUse::Decoder);
-    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+    const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
+    const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
+    const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
 
-    if (cudaMemcpy(inputs_device, inputs_host, samples_number * inputs_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+    if (cudaMemcpy(inputs_device, inputs_host, input_size * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Inputs copy error" << endl;
 
-    if (cudaMemcpy(decoder_device, decoder_host, samples_number * decoder_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Decoder copy error" << endl;
+    if (!decoder_dimensions.empty())
+        if (cudaMemcpy(decoder_device, decoder_host, decoder_size * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+            cout << "Decoder copy error" << endl;
 
-    if (cudaMemcpy(targets_device, targets_host, samples_number * targets_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+    if (cudaMemcpy(targets_device, targets_host, target_size * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Targets copy error" << endl;
 }
 
@@ -353,14 +376,14 @@ Tensor<type, 2> BatchCuda::get_inputs_device() const
 {
     const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
 
-    Tensor<type, 2> inputs_host(samples_number, inputs_number);
+    Tensor<type, 2> inputs(samples_number, inputs_number);
 
-    inputs_host.setZero();
+    inputs.setZero();
 
-    if (cudaMemcpy(inputs_host.data(), inputs_device, samples_number * inputs_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+    if (cudaMemcpy(inputs.data(), inputs_device, samples_number * inputs_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Cuda matrix memcpy error" << endl;
 
-    return inputs_host;
+    return inputs;
 }
 
 
@@ -368,38 +391,38 @@ Tensor<type, 2> BatchCuda::get_decoder_device() const
 {
     const Index decoder_number = data_set->get_raw_variables_number(DataSet::VariableUse::Decoder);
 
-    Tensor<type, 2> decoder_host(samples_number, decoder_number);
+    Tensor<type, 2> decoder(samples_number, decoder_number);
 
-    decoder_host.setZero();
+    decoder.setZero();
 
-    if (cudaMemcpy(decoder_host.data(), inputs_device, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+    if (cudaMemcpy(decoder.data(), inputs_device, samples_number * decoder_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Cuda matrix memcpy error" << endl;
 
-    return decoder_host;
+    return decoder;
 }
 
 
 Tensor<type, 2> BatchCuda::get_targets_device() const
 {
-    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+    const Index targets_number = target_dimensions[1];
 
-    Tensor<type, 2> targets_host(samples_number, targets_number);
+    Tensor<type, 2> targets(samples_number, targets_number);
 
-    targets_host.setZero();
+    targets.setZero();
 
-    if (cudaMemcpy(targets_host.data(), targets_device, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+    if (cudaMemcpy(targets.data(), targets_device, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Cuda matrix memcpy error" << endl;
 
-    return targets_host;
+    return targets;
 }
 
 
 vector<pair<type*, dimensions>> BatchCuda::get_input_pairs_device() const
 {
-    vector<pair<type*, dimensions>> input_pairs = { {(type*)inputs_device, input_dimensions} };
+    vector<pair<type*, dimensions>> input_pairs = { {inputs_device, input_dimensions} };
 
     if (!decoder_dimensions.empty())
-        input_pairs.insert(input_pairs.begin(), { (type*)decoder_device, decoder_dimensions });
+        input_pairs.insert(input_pairs.begin(), { decoder_device, decoder_dimensions });
 
     return input_pairs;
 }
@@ -407,47 +430,9 @@ vector<pair<type*, dimensions>> BatchCuda::get_input_pairs_device() const
 
 pair<type*, dimensions> BatchCuda::get_target_pair_device() const
 {
-    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
+    pair<type*, dimensions> target_pair = {targets_device , target_dimensions};
 
-    pair<type*, dimensions> target_host;
-
-    if (cudaMemcpy(target_host.first, targets_device, samples_number * targets_number * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Cuda matrix memcpy error" << endl;
-
-    target_host.second = target_dimensions;
-
-    return target_host;
-    
-}
-
-
-void BatchCuda::allocate()
-{
-    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
-    const Index decoder_number = data_set->get_raw_variables_number(DataSet::VariableUse::Decoder);
-    const Index targets_number = data_set->get_raw_variables_number(DataSet::VariableUse::Target);
-
-    // Host
-
-    if (cudaMallocHost(&inputs_host, samples_number * inputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Inputs host allocation error" << endl;
-
-    if (cudaMallocHost(&decoder_host, samples_number * decoder_number * sizeof(float)) != cudaSuccess)
-        cout << "Decoder host allocation error" << endl;
-
-    if (cudaMallocHost(&targets_host, samples_number * targets_number * sizeof(float)) != cudaSuccess)
-        cout << "Targets host allocation error" << endl;
-
-    // Device
-
-    if (cudaMalloc(&inputs_device, samples_number * inputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Inputs allocation error" << endl;
-
-    if (cudaMalloc(&decoder_device, samples_number * decoder_number * sizeof(float)) != cudaSuccess)
-        cout << "Decoder allocation error" << endl;
-
-    if (cudaMalloc(&targets_device, samples_number * targets_number * sizeof(float)) != cudaSuccess)
-        cout << "Targets allocation error" << endl;
+    return target_pair;
 }
 
 
@@ -457,7 +442,7 @@ Index BatchCuda::get_samples_number() const
 }
 
 
-void BatchCuda::print()
+void BatchCuda::print() const
 {
     if (!input_dimensions.empty())
         cout << "get_inputs_device:" << endl << get_inputs_device() << endl;

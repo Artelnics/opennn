@@ -58,6 +58,9 @@ public:
                              const ForwardPropagationCuda&,
                              BackPropagationCuda&) const override;
 
+   void calculate_output_delta_cuda(const BatchCuda&,
+                                    ForwardPropagationCuda&,
+                                    BackPropagationCuda&) const override;
 
 #endif
 

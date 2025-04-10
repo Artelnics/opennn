@@ -81,6 +81,8 @@ struct BackPropagationCuda
     float* numerator = nullptr;
     float* numerator_2 = nullptr;
     float* numerator_3 = nullptr;
+    float* one_minus_targets = nullptr;
+    float* one_minus_outputs = nullptr;
     float* numerator_reduce = nullptr;
     cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t output_reduce_tensor_descriptor = nullptr;

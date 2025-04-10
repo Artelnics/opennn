@@ -209,6 +209,8 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    float* combinations = nullptr;
 };
 
 

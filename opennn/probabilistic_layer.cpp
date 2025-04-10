@@ -95,9 +95,7 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    //set_parameters_random();
-    biases.setRandom();
-    weights.setRandom();
+    set_parameters_random();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -645,7 +643,8 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
     ProbabilisticLayerForwardPropagationCuda* probabilistic_layer_forward_propagation_cuda =
         static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    type* outputs = probabilistic_layer_forward_propagation_cuda->outputs;
+    float* combinations = probabilistic_layer_forward_propagation_cuda->combinations;
+    float* outputs = probabilistic_layer_forward_propagation_cuda->outputs;
 
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation_cuda->activation_descriptor;
 
@@ -666,13 +665,13 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
         weights_device,
         inputs_number,
         &beta,
-        outputs,
+        combinations,
         batch_samples_number);
 
     // @todo Improve by using cudnnAddTensor
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = outputs + biases_index * batch_samples_number;
+        type* outputs_batch = combinations + biases_index * batch_samples_number;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -697,7 +696,7 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
             activation_descriptor,
             &alpha,
             outputs_tensor_descriptor,
-            outputs,
+            combinations,
             &beta,
             outputs_tensor_descriptor,
             outputs);
@@ -710,7 +709,7 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
             CUDNN_SOFTMAX_MODE_CHANNEL,
             &alpha,
             outputs_softmax_tensor_descriptor,
-            outputs,
+            combinations,
             &beta,
             outputs_softmax_tensor_descriptor,
             outputs);
@@ -725,7 +724,6 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
                                              unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                              unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
-    /*
     // Probabilistic layer
 
     const Index inputs_number = get_inputs_number();
@@ -733,18 +731,19 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device(0).second[0];
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
 
-    const type* inputs_device = inputs_pair_device(0).first;
-    const type* deltas_device = deltas_pair_device(0).first;
+    const float* inputs_device = inputs_pair_device[0].first;
+
+    const float* deltas_device = deltas_pair_device[0].first;
 
     // Forward propagation
 
     ProbabilisticLayerForwardPropagationCuda* probabilistic_layer_forward_propagation =
-        static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda);
+        static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    const type* combinations = probabilistic_layer_forward_propagation->combinations_cuda;
-    const type* outputs = probabilistic_layer_forward_propagation->outputs;
+    const float* combinations = probabilistic_layer_forward_propagation->combinations;
+    const float* outputs = probabilistic_layer_forward_propagation->outputs;
 
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation->activation_descriptor;
 
@@ -753,14 +752,14 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
     // Back propagation
 
     ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation =
-        static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda);
+        static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    const type* targets = probabilistic_layer_back_propagation->targets;
-    const type* ones = probabilistic_layer_back_propagation->ones;
-    type* error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives_cuda;
-    type* weights_derivatives = probabilistic_layer_back_propagation->weights_derivatives_cuda;
-    type* biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives_cuda;
-    type* inputs_derivatives = probabilistic_layer_back_propagation->inputs_derivatives;
+    const float* targets = probabilistic_layer_back_propagation->targets;
+    const float* ones = probabilistic_layer_back_propagation->ones;
+    float* error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives_cuda;
+    float* weights_derivatives = probabilistic_layer_back_propagation->weights_derivatives_cuda;
+    float* biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives_cuda;
+    float* inputs_derivatives = probabilistic_layer_back_propagation->inputs_derivatives;
 
     const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = probabilistic_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
 
@@ -788,7 +787,6 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
     }
     else
     {
-
         const float alpha_substract = -1.0f;
 
         cudnnOpTensor(cudnn_handle,
@@ -847,8 +845,6 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
         &beta,
         inputs_derivatives,
         batch_samples_number);
-    cout << "GPU input derivatives probabilistic layer:\n" << vector_from_device(inputs_derivatives, batch_samples_number * inputs_number) << endl;
-    */
 }
 
 
@@ -856,16 +852,15 @@ void ProbabilisticLayer::insert_gradient_cuda(unique_ptr<LayerBackPropagationCud
                                               Index& index,
                                               float* gradient) const
 {
-    /*
     // Probabilistic layer
 
-    const Index weights_number = get_weights_number();
-    const Index biases_number = get_biases_number();
+    const Index weights_number = weights.size();
+    const Index biases_number = biases.size();
 
-    // Probabilistic layer back propagation cuda
+    // Back propagation
 
     ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation_cuda =
-        static_cast<ProbabilisticLayerBackPropagationCuda*>(layer_back_propagation_cuda);
+        static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
     type* weights_derivatives_cuda = probabilistic_layer_back_propagation_cuda->weights_derivatives_cuda;
 
@@ -882,15 +877,13 @@ void ProbabilisticLayer::insert_gradient_cuda(unique_ptr<LayerBackPropagationCud
         size_t(biases_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
         cout << "gradient (biases) copy error" << endl;
-    */
 }
 
 
 void ProbabilisticLayer::set_parameters_cuda(const float* new_parameters, const Index& index)
 {
-    /*
-    const Index biases_number = get_biases_number();
-    const Index weights_number = get_weights_number();
+    const Index weights_number = weights.size();
+    const Index biases_number = biases.size();
 
     if (cudaMemcpy(weights_device,
         new_parameters + index,
@@ -903,7 +896,6 @@ void ProbabilisticLayer::set_parameters_cuda(const float* new_parameters, const 
         size_t(biases_number) * sizeof(type),
         cudaMemcpyDeviceToDevice) != cudaSuccess)
         cout << "synaptic weights copy error" << endl;
-    */
 }
 
 
@@ -1024,6 +1016,9 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
         1);
 
     // Outputs
+
+    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "combinations allocation error" << endl;
 
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;

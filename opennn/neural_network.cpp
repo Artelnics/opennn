@@ -79,7 +79,7 @@ bool NeuralNetwork::validate_layer_type(const Layer::Type& layer_type) const
 bool NeuralNetwork::has(const Layer::Type& layer_type) const
 {
     return any_of(layers.begin(), layers.end(),
-                  [&](const auto& layer) {return layer->get_type() == layer_type;});
+                  [&](const unique_ptr<Layer>& layer) {return layer->get_type() == layer_type;});
 }
 
 
@@ -236,7 +236,7 @@ Index NeuralNetwork::find_input_index(const vector<Index>& layer_inputs_indices,
 
 Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
 {
-    for(const auto& layer : layers)
+    for(const unique_ptr<Layer>& layer : layers)
         if(layer->get_type() == layer_type)
             return layer.get();
 
@@ -706,7 +706,7 @@ void NeuralNetwork::set_default()
 
 void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
-    for (auto& layer : layers)
+    for (const unique_ptr<Layer>& layer : layers)
         layer->set_threads_number(new_threads_number);
 }
 
@@ -820,7 +820,7 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     Index position = 0;
 
-    for (const auto& layer : layers)
+    for (const unique_ptr<Layer>& layer : layers)
     {
         const Tensor<type, 1> layer_parameters = layer->get_parameters();
 
@@ -857,7 +857,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     Index index = 0;
 
-    for(auto& layer : layers)
+    for(const unique_ptr<Layer>& layer : layers)
         layer->set_parameters(new_parameters, index);
 }
 
@@ -910,7 +910,7 @@ Index NeuralNetwork::get_last_trainable_layer_index() const
 Index NeuralNetwork::get_layers_number(const Layer::Type& layer_type) const
 {
     return count_if(layers.begin(), layers.end(),
-                    [&](const auto& layer) {return layer->get_type() == layer_type;});
+                    [&](const unique_ptr<Layer>& layer) {return layer->get_type() == layer_type;});
 }
 
 
@@ -2177,22 +2177,10 @@ void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 
 void NeuralNetwork::set_parameters_cuda(float* new_parameters)
 {
-    /*
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
-
-    const Tensor<Index, 1> trainable_layers_parameters_numbers = get_trainable_layers_parameters_numbers();
-
     Index index = 0;
 
-    for (Index i = 0; i < trainable_layers_number; i++)
-    {
-        trainable_layers(i)->set_parameters_cuda(new_parameters, index);
-
-        index += trainable_layers_parameters_numbers(i);
-    }
-    */
+    for (const unique_ptr<Layer>& layer : layers)
+        layer->set_parameters_cuda(new_parameters, index);
 }
 
 
@@ -2514,6 +2502,12 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
 }
 
 
+const vector<unique_ptr<LayerBackPropagationCuda>>& NeuralNetworkBackPropagationCuda::get_layers() const
+{
+    return layers;
+}
+
+
 void NeuralNetworkBackPropagationCuda::print()
 {
     const Index layers_number = layers.size();
@@ -2532,13 +2526,12 @@ void NeuralNetworkBackPropagationCuda::print()
 void NeuralNetworkBackPropagationCuda::free()
 {
     const Index layers_number = layers.size();
-    /*
+
     for (Index i = 0; i < layers_number; i++)
     {
         if (layers[i] != nullptr)
             layers[i]->free();
     }
-    */
 }
 
 #endif

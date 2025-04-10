@@ -174,13 +174,21 @@ public:
                                       const ForwardPropagationCuda&,
                                       BackPropagationCuda&) const {}
 
+    virtual void calculate_output_delta_cuda(const BatchCuda&,
+                                             ForwardPropagationCuda&,
+                                             BackPropagationCuda&) const {}
+
+    void calculate_layers_error_gradient_cuda(const BatchCuda&,
+                                              ForwardPropagationCuda&,
+                                              BackPropagationCuda&) const;
+
     void back_propagate_cuda(const BatchCuda&,
                              ForwardPropagationCuda&,
                              BackPropagationCuda&);
 
     void add_regularization_cuda(BackPropagationCuda&) const;
 
-    void assemble_layers_error_gradient(BackPropagationCuda&) const;
+    void assemble_layers_error_gradient_cuda(BackPropagationCuda&) const;
 
     float calculate_regularization_cuda(Index, float*);
 
@@ -206,23 +214,6 @@ public:
                                float* aux_vector,
                                float* gradient);
     
-
-    /*
-    void calculate_errors_cuda(const BatchCuda&,
-                               const ForwardPropagationCuda&,
-                               BackPropagationCuda&) const;
-
-    void calculate_layers_error_gradient_cuda(const BatchCuda&,
-                                              ForwardPropagationCuda&,
-                                              BackPropagationCuda&) const;
-    
-    virtual string get_error_type() const = 0;
-
-    virtual void calculate_mean_square_error_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
-    virtual void calculate_cross_entropy_error_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
-    virtual void calculate_mean_square_output_delta_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
-    virtual void calculate_cross_entropy_output_delta_cuda(const BatchCuda&, ForwardPropagationCuda&, BackPropagationCuda&) = 0;
-    */
 protected:
 
     cublasHandle_t cublas_handle = nullptr;

@@ -926,7 +926,7 @@ TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>& tensor, const Index
 }
 
 
-TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 3>>& tensor, const Index& index_3)
+TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>& tensor, const Index& index_3)
 {
     return TensorMap<Tensor<type, 3>>(tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
         tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));

@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -642,7 +642,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if (neural_network->has(Layer::Type::LongShortTermMemory)
         || neural_network->has(Layer::Type::Recurrent))
@@ -682,18 +682,17 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             loss_index->back_propagate_cuda(training_batch_cuda,
                                             training_forward_propagation_cuda,
                                             training_back_propagation_cuda);
-            return results;
 
             training_error += training_back_propagation_cuda.error();
 
             if (is_classification_model)   training_accuracy += training_back_propagation_cuda.accuracy();
 
             // Optimization algorithm
-
+            
             update_parameteres_cuda(training_back_propagation_cuda, optimization_data_cuda);
 
         }
-        /*
+
         // Loss
 
         training_error /= type(training_batches_number);
@@ -725,35 +724,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
                                                        selection_forward_propagation_cuda,
                                                        is_training);
 
-                //Loss @todo use virtual functions
+                // Loss
 
-                const string error_type = loss_index->get_error_type();
-
-                if (error_type == "MEAN_SQUARED_ERROR") {
-                    loss_index->calculate_errors_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                    loss_index->calculate_mean_square_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                }
-                else if (error_type == "NORMALIZED_SQUARED_ERROR") {
-
-                }
-                else if (error_type == "MINKOWSKI_ERROR") {
-
-                }
-                else if (error_type == "CROSS_ENTROPY_ERROR") {
-                    loss_index->calculate_cross_entropy_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                }
-                else if (error_type == "WEIGHTED_SQUARED_ERROR") {
-
-                }
-                else if (error_type == "SUM_SQUARED_ERROR") {
-
-                }
-                //loss_index->calculate_error_cuda(selection_batch_cuda,
-                //                                 selection_forward_propagation_cuda,
-                //                                 training_selection_back_propagation_cuda);
+                loss_index->calculate_error_cuda(selection_batch_cuda,
+                                                 selection_forward_propagation_cuda,
+                                                 selection_back_propagation_cuda);
 
                 selection_error += selection_back_propagation_cuda.error();
-                if (is_classification_model)    selection_accuracy += selection_back_propagation_cuda.accuracy();
+
+                if (is_classification_model)    
+                    selection_accuracy += selection_back_propagation_cuda.accuracy();
             }
 
             selection_error /= type(selection_batches_number);
@@ -827,7 +807,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
         }
 
         if (epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
-        */
     }
 
     set_unscaling();

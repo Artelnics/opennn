@@ -71,15 +71,20 @@ public:
     void calculate_multiple_error_cuda(const BatchCuda&,
                                        const ForwardPropagationCuda&,
                                        BackPropagationCuda&) const;
-    /*
-    void calculate_cross_entropy_error_cuda(const BatchCuda&,
-                                            const NeuralNetwork::ForwardPropagationCuda&,
+
+    // Gradient
+
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
+
+    void calculate_binary_output_delta_cuda(const BatchCuda&,
+                                            ForwardPropagationCuda&,
                                             BackPropagationCuda&) const;
 
-    void calculate_cross_entropy_output_delta_cuda(const BatchCuda&,
-                                                   const NeuralNetwork::ForwardPropagationCuda&,
-                                                   BackPropagationCuda&) const;
-    */
+    void calculate_multiple_output_delta_cuda(const BatchCuda&,
+                                              ForwardPropagationCuda&,
+                                              BackPropagationCuda&) const;
 
 #endif
 
