@@ -255,7 +255,7 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
     combinations = (input_weights.contract(inputs, axes(1, 1))
         + recurrent_weights.contract(hidden_states, axes(1, 1))
-        + biases.broadcast(Eigen::array<Index, 2>{samples_number, 1}));
+        + biases.broadcast(array<Index, 2>{samples_number, 1}));
 
 }
 
@@ -441,8 +441,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             += combinations_bias_derivatives.contract(current_combinations_derivatives, A_B);
 
 //        combinations_input_weight_derivatives += current_inputs
-//            .reshape(Eigen::array<Index, 2>({ inputs_number, 1 }))
-//            .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//            .reshape(array<Index, 2>({ inputs_number, 1 }))
+//            .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
 
 //        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
 //            for(Index input_index = 0; input_index < inputs_number; input_index++)
@@ -458,8 +458,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                         += outputs(sample_index - 1, activation_index);
 
 //            combinations_recurrent_weight_derivatives += outputs.chip(sample_index - 1, 0)
-//                .reshape(Eigen::array<Index, 2>({ neurons_number, 1 }))
-//                .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//                .reshape(array<Index, 2>({ neurons_number, 1 }))
+//                .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
         }
 
         // Weights derivatives

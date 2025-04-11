@@ -56,7 +56,8 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    const Eigen::array<Index, 1> vector{{x_rows}};
+    const array<Index, 1> vector{{x_rows}};
+
     if(x_columns == 1 && y_columns == 1)
     {
         const Tensor<type, 1> x_vector = x.reshape(vector);
@@ -118,7 +119,7 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    const Eigen::array<Index, 1> vector{{x_rows}};
+    const array<Index, 1> vector{{x_rows}};
 
     if(x_columns == 1 && y_columns == 1)
     {
@@ -578,10 +579,9 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-
     // Logistic correlation
 
-    const Eigen::array<Index, 1> vector{{x_filtered.size()}};
+    const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -668,7 +668,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     // Logistic correlation
 
-    const Eigen::array<Index, 1> vector{{x_filtered.size()}};
+    const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -778,7 +778,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    const Eigen::array<Index, 1> vector{{targets.size()}};
+    const array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -899,7 +899,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    const Eigen::array<Index, 1> vector{{targets.size()}};
+    const array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 

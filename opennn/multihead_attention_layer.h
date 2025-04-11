@@ -122,13 +122,13 @@ private:
 
     type dropout_rate = type(0);
 
-    const Eigen::array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };
-    const Eigen::array<Index, 2> projection_bias_derivatives_sum_indices = { 0, 1 };
+    const array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };
+    const array<Index, 2> projection_bias_derivatives_sum_indices = { 0, 1 };
 
-    const Eigen::array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices
+    const array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices
         = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
 
-    const Eigen::array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices
+    const array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices
         = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 
     const type minus_inf = -numeric_limits<float>::infinity();

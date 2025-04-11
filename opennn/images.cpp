@@ -109,7 +109,7 @@ Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
+    const array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
 
     image/*.device(thread_pool_device)*/ = image.reverse(reflect_horizontal_dimensions);
 }
@@ -118,7 +118,7 @@ void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
 void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_vertical_dimensions = { true, false, false };
+    const array<bool, 3> reflect_vertical_dimensions = { true, false, false };
 
     image/*.device(thread_pool_device)*/ = image.reverse(reflect_vertical_dimensions);
 }

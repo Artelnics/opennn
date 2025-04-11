@@ -77,7 +77,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -109,7 +109,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  TensorMap<Tensor<type, 3>>& A,
                                  const TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -140,7 +140,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 4>& B,
                                  Tensor<type, 4>& C,
-                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -182,16 +182,16 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
 
     // Merge the last two dimensions of A and B by shuffling to bring channels and blocks to the front,
     // then reshape to a 3D tensor with the first dimension as the merged batch.
-    auto A_reshaped = A.shuffle(Eigen::array<Index, 4>{2, 0, 1, 3})
+    auto A_reshaped = A.shuffle(array<Index, 4>{2, 0, 1, 3})
                        .reshape(DSizes<Index, 3>{batch, A_rows, A_cols});
 
-    auto B_reshaped = B.shuffle(Eigen::array<Index, 4>{2, 0, 1, 3})
+    auto B_reshaped = B.shuffle(array<Index, 4>{2, 0, 1, 3})
                        .reshape(DSizes<Index, 3>{batch, B_rows, B_cols});
 
     // Perform batch contraction:
     // For standard matrix multiplication, contract the last dimension of A_reshaped with
     // the middle dimension of B_reshaped.
-    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(2, 1)};
+    const array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(2, 1)};
     auto C_batch = A_reshaped.contract(B_reshaped, contract_dims);  // shape: (batch, A_rows, B_cols)
 
     // Reshape back to the 4D tensor: (A_rows, B_cols, channels, blocks)

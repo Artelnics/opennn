@@ -6,10 +6,13 @@
 namespace opennn
 {
 
+template<typename T, std::size_t N>
+using array = Eigen::array<T, N>;
+
 template <typename Index>
-Eigen::array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
+array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
 {
-    return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
+    return array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
 }
 
 Index get_random_index(const Index&, const Index&);
@@ -60,9 +63,9 @@ void multiply_rows(const Tensor<type, 2>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
-void batch_matrix_multiplication(const ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, Eigen::array<IndexPair<Index>, 1>);
-void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, Eigen::array<IndexPair<Index>, 1>);
-void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Eigen::array<IndexPair<Index>, 1>);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, array<IndexPair<Index>, 1>);
+void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, array<IndexPair<Index>, 1>);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, array<IndexPair<Index>, 1>);
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 

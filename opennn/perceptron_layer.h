@@ -74,9 +74,9 @@ public:
         Tensor<type, 2>& outputs) const
     {
 
-        const Eigen::array<Index, 2> rows({ outputs.dimension(0), 1 });
+        const array<Index, 2> rows({ outputs.dimension(0), 1 });
 
-        const Eigen::array<int, 1> axis_x({ 0 });
+        const array<int, 1> axis_x({ 0 });
 
         means.device(*thread_pool_device) = outputs.mean(axis_x);
 
@@ -84,7 +84,7 @@ public:
             = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
         
        
-        outputs = inputs;// -means.broadcast(Eigen::array<Index, 2>({ outputs.dimension(0), 1 }));
+        outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
             //shifts.broadcast(rows);
                 //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
         
@@ -177,7 +177,7 @@ private:
 
     type dropout_rate = type(0);
 
-    const Eigen::array<Index, 1> sum_dimensions_1 = {0};
+    const array<Index, 1> sum_dimensions_1 = {0};
 };
 
 

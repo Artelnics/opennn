@@ -109,7 +109,7 @@ private:
 
    type dropout_rate = type(0);
 
-   const Eigen::array<Index, 2> sum_dimensions = {0, 1};
+   const array<Index, 2> sum_dimensions = {0, 1};
 };
 
 
