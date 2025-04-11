@@ -18,7 +18,7 @@
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
-#include "normalization_layer_3d.h"
+#include "../../opennn/normalization_layer_3d.h"
 
 using namespace std;
 using namespace opennn;
