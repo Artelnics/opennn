@@ -72,8 +72,8 @@ public:
 
     void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
-    void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
+    // void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
+    void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -124,7 +124,7 @@ private:
 
     // type iteration = 0;
 
-    const Eigen::array<Index, 1> projection_sum_index = { 3 };
+    // const Eigen::array<Index, 1> projection_sum_index = { 3 };
     const Eigen::array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };
     const Eigen::array<Index, 2> projection_bias_derivatives_sum_indices = { 0, 1 };
 

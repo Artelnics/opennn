@@ -275,7 +275,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
             // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
             // cout << "MHA Gradient - numerical gradient:" << endl;
-            // for(Index i = numerical_gradient.size()-229; i < numerical_gradient.size()-61;i++)
+            // for(Index i = numerical_gradient.size()-600; i < numerical_gradient.size()-321;i++)
             //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
             // throw runtime_error("\nChecking the gradient and numerical gradient.");

@@ -20,7 +20,7 @@ type bound(const type& value, const type& minimum, const type& maximum)
 }
 
 
-Index get_random_index(const Index& min, const Index& max) 
+Index get_random_index(const Index& min, const Index& max)
 {
     random_device rd;
     mt19937 gen(rd());
@@ -29,7 +29,7 @@ Index get_random_index(const Index& min, const Index& max)
 }
 
 
-type get_random_type(const type& minimum, const type& maximum) 
+type get_random_type(const type& minimum, const type& maximum)
 {
     random_device rd;
     mt19937 gen(rd());
@@ -229,7 +229,7 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //Maybe this one gives error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
+        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //This one gives an error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
         auto column = matrix.chip(i, 1);
 
         column.device(*thread_pool_device) = column + vector(i);
@@ -267,8 +267,8 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
     #pragma omp parallel for
-    for(int i = 0; i < x.size(); i++) 
-        result(i) = (x(i) == y(i)); 
+    for(int i = 0; i < x.size(); i++)
+        result(i) = (x(i) == y(i));
 
     return result;
 }
@@ -389,7 +389,7 @@ Index count_between(const Tensor<type, 1>& vector,const type& minimum, const typ
 
     #pragma omp parallel for reduction(+: count)
     for(Index i = 0; i < size; i++)
-        if(vector(i) >= minimum && vector(i) <= maximum) 
+        if(vector(i) >= minimum && vector(i) <= maximum)
             count++;
 
     return count;
@@ -400,7 +400,7 @@ void set_row(Tensor<type,2>& matrix, const Tensor<type, 1>& new_row, const Index
 {
     const Index columns_number = new_row.size();
 
-    #pragma omp parallel for    
+    #pragma omp parallel for
 
     for(Index i = 0; i < columns_number; i++)
         matrix(row_index, i) = new_row(i);
@@ -415,9 +415,9 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 }
 
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, 
-                                             const Index& column_index, 
-                                             const type& minimum, 
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,
+                                             const Index& column_index,
+                                             const type& minimum,
                                              const type& maximum)
 {
     const Tensor<type, 1> column = matrix.chip(column_index,1);
@@ -436,7 +436,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(matrix(i, column_index) >= minimum 
+        if(matrix(i, column_index) >= minimum
         && matrix(i, column_index) <= maximum)
         {
             const Tensor<type, 1> row = matrix.chip(i, 0);
@@ -523,7 +523,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
 
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
-    // @todo add thread pool 
+    // @todo add thread pool
 
     if(x.size() != y.size())
         throw runtime_error("x and y vector must  have the same dimensions.\n");
@@ -538,7 +538,7 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 
 type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    // @todo add thread pool 
+    // @todo add thread pool
 
     Tensor<type, 0> distance;
 
@@ -601,7 +601,7 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
 
     const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-    
+
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
@@ -930,7 +930,7 @@ TensorMap<Tensor<type, 3>> tensor_map_(Tensor<type, 4>& tensor, const Index& ind
 
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3, const Index& index_2)
 {
-    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_2 * tensor.dimension(3) + index_3),
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
         tensor.dimension(0), tensor.dimension(1));
 }
 

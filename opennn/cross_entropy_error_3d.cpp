@@ -31,9 +31,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     const pair<type*, dimensions> targets_pair = batch.get_target_pair();
 
-    cout << "Targets dimensions:\n";
-    print_vector(targets_pair.second);
-
     const Index outputs_number = targets_pair.second[1];
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
@@ -43,11 +40,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
-
-    // cout << "Outputs:\n" << outputs << endl;
-    // cout << "Outputs dimensions: " << outputs.dimensions() << endl;
-
-    cout << "Targets:\n" << targets << endl;
 
     // Back propagation
 
@@ -84,8 +76,6 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
         for(Index j = 0; j < outputs_number; j++)
             errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
 
-    cout << "Errors dimensions: " << errors.dimensions() << endl << "Mask dimensions: " << mask.dimensions() << endl << "Targets dimensions: " << targets.dimensions() << endl;
-
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
     error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
@@ -94,13 +84,9 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
 
-    cout << "Predictions\n" << predictions << endl;
-
     matches.device(*thread_pool_device) = (predictions == targets) && mask;
 
     accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
-
-    cout << "Does this" << endl;
 
     if(isnan(error())) throw runtime_error("Error is NAN");
 }
