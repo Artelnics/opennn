@@ -25,7 +25,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
     Tensor<type, 1> autocorrelation(lags_number);
 
     const Index this_size = x.size();
-
     for(Index i = 0; i < lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
@@ -36,7 +35,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
             column_x(j) = x(j);
             column_y(j) = x(j + i);
         }
-
         autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
 
@@ -155,6 +153,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& y,
                                    const Index& maximum_lags_number)
 {
+    cout << "a" << endl;
     if(y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
@@ -175,6 +174,9 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
 
         cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
+    cout << "cross correlatio calculate" << endl;
+    cout << cross_correlation << endl;
+    cout << "-----------------------" << endl;
 
     return cross_correlation;
 }
@@ -363,7 +365,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) || is_constant(y))
         return Correlation();
-    
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();

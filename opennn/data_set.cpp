@@ -664,6 +664,50 @@ namespace opennn
         }
     }
 
+    void DataSet::set_default_raw_variables_uses_forecasting()
+    {
+        const Index raw_variables_number = raw_variables.size();
+
+        bool target = false;
+        bool timeRawVariable = false;
+
+        if (raw_variables_number == 0)
+            return;
+
+        if (raw_variables_number == 1)
+        {
+            raw_variables[0].set_use(VariableUse::None);
+            return;
+        }
+
+        set(VariableUse::Input);
+
+        for (Index i = raw_variables.size() - 1; i >= 0; i--)
+        {
+            if (raw_variables[i].type == RawVariableType::DateTime && !timeRawVariable)
+            {
+                raw_variables[i].set_use(VariableUse::Time);
+
+                timeRawVariable = true;
+                continue;
+            }
+
+            if (raw_variables[i].type == RawVariableType::Constant)
+            {
+                raw_variables[i].set_use(VariableUse::None);
+                continue;
+            }
+
+            if (!target)
+            {
+                raw_variables[i].set_use(VariableUse::Target);
+
+                target = true;
+
+                continue;
+            }
+        }
+    }
 
     void DataSet::set_default_raw_variable_names()
     {
@@ -2617,7 +2661,6 @@ namespace opennn
 
         return correlations_spearman;
     }
-
 
     void DataSet::print_inputs_correlations() const
     {

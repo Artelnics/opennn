@@ -55,6 +55,11 @@ const Index& TimeSeriesDataSet::get_steps_ahead() const
     return steps_ahead;
 }
 
+const string& TimeSeriesDataSet::get_time_raw_variable() const
+{
+    return time_raw_variable;
+}
+
 void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
 {
     lags_number = new_lags_number;
@@ -73,7 +78,7 @@ void TimeSeriesDataSet::set_time_raw_variable_index(const Index& new_time_raw_va
 
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
-    time_column = new_time_column;
+    time_raw_variable = new_time_column;
 }
 
 
@@ -123,8 +128,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
     add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
     add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
-    //add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
-    add_xml_element(printer, "TimeRawVariable", "");
+    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
     add_xml_element(printer, "GroupByRawVariable", "");
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
@@ -257,7 +261,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_lags_number(stoi(read_xml_string(data_source_element, "LagsNumber")));
     set_steps_ahead_number(stoi(read_xml_string(data_source_element, "StepsAhead")));
-    //set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
+    set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
     //set_group_by_raw_variable(read_xml_string(data_source_element, "GroupByRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
@@ -662,7 +666,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         {
             continue;
         }
-        
+
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
         
         autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
@@ -757,7 +761,7 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
         for(Index j = 0; j < raw_variables_number; j++)
         {
             if(raw_variables[j].use == VariableUse::None
-            || raw_variables[j].type == RawVariableType::Numeric)
+            || raw_variables[j].type != RawVariableType::Numeric)
                 continue;
 
             input_j = get_raw_variable_data(j);
