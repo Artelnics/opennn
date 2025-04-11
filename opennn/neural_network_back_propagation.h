@@ -14,9 +14,9 @@ struct NeuralNetworkBackPropagation
 
     const vector<unique_ptr<LayerBackPropagation>>& get_layers() const;
 
-    NeuralNetwork* get_neural_network() const;
-
     void print() const;
+
+    NeuralNetwork* get_neural_network() const;
 
     Index batch_size = 0;
 
@@ -34,6 +34,8 @@ struct NeuralNetworkBackPropagationCuda
 
     void set(const Index& = 0, NeuralNetwork* = nullptr);
 
+    const vector<unique_ptr<LayerBackPropagationCuda>>& get_layers() const;
+
     void print();
 
     void free();
@@ -42,7 +44,7 @@ struct NeuralNetworkBackPropagationCuda
 
     NeuralNetwork* neural_network = nullptr;
     
-    vector<unique_ptr<LayerBackPropagation>> layers;
+    vector<unique_ptr<LayerBackPropagationCuda>> layers;
 };
 
 #endif

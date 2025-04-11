@@ -240,10 +240,10 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
+    ProbabilisticLayer3DForwardPropagation* this_forward_propagation =
         static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
     
-    Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
+    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     calculate_combinations(inputs, outputs);
 
@@ -260,10 +260,10 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_3d_forward_propagation =
+    ProbabilisticLayer3DForwardPropagation* this_forward_propagation =
             static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& outputs = probabilistic_layer_3d_forward_propagation->outputs;
+    const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     // Back propagation
 
@@ -274,9 +274,10 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     Tensor<type, 2>& mask = probabilistic_3d_back_propagation->mask;
     bool& built_mask = probabilistic_3d_back_propagation->built_mask;
 
+    Tensor<type, 3>& combination_deltas = probabilistic_3d_back_propagation->combination_deltas;
+
     Tensor<type, 1>& bias_derivatives = probabilistic_3d_back_propagation->bias_derivatives;
     Tensor<type, 2>& weight_derivatives = probabilistic_3d_back_propagation->weight_derivatives;
-
     Tensor<type, 3>& input_derivatives = probabilistic_3d_back_propagation->input_derivatives;
 
     if(!built_mask)
@@ -289,19 +290,21 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         
         built_mask = true;
     }
-/*
-    calculate_combination_deltas(outputs, targets, mask, deltas);
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
+    calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, double_contraction_indices);
+    bias_derivatives.device(*thread_pool_device)
+        = combination_deltas.sum(sum_dimensions);
 
-    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, single_contraction_indices);
-*/
+    weight_derivatives.device(*thread_pool_device)
+        = inputs.contract(combination_deltas, double_contraction_indices);
+
+    input_derivatives.device(*thread_pool_device)
+        = combination_deltas.contract(weights, single_contraction_indices);
 }
 
 
-void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& outputs, 
+void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& outputs,
                                                    const Tensor<type, 2>& targets,
                                                    const Tensor<type, 2>& mask,
                                                    Tensor<type, 3>& combination_deltas) const
@@ -352,7 +355,6 @@ void Probabilistic3d::from_XML(const XMLDocument& document)
     Index index = 0;
 
     set_parameters(to_type_vector(read_xml_string(probabilistic_layer_element, "Parameters"), " "), index);
-
 }
 
 

@@ -57,13 +57,12 @@ struct Batch
         Index get_samples_number() const;
 
         Tensor<type, 2> get_inputs_device() const;
+        Tensor<type, 2> get_decoder_device() const;
         Tensor<type, 2> get_targets_device() const;
 
         void set(const Index&, DataSet*);
 
         void copy_device();
-
-        void allocate();
 
         void free();
 
@@ -72,20 +71,17 @@ struct Batch
                   const vector<Index>&,
                   const vector<Index> & = vector<Index>());
 
-        void print();
+        void print() const;
+
+        bool is_empty() const;
 
         Index samples_number = 0;
 
         DataSet* data_set = nullptr;
 
         dimensions input_dimensions;
-        Tensor<type, 1> input_tensor;
-
         dimensions decoder_dimensions;
-        Tensor<type, 1> decoder_tensor;
-
         dimensions target_dimensions;
-        Tensor<type, 1> target_tensor;
 
         float* inputs_host = nullptr;
         float* decoder_host = nullptr;
