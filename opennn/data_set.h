@@ -261,6 +261,7 @@ public:
     void set_default_raw_variable_names();
 
     void set_default_raw_variables_uses();
+    void set_default_raw_variables_uses_forecasting();
     virtual void set_raw_variable_uses(const vector<string>&);
     virtual void set_raw_variable_uses(const vector<VariableUse>&);
 
