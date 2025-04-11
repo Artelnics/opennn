@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "images.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -148,7 +149,6 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
-    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
 
     for(Index x = 0; x < width; x++)
     {
@@ -158,7 +158,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
             coordinates(1) = type(y);
             coordinates(2) = type(1);
 
-            transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
+            transformed_coordinates = rotation_matrix.contract(coordinates, axes(1,0));
 
             if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width
             && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)

@@ -249,12 +249,12 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     Index samples_number = inputs.dimension(0);
 
     combinations.device(*thread_pool_device) = biases
-                                             + inputs.contract(input_weights, AT_B)
-                                             + hidden_states.contract(recurrent_weights, AT_B);
+                                             + inputs.contract(input_weights, axes(0,0))
+                                             + hidden_states.contract(recurrent_weights, axes(0,0));
 
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-    combinations = (input_weights.contract(inputs, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
-        + recurrent_weights.contract(hidden_states, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
+    combinations = (input_weights.contract(inputs, axes(1, 1))
+        + recurrent_weights.contract(hidden_states, axes(1, 1))
         + biases.broadcast(Eigen::array<Index, 2>{samples_number, 1}));
 
 }
@@ -324,7 +324,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         calculate_activations(hidden_states, empty_2);
 
-        outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}}) + output_biases;
+        outputs = hidden_states.contract(output_weights, axes(1, 0)) + output_biases;
 
         calculate_activations(outputs, empty_2);
 

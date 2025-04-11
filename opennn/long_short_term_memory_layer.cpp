@@ -329,8 +329,8 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
                                                       const Tensor<type, 1>& biases,
                                                       Tensor<type, 1>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, AT_B)
-                                             + hidden_states.contract(recurrent_weights, AT_B)
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(0,0))
+                                             + hidden_states.contract(recurrent_weights, axes(0,0))
                                              + biases;
 }
 
@@ -732,7 +732,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tens
             // Forget combinations derivatives
 
             forget_combinations_weight_derivatives.device(*thread_pool_device)
-                = hidden_states_weight_derivatives.contract(forget_recurrent_weights, A_B);
+                = hidden_states_weight_derivatives.contract(forget_recurrent_weights, axes(1, 0));
 
             forget_combinations_recurrent_weight_derivatives.device(*thread_pool_device)
                 = hidden_states_recurrent_weight_derivatives.contract(forget_recurrent_weights, A_B);

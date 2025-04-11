@@ -6,7 +6,18 @@
 namespace opennn
 {
 
-const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
+const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+
+template <typename Index>
+Eigen::array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
+{
+    //Eigen::array<IndexPair<Index>, 1> dims;
+    //dims[0] = IndexPair<Index>(a, b);
+    //return dims;
+
+    return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
+
+}
 
 Index get_random_index(const Index&, const Index&);
 

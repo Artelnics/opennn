@@ -210,15 +210,15 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& opt
     Tensor<type, 0> parameters_difference_dot_gradient_difference;
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = parameters_difference.contract(gradient_difference, AT_B);
+        = parameters_difference.contract(gradient_difference, axes(0,0));
 
     old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, A_B);
+            = old_inverse_hessian.contract(gradient_difference, axes(1,0));
 
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
+        = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
 
     // Calculate approximation
 
@@ -250,13 +250,13 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& op
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = parameters_difference.contract(gradient_difference, AT_B);
+            = parameters_difference.contract(gradient_difference, axes(0,0));
 
     old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, A_B);
+            = old_inverse_hessian.contract(gradient_difference, axes(0,0));
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B);
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
 
     BFGS.device(*thread_pool_device)
             = parameters_difference/parameters_difference_dot_gradient_difference(0)
@@ -315,7 +315,7 @@ void QuasiNewtonMethod::update_parameters(
 
     training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
 
-    training_slope.device(*thread_pool_device) = gradient.contract(training_direction, AT_B);
+    training_slope.device(*thread_pool_device) = gradient.contract(training_direction, axes(0,0));
 
     if(training_slope(0) >= type(0))
         training_direction.device(*thread_pool_device) = -gradient;

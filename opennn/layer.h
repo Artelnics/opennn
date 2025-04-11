@@ -305,10 +305,8 @@ protected:
         }
     }
 
-    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-
 
 #ifdef OPENNN_CUDA_test
 

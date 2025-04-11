@@ -183,19 +183,19 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
     // Merge the last two dimensions of A and B by shuffling to bring channels and blocks to the front,
     // then reshape to a 3D tensor with the first dimension as the merged batch.
     auto A_reshaped = A.shuffle(Eigen::array<Index, 4>{2, 0, 1, 3})
-                       .reshape(Eigen::DSizes<Index, 3>{batch, A_rows, A_cols});
+                       .reshape(DSizes<Index, 3>{batch, A_rows, A_cols});
 
     auto B_reshaped = B.shuffle(Eigen::array<Index, 4>{2, 0, 1, 3})
-                       .reshape(Eigen::DSizes<Index, 3>{batch, B_rows, B_cols});
+                       .reshape(DSizes<Index, 3>{batch, B_rows, B_cols});
 
     // Perform batch contraction:
     // For standard matrix multiplication, contract the last dimension of A_reshaped with
     // the middle dimension of B_reshaped.
-    const Eigen::array<Eigen::IndexPair<Index>, 1> contract_dims = { Eigen::IndexPair<Index>(2, 1) };
+    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(2, 1)};
     auto C_batch = A_reshaped.contract(B_reshaped, contract_dims);  // shape: (batch, A_rows, B_cols)
 
     // Reshape back to the 4D tensor: (A_rows, B_cols, channels, blocks)
-    C.device(*thread_pool_device) = C_batch.reshape(Eigen::DSizes<Index, 4>{A_rows, B_cols, channels, blocks});
+    C.device(*thread_pool_device) = C_batch.reshape(DSizes<Index, 4>{A_rows, B_cols, channels, blocks});
 */
 }
 
