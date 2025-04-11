@@ -249,7 +249,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index pad_left = pad_width / 2;
     const Index pad_right = pad_width - pad_left;
 
-    const Eigen::array<pair<Index, Index>, 2> paddings
+    const array<pair<Index, Index>, 2> paddings
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
     // Inputs (for padding same)
@@ -679,12 +679,12 @@ pair<Index, Index> Convolutional::get_padding() const
 }
 
 
-Eigen::array<pair<Index, Index>, 4> Convolutional::get_paddings() const
+array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 {
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    const Eigen::array<std::pair<Index, Index>, 4> paddings =
+    const array<std::pair<Index, Index>, 4> paddings =
         { make_pair(0, 0),
           make_pair(pad_rows, pad_rows),
           make_pair(pad_columns, pad_columns),
@@ -694,9 +694,9 @@ Eigen::array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 }
 
 
-Eigen::array<ptrdiff_t, 4> Convolutional::get_strides() const
+array<ptrdiff_t, 4> Convolutional::get_strides() const
 {   
-    return Eigen::array<ptrdiff_t, 4>({1, row_stride, column_stride, 1});
+    return array<ptrdiff_t, 4>({1, row_stride, column_stride, 1});
 }
 
 
@@ -883,9 +883,6 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
     const Index kernel_width = convolutional_layer->get_kernel_width();
     const Index kernel_channels = convolutional_layer->get_kernel_channels();
     const Index kernels_number = convolutional_layer->get_kernels_number();
-
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
 
     bias_derivatives.resize(kernels_number);
 

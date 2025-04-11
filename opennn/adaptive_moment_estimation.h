@@ -99,7 +99,7 @@ private:
 
     // Stopping criteria
 
-   type training_loss_goal = type(0);
+   type training_loss_goal = type(-10);
    
    type training_accuracy_goal = type(1);
 

@@ -129,7 +129,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
     // cout << "Errors dimensions: " << errors.dimensions() << endl;
     // cout << "Squared errors dimensions: " << squared_errors.dimensions() << endl;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0))*coefficient;
 }
 
 
@@ -147,7 +147,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(1,0))*coefficient;
 }
 
 

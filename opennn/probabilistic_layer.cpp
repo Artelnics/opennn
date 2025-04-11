@@ -183,7 +183,7 @@ void ProbabilisticLayer::set_parameters_random()
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                 Tensor<type, 2>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 }
@@ -273,11 +273,11 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& weight_derivatives = probabilistic_back_propagation->weight_derivatives;
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, AT_B);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
 
-    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
+    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 
@@ -607,7 +607,6 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_size, Layer
 
     batch_size = new_batch_size;
 
-    const Index outputs_number = layer->get_outputs_number();
     const Index parameters_number = layer->get_parameters_number();
 
     squared_errors_Jacobian.resize(batch_size, parameters_number);

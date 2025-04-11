@@ -249,13 +249,13 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     Index samples_number = inputs.dimension(0);
 
     combinations.device(*thread_pool_device) = biases
-                                             + inputs.contract(input_weights, AT_B)
-                                             + hidden_states.contract(recurrent_weights, AT_B);
+                                             + inputs.contract(input_weights, axes(0,0))
+                                             + hidden_states.contract(recurrent_weights, axes(0,0));
 
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-    combinations = (input_weights.contract(inputs, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
-        + recurrent_weights.contract(hidden_states, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
-        + biases.broadcast(Eigen::array<Index, 2>{samples_number, 1}));
+    combinations = (input_weights.contract(inputs, axes(1, 1))
+        + recurrent_weights.contract(hidden_states, axes(1, 1))
+        + biases.broadcast(array<Index, 2>{samples_number, 1}));
 
 }
 
@@ -324,7 +324,7 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         calculate_activations(hidden_states, empty_2);
 
-        outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}}) + output_biases;
+        outputs = hidden_states.contract(output_weights, axes(1, 0)) + output_biases;
 
         calculate_activations(outputs, empty_2);
 
@@ -389,8 +389,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& input_derivatives = recurrent_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
-
     for (Index time_step = 0; time_step < time_steps; time_step++)
         current_inputs = inputs.chip(time_step, 1);
 
@@ -421,14 +419,14 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             multiply_matrices(thread_pool_device, combinations_input_weight_derivatives, current_activations_derivatives);
 
             combinations_input_weight_derivatives.device(*thread_pool_device) 
-                = combinations_input_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_input_weight_derivatives.contract(recurrent_weights, axes(2,0));
 
             // Combinations recurrent weights derivatives
 
             multiply_matrices(thread_pool_device, combinations_recurrent_weight_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weight_derivatives.device(*thread_pool_device) 
-                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, axes(2,0));
         }
 
         current_combinations_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
@@ -443,8 +441,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             += combinations_bias_derivatives.contract(current_combinations_derivatives, A_B);
 
 //        combinations_input_weight_derivatives += current_inputs
-//            .reshape(Eigen::array<Index, 2>({ inputs_number, 1 }))
-//            .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//            .reshape(array<Index, 2>({ inputs_number, 1 }))
+//            .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
 
 //        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
 //            for(Index input_index = 0; input_index < inputs_number; input_index++)
@@ -460,17 +458,17 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                         += outputs(sample_index - 1, activation_index);
 
 //            combinations_recurrent_weight_derivatives += outputs.chip(sample_index - 1, 0)
-//                .reshape(Eigen::array<Index, 2>({ neurons_number, 1 }))
-//                .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//                .reshape(array<Index, 2>({ neurons_number, 1 }))
+//                .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
         }
 
         // Weights derivatives
 
         input_weight_derivatives.device(*thread_pool_device)
-            += combinations_input_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_input_weight_derivatives.contract(current_combinations_derivatives, axes(2,0));
 
         recurrent_weight_derivatives.device(*thread_pool_device)
-            += combinations_recurrent_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_recurrent_weight_derivatives.contract(current_combinations_derivatives, axes(2,0));
     }
 
     // Input derivatives

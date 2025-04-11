@@ -236,7 +236,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2* total_samples_number)/type(samples_number* normalization_coefficient);
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0))*coefficient;
 }
 
 
@@ -257,7 +257,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(1,0))*coefficient;
 }
 
 

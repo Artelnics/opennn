@@ -92,7 +92,7 @@ protected:
 
     type maximum_time;
 
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+    const array<int, 1> rows_sum = {array<int, 1>({1})};
 };
 
 

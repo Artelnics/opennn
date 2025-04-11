@@ -25,7 +25,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
     Tensor<type, 1> autocorrelation(lags_number);
 
     const Index this_size = x.size();
-
     for(Index i = 0; i < lags_number; i++)
     {
         Tensor<type, 1> column_x(this_size-i);
@@ -36,7 +35,6 @@ Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device,
             column_x(j) = x(j);
             column_y(j) = x(j + i);
         }
-
         autocorrelation(i) = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
 
@@ -58,7 +56,8 @@ Correlation correlation(const ThreadPoolDevice* thread_pool_device,
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    const Eigen::array<Index, 1> vector{{x_rows}};
+    const array<Index, 1> vector{{x_rows}};
+
     if(x_columns == 1 && y_columns == 1)
     {
         const Tensor<type, 1> x_vector = x.reshape(vector);
@@ -120,7 +119,7 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
     const bool x_binary = is_binary(x);
     const bool y_binary = is_binary(y);
 
-    const Eigen::array<Index, 1> vector{{x_rows}};
+    const array<Index, 1> vector{{x_rows}};
 
     if(x_columns == 1 && y_columns == 1)
     {
@@ -155,6 +154,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
                                    const Tensor<type, 1>& y,
                                    const Index& maximum_lags_number)
 {
+    cout << "a" << endl;
     if(y.size() != x.size())
         throw runtime_error("Both vectors must have the same size.\n");
 
@@ -175,6 +175,9 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
 
         cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
+    cout << "cross correlatio calculate" << endl;
+    cout << cross_correlation << endl;
+    cout << "-----------------------" << endl;
 
     return cross_correlation;
 }
@@ -363,7 +366,6 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) || is_constant(y))
         return Correlation();
-    
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
@@ -577,10 +579,9 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-
     // Logistic correlation
 
-    const Eigen::array<Index, 1> vector{{x_filtered.size()}};
+    const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -667,7 +668,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     // Logistic correlation
 
-    const Eigen::array<Index, 1> vector{{x_filtered.size()}};
+    const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -777,7 +778,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    const Eigen::array<Index, 1> vector{{targets.size()}};
+    const array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 
@@ -898,7 +899,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
-    const Eigen::array<Index, 1> vector{{targets.size()}};
+    const array<Index, 1> vector{{targets.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
 

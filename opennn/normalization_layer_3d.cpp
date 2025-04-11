@@ -117,8 +117,8 @@ void Normalization3d::standarization(const Tensor<type, 3>& inputs,
     const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = inputs.dimension(2);
 
-    const Eigen::array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
+    const array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
+    const array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
     means.device(*thread_pool_device) = inputs.mean(normalization_axis);
        // .reshape(range_3).broadcast(expand_normalization_axis);
@@ -166,8 +166,8 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
 
-    const Eigen::array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
-    const Eigen::array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
+    const array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
+    const array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);

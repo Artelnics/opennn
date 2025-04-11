@@ -215,9 +215,7 @@ void Perceptron::set_parameters_random()
 void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
                                         Tensor<type, 2>& combinations) const
 {
-    const Eigen::array<Index, 2> rows({1, combinations.dimension(0)});
-
-    combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 }
@@ -228,9 +226,9 @@ void Perceptron::batch_normalization(Tensor<type, 1>& means,
     const Tensor<type, 2>& inputs,
     Tensor<type, 2>& outputs) const
 {
-    const Eigen::array<Index, 2> rows({outputs.dimension(0), 1 });
+    const array<Index, 2> rows({outputs.dimension(0), 1 });
 
-    const Eigen::array<int, 1> axis_x({ 0 });
+    const array<int, 1> axis_x({ 0 });
 
     means.device(*thread_pool_device) = outputs.mean(axis_x);
 
@@ -337,10 +335,10 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
 
     bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_1);
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, AT_B);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
+        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(0,0));
 }
 
 
@@ -404,7 +402,7 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
     }
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
+        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 
@@ -658,7 +656,6 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Laye
 
     batch_size = new_samples_number;
 
-    const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 

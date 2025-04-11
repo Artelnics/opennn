@@ -236,12 +236,9 @@ protected:
 
    bool display = true;
 
-   const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
+   const array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
-   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
-
-   const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+   const array<int, 1> rows_sum = {array<int, 1>({1})};
 
 };
 

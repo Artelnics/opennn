@@ -119,8 +119,6 @@ private:
     Tensor<type, 2> positional_encoding;
 
     type dropout_rate;
-
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
 
 

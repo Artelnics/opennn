@@ -33,6 +33,7 @@ public:
 
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
+    const string& get_time_raw_variable() const;
 
     const Index& get_time_raw_variable_index() const;
 
@@ -60,15 +61,15 @@ public:
 
 private:
 
-    Index lags_number = 0;
+    Index lags_number = 2;
 
-    Index steps_ahead = 0;
+    Index steps_ahead = 1;
 
     Index time_raw_variable_index = 0;
 
     Index group_raw_variable_index = 0;
 
-    string time_column;
+    string time_raw_variable = " ";
 
     Tensor<type, 2> time_series_data;
 
