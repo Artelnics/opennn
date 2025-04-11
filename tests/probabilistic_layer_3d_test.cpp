@@ -226,13 +226,13 @@ TEST(ProbabilisticLayer3DTest, ForwardPropagate)
         
         //Forward propagate
 
-        probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
+        this_forward_propagation.set(samples_number, &probabilistic_layer_3d);
         
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
-                                                 &probabilistic_layer_3d_forward_propagation,
+                                                 &this_forward_propagation,
                                                  is_training);
         
-        Tensor<type, 3> outputs = probabilistic_layer_3d_forward_propagation.outputs;
+        Tensor<type, 3> outputs = this_forward_propagation.outputs;
 
         bool correct_outputs = true;
 
@@ -266,13 +266,13 @@ TEST(ProbabilisticLayer3DTest, ForwardPropagate)
         
         //Forward propagate
 
-        probabilistic_layer_3d_forward_propagation.set(samples_number, &probabilistic_layer_3d);
+        this_forward_propagation.set(samples_number, &probabilistic_layer_3d);
 
         probabilistic_layer_3d.forward_propagate(tensor_wrapper(to_pair(inputs)),
-                                                 &probabilistic_layer_3d_forward_propagation,
+                                                 &this_forward_propagation,
                                                  is_training);
 
-        Tensor<type, 3> outputs = probabilistic_layer_3d_forward_propagation.outputs;
+        Tensor<type, 3> outputs = this_forward_propagation.outputs;
 
         Tensor<type, 1> combination_solution(4);
         combination_solution.setValues({ type(7),type(-5),type(1),type(7) });

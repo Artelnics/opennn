@@ -281,7 +281,6 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     const Index batch_size = query_input.dimension(0);
 
-
     // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 

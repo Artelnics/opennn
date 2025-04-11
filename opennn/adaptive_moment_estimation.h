@@ -119,11 +119,6 @@ private:
 
         void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
 
-    private:
-
-        cublasHandle_t cublas_handle;
-        cudnnHandle_t cudnn_handle;
-
 #endif
 
 };
@@ -156,8 +151,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
 
         void set(AdaptiveMomentEstimation* = nullptr);
-
-        void allocate();
 
         void free();
 

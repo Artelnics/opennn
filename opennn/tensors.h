@@ -227,7 +227,10 @@ TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 3>&, const Index&);
 TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>&, const Index&);
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>&, const Index&, const Index&);
 
-TensorMap<Tensor<type, 3>> tensor_map_(Tensor<type, 4>&, const Index&);
+TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>&, const Index&);
+
+
+TensorMap<Tensor<type, 1>> tensor_map_(TensorMap<Tensor<type, 2>>&, const Index&);
 
 
 TensorMap<Tensor<type, 1>> tensor_map_1(const pair<type*, dimensions>& x_pair);

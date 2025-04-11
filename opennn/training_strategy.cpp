@@ -798,6 +798,8 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 
     get_loss_index()->create_cuda();
 
+    get_optimization_algorithm()->create_cuda();
+
     if (neural_network->has(Layer::Type::Recurrent)
         || neural_network->has(Layer::Type::LongShortTermMemory))
         fix_forecasting();

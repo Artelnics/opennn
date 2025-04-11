@@ -66,11 +66,6 @@ public:
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
 
-/*    void back_propagate_lm(const vector<pair<type*, dimensions>>&,
-                           const vector<pair<type*, dimensions>>&,
-                           unique_ptr<LayerForwardPropagation>&,
-                           unique_ptr<LayerBackPropagationLM>&) const override;
-*/
     void insert_gradient(unique_ptr<LayerBackPropagation>&,
                          Index&,
                          Tensor<type, 1>&) const override;
@@ -207,17 +202,15 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
 
     void free() override;
 
-    std::pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    type* combinations_cuda = nullptr;
-    type* outputs = nullptr;
-
-    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    float* combinations = nullptr;
 };
 
 
