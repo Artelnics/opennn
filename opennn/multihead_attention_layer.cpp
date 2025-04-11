@@ -370,7 +370,7 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
                                                      Tensor<type, 4>& attention_weights) const
 {
 
-    batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_weights, A_BT);
+    batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_weights, axes<Index>(1,1));
 
     const type scaling_factor = get_scaling_factor();
 
@@ -391,7 +391,7 @@ void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& valu
                                 attention_weights,
                                 value,
                                 attention_outputs,
-                                AT_B);
+                                axes<Index>(0,0));
 }
 
 
@@ -462,7 +462,7 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& conc
         const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(concatenated_attention_outputs, sample_index);
 
         outputs.chip(sample_index, 0).device(*thread_pool_device)
-            = sample_attention_output.contract(projection_weights, A_B);
+            = sample_attention_output.contract(projection_weights, axes(1,0));
     }
 
     sum_matrices(thread_pool_device.get(), projection_biases, outputs);
@@ -564,7 +564,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
             = tensor_map(concatenated_attention_output_deltas, sample_index);
 
         sample_concatenated_attention_output_deltas.device(*thread_pool_device)
-            = deltas.chip(sample_index, 0).contract(projection_weights, A_BT);
+            = deltas.chip(sample_index, 0).contract(projection_weights, axes(1,1));
 
         // Attention output deltas
 
@@ -615,7 +615,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                     head_attention_weights,
                                     head_attention_output_deltas,
                                     head_value_derivatives,
-                                    A_B);
+                                    axes<Index>(1,0));
 
         // VALUE WEIGHT DERIVATIVES
 
@@ -630,7 +630,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                     head_value,
                                     head_attention_output_deltas,
                                     head_attention_weight_derivatives_xxx,
-                                    A_BT);
+                                    axes<Index>(1,1));
 
         softmax_derivatives_times_tensor(head_attention_weights,
                                          head_attention_weight_derivatives_xxx,
@@ -644,7 +644,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                     head_attention_weight_derivatives_xxx,
                                     head_key,
                                     head_query_derivatives,
-                                    AT_B);
+                                    axes<Index>(0,0));
 
         // KEY DERIVATIVES
 
@@ -652,7 +652,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                                     head_attention_weight_derivatives_xxx,
                                     head_query,
                                     head_key_derivatives,
-                                    A_B);
+                                    axes<Index>(1,0));
 
         // QUERY WEIGHTS DERIVATIVES
 
@@ -681,7 +681,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
             const TensorMap<Tensor<type, 2>> sample_query_derivatives = tensor_map(this_back_propagation->query_deltas, head_index, sample_index);
 
             input_query_derivatives.chip(sample_index, 0).device(*thread_pool_device)
-                += sample_query_derivatives.contract(head_query_weights, A_BT);
+                += sample_query_derivatives.contract(head_query_weights, axes(1,1));
         }
     }
 
@@ -709,8 +709,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
             const TensorMap<Tensor<type, 2>> sample_value_derivatives = tensor_map(this_back_propagation->value_deltas, head_index, sample_index);
 
             input_source_derivatives.chip(sample_index, 0).device(*thread_pool_device)
-                += sample_key_derivatives.contract(head_key_weights, A_BT)
-                   + sample_value_derivatives.contract(head_value_weights, A_BT);
+                += sample_key_derivatives.contract(head_key_weights, axes(1,1))
+                   + sample_value_derivatives.contract(head_value_weights, axes(1,1));
         }
     }
 }

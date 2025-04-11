@@ -110,8 +110,6 @@ private:
    type dropout_rate = type(0);
 
    const Eigen::array<Index, 2> sum_dimensions = {0, 1};
-
-   const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 };
 
 

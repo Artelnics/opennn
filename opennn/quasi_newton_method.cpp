@@ -313,7 +313,7 @@ void QuasiNewtonMethod::update_parameters(
         ? set_identity(inverse_hessian)
         : calculate_inverse_hessian_approximation(optimization_data);
 
-    training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
+    training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, axes(1,0));
 
     training_slope.device(*thread_pool_device) = gradient.contract(training_direction, axes(0,0));
 

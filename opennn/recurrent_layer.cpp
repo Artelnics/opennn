@@ -389,8 +389,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 3>& input_derivatives = recurrent_back_propagation->input_derivatives;
 
-    const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
-
     for (Index time_step = 0; time_step < time_steps; time_step++)
         current_inputs = inputs.chip(time_step, 1);
 
@@ -421,14 +419,14 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             multiply_matrices(thread_pool_device, combinations_input_weight_derivatives, current_activations_derivatives);
 
             combinations_input_weight_derivatives.device(*thread_pool_device) 
-                = combinations_input_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_input_weight_derivatives.contract(recurrent_weights, axes(2,0));
 
             // Combinations recurrent weights derivatives
 
             multiply_matrices(thread_pool_device, combinations_recurrent_weight_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weight_derivatives.device(*thread_pool_device) 
-                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, axes(2,0));
         }
 
         current_combinations_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
@@ -467,10 +465,10 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         // Weights derivatives
 
         input_weight_derivatives.device(*thread_pool_device)
-            += combinations_input_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_input_weight_derivatives.contract(current_combinations_derivatives, axes(2,0));
 
         recurrent_weight_derivatives.device(*thread_pool_device)
-            += combinations_recurrent_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_recurrent_weight_derivatives.contract(current_combinations_derivatives, axes(2,0));
     }
 
     // Input derivatives

@@ -217,7 +217,7 @@ void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     const Eigen::array<Index, 2> rows({1, combinations.dimension(0)});
 
-    combinations.device(*thread_pool_device) = inputs.contract(weights, A_B);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
 
     sum_columns(thread_pool_device.get(), biases, combinations);
 }
@@ -404,7 +404,7 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
     }
 
     if(!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, A_BT);
+        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }
 
 

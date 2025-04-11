@@ -77,7 +77,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -109,7 +109,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  TensorMap<Tensor<type, 3>>& A,
                                  const TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -140,7 +140,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 4>& B,
                                  Tensor<type, 4>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 Eigen::array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order

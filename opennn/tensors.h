@@ -6,17 +6,10 @@
 namespace opennn
 {
 
-const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
 template <typename Index>
 Eigen::array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
 {
-    //Eigen::array<IndexPair<Index>, 1> dims;
-    //dims[0] = IndexPair<Index>(a, b);
-    //return dims;
-
     return Eigen::array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
-
 }
 
 Index get_random_index(const Index&, const Index&);
@@ -67,12 +60,9 @@ void multiply_rows(const Tensor<type, 2>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 2>&);
 
-void batch_matrix_multiplication(const ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 4>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, Tensor<type, 3>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
-//void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const Eigen::array<IndexPair<Index>, 1> = A_B);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, Eigen::array<IndexPair<Index>, 1>);
+void batch_matrix_multiplication(const ThreadPoolDevice*, TensorMap<Tensor<type, 3>>&, const TensorMap<Tensor<type, 3>>&, TensorMap<Tensor<type, 3>>&, Eigen::array<IndexPair<Index>, 1>);
+void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&, const Tensor<type, 4>&, Tensor<type, 4>&, Eigen::array<IndexPair<Index>, 1>);
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
