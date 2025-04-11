@@ -215,8 +215,6 @@ void Perceptron::set_parameters_random()
 void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
                                         Tensor<type, 2>& combinations) const
 {
-    const array<Index, 2> rows({1, combinations.dimension(0)});
-
     combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
 
     sum_columns(thread_pool_device.get(), biases, combinations);
@@ -658,7 +656,6 @@ void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Laye
 
     batch_size = new_samples_number;
 
-    const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[0];
     const Index parameters_number = layer->get_parameters_number();
 

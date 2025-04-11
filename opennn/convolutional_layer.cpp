@@ -884,9 +884,6 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
     const Index kernel_channels = convolutional_layer->get_kernel_channels();
     const Index kernels_number = convolutional_layer->get_kernels_number();
 
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
-
     bias_derivatives.resize(kernels_number);
 
     weight_derivatives.resize(kernels_number,

@@ -720,8 +720,6 @@ namespace opennn
 
     vector<string> DataSet::get_variable_names() const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         const Index variables_number = get_variables_number();
 
         vector<string> variable_names(variables_number);
@@ -744,8 +742,6 @@ namespace opennn
         const Index variables_number = get_variables_number(variable_use);
 
         vector<string> variable_names(variables_number);
-
-        const Index raw_variables_number = get_raw_variables_number();
 
         Index index = 0;
 
@@ -930,8 +926,6 @@ namespace opennn
 
     vector<string> DataSet::get_raw_variable_names(const VariableUse& variable_use) const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         const Index count = get_raw_variables_number(variable_use);
 
         vector<string> names(count);
@@ -2032,13 +2026,13 @@ namespace opennn
     {
         vector<string> unused_raw_variables;
 
-        for (Index i = 0; i < original_variable_indices.size(); i++)
+        for (Index i = 0; i < (Index)original_variable_indices.size(); i++)
         {
             const Index original_raw_variable_index = original_variable_indices[i];
 
             bool found = false;
 
-            for (Index j = 0; j < override_variable_indices.size(); j++)
+            for (Index j = 0; j < (Index)override_variable_indices.size(); j++)
             {
                 if (original_raw_variable_index == override_variable_indices[j])
                 {
@@ -2063,7 +2057,6 @@ namespace opennn
 
     vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bins_number) const
     {
-        const Index raw_variables_number = raw_variables.size();
         const Index used_raw_variables_number = get_used_raw_variables_number();
         const vector<Index> used_sample_indices = get_used_sample_indices();
         const Index used_samples_number = used_sample_indices.size();
@@ -3627,13 +3620,10 @@ namespace opennn
 
         for (Index i = 0; i < used_variables_number; i++)
         {
-            const Index variable_index = used_variable_indices[i];
-
             for (Index j = 0; j < used_samples_number; j++)
             {
                 sample_index = used_sample_indices[j];
 
-                //const type value = data(sample_index, variable_index);
                 const type value = data(sample_index, i);
 
                 if (get_sample_use(sample_index) == SampleUse::None

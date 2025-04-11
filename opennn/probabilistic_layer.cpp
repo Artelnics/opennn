@@ -607,7 +607,6 @@ void ProbabilisticLayerBackPropagationLM::set(const Index& new_batch_size, Layer
 
     batch_size = new_batch_size;
 
-    const Index outputs_number = layer->get_outputs_number();
     const Index parameters_number = layer->get_parameters_number();
 
     squared_errors_Jacobian.resize(batch_size, parameters_number);
