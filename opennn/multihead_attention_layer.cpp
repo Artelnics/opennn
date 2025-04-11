@@ -259,41 +259,37 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
 
 void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Tensor<type, 4>& query) const
 {
-    /*
-    const Index batch_size = query_input.dimension(0);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_query_weights = tensor_map(query_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_query = tensor_map(query, head_index, sample_index);
-
-            head_sample_query.device(*thread_pool_device)
-                = query_input.chip(sample_index, 0).contract(head_query_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
-        }
-    }
-*/
-
-    const Index batch_size = query_input.dimension(0);
-
     // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 
     // Tensor contraction dimensions:
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
-    Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
 
-    Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+    const Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+
+    const Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    query = query_input.contract(query_weights, contract_dims)
+    query.device(*thread_pool_device) = query_input.contract(query_weights, contract_dims)
                             .shuffle(shuffle_dims);
+
+    // @todo try this
+
+    const Index hidden_depth = get_hidden_depth();
+
+    const Eigen::array<ptrdiff_t, 4> reshape_dims = { 1, hidden_depth, 1, heads_number };
+
+    // Broadcast it along the dimensions (query_sequence_length and batch_size)
+    // Here, query.dimension(0) is query_sequence_length and query.dimension(2) is batch_size.
+    const Eigen::array<ptrdiff_t, 4> broadcast_dims = { query.dimension(0), 1, query.dimension(2), 1 };
+
+    // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
+    query.device(*thread_pool_device) = query + query_biases.reshape(reshape_dims).broadcast(broadcast_dims);
+
+/*
+    const Index batch_size = query_input.dimension(0);
 
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -306,46 +302,27 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
             sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
         }
     }
+*/
 }
 
 
 void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tensor<type, 4>& key) const
 {
-    /*
-    const Index batch_size = source_input.dimension(0);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_key_weights = tensor_map(key_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_key_biases = tensor_map(key_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_key = tensor_map(key, head_index, sample_index);
-
-            head_sample_key.device(*thread_pool_device)
-                = source_input.chip(sample_index, 0).contract(head_key_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_key_biases, head_sample_key);
-        }
-    }
-*/
-    const Index batch_size = source_input.dimension(0);
-
-
     // Verify embedding dimension matches
     assert(embedding_dimension == key_weights.dimension(0));
 
     // Tensor contraction dimensions:
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
-    Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+    const Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
 
-    Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+    const Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    key = source_input.contract(key_weights, contract_dims)
+    key.device(*thread_pool_device) = source_input.contract(key_weights, contract_dims)
                 .shuffle(shuffle_dims);
+
+    const Index batch_size = source_input.dimension(0);
 
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -363,43 +340,22 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
 
 void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Tensor<type, 4>& value) const
 {
-    /*
     const Index batch_size = source_input.dimension(0);
 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_value_weights = tensor_map(value_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_value_biases = tensor_map(value_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_value = tensor_map(value, head_index, sample_index);
-
-            head_sample_value.device(*thread_pool_device)
-                = source_input.chip(sample_index, 0).contract(head_value_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_value_biases, head_sample_value);
-        }
-    }
-*/
-    const Index batch_size = source_input.dimension(0);
-
-
-    // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 
     // Tensor contraction dimensions:
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
-    Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+    const Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
 
-    Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+    const Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    value = source_input.contract(value_weights, contract_dims)
+    value.device(*thread_pool_device) = source_input.contract(value_weights, contract_dims)
                 .shuffle(shuffle_dims);
 
-    for (Index head_index = 0; head_index < heads_number; head_index++)
+    for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 1>> head_value_biases = tensor_map(value_biases, head_index);
 
@@ -417,6 +373,7 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
                                                      const Tensor<type, 4>& key,
                                                      Tensor<type, 4>& attention_weights) const
 {
+
     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_weights, A_BT);
 
     const type scaling_factor = get_scaling_factor();
