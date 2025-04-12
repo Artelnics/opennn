@@ -60,7 +60,8 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
-        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, convolutions_dimensions) + biases(kernel_index);
+        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, array<Index, 3>({1, 2, 3}))
+                                                          + biases(kernel_index);
     }
 }
 
@@ -79,7 +80,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
         Tensor<type, 1>& means = this_forward_propagation->means;
         Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
-        means.device(*thread_pool_device) = outputs.mean(means_dimensions);
+        means.device(*thread_pool_device) = outputs.mean(array<Index, 3>({0, 1, 2}));
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
         outputs.device(*thread_pool_device)
@@ -262,7 +263,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     
     // Biases derivatives
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(convolutions_dimensions_3d);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 3>({0, 1, 2}));
 
     // Weigth derivatives
 
@@ -274,12 +275,12 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);
 
-        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, convolutions_dimensions_3d);
+        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, array<Index, 3>({0, 1, 2}));
     }
 
     // Input derivatives
-    
-    rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
+        
+    rotated_weights.device(*thread_pool_device) = weights.reverse(array<Index, 4>({1, 1, 0, 0}));
 
     #pragma omp parallel for //schedule(static)
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
@@ -289,6 +290,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
         for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
     }
+
+    const array<Index, 2> convolution_dimensions_2d = {0, 1};
 
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
@@ -302,7 +305,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             {
                 const Tensor<type, 2> convolution_result = image_kernel_convolutions_derivatives_padded
-                    .convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
+                    .convolve(precomputed_rotated_slices[kernel_index][channel_index], convolution_dimensions_2d);
 
                 for (Index h = 0; h < input_height; ++h) 
                     for (Index w = 0; w < input_width; ++w) 

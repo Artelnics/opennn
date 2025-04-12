@@ -208,14 +208,6 @@ private:
 
    Activation activation_function = Activation::Linear;
 
-   const array<Index, 3> convolutions_dimensions = { 1, 2, 3 };
-   const array<Index, 3> convolutions_dimensions_3d = { 0, 1, 2 };
-   const array<Index, 2> convolution_dimensions_2d = { 0, 1 };
-
-   const array<Index, 4> reverse_dimensions = {1, 1, 0, 0};
-
-   const array<Index, 3> means_dimensions = {0, 1, 2};
-
    // Batch normalization
 
    bool batch_normalization = false;

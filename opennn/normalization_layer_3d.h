@@ -73,11 +73,6 @@ private:
 
     Tensor<type, 1> betas;
 
-    const array<Index, 1> sum_dimensions_1 = {2};
-    const array<Index, 2> sum_dimensions_2 = {0, 1};
-
-    const array<Index, 1> normalization_axis{{2}};
-
     const type epsilon = type(0.001);
 };
 

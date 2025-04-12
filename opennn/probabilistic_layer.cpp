@@ -275,7 +275,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
     input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }

@@ -98,8 +98,6 @@ private:
 
     type decision_threshold;
 
-    const array<Index, 1> sum_dimensions = {0};
-
 #ifdef OPENNN_CUDA_test
 
 public:

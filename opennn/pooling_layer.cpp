@@ -288,11 +288,6 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    const array<Index, 4> outputs_dimensions_array({outputs.dimension(0),
-                                                        outputs.dimension(1),
-                                                        outputs.dimension(2),
-                                                        outputs.dimension(3)});
-
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,     
         pool_width,      
@@ -306,7 +301,7 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     outputs.device(*thread_pool_device) = image_patches
         .mean(array<Index, 2>({1, 2}))
-        .reshape(outputs_dimensions_array);
+        .reshape(array<Index, 4>({outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)}));
 }
 
 
@@ -325,11 +320,6 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index output_height = outputs.dimension(2);
     const Index channels = outputs.dimension(3);
 
-    const array<Index, 4> outputs_dimensions_array({ batch_size,
-                                                               output_width,
-                                                               output_height,
-                                                               channels});
-
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,
         pool_width,
@@ -341,7 +331,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     outputs.device(*thread_pool_device) = image_patches
         .maximum(array<Index, 2>({1, 2}))
-        .reshape(outputs_dimensions_array);
+        .reshape(array<Index, 4>({batch_size, output_width, output_height, channels}));
 
     if (!is_training) return;
 
@@ -357,6 +347,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     for (Index batch_index = 0; batch_index < batch_size; batch_index++)
     { 
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0).reshape(reshape_dimensions);
+
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
 }
@@ -486,14 +477,13 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                 const Index width_start = output_width_index * column_stride;
                 const Index width_end = min(width_start + pool_width, input_width);
 
-                const array<Index, 4> grad_offsets = { 0, output_height_index, output_width_index, channel_index };
-                const array<Index, 4> broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
+                const array<Index, 4> grad_offsets = {0, output_height_index, output_width_index, channel_index};
+                const array<Index, 4> offsets = {0, height_start, width_start, channel_index };
+                const array<Index, 4> extents = {batch_size, height_end - height_start, width_end - width_start, 1};
 
-                const array<Index, 4> offsets = { 0, height_start, width_start, channel_index };
-                const array<Index, 4> extents = { batch_size, height_end - height_start, width_end - width_start, 1 };
-
-                input_derivatives.slice(offsets, extents) +=
-                    deltas_by_pool_size.slice(grad_offsets, grad_extents).broadcast(broadcast_dims);
+                input_derivatives.slice(offsets, extents) += deltas_by_pool_size
+                    .slice(grad_offsets, grad_extents)
+                    .broadcast(array<Index, 4>({1, height_end - height_start, width_end - width_start, 1}));
             }
         }
 }

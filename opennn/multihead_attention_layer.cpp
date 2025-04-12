@@ -276,16 +276,13 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     const Index hidden_depth = get_hidden_depth();
 
-    const array<Index, 4> reshape_dims = { 1, hidden_depth, 1, heads_number };
-
     // Broadcast it along the dimensions (query_sequence_length and batch_size)
     // Here, query.dimension(0) is query_sequence_length and query.dimension(2) is batch_size.
-    const array<Index, 4> broadcast_dims = { query.dimension(0), 1, query.dimension(2), 1 };
 
     // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
     query.device(*thread_pool_device) += query_biases
-         .reshape(reshape_dims)
-         .broadcast(broadcast_dims);
+         .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+         .broadcast(array<Index, 4>({query.dimension(0), 1, query.dimension(2), 1 }));
 
 /*
     const Index batch_size = query_input.dimension(0);
@@ -469,6 +466,7 @@ void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& conc
     sum_matrices(thread_pool_device.get(), projection_biases, outputs);
 }
 
+
 void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                            unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                            const bool& is_training)
@@ -557,6 +555,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     // Calculation
 
     projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
+
     projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, axes(2,0,0,1));
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
@@ -691,9 +690,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     auto heads_result = query_deltas.contract(query_weights, axes(3,1));
 
-    const array<int, 1> reduction_dims = { 0 };
-
-    auto result = heads_result.sum(reduction_dims);
+    auto result = heads_result.sum(array<int, 1>({0}));
 
     input_query_derivatives.device(*thread_pool_device) += result;
 */

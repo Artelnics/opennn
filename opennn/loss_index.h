@@ -235,9 +235,6 @@ protected:
    type regularization_weight = type(0.01);
 
    bool display = true;
-
-   const array<int, 1> rows_sum = {array<int, 1>({1})};
-
 };
 
 
