@@ -112,7 +112,6 @@ void Normalization3d::standarization(const Tensor<type, 3>& inputs,
                                      Tensor<type, 2>& means,
                                      Tensor<type, 2>& standard_deviations) const
 {
-
     const Index batch_size = inputs.dimension(0);
     const Index sequence_length = inputs.dimension(1);
     const Index embedding_dimension = inputs.dimension(2);
@@ -134,6 +133,7 @@ void Normalization3d::standarization(const Tensor<type, 3>& inputs,
 void Normalization3d::affine_transformation(Tensor<type, 3>& outputs) const
 {
     multiply_matrices(thread_pool_device.get(), outputs, gammas);
+
     sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
@@ -166,9 +166,6 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     // @todo simplify                                                                                                  
     const Index batch_size = input_pairs[0].second[0];
     const Index embedding_dimension = get_embedding_dimension();
-
-    const array<Index, 3> range_3{ { batch_size, sequence_length, 1 } };
-    const array<Index, 3> expand_normalization_axis{ { 1, 1, embedding_dimension } };
 
     if(delta_pairs.size() > 1)     
         add_deltas(delta_pairs);
@@ -215,7 +212,9 @@ void Normalization3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     standard_deviation_derivatives.device(*thread_pool_device) = outputs;
     multiply_matrices(thread_pool_device.get(), standard_deviation_derivatives, aux_2d);
 
-    scaled_deltas.device(*thread_pool_device) = scaled_deltas / (standard_deviations.reshape(range_3).broadcast(expand_normalization_axis) + epsilon);
+    scaled_deltas.device(*thread_pool_device) = scaled_deltas
+        / (standard_deviations.reshape(array<Index, 3>({batch_size, sequence_length, 1}))
+                              .broadcast(array<Index, 3>({1, 1, embedding_dimension})) + epsilon);
 
     input_derivatives.device(*thread_pool_device) = scaled_deltas - standard_deviation_derivatives;
 

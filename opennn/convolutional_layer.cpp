@@ -40,12 +40,16 @@ bool Convolutional::get_batch_normalization() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == Convolution::Same
-        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
-        : preprocessed_inputs.device(*thread_pool_device) = inputs;
-
-    if (row_stride != 1 || column_stride != 1)
-        preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
+    if (convolution_type == Convolution::Same)
+        if (row_stride != 1 || column_stride != 1)
+            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides());
+        else
+            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
+    else
+        if (row_stride != 1 || column_stride != 1)
+            preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides());
+        else
+            preprocessed_inputs.device(*thread_pool_device) = inputs;
 }
 
 

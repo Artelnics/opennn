@@ -46,29 +46,21 @@ void set_random(Tensor<type, rank>& tensor, const type& minimum = -0.1, const ty
 
 type bound(const type& value, const type& minimum, const type& maximum);
 
-//void get_row(Tensor<type, 1>&, const Tensor<type, 2, RowMajor>&, const Index&);
-
 void set_row(Tensor<type, 2>&, const Tensor<type, 1>&, const Index&);
 
 void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
-void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
+//void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+//void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
-//void sum_matrices(const ThreadPoolDevice*, const TensorMap<Tensor<type, 1>>&, Tensor<type, 3>&);
-//void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
-void substract_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
 void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
 
 void set_identity(Tensor<type, 2>&);
 
 void sum_diagonal(Tensor<type, 2>&, const type&);
-//void sum_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
-
-//void substract_diagonal(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 void multiply_rows(const Tensor<type, 2>&, const Tensor<type, 1>&);
 void multiply_matrices(const ThreadPoolDevice*, Tensor<type, 3>&, const Tensor<type, 1>&);
@@ -81,8 +73,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
 //void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
-void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
-
+//void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
 bool is_binary(const Tensor<type, Rank>& tensor)
@@ -100,7 +91,6 @@ bool is_binary(const Tensor<type, Rank>& tensor)
 template <int Rank>
 bool is_constant(const Tensor<type, Rank>& tensor)
 {
-
     const Index size = tensor.size();
 
     Index first_non_nan_index = 0;
@@ -206,7 +196,8 @@ string vector_to_string(const vector<T>& x, const string& separator = " ")
 {
     ostringstream buffer;
 
-    for (size_t i = 0; i < x.size(); i++) {
+    for (size_t i = 0; i < x.size(); i++)
+    {
         buffer << x[i];
         if (i < x.size() - 1) 
             buffer << separator;
@@ -286,7 +277,8 @@ void print_vector(const vector<vector<T>>& vec)
 {
     cout << "[ ";
 
-    for (size_t i = 0; i < vec.size(); ++i) {
+    for (size_t i = 0; i < vec.size(); ++i)
+    {
         print_vector(vec[i]);
         if (i < vec.size() - 1)
             cout << ";";
@@ -306,16 +298,6 @@ Tensor<Index, 1> get_dimensions(const Tensor<T, n>& tensor)
     memcpy(dimensions.data(), tensor.dimensions().data(), size_t(n)*sizeof(Index));
 
     return dimensions;
-}
-
-
-template<class T>
-Tensor<T, 1> tensor_wrapper(T obj)
-{
-    Tensor<T, 1> wrapper(1);
-    wrapper.setValues({obj});
-
-    return wrapper;
 }
 
 

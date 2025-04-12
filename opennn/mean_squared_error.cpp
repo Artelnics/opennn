@@ -105,9 +105,12 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
+    output_deltas.device(*thread_pool_device) = errors
+        / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
+                        .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
 
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    //    output_deltas.device(*thread_pool_device) = errors;
+    //    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
