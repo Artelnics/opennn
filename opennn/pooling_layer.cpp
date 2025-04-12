@@ -288,10 +288,10 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    const array<ptrdiff_t, 4> outputs_dimensions_array({outputs.dimension(0),
-                                                               outputs.dimension(1),
-                                                               outputs.dimension(2),
-                                                               outputs.dimension(3)});
+    const array<Index, 4> outputs_dimensions_array({outputs.dimension(0),
+                                                        outputs.dimension(1),
+                                                        outputs.dimension(2),
+                                                        outputs.dimension(3)});
 
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,     
@@ -304,7 +304,9 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
         type(padding_width)
     );
 
-    outputs.device(*thread_pool_device) = image_patches.mean(pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = image_patches
+        .mean(array<Index, 2>({1, 2}))
+        .reshape(outputs_dimensions_array);
 }
 
 
@@ -323,7 +325,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index output_height = outputs.dimension(2);
     const Index channels = outputs.dimension(3);
 
-    const array<ptrdiff_t, 4> outputs_dimensions_array({ batch_size,
+    const array<Index, 4> outputs_dimensions_array({ batch_size,
                                                                output_width,
                                                                output_height,
                                                                channels});
@@ -337,8 +339,9 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         PADDING_VALID,
         type(padding_width));
 
-    outputs.device(*thread_pool_device)
-        = image_patches.maximum(pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = image_patches
+        .maximum(array<Index, 2>({1, 2}))
+        .reshape(outputs_dimensions_array);
 
     if (!is_training) return;
 
@@ -347,7 +350,7 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index pool_size = pool_height * pool_width;
     const Index output_size = output_height * output_width * channels;
 
-    const array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
+    const array<Index, 3> output_dimensions({ output_height, output_width, channels });
     const array<Index, 2> reshape_dimensions = { pool_size, output_size };
     
     #pragma omp parallel for

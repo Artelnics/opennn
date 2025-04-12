@@ -48,7 +48,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     errors.device(*thread_pool_device) = outputs - targets;
     
-    error.device(*thread_pool_device) = errors.contract(errors, SSE) / type(samples_number * outputs_number);
+    error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
         
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }

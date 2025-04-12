@@ -32,6 +32,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
 {
 }
 
+
 const Index& TimeSeriesDataSet::get_time_raw_variable_index() const
 {
     return time_raw_variable_index;
@@ -55,10 +56,6 @@ const Index& TimeSeriesDataSet::get_steps_ahead() const
     return steps_ahead;
 }
 
-const string& TimeSeriesDataSet::get_time_raw_variable() const
-{
-    return time_raw_variable;
-}
 
 void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
 {
@@ -78,7 +75,7 @@ void TimeSeriesDataSet::set_time_raw_variable_index(const Index& new_time_raw_va
 
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
-    time_raw_variable = new_time_column;
+//    time_raw_variable = new_time_column;
 }
 
 
@@ -128,7 +125,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
     add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
     add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
-    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
+    //add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
     add_xml_element(printer, "GroupByRawVariable", "");
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
@@ -218,7 +215,9 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
     vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
-    for(int i = 0; i < data_file_preview.size(); i++){
+
+    for(int i = 0; i < data_file_preview.size(); i++)
+    {
         printer.OpenElement("Row");
         printer.PushAttribute("Item", to_string(i + 1).c_str());
         printer.PushText(vector_data_file_preview[i].data());
@@ -433,17 +432,6 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
-Index TimeSeriesDataSet::get_time_series_time_raw_variable_index() const
-{
-    for(size_t i = 0; i < raw_variables.size(); i++)
-    {
-        if(raw_variables[i].type == RawVariableType::DateTime) return i;
-    }
-
-    return static_cast<Index>(NAN);
-}
-
-
 void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -597,10 +585,8 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
     const Index samples_number = get_samples_number();
 
     if(lags_number > samples_number)
-    {
         throw runtime_error("Lags number (" + to_string(lags_number) + ") "
                             "is greater than samples number (" + to_string(samples_number) + ") \n");
-    }
 
     const Index raw_variables_number = get_raw_variables_number();
 
@@ -670,11 +656,11 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
         const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
         
         autocorrelations_vector = opennn::autocorrelations(thread_pool_device.get(), current_input_i, new_lags_number);
+
         for(Index j = 0; j < new_lags_number; j++)
             autocorrelations (counter_i, j) = autocorrelations_vector(j) ;
 
         counter_i++;
- 
     }
 
     return autocorrelations;
@@ -725,14 +711,9 @@ Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lag
         }
     }
 
-    Index new_lags_number;
-
-    if(samples_number == lags_number)
-        new_lags_number = lags_number - 2;
-    else if(samples_number == lags_number + 1)
-        new_lags_number = lags_number - 1;
-    else
-        new_lags_number = lags_number;
+    const Index new_lags_number = (samples_number == lags_number) ? (lags_number - 2)
+                                : (samples_number == lags_number + 1) ? (lags_number - 1)
+                                : lags_number;
 
     Tensor<type, 3> cross_correlations(input_target_numeric_raw_variables_number,
                                        input_target_numeric_raw_variables_number,

@@ -145,7 +145,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
     //Tensor<type, 1> current_deltas;
 
     Tensor<type, 2> combination_deltas;
-    Tensor<type, 1> current_combinations_derivatives;
+    Tensor<type, 1> current_combination_derivatives;
 
     Tensor<type, 2> combinations_bias_derivatives;
     Tensor<type, 3> combinations_input_weight_derivatives;

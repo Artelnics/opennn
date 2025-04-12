@@ -266,25 +266,26 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
 
-    const array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
-
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    query.device(*thread_pool_device)
-        = query_input.contract(query_weights, axes(2,0)).shuffle(shuffle_dims);
+    query.device(*thread_pool_device) = query_input
+        .contract(query_weights, axes(2, 0))
+        .shuffle(array<Index, 4>({1, 2, 0, 3}));
 
     // @todo try this
 
     const Index hidden_depth = get_hidden_depth();
 
-    const array<ptrdiff_t, 4> reshape_dims = { 1, hidden_depth, 1, heads_number };
+    const array<Index, 4> reshape_dims = { 1, hidden_depth, 1, heads_number };
 
     // Broadcast it along the dimensions (query_sequence_length and batch_size)
     // Here, query.dimension(0) is query_sequence_length and query.dimension(2) is batch_size.
-    const array<ptrdiff_t, 4> broadcast_dims = { query.dimension(0), 1, query.dimension(2), 1 };
+    const array<Index, 4> broadcast_dims = { query.dimension(0), 1, query.dimension(2), 1 };
 
     // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
-    query.device(*thread_pool_device) = query + query_biases.reshape(reshape_dims).broadcast(broadcast_dims);
+    query.device(*thread_pool_device) += query_biases
+         .reshape(reshape_dims)
+         .broadcast(broadcast_dims);
 
 /*
     const Index batch_size = query_input.dimension(0);
@@ -313,11 +314,11 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
 
-    const array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    key.device(*thread_pool_device) = source_input.contract(key_weights, axes(2,0))
-                .shuffle(shuffle_dims);
+    key.device(*thread_pool_device) = source_input
+        .contract(key_weights, axes(2,0))
+        .shuffle(array<Index, 4>({1, 2, 0, 3}));
 
     const Index batch_size = source_input.dimension(0);
 
@@ -345,11 +346,11 @@ void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Te
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
     // query_weights: (embedding_dimension, hidden_depth, heads_number)
 
-    const array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
     // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
-    value.device(*thread_pool_device) = source_input.contract(value_weights, axes(2,0))
-                .shuffle(shuffle_dims);
+    value.device(*thread_pool_device) = source_input
+        .contract(value_weights, axes(2,0))
+        .shuffle(array<Index, 4>({1, 2, 0, 3}));
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
@@ -555,8 +556,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     // Calculation
 
-    projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(projection_bias_derivatives_sum_indices);
-    projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, projection_weight_derivatives_contraction_indices);
+    projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
+    projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, axes(2,0,0,1));
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
@@ -620,9 +621,9 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         // VALUE WEIGHT DERIVATIVES
 
         head_value_weight_derivatives.device(*thread_pool_device)
-            = context.contract(head_value_derivatives, transformation_weight_derivatives_contraction_indices);
+            = context.contract(head_value_derivatives, axes(1,0,0,2));
 
-        head_value_bias_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(bias_derivatives_sum_indices);
+        head_value_bias_derivatives.device(*thread_pool_device) = head_value_derivatives.sum(array<Index, 2>({0,2}));
 
         // ATTENTION WEIGHT DERIVATIVES
 
@@ -657,16 +658,16 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
         // QUERY WEIGHTS DERIVATIVES
 
         head_query_weight_derivatives.device(*thread_pool_device)
-            = input.contract(head_query_derivatives, transformation_weight_derivatives_contraction_indices);
+            = input.contract(head_query_derivatives, axes(1,0,0,2));
 
-        head_query_bias_derivatives.device(*thread_pool_device) = head_query_derivatives.sum(bias_derivatives_sum_indices);
+        head_query_bias_derivatives.device(*thread_pool_device) = head_query_derivatives.sum(array<Index, 2>({0,2}));
 
         // KEY WEIGHTS DERIVATIVES
 
         head_key_weight_derivatives.device(*thread_pool_device)
-            = context.contract(head_key_derivatives, transformation_weight_derivatives_contraction_indices);
+            = context.contract(head_key_derivatives, axes(1,0,0,2));
 
-        head_key_bias_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(bias_derivatives_sum_indices);
+        head_key_bias_derivatives.device(*thread_pool_device) = head_key_derivatives.sum(array<Index, 2>({0,2}));
     }
 
 

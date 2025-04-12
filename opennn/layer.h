@@ -128,8 +128,6 @@ public:
 
 protected:
 
-    const array<IndexPair<Index>, 2> double_contraction_indices = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
-
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 

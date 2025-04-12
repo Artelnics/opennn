@@ -236,8 +236,6 @@ protected:
 
    bool display = true;
 
-   const array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
-
    const array<int, 1> rows_sum = {array<int, 1>({1})};
 
 };

@@ -51,7 +51,7 @@ void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
 
 void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& convolutions) const
-{
+{       
     const Index kernels_number = get_kernels_number();
 
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -694,9 +694,9 @@ array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 }
 
 
-array<ptrdiff_t, 4> Convolutional::get_strides() const
+array<Index, 4> Convolutional::get_strides() const
 {   
-    return array<ptrdiff_t, 4>({1, row_stride, column_stride, 1});
+    return array<Index, 4>({1, row_stride, column_stride, 1});
 }
 
 

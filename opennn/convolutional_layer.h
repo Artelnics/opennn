@@ -59,7 +59,7 @@ public:
 
     array<pair<Index, Index>, 4> get_paddings() const;
 
-    array<ptrdiff_t, 4> get_strides() const;
+    array<Index, 4> get_strides() const;
 
     Index get_output_height() const;
     Index get_output_width() const;
@@ -208,13 +208,13 @@ private:
 
    Activation activation_function = Activation::Linear;
 
-   const array<ptrdiff_t, 3> convolutions_dimensions = { 1, 2, 3 };
-   const array<ptrdiff_t, 3> convolutions_dimensions_3d = { 0, 1, 2 };
-   const array<ptrdiff_t, 2> convolution_dimensions_2d = { 0, 1 };
+   const array<Index, 3> convolutions_dimensions = { 1, 2, 3 };
+   const array<Index, 3> convolutions_dimensions_3d = { 0, 1, 2 };
+   const array<Index, 2> convolution_dimensions_2d = { 0, 1 };
 
-   const array<ptrdiff_t, 4> reverse_dimensions = {1, 1, 0, 0};
+   const array<Index, 4> reverse_dimensions = {1, 1, 0, 0};
 
-   const array<ptrdiff_t, 3> means_dimensions = {0, 1, 2};
+   const array<Index, 3> means_dimensions = {0, 1, 2};
 
    // Batch normalization
 

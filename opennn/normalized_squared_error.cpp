@@ -146,7 +146,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
-    error.device(*thread_pool_device) =  errors.contract(errors, SSE) * coefficient;
+    error.device(*thread_pool_device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }

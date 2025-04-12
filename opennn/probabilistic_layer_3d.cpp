@@ -297,7 +297,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         = combination_deltas.sum(sum_dimensions);
 
     weight_derivatives.device(*thread_pool_device)
-        = inputs.contract(combination_deltas, double_contraction_indices);
+        = inputs.contract(combination_deltas, axes(0,0,1,1));
 
     input_derivatives.device(*thread_pool_device)
         = combination_deltas.contract(weights, axes(2,1));

@@ -155,8 +155,6 @@ private:
     Index column_stride = 1;
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
-
-    const array<ptrdiff_t, 2> pooling_dimensions = {1, 2};
 };
 
 

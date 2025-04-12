@@ -15,6 +15,17 @@ array<IndexPair<Index>, 1> axes(const Index& a, const Index& b)
     return array<IndexPair<Index>, 1>({IndexPair<Index>(a, b)});
 }
 
+
+template <typename Index>
+array<IndexPair<Index>, 2> axes(const Index& a1, const Index& b1, const Index& a2, const Index& b2)
+{
+    const array<IndexPair<Index>, 2> indices
+        = { IndexPair<Index>(a1, b1), IndexPair<Index>(a2, b2) };
+
+    return indices;//array<IndexPair<Index>, 2>({IndexPair<Index>(a1, b1)}, {IndexPair<Index>(a2, b2)});
+}
+
+
 Index get_random_index(const Index&, const Index&);
 
 type get_random_type(const type& = type(-1), const type& = type(1));
