@@ -272,11 +272,11 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 
             //Tensor<type, 2> augmented_data = perform_augmentation(data);
 
-            //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
+            //fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
         }
         else
         {
-            fill_tensor_data(data, sample_indices, input_indices, inputs_host);
+            fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
         }
     }
     else

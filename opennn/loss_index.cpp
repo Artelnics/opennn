@@ -433,10 +433,10 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     Index index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
+    for (Index i = 0; i < layers_number; i++)
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
-                                   index,
-                                   back_propagation.gradient);
+            index,
+            back_propagation.gradient);
 }
 
 
@@ -1478,8 +1478,8 @@ void LossIndex::assemble_layers_error_gradient_cuda(BackPropagationCuda& back_pr
 
     for (Index i = 0; i < layers_number; i++)
         layers[i]->insert_gradient_cuda(back_propagation_cuda.neural_network.layers[i],
-                                        index,
-                                        back_propagation_cuda.gradient);
+            index,
+            back_propagation_cuda.gradient);
 }
 
 
@@ -1750,10 +1750,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     if (cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "Numerator 3 allocation error" << endl;
 
-    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_targets allocation error" << endl;
+    if (cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "outputs_plus_epsilon allocation error" << endl;
+
     if (cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "one_minus_outputs allocation error" << endl;
+    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "one_minus_targets allocation error" << endl;
 
     if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
         cout << "Numerator reduce allocation error" << endl;
@@ -1787,9 +1790,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     if (cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "aux ones allocation error" << endl;
 
-    for (Index i = 0; i < samples_number; i++) {
+    for (Index i = 0; i < samples_number; i++)
         cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
-    }
 
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{

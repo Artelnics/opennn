@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
 #include "flatten_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -59,8 +59,8 @@ void Flatten::set(const dimensions& new_input_dimensions)
 
 
 void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                     const bool&)
+                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                const bool&)
 {
     const Index batch_size = layer_forward_propagation->batch_size;
     const Index outputs_number = get_outputs_number();
@@ -73,9 +73,9 @@ void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 
 
 void Flatten::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                  const vector<pair<type*, dimensions>>& delta_pairs,
-                                  unique_ptr<LayerForwardPropagation>&,
-                                  unique_ptr<LayerBackPropagation>& back_propagation) const
+                             const vector<pair<type*, dimensions>>& delta_pairs,
+                             unique_ptr<LayerForwardPropagation>&,
+                             unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const Index batch_size = input_pairs[0].second[0];
     const Index height = input_pairs[0].second[1];
@@ -202,6 +202,136 @@ vector<pair<type*, dimensions>> FlattenLayerBackPropagation::get_input_derivativ
             {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
 }
 
+
+#ifdef OPENNN_CUDA_test
+
+void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
+                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                     const bool&) //final
+{
+    // Inputs
+
+    const Index batch_samples_number = input_pairs_device[0].second[0];
+
+    const Index outputs_number = get_outputs_number();
+
+    type* inputs_device = input_pairs_device[0].first;
+
+    // Forward propagation
+
+    FlattenLayerForwardPropagationCuda* flatten_layer_forward_propagation_cuda =
+        static_cast<FlattenLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
+
+    reorganize_inputs_cuda(inputs_device, outputs_device, batch_samples_number, outputs_number);
+}
+
+
+void Flatten::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                  const vector<pair<type*, dimensions>>& deltas_pair_device,
+                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                  unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
+{
+    // Inputs
+
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
+
+    const Index outputs_number = get_outputs_number();
+
+    type* deltas_device = deltas_pair_device[0].first;
+
+    // Back propagation
+
+    FlattenLayerBackPropagationCuda* flatten_layer_back_propagation_cuda =
+        static_cast<FlattenLayerBackPropagationCuda*>(back_propagation_cuda.get());
+
+    type* inputs_derivatives = flatten_layer_back_propagation_cuda->inputs_derivatives;
+
+    reorganize_deltas_cuda(deltas_device, inputs_derivatives, batch_samples_number, outputs_number);
+}
+
+
+// CUDA structs
+
+FlattenLayerForwardPropagationCuda::FlattenLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+void FlattenLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    batch_size = new_batch_samples_number;
+
+    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
+
+    const Index neurons_number = flatten_layer->get_outputs_number();
+
+    // Outputs
+
+    if (cudaMalloc(&outputs, batch_size * neurons_number * sizeof(float)) != cudaSuccess)
+        cout << "outputs allocation error" << endl;
+}
+
+
+void FlattenLayerForwardPropagationCuda::print() const
+{
+
+}
+
+
+pair<type*, dimensions> FlattenLayerForwardPropagationCuda::get_outputs_pair() const
+{
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    return { (type*)outputs, {batch_size, output_dimensions[0]} };
+}
+
+
+FlattenLayerBackPropagationCuda::FlattenLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagationCuda()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+vector<pair<type*, dimensions>> FlattenLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+{
+    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
+
+    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
+
+    return { {inputs_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
+}
+
+
+void FlattenLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    layer = new_layer;
+
+    batch_size = new_batch_samples_number;
+
+    const Flatten* flatten_layer = static_cast<Flatten*>(new_layer);
+
+    dimensions input_dimensions = flatten_layer->get_input_dimensions();
+
+    // Input derivatives
+
+    if (cudaMalloc(&inputs_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)) != cudaSuccess)
+        cout << "inputs_derivatives flatten layer back propagation allocation error" << endl;
+}
+
+
+void FlattenLayerBackPropagationCuda::print() const
+{
+
+}
+
+#endif
 
 }
 

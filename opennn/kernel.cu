@@ -88,6 +88,15 @@ void reorganize_deltas_cuda(const type* inputs_device, type* outputs_device, int
 }
 
 
+void copy_to_vector_cuda(float* destination, const float* source, const Index& size, Index& index)
+{
+    if (cudaMemcpy(destination + index, source, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
+        cout << "copy_to_vector_cuda error" << endl;
+
+    index += size;
+}
+
+
 type* vector_to_device(const Tensor<type, 1>& vector)
 {
     type* pointer = nullptr;

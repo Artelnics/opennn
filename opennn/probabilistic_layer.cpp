@@ -95,7 +95,9 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    set_parameters_random();
+    //set_parameters_random();
+    biases.setRandom();
+    weights.setRandom();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -716,6 +718,9 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
 
         break;
     }
+    //cout << "CUDA combinations:\n" << matrix_from_device(combinations, batch_samples_number, outputs_number) << endl;
+    //cout << "CUDA outputs:\n" << matrix_from_device(outputs, batch_samples_number, outputs_number) << endl;
+    //system("pause");
 }
 
 
@@ -845,6 +850,12 @@ void ProbabilisticLayer::back_propagate_cuda(const vector<pair<type*, dimensions
         &beta,
         inputs_derivatives,
         batch_samples_number);
+    /*
+    cout << "CUDA biases_derivatives:\n" << vector_from_device(biases_derivatives, outputs_number) << endl;
+    cout << "CUDA weights_derivatives:\n" << matrix_from_device(weights_derivatives, inputs_number, outputs_number) << endl;
+    cout << "CUDA inputs_derivatives:\n" << matrix_from_device(inputs_derivatives, batch_samples_number, inputs_number) << endl;
+    system("pause");
+    */
 }
 
 
@@ -852,31 +863,11 @@ void ProbabilisticLayer::insert_gradient_cuda(unique_ptr<LayerBackPropagationCud
                                               Index& index,
                                               float* gradient) const
 {
-    // Probabilistic layer
-
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
-
-    // Back propagation
-
     ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation_cuda =
         static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    type* weights_derivatives_cuda = probabilistic_layer_back_propagation_cuda->weights_derivatives_cuda;
-
-    type* biases_derivatives_cuda = probabilistic_layer_back_propagation_cuda->biases_derivatives_cuda;
-
-    if (cudaMemcpy(gradient + index,
-        weights_derivatives_cuda,
-        size_t(weights_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient (weights) copy error" << endl;
-
-    if (cudaMemcpy(gradient + index + weights_number,
-        biases_derivatives_cuda,
-        size_t(biases_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient (biases) copy error" << endl;
+    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->weights_derivatives_cuda, weights.size(), index);
+    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->biases_derivatives_cuda, biases.size(), index);
 }
 
 

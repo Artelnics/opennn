@@ -35,6 +35,8 @@ void reorganize_inputs_cuda(const type*, type*, int, int);
 __global__ void reorganize_deltas_kernel(const type*, type*, int, int);
 void reorganize_deltas_cuda(const type*, type*, int, int);
 
+void copy_to_vector_cuda(float* destination, const float* source, const Index& size, Index& index);
+
 type* vector_to_device(const Tensor<type, 1>&);
 
 Tensor<type, 1> vector_from_device(const type*, const size_t&);

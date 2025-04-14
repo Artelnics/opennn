@@ -437,6 +437,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
+        /*
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
@@ -459,6 +460,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        padding_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
+        */
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));
@@ -857,7 +859,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     Index index = 0;
 
-    for(const unique_ptr<Layer>& layer : layers)
+    for (const unique_ptr<Layer>& layer : layers)
         layer->set_parameters(new_parameters, index);
 }
 
@@ -2147,12 +2149,11 @@ void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs_device = forward_propagation_cuda.get_layer_input_pairs_device(input_pair_device, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
-    {
         layers[i]->forward_propagate_cuda(layer_input_pairs_device[i],
                                           forward_propagation_cuda.layers[i],
                                           is_training);
-    }
 }
+
 
 void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 {
@@ -2175,16 +2176,24 @@ void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 }
 
 
-void NeuralNetwork::set_parameters_cuda(float* new_parameters)
+void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
 {
+    const Index layers_number = get_layers_number();
+
+    const vector<Index> layer_parameter_numbers = get_layer_parameter_numbers();
+
     Index index = 0;
 
-    for (const unique_ptr<Layer>& layer : layers)
-        layer->set_parameters_cuda(new_parameters, index);
+    for (Index i = 0; i < layers_number; i++)
+    {
+        layers[i]->set_parameters_cuda(new_parameters, index);
+
+        index += layer_parameter_numbers[i];
+    }
 }
 
 
-void NeuralNetwork::create_cuda()
+void NeuralNetwork::create_cuda() const
 {
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
@@ -2195,7 +2204,7 @@ void NeuralNetwork::create_cuda()
 }
 
 
-void NeuralNetwork::destroy_cuda()
+void NeuralNetwork::destroy_cuda() const
 {
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
@@ -2265,7 +2274,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             break;
 
         case Layer::Type::Flatten:
-            //layers[i] = make_unique<FlattenLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<FlattenLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Scaling2D:
@@ -2473,7 +2482,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
             break;
 
         case Layer::Type::Flatten:
-            //layers[i] = make_unique <FlattenLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique <FlattenLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Embedding:
