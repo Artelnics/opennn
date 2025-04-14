@@ -71,25 +71,15 @@ string Recurrent::get_activation_function_string() const
     switch(activation_function)
     {
     case Activation::Logistic: return "Logistic";
-
     case Activation::HyperbolicTangent: return "HyperbolicTangent";
-
     case Activation::Linear: return "Linear";
-
     case Activation::RectifiedLinear: return "RectifiedLinear";
-
     case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
-
     case Activation::SoftPlus: return "SoftPlus";
-
     case Activation::SoftSign: return "SoftSign";
-
     case Activation::HardSigmoid: return "HardSigmoid";
-
     case Activation::ExponentialLinear: return "ExponentialLinear";
-
-    default:
-        return string();
+    default: return string();
     }
 }
 
@@ -106,7 +96,7 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     output_weights.resize(new_output_dimensions[0], new_output_dimensions[0]);
 
-    Index samples_number = 10;
+    const Index samples_number = 10;
 
     hidden_states.resize(samples_number, new_output_dimensions[0]);
 
@@ -243,19 +233,21 @@ void Recurrent::set_parameters_random()
     set_random(output_biases);
 }
 
+
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
                                             Tensor<type, 2>& combinations) const
 {
-    Index samples_number = inputs.dimension(0);
+    const Index samples_number = inputs.dimension(0);
 
     combinations.device(*thread_pool_device) = biases
-                                             + inputs.contract(input_weights, AT_B)
-                                             + hidden_states.contract(recurrent_weights, AT_B);
+                                             + inputs.contract(input_weights, axes(0,0))
+                                             + hidden_states.contract(recurrent_weights, axes(0,0));
 
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-    combinations = (input_weights.contract(inputs, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
-        + recurrent_weights.contract(hidden_states, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 1)}})
-        + biases.broadcast(Eigen::array<Index, 2>{samples_number, 1}));
+
+    combinations = input_weights.contract(inputs, axes(1, 1))
+                 + recurrent_weights.contract(hidden_states, axes(1, 1))
+                 + biases.broadcast(array<Index, 2>{samples_number, 1});
 
 }
 
@@ -266,26 +258,18 @@ void Recurrent::calculate_activations(Tensor<type, 2>& activations,
     switch(activation_function)
     {
         case Activation::Linear: linear(activations, activation_derivatives); return;
-
         case Activation::Logistic: logistic(activations, activation_derivatives); return;
-
         case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
         case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
         case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-
         case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
-
         case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-
         case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-
         case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-
         default: throw runtime_error("Unknown activation function");
     }
 }
+
 
 void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
@@ -324,10 +308,9 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         calculate_activations(hidden_states, empty_2);
 
-        outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}}) + output_biases;
+        outputs = hidden_states.contract(output_weights, axes(1, 0)) + output_biases;
 
         calculate_activations(outputs, empty_2);
-
     }
 }
 
@@ -367,7 +350,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     //Tensor<type, 1>& current_deltas = recurrent_back_propagation->current_deltas;
 
     Tensor<type, 2>& combination_deltas = recurrent_back_propagation->combination_deltas;
-    Tensor<type, 1>& current_combinations_derivatives = recurrent_back_propagation->current_combinations_derivatives;
+    Tensor<type, 1>& current_combination_derivatives = recurrent_back_propagation->current_combination_derivatives;
 
     Tensor<type, 2>& combinations_bias_derivatives = recurrent_back_propagation->combinations_bias_derivatives;
     combinations_bias_derivatives.setZero();
@@ -388,8 +371,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     recurrent_weight_derivatives.setZero();
 
     Tensor<type, 3>& input_derivatives = recurrent_back_propagation->input_derivatives;
-
-    const Eigen::array<IndexPair<Index>, 1> combinations_weights_indices = { IndexPair<Index>(2, 0) };
 
     for (Index time_step = 0; time_step < time_steps; time_step++)
         current_inputs = inputs.chip(time_step, 1);
@@ -421,30 +402,30 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
             multiply_matrices(thread_pool_device, combinations_input_weight_derivatives, current_activations_derivatives);
 
             combinations_input_weight_derivatives.device(*thread_pool_device) 
-                = combinations_input_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_input_weight_derivatives.contract(recurrent_weights, axes(2,0));
 
             // Combinations recurrent weights derivatives
 
             multiply_matrices(thread_pool_device, combinations_recurrent_weight_derivatives, current_activations_derivatives);
 
             combinations_recurrent_weight_derivatives.device(*thread_pool_device) 
-                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, combinations_weights_indices);
+                = combinations_recurrent_weight_derivatives.contract(recurrent_weights, axes(2,0));
         }
 
-        current_combinations_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
+        current_combination_derivatives.device(*thread_pool_device) = current_deltas * current_activations_derivatives;
 
-        combination_deltas.chip(sample_index, 0).device(*thread_pool_device) = current_combinations_derivatives;
+        combination_deltas.chip(sample_index, 0).device(*thread_pool_device) = current_combination_derivatives;
 
         sum_diagonal(combinations_bias_derivatives, type(1));
 
         // Biases derivatives
 
         bias_derivatives.device(*thread_pool_device)
-            += combinations_bias_derivatives.contract(current_combinations_derivatives, A_B);
+            += combinations_bias_derivatives.contract(current_combination_derivatives, A_B);
 
 //        combinations_input_weight_derivatives += current_inputs
-//            .reshape(Eigen::array<Index, 2>({ inputs_number, 1 }))
-//            .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//            .reshape(array<Index, 2>({ inputs_number, 1 }))
+//            .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
 
 //        for(Index neuron_index = 0; neuron_index < neurons_number; neuron_index++)
 //            for(Index input_index = 0; input_index < inputs_number; input_index++)
@@ -460,17 +441,17 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                         += outputs(sample_index - 1, activation_index);
 
 //            combinations_recurrent_weight_derivatives += outputs.chip(sample_index - 1, 0)
-//                .reshape(Eigen::array<Index, 2>({ neurons_number, 1 }))
-//                .broadcast(Eigen::array<Index, 3>({ 1, neurons_number, 1 }));
+//                .reshape(array<Index, 2>({ neurons_number, 1 }))
+//                .broadcast(array<Index, 3>({ 1, neurons_number, 1 }));
         }
 
         // Weights derivatives
 
         input_weight_derivatives.device(*thread_pool_device)
-            += combinations_input_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_input_weight_derivatives.contract(current_combination_derivatives, axes(2,0));
 
         recurrent_weight_derivatives.device(*thread_pool_device)
-            += combinations_recurrent_weight_derivatives.contract(current_combinations_derivatives, combinations_weights_indices);
+            += combinations_recurrent_weight_derivatives.contract(current_combination_derivatives, axes(2,0));
     }
 
     // Input derivatives
@@ -618,7 +599,7 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     combinations_recurrent_weight_derivatives.resize(outputs_number, outputs_number, outputs_number);
 
     combination_deltas.resize(batch_size, outputs_number);
-    current_combinations_derivatives.resize(outputs_number);
+    current_combination_derivatives.resize(outputs_number);
 
     bias_derivatives.resize(outputs_number);
 

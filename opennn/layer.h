@@ -154,7 +154,7 @@ protected:
 
 
     template <int Rank>
-    void linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    void linear(Tensor<type, Rank>&, Tensor<type, Rank>& dy_dx) const
     {
         if (dy_dx.size() == 0) return;
 
@@ -304,11 +304,6 @@ protected:
                 : tensor(i) * scaling_factor;
         }
     }
-
-    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
-    const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
-    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-
 
 #ifdef OPENNN_CUDA_test
 

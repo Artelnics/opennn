@@ -34,9 +34,9 @@ public:
     };
 
     Perceptron(const dimensions& = {0},
-                    const dimensions& = {0},
-                    const Activation& = Perceptron::Activation::HyperbolicTangent,
-                    const string& = "perceptron_layer");
+               const dimensions& = {0},
+               const Activation& = Perceptron::Activation::HyperbolicTangent,
+               const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -75,17 +75,16 @@ public:
         Tensor<type, 2>& outputs) const
     {
 
-        const Eigen::array<Index, 2> rows({ outputs.dimension(0), 1 });
+        const array<Index, 2> rows({outputs.dimension(0), 1});
 
-        const Eigen::array<int, 1> axis_x({ 0 });
+        const array<int, 1> axis_x({0});
 
         means.device(*thread_pool_device) = outputs.mean(axis_x);
 
         standard_deviations.device(*thread_pool_device)
             = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
-        
-       
-        outputs = inputs;// -means.broadcast(Eigen::array<Index, 2>({ outputs.dimension(0), 1 }));
+               
+        outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
             //shifts.broadcast(rows);
                 //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
         
@@ -158,12 +157,6 @@ public:
     float* get_weights_device() const;
     float* get_biases_device() const;
 
-protected:
-
-    cublasHandle_t cublas_handle;
-    cudnnHandle_t cudnn_handle;
-    cudnnOpTensorDescriptor_t operator_sum_descriptor;
-
 private:
 
     float* biases_device = nullptr;
@@ -183,8 +176,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };
 
 
@@ -257,13 +248,12 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    type* combinations_cuda = nullptr;
-
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
-    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    float* combinations = nullptr;
 };
 
 

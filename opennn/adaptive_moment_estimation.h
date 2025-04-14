@@ -99,7 +99,7 @@ private:
 
     // Stopping criteria
 
-   type training_loss_goal = type(0);
+   type training_loss_goal = type(-10);
    
    type training_accuracy_goal = type(1);
 
@@ -118,11 +118,6 @@ private:
         TrainingResults perform_training_cuda();
 
         void update_parameteres_cuda(BackPropagationCuda&, ADAMOptimizationDataCuda&) const;
-
-    private:
-
-        cublasHandle_t cublas_handle;
-        cudnnHandle_t cudnn_handle;
 
 #endif
 
@@ -156,8 +151,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
         ADAMOptimizationDataCuda(AdaptiveMomentEstimation* = nullptr);
 
         void set(AdaptiveMomentEstimation* = nullptr);
-
-        void allocate();
 
         void free();
 

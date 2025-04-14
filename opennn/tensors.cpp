@@ -18,7 +18,7 @@ type bound(const type& value, const type& minimum, const type& maximum)
 }
 
 
-Index get_random_index(const Index& min, const Index& max) 
+Index get_random_index(const Index& min, const Index& max)
 {
     random_device rd;
     mt19937 gen(rd());
@@ -27,7 +27,7 @@ Index get_random_index(const Index& min, const Index& max)
 }
 
 
-type get_random_type(const type& minimum, const type& maximum) 
+type get_random_type(const type& minimum, const type& maximum)
 {
     random_device rd;
     mt19937 gen(rd());
@@ -77,7 +77,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const TensorMap<Tensor<type, 3>>& A,
                                  TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -109,7 +109,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  TensorMap<Tensor<type, 3>>& A,
                                  const TensorMap<Tensor<type, 3>>& B,
                                  TensorMap<Tensor<type, 3>>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
 // Assumes A, B & C share dimension 2 and A & B share one of their remaining 2 dimensions (the contraction axes)
 // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -140,7 +140,7 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
                                  const Tensor<type, 4>& A,
                                  const Tensor<type, 4>& B,
                                  Tensor<type, 4>& C,
-                                 const Eigen::array<IndexPair<Index>, 1> contraction_axes)
+                                 array<IndexPair<Index>, 1> contraction_axes)
 {
     // Assumes A, B & C share dimensions 2 & 3 and A & B share one of their remaining 2 dimensions (the contraction axes)
     // The other 2 dimensions of C will be the non-equal dimensions of A & B, in that order
@@ -168,6 +168,35 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
         }
     }
+
+    // @todo try this
+/*
+    const Index A_rows   = A.dimension(0);
+    const Index A_cols   = A.dimension(1);
+    const Index channels = A.dimension(2);
+    const Index blocks   = A.dimension(3);
+    const Index batch    = channels * blocks;  // merged batch dimension
+
+    const Index B_rows   = B.dimension(0);
+    const Index B_cols   = B.dimension(1);
+
+    // Merge the last two dimensions of A and B by shuffling to bring channels and blocks to the front,
+    // then reshape to a 3D tensor with the first dimension as the merged batch.
+    auto A_reshaped = A.shuffle(array<Index, 4>{2, 0, 1, 3})
+                       .reshape(DSizes<Index, 3>{batch, A_rows, A_cols});
+
+    auto B_reshaped = B.shuffle(array<Index, 4>{2, 0, 1, 3})
+                       .reshape(DSizes<Index, 3>{batch, B_rows, B_cols});
+
+    // Perform batch contraction:
+    // For standard matrix multiplication, contract the last dimension of A_reshaped with
+    // the middle dimension of B_reshaped.
+    const array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(2, 1)};
+    auto C_batch = A_reshaped.contract(B_reshaped, contract_dims);  // shape: (batch, A_rows, B_cols)
+
+    // Reshape back to the 4D tensor: (A_rows, B_cols, channels, blocks)
+    C.device(*thread_pool_device) = C_batch.reshape(DSizes<Index, 4>{A_rows, B_cols, channels, blocks});
+*/
 }
 
 
@@ -187,7 +216,7 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     return matrix;
 }
 
-
+/*
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
@@ -207,7 +236,7 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
     }
 }
 
-
+/*
 void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index columns_number = matrix.dimension(1);
@@ -227,12 +256,13 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
 
     for(Index i = 0; i < columns_number; i++)
     {
-        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //Maybe this one gives error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
+        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //This one gives an error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
         auto column = matrix.chip(i, 1);
 
         column.device(*thread_pool_device) = column + vector(i);
     }
 }
+*/
 
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {
@@ -265,8 +295,8 @@ Tensor<bool, 2> elements_are_equal(const Tensor<type, 2>& x, const Tensor<type, 
     Tensor<bool, 2> result(x.dimension(0), x.dimension(1));
 
     #pragma omp parallel for
-    for(int i = 0; i < x.size(); i++) 
-        result(i) = (x(i) == y(i)); 
+    for(int i = 0; i < x.size(); i++)
+        result(i) = (x(i) == y(i));
 
     return result;
 }
@@ -387,7 +417,7 @@ Index count_between(const Tensor<type, 1>& vector,const type& minimum, const typ
 
     #pragma omp parallel for reduction(+: count)
     for(Index i = 0; i < size; i++)
-        if(vector(i) >= minimum && vector(i) <= maximum) 
+        if(vector(i) >= minimum && vector(i) <= maximum)
             count++;
 
     return count;
@@ -398,7 +428,7 @@ void set_row(Tensor<type,2>& matrix, const Tensor<type, 1>& new_row, const Index
 {
     const Index columns_number = new_row.size();
 
-    #pragma omp parallel for    
+    #pragma omp parallel for
 
     for(Index i = 0; i < columns_number; i++)
         matrix(row_index, i) = new_row(i);
@@ -413,9 +443,9 @@ void set_row(Tensor<type, 2, RowMajor>& matrix, const Tensor<type, 1>& vector, c
 }
 
 
-Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix, 
-                                             const Index& column_index, 
-                                             const type& minimum, 
+Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,
+                                             const Index& column_index,
+                                             const type& minimum,
                                              const type& maximum)
 {
     const Tensor<type, 1> column = matrix.chip(column_index,1);
@@ -434,7 +464,7 @@ Tensor<type,2> filter_column_minimum_maximum(Tensor<type,2>& matrix,
 
     for(Index i = 0; i < rows_number; i++)
     {
-        if(matrix(i, column_index) >= minimum 
+        if(matrix(i, column_index) >= minimum
         && matrix(i, column_index) <= maximum)
         {
             const Tensor<type, 1> row = matrix.chip(i, 0);
@@ -521,7 +551,7 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
 
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
-    // @todo add thread pool 
+    // @todo add thread pool
 
     if(x.size() != y.size())
         throw runtime_error("x and y vector must  have the same dimensions.\n");
@@ -536,7 +566,7 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 
 type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    // @todo add thread pool 
+    // @todo add thread pool
 
     Tensor<type, 0> distance;
 
@@ -599,7 +629,7 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
 
     const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-    
+
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
@@ -926,7 +956,7 @@ TensorMap<Tensor<type, 3>> tensor_map(const Tensor<type, 4>& tensor, const Index
 }
 
 
-TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 3>>& tensor, const Index& index_3)
+TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 4>>& tensor, const Index& index_3)
 {
     return TensorMap<Tensor<type, 3>>(tensor.data() + tensor.dimension(0) * tensor.dimension(1) * tensor.dimension(2) * index_3,
         tensor.dimension(0), tensor.dimension(1), tensor.dimension(2));
@@ -935,7 +965,7 @@ TensorMap<Tensor<type, 3>> tensor_map_(TensorMap<Tensor<type, 3>>& tensor, const
 
 TensorMap<Tensor<type, 2>> tensor_map(const Tensor<type, 4>& tensor, const Index& index_3, const Index& index_2)
 {
-    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_2 * tensor.dimension(3) + index_3),
+    return TensorMap<Tensor<type, 2>>((type*)tensor.data() + tensor.dimension(0) * tensor.dimension(1)*(index_3 * tensor.dimension(2) + index_2),
         tensor.dimension(0), tensor.dimension(1));
 }
 

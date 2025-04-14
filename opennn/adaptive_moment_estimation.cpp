@@ -275,7 +275,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
             // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
             // cout << "MHA Gradient - numerical gradient:" << endl;
-            // for(Index i = numerical_gradient.size()-229; i < numerical_gradient.size()-61;i++)
+            // for(Index i = numerical_gradient.size()-600; i < numerical_gradient.size()-321;i++)
             //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
             // throw runtime_error("\nChecking the gradient and numerical gradient.");
@@ -605,12 +605,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     set_scaling();
 
     set_vocabularies();
-    
+
     BatchCuda training_batch_cuda(training_batch_samples_number, data_set);
     BatchCuda selection_batch_cuda(selection_batch_samples_number, data_set);
-    
+
     ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
     ForwardPropagationCuda selection_forward_propagation_cuda(selection_batch_samples_number, neural_network);
+
+    neural_network->allocate_parameters_device();
+    neural_network->copy_parameters_device();
     
     // Loss Index
 
@@ -629,7 +632,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     // Optimization algorithm
     
-    ADAMOptimizationDataCuda optimization_data(this);
+    ADAMOptimizationDataCuda optimization_data_cuda(this);
     
     bool stop_training = false;
     bool is_training = true;
@@ -639,7 +642,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if (neural_network->has(Layer::Type::LongShortTermMemory)
         || neural_network->has(Layer::Type::Recurrent))
@@ -647,10 +650,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     // Main loop
   
-    optimization_data.iteration = 1;
-    /*
+    optimization_data_cuda.iteration = 1;
+
     for (Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
-    {
+    { 
         if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
@@ -685,8 +688,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             if (is_classification_model)   training_accuracy += training_back_propagation_cuda.accuracy();
 
             // Optimization algorithm
-
-            update_parameteres_cuda(training_back_propagation_cuda, optimization_data);
+            
+            update_parameteres_cuda(training_back_propagation_cuda, optimization_data_cuda);
 
         }
 
@@ -721,35 +724,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
                                                        selection_forward_propagation_cuda,
                                                        is_training);
 
-                //Loss @todo use virtual functions
+                // Loss
 
-                const string error_type = loss_index->get_error_type();
-
-                if (error_type == "MEAN_SQUARED_ERROR") {
-                    loss_index->calculate_errors_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                    loss_index->calculate_mean_square_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                }
-                else if (error_type == "NORMALIZED_SQUARED_ERROR") {
-
-                }
-                else if (error_type == "MINKOWSKI_ERROR") {
-
-                }
-                else if (error_type == "CROSS_ENTROPY_ERROR") {
-                    loss_index->calculate_cross_entropy_error_cuda(selection_batch_cuda, selection_forward_propagation_cuda, selection_back_propagation_cuda);
-                }
-                else if (error_type == "WEIGHTED_SQUARED_ERROR") {
-
-                }
-                else if (error_type == "SUM_SQUARED_ERROR") {
-
-                }
-                //loss_index->calculate_error_cuda(selection_batch_cuda,
-                //                                 selection_forward_propagation_cuda,
-                //                                 training_selection_back_propagation_cuda);
+                loss_index->calculate_error_cuda(selection_batch_cuda,
+                                                 selection_forward_propagation_cuda,
+                                                 selection_back_propagation_cuda);
 
                 selection_error += selection_back_propagation_cuda.error();
-                if (is_classification_model)    selection_accuracy += selection_back_propagation_cuda.accuracy();
+
+                if (is_classification_model)    
+                    selection_accuracy += selection_back_propagation_cuda.accuracy();
             }
 
             selection_error /= type(selection_batches_number);
@@ -830,7 +814,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     neural_network->copy_parameters_host();
 
     if (display) results.print();
-    */
+
     return results;
     
 }
@@ -980,7 +964,7 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
 
 ADAMOptimizationDataCuda::ADAMOptimizationDataCuda(AdaptiveMomentEstimation* new_adaptive_moment_estimation)
 {
-    set();
+    set(new_adaptive_moment_estimation);
 }
 
 
@@ -988,12 +972,9 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
 {
     adaptive_moment_estimation = new_adaptive_moment_estimation;
 
-    allocate();
-}
-
-void ADAMOptimizationDataCuda::allocate()
-{
     const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    // Gradient
 
     if (cudaMalloc(&square_gradient, parameters_number * sizeof(float)) != cudaSuccess)
         cout << "Square gradient allocation error" << endl;
@@ -1005,18 +986,18 @@ void ADAMOptimizationDataCuda::allocate()
         cout << "square_gradient_exponential_decay allocation error" << endl;
 
     if (cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
+        cout << "last_gradient_exponential_decay allocation error" << endl;
 
     if (cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
+        cout << "last_square_gradient_exponential_decay allocation error" << endl;
 
     if (cudaMalloc(&numerator, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
+        cout << "numerator allocation error" << endl;
 
     if (cudaMalloc(&denominator, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
+        cout << "denominator allocation error" << endl;
 
-    // Epsilon device
+    // Epsilon
 
     if (cudaMalloc(&epsilon_device, sizeof(float)) != cudaSuccess)
         cout << "epsilon_device allocation error" << endl;
@@ -1032,7 +1013,6 @@ void ADAMOptimizationDataCuda::allocate()
         1,
         1,
         1);
-
 }
 
 
@@ -1053,10 +1033,11 @@ void ADAMOptimizationDataCuda::print() const
 {
     const Index parameters_number = adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    const Tensor<type, 1> gradient_exponential_decay_host = vector_from_device(gradient_exponential_decay, parameters_number);
-
     cout << "gradient_exponential_decay_host:" << endl;
-    cout << gradient_exponential_decay_host << endl;
+    cout << vector_from_device(gradient_exponential_decay, parameters_number) << endl;
+
+    cout << "square_gradient_exponential_decay_host:" << endl;
+    cout << vector_from_device(square_gradient_exponential_decay, parameters_number) << endl;
 }
 
 #endif

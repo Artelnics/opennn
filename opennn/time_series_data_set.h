@@ -38,7 +38,6 @@ public:
 
     const Index& get_group_raw_variable_index() const;
 
-
     void set_lags_number(const Index&);
     void set_steps_ahead_number(const Index&);
     void set_time_raw_variable_index(const Index&);
@@ -54,28 +53,17 @@ public:
     void to_XML(XMLPrinter&) const override;
     void from_XML(const XMLDocument&) override;
 
-    Index get_time_series_time_raw_variable_index() const;
-
     void impute_missing_values_mean();
 
 private:
 
-    Index lags_number = 0;
+    Index lags_number = 2;
 
-    Index steps_ahead = 0;
+    Index steps_ahead = 1;
 
     Index time_raw_variable_index = 0;
 
     Index group_raw_variable_index = 0;
-
-    string time_column;
-
-    Tensor<type, 2> time_series_data;
-
-    RawVariable* time_series_raw_variables;
-
-    bool display = true;
-
 };
 
 }

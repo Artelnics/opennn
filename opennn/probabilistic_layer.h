@@ -98,8 +98,6 @@ private:
 
     type decision_threshold;
 
-    const Eigen::array<Index, 1> sum_dimensions = {0};
-
 #ifdef OPENNN_CUDA_test
 
 public:
@@ -202,17 +200,15 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
 
     void free() override;
 
-    std::pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair() const override;
 
-    type* combinations_cuda = nullptr;
-    type* outputs = nullptr;
-
-    cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
+    float* combinations = nullptr;
 };
 
 

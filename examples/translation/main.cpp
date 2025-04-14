@@ -54,8 +54,8 @@ int main()
 
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
-        const Index embedding_dimension = 32;
-        const Index heads_number = 4;
+        const Index embedding_dimension = /*4*/32;
+        const Index heads_number = /*2*/4;
         const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
@@ -77,14 +77,14 @@ int main()
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
         language_data_set.set(DataSet::SampleUse::Training);
-        adaptive_moment_estimation->set_loss_goal(0.3);
-        // adaptive_moment_estimation->set_maximum_epochs_number(100);
+        // adaptive_moment_estimation->set_loss_goal(0.3);
+        adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(12);
+        adaptive_moment_estimation->set_batch_samples_number(/*4*/12);
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();
-/*
+
 
         // Prediction test
         cout << "Vocabulary:" << endl;

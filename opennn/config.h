@@ -20,20 +20,6 @@
 //#pragma warning(push, 0)
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
-//#define OPENNN_CUDA
-
-#ifdef OPENNN_CUDA
-
-#include "../../opennn_cuda/CudaOpennn/kernel.cuh"
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "cublas_v2.h"
-#include <cublasXt.h>
-#include <curand.h>
-#include <cudnn.h>
-
-#endif
-
 #include <omp.h>
 
 #define	STRING(x) #x

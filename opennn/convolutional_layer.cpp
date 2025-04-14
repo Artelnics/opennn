@@ -40,18 +40,22 @@ bool Convolutional::get_batch_normalization() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    convolution_type == Convolution::Same
-        ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
-        : preprocessed_inputs.device(*thread_pool_device) = inputs;
-
-    if (row_stride != 1 || column_stride != 1)
-        preprocessed_inputs.device(*thread_pool_device) = preprocessed_inputs.stride(get_strides());
+    if (convolution_type == Convolution::Same)
+        if (row_stride != 1 || column_stride != 1)
+            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides());
+        else
+            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
+    else
+        if (row_stride != 1 || column_stride != 1)
+            preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides());
+        else
+            preprocessed_inputs.device(*thread_pool_device) = inputs;
 }
 
 
 void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
                                            Tensor<type, 4>& convolutions) const
-{
+{       
     const Index kernels_number = get_kernels_number();
 
     for (Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
@@ -60,7 +64,8 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 
         TensorMap<Tensor<type, 3>> kernel_convolutions = tensor_map(convolutions, kernel_index);
 
-        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, convolutions_dimensions) + biases(kernel_index);
+        kernel_convolutions.device(*thread_pool_device) = inputs.convolve(kernel_weights, array<Index, 3>({1, 2, 3}))
+                                                          + biases(kernel_index);
     }
 }
 
@@ -79,7 +84,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
         Tensor<type, 1>& means = this_forward_propagation->means;
         Tensor<type, 1>& standard_deviations = this_forward_propagation->standard_deviations;
 
-        means.device(*thread_pool_device) = outputs.mean(means_dimensions);
+        means.device(*thread_pool_device) = outputs.mean(array<Index, 3>({0, 1, 2}));
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
         outputs.device(*thread_pool_device)
@@ -249,7 +254,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     const Index pad_left = pad_width / 2;
     const Index pad_right = pad_width - pad_left;
 
-    const Eigen::array<pair<Index, Index>, 2> paddings
+    const array<pair<Index, Index>, 2> paddings
         = { make_pair(pad_top, pad_bottom), make_pair(pad_left, pad_right) };
 
     // Inputs (for padding same)
@@ -262,7 +267,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     
     // Biases derivatives
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(convolutions_dimensions_3d);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 3>({0, 1, 2}));
 
     // Weigth derivatives
 
@@ -274,12 +279,12 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
         TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);
 
-        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, convolutions_dimensions_3d);
+        kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, array<Index, 3>({0, 1, 2}));
     }
 
     // Input derivatives
-    
-    rotated_weights.device(*thread_pool_device) = weights.reverse(reverse_dimensions);
+        
+    rotated_weights.device(*thread_pool_device) = weights.reverse(array<Index, 4>({1, 1, 0, 0}));
 
     #pragma omp parallel for //schedule(static)
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
@@ -289,6 +294,8 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
         for (Index channel_index = 0; channel_index < input_channels; ++channel_index)
             precomputed_rotated_slices[kernel_index][channel_index] = kernel_rotated_weights.chip(channel_index, 2);
     }
+
+    const array<Index, 2> convolution_dimensions_2d = {0, 1};
 
     for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index) 
     {
@@ -302,7 +309,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
             for (Index channel_index = 0; channel_index < input_channels; ++channel_index) 
             {
                 const Tensor<type, 2> convolution_result = image_kernel_convolutions_derivatives_padded
-                    .convolve(precomputed_rotated_slices[kernel_index][channel_index],convolution_dimensions_2d);
+                    .convolve(precomputed_rotated_slices[kernel_index][channel_index], convolution_dimensions_2d);
 
                 for (Index h = 0; h < input_height; ++h) 
                     for (Index w = 0; w < input_width; ++w) 
@@ -679,12 +686,12 @@ pair<Index, Index> Convolutional::get_padding() const
 }
 
 
-Eigen::array<pair<Index, Index>, 4> Convolutional::get_paddings() const
+array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 {
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    const Eigen::array<std::pair<Index, Index>, 4> paddings =
+    const array<std::pair<Index, Index>, 4> paddings =
         { make_pair(0, 0),
           make_pair(pad_rows, pad_rows),
           make_pair(pad_columns, pad_columns),
@@ -694,9 +701,9 @@ Eigen::array<pair<Index, Index>, 4> Convolutional::get_paddings() const
 }
 
 
-Eigen::array<ptrdiff_t, 4> Convolutional::get_strides() const
+array<Index, 4> Convolutional::get_strides() const
 {   
-    return Eigen::array<ptrdiff_t, 4>({1, row_stride, column_stride, 1});
+    return array<Index, 4>({1, row_stride, column_stride, 1});
 }
 
 
@@ -883,9 +890,6 @@ void ConvolutionalBackPropagation::set(const Index& new_batch_size, Layer* new_l
     const Index kernel_width = convolutional_layer->get_kernel_width();
     const Index kernel_channels = convolutional_layer->get_kernel_channels();
     const Index kernels_number = convolutional_layer->get_kernels_number();
-
-    const Index output_height = convolutional_layer->get_output_height();
-    const Index output_width = convolutional_layer->get_output_width();
 
     bias_derivatives.resize(kernels_number);
 

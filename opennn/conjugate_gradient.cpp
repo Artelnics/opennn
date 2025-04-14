@@ -52,8 +52,8 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
 
-    numerator.device(*thread_pool_device) = gradient.contract(gradient, AT_B);
-    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
+    numerator.device(*thread_pool_device) = gradient.contract(gradient, axes(0,0));
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, axes(0,0));
 
     FR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
@@ -88,9 +88,9 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
 
-    numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, AT_B);
+    numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, axes(0,0));
 
-    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, axes(0,0));
 
     PR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
@@ -482,7 +482,7 @@ void ConjugateGradient::update_parameters(
                     optimization_data.training_direction);
 
     optimization_data.training_slope.device(*thread_pool_device)
-            = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+            = back_propagation.gradient.contract(optimization_data.training_direction, axes(0,0));
 
     if(optimization_data.training_slope(0) >= type(0))
     {

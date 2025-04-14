@@ -146,7 +146,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
 
     const type coefficient = type(total_samples_number) / type(samples_number * normalization_coefficient);
 
-    error.device(*thread_pool_device) =  errors.contract(errors, SSE) * coefficient;
+    error.device(*thread_pool_device) =  errors.contract(errors, axes(0,0,1,1)) * coefficient;
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -212,9 +212,12 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
+    output_deltas.device(*thread_pool_device) = errors
+        / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
+                        .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
 
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+//output_deltas.device(*thread_pool_device) = errors;
+//    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
@@ -236,7 +239,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2* total_samples_number)/type(samples_number* normalization_coefficient);
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0))*coefficient;
 }
 
 
@@ -257,7 +260,7 @@ void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const type coefficient = type(2)/((type(samples_number)/type(total_samples_number))*normalization_coefficient);
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(1,0))*coefficient;
 }
 
 
