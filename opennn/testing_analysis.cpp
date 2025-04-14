@@ -1829,10 +1829,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         number_of_well_classified++;
     }
 
-    const array<Index, 2> offsets = {0, 0};
-    const array<Index, 2> extents = {number_of_well_classified, 4};
-
-    return well_lassified_samples.slice(offsets, extents);
+    return well_lassified_samples.slice(array<Index, 2>({0, 0}),
+                                        array<Index, 2>({number_of_well_classified, 4}));
 }
 
 

@@ -108,8 +108,6 @@ private:
    Activation activation_function;
 
    type dropout_rate = type(0);
-
-   const array<Index, 2> sum_dimensions = {0, 1};
 };
 
 

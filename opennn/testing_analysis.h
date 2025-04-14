@@ -272,8 +272,6 @@ private:
    DataSet* data_set = nullptr;
 
    bool display = true;
-
-   const array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }

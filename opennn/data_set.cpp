@@ -1615,8 +1615,8 @@ namespace opennn
         if (raw_variables[raw_variable_index].type == RawVariableType::Categorical)
             raw_variables_number = raw_variables[raw_variable_index].get_categories_number();
 
-        const array<Index, 2> extents = { rows_number, raw_variables_number };
         const array<Index, 2> offsets = { 0, get_variable_indices(raw_variable_index)[0] };
+        const array<Index, 2> extents = { rows_number, raw_variables_number };
 
         return data.slice(offsets, extents);
     }

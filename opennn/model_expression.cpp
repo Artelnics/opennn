@@ -145,7 +145,7 @@ void ModelExpression::lstm_c()
 
     buffer << "struct LSTMMemory" << endl
         << "{" << endl
-        << "\t" << "int current_combinations_derivatives = 3;" << endl
+        << "\t" << "int current_combination_derivatives = 3;" << endl
         << "\t" << "int time_step_counter = 1;" << endl;
 
     for (int i = 0; i < hidden_state_counter; i++)
@@ -157,7 +157,7 @@ void ModelExpression::lstm_c()
     buffer << "} lstm; \n\n" << endl
         << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
 
-    buffer << "\n\tif(lstm.time_step_counter%lstm.current_combinations_derivatives == 0 ){" << endl
+    buffer << "\n\tif(lstm.time_step_counter%lstm.current_combination_derivatives == 0 ){" << endl
         << "\t\t" << "lstm.time_step_counter = 1;" << endl;
 
     for (int i = 0; i < hidden_state_counter; i++)
@@ -454,8 +454,8 @@ void ModelExpression::lstm_api()
     buffer << "}" << endl
         << "$nn = new NeuralNetwork;" << endl;
 
-    buffer << "if($nn->time_step_counter % $nn->current_combinations_derivatives === 0 ){" << endl
-        << "$nn->current_combinations_derivatives = 3;" << endl
+    buffer << "if($nn->time_step_counter % $nn->current_combination_derivatives === 0 ){" << endl
+        << "$nn->current_combination_derivatives = 3;" << endl
         << "$nn->time_step_counter = 1;" << endl;
 
     for (int i = 0; i < hidden_state_counter; i++)
@@ -1276,7 +1276,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 hidden_state_counter += 1;
         }
 
-        buffer << "\t" << "if(time_step_counter % current_combinations_derivatives == 0 ){" << endl
+        buffer << "\t" << "if(time_step_counter % current_combination_derivatives == 0 ){" << endl
                << "\t\t" << "time_step_counter = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -1354,7 +1354,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     if(LSTM_number > 0)
     {
         buffer << "\t" << "var steps = 3;            " << endl
-               << "\t" << "var current_combinations_derivatives = steps;   " << endl
+               << "\t" << "var current_combination_derivatives = steps;   " << endl
                << "\t" << "var time_step_counter = 1;" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -1580,7 +1580,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     {
         buffer << "\t" << "def __init__(self, ts = 1):" << endl
                << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
-               << "\t\t" << "self.current_combinations_derivatives = ts" << endl;
+               << "\t\t" << "self.current_combination_derivatives = ts" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
             buffer << "\t\t" << "self.hidden_state_" << to_string(i) << " = 0" << endl;
@@ -1660,7 +1660,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     if(LSTM_number > 0)
     {
-        buffer << "\n\t\t" << "if(self.time_step_counter % self.current_combinations_derivatives == 0 ):" << endl
+        buffer << "\n\t\t" << "if(self.time_step_counter % self.current_combination_derivatives == 0 ):" << endl
                << "\t\t\t" << "self.t = 1" << endl;
 
         for(int i = 0; i < hidden_state_counter; i++)
@@ -1747,11 +1747,11 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
            << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
     /*
     if(has_recurrent_layer())
-        buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl
+        buffer << "\t\t\tif(i%self.current_combination_derivatives == 0):\n" << endl
                << "\t\t\t\tself.hidden_states = "+ to_string(get_recurrent_layer()->get_neurons_number())+"*[0]\n" << endl;
 
     if(has_long_short_term_memory_layer())
-        buffer << "\t\t\tif(i%self.current_combinations_derivatives == 0):\n" << endl
+        buffer << "\t\t\tif(i%self.current_combination_derivatives == 0):\n" << endl
                << "\t\t\t\tself.hidden_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl
                << "\t\t\t\tself.cell_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl;
 */

@@ -267,9 +267,9 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, double_contraction_indices);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
 
     input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
 }

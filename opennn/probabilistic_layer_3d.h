@@ -121,8 +121,6 @@ private:
    Tensor<type, 2> weights;
 
    Activation activation_function = Activation::Softmax;
-
-   const array<Index, 2> sum_dimensions = { 0, 1 };
 };
 
 

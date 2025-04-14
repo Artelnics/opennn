@@ -183,9 +183,13 @@ void ProbabilisticLayer::set_parameters_random()
 void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                                                 Tensor<type, 2>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
+    const Index batch_size = combinations.dimension(0);
+    const Index outputs_number = biases.size();
 
-    sum_columns(thread_pool_device.get(), biases, combinations);
+    combinations.device(*thread_pool_device)
+        = inputs.contract(weights, axes(1,0))
+        + biases.reshape(array<Index, 2>({1, outputs_number}))
+                .broadcast(array<Index, 2>({batch_size, 1}));
 }
 
 void ProbabilisticLayer::calculate_activations(Tensor<type, 2>& activations,Tensor<type, 2>& activation_derivatives) const
@@ -275,7 +279,7 @@ void ProbabilisticLayer::back_propagate(const vector<pair<type*, dimensions>>& i
 
     weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
     input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1,1));
 }

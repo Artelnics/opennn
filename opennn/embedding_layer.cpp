@@ -152,9 +152,7 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
         auto output_slice = outputs.chip(row, 0);
 
         for (Index input_position = 0; input_position < sequence_length; input_position++)
-        {
             output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
-        }
     }
 
     outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
@@ -164,18 +162,11 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 { 
     const Index batch_size = embeddings.dimension(0);
-    // const Index sequence_length = embeddings.dimension(1);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    const array<Index, 3> broadcast_dimensions = { batch_size, 1, 1 };
-
-    const array<Index, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
-
-    embeddings.device(*thread_pool_device)
-        += positional_encoding.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
-
-    //for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-    //    embeddings.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
+    embeddings.device(*thread_pool_device) += positional_encoding
+        .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
+        .broadcast(array<Index, 3>({batch_size, 1, 1}));
 }
 
 

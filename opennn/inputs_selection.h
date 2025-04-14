@@ -91,8 +91,6 @@ protected:
     type minimum_correlation;
 
     type maximum_time;
-
-    const array<int, 1> rows_sum = {array<int, 1>({1})};
 };
 
 

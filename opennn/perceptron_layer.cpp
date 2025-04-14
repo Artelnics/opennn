@@ -215,9 +215,13 @@ void Perceptron::set_parameters_random()
 void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
                                         Tensor<type, 2>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(1,0));
+    const Index batch_size = combinations.dimension(0);
+    const Index outputs_number = biases.size();
 
-    sum_columns(thread_pool_device.get(), biases, combinations);
+    combinations.device(*thread_pool_device)
+        = inputs.contract(weights, axes(1,0))
+        + biases.reshape(array<Index, 2>({1, outputs_number}))
+                .broadcast(array<Index, 2>({batch_size, 1}));
 }
 
 /*
@@ -333,7 +337,7 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions_1);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
     weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
