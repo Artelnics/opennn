@@ -387,6 +387,7 @@ void MultiHeadAttention::calculate_attention_outputs(const Tensor<type, 4>& valu
                                 AT_B);
 }
 
+
 void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outputs,
                                            Tensor<type, 3>& concatenated_attention_outputs) const
 {
