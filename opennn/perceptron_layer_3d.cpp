@@ -181,7 +181,7 @@ void Perceptron3d::set_parameters_glorot()
 void Perceptron3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                           Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, contraction_indices);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
 
     sum_matrices(thread_pool_device.get(), biases, combinations);
 }
@@ -267,11 +267,11 @@ void Perceptron3d::back_propagate(const vector<pair<type*, dimensions>>& input_p
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
-    bias_derivatives.device(*thread_pool_device) = deltas.sum(sum_dimensions);
+    bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
 
-    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, double_contraction_indices);
+    weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0,1,1));
 
-    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, single_contraction_indices);
+    input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(2,1));
 }
 
 

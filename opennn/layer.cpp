@@ -364,51 +364,41 @@ void Layer::competitive(Tensor<type, 2>& y) const
 
 
 void Layer::softmax(Tensor<type, 2>& y) const
-{
-    const Eigen::array<Index, 1> softmax_dimension{{1}};
-    
+{    
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     
-    const Eigen::array<Index, 2> range_2{ { rows_number, 1 }};
-    const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number} };
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({1}))
                                          .eval()
-                                         .reshape(range_2)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 2>({rows_number, 1}))
+                                         .broadcast(array<Index, 2>({1, columns_number}));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
                                          .eval()
-                                         .reshape(range_2)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 2>({rows_number, 1}))
+                                         .broadcast(array<Index, 2>({1, columns_number}));
 }
 
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{{2}}; 
-    
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
     
-    const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 }};
-    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels }};
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({2}))
                                          .eval()
-                                         .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                         .broadcast(array<Index, 3>({1, 1, channels}));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({2}))
                                          .eval()
-                                         .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                         .broadcast(array<Index, 3>({1, 1, channels}));
 }
 
 
@@ -419,21 +409,17 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{{0}};
-    const Eigen::array<Index, 4> range_4{{1, columns_number, channels, blocks_number}};
-    const Eigen::array<Index, 4> expand_softmax_dim{{rows_number, 1, 1, 1 }};
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({0}))
                                          .eval()
-                                         .reshape(range_4)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
+                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({0}))
                                          .eval()
-                                         .reshape(range_4)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
+                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
 }
 
 

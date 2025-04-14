@@ -48,7 +48,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     
     errors.device(*thread_pool_device) = outputs - targets;
     
-    error.device(*thread_pool_device) = errors.contract(errors, SSE) / type(samples_number * outputs_number);
+    error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
         
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
@@ -105,9 +105,12 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-    output_deltas.device(*thread_pool_device) = errors;
+    output_deltas.device(*thread_pool_device) = errors
+        / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
+                        .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
 
-    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
+    //    output_deltas.device(*thread_pool_device) = errors;
+    //    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
@@ -129,7 +132,7 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
     // cout << "Errors dimensions: " << errors.dimensions() << endl;
     // cout << "Squared errors dimensions: " << squared_errors.dimensions() << endl;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B)*coefficient;
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0))*coefficient;
 }
 
 
@@ -147,7 +150,7 @@ void MeanSquaredError::calculate_error_hessian_lm(const Batch& batch,
 
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
-    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, AT_B)*coefficient;
+    hessian.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors_jacobian, axes(1,0))*coefficient;
 }
 
 

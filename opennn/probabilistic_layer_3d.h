@@ -121,12 +121,6 @@ private:
    Tensor<type, 2> weights;
 
    Activation activation_function = Activation::Softmax;
-
-   const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-   const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
-
-   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
-   const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };
 };
 
 
@@ -158,6 +152,7 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     Tensor<type, 2> mask;
     bool built_mask = false;
 
+    Tensor<type, 3> combination_deltas;
     Tensor<type, 3> input_derivatives;
 
     Tensor<type, 1> bias_derivatives;

@@ -1829,10 +1829,8 @@ Tensor<string, 2> TestingAnalysis::calculate_well_classified_samples(const Tenso
         number_of_well_classified++;
     }
 
-    const Eigen::array<Index, 2> offsets = {0, 0};
-    const Eigen::array<Index, 2> extents = {number_of_well_classified, 4};
-
-    return well_lassified_samples.slice(offsets, extents);
+    return well_lassified_samples.slice(array<Index, 2>({0, 0}),
+                                        array<Index, 2>({number_of_well_classified, 4}));
 }
 
 
@@ -1879,8 +1877,8 @@ Tensor<string, 2> TestingAnalysis::calculate_misclassified_samples(const Tensor<
         j++;
     }
 
-//    Eigen::array<Index, 2> offsets = {0, 0};
-//    Eigen::array<Index, 2> extents = {number_of_misclassified, 4};
+//    array<Index, 2> offsets = {0, 0};
+//    array<Index, 2> extents = {number_of_misclassified, 4};
 
 //    return misclassified_samples.slice(offsets, extents);
     return misclassified_samples;

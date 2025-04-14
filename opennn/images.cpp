@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "images.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -108,18 +109,14 @@ Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
-
-    image/*.device(thread_pool_device)*/ = image.reverse(reflect_horizontal_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({false, true, false}));
 }
 
 
 void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_vertical_dimensions = { true, false, false };
-
-    image/*.device(thread_pool_device)*/ = image.reverse(reflect_vertical_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({true, false, false}));
 }
 
 
@@ -148,7 +145,6 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
-    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
 
     for(Index x = 0; x < width; x++)
     {
@@ -158,7 +154,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
             coordinates(1) = type(y);
             coordinates(2) = type(1);
 
-            transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
+            transformed_coordinates = rotation_matrix.contract(coordinates, axes(1,0));
 
             if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width
             && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)

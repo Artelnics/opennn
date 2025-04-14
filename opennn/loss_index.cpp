@@ -151,7 +151,7 @@ void LossIndex::calculate_squared_errors_lm(const Batch&,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*thread_pool_device) = errors.square().sum(rows_sum).sqrt();
+    squared_errors.device(*thread_pool_device) = errors.square().sum(array<int, 1>({1})).sqrt();
 }
 
 
@@ -303,7 +303,7 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B);
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0));
 }
 
 

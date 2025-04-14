@@ -56,14 +56,14 @@ void Flatten3D::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool&)
 {
-    const Index samples_number = layer_forward_propagation->batch_size;
+    const Index batch_size = layer_forward_propagation->batch_size;
 
     const Index outputs_number = get_outputs_number();
 
     Flatten3dForwardPropagation* flatten_layer_3d_forward_propagation =
         static_cast<Flatten3dForwardPropagation*>(layer_forward_propagation.get());
 
-    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, samples_number, outputs_number);
+    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
 }
 
 

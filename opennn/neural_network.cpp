@@ -2048,9 +2048,9 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_size,
             layers[i] = make_unique<PerceptronLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::Probabilistic:
-            layers[i] = make_unique<ProbabilisticLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
-            break;
+        // case Layer::Type::Probabilistic:
+        //     layers[i] = make_unique<ProbabilisticLayerBackPropagationLM>(batch_size, neural_network_layers[i].get());
+        //     break;
 
         default:
             continue;

@@ -28,10 +28,6 @@ namespace opennn
     void translate_image_y(const ThreadPoolDevice*, const Tensor<type, 3>&, Tensor<type, 3>&, const Index&);
 
     //Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image, const int& rows_number, const int& columns_number, const int& padding);
-
-    //const Eigen::array<bool, 3> reflect_horizontal_dimesions = {false, true, false};
-    //const Eigen::array<bool, 3> reflect_vertical_dimesions = {true, false, false};
-
 }
 
 #endif // OPENNN_IMAGES_H
