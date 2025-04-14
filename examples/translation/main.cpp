@@ -125,8 +125,6 @@ int main()
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
 
 /*
-
-
         const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;

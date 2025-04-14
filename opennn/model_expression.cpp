@@ -129,60 +129,6 @@ string ModelExpression::write_soft_sign_c()
         "\n";
 }
 
-void ModelExpression::lstm_c()
-{
-    /*
-    for (int i = 0; i < found_tokens.size(); i++)
-    {
-        const string token = found_tokens(i);
-
-        if (token.find("cell_state") == 0)
-            cell_states_counter += 1;
-
-        if (token.find("hidden_state") == 0)
-            hidden_state_counter += 1;
-    }
-
-    buffer << "struct LSTMMemory" << endl
-        << "{" << endl
-        << "\t" << "int current_combination_derivatives = 3;" << endl
-        << "\t" << "int time_step_counter = 1;" << endl;
-
-    for (int i = 0; i < hidden_state_counter; i++)
-        buffer << "\t" << "float hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-    for (int i = 0; i < cell_states_counter; i++)
-        buffer << "\t" << "float cell_states_" << to_string(i) << " = type(0);" << endl;
-
-    buffer << "} lstm; \n\n" << endl
-        << "vector<float> calculate_outputs(const vector<float>& inputs, LSTMMemory& lstm)" << endl;
-
-    buffer << "\n\tif(lstm.time_step_counter%lstm.current_combination_derivatives == 0 ){" << endl
-        << "\t\t" << "lstm.time_step_counter = 1;" << endl;
-
-    for (int i = 0; i < hidden_state_counter; i++)
-        buffer << "\t\t" << "lstm.hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-    for (int i = 0; i < cell_states_counter; i++)
-        buffer << "\t\t" << "lstm.cell_states_" << to_string(i) << " = type(0);" << endl;
-
-    buffer << "\t}" << endl;
-
-    replace_all_appearances(outputs_expression, "(t)", "");
-    replace_all_appearances(outputs_expression, "(t-1)", "");
-    replace_all_appearances(outputs_expression, "double cell_state", "cell_state");
-    replace_all_appearances(outputs_expression, "double hidden_state", "hidden_state");
-    replace_all_appearances(outputs_expression, "cell_state", "lstm.cell_state");
-    replace_all_appearances(outputs_expression, "hidden_state", "lstm.hidden_state");
-
-    buffer << "\t" << "LSTMMemory lstm;" << "\n" << endl
-    << "\t" << "vector<float> outputs(" << outputs_number << ");" << endl
-    << "\n\t" << "outputs = calculate_outputs(inputs, lstm);" << endl;
-
-    buffer << "\n\t" << "lstm.time_step_counter += 1;" << endl;
-*/
-}
-
 
 void ModelExpression::auto_association_c(const NeuralNetwork& neural_network)
 {
@@ -225,7 +171,6 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
 
     // int cell_states_counter = 0;
     // int hidden_state_counter = 0;
-    // int LSTM_number = neural_network.get_long_short_term_memory_layers_number();
 
     bool logistic = false;
     bool ReLU = false;
@@ -291,26 +236,13 @@ string ModelExpression::get_expression_c(const NeuralNetwork& neural_network)
             if (line.find(target) != string::npos) *flag = true;
     }
 
-    if(logistic)
-        buffer << write_logistic_c();
-
-    if(ReLU)
-        buffer << write_relu_c();
-
-    if(ExpLinear)
-        buffer << write_exponential_linear_c();
-
-    if (SExpLinear)
-        buffer << write_exponential_linear_c();
-
-    if(HSigmoid)
-        buffer << write_hard_sigmoid_c();
-
-    if(SoftPlus)
-        buffer << write_soft_plus_c();
-
-    if(SoftSign)
-        buffer << write_soft_sign_c();
+    if(logistic) buffer << write_logistic_c();
+    if(ReLU) buffer << write_relu_c();
+    if(ExpLinear) buffer << write_exponential_linear_c();
+    if (SExpLinear) buffer << write_exponential_linear_c();
+    if(HSigmoid) buffer << write_hard_sigmoid_c();
+    if(SoftPlus) buffer << write_soft_plus_c();
+    if(SoftSign) buffer << write_soft_sign_c();
 
     buffer << "vector<float> calculate_outputs(const vector<float>& inputs)" << endl
            << "{" << endl;
@@ -425,55 +357,6 @@ string ModelExpression::write_subheader_api(){
         "</div>\n"
         "<h4>\n"
        "<?php\n\n";
-}
-
-void ModelExpression::lstm_api()
-{
-    /*
-    for (int i = 0; i < found_tokens.size(); i++)
-    {
-        const string t = found_tokens(i);
-
-        if (token.find("cell_state") == 0)
-            cell_states_counter += 1;
-
-        if (token.find("hidden_state") == 0)
-            hidden_state_counter += 1;
-    }
-
-    buffer << "class NeuralNetwork{" << endl
-        << "public $time_steps = 3;" << endl
-        << "public $time_step_counter = 1;" << endl;
-
-    for (int i = 0; i < hidden_state_counter; i++)
-        buffer << "public $" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-    for (int i = 0; i < cell_states_counter; i++)
-        buffer << "public $" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-    buffer << "}" << endl
-        << "$nn = new NeuralNetwork;" << endl;
-
-    buffer << "if($nn->time_step_counter % $nn->current_combination_derivatives === 0 ){" << endl
-        << "$nn->current_combination_derivatives = 3;" << endl
-        << "$nn->time_step_counter = 1;" << endl;
-
-    for (int i = 0; i < hidden_state_counter; i++)
-        buffer << "$nn->" << "hidden_state_" << to_string(i) << " = type(0);" << endl;
-
-    for (int i = 0; i < cell_states_counter; i++)
-        buffer << "$nn->" << "cell_states_" << to_string(i) << " = type(0);" << endl;
-
-    buffer << "}" << endl;
-
-    replace_all_appearances(t, "(t)"     , "");
-    replace_all_appearances(t, "(t-1)"   , "");
-    replace_all_appearances(t, "hidden_" , "$hidden_");
-    replace_all_appearances(t, "cell_"   , "$cell_");
-    replace_all_appearances(t, "$hidden_", "$nn->hidden_");
-    replace_all_appearances(t, "$cell_"  , "$nn->cell_");
-
-*/
 }
 
 
@@ -612,7 +495,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
-    const int LSTM_number = neural_network.get_layers_number(Layer::Type::LongShortTermMemory);
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
@@ -768,9 +650,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
            << "$response = ['status' => $status,  'status_message' => $status_msg" << "];" << endl
            << "}" << endl;
 
-    if(LSTM_number>0)
-        buffer << "$nn->time_step_counter += 1;" << endl;
-
     buffer << "\n$json_response_pretty = json_encode($response, JSON_PRETTY_PRINT);" << endl
            << "echo nl2br(\"\\n\" . $json_response_pretty . \"\\n\");" << endl
            << "}else{" << endl
@@ -873,6 +752,8 @@ string ModelExpression::autoassociaton_javascript(const NeuralNetwork& neural_ne
 
     if (index != string::npos)
         expression.erase(index, string::npos);
+
+    return expression;
 }
 
 
@@ -1088,7 +969,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
-    int LSTM_number = neural_network.get_layers_number(Layer::Type::LongShortTermMemory);
 
     bool logistic     = false;
     bool ReLU         = false;
@@ -1231,9 +1111,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
        }
     }
 
-    buffer << "\t" << "update_LSTM();" << endl
-           << "}\n" << endl;
-
     while(getline(ss, token, '\n'))
     {
         if(token.size() > 1 && token.back() == '{')
@@ -1259,31 +1136,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
         if(word.size() > 1)
             found_tokens.push_back(word);
-    }
-
-    if(LSTM_number > 0)
-    {
-        for(int i = 0; i < found_tokens.size(); i++)
-        {
-            token = found_tokens[i];
-
-            if(token.find("cell_state") == 0)
-                cell_states_counter += 1;
-
-            if(token.find("hidden_state") == 0)
-                hidden_state_counter += 1;
-        }
-
-        buffer << "\t" << "if(time_step_counter % current_combination_derivatives == 0 ){" << endl
-               << "\t\t" << "time_step_counter = 1" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t\t" << "hidden_state_" << to_string(i) << " = 0" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t\t" << "cell_states_" << to_string(i) << " = 0" << endl;
-
-        buffer << "\t}\n" << endl;
     }
 
     string target_string_0("Logistic");
@@ -1333,9 +1185,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             : buffer << "\t" << "var " << line << endl;
     }
 
-    if(LSTM_number>0)
-        buffer << "\t" << "time_step_counter += 1" << "\n" << endl;
-
     const vector<string> fixed_outputs = fix_get_expression_outputs(expression, output_names, ProgrammingLanguage::JavaScript);
 
     for(int i = 0; i < fixed_outputs.size(); i++)
@@ -1349,41 +1198,13 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     buffer << "\n\t" << "return out;" << endl
            << "}\n" << endl;
 
-    if(LSTM_number > 0)
-    {
-        buffer << "\t" << "var steps = 3;            " << endl
-               << "\t" << "var current_combination_derivatives = steps;   " << endl
-               << "\t" << "var time_step_counter = 1;" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t" << "var " << "var hidden_state_" << to_string(i) << " = 0" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t" << "var " << "var cell_states_" << to_string(i) << " = 0" << endl;
-
-        buffer << "\n" << endl;
-    }
-
-    if (logistic)
-        buffer << logistic_javascript();
-
-    if (ReLU)
-        buffer << relu_javascript();
-
-    if (ExpLinear)
-        buffer << exponential_linear_javascript();
-
-    if (SExpLinear)
-        buffer << "scaled_exponential_linear()";
-
-    if(HSigmoid)
-        buffer << hard_sigmoid_javascript();
-
-    if(SoftPlus)
-        buffer << soft_plus_javascript();
-
-    if (SoftSign)
-        buffer << "soft_sign_javascript()";
+    if (logistic) buffer << logistic_javascript();
+    if (ReLU) buffer << relu_javascript();
+    if (ExpLinear) buffer << exponential_linear_javascript();
+    if (SExpLinear) buffer << "scaled_exponential_linear()";
+    if(HSigmoid) buffer << hard_sigmoid_javascript();
+    if(SoftPlus) buffer << soft_plus_javascript();
+    if (SoftSign) buffer << "soft_sign_javascript()";
 
     buffer << "function updateTextInput1(val, id)" << endl
            << "{" << endl
@@ -1395,17 +1216,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
            << "</body>\n" << endl
            << "</html>" << endl;
 
-    string out = buffer.str();
-
-    if(LSTM_number>0)
-    {
-        replace_all_appearances(out, "(t)", "");
-        replace_all_appearances(out, "(t-1)", "");
-        replace_all_appearances(out, "var cell_state"  , "cell_state");
-        replace_all_appearances(out, "var hidden_state", "hidden_state");
-    }
-
-    return out;
+    return buffer.str();
 }
 
 string ModelExpression::write_header_python()
@@ -1454,7 +1265,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     //const Index layers_number = neural_network.get_layers_number();
 
-    const int LSTM_number = neural_network.get_layers_number(Layer::Type::LongShortTermMemory);
     int cell_states_counter = 0;
     int hidden_state_counter = 0;
 
@@ -1574,36 +1384,19 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 */
     }
 
-    if(LSTM_number > 0)
+    string inputs_list;
+
+    for(int i = 0; i < original_inputs.size();i++)
     {
-        buffer << "\t" << "def __init__(self, ts = 1):" << endl
-               << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
-               << "\t\t" << "self.current_combination_derivatives = ts" << endl;
+        inputs_list += "'" + original_inputs[i] + "'";
 
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t\t" << "self.hidden_state_" << to_string(i) << " = 0" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t\t" << "self.cell_states_" << to_string(i) << " = 0" << endl;
-
-        buffer << "\t\t" << "self.time_step_counter = 1" << endl;
+        if(i < original_inputs.size() - 1)
+            inputs_list += ", ";
     }
-    else
-    {
-        string inputs_list;
 
-        for(int i = 0; i < original_inputs.size();i++)
-        {
-            inputs_list += "'" + original_inputs[i] + "'";
-
-            if(i < original_inputs.size() - 1)
-                inputs_list += ", ";
-        }
-
-        buffer << "\t" << "def __init__(self):" << endl
-               << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
-               << "\t\t" << "self.input_names = [" << inputs_list << "]" << endl;
-    }
+    buffer << "\t" << "def __init__(self):" << endl
+            << "\t\t" << "self.inputs_number = " << to_string(inputs_number) << endl
+            << "\t\t" << "self.input_names = [" << inputs_list << "]" << endl;
 
     buffer << "\n" << endl;
 
@@ -1656,18 +1449,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     for(int i = 0; i < inputs_number; i++)
         buffer << "\t\t" << inputs[i] << " = " << "inputs[" << to_string(i) << "]" << endl;
 
-    if(LSTM_number > 0)
-    {
-        buffer << "\n\t\t" << "if(self.time_step_counter % self.current_combination_derivatives == 0 ):" << endl
-               << "\t\t\t" << "self.t = 1" << endl;
-
-        for(int i = 0; i < hidden_state_counter; i++)
-            buffer << "\t\t\t" << "self.hidden_state_" << to_string(i) << " = 0" << endl;
-
-        for(int i = 0; i < cell_states_counter; i++)
-            buffer << "\t\t\t" << "self.cell_states_" << to_string(i) << " = 0" << endl;
-    }
-
     buffer << endl;
 
     found_tokens.resize(0);
@@ -1711,14 +1492,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
             replace_all_appearances(line, key_word, new_word);
         }
 
-        if(LSTM_number>0)
-        {
-            replace_all_appearances(line, "(t)", "");
-            replace_all_appearances(line, "(t-1)", "");
-            replace_all_appearances(line, "cell_state", "self.cell_state");
-            replace_all_appearances(line, "hidden_state", "self.hidden_state");
-        }
-
         buffer << "\t\t" << line << endl;
     }
 
@@ -1733,9 +1506,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     for(int i = 0; i < outputs_number; i++)
         buffer << "\t\t" << "out[" << to_string(i) << "] = " << outputs[i] << endl;
 
-    if(LSTM_number>0)
-        buffer << "\n\t\t" << "self.time_step_counter += 1" << endl;
-
     model_type != NeuralNetwork::ModelType::AutoAssociation
         ? buffer << "\n\t\t" << "return out;" << endl
         : buffer << "\n\t\t" << "return out, sample_autoassociation_distance, sample_autoassociation_variables_distance;" << endl;
@@ -1747,11 +1517,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     if(has_recurrent_layer())
         buffer << "\t\t\tif(i%self.current_combination_derivatives == 0):\n" << endl
                << "\t\t\t\tself.hidden_states = "+ to_string(get_recurrent_layer()->get_neurons_number())+"*[0]\n" << endl;
-
-    if(has_long_short_term_memory_layer())
-        buffer << "\t\t\tif(i%self.current_combination_derivatives == 0):\n" << endl
-               << "\t\t\t\tself.hidden_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl
-               << "\t\t\t\tself.cell_states = "+ to_string(get_long_short_term_memory_layer()->get_neurons_number())+"*[0]\n" << endl;
 */
     buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl
            << "\t\t\toutput = self.calculate_outputs(inputs)\n" << endl

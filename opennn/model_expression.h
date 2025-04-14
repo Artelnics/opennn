@@ -35,7 +35,6 @@ public:
     string write_hard_sigmoid_c();
     string write_soft_plus_c();
     string write_soft_sign_c();
-    void lstm_c();
     void auto_association_c(const NeuralNetwork& );
     string get_expression_c(const NeuralNetwork& );
 
@@ -47,7 +46,6 @@ public:
     // php
     string write_header_api();
     string write_subheader_api();
-    void lstm_api();
     void autoassociation_api(const NeuralNetwork& );
     string logistic_api();
     string relu_api();
@@ -73,7 +71,7 @@ public:
 
     // other functions
     string replace_reserved_keywords(const string& );
-    vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage& );
+    vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&);
     void fix_input_names(vector<string>& );
     void fix_output_names(vector<string>& );
 
