@@ -90,24 +90,19 @@ public:
 
 private:
 
-   Index time_steps = 1;
+    Index time_steps = 1;
 
     Index batch_size=type(10);
 
     Tensor<type, 1> biases;
 
-    Tensor<type, 1> output_biases;
-
     Tensor<type, 2> input_weights;
 
     Tensor<type, 2> recurrent_weights;
 
-    Tensor<type, 2> output_weights;
-
     Activation activation_function = Activation::HyperbolicTangent;
 
     Tensor<type, 2> hidden_states;
-
 
 //#ifdef OPENNN_CUDA
 //    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
@@ -160,8 +155,6 @@ struct RecurrentBackPropagation : LayerBackPropagation
     Tensor<type, 2> input_weight_derivatives;
 
     Tensor<type, 2> recurrent_weight_derivatives;
-
-    Tensor<type, 2> output_weights_derivatives;
 
     Tensor<type, 2> input_derivatives;
 
