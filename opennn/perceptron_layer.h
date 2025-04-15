@@ -29,7 +29,8 @@ public:
         ScaledExponentialLinear,
         SoftPlus,
         SoftSign,
-        HardSigmoid
+        HardSigmoid,
+        Softmax
     };
 
     Perceptron(const dimensions& = {0},

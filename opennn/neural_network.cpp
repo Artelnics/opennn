@@ -266,7 +266,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                            1, 
                                            multiplies<Index>());
 
-    if(input_names.empty()){
+    if(input_names.empty())
+    {
         input_names.resize(inputs_number);
         for(Index i = 0; i < inputs_number; i++)
             input_names[i] = "input_" + to_string(i+1);
@@ -295,10 +296,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
-    case ModelType::TextClassification:
-        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
     case ModelType::Forecasting:
         set_forecasting(input_dimensions, complexity_dimensions, output_dimensions);
         break;
@@ -311,11 +308,11 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
     
-/*
-    case ModelType::TextClassificationTransformer:
-        set_text_classification_transformer(input_dimensions, complexity_dimensions, output_dimensions);
+
+    case ModelType::TextClassification:
+        set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
-*/
+
 
     default:
         break;
@@ -470,12 +467,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                               "probabilistic_layer"));
 }
 
-/*
-void NeuralNetwork::set_text_classification_transformer(const dimensions& input_dimensions,
-                                         const dimensions& complexity_dimensions,
-                                                        const dimensions& output_dimensions)
-{
 
+void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
+                                            const dimensions& complexity_dimensions,
+                                            const dimensions& output_dimensions)
+{
+/*
     layers.resize(0);
 
     // input_names.resize(input_length + decoder_length);
@@ -628,9 +625,9 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
         set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
     }
-
-};
 */
+}
+
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -694,7 +691,6 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 
     //     perceptron_layer->set_input_dimensions(new_input_dimensions);
     // }
-
 }
 
 
@@ -991,7 +987,6 @@ string NeuralNetwork::get_expression() const
         input_names[i].empty()
             ? new_input_names[i] = "input_" + to_string(i)
             : new_input_names[i] = input_names[i];
-            //: new_input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
 
     vector<string> scaled_input_names(inputs_number);
     vector<string> unscaled_output_names(outputs_number);
@@ -1003,7 +998,6 @@ string NeuralNetwork::get_expression() const
         {
             for (int j = 0; j < output_names.size(); j++){
                 if (!output_names[j].empty())
-                    //new_output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
                     new_output_names[j] = output_names[j];
                 else
                     new_output_names[j] = "output_" + to_string(i);
@@ -1012,24 +1006,18 @@ string NeuralNetwork::get_expression() const
         }
         else
         {
-            Index layer_neurons_number = layers[i]->get_outputs_number();
+            const Index layer_neurons_number = layers[i]->get_outputs_number();
+
             new_output_names.resize(layer_neurons_number);
+            
             for (Index j = 0; j < layer_neurons_number; j++)
-            {
                 if (layer_names[i] == "scaling_layer")
-                {
-                    //new_output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
                     new_output_names[j] = "scaled_" + input_names[j];
-                    //scaled_input_names[j] = output_names[j];
-                }
                 else
-                {
                     new_output_names[j] = layer_names[i] + "_output_" + to_string(j);
-                }
-            }
+
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
-            // unscaled_output_names = input_namess_vector;
         }
 
     }
