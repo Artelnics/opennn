@@ -332,7 +332,7 @@ public:
                                       Index&,
                                       float*) const {}
 
-    virtual void set_parameters_cuda(const float*, const Index&) {}
+    virtual void set_parameters_cuda(const float*, Index&) {}
 
     virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&) {}
 

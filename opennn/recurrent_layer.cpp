@@ -22,7 +22,7 @@ Recurrent::Recurrent(const dimensions& new_input_dimensions,
 
 dimensions Recurrent::get_input_dimensions() const
 {
-    return { input_weights.dimension(0) };
+    return { time_steps, input_weights.dimension(0) };
 }
 
 
@@ -104,32 +104,11 @@ void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& ne
 
     time_steps = get_timesteps();
 
-    //set_parameters_random();
-
-    name = "recurrent_layer";
-
-    layer_type = Type::Recurrent;
-/*
-    biases.resize(new_neurons_number);
-
-    input_weights.resize(new_inputs_number, new_neurons_number);
-
-    recurrent_weights.resize(new_neurons_number, new_neurons_number);
-
-    Index samples_number = 10;
-
-    hidden_states.resize(samples_number, time_steps, new_neurons_number);
-
-    hidden_states.setConstant(type(0));
-
-    time_steps = new_timesteps;
-
     set_parameters_random();
 
     name = "recurrent_layer";
 
     layer_type = Type::Recurrent;
-*/
 }
 
 
@@ -272,55 +251,130 @@ void Recurrent::calculate_activations(Tensor<type, 2>& activations,
 
 
 void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool& is_training)
-
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  const bool& is_training)
 {
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
     const Index output_size = get_outputs_number();
 
-    TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
 
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
+    RecurrentLayerForwardPropagation* recurrent_forward =
         static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
 
-    Tensor<type, 2>& outputs = recurrent_layer_forward_propagation->outputs;
+    Tensor<type, 2>& outputs = recurrent_forward->outputs;
+    Tensor<type, 3>& current_inputs = recurrent_forward->current_inputs;
+    Tensor<type, 2>& activation_derivatives = recurrent_forward->activation_derivatives;
+    Tensor<type, 3>& current_activations_derivatives = recurrent_forward->current_activations_derivatives;
 
-    outputs.resize(batch_size, output_size);
-    outputs.setZero();
+    current_inputs.resize(batch_size, time_steps, input_size);
+    current_activations_derivatives.resize(batch_size, time_steps, output_size);
 
-    hidden_states.resize(batch_size, output_size);
-    hidden_states.setZero();
-
-    for (Index time_step = 0; time_step < time_steps; time_step++)
+    for(Index t = 0; t < time_steps; ++t)
     {
-        Tensor<type, 3> current_inputs = inputs.slice(DSizes<Index, 3>{0, time_step, 0},
-                                                      DSizes<Index, 3>{batch_size, 1, input_size})
-                                             .reshape(DSizes<Index, 3>{batch_size, 1, input_size});
+        current_inputs.chip(t, 1) = inputs.chip(t, 1);
 
-        multiply_matrices(thread_pool_device.get(), current_inputs, input_weights);
-        sum_matrices(thread_pool_device.get(), biases, current_inputs);
+        Tensor<type, 2> combination = current_inputs.chip(t, 1).contract(input_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{ { {1, 0} } });
 
-        hidden_states = hidden_states * recurrent_weights;
-        hidden_states += current_inputs.reshape(DSizes<Index, 2>{batch_size, input_size});
+        if (t > 0)
+        {
+            combination += hidden_states.contract(recurrent_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{ { {1, 0} } });
+        }
 
-        calculate_activations(hidden_states, empty_2);
+        Eigen::array<Index, 2> bcast = { batch_size, 1 };
+        combination.device(*thread_pool_device) +=
+            biases.reshape(Eigen::DSizes<Index, 2>{1, biases.dimension(0)}).broadcast(bcast);
 
-        outputs = hidden_states.contract(output_weights, axes(1, 0)) + output_biases;
+        calculate_activations(combination, activation_derivatives);
 
-        calculate_activations(outputs, empty_2);
+        hidden_states = combination;
+
+        current_activations_derivatives.chip(t, 1) = activation_derivatives;
+
+        outputs=combination;
+
+        /*
+        outputs = hidden_states.contract(output_weights, Eigen::array<Eigen::IndexPair<Index>, 1>{ { {1, 0} } });
+        Eigen::array<Index, 2> dims = {batch_size, 1};
+        outputs.device(*thread_pool_device) += output_biases.reshape(Eigen::DSizes<Index, 2>{1, output_biases.dimension(0)}).broadcast(dims);
+
+        calculate_activations(outputs, activation_derivatives);
+*/
+
+    }
+
+    cout << "Forward terminado. Outputs: " << recurrent_forward->outputs << endl;
+}
+
+
+void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+                               const vector<pair<type*, dimensions>>& delta_pairs,
+                               unique_ptr<LayerForwardPropagation>& forward_propagation,
+                               unique_ptr<LayerBackPropagation>& back_propagation) const
+{
+    const Index batch_size = input_pairs[0].second[0];
+    const Index time_steps = input_pairs[0].second[1];
+    const Index input_size = input_pairs[0].second[2];
+    const Index output_size = get_outputs_number();
+
+    TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, time_steps, input_size);
+    TensorMap<Tensor<type, 3>> deltas(delta_pairs[0].first, batch_size, time_steps, output_size);
+
+    RecurrentLayerForwardPropagation* recurrent_forward =
+        static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
+    RecurrentBackPropagation* recurrent_backward =
+        static_cast<RecurrentBackPropagation*>(back_propagation.get());
+
+    Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
+    Tensor<type, 2>& input_derivatives = recurrent_backward->input_derivatives;
+    Tensor<type, 2>& input_weights_derivatives = recurrent_backward->input_weight_derivatives;
+    Tensor<type, 2>& recurrent_weights_derivatives = recurrent_backward->recurrent_weight_derivatives;
+    Tensor<type, 2>& output_weights_derivatives = recurrent_backward->output_weights_derivatives;
+    Tensor<type, 1>& bias_derivatives = recurrent_backward->bias_derivatives;
+    Tensor<type, 2>& combination_deltas = recurrent_backward->combination_deltas;
+    Tensor<type, 2>& current_combinations_derivatives = recurrent_backward->current_combinations_derivatives;
+
+    Tensor<type, 2>& activation_derivatives = recurrent_forward->activation_derivatives;
+    Tensor<type, 3>& current_activations_derivatives = recurrent_forward->current_activations_derivatives;
+    Tensor<type, 3>& current_inputs = recurrent_forward->current_inputs;
+
+    for(Index t = time_steps - 1; t >= 0; --t)
+    {
+        current_deltas = deltas.chip(t, 1);
+
+        combination_deltas.device(*thread_pool_device) =
+            current_deltas * current_activations_derivatives.chip(t, 1);
+
+        combination_deltas += current_combinations_derivatives;
+
+        input_weights_derivatives += combination_deltas.contract(current_inputs.chip(t, 1),Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(0, 0)}});
+
+        if(t > 0)
+        {
+            recurrent_weights_derivatives += combination_deltas.contract(current_activations_derivatives.chip(t - 1, 1),Eigen::array<Eigen::IndexPair<Index>, 1>{ Eigen::IndexPair<Index>(0, 0) });
+        }
+
+        output_weights_derivatives += combination_deltas.contract(current_activations_derivatives.chip(t, 1),Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(0, 0)}});
+
+        Eigen::array<Index, 1> dims = {0};
+        bias_derivatives.device(*thread_pool_device) += combination_deltas.sum(dims);
+
+        input_derivatives = combination_deltas.contract(recurrent_weights.shuffle(Eigen::array<Index, 2>{1, 0}),Eigen::array<Eigen::IndexPair<Index>, 1>{{Eigen::IndexPair<Index>(1, 0)}});
+
+        current_combinations_derivatives = combination_deltas.contract(recurrent_weights.shuffle(Eigen::array<Index, 2>{1, 0}),Eigen::array<Eigen::IndexPair<Index>, 1>{ Eigen::IndexPair<Index>(1, 0) });
     }
 }
 
 
+/*
 void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                     const vector<pair<type*, dimensions>>& delta_pairs,
                                     unique_ptr<LayerForwardPropagation>& forward_propagation,
                                     unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-/*
+
     const Index batch_size = input_pairs[0].second[0];
     const Index outputs_number = get_outputs_number();
     const Index inputs_number = get_inputs_number();
@@ -458,9 +512,9 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     if(!is_first_layer)
         input_derivatives.device(*thread_pool_device) = combination_deltas.contract(input_weights, A_BT);
-*/
-}
 
+}
+*/
 
 void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                 Index& index,
@@ -561,18 +615,20 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
-    const Index time_steps = 0;
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index time_steps = layer->get_input_dimensions()[0];
 
     batch_size = new_batch_size;
 
-    current_inputs.resize(batch_size, inputs_number);
-    current_activations_derivatives.resize(batch_size, outputs_number);
+    current_inputs.resize(batch_samples_number,time_steps, inputs_number);
 
-    activation_derivatives.resize(batch_size, time_steps, outputs_number);
+    current_activations_derivatives.resize(batch_samples_number, time_steps, outputs_number);
 
-    outputs.resize(batch_size, outputs_number);
+    activation_derivatives.resize(batch_samples_number, outputs_number);
+
+    outputs.resize(batch_samples_number, outputs_number);
     outputs.setZero();
+
 }
 
 
@@ -587,8 +643,9 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     batch_size = new_batch_size;
 
-    const Index inputs_number = layer->get_input_dimensions()[0];
     const Index outputs_number = layer->get_outputs_number();
+    const Index inputs_number = layer->get_input_dimensions()[1];
+    const Index time_steps = layer->get_input_dimensions()[0];
 
     //current_deltas.resize(neurons_number);
 
@@ -598,8 +655,9 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     combinations_recurrent_weight_derivatives.resize(outputs_number, outputs_number, outputs_number);
 
-    combination_deltas.resize(batch_size, outputs_number);
-    current_combination_derivatives.resize(outputs_number);
+    combination_deltas.resize(batch_samples_number, outputs_number);
+
+    current_combinations_derivatives.resize(batch_samples_number, outputs_number);
 
     bias_derivatives.resize(outputs_number);
 
@@ -607,9 +665,10 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     recurrent_weight_derivatives.resize(outputs_number, outputs_number);
 
-    const Index time_steps = 0;
+    const Index time_steps = layer->get_input_dimensions()[0];
 
-    input_derivatives.resize(batch_size, time_steps, inputs_number);
+    input_derivatives.resize(batch_samples_number, inputs_number);
+
 }
 
 

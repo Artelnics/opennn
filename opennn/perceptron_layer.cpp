@@ -113,9 +113,9 @@ string Perceptron::get_activation_function_string() const
 
 
 void Perceptron::set(const dimensions& new_input_dimensions,
-                          const dimensions& new_output_dimensions,
-                          const Perceptron::Activation& new_activation_function,
-                          const string& new_name)
+                     const dimensions& new_output_dimensions,
+                     const Perceptron::Activation& new_activation_function,
+                     const string& new_name)
 {
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
@@ -342,7 +342,7 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
     weight_derivatives.device(*thread_pool_device) = inputs.contract(deltas, axes(0,0));
 
     if (!is_first_layer)
-        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(0,0));
+        input_derivatives.device(*thread_pool_device) = deltas.contract(weights, axes(1, 1));
 }
 
 
@@ -893,50 +893,18 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
                                       Index& index, 
                                       float* gradient) const
 {
-    // Perceptron layer
-
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
-
-    // Perceptron layer back propagation cuda
-
     PerceptronLayerBackPropagationCuda* perceptron_layer_back_propagation =
         static_cast<PerceptronLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    type* weights_derivatives_cuda = perceptron_layer_back_propagation->weights_derivatives_cuda;
-
-    type* biases_derivatives_cuda = perceptron_layer_back_propagation->biases_derivatives_cuda;
-
-    if (cudaMemcpy(gradient + index,
-        weights_derivatives_cuda,
-        size_t(weights_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient (weights) copy error" << endl;
-
-    if (cudaMemcpy(gradient + index + weights_number,
-        biases_derivatives_cuda,
-        size_t(biases_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient (biases) copy error" << endl;
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weights_derivatives_cuda, weights.size(), index);
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->biases_derivatives_cuda, biases.size(), index);
 }
 
 
-void Perceptron::set_parameters_cuda(const float* new_parameters, const Index& index)
+void Perceptron::set_parameters_cuda(const float* new_parameters, Index& index)
 {
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
-
-    if (cudaMemcpy(weights_device,
-        new_parameters + index,
-        size_t(weights_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "biases copy error" << endl;
-
-    if (cudaMemcpy(biases_device,
-        new_parameters + weights_number + index,
-        size_t(biases_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "synaptic weights copy error" << endl;
+    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
 }
 
 

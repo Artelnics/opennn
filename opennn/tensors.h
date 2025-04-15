@@ -148,6 +148,7 @@ type l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&);
 Tensor<type, 1> l2_distance(const Tensor<type, 2>&, const Tensor<type, 2>&, const Index&);
 
 void fill_tensor_data(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
+void fill_tensor_data_row_major(const Tensor<type, 2>&, const vector<Index>&, const vector<Index>&, type*);
 void fill_tensor_3D(const Tensor<type, 2>&,const vector<Index>&,const vector<Index>&,type*);
 
 template <typename Type, int Rank>
@@ -353,8 +354,10 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
 
 
 template <int Rank>
-void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) {
+void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) 
+{
     memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
+
     index += destination.size();
 }
 
