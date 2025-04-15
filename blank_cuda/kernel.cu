@@ -96,6 +96,15 @@ void copy_to_vector_cuda(float* destination, const float* source, const Index& s
 }
 
 
+void copy_from_vector_cuda(float* destination, const float* source, const Index& size, Index& index)
+{
+    if (cudaMemcpy(destination, source + index, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
+        cout << "copy_from_vector_cuda error" << endl;
+
+    index += size;
+}
+
+
 type* vector_to_device(const Tensor<type, 1>& vector)
 {
     type* pointer = nullptr;

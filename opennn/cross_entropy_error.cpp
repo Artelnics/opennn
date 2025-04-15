@@ -58,9 +58,6 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     error.device(*thread_pool_device)
         = ((targets * (outputs + type(1e-5)).log() + (type(1) - targets) * ((type(1) - outputs + type(1e-5)).log())).sum()) / type(-samples_number);
 
-    cout << "error cpu: " << error << endl;
-    system("pause");
-
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
@@ -331,9 +328,6 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     cudaMemcpy(error.data(), numerator_reduce, sizeof(type), cudaMemcpyDeviceToHost);
 
     error = error / type(-samples_number);
-
-    cout << "error gpu: " << error << endl;
-    system("pause");
 
     if (isnan(error())) throw runtime_error("\nError is NAN.");
 }

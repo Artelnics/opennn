@@ -354,8 +354,10 @@ bool are_equal(const Tensor<Type, Rank>& tensor_1,
 
 
 template <int Rank>
-void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) {
+void copy_from_vector(Tensor<type, Rank>& destination, const Tensor<type, 1>& source, Index& index) 
+{
     memcpy(destination.data(), source.data() + index, destination.size() * sizeof(type));
+
     index += destination.size();
 }
 

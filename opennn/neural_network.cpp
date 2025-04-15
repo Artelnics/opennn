@@ -434,7 +434,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
-        /*
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
@@ -457,7 +456,6 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        padding_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
-        */
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));
@@ -2062,9 +2060,7 @@ void NeuralNetwork::allocate_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->allocate_parameters_device();
-    }
 }
 
 
@@ -2080,9 +2076,7 @@ void NeuralNetwork::free_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->free_parameters_device();
-    }
 }
 
 
@@ -2098,9 +2092,7 @@ void NeuralNetwork::copy_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->copy_parameters_device();
-    }
 }
 
 
@@ -2116,9 +2108,7 @@ void NeuralNetwork::copy_parameters_host()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->copy_parameters_host();
-    }
 }
 
 
@@ -2166,18 +2156,10 @@ void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 
 void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
 {
-    const Index layers_number = get_layers_number();
-
-    const vector<Index> layer_parameter_numbers = get_layer_parameter_numbers();
-
     Index index = 0;
 
-    for (Index i = 0; i < layers_number; i++)
-    {
-        layers[i]->set_parameters_cuda(new_parameters, index);
-
-        index += layer_parameter_numbers[i];
-    }
+    for (const unique_ptr<Layer>& layer : layers)
+        layer->set_parameters_cuda(new_parameters, index);
 }
 
 
@@ -2186,9 +2168,7 @@ void NeuralNetwork::create_cuda() const
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
     for (const unique_ptr<Layer>& layer : neural_network_layers)
-    {
         layer->create_cuda();
-    }
 }
 
 
@@ -2197,9 +2177,7 @@ void NeuralNetwork::destroy_cuda() const
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
     for (const unique_ptr<Layer>& layer : neural_network_layers)
-    {
         layer->destroy_cuda();
-    }
 }
 
 
@@ -2326,23 +2304,18 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
+    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+
     vector<vector<pair<type*, dimensions>>> layer_input_pairs_device(layers_number);
 
     layer_input_pairs_device[0] = batch_input_pairs_device;
 
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-
-    for (Index i = first_trainable_layer_index; i < layers_number; i++)
+    for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
     {
         const vector<Index>& this_layer_input_indices = layer_input_indices[i];
 
         layer_input_pairs_device[i].resize(1);
-
-        // if (i == first_trainable_layer_index)
-        // {
-        //     layer_input_pairs[i] = batch_input_pairs;
-        //     continue;
-        // }
 
         if (neural_network->get_model_type_string() == "TextClassification") {
 

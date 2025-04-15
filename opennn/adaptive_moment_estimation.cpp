@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -256,7 +256,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 target_variable_indices);
 
             // Neural network
-            
+
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -642,7 +642,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
     if (neural_network->has(Layer::Type::LongShortTermMemory)
         || neural_network->has(Layer::Type::Recurrent))
@@ -688,7 +688,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             if (is_classification_model)   training_accuracy += training_back_propagation_cuda.accuracy();
 
             // Optimization algorithm
-            
+
             update_parameteres_cuda(training_back_propagation_cuda, optimization_data_cuda);
 
         }

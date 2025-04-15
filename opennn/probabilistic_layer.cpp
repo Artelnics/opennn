@@ -95,9 +95,7 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    //set_parameters_random();
-    biases.setRandom();
-    weights.setRandom();
+    set_parameters_random();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -874,22 +872,10 @@ void ProbabilisticLayer::insert_gradient_cuda(unique_ptr<LayerBackPropagationCud
 }
 
 
-void ProbabilisticLayer::set_parameters_cuda(const float* new_parameters, const Index& index)
+void ProbabilisticLayer::set_parameters_cuda(const float* new_parameters, Index& index)
 {
-    const Index weights_number = weights.size();
-    const Index biases_number = biases.size();
-
-    if (cudaMemcpy(weights_device,
-        new_parameters + index,
-        size_t(weights_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "biases copy error" << endl;
-
-    if (cudaMemcpy(biases_device,
-        new_parameters + weights_number + index,
-        size_t(biases_number) * sizeof(type),
-        cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "synaptic weights copy error" << endl;
+    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
 }
 
 
@@ -903,7 +889,6 @@ void ProbabilisticLayer::allocate_parameters_device()
 
     if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "Weights allocation error" << endl;
-
 }
 
 
