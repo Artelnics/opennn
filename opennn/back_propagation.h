@@ -81,6 +81,7 @@ struct BackPropagationCuda
     float* numerator = nullptr;
     float* numerator_2 = nullptr;
     float* numerator_3 = nullptr;
+    float* outputs_plus_epsilon = nullptr;
     float* one_minus_targets = nullptr;
     float* one_minus_outputs = nullptr;
     float* numerator_reduce = nullptr;

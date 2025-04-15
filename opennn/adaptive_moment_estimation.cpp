@@ -256,7 +256,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                 target_variable_indices);
 
             // Neural network
-            
+
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -688,7 +688,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             if (is_classification_model)   training_accuracy += training_back_propagation_cuda.accuracy();
 
             // Optimization algorithm
-            
+
             update_parameteres_cuda(training_back_propagation_cuda, optimization_data_cuda);
 
         }
@@ -833,6 +833,8 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
 
     const Index parameters_number = optimization_data_cuda.adaptive_moment_estimation->get_loss_index()->get_neural_network()->get_parameters_number();
 
+    type* ones = optimization_data_cuda.ones;
+
     type* gradient = back_propagation_cuda.gradient;
 
     type* gradient_exponential_decay = optimization_data_cuda.gradient_exponential_decay;
@@ -892,8 +894,6 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
 
     // Parameters
 
-    const cudnnTensorDescriptor_t& epsilon_device_tensor_descriptor = optimization_data_cuda.epsilon_device_tensor_descriptor;
-
     // Numerator -> (learning_rate * bias_correction) * gradient_exponential_decay
 
     float* numerator = optimization_data_cuda.numerator;
@@ -922,8 +922,6 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
 
     float* denominator = optimization_data_cuda.denominator;
 
-    float* epsilon_device = optimization_data_cuda.epsilon_device;
-
     alpha = 1.0f;
 
     cudnnOpTensor(cudnn_handle,
@@ -938,17 +936,9 @@ void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back
         gradient_tensor_descriptor,
         denominator);
 
-    cudnnOpTensor(cudnn_handle,
-        operator_sum_descriptor,
-        &alpha,
-        gradient_tensor_descriptor,
-        denominator,
-        &alpha,
-        epsilon_device_tensor_descriptor,
-        epsilon_device,
-        &beta,
-        gradient_tensor_descriptor,
-        denominator);
+    alpha = epsilon;
+    
+    cublasSaxpy(cublas_handle, parameters_number, &alpha, ones, 1, denominator, 1);
 
     // parameters -= numerator / denominator
 
@@ -997,22 +987,13 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     if (cudaMalloc(&denominator, parameters_number * sizeof(float)) != cudaSuccess)
         cout << "denominator allocation error" << endl;
 
-    // Epsilon
+    // Aux ones
 
-    if (cudaMalloc(&epsilon_device, sizeof(float)) != cudaSuccess)
-        cout << "epsilon_device allocation error" << endl;
+    if (cudaMalloc(&ones, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "aux ones allocation error" << endl;
 
-    cudaMemcpy(epsilon_device, &epsilon, sizeof(float), cudaMemcpyHostToDevice);
-
-    cudnnCreateTensorDescriptor(&epsilon_device_tensor_descriptor);
-
-    cudnnSetTensor4dDescriptor(epsilon_device_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        1,
-        1,
-        1,
-        1);
+    for (Index i = 0; i < parameters_number; i++)
+        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
 }
 
 
@@ -1025,7 +1006,7 @@ void ADAMOptimizationDataCuda::free()
     cudaFree(last_square_gradient_exponential_decay);
     cudaFree(numerator);
     cudaFree(denominator);
-    cudaFree(epsilon_device);
+    cudaFree(ones);
 }
 
 

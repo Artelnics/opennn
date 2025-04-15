@@ -14,14 +14,6 @@
 namespace opennn
 {
 
-struct FlattenLayerForwardPropagation;
-struct FlattenLayerBackPropagation;
-
-#ifdef OPENNN_CUDA
-struct FlattenLayerForwardPropagationCuda;
-struct FlattenLayerBackPropagationCuda;
-#endif
-
 class Flatten : public Layer
 {
 
@@ -59,39 +51,26 @@ public:
 
     void print() const override;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
     void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const {}
     void set_parameters_cuda(const float*, const Index&) {}
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&) {}
-
     void allocate_parameters_device() {}
     void free_parameters_device() {}
     void copy_parameters_device() {}
     void copy_parameters_host() {}
-
-    void reorganize_inputs_cuda(const type* inputs, type* outputs,
-                                const Index batch_size, 
-                                const Index neurons_number) const;
-
-    void reorganize_deltas_cuda(const type* deltas, type* inputs_derivatives,
-                                const Index batch_size, 
-                                const Index neurons_number) const;
-
-    dimensions get_input_dimensions() const;
-
-    Index get_neurons_number() const;
 
 #endif
 
@@ -129,35 +108,29 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    explicit FlattenLayerForwardPropagationCuda(const Index&, Layer*);
+    FlattenLayerForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    pair<type*, dimensions> get_outputs_pair() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
-
-    void free() override;
-
-    pair<type*, dimensions> get_outputs_pair() const;
-
-    type* outputs = nullptr;
 };
 
 
 struct FlattenLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
-    explicit FlattenLayerBackPropagationCuda(const Index&, Layer*);
+    FlattenLayerBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
-
-    void free() override;
-
-    type* inputs_derivatives = nullptr;
 };
 
 #endif

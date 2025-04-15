@@ -93,9 +93,9 @@ void Transformer::set(const Index& new_decoder_length,
 
         i == 0
             ? set_layer_inputs_indices("input_self_attention_1",
-                                    {"input_embedding", "input_embedding"})
+                                      {"input_embedding", "input_embedding"})
             : set_layer_inputs_indices("input_self_attention_" + to_string(i+1),
-                { "encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i) });
+                                      {"encoder_perceptron_normalization_" + to_string(i), "encoder_perceptron_normalization_" + to_string(i)});
 
         //input_self_attention_layer->set_dropout_rate(dropout_rate);
 

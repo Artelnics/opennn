@@ -87,6 +87,24 @@ void reorganize_deltas_cuda(const type* inputs_device, type* outputs_device, int
 }
 
 
+void copy_to_vector_cuda(float* destination, const float* source, const Index& size ,Index& index)
+{
+    if (cudaMemcpy(destination + index, source, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
+        cout << "copy_to_vector_cuda error" << endl;
+
+    index += size;
+}
+
+
+void copy_from_vector_cuda(float* destination, const float* source, const Index& size, Index& index)
+{
+    if (cudaMemcpy(destination, source + index, size * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
+        cout << "copy_from_vector_cuda error" << endl;
+
+    index += size;
+}
+
+
 type* vector_to_device(const Tensor<type, 1>& vector)
 {
     type* pointer = nullptr;
@@ -355,7 +373,7 @@ void log_kernel(const int n, const float* x, float* y)
 
     if (i < n) {
         if (isnan(x[i]) || x[i] <= 0.0f) {
-            y[i] = logf(x[i] + 1e-39);
+            y[i] = logf(x[i] + 1e-05);
         }
         else {
             y[i] = logf(x[i]);

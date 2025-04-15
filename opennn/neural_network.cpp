@@ -266,7 +266,8 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
                                            1, 
                                            multiplies<Index>());
 
-    if(input_names.empty()){
+    if(input_names.empty())
+    {
         input_names.resize(inputs_number);
         for(Index i = 0; i < inputs_number; i++)
             input_names[i] = "input_" + to_string(i+1);
@@ -295,10 +296,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
-    case ModelType::TextClassification:
-        set_classification(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-
     case ModelType::Forecasting:
         set_forecasting(input_dimensions, complexity_dimensions, output_dimensions);
         break;
@@ -311,11 +308,11 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
     
-/*
-    case ModelType::TextClassificationTransformer:
-        set_text_classification_transformer(input_dimensions, complexity_dimensions, output_dimensions);
+
+    case ModelType::TextClassification:
+        set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
-*/
+
 
     default:
         break;
@@ -468,12 +465,12 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                               "probabilistic_layer"));
 }
 
-/*
-void NeuralNetwork::set_text_classification_transformer(const dimensions& input_dimensions,
-                                         const dimensions& complexity_dimensions,
-                                                        const dimensions& output_dimensions)
-{
 
+void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
+                                            const dimensions& complexity_dimensions,
+                                            const dimensions& output_dimensions)
+{
+/*
     layers.resize(0);
 
     // input_names.resize(input_length + decoder_length);
@@ -626,9 +623,9 @@ void NeuralNetwork::set_text_classification_transformer(const dimensions& input_
 
         set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
     }
-
-};
 */
+}
+
 
 void NeuralNetwork::set(const filesystem::path& file_name)
 {
@@ -692,7 +689,6 @@ void NeuralNetwork::set_input_dimensions(const dimensions& new_input_dimensions)
 
     //     perceptron_layer->set_input_dimensions(new_input_dimensions);
     // }
-
 }
 
 
@@ -857,7 +853,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters) const
 
     Index index = 0;
 
-    for(const unique_ptr<Layer>& layer : layers)
+    for (const unique_ptr<Layer>& layer : layers)
         layer->set_parameters(new_parameters, index);
 }
 
@@ -989,7 +985,6 @@ string NeuralNetwork::get_expression() const
         input_names[i].empty()
             ? new_input_names[i] = "input_" + to_string(i)
             : new_input_names[i] = input_names[i];
-            //: new_input_names[i] = replace_non_allowed_programming_expressions(input_names[i]);
 
     vector<string> scaled_input_names(inputs_number);
     vector<string> unscaled_output_names(outputs_number);
@@ -1001,7 +996,6 @@ string NeuralNetwork::get_expression() const
         {
             for (int j = 0; j < output_names.size(); j++){
                 if (!output_names[j].empty())
-                    //new_output_names[j] = replace_non_allowed_programming_expressions(output_names[j]);
                     new_output_names[j] = output_names[j];
                 else
                     new_output_names[j] = "output_" + to_string(i);
@@ -1010,24 +1004,18 @@ string NeuralNetwork::get_expression() const
         }
         else
         {
-            Index layer_neurons_number = layers[i]->get_outputs_number();
+            const Index layer_neurons_number = layers[i]->get_outputs_number();
+
             new_output_names.resize(layer_neurons_number);
+            
             for (Index j = 0; j < layer_neurons_number; j++)
-            {
                 if (layer_names[i] == "scaling_layer")
-                {
-                    //new_output_names[j] = "scaled_" + replace_non_allowed_programming_expressions(input_names[j]);
                     new_output_names[j] = "scaled_" + input_names[j];
-                    //scaled_input_names[j] = output_names[j];
-                }
                 else
-                {
                     new_output_names[j] = layer_names[i] + "_output_" + to_string(j);
-                }
-            }
+
             buffer << layers[i]->get_expression(new_input_names, new_output_names) << endl;
             new_input_names = new_output_names;
-            // unscaled_output_names = input_namess_vector;
         }
 
     }
@@ -2072,9 +2060,7 @@ void NeuralNetwork::allocate_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->allocate_parameters_device();
-    }
 }
 
 
@@ -2090,9 +2076,7 @@ void NeuralNetwork::free_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->free_parameters_device();
-    }
 }
 
 
@@ -2108,9 +2092,7 @@ void NeuralNetwork::copy_parameters_device()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->copy_parameters_device();
-    }
 }
 
 
@@ -2126,9 +2108,7 @@ void NeuralNetwork::copy_parameters_host()
     const Index last_trainable_layer_index = get_last_trainable_layer_index();
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
-    {
         layers[i]->copy_parameters_host();
-    }
 }
 
 
@@ -2147,12 +2127,11 @@ void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     const vector<vector<pair<type*, dimensions>>> layer_input_pairs_device = forward_propagation_cuda.get_layer_input_pairs_device(input_pair_device, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
-    {
         layers[i]->forward_propagate_cuda(layer_input_pairs_device[i],
                                           forward_propagation_cuda.layers[i],
                                           is_training);
-    }
 }
+
 
 void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 {
@@ -2175,7 +2154,7 @@ void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
 }
 
 
-void NeuralNetwork::set_parameters_cuda(float* new_parameters)
+void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
 {
     Index index = 0;
 
@@ -2184,25 +2163,21 @@ void NeuralNetwork::set_parameters_cuda(float* new_parameters)
 }
 
 
-void NeuralNetwork::create_cuda()
+void NeuralNetwork::create_cuda() const
 {
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
     for (const unique_ptr<Layer>& layer : neural_network_layers)
-    {
         layer->create_cuda();
-    }
 }
 
 
-void NeuralNetwork::destroy_cuda()
+void NeuralNetwork::destroy_cuda() const
 {
     const vector<unique_ptr<Layer>>& neural_network_layers = get_layers();
 
     for (const unique_ptr<Layer>& layer : neural_network_layers)
-    {
         layer->destroy_cuda();
-    }
 }
 
 
@@ -2265,7 +2240,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             break;
 
         case Layer::Type::Flatten:
-            //layers[i] = make_unique<FlattenLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<FlattenLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Scaling2D:
@@ -2329,23 +2304,18 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
+    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+
     vector<vector<pair<type*, dimensions>>> layer_input_pairs_device(layers_number);
 
     layer_input_pairs_device[0] = batch_input_pairs_device;
 
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-
-    for (Index i = first_trainable_layer_index; i < layers_number; i++)
+    for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
     {
         const vector<Index>& this_layer_input_indices = layer_input_indices[i];
 
         layer_input_pairs_device[i].resize(1);
-
-        // if (i == first_trainable_layer_index)
-        // {
-        //     layer_input_pairs[i] = batch_input_pairs;
-        //     continue;
-        // }
 
         if (neural_network->get_model_type_string() == "TextClassification") {
 
@@ -2473,7 +2443,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
             break;
 
         case Layer::Type::Flatten:
-            //layers[i] = make_unique <FlattenLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique <FlattenLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Embedding:

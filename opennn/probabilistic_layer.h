@@ -115,7 +115,7 @@ public:
                               Index&,
                               float*) const override;
 
-    void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, Index&);
 
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 

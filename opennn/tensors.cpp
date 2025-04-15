@@ -672,6 +672,35 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
     }
 }
 
+
+void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
+                                const vector<Index>& row_indices,
+                                const vector<Index>& column_indices,
+                                type* tensor_data)
+{
+
+    const Index rows_number = row_indices.size();
+    const Index columns_number = column_indices.size();
+
+    const type* matrix_data = matrix.data();
+
+#pragma omp parallel for
+
+    for (Index i = 0; i < rows_number; i++)
+    {
+        const Index row_index = row_indices[i];
+
+        for (Index j = 0; j < columns_number; j++)
+        {
+            const Index column_index = column_indices[j];
+            const type* matrix_value = matrix_data + row_index + matrix.dimension(0) * column_index;
+            type* tensor_value = tensor_data + i * columns_number + j;
+            *tensor_value = *matrix_value;
+        }
+    }
+}
+
+
 void fill_tensor_3D(const Tensor<type, 2>& matrix,
                    const vector<Index>& rows_indices,
                    const vector<Index>& columns_indices,
@@ -700,6 +729,7 @@ void fill_tensor_3D(const Tensor<type, 2>& matrix,
         }
     }
 }
+
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {
