@@ -1476,18 +1476,18 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
         sufix = "np.";
 
-        for(int i = 0; i < found_tokens.size(); i++)
+        for(int j = 0; j < found_tokens.size(); j++)
         {
-            key_word = found_tokens[i];
+            key_word = found_tokens[j];
             new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
 
         sufix = "NeuralNetwork.";
 
-        for(int i = 0; i < found_mathematical_expressions.size(); i++)
+        for(int j = 0; j < found_mathematical_expressions.size(); j++)
         {
-            key_word = found_mathematical_expressions[i];
+            key_word = found_mathematical_expressions[j];
             new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
