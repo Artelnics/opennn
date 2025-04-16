@@ -28,34 +28,7 @@ int main()
         cout << "OpenNN. Blank Cuda." << endl;
 
         #ifdef OPENNN_CUDA_test
-        
-        // Data set
 
-        DataSet data_set("../examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true, false);
-
-        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
-
-        // Neural network
-
-        const Index neurons_number = 20;
-
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-            { input_variables_number }, { neurons_number }, { target_variables_number });
-
-        // Training strategy
-
-        TrainingStrategy training_strategy(&neural_network, &data_set);
-
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-        training_strategy.set_maximum_epochs_number(100);
-        training_strategy.set_display_period(10);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        //training_strategy.perform_training();
-        training_strategy.perform_training_cuda();
-        
         // Data set
         /*
         const Index samples_number = 2;
@@ -69,13 +42,14 @@ int main()
 
         image_data_set.set_data_random();
         */
-        /*
+        
         ImageDataSet image_data_set;
 
-        //image_data_set.set_data_path("../examples/mnist/data");
-        image_data_set.set_data_path("data/mnist");
+        image_data_set.set_data_path("../examples/mnist/data_test");
 
         image_data_set.read_bmp();
+
+        image_data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 
@@ -105,7 +79,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
+        
         #endif  
 
         cout << "Bye!" << endl;

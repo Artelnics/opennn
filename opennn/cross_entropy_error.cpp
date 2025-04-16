@@ -516,19 +516,37 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
 
     const float* outputs = outputs_pair.first;
 
-    const size_t size = samples_number * outputs_pair.second[1];
-
     // Back propagation
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation_cuda.get_output_deltas_pair_device();
 
     float* output_deltas = output_deltas_pair.first;
 
-    const type coefficient = -type(1) / type(samples_number);
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
 
-    division(size, targets, outputs, output_deltas);
+    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
 
-    cublasSscal(cublas_handle, size, &coefficient, output_deltas, 1);
+    const type alpha = 1.0f;
+    const type beta = 0.0f;
+    const type beta_minus_one = -1.0f;
+
+    const type scale_factor = type(1.0) / static_cast<type>(samples_number);
+
+    // outputs - targets
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        outputs,
+        &beta_minus_one,
+        outputs_tensor_descriptor,
+        targets,
+        &beta,
+        outputs_tensor_descriptor,
+        output_deltas);
+
+    // (outputs - targets) / samples_number
+    cudnnScaleTensor(cudnn_handle, outputs_tensor_descriptor, output_deltas, &scale_factor);
 }
 
 #endif
