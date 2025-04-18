@@ -434,6 +434,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
+        /*
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
@@ -456,6 +457,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        padding_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
+        */
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));

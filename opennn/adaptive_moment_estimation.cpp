@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     if(neural_network->has(Layer::Type::LongShortTermMemory)
     || neural_network->has(Layer::Type::Recurrent))
@@ -642,7 +642,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = true;
+    bool shuffle = false;
 
     if (neural_network->has(Layer::Type::LongShortTermMemory)
         || neural_network->has(Layer::Type::Recurrent))

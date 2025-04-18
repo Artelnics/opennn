@@ -95,7 +95,9 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    set_parameters_random();
+    //set_parameters_random();
+    biases.setRandom();
+    weights.setRandom();
 
     layer_type = Layer::Type::Probabilistic;
 
