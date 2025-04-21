@@ -95,9 +95,7 @@ void ProbabilisticLayer::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    //set_parameters_random();
-    biases.setRandom();
-    weights.setRandom();
+    set_parameters_random();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -721,7 +719,6 @@ void ProbabilisticLayer::forward_propagate_cuda(const vector<pair<type*, dimensi
 
         break;
     }
-    //cout << "CUDA combinations:\n" << matrix_from_device(combinations, batch_samples_number, outputs_number) << endl;
     //cout << "CUDA outputs:\n" << matrix_from_device(outputs, batch_samples_number, outputs_number) << endl;
     //system("pause");
 }

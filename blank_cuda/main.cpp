@@ -45,11 +45,10 @@ int main()
         
         ImageDataSet image_data_set;
 
-        image_data_set.set_data_path("../examples/mnist/data_test");
+        image_data_set.set_data_path("../examples/mnist/data_bin");
+        //image_data_set.set_data_path("../examples/mnist/data");
 
         image_data_set.read_bmp();
-
-        image_data_set.set(DataSet::SampleUse::Training);
 
         // Neural network
 
@@ -69,8 +68,8 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
-        //training_strategy.perform_training();
-        training_strategy.perform_training_cuda();
+        training_strategy.perform_training();
+        //training_strategy.perform_training_cuda();
 
         // Testing analysis
 
@@ -79,9 +78,9 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        
-        #endif  
 
+        #endif  
+        
         cout << "Bye!" << endl;
         
         return 0;

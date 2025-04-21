@@ -375,11 +375,14 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 
     const float epsilon = type(1e-5);
 
+    // outputs + epsilon
     cudaMemcpy(outputs_plus_epsilon, outputs, size * sizeof(float), cudaMemcpyDeviceToDevice);
     cublasSaxpy(cublas_handle, size, &epsilon, ones, 1, outputs_plus_epsilon, 1);
 
+    // (outputs + epsilon).log()
     log(size, outputs_plus_epsilon, numerator_2);
 
+    // targets * ((outputs + epsilon).log())
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
@@ -392,6 +395,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
         outputs_tensor_descriptor,
         numerator);
 
+    // (targets * ((outputs + epsilon).log())).sum()
     cudnnReduceTensor(cudnn_handle,
         reduce_tensor_descriptor,
         nullptr, 0,
