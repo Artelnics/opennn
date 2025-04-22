@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct EmbeddingLayerForwardPropagationCuda;
-//struct EmbeddingLayerBackPropagationCuda;
-//#endif
-
-
 class Embedding : public Layer
 {
 
@@ -162,9 +156,6 @@ struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const;
-
-    type* outputs = nullptr;
     type* positional_encoding_cuda = nullptr;
     bool built_positional_encoding_matrix = false;
 };

@@ -46,17 +46,20 @@ private:
 
    type minkowski_parameter;
 
-#ifdef OPENNN_CUDA
 
-public:
+#ifdef OPENNN_CUDA_test
 
-    void calculate_error_cuda(const BatchCuda&,
-                              const NeuralNetwork::ForwardPropagationCuda&,
-                              BackPropagationCuda&) const;
+   // Error
 
-    void calculate_output_delta_cuda(const BatchCuda&,
-                                     const NeuralNetwork::ForwardPropagationCuda&,
-                                     BackPropagationCuda&) const;
+   void calculate_error_cuda(const BatchCuda&,
+                             const ForwardPropagationCuda&,
+                             BackPropagationCuda&) const override;
+
+   // Gradient
+
+   void calculate_output_delta_cuda(const BatchCuda&,
+                                    ForwardPropagationCuda&,
+                                    BackPropagationCuda&) const override;
 
 #endif
 

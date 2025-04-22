@@ -16,12 +16,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct ConvolutionalForwardPropagationCuda;
-//struct ConvolutionalBackPropagationCuda;
-//#endif
-
-
 class Convolutional : public Layer
 {
 

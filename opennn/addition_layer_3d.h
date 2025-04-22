@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    struct AdditionLayer3DForwardPropagationCuda;
-//    struct AdditionLayer3DBackPropagationCuda;
-//#endif
-
 class Addition3d : public Layer
 {
 
@@ -48,18 +43,7 @@ public:
 
 #ifdef OPENNN_CUDA
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
-
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
-
-    Index get_inputs_number() const;
-
-    Index get_inputs_depth() const;
+//@todo
 
 #endif
 

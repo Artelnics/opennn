@@ -10,8 +10,6 @@
 #define LONGSHORTTERMMEMORYLAYER_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -162,7 +160,7 @@ private:
    Tensor<type, 1> empty;
 
 #ifdef OPENNN_CUDA
-    // Empty @todo
+    // @todo
 #endif
 
 };
@@ -270,6 +268,11 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA
+// @todo
+#endif
 
 }
 

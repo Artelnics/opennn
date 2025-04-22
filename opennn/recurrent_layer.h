@@ -14,24 +14,20 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
-//#endif
-
 class Recurrent : public Layer
 {
 
 public:
 
     enum class Activation{Logistic, 
-                                  HyperbolicTangent,
-                                  Linear, 
-                                  RectifiedLinear, 
-                                  ExponentialLinear,
-                                  ScaledExponentialLinear, 
-                                  SoftPlus, 
-                                  SoftSign, 
-                                  HardSigmoid};
+                          HyperbolicTangent,
+                          Linear, 
+                          RectifiedLinear, 
+                          ExponentialLinear,
+                          ScaledExponentialLinear, 
+                          SoftPlus, 
+                          SoftSign, 
+                          HardSigmoid};
 
    Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
@@ -104,9 +100,9 @@ private:
 
     Tensor<type, 2> hidden_states;
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 };
 
@@ -159,6 +155,11 @@ struct RecurrentBackPropagation : LayerBackPropagation
     Tensor<type, 2> input_derivatives;
 
 };
+
+
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 }
 

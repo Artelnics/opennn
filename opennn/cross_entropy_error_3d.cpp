@@ -135,6 +135,26 @@ void CrossEntropyError3D::from_XML(const XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
+
+#ifdef OPENNN_CUDA_test
+
+void CrossEntropyError3D::calculate_error_cuda(const BatchCuda& batch_cuda,
+                                               const ForwardPropagationCuda& forward_propagation_cuda,
+                                               BackPropagationCuda& back_propagation_cuda) const
+{
+    throw runtime_error("CUDA calculate_error_cuda not implemented for loss index type: CrossEntropyError3D");
+}
+
+
+void CrossEntropyError3D::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
+                                                      ForwardPropagationCuda& forward_propagation_cuda,
+                                                      BackPropagationCuda& back_propagation_cuda) const
+{
+    throw runtime_error("CUDA calculate_output_delta_cuda not implemented for loss index type: CrossEntropyError3D");
+}
+
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

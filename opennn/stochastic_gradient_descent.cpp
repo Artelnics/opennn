@@ -132,7 +132,7 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 
 
 void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
-                      StochasticGradientDescentData& optimization_data) const
+                                                  StochasticGradientDescentData& optimization_data) const
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -517,6 +517,64 @@ void StochasticGradientDescentData::set(StochasticGradientDescent* new_stochasti
     parameters_increment.setZero();
     last_parameters_increment.setZero();
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults StochasticGradientDescent::perform_training_cuda()
+{
+    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: StochasticGradientDescent");
+}
+
+
+void StochasticGradientDescent::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda, 
+                                                        SGDOptimizationDataCuda& optimization_data_cuda) const
+{
+    // @todo
+}
+
+
+SGDOptimizationDataCuda::SGDOptimizationDataCuda(StochasticGradientDescent* new_stochastic_gradient_descent)
+{
+    set(new_stochastic_gradient_descent);
+}
+
+
+void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_gradient_descent)
+{
+    stochastic_gradient_descent = new_stochastic_gradient_descent;
+
+    const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    // Gradient
+
+    if (cudaMalloc(&parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "parameters_increment allocation error" << endl;
+
+    if (cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "last_parameters_increment allocation error" << endl;
+}
+
+
+void SGDOptimizationDataCuda::free()
+{
+    cudaFree(parameters_increment);
+    cudaFree(last_parameters_increment);
+}
+
+
+void SGDOptimizationDataCuda::print() const
+{
+    const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    cout << "parameters_increment:" << endl;
+    cout << vector_from_device(parameters_increment, parameters_number) << endl;
+
+    cout << "last_parameters_increment:" << endl;
+    cout << vector_from_device(last_parameters_increment, parameters_number) << endl;
+}
+
+#endif
 
 }
 

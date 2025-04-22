@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct NormalizationLayer3DForwardPropagationCuda;
-//struct NormalizationLayer3DBackPropagationCuda;
-//#endif
-
 class Normalization3d : public Layer
 {
 
@@ -61,9 +56,9 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    //#ifdef OPENNN_CUDA
-    //    #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_cuda.h"
-    //#endif
+    #ifdef OPENNN_CUDA_test
+        // @todo
+    #endif
 
 private:
 
@@ -117,10 +112,9 @@ struct Normalization3dBackPropagation : LayerBackPropagation
 };
 
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_forward_propagation_cuda.h"
-//    #include "../../opennn_cuda/opennn_cuda/normalization_layer_3d_back_propagation_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 }
 

@@ -172,11 +172,11 @@ public:
 
     virtual void calculate_error_cuda(const BatchCuda&,
                                       const ForwardPropagationCuda&,
-                                      BackPropagationCuda&) const {}
+                                      BackPropagationCuda&) const = 0;
 
     virtual void calculate_output_delta_cuda(const BatchCuda&,
                                              ForwardPropagationCuda&,
-                                             BackPropagationCuda&) const {}
+                                             BackPropagationCuda&) const = 0;
 
     void calculate_layers_error_gradient_cuda(const BatchCuda&,
                                               ForwardPropagationCuda&,
