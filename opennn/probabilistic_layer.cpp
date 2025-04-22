@@ -95,9 +95,7 @@ void Probabilistic::set(const dimensions& new_input_dimensions,
     biases.resize(new_output_dimensions[0]);
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
-    //set_parameters_random();
-    biases.setRandom();
-    weights.setRandom();
+    set_parameters_random();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -721,7 +719,6 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
         break;
     }
-    //cout << "CUDA combinations:\n" << matrix_from_device(combinations, batch_samples_number, outputs_number) << endl;
     //cout << "CUDA outputs:\n" << matrix_from_device(outputs, batch_samples_number, outputs_number) << endl;
     //system("pause");
 }
@@ -762,7 +759,6 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation =
         static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    const float* targets = probabilistic_layer_back_propagation->targets;
     const float* ones = probabilistic_layer_back_propagation->ones;
     float* error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives_cuda;
     float* weights_derivatives = probabilistic_layer_back_propagation->weights_derivatives_cuda;
@@ -770,8 +766,6 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     float* inputs_derivatives = probabilistic_layer_back_propagation->inputs_derivatives;
 
     const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = probabilistic_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
-
-    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = probabilistic_layer_back_propagation->operator_sum_descriptor;
 
     float alpha = 1.0f;
     const float beta = 0.0f;
@@ -794,21 +788,9 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
             error_combinations_derivatives);
     }
     else
-    {
-        const float alpha_substract = -1.0f;
-
-        cudnnOpTensor(cudnn_handle,
-            operator_sum_descriptor,
-            &alpha,
-            error_combinations_derivatives_tensor_descriptor, outputs,
-            &alpha_substract,
-            error_combinations_derivatives_tensor_descriptor, targets,
-            &beta,
-            error_combinations_derivatives_tensor_descriptor, error_combinations_derivatives);
-    }
+        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_samples_number * outputs_number * sizeof(float), cudaMemcpyDeviceToDevice);
 
     //Synaptic weights derivatives
-
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
@@ -823,7 +805,6 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
         inputs_number);
 
     //Bias derivatives
-    // @todo use cudnn reduce tensor instead of contract of ones
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
@@ -839,7 +820,6 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
         outputs_number);
 
     // Inputs derivatives
-
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
         batch_samples_number,
@@ -853,12 +833,6 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
         &beta,
         inputs_derivatives,
         batch_samples_number);
-    /*
-    cout << "CUDA biases_derivatives:\n" << vector_from_device(biases_derivatives, outputs_number) << endl;
-    cout << "CUDA weights_derivatives:\n" << matrix_from_device(weights_derivatives, inputs_number, outputs_number) << endl;
-    cout << "CUDA inputs_derivatives:\n" << matrix_from_device(inputs_derivatives, batch_samples_number, inputs_number) << endl;
-    system("pause");
-    */
 }
 
 
