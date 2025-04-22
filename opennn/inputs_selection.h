@@ -130,7 +130,7 @@ struct InputsSelectionResults
 
     type optimum_selection_error = numeric_limits<type>::max();
 
-    vector<string> optimal_input_raw_variables_names;
+    vector<string> optimal_input_raw_variable_names;
 
     vector<Index> optimal_input_raw_variables_indices;
 

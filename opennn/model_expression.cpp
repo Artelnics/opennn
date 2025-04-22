@@ -9,6 +9,7 @@
 #include "model_expression.h"
 #include "descriptives.h"
 #include "scaling_layer_2d.h"
+#include "strings_utilities.h"
 
 namespace opennn {
 
@@ -39,6 +40,7 @@ string ModelExpression::write_comments_c()
         "// \n"
         "// Input names:";
 }
+
 
 string ModelExpression::write_logistic_c()
 {
@@ -362,13 +364,7 @@ string ModelExpression::write_subheader_api(){
 
 void ModelExpression::autoassociation_api(const NeuralNetwork& neural_network)
 {
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
-
     string expression;
-
-    // Delete intermediate calculations
-
-    // sample_autoassociation_distance
 
     size_t index = 0;
 
@@ -493,11 +489,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
 
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
-
-    int cell_states_counter = 0;
-    int hidden_state_counter = 0;
-
     bool logistic     = false;
     bool ReLU         = false;
     bool ExpLinear    = false;
@@ -531,7 +522,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
             line.append(";");
 
         lines.push_back(line);
-
     }
 
     const Index lines_number = lines.size();
@@ -737,8 +727,6 @@ string ModelExpression::get_expression_api(const NeuralNetwork& neural_network)
 
 string ModelExpression::autoassociaton_javascript(const NeuralNetwork& neural_network)
 {
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
-
     string expression;
 
     size_t index = 0;
@@ -944,6 +932,7 @@ string ModelExpression::subheader_javascript()
         "<h4>INPUTS</h4>\n";
 }
 
+
 string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network)
 {
     vector<string> lines;
@@ -956,8 +945,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
 
-    const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
-
     ostringstream buffer_to_fix;
 
     string token;
@@ -966,9 +953,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     const int maximum_output_variable_numbers = 5;
 
     stringstream ss(expression);
-
-    int cell_states_counter = 0;
-    int hidden_state_counter = 0;
 
     bool logistic     = false;
     bool ReLU         = false;
@@ -987,9 +971,9 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     buffer << subheader_javascript();
 
-    if(neural_network.has(Layer::Type::Scaling2D) || neural_network.has(Layer::Type::Scaling4D))
+    if(neural_network.has(Layer::Type::Scaling2d) || neural_network.has(Layer::Type::Scaling4d))
     {
-        const vector<Descriptives> inputs_descriptives= static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D))->get_descriptives();
+        const vector<Descriptives> inputs_descriptives= static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d))->get_descriptives();
 
         for(int i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl
@@ -1263,11 +1247,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
     const NeuralNetwork::ModelType model_type = neural_network.get_model_type();
 
-    //const Index layers_number = neural_network.get_layers_number();
-
-    int cell_states_counter = 0;
-    int hidden_state_counter = 0;
-
     bool logistic     = false;
     bool ReLU         = false;
     bool ExpLinear    = false;
@@ -1279,9 +1258,7 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
     buffer << write_header_python();
 
     for(Index i = 0; i < inputs_number; i++)
-    {
         buffer << "\t" << i << ") " << inputs[i] << endl;
-    }
 
     buffer << write_subheader_python();
 
@@ -1343,17 +1320,6 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
         if(word.size() > 1)
             found_tokens.push_back(word);
-    }
-
-    for(int i = 0; i< found_tokens.size(); i++)
-    {
-        const string token = found_tokens[i];
-
-        if(token.find("cell_state") == 0)
-            cell_states_counter += 1;
-
-        if(token.find("hidden_state") == 0)
-            hidden_state_counter += 1;
     }
 
     buffer << "import numpy as np\n" << endl;

@@ -14,12 +14,12 @@
 namespace opennn
 {
 
-class ScalingLayer4D : public Layer
+class Scaling4d : public Layer
 {
 
 public:
 
-   ScalingLayer4D(const dimensions& = {0, 0, 0, 0});
+   Scaling4d(const dimensions& = {0, 0, 0, 0});
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;

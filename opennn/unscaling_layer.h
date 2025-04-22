@@ -15,12 +15,12 @@
 namespace opennn
 {
 
-class UnscalingLayer : public Layer
+class Unscaling : public Layer
 {
 
 public:
 
-   UnscalingLayer(const dimensions& = {0}, const string& = "unscaling_layer");
+   Unscaling(const dimensions& = {0}, const string& = "unscaling_layer");
    
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;

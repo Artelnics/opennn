@@ -58,11 +58,11 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Recurrent:
         return "Recurrent";
 
-    case Type::Scaling2D:
-        return "Scaling2D";
+    case Type::Scaling2d:
+        return "Scaling2d";
 
-    case Type::Scaling4D:
-        return "Scaling4D";
+    case Type::Scaling4d:
+        return "Scaling4d";
 
     case Type::Unscaling:
         return "Unscaling";
@@ -70,17 +70,17 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Flatten3D:
-        return "Flatten3D";
+    case Type::Flatten3d:
+        return "Flatten3d";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
 
-    case Type::Addition3D:
-        return "Addition3D";
+    case Type::Addition3d:
+        return "Addition3d";
 
-    case Type::Normalization3D:
-        return "Normalization3D";
+    case Type::Normalization3d:
+        return "Normalization3d";
 
     case Type::Embedding:
         return "Embedding";
@@ -91,7 +91,6 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     default:
         throw runtime_error("Unknown layer type.");
     }
-
 }
 
 
@@ -124,11 +123,11 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Recurrent")
         return Type::Recurrent;
 
-    if(this_layer_type == "Scaling2D")
-        return Type::Scaling2D;
+    if(this_layer_type == "Scaling2d")
+        return Type::Scaling2d;
 
-    if(this_layer_type == "Scaling4D")
-        return Type::Scaling4D;
+    if(this_layer_type == "Scaling4d")
+        return Type::Scaling4d;
 
     if(this_layer_type == "Unscaling")
         return Type::Unscaling;
@@ -136,17 +135,17 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Flatten")
         return Type::Flatten;
 
-    if(this_layer_type == "Flatten3D")
-        return Type::Flatten3D;
+    if(this_layer_type == "Flatten3d")
+        return Type::Flatten3d;
 
     if(this_layer_type == "NonMaxSuppression")
         return Type::NonMaxSuppression;
 
-    if(this_layer_type == "Addition3D")
-        return Type::Addition3D;
+    if(this_layer_type == "Addition3d")
+        return Type::Addition3d;
 
-    if(this_layer_type == "Normalization3D")
-        return Type::Normalization3D;
+    if(this_layer_type == "Normalization3d")
+        return Type::Normalization3d;
 
     if(this_layer_type == "Embedding")
         return Type::Embedding;
@@ -201,11 +200,11 @@ string Layer::get_type_string() const
     case Type::Recurrent:
         return "Recurrent";
 
-    case Type::Scaling2D:
-        return "Scaling2D";
+    case Type::Scaling2d:
+        return "Scaling2d";
 
-    case Type::Scaling4D:
-        return "Scaling4D";
+    case Type::Scaling4d:
+        return "Scaling4d";
 
     case Type::Unscaling:
         return "Unscaling";
@@ -213,17 +212,17 @@ string Layer::get_type_string() const
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Flatten3D:
-        return "Flatten3D";
+    case Type::Flatten3d:
+        return "Flatten3d";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
 
-    case Type::Addition3D:
-        return "Addition3D";
+    case Type::Addition3d:
+        return "Addition3d";
 
-    case Type::Normalization3D:
-        return "Normalization3D";
+    case Type::Normalization3d:
+        return "Normalization3d";
 
     case Type::Embedding:
         return "Embedding";
@@ -549,7 +548,8 @@ cudnnHandle_t Layer::get_cudnn_handle()
 #endif
 
 }
- // namespace opennn
+
+// namespace opennn
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

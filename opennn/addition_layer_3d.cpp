@@ -16,7 +16,7 @@ Addition3d::Addition3d(const Index& new_sequence_length,
                        const Index& new_embedding_dimension, 
                        const string& new_name) : Layer()
 {
-    layer_type = Type::Addition3D;
+    layer_type = Type::Addition3d;
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
@@ -98,10 +98,10 @@ void Addition3d::back_propagate(const vector<pair<type*, dimensions>>&,
 
 void Addition3d::from_XML(const XMLDocument& document)
 {
-    const auto* addition_layer_element = document.FirstChildElement("Addition3D");
+    const auto* addition_layer_element = document.FirstChildElement("Addition3d");
 
     if (!addition_layer_element)
-        throw runtime_error("Addition3D element is nullptr.\n");
+        throw runtime_error("Addition3d element is nullptr.\n");
 
     const string new_name = read_xml_string(addition_layer_element, "Name");
     const Index new_sequence_lenght = read_xml_index(addition_layer_element, "SequenceLength");
@@ -113,7 +113,7 @@ void Addition3d::from_XML(const XMLDocument& document)
 
 void Addition3d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Addition3D");
+    printer.OpenElement("Addition3d");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));

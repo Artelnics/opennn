@@ -202,9 +202,7 @@ Correlation exponential_correlation(const ThreadPoolDevice* thread_pool_device,
     exponential_correlation = linear_correlation(thread_pool_device, x, y.log());
 
     exponential_correlation.form = Correlation::Form::Exponential;
-
     exponential_correlation.a = exp(exponential_correlation.a);
-
     exponential_correlation.b = exponential_correlation.b;
 
     return exponential_correlation;
@@ -547,18 +545,18 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
-    neural_network.add_layer(make_unique<ScalingLayer2D>(dim1));
+    neural_network.add_layer(make_unique<Scaling2d>(dim1));
     neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::Activation::Logistic));
 
     neural_network.set_parameters_constant(type(0.001));
 
-//    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+//    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
 //    scaling_layer_2d->set_display(false);
 
-//    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+//    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-//    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Logistic);
+//    probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -641,13 +639,13 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
 
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
     scaling_layer_2d->set_display(false);
 
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Logistic);
+    probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -749,11 +747,11 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { input_variables_number }, {1}, {target_variables_number});
 
-    // ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+    // Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    // ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+    // Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    // probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
+    // probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
     // scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -869,11 +867,11 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  {input_variables_number }, {}, {target_variables_number});
 
-    ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network.get_first(Layer::Type::Scaling2D));
+    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network.get_first(Layer::Type::Probabilistic));
+    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
+    probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
 
     scaling_layer_2d->set_display(false);
 

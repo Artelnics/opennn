@@ -10,7 +10,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
-#include "probabilistic_layer.h"
+//#include "probabilistic_layer.h"
 
 namespace opennn
 {
