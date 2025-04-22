@@ -841,7 +841,6 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         cudaMemcpy(error_combinations_derivatives, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 
     // Bias derivatives 
-    //// @todo  Use cudnnReduceTensor instead of contract of ones
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
@@ -857,7 +856,6 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         outputs_number);
 
     // Synaptic weights derivatives
-
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
@@ -872,7 +870,6 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         inputs_number);
 
     // Input derivatives
-
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
         batch_samples_number,

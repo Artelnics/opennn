@@ -534,8 +534,6 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
     const type beta = 0.0f;
     const type beta_minus_one = -1.0f;
 
-    const type scale_factor = type(1.0) / static_cast<type>(samples_number);
-
     // outputs - targets
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
@@ -550,7 +548,8 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
         output_deltas);
 
     // (outputs - targets) / samples_number
-    cudnnScaleTensor(cudnn_handle, outputs_tensor_descriptor, output_deltas, &scale_factor);
+    const float scale_factor = 1.0f / static_cast<float>(samples_number);
+    cudnnScaleTensor(cudnn_handle,outputs_tensor_descriptor,output_deltas,&scale_factor);
 }
 
 #endif

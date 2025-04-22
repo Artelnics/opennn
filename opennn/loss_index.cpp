@@ -1895,17 +1895,26 @@ void BackPropagationCuda::print()
 
 void BackPropagationCuda::free()
 {
-    cudaFree(loss_index);
     cudaFree(errors);
     cudaFree(gradient);
     cudaFree(parameters);
     cudaFree(parameters_square);
     cudaFree(output_deltas);
     cudaFree(numerator);
+    cudaFree(numerator_2);
+    cudaFree(numerator_3);
+    cudaFree(outputs_plus_epsilon);
+    cudaFree(one_minus_targets);
+    cudaFree(one_minus_outputs);
+    cudaFree(numerator_reduce);
+    cudaFree(regularization_gradient);
+    cudaFree(ones);
+    cudaFree(workspace);
     //cudaFree(predictions);
     //cudaFree(matches);
     //cudaFree(mask);
 
+    cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_square_root_descriptor);

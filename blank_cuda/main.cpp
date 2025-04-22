@@ -43,23 +43,22 @@ int main()
         image_data_set.set_data_random();
         */
         
-        ImageDataSet image_data_set;
+        ImageDataSet data_set;
 
-        image_data_set.set_data_path("../examples/mnist/data_bin");
-        //image_data_set.set_data_path("../examples/mnist/data");
+        data_set.set_data_path("../examples/mnist/data");
 
-        image_data_set.read_bmp();
-
+        data_set.read_bmp();
+       
         // Neural network
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            image_data_set.get_dimensions(DataSet::VariableUse::Input),
+            data_set.get_dimensions(DataSet::VariableUse::Input),
             { 1 },
-            image_data_set.get_dimensions(DataSet::VariableUse::Target));
+            data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &image_data_set);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -68,12 +67,12 @@ int main()
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
-        training_strategy.perform_training();
-        //training_strategy.perform_training_cuda();
+        //training_strategy.perform_training();
+        training_strategy.perform_training_cuda();
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
