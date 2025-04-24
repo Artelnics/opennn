@@ -201,7 +201,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                 // Neural network
 
                 input_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-                input_selection_results.optimal_input_raw_variables_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+                input_selection_results.optimal_input_raw_variable_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
                 input_selection_results.optimal_parameters = neural_network->get_parameters();
 
@@ -312,9 +312,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     neural_network->set_input_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
-    if(neural_network->has(Layer::Type::Scaling2D))
+    if(neural_network->has(Layer::Type::Scaling2d))
     {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }

@@ -65,6 +65,7 @@ void Batch::fill(const vector<Index>& sample_indices,
     
 }
 
+
 Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
     ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);

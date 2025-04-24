@@ -14,14 +14,14 @@
 namespace opennn
 {
 
-class ProbabilisticLayer : public Layer
+class Probabilistic : public Layer
 {
 
 public:
 
     enum class Activation { Binary, Logistic, Competitive, Softmax };
 
-    ProbabilisticLayer(const dimensions& = {0},
+    Probabilistic(const dimensions& = {0},
                        const dimensions& = {0},
                        const string& = "probabilistic_layer");
 

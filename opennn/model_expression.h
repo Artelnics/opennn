@@ -9,7 +9,6 @@
 #ifndef MODELEXPRESSION_H
 #define MODELEXPRESSION_H
 
-#include "strings_utilities.h"
 #include "neural_network.h"
 
 //#include "tensors.h"

@@ -15,37 +15,37 @@
 namespace opennn
 {
 
-ScalingLayer2D::ScalingLayer2D(const dimensions& new_input_dimensions) : Layer()
+Scaling2d::Scaling2d(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 }
 
 
-dimensions ScalingLayer2D::get_input_dimensions() const
+dimensions Scaling2d::get_input_dimensions() const
 {
     return dimensions{Index(scalers.size())};
 }
 
 
-dimensions ScalingLayer2D::get_output_dimensions() const
+dimensions Scaling2d::get_output_dimensions() const
 {
     return dimensions{Index(scalers.size())};
 }
 
 
-vector<Descriptives> ScalingLayer2D::get_descriptives() const
+vector<Descriptives> Scaling2d::get_descriptives() const
 {
     return descriptives;
 }
 
 
-Descriptives ScalingLayer2D::get_descriptives(const Index& index) const
+Descriptives Scaling2d::get_descriptives(const Index& index) const
 {
     return descriptives[index];
 }
 
 
-Tensor<type, 1> ScalingLayer2D::get_minimums() const
+Tensor<type, 1> Scaling2d::get_minimums() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -59,7 +59,7 @@ Tensor<type, 1> ScalingLayer2D::get_minimums() const
 }
 
 
-Tensor<type, 1> ScalingLayer2D::get_maximums() const
+Tensor<type, 1> Scaling2d::get_maximums() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -73,7 +73,7 @@ Tensor<type, 1> ScalingLayer2D::get_maximums() const
 }
 
 
-Tensor<type, 1> ScalingLayer2D::get_means() const
+Tensor<type, 1> Scaling2d::get_means() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -87,7 +87,7 @@ Tensor<type, 1> ScalingLayer2D::get_means() const
 }
 
 
-Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
+Tensor<type, 1> Scaling2d::get_standard_deviations() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -101,13 +101,13 @@ Tensor<type, 1> ScalingLayer2D::get_standard_deviations() const
 }
 
 
-vector<Scaler> ScalingLayer2D::get_scaling_methods() const
+vector<Scaler> Scaling2d::get_scaling_methods() const
 {
     return scalers;
 }
 
 
-vector<string> ScalingLayer2D::write_scalers() const
+vector<string> Scaling2d::write_scalers() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -122,7 +122,7 @@ vector<string> ScalingLayer2D::write_scalers() const
 }
 
 
-vector<string> ScalingLayer2D::write_scalers_text() const
+vector<string> Scaling2d::write_scalers_text() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -147,7 +147,7 @@ vector<string> ScalingLayer2D::write_scalers_text() const
 }
 
 
-void ScalingLayer2D::set(const dimensions& new_input_dimensions)
+void Scaling2d::set(const dimensions& new_input_dimensions)
 {
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions rank is not 1");
@@ -173,12 +173,12 @@ void ScalingLayer2D::set(const dimensions& new_input_dimensions)
 
     set_min_max_range(type(-1), type(1));
 
-    layer_type = Type::Scaling2D;
+    layer_type = Type::Scaling2d;
 
 }
 
 
-void ScalingLayer2D::set_input_dimensions(const dimensions& new_input_dimensions)
+void Scaling2d::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     descriptives.resize(new_input_dimensions[0]);
 
@@ -186,32 +186,32 @@ void ScalingLayer2D::set_input_dimensions(const dimensions& new_input_dimensions
 }
 
 
-void ScalingLayer2D::set_output_dimensions(const dimensions& new_output_dimensions)
+void Scaling2d::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     set_input_dimensions(new_output_dimensions);
 }
 
 
-void ScalingLayer2D::set_min_max_range(const type& min, const type& max)
+void Scaling2d::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
 }
 
 
-void ScalingLayer2D::set_descriptives(const vector<Descriptives>& new_descriptives)
+void Scaling2d::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
 }
 
 
-void ScalingLayer2D::set_scalers(const vector<Scaler>& new_scaling_methods)
+void Scaling2d::set_scalers(const vector<Scaler>& new_scaling_methods)
 {
     scalers = new_scaling_methods;
 }
 
 
-void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_string)
+void Scaling2d::set_scalers(const vector<string>& new_scaling_methods_string)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -225,7 +225,7 @@ void ScalingLayer2D::set_scalers(const vector<string>& new_scaling_methods_strin
 }
 
 
-void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
+void Scaling2d::set_scalers(const string& new_scaling_methods_string)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -235,7 +235,7 @@ void ScalingLayer2D::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
+void Scaling2d::set_scalers(const Scaler& new_scaling_method)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -245,13 +245,13 @@ void ScalingLayer2D::set_scalers(const Scaler& new_scaling_method)
 }
 
 
-bool ScalingLayer2D::is_empty() const
+bool Scaling2d::is_empty() const
 {
     return get_output_dimensions()[0] == 0;
 }
 
 
-void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
 {
@@ -307,7 +307,7 @@ void ScalingLayer2D::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-string ScalingLayer2D::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -322,7 +322,7 @@ string ScalingLayer2D::write_no_scaling_expression(const vector<string>& input_n
 }
 
 
-string ScalingLayer2D::write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_minimum_maximum_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -337,7 +337,7 @@ string ScalingLayer2D::write_minimum_maximum_expression(const vector<string>& in
 }
 
 
-string ScalingLayer2D::write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_mean_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_inputs_number();
 
@@ -352,7 +352,7 @@ string ScalingLayer2D::write_mean_standard_deviation_expression(const vector<str
 }
 
 
-string ScalingLayer2D::write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string Scaling2d::write_standard_deviation_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -367,7 +367,7 @@ string ScalingLayer2D::write_standard_deviation_expression(const vector<string>&
 }
 
 
-string ScalingLayer2D::get_expression(const vector<string>& new_input_names, const vector<string>&) const
+string Scaling2d::get_expression(const vector<string>& new_input_names, const vector<string>&) const
 {
     const vector<string> input_names = new_input_names.empty()
     ? get_default_input_names()
@@ -416,7 +416,7 @@ string ScalingLayer2D::get_expression(const vector<string>& new_input_names, con
 }
 
 
-void ScalingLayer2D::print() const
+void Scaling2d::print() const
 {
     cout << "Scaling layer" << endl;
 
@@ -434,9 +434,9 @@ void ScalingLayer2D::print() const
 }
 
 
-void ScalingLayer2D::to_XML(XMLPrinter& printer) const
+void Scaling2d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Scaling2D");
+    printer.OpenElement("Scaling2d");
 
     add_xml_element(printer, "NeuronsNumber", to_string(get_output_dimensions()[0]));
 
@@ -457,12 +457,12 @@ void ScalingLayer2D::to_XML(XMLPrinter& printer) const
 }
 
 
-void ScalingLayer2D::from_XML(const XMLDocument& document)
+void Scaling2d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling2D");
+    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling2d");
 
     if(!scaling_layer_element)
-        throw runtime_error("Scaling2D element is nullptr.\n");
+        throw runtime_error("Scaling2d element is nullptr.\n");
 
     const Index neurons_number = read_xml_index(scaling_layer_element, "NeuronsNumber");
     set({ neurons_number });
