@@ -114,7 +114,7 @@ struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
     FlattenLayerForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
 
     void set(const Index & = 0, Layer* = nullptr);
 

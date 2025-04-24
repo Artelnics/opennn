@@ -193,6 +193,7 @@
     <ClInclude Include="..\opennn\images.h" />
     <ClInclude Include="..\opennn\image_data_set.h" />
     <ClInclude Include="..\opennn\inputs_selection.h" />
+    <ClInclude Include="..\opennn\kernel.cuh" />
     <ClInclude Include="..\opennn\kmeans.h" />
     <ClInclude Include="..\opennn\language_data_set.h" />
     <ClInclude Include="..\opennn\layer.h" />
@@ -239,10 +240,9 @@
     <ClInclude Include="..\opennn\transformer.h" />
     <ClInclude Include="..\opennn\unscaling_layer.h" />
     <ClInclude Include="..\opennn\weighted_squared_error.h" />
-    <ClInclude Include="kernel.cuh" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="..\opennn\kernel.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

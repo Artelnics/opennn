@@ -66,15 +66,20 @@ protected:
 
    type normalization_coefficient = type(1);
 
-#ifdef OPENNN_CUDA
+
+#ifdef OPENNN_CUDA_test
+
+   // Error
 
    void calculate_error_cuda(const BatchCuda&,
-                             const NeuralNetwork::ForwardPropagationCuda&,
-                             BackPropagationCuda&) const;
+                             const ForwardPropagationCuda&,
+                             BackPropagationCuda&) const override;
+
+   // Gradient
 
    void calculate_output_delta_cuda(const BatchCuda&,
-                                    const NeuralNetwork::ForwardPropagationCuda&,
-                                    BackPropagationCuda&) const;
+                                    ForwardPropagationCuda&,
+                                    BackPropagationCuda&) const override;
 
 #endif
 

@@ -36,23 +36,23 @@ public:
 
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA
 
-    void calculate_error_cuda(const BatchCuda& batch_cuda,
-                              const NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
-                              BackPropagationCuda& back_propagation_cuda) const
-    {
+#ifdef OPENNN_CUDA_test
 
-    }
+    // Error
 
-    void calculate_output_delta_cuda(const BatchCuda& batch_cuda,
-                                     const NeuralNetwork::ForwardPropagationCuda& forward_propagation_cuda,
-                                     BackPropagationCuda& back_propagation_cuda) const
-    {
+    void calculate_error_cuda(const BatchCuda&,
+                              const ForwardPropagationCuda&,
+                              BackPropagationCuda&) const override;
 
-    }
+    // Gradient
 
-    #endif
+    void calculate_output_delta_cuda(const BatchCuda&,
+                                     ForwardPropagationCuda&,
+                                     BackPropagationCuda&) const override;
+
+#endif
+
 };
 
 }

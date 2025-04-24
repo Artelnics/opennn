@@ -16,12 +16,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct ConvolutionalForwardPropagationCuda;
-//struct ConvolutionalBackPropagationCuda;
-//#endif
-
-
 class Convolutional : public Layer
 {
 
@@ -151,44 +145,42 @@ public:
 
    void print() const override;
 
-    #ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
     public:
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                              Index&,
+                              float*) const override;
 
-    void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, Index&);
 
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 
-    void allocate_parameters_device();
-    void free_parameters_device();
-    void copy_parameters_device();
     void copy_parameters_host();
+
+    void copy_parameters_device();
+
+    void allocate_parameters_device();
+
+    void free_parameters_device();
 
     float* get_weights_device() const;
     float* get_biases_device() const;
 
-    void print_cuda_parameters();
-
-    void reverse_cuda(Index, Index, Index, float*);
-
-    private:
+protected:
 
     float* biases_device = nullptr;
     float* weights_device = nullptr;
-
-    cudnnHandle_t cudnn_handle;
-    cublasHandle_t cublas_handle;
 
 #endif
 
@@ -264,19 +256,23 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    explicit ConvolutionalLayerForwardPropagationCuda(const Index&, Layer*);
+    ConvolutionalLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    pair<type*, dimensions> get_outputs_pair_device() const;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const;
+    int output_batch_size, output_channels, output_height, output_width = 0;
+
+    type* convolutions = nullptr;
 
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
@@ -288,38 +284,39 @@ struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagation
     vector<cudnnConvolutionFwdAlgoPerf_t> perfResults;
     int returnedAlgoCount = 0;
 
-    type* convolutions = nullptr;
     void* workspace = nullptr;
     size_t workspace_bytes = 0;
-
-    int output_batch_size = 0, output_channels = 0, output_height = 0, output_width = 0;
 };
 
 
 struct ConvolutionalLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
-    explicit ConvolutionalLayerBackPropagationCuda(const Index&, Layer*);
+    ConvolutionalLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    cudnnTensorDescriptor_t deltas_device_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
-    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
-    cudnnFilterDescriptor_t kernel_weights_derivatives_tensor_descriptor = nullptr;
-    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
+    type* error_combinations_derivatives_device = nullptr;
 
-    type* error_combinations_derivatives = nullptr;
-    type* biases_derivatives = nullptr;
-    type* kernel_weights_derivatives = nullptr;
+    type* biases_derivatives_device = nullptr;
+    type* weights_derivatives_device = nullptr;
+
     void* backward_data_workspace = nullptr;
     void* backward_filter_workspace = nullptr;
     size_t backward_data_workspace_bytes = 0;
     size_t backward_filter_workspace_bytes = 0;
+
+    cudnnTensorDescriptor_t deltas_device_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnFilterDescriptor_t kernel_descriptor = nullptr;
+    cudnnFilterDescriptor_t weights_derivatives_tensor_descriptor = nullptr;
+    cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 };
 
 #endif

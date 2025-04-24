@@ -200,7 +200,7 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
 
     cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
@@ -224,12 +224,14 @@ struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    float* targets = nullptr;
-    float* error_combinations_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_device = nullptr;
+
+    float* biases_derivatives_device = nullptr;
+    float* weights_derivatives_device = nullptr;
+
+    float* input_derivatives = nullptr;
+
     float* ones = nullptr;
-    float* biases_derivatives_cuda = nullptr;
-    float* weights_derivatives_cuda = nullptr;
-    float* inputs_derivatives = nullptr;
     float one = 1.0f;
 
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
