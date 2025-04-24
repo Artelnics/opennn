@@ -2286,7 +2286,7 @@ pair<type*, dimensions> ForwardPropagationCuda::get_last_trainable_layer_outputs
 
     const unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation = layers[last_trainable_layer_index];
 
-    return layer_forward_propagation->get_outputs_pair();
+    return layer_forward_propagation->get_outputs_pair_device();
 }
 
 
@@ -2346,7 +2346,7 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_
         {
             const Index this_layer_input_index = this_layer_input_indices[j];
 
-            layer_input_pairs_device[i][j] = layers[this_layer_input_index]->get_outputs_pair();
+            layer_input_pairs_device[i][j] = layers[this_layer_input_index]->get_outputs_pair_device();
         }
     }
 
