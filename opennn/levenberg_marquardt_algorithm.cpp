@@ -186,7 +186,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Start training
 
-    if(display) cout << "Training with Levenberg-Marquardt algorithm...\n";
+    if(display) cout << "Training with Levenberg-Marquardt algorithm..." << endl;;
 
     TrainingResults results(maximum_epochs_number+1);
 
@@ -206,9 +206,9 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     // Neural network
-    
+
     NeuralNetwork* neural_network = loss_index->get_neural_network();
-    
+
     set_names();
 
     set_scaling();

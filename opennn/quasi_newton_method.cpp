@@ -414,8 +414,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
-
-
     // Neural network
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();

@@ -1002,7 +1002,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                    << "</tr>\n" << endl;
     }
     else
-    {
         for(int i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
@@ -1012,7 +1011,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                    << "<input class=\"tabla\" type=\"number\" id=\"" << input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
-    }
+
 
     buffer << "</table>" << endl
            << "</form>\n" << endl;
@@ -1056,7 +1055,6 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "</tr>\n" << endl;
     }
     else
-    {
         for(int i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
@@ -1064,7 +1062,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                    << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
-    }
+
 
     buffer << "</table>\n" << endl
            << "</form>" << endl
@@ -1096,20 +1094,14 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
-    for(int i = 0; i < outputs_number; i++)
-        buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl
-               << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-    {
        for(int i = 0; i < outputs_number; i++)
-       {
-           buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl;
-           buffer << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-       }
-    }
+            buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl
+                   << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+
+
 
     while(getline(ss, token, '\n'))
     {
@@ -1122,7 +1114,8 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         lines.push_back(token);
     }
 
-    buffer << "function calculate_outputs(inputs)" << endl
+    buffer << "}" << endl
+           << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
     for(int i = 0; i < inputs_number; i++)
@@ -1544,12 +1537,12 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
 string ModelExpression::replace_reserved_keywords(const string& str)
 {
+    /*
     string language;
 
     vector<string> out;
     vector<string> tokens;
     vector<string> found_tokens;
-    /*
     string token;
     string out_string;
     string new_variable;
@@ -1774,33 +1767,32 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
 void ModelExpression::fix_input_names(vector<string>& input_names)
 {
-    /*
+
     const Index inputs_number = input_names.size();
 
-    vector<string> input_names(inputs_number);
+    vector<string> fixes_input_names(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
-            input_names[i] = "input_" + to_string(i);
+            fixes_input_names[i] = "input_" + to_string(i);
         else
-            input_names[i] = replace_reserved_keywords(input_names[i]);
-*/
+            fixes_input_names[i] = replace_reserved_keywords(input_names[i]);
+
 }
 
 
 void ModelExpression::fix_output_names(vector<string>& output_names)
 {
-    /*
+
     const Index outputs_number = output_names.size();
 
-    vector<string> output_names(outputs_number);
+    vector<string> fixes_output_names(outputs_number);
 
     for (int i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
-            output_names[i] = "output_" + to_string(i);
+            fixes_output_names[i] = "output_" + to_string(i);
         else
-            input_names[i] = replace_reserved_keywords(input_names[i]);
-*/
+            fixes_output_names[i] = replace_reserved_keywords(output_names[i]);
 }
 
 void ModelExpression::save_expression(const string& file_name,
@@ -1813,19 +1805,19 @@ void ModelExpression::save_expression(const string& file_name,
         throw runtime_error("Cannot open expression text file.\n");
 
     switch (programming_language) {
-    case ProgrammingLanguage::Python:
-        file << get_expression_python(*neural_network);
-        break;
-    case ProgrammingLanguage::C:
-        file << get_expression_c(*neural_network);
-        break;
-    case ProgrammingLanguage::JavaScript:
-        file << get_expression_javascript(*neural_network);
-        break;
-    case ProgrammingLanguage::PHP:
-        file << get_expression_api(*neural_network);
-        break;
-    }
+        case ProgrammingLanguage::Python:
+            file << get_expression_python(*neural_network);
+            break;
+        case ProgrammingLanguage::C:
+            file << get_expression_c(*neural_network);
+            break;
+        case ProgrammingLanguage::JavaScript:
+            file << get_expression_javascript(*neural_network);
+            break;
+        case ProgrammingLanguage::PHP:
+            file << get_expression_api(*neural_network);
+            break;
+        }
 
     file.close();
 }
