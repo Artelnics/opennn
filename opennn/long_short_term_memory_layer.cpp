@@ -2215,6 +2215,14 @@ void LongShortTermMemoryLayerBackPropagation::print() const
 {
 }
 
+#ifdef OPENNN_CUDA_test
+// @todo
+
+// CUDA structs
+
+//@todo
+#endif
+
 }
 
 // OpenNN: Open Neural Networks Library.

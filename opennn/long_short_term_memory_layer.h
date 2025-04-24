@@ -159,7 +159,7 @@ private:
 
    Tensor<type, 1> empty;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
     // @todo
 #endif
 
@@ -270,7 +270,7 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 // @todo
 #endif
 

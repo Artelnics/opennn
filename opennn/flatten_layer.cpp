@@ -182,6 +182,8 @@ void FlattenLayerBackPropagation::set(const Index& new_batch_size, Layer* new_la
 
 void FlattenLayerBackPropagation::print() const
 {
+    cout << "Flatten Input derivatives:" << endl
+        << input_derivatives.dimensions() << endl;
 }
 
 
@@ -207,7 +209,7 @@ vector<pair<type*, dimensions>> FlattenLayerBackPropagation::get_input_derivativ
 
 void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                     const bool&) //final
+                                     const bool&)
 {
     // Inputs
 
@@ -246,9 +248,9 @@ void Flatten::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
     FlattenLayerBackPropagationCuda* flatten_layer_back_propagation_cuda =
         static_cast<FlattenLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    type* inputs_derivatives = flatten_layer_back_propagation_cuda->inputs_derivatives;
+    type* input_derivatives = flatten_layer_back_propagation_cuda->input_derivatives;
 
-    reorganize_deltas_cuda(deltas_device, inputs_derivatives, batch_samples_number, outputs_number);
+    reorganize_deltas_cuda(deltas_device, input_derivatives, batch_samples_number, outputs_number);
 }
 
 
@@ -280,11 +282,14 @@ void FlattenLayerForwardPropagationCuda::set(const Index& new_batch_samples_numb
 
 void FlattenLayerForwardPropagationCuda::print() const
 {
+    const dimensions output_dimensions = layer->get_output_dimensions();
 
+    cout << "Flatten Outputs:" << endl
+        << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
 }
 
 
-pair<type*, dimensions> FlattenLayerForwardPropagationCuda::get_outputs_pair() const
+pair<type*, dimensions> FlattenLayerForwardPropagationCuda::get_outputs_pair_device() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -305,7 +310,7 @@ vector<pair<type*, dimensions>> FlattenLayerBackPropagationCuda::get_input_deriv
 
     const dimensions input_dimensions = flatten_layer->get_input_dimensions();
 
-    return { {inputs_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
+    return { {input_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
 }
 
 
@@ -321,14 +326,17 @@ void FlattenLayerBackPropagationCuda::set(const Index& new_batch_samples_number,
 
     // Input derivatives
 
-    if (cudaMalloc(&inputs_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)) != cudaSuccess)
-        cout << "inputs_derivatives flatten layer back propagation allocation error" << endl;
+    if (cudaMalloc(&input_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)) != cudaSuccess)
+        cout << "input_derivatives flatten layer back propagation allocation error" << endl;
 }
 
 
 void FlattenLayerBackPropagationCuda::print() const
 {
+    const dimensions input_dimensions = layer->get_input_dimensions();
 
+    cout << "Flatten Input derivatives:" << endl
+        << matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]) << endl;
 }
 
 #endif

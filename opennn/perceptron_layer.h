@@ -246,7 +246,7 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
@@ -269,9 +269,11 @@ struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    float* biases_derivatives_cuda = nullptr;
-    float* weights_derivatives_cuda = nullptr;
-    float* error_combinations_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_device = nullptr;
+
+    float* biases_derivatives_device = nullptr;
+    float* weights_derivatives_device = nullptr;
+    
     float* ones = nullptr;
     float one = 1.0f;
 
