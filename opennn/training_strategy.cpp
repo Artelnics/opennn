@@ -512,7 +512,7 @@ void TrainingStrategy::fix_forecasting()
     if(neural_network->has(Layer::Type::Recurrent))
         time_steps = static_cast<Recurrent*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
     else if(neural_network->has(Layer::Type::LongShortTermMemory))
-        time_steps = static_cast<LongShortTermMemoryLayer*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
+        time_steps = static_cast<LongShortTermMemory*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
     else
         return;
 

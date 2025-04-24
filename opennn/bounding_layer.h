@@ -14,12 +14,12 @@
 namespace opennn
 {
 
-class BoundingLayer : public Layer
+class Bounding : public Layer
 {
 
 public:
 
-   BoundingLayer(const dimensions& = {0}, const string& = "bounding_layer");
+   Bounding(const dimensions& = {0}, const string& = "bounding_layer");
 
    enum class BoundingMethod{NoBounding, Bounding};
 

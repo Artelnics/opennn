@@ -15,12 +15,12 @@
 namespace opennn
 {
 
-class ScalingLayer2D : public Layer
+class Scaling2d : public Layer
 {
 
 public:
 
-   ScalingLayer2D(const dimensions& = {0});
+   Scaling2d(const dimensions& = {0});
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;

@@ -287,10 +287,8 @@ void LanguageDataSet::print() const
     else
     {
         cout << "Language data set" << endl;
-
         cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
         cout << "Target size: " << get_target_length() << endl;
-
         cout << "Input lenght: " << get_input_length() << endl;
         cout << "Target categories: 0, 1"<<endl;
     }

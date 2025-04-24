@@ -10,7 +10,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
-#include "probabilistic_layer.h"
+//#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -375,11 +375,14 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 
     const float epsilon = type(1e-5);
 
+    // outputs + epsilon
     cudaMemcpy(outputs_plus_epsilon, outputs, size * sizeof(float), cudaMemcpyDeviceToDevice);
     cublasSaxpy(cublas_handle, size, &epsilon, ones, 1, outputs_plus_epsilon, 1);
 
+    // (outputs + epsilon).log()
     log(size, outputs_plus_epsilon, numerator_2);
 
+    // targets * ((outputs + epsilon).log())
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
@@ -392,6 +395,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
         outputs_tensor_descriptor,
         numerator);
 
+    // (targets * ((outputs + epsilon).log())).sum()
     cudnnReduceTensor(cudnn_handle,
         reduce_tensor_descriptor,
         nullptr, 0,
@@ -530,8 +534,6 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
     const type beta = 0.0f;
     const type beta_minus_one = -1.0f;
 
-    const type scale_factor = type(1.0) / static_cast<type>(samples_number);
-
     // outputs - targets
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
@@ -546,7 +548,8 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
         output_deltas);
 
     // (outputs - targets) / samples_number
-    cudnnScaleTensor(cudnn_handle, outputs_tensor_descriptor, output_deltas, &scale_factor);
+    const float scale_factor = 1.0f / static_cast<float>(samples_number);
+    cudnnScaleTensor(cudnn_handle,outputs_tensor_descriptor,output_deltas,&scale_factor);
 }
 
 #endif

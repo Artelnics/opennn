@@ -25,10 +25,10 @@ class Layer
 public:
 
     enum class Type{None,
-                    Scaling2D,
-                    Scaling4D,
-                    Addition3D,
-                    Normalization3D,
+                    Scaling2d,
+                    Scaling4d,
+                    Addition3d,
+                    Normalization3d,
                     Convolutional,
                     Perceptron,
                     Perceptron3d,
@@ -40,7 +40,7 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
-                    Flatten3D,
+                    Flatten3d,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};

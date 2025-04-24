@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
-#include "scaling_layer_2d.h"
+//#include "scaling_layer_2d.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_data_set.h"
@@ -209,7 +209,7 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
 
-    UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
@@ -267,7 +267,7 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
 
     const Tensor<type, 2> testing_output_data = neural_network->calculate_outputs(testing_input_data);
 
-    UnscalingLayer* unscaling_layer = static_cast<UnscalingLayer*>(neural_network->get_first(Layer::Type::Unscaling));
+    Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
     unscaling_layer->set_scalers(Scaler::MinimumMaximum);
 
     Descriptives desc;
@@ -1035,7 +1035,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 
     if (outputs_number == 1)
     {
-        ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network->get_first(Layer::Type::Probabilistic));
+        Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network->get_first(Layer::Type::Probabilistic));
 
         const type decision_threshold = probabilistic_layer
                                         ? probabilistic_layer->get_decision_threshold()
@@ -1537,8 +1537,7 @@ vector<Histogram> TestingAnalysis::calculate_output_histogram(const Tensor<type,
 {
     const Tensor<type, 1> output_column = outputs.chip(0,1);
 
-    vector<Histogram> output_histogram (1);
-
+    vector<Histogram> output_histogram(1);
     output_histogram[0] = histogram(output_column, bins_number);
 
     return output_histogram;
@@ -1555,7 +1554,7 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const vector<Index> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
 
-    ProbabilisticLayer* probabilistic_layer = static_cast<ProbabilisticLayer*>(neural_network->get_first(Layer::Type::Probabilistic));
+    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network->get_first(Layer::Type::Probabilistic));
 
     const type decision_threshold = probabilistic_layer
                                   ? probabilistic_layer->get_decision_threshold()
@@ -2159,7 +2158,6 @@ pair<type, type> TestingAnalysis::test_transformer() const
     //     }
     //     cout<<language_data_set->get_completion_vocabulary()[index]<<" ";
     // }
-
 
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);
 

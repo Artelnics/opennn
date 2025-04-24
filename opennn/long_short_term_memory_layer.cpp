@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, 
+LongShortTermMemory::LongShortTermMemory(const Index& new_inputs_number,
                                                    const Index& new_neurons_number, 
                                                    const Index& new_timesteps) : Layer()
 {
@@ -22,13 +22,13 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_numbe
 }
 
 
-dimensions LongShortTermMemoryLayer::get_input_dimensions() const
+dimensions LongShortTermMemory::get_input_dimensions() const
 {
     return { input_weights.dimension(0) };
 }
 
 
-dimensions LongShortTermMemoryLayer::get_output_dimensions() const
+dimensions LongShortTermMemory::get_output_dimensions() const
 {
 /*
     const Index neurons_number = get_neurons_number();
@@ -39,7 +39,7 @@ dimensions LongShortTermMemoryLayer::get_output_dimensions() const
 }
 
 
-Index LongShortTermMemoryLayer::get_parameters_number() const
+Index LongShortTermMemory::get_parameters_number() const
 {
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
@@ -48,13 +48,13 @@ Index LongShortTermMemoryLayer::get_parameters_number() const
 }
 
 
-Index LongShortTermMemoryLayer::get_timesteps() const
+Index LongShortTermMemory::get_timesteps() const
 {
     return time_steps;
 }
 
 
-Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
+Tensor<type, 1> LongShortTermMemory::get_parameters() const
 {
     const Index parameters_number = get_parameters_number();
 
@@ -79,19 +79,19 @@ Tensor<type, 1> LongShortTermMemoryLayer::get_parameters() const
 }
 
 
-const LongShortTermMemoryLayer::Activation& LongShortTermMemoryLayer::get_activation_function() const
+const LongShortTermMemory::Activation& LongShortTermMemory::get_activation_function() const
 {
     return activation_function;
 }
 
 
-const LongShortTermMemoryLayer::Activation& LongShortTermMemoryLayer::get_recurrent_activation_function() const
+const LongShortTermMemory::Activation& LongShortTermMemory::get_recurrent_activation_function() const
 {
     return recurrent_activation_function;
 }
 
 
-string LongShortTermMemoryLayer::get_activation_function_string() const
+string LongShortTermMemory::get_activation_function_string() const
 {
     switch(activation_function)
     {
@@ -118,7 +118,7 @@ string LongShortTermMemoryLayer::get_activation_function_string() const
 }
 
 
-string LongShortTermMemoryLayer::write_recurrent_activation_function() const
+string LongShortTermMemory::write_recurrent_activation_function() const
 {
     switch(recurrent_activation_function)
     {
@@ -145,7 +145,7 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function() const
 }
 
 
-void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
+void LongShortTermMemory::set(const Index& new_inputs_number, const Index& new_neurons_number, const Index& new_timesteps)
 {
     input_biases.resize(new_neurons_number);
     forget_biases.resize(new_neurons_number);
@@ -172,7 +172,7 @@ void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& 
 }
 
 
-void LongShortTermMemoryLayer::set_input_dimensions(const dimensions& new_input_dimensions)
+void LongShortTermMemory::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index outputs_number = get_outputs_number();
     const Index time_steps = get_timesteps();
@@ -181,7 +181,7 @@ void LongShortTermMemoryLayer::set_input_dimensions(const dimensions& new_input_
 }
 
 
-void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_output_dimensions)
+void LongShortTermMemory::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_inputs_number();
     const Index time_steps = get_timesteps();
@@ -190,7 +190,7 @@ void LongShortTermMemoryLayer::set_output_dimensions(const dimensions& new_outpu
 }
 
 
-void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
+void LongShortTermMemory::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {
     copy_from_vector(forget_biases, new_parameters, index);
     copy_from_vector(input_biases, new_parameters, index);
@@ -207,13 +207,13 @@ void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_paramet
 }
 
 
-void LongShortTermMemoryLayer::set_activation_function(const LongShortTermMemoryLayer::Activation& new_activation_function)
+void LongShortTermMemory::set_activation_function(const LongShortTermMemory::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void LongShortTermMemoryLayer::set_activation_function(const string& new_activation_function_name)
+void LongShortTermMemory::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
         activation_function = Activation::Logistic;
@@ -238,13 +238,13 @@ void LongShortTermMemoryLayer::set_activation_function(const string& new_activat
 }
 
 
-void LongShortTermMemoryLayer::set_recurrent_activation_function(const LongShortTermMemoryLayer::Activation& new_recurrent_activation_function)
+void LongShortTermMemory::set_recurrent_activation_function(const LongShortTermMemory::Activation& new_recurrent_activation_function)
 {
     recurrent_activation_function = new_recurrent_activation_function;
 }
 
 
-void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
+void LongShortTermMemory::set_recurrent_activation_function(const string& new_recurrent_activation_function_name)
 {
     if(new_recurrent_activation_function_name == "Logistic")
         recurrent_activation_function = Activation::Logistic;
@@ -269,13 +269,13 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 }
 
 
-void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
+void LongShortTermMemory::set_timesteps(const Index& new_timesteps)
 {
     time_steps = new_timesteps;
 }
 
 
-void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
+void LongShortTermMemory::set_parameters_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -294,7 +294,7 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 }
 
 
-void LongShortTermMemoryLayer::set_parameters_random()
+void LongShortTermMemory::set_parameters_random()
 {
     set_random(forget_biases);
 
@@ -322,7 +322,7 @@ void LongShortTermMemoryLayer::set_parameters_random()
 }
 
 
-void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inputs,
+void LongShortTermMemory::calculate_combinations(const Tensor<type, 1>& inputs,
                                                       const Tensor<type, 2>& weights,
                                                       const Tensor<type, 1>& hidden_states,
                                                       const Tensor<type, 2>& recurrent_weights,
@@ -335,7 +335,7 @@ void LongShortTermMemoryLayer::calculate_combinations(const Tensor<type, 1>& inp
 }
 
 
-void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activations, 
+void LongShortTermMemory::calculate_activations(Tensor<type, 1>& activations,
                                                      Tensor<type, 1>& activation_derivatives) const
 {
     switch(activation_function)
@@ -363,7 +363,7 @@ void LongShortTermMemoryLayer::calculate_activations(Tensor<type, 1>& activation
 }
 
 
-void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activation_derivatives) const
+void LongShortTermMemory::calculate_recurrent_activations(Tensor<type, 1>& activations, Tensor<type, 1>& activation_derivatives) const
 {
     switch(recurrent_activation_function)
     {
@@ -390,7 +390,7 @@ void LongShortTermMemoryLayer::calculate_recurrent_activations(Tensor<type, 1>& 
 }
 
 
-void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void LongShortTermMemory::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
                                                  const bool& is_training)
 {
@@ -562,7 +562,7 @@ void LongShortTermMemoryLayer::forward_propagate(const vector<pair<type*, dimens
 }
 
 
-void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void LongShortTermMemory::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                               const vector<pair<type*, dimensions>>& delta_pairs,
                                               unique_ptr<LayerForwardPropagation>& forward_propagation,
                                               unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -599,7 +599,7 @@ void LongShortTermMemoryLayer::back_propagate(const vector<pair<type*, dimension
 }
 
 
-void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tensor<type, 2>& inputs,
+void LongShortTermMemory::calculate_forget_parameter_derivatives(const Tensor<type, 2>& inputs,
                                                                       const Tensor<type, 2>& deltas,
                                                                       unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
                                                                       unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
@@ -914,7 +914,7 @@ void LongShortTermMemoryLayer::calculate_forget_parameter_derivatives(const Tens
 }
 
 
-void LongShortTermMemoryLayer::calculate_input_parameter_derivatives(const Tensor<type, 2>& inputs,
+void LongShortTermMemory::calculate_input_parameter_derivatives(const Tensor<type, 2>& inputs,
                                                                      const Tensor<type, 2>& deltas,
                                                                      unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
                                                                      unique_ptr<LongShortTermMemoryLayerBackPropagation>& long_short_term_memory_back_propagation) const
@@ -1230,7 +1230,7 @@ void LongShortTermMemoryLayer::calculate_input_parameter_derivatives(const Tenso
 }
 
 
-void LongShortTermMemoryLayer::calculate_state_parameter_derivatives(
+void LongShortTermMemory::calculate_state_parameter_derivatives(
         const Tensor<type, 2>& inputs,
         const Tensor<type, 2>& deltas,
         unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
@@ -1546,7 +1546,7 @@ void LongShortTermMemoryLayer::calculate_state_parameter_derivatives(
 }
 
 
-void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
+void LongShortTermMemory::calculate_output_parameter_derivatives(
     const Tensor<type, 2>& inputs,
     const Tensor<type, 2>& deltas,
     unique_ptr<LongShortTermMemoryLayerForwardPropagation>& long_short_term_memory_layer_forward_propagation,
@@ -1862,7 +1862,7 @@ void LongShortTermMemoryLayer::calculate_output_parameter_derivatives(
 }
 
 
-void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+void LongShortTermMemory::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                                Index& index,
                                                Tensor<type, 1>& gradient) const
 {    
@@ -1892,7 +1892,7 @@ void LongShortTermMemoryLayer::insert_gradient(unique_ptr<LayerBackPropagation>&
 }
 
 
-string LongShortTermMemoryLayer::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
+string LongShortTermMemory::get_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -1977,7 +1977,7 @@ string LongShortTermMemoryLayer::get_expression(const vector<string>& input_name
 }
 
 
-void LongShortTermMemoryLayer::from_XML(const XMLDocument& document)
+void LongShortTermMemory::from_XML(const XMLDocument& document)
 {
     const XMLElement* lstm_layer_element = document.FirstChildElement("LongShortTermMemory");
 
@@ -1996,7 +1996,7 @@ void LongShortTermMemoryLayer::from_XML(const XMLDocument& document)
 }
 
 
-void LongShortTermMemoryLayer::to_XML(XMLPrinter& printer) const
+void LongShortTermMemory::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("LongShortTermMemory");
 
@@ -2012,7 +2012,7 @@ void LongShortTermMemoryLayer::to_XML(XMLPrinter& printer) const
 }
 
 
-string LongShortTermMemoryLayer::write_recurrent_activation_function_expression() const
+string LongShortTermMemory::write_recurrent_activation_function_expression() const
 {
     switch(recurrent_activation_function)
     {
@@ -2026,7 +2026,7 @@ string LongShortTermMemoryLayer::write_recurrent_activation_function_expression(
 }
 
 
-string LongShortTermMemoryLayer::get_activation_function_string_expression() const
+string LongShortTermMemory::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
