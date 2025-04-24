@@ -575,8 +575,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
 }
 
 
-void LevenbergMarquardtAlgorithm::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
-                                                          LMAOptimizationDataCuda& optimization_data_cuda) const
+void LevenbergMarquardtAlgorithm::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
+                                                         LMAOptimizationDataCuda& optimization_data_cuda) const
 {
     // @todo
 }

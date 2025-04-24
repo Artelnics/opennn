@@ -661,7 +661,7 @@ TrainingResults ConjugateGradient::perform_training_cuda()
 }
 
 
-void ConjugateGradient::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
+void ConjugateGradient::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
                                                 CGOptimizationDataCuda& optimization_data_cuda) const
 {
     // @todo

@@ -709,7 +709,7 @@ TrainingResults QuasiNewtonMethod::perform_training_cuda()
 }
 
 
-void QuasiNewtonMethod::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
+void QuasiNewtonMethod::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
                                                 QNMOptimizationDataCuda& optimization_data_cuda) const
 {
     // @todo

@@ -129,7 +129,7 @@ public:
 
     TrainingResults perform_training_cuda();
 
-    void update_parameteres_cuda(BackPropagationCuda&, CGOptimizationDataCuda&) const;
+    void update_parameters_cuda(BackPropagationCuda&, CGOptimizationDataCuda&) const;
 
 #endif
 
