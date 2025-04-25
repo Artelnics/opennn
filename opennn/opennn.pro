@@ -93,7 +93,6 @@ HEADERS += \
     pooling_layer.h \
     convolutional_layer.h \
     bounding_layer.h \
-    long_short_term_memory_layer.h \
     recurrent_layer.h \
     neural_network.h \
     model_expression.h \
@@ -116,7 +115,6 @@ HEADERS += \
     levenberg_marquardt_algorithm.h\
     stochastic_gradient_descent.h\
     adaptive_moment_estimation.h\
-    conjugate_gradient.h\
     model_selection.h \
     neurons_selection.h \
     growing_neurons.h \
@@ -169,7 +167,6 @@ SOURCES += \
     pooling_layer.cpp \
     bounding_layer.cpp \
     convolutional_layer.cpp \
-    long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
     auto_associative_neural_network.cpp \
@@ -186,7 +183,6 @@ SOURCES += \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
     adaptive_moment_estimation.cpp\
-    conjugate_gradient.cpp \
     model_selection.cpp \
     neurons_selection.cpp \
     growing_neurons.cpp \

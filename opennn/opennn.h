@@ -57,8 +57,6 @@
 #include "normalized_squared_error.h"
 #include "weighted_squared_error.h"
 
-#include "conjugate_gradient.h"
-
 #include "levenberg_marquardt_algorithm.h"
 #include "quasi_newton_method.h"
 #include "optimization_algorithm.h"

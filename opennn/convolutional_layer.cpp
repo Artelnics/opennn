@@ -73,7 +73,8 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                               const bool& is_training)
 {
-/*
+    // @todo This method does not work
+
     ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
@@ -89,6 +90,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
+    }
 
     const Index kernels_number = get_kernels_number();
 
@@ -98,16 +100,16 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
         if(is_training)
         {
-            TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
+            //TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
 
-            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
+            //TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
 
-            mean.device(*thread_pool_device) = kernel_output.mean();
+            //mean.device(*thread_pool_device) = kernel_output.mean();
 
-            standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
+            //standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
 
-            kernel_output.device(*thread_pool_device)
-                = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
+            //kernel_output.device(*thread_pool_device)
+            //    = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
         }
         else
         {
@@ -118,19 +120,17 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
     if(is_training)
     {
-        moving_means.device(*thread_pool_device)
-            = momentum * moving_means + (type(1) - momentum) * means;
+        //moving_means.device(*thread_pool_device)
+        //    = momentum * moving_means + (type(1) - momentum) * means;
 
-        moving_standard_deviations.device(*thread_pool_device)
-            = momentum * moving_standard_deviations + (type(1) - momentum) * standard_deviations;
+        //moving_standard_deviations.device(*thread_pool_device)
+        //    = momentum * moving_standard_deviations + (type(1) - momentum) * standard_deviations;
     }
     else
     {
         outputs.device(*thread_pool_device)
-            = (outputs - moving_means)
-            / (moving_standard_deviations + epsilon);
+            = (outputs - moving_means)/(moving_standard_deviations + epsilon);
     }
-*/
 }
 
 

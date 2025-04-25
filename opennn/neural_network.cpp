@@ -30,7 +30,6 @@
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
-#include "long_short_term_memory_layer.h"
 //#include "transformer.h"
 
 namespace opennn
@@ -1451,7 +1450,6 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"Flatten", []() -> unique_ptr<Layer> { return make_unique<Flatten>(); }},
      {"Probabilistic", []() -> unique_ptr<Layer> { return make_unique<Probabilistic>(); }},
      {"Probabilistic3d", []() -> unique_ptr<Layer> { return make_unique<Probabilistic3d>(); }},
-     {"LongShortTermMemory", []() -> unique_ptr<Layer> { return make_unique<LongShortTermMemory>(); }},
      {"Recurrent", []() -> unique_ptr<Layer> { return make_unique<Recurrent>(); }},
      {"Unscaling", []() -> unique_ptr<Layer> { return make_unique<Unscaling>(); }},
      {"Bounding", []() -> unique_ptr<Layer> { return make_unique<Bounding>(); }},
@@ -1747,10 +1745,6 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
             layers[i] = make_unique < RecurrentBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
-        case Layer::Type::LongShortTermMemory:
-            layers[i] = make_unique < LongShortTermMemoryLayerBackPropagation>(batch_size, neural_network_layers[i].get());
-        break;
-
         case Layer::Type::Convolutional:
             layers[i] = make_unique < ConvolutionalBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
@@ -1861,10 +1855,6 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
 
         case Layer::Type::Recurrent:
             layers[i] = make_unique<RecurrentLayerForwardPropagation>(samples_number, neural_network_layers[i].get());
-        break;
-
-        case Layer::Type::LongShortTermMemory:
-            layers[i] = make_unique<LongShortTermMemoryLayerForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Convolutional:
@@ -2222,10 +2212,6 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             //layers[i] = make_unique<RecurrentLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::LongShortTermMemory:
-            //layers[i] = make_unique<LongShortTermMemoryLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
         case Layer::Type::Convolutional:
             //layers[i] = make_unique<ConvolutionalForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
@@ -2423,10 +2409,6 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
 
         case Layer::Type::Recurrent:
             //layers[i] = make_unique <RecurrentBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::LongShortTermMemory:
-            //layers[i] = make_unique <LongShortTermMemoryLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Convolutional:

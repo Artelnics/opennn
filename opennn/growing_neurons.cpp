@@ -84,7 +84,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     TrainingResults training_results;
 
-    training_strategy->set_display(/*false*/true);
+    training_strategy->set_display(false);
 
     time(&beginning_time);
 

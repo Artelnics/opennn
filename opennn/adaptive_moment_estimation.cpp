@@ -227,8 +227,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool shuffle = true;
 
-    if(neural_network->has(Layer::Type::LongShortTermMemory)
-    || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
@@ -644,8 +643,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     bool shuffle = true;
 
-    if (neural_network->has(Layer::Type::LongShortTermMemory)
-        || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
