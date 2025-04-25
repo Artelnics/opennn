@@ -56,7 +56,7 @@ int main()
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-        training_strategy.perform_training();
+        // training_strategy.perform_training();
 
 
         // GeneticAlgorithm genetic_algorithm(&training_strategy);

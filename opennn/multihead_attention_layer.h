@@ -72,7 +72,6 @@ public:
 
     void concatenate_heads(const Tensor<type, 4>&, Tensor<type, 3>&) const;
 
-    // void calculate_output_projection(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 3>&) const;
     void calculate_output_projection(const Tensor<type, 3>&, Tensor<type, 3>&) const;
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,

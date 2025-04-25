@@ -259,26 +259,6 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
 
 void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Tensor<type, 4>& query) const
 {
-    /*
-    const Index batch_size = query_input.dimension(0);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_query_weights = tensor_map(query_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_query = tensor_map(query, head_index, sample_index);
-
-            head_sample_query.device(*thread_pool_device)
-                = query_input.chip(sample_index, 0).contract(head_query_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
-        }
-    }
-*/
-
     const Index batch_size = query_input.dimension(0);
 
     // Verify embedding dimension matches
@@ -311,25 +291,6 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
 void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tensor<type, 4>& key) const
 {
-    /*
-    const Index batch_size = source_input.dimension(0);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_key_weights = tensor_map(key_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_key_biases = tensor_map(key_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_key = tensor_map(key, head_index, sample_index);
-
-            head_sample_key.device(*thread_pool_device)
-                = source_input.chip(sample_index, 0).contract(head_key_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_key_biases, head_sample_key);
-        }
-    }
-*/
     const Index batch_size = source_input.dimension(0);
 
 
@@ -363,25 +324,6 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
 
 void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Tensor<type, 4>& value) const
 {
-    /*
-    const Index batch_size = source_input.dimension(0);
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        const TensorMap<Tensor<type, 2>> head_value_weights = tensor_map(value_weights, head_index);
-        const TensorMap<Tensor<type, 1>> head_value_biases = tensor_map(value_biases, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            TensorMap<Tensor<type, 2>> head_sample_value = tensor_map(value, head_index, sample_index);
-
-            head_sample_value.device(*thread_pool_device)
-                = source_input.chip(sample_index, 0).contract(head_value_weights, A_B);
-
-            sum_columns(thread_pool_device.get(), head_value_biases, head_sample_value);
-        }
-    }
-*/
     const Index batch_size = source_input.dimension(0);
 
 
@@ -462,42 +404,7 @@ void MultiHeadAttention::concatenate_heads(const Tensor<type, 4>& attention_outp
         }
     }
 }
-/*
-void MultiHeadAttention::calculate_output_projection(const Tensor<type, 4>& attention_outputs,
-                                                     Tensor<type, 4>& projection_outputs,
-                                                     Tensor<type, 3>& outputs) const
-{
 
-    const Index batch_size = outputs.dimension(0);
-    const Index heads_number = get_heads_number();
-
-    for (Index head_index = 0; head_index < heads_number; head_index++)
-    {
-        // const Tensor<type, 2> head_projection_weights = projection_weights.slice(Eigen::array<Index,2>{head_index*get_hidden_depth(),0},Eigen::array<Index,2>{get_hidden_depth(),embedding_dimension});
-        const TensorMap<Tensor<type, 2>> head_projection_weights = tensor_map(projection_weights, head_index);
-        TensorMap<Tensor<type, 3>> head_projection_outputs = tensor_map(projection_outputs, head_index);
-
-        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-        {
-            const TensorMap<Tensor<type, 2>> sample_attention_output = tensor_map(attention_outputs, head_index, sample_index);
-
-            head_projection_outputs.chip(sample_index, 0).device(*thread_pool_device)
-                = sample_attention_output.contract(head_projection_weights, A_B);
-            // if(sample_index < 2 && iteration == 3){
-            //     cout << "sample " << sample_index << " attention_output of head " << head_index << ":\n" << sample_attention_output << endl;
-            //     cout << "head_projection_weights of head " << head_index << ":\n" << head_projection_weights << endl;
-            // }
-        }
-    }
-
-    outputs.device(*thread_pool_device) = projection_outputs.sum(projection_sum_index);
-
-    // cout << "Outputs before:\n" << outputs << endl<<endl<<endl<<endl;
-
-    sum_matrices(thread_pool_device.get(), projection_biases, outputs);
-
-}
-*/
 void MultiHeadAttention::calculate_output_projection(const Tensor<type, 3>& concatenated_attention_outputs,
                                                      Tensor<type, 3>& outputs) const
 {
