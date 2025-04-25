@@ -22,7 +22,7 @@ int main()
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-/*
+
         // Data Set
 
         const Index samples_number = 1000000;
@@ -30,9 +30,9 @@ int main()
         const Index outputs_number = 1;
         const Index hidden_neurons_number = 1000;
 
-        DataSet data_set;// ("C:/R_100000_samples_11_variables.csv", ',', true);
+        DataSet data_set;//(samples_number, inputs_number, outputs_number);// ("C:/R_100000_samples_11_variables.csv", ',', true);
 
-        data_set.generate_Rosenbrock_data(samples_number, inputs_number + outputs_number);
+        data_set.set_data_rosenbrock();
 
         data_set.set(DataSet::SampleUse::Training);
 
@@ -57,7 +57,7 @@ int main()
         training_strategy.set_maximum_time(86400);
 
         training_strategy.perform_training();
-*/
+
         cout << "End Rosenbrock" << endl;
 
         return 0;

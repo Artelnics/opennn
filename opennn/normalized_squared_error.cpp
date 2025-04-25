@@ -215,9 +215,6 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
     output_deltas.device(*thread_pool_device) = errors
         / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
                         .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
-
-//output_deltas.device(*thread_pool_device) = errors;
-//    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 

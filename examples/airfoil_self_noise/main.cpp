@@ -47,7 +47,6 @@ int main()
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
 
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::CONJUGATE_GRADIENT);
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT);
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
@@ -76,7 +75,7 @@ int main()
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         testing_analysis.print_goodness_of_fit_analysis();
-/*
+
         // Save results
         
 //        neural_network.save("../opennn/examples/airfoil_self_noise/data/neural_network.xml");
@@ -108,7 +107,6 @@ int main()
         cout << outputs << endl;
 
         neural_network.print();
-*/
 
         cout << "Good bye!" << endl;
 

@@ -198,14 +198,6 @@ Histogram::Histogram(const Tensor<type, 1>& probability_data)
 
     centers = new_centers;
     frequencies = new_frequencies;
-    /*
-    cout << "Tamano de frequencies: " << frequencies.size() << "\n";
-    cout << "Valores de frequencies: ";
-    for (Index i = 0; i < frequencies.size(); ++i) {
-        cout << frequencies(i) << " ";
-    }
-    cout << "\n";
-    */
 }
 
 
@@ -1257,6 +1249,7 @@ vector<Histogram> histograms(const Tensor<type, 2>& matrix, const Index& bins_nu
     return histograms;
 }
 
+
 Descriptives vector_descriptives(const Tensor<type, 1>& x)
 {
     Descriptives my_descriptives;
@@ -1264,10 +1257,7 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
     const Index size = x.size();
 
     if (size <= 0)
-    {
-        std::cerr << "Error: vector_descriptives() recibi� un tensor vac�o." << std::endl;
         return my_descriptives;
-    }
 
     const Tensor<type, 0> minimum = x.minimum();
     const Tensor<type, 0> maximum = x.maximum();
@@ -1280,23 +1270,22 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
     {
         if (isnan(x(i))) continue;
 
-        if (i >= 0 && i < x.size()) {
+        if (i >= 0 && i < x.size())
             sum += x(i);
-        }
-        else {
-            std::cerr << "�ndice fuera de rango: " << i << std::endl;
-        }
+        else
+            std::cerr << "Index out of range: " << i << std::endl;
+
         squared_sum += double(x(i)) * double(x(i));
         count++;
     }
 
     type mean = 0;
+
     if (count > 0)
-    {
         mean = type(sum / count);
-    }
 
     type standard_deviation = 0;
+
     if (count > 1)
     {
         const type numerator = type(squared_sum - sum * sum / count);
@@ -1309,6 +1298,7 @@ Descriptives vector_descriptives(const Tensor<type, 1>& x)
     return my_descriptives;
 }
 
+
 vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
 {
 
@@ -1318,18 +1308,14 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix)
     vector<Descriptives> descriptives(columns_number);
     Tensor<type, 1> column(rows_number);
 
-    for (Index i = 0; i < columns_number; i++) {
-        // Acceder directamente a la columna sin usar TensorMap
-        column = matrix.chip(i, 1); // Chip devuelve un tensor con la columna
+    for (Index i = 0; i < columns_number; i++)
+    {
+        column = matrix.chip(i, 1);
 
-        if (i >= 0 && i < descriptives.size()) {
-            descriptives[i] = vector_descriptives(column);
-        }
-        else {
-            std::cerr << "�ndice fuera de rango: " << i << std::endl;
-        }
-
-        //std::cout << "Tama�o del vector descriptives: " << descriptives.size() << std::endl;
+        if (i >= 0 && i < descriptives.size())
+            descriptives[i] = vector_descriptives(column);   
+        else
+            cerr << "Index out of range: " << i << std::endl;
     }
 
     return descriptives;
