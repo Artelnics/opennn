@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "images.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -108,18 +109,14 @@ Tensor<type, 3> resize_image(const Tensor<type, 3>& input_image,
 void reflect_image_x(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_horizontal_dimensions = { false, true, false };
-
-    image/*.device(thread_pool_device)*/ = image.reverse(reflect_horizontal_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({false, true, false}));
 }
 
 
 void reflect_image_y(const ThreadPoolDevice* thread_pool_device,
                      Tensor<type, 3>& image)
 {
-    const Eigen::array<bool, 3> reflect_vertical_dimensions = { true, false, false };
-
-    image/*.device(thread_pool_device)*/ = image.reverse(reflect_vertical_dimensions);
+    image/*.device(thread_pool_device)*/ = image.reverse(array<bool, 3>({true, false, false}));
 }
 
 
@@ -148,7 +145,6 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
 
     Tensor<type, 1> coordinates(3);
     Tensor<type, 1> transformed_coordinates(3);
-    const Eigen::array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(1,0)};
 
     for(Index x = 0; x < width; x++)
     {
@@ -158,7 +154,7 @@ void rotate_image(const ThreadPoolDevice* thread_pool_device,
             coordinates(1) = type(y);
             coordinates(2) = type(1);
 
-            transformed_coordinates = rotation_matrix.contract(coordinates, contract_dims);
+            transformed_coordinates = rotation_matrix.contract(coordinates, axes(1,0));
 
             if(transformed_coordinates[0] >= 0 && transformed_coordinates[0] < width
             && transformed_coordinates[1] >= 0 && transformed_coordinates[1] < height)
@@ -223,48 +219,9 @@ void translate_image_y(const ThreadPoolDevice* thread_pool_device,
 {
 }
 
-// Tensor<unsigned char, 1> remove_padding(Tensor<unsigned char, 1>& image,
-//                                         const int& rows_number,
-//                                         const int& columns_number,
-//                                         const int& padding)
-// {
-//     Tensor<unsigned char, 1> data_without_padding(image.size() - padding*rows_number);
-
-//     unsigned char* image_data = image.data();
-
-//     const int channels = 3;
-
-//     if(rows_number % 4 == 0)
-//     {
-//         copy(image_data,
-//              image_data + columns_number * channels * rows_number,
-//              data_without_padding.data());
-//     }
-//     else
-//     {
-//         for(int i = 0; i < rows_number; i++)
-//         {
-//             if(i == 0)
-//             {
-//                 copy(image_data,
-//                      image_data + columns_number * channels, data_without_padding.data());
-//             }
-//             else
-//             {
-//                 copy(image_data + channels * columns_number * i + padding * i,
-//                     image_data + channels * columns_number * (i+1) + padding * i,
-//                     data_without_padding.data() + channels * columns_number * i);
-//             }
-//         }
-//     }
-
-//     return data_without_padding;
-// }
-
 
 void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)
 {
-
 }
 
 } // namespace opennn

@@ -12,44 +12,44 @@
 namespace opennn
 {
 
-ScalingLayer4D::ScalingLayer4D(const dimensions& new_input_dimensions) : Layer()
+Scaling4d::Scaling4d(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 }
 
 
-dimensions ScalingLayer4D::get_input_dimensions() const
+dimensions Scaling4d::get_input_dimensions() const
 {
     return input_dimensions;
 }
 
 
-dimensions ScalingLayer4D::get_output_dimensions() const
+dimensions Scaling4d::get_output_dimensions() const
 {
     return input_dimensions;
 }
 
 
-void ScalingLayer4D::set(const dimensions& new_input_dimensions)
+void Scaling4d::set(const dimensions& new_input_dimensions)
 {
     input_dimensions = new_input_dimensions;
 
     set_min_max_range(type(0), type(255));
 
-    layer_type = Type::Scaling4D;
+    layer_type = Type::Scaling4d;
 
     name = "scaling_layer_4d";
 }
 
 
-void ScalingLayer4D::set_min_max_range(const type& min, const type& max)
+void Scaling4d::set_min_max_range(const type& min, const type& max)
 {
     min_range = min;
     max_range = max;
 }
 
 
-bool ScalingLayer4D::is_empty() const
+bool Scaling4d::is_empty() const
 {
     const Index inputs_number = get_output_dimensions()[0];
 
@@ -57,7 +57,7 @@ bool ScalingLayer4D::is_empty() const
 }
 
 
-void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
 {
@@ -72,7 +72,7 @@ void ScalingLayer4D::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-void ScalingLayer4D::print() const
+void Scaling4d::print() const
 {
     cout << "Scaling layer 4D" << endl;
 
@@ -80,9 +80,9 @@ void ScalingLayer4D::print() const
 }
 
 
-void ScalingLayer4D::to_XML(XMLPrinter& printer) const
+void Scaling4d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Scaling4D");
+    printer.OpenElement("Scaling4d");
 
     add_xml_element(printer, "InputDimensions", dimensions_to_string(input_dimensions));
 
@@ -90,9 +90,9 @@ void ScalingLayer4D::to_XML(XMLPrinter& printer) const
 }
 
 
-void ScalingLayer4D::from_XML(const XMLDocument& document)
+void Scaling4d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4D");
+    const XMLElement* scaling_layer_element = document.FirstChildElement("Scaling4d");
 
     if(!scaling_layer_element)
         throw runtime_error("Scaling layer element is nullptr.\n");
@@ -111,7 +111,7 @@ ScalingLayer4DForwardPropagation::ScalingLayer4DForwardPropagation(const Index& 
 
 pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
 {
-    const ScalingLayer4D* scaling_layer_4d = static_cast<ScalingLayer4D*>(layer);
+    const Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(layer);
 
     const dimensions output_dimensions = scaling_layer_4d->get_output_dimensions();
 

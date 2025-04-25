@@ -7,8 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "conjugate_gradient.h"
-#include "scaling_layer_2d.h"
-#include "unscaling_layer.h"
+//#include "scaling_layer_2d.h"
+//#include "unscaling_layer.h"
 #include "forward_propagation.h"
 #include "back_propagation.h"
 
@@ -52,8 +52,8 @@ type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradie
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
 
-    numerator.device(*thread_pool_device) = gradient.contract(gradient, AT_B);
-    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
+    numerator.device(*thread_pool_device) = gradient.contract(gradient, axes(0,0));
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, axes(0,0));
 
     FR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
@@ -88,9 +88,9 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     Tensor<type, 0> numerator;
     Tensor<type, 0> denominator;
 
-    numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, AT_B);
+    numerator.device(*thread_pool_device) = (gradient-old_gradient).contract(gradient, axes(0,0));
 
-    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, AT_B);
+    denominator.device(*thread_pool_device) = old_gradient.contract(old_gradient, axes(0,0));
 
     PR_parameter = (abs(denominator(0)) < NUMERIC_LIMITS_MIN)
         ? type(0)
@@ -482,7 +482,7 @@ void ConjugateGradient::update_parameters(
                     optimization_data.training_direction);
 
     optimization_data.training_slope.device(*thread_pool_device)
-            = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+            = back_propagation.gradient.contract(optimization_data.training_direction, axes(0,0));
 
     if(optimization_data.training_slope(0) >= type(0))
     {
@@ -649,7 +649,73 @@ void ConjugateGradientData::set(ConjugateGradient* new_conjugate_gradient)
 
 void ConjugateGradientData::print() const
 {
+    // @todo
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults ConjugateGradient::perform_training_cuda()
+{
+    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: ConjugateGradient");
+}
+
+
+void ConjugateGradient::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
+                                                CGOptimizationDataCuda& optimization_data_cuda) const
+{
+    // @todo
+}
+
+
+CGOptimizationDataCuda::CGOptimizationDataCuda(ConjugateGradient* new_conjugate_gradient)
+{
+    set(new_conjugate_gradient);
+}
+
+
+void CGOptimizationDataCuda::set(ConjugateGradient* new_conjugate_gradient)
+{
+    conjugate_gradient = new_conjugate_gradient;
+
+    const Index parameters_number = conjugate_gradient->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    // Gradient
+
+    if (cudaMalloc(&parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "parameters_increment allocation error" << endl;
+
+    if (cudaMalloc(&old_gradient, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "old_gradient allocation error" << endl;
+
+    if (cudaMalloc(&old_training_direction, parameters_number * sizeof(float)) != cudaSuccess)
+        cout << "old_training_direction allocation error" << endl;
+}
+
+
+void CGOptimizationDataCuda::free()
+{
+    cudaFree(parameters_increment);
+    cudaFree(old_gradient);
+    cudaFree(old_training_direction);
+}
+
+
+void CGOptimizationDataCuda::print() const
+{
+    const Index parameters_number = conjugate_gradient->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    cout << "parameters_increment:" << endl;
+    cout << vector_from_device(parameters_increment, parameters_number) << endl;
+
+    cout << "old_gradient:" << endl;
+    cout << vector_from_device(old_gradient, parameters_number) << endl;
+
+    cout << "old_training_direction:" << endl;
+    cout << vector_from_device(old_training_direction, parameters_number) << endl;
+}
+
+#endif
 
 }
 

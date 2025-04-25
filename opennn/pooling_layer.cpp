@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tensors.h"
 #include "pooling_layer.h"
+#include "tensors.h"
 
 namespace opennn
 {
@@ -288,11 +288,6 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     Tensor<type, 5>& image_patches = pooling_layer_forward_propagation->image_patches;
     Tensor<type, 4>& outputs = pooling_layer_forward_propagation->outputs;
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({outputs.dimension(0),
-                                                               outputs.dimension(1),
-                                                               outputs.dimension(2),
-                                                               outputs.dimension(3)});
-
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,     
         pool_width,      
@@ -304,7 +299,9 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
         type(padding_width)
     );
 
-    outputs.device(*thread_pool_device) = image_patches.mean(pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = image_patches
+        .mean(array<Index, 2>({1, 2}))
+        .reshape(array<Index, 4>({outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)}));
 }
 
 
@@ -323,11 +320,6 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index output_height = outputs.dimension(2);
     const Index channels = outputs.dimension(3);
 
-    const Eigen::array<ptrdiff_t, 4> outputs_dimensions_array({ batch_size,
-                                                               output_width,
-                                                               output_height,
-                                                               channels});
-
     image_patches.device(*thread_pool_device) = inputs.extract_image_patches(
         pool_height,
         pool_width,
@@ -337,8 +329,9 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         PADDING_VALID,
         type(padding_width));
 
-    outputs.device(*thread_pool_device)
-        = image_patches.maximum(pooling_dimensions).reshape(outputs_dimensions_array);
+    outputs.device(*thread_pool_device) = image_patches
+        .maximum(array<Index, 2>({1, 2}))
+        .reshape(array<Index, 4>({batch_size, output_width, output_height, channels}));
 
     if (!is_training) return;
 
@@ -347,13 +340,14 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
     const Index pool_size = pool_height * pool_width;
     const Index output_size = output_height * output_width * channels;
 
-    const Eigen::array<ptrdiff_t, 3> output_dimensions({ output_height, output_width, channels });
-    const Eigen::array<Index, 2> reshape_dimensions = { pool_size, output_size };
+    const array<Index, 3> output_dimensions({ output_height, output_width, channels });
+    const array<Index, 2> reshape_dimensions = { pool_size, output_size };
     
     #pragma omp parallel for
     for (Index batch_index = 0; batch_index < batch_size; batch_index++)
     { 
         const Tensor<type, 2> patches_flat = image_patches.chip(batch_index, 0).reshape(reshape_dimensions);
+
         maximal_indices.chip(batch_index, 0) = patches_flat.argmax(0).reshape(output_dimensions);
     }
 }
@@ -431,13 +425,6 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                     input_derivatives(batch_index, input_row, input_column, channel_index)
                         += deltas(batch_index, output_height_index, output_width_index, channel_index);
                 }
-
-    //auto end = chrono::high_resolution_clock::now();
-    //auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    //cout << "Tiempo max pooling back propagate: "
-    //    << duration.count() / 1000 << "::"
-    //    << duration.count() % 1000
-    //    << " segundos::milisegundos" << endl;
 }
 
 
@@ -456,7 +443,7 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     const Index pool_size = pool_height * pool_width;
 
-    const Eigen::array<Index, 4> grad_extents = { batch_size, 1, 1, 1 };
+    const array<Index, 4> grad_extents = { batch_size, 1, 1, 1 };
 
     // Back propagation
 
@@ -483,14 +470,13 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
                 const Index width_start = output_width_index * column_stride;
                 const Index width_end = min(width_start + pool_width, input_width);
 
-                const Eigen::array<Index, 4> grad_offsets = { 0, output_height_index, output_width_index, channel_index };
-                const Eigen::array<Index, 4> broadcast_dims = { 1, height_end - height_start, width_end - width_start, 1 };
+                const array<Index, 4> grad_offsets = {0, output_height_index, output_width_index, channel_index};
+                const array<Index, 4> offsets = {0, height_start, width_start, channel_index };
+                const array<Index, 4> extents = {batch_size, height_end - height_start, width_end - width_start, 1};
 
-                const Eigen::array<Index, 4> offsets = { 0, height_start, width_start, channel_index };
-                const Eigen::array<Index, 4> extents = { batch_size, height_end - height_start, width_end - width_start, 1 };
-
-                input_derivatives.slice(offsets, extents) +=
-                    deltas_by_pool_size.slice(grad_offsets, grad_extents).broadcast(broadcast_dims);
+                input_derivatives.slice(offsets, extents) += deltas_by_pool_size
+                    .slice(grad_offsets, grad_extents)
+                    .broadcast(array<Index, 4>({1, height_end - height_start, width_end - width_start, 1}));
             }
         }
 }
@@ -643,6 +629,294 @@ void PoolingLayerBackPropagation::print() const
     cout << "Input derivatives:" << endl
          << input_derivatives << endl;
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+
+void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                     const bool& is_training)
+{
+    // Inputs
+
+    const type* inputs_device = inputs_pair_device[0].first;
+
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index inputs_height = inputs_pair_device[0].second[1];
+    const Index inputs_width = inputs_pair_device[0].second[2];
+    const Index channels_number = inputs_pair_device[0].second[3];
+
+    // Forward propagation
+
+    PoolingLayerForwardPropagationCuda* pooling_layer_forward_propagation_cuda
+        = static_cast<PoolingLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    type* outputs = pooling_layer_forward_propagation_cuda->outputs;
+
+    cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
+    cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
+
+    // Pooling
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    cudnnStatus_t status = cudnnPoolingForward(cudnn_handle,
+        pooling_descriptor,
+        &alpha,
+        inputs_tensor_descriptor,
+        inputs_device,
+        &beta,
+        outputs_tensor_descriptor,
+        outputs);
+
+    if (status != CUDNN_STATUS_SUCCESS)
+        cout << "cudnnPoolingForward failed: " << cudnnGetErrorString(status) << endl;
+}
+
+
+void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                  const vector<pair<type*, dimensions>>& deltas_pair_device,
+                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                  unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
+{
+    // Inputs
+
+    const type* inputs_device = inputs_pair_device[0].first;
+    const type* deltas_device = deltas_pair_device[0].first;
+
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index inputs_height = inputs_pair_device[0].second[1];
+    const Index inputs_width = inputs_pair_device[0].second[2];
+    const Index channels_number = inputs_pair_device[0].second[3];
+
+    /*
+    cout << "inputs_pair_device(0).second[0] (batch): " << inputs_pair_device(0).second[0] << endl;
+    cout << "inputs_pair_device(0).second[1] (rows): " << inputs_pair_device(0).second[1] << endl;
+    cout << "inputs_pair_device(0).second[2] (columns): " << inputs_pair_device(0).second[2] << endl;
+    cout << "inputs_pair_device(0).second[3] (channels): " << inputs_pair_device(0).second[3] << endl;
+    cout << "deltas_pair_device(0).second[0] (batch):" << deltas_pair_device(0).second[0] << endl;
+    cout << "deltas_pair_device(0).second[1] (rows): " << deltas_pair_device(0).second[1] << endl;
+    cout << "deltas_pair_device(0).second[2] (columns): " << deltas_pair_device(0).second[2] << endl;
+    cout << "deltas_pair_device(0).second[3] (channels): " << deltas_pair_device(0).second[3] << endl;
+    */
+    // Forward propagation
+
+    PoolingLayerForwardPropagationCuda* pooling_layer_forward_propagation_cuda
+        = static_cast<PoolingLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    const type* outputs = pooling_layer_forward_propagation_cuda->outputs;
+
+    cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
+    cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
+
+    // Back propagation
+
+    PoolingLayerBackPropagationCuda* pooling_layer_back_propagation_cuda
+        = static_cast<PoolingLayerBackPropagationCuda*>(back_propagation_cuda.get());
+
+    type* inputs_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
+
+    // Pooling
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    cudnnStatus_t status = cudnnPoolingBackward(cudnn_handle,
+        pooling_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        outputs,
+        inputs_tensor_descriptor,
+        deltas_device,
+        inputs_tensor_descriptor,
+        inputs_device,
+        &beta,
+        inputs_tensor_descriptor,
+        inputs_derivatives);
+
+    if (status != CUDNN_STATUS_SUCCESS)
+        cout << "cudnnPoolingBackward failed: " << cudnnGetErrorString(status) << endl;
+
+        //cout << "input derivatives pooling layer:\n" << vector_from_device(inputs_derivatives, batch_samples_number * inputs_height * inputs_width) << endl;
+}
+
+
+// CUDA structs
+
+
+PoolingLayerForwardPropagationCuda::PoolingLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    Pooling* pooling_layer = static_cast<Pooling*>(layer);
+
+    const Index input_height = pooling_layer->get_input_height();
+    const Index input_width = pooling_layer->get_input_width();
+
+    const Index channels = pooling_layer->get_channels_number();
+
+    const Index pool_height = pooling_layer->get_pool_height();
+    const Index pool_width = pooling_layer->get_pool_width();
+
+    const Index output_height = pooling_layer->get_output_height();
+    const Index output_width = pooling_layer->get_output_width();
+
+    const Index padding_height = pooling_layer->get_padding_height();
+    const Index padding_width = pooling_layer->get_padding_width();
+
+    const Index row_stride = pooling_layer->get_row_stride();
+    const Index column_stride = pooling_layer->get_column_stride();
+
+    // Inputs
+
+    cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(inputs_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        channels,
+        input_height,
+        input_width);
+
+    // Outputs
+
+    if (cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)) != cudaSuccess)
+        cout << "Outputs allocation error" << endl;
+
+    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+
+    // Pooling
+
+    switch (pooling_layer->get_pooling_method())
+    {
+    case Pooling::PoolingMethod::MaxPooling:
+
+        pooling_mode = CUDNN_POOLING_MAX;
+
+        cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+            CUDNN_TENSOR_NCHW,
+            CUDNN_DATA_FLOAT,
+            batch_size,
+            channels,
+            output_height,
+            output_width);
+
+        break;
+
+    case Pooling::PoolingMethod::AveragePooling:
+
+        pooling_mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+
+        cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+            CUDNN_TENSOR_NCHW,
+            CUDNN_DATA_FLOAT,
+            batch_size,
+            channels,
+            output_height,
+            output_width);
+
+        break;
+    }
+
+    cudnnCreatePoolingDescriptor(&pooling_descriptor);
+
+    cudnnSetPooling2dDescriptor(pooling_descriptor,
+        pooling_mode,
+        CUDNN_PROPAGATE_NAN,
+        pool_height,
+        pool_width,
+        padding_height,
+        padding_width,
+        row_stride,
+        column_stride);
+}
+
+
+void PoolingLayerForwardPropagationCuda::print() const
+{
+    // @todo
+}
+
+
+void PoolingLayerForwardPropagationCuda::free()
+{
+    cudaFree(outputs);
+
+    cudnnDestroyTensorDescriptor(inputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyPoolingDescriptor(pooling_descriptor);
+}
+
+
+pair<type*, dimensions> PoolingLayerForwardPropagationCuda::get_outputs_pair_device() const
+{
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    return pair<type*, dimensions>(outputs, { {batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]} });
+}
+
+
+PoolingLayerBackPropagationCuda::PoolingLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerBackPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    const Pooling* pooling_layer = static_cast<Pooling*>(layer);
+
+    const Index input_height = pooling_layer->get_input_height();
+    const Index input_width = pooling_layer->get_input_width();
+
+    const Index channels = pooling_layer->get_channels_number();
+
+    // Inputs derivatives
+
+    if (cudaMalloc(&input_derivatives, batch_size * channels * input_height * input_width * sizeof(float)) != cudaSuccess)
+        cout << "Input derivatives pooling layer back propagation allocation error" << endl;
+}
+
+
+vector<pair<type*, dimensions>> PoolingLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+{
+    const dimensions input_dimensions = layer->get_input_dimensions();
+
+    return { {input_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
+}
+
+
+void PoolingLayerBackPropagationCuda::print() const
+{
+    // @todo
+}
+
+
+void PoolingLayerBackPropagationCuda::free()
+{
+    cudaFree(input_derivatives);
+}
+
+#endif
 
 }
 

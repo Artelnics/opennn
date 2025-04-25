@@ -172,11 +172,11 @@ public:
 
     virtual void calculate_error_cuda(const BatchCuda&,
                                       const ForwardPropagationCuda&,
-                                      BackPropagationCuda&) const {}
+                                      BackPropagationCuda&) const = 0;
 
     virtual void calculate_output_delta_cuda(const BatchCuda&,
                                              ForwardPropagationCuda&,
-                                             BackPropagationCuda&) const {}
+                                             BackPropagationCuda&) const = 0;
 
     void calculate_layers_error_gradient_cuda(const BatchCuda&,
                                               ForwardPropagationCuda&,
@@ -235,14 +235,6 @@ protected:
    type regularization_weight = type(0.01);
 
    bool display = true;
-
-   const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
-   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
-
-   const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
-
 };
 
 

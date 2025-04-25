@@ -10,8 +10,6 @@
 #define LONGSHORTTERMMEMORYLAYER_H
 
 #include "layer.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
 
 namespace opennn
 {
@@ -19,7 +17,7 @@ namespace opennn
 struct LongShortTermMemoryLayerForwardPropagation;
 struct LongShortTermMemoryLayerBackPropagation;
 
-class LongShortTermMemoryLayer : public Layer
+class LongShortTermMemory : public Layer
 {
 
 public:
@@ -34,7 +32,7 @@ public:
                                   SoftSign, 
                                   HardSigmoid};
 
-   LongShortTermMemoryLayer(const Index& = 0, const Index& = 0, const Index& = 0);
+   LongShortTermMemory(const Index& = 0, const Index& = 0, const Index& = 0);
 
    dimensions get_input_dimensions() const override;
    dimensions get_output_dimensions() const override;
@@ -44,8 +42,8 @@ public:
    Index get_parameters_number() const override;
    Tensor<type, 1> get_parameters() const override;
 
-   const LongShortTermMemoryLayer::Activation& get_activation_function() const;
-   const LongShortTermMemoryLayer::Activation& get_recurrent_activation_function() const;
+   const LongShortTermMemory::Activation& get_activation_function() const;
+   const LongShortTermMemory::Activation& get_recurrent_activation_function() const;
 
    string get_activation_function_string() const;
    string write_recurrent_activation_function() const;
@@ -161,8 +159,8 @@ private:
 
    Tensor<type, 1> empty;
 
-#ifdef OPENNN_CUDA
-    // Empty @todo
+#ifdef OPENNN_CUDA_test
+    // @todo
 #endif
 
 };
@@ -270,6 +268,11 @@ struct LongShortTermMemoryLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> input_derivatives;
 };
+
+
+#ifdef OPENNN_CUDA_test
+// @todo
+#endif
 
 }
 

@@ -6,9 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "embedding_layer.h"
 #include "tensors.h"
 #include "strings_utilities.h"
-#include "embedding_layer.h"
 
 namespace opennn
 {
@@ -152,9 +152,7 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
         auto output_slice = outputs.chip(row, 0);
 
         for (Index input_position = 0; input_position < sequence_length; input_position++)
-        {
             output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
-        }
     }
 
     outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
@@ -164,18 +162,11 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
 void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 { 
     const Index batch_size = embeddings.dimension(0);
-    // const Index sequence_length = embeddings.dimension(1);
     const Index embedding_dimension = embeddings.dimension(2);
 
-    const Eigen::array<Index, 3> broadcast_dimensions = { batch_size, 1, 1 };
-
-    const Eigen::array<Index, 3> reshape_dimensions = { 1, sequence_length, embedding_dimension};
-
-    embeddings.device(*thread_pool_device)
-        += positional_encoding.reshape(reshape_dimensions).broadcast(broadcast_dimensions);
-
-    //for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-    //    embeddings.chip(sample_index, 0).device(*thread_pool_device) += positional_encoding;
+    embeddings.device(*thread_pool_device) += positional_encoding
+        .reshape(array<Index, 3>({1, sequence_length, embedding_dimension}))
+        .broadcast(array<Index, 3>({batch_size, 1, 1}));
 }
 
 
@@ -361,6 +352,145 @@ void EmbeddingBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 void EmbeddingBackPropagation::print() const
 {
 }
+
+#ifdef OPENNN_CUDA_test
+
+void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                       unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                       const bool& is_training)
+{
+    // @todo
+}
+
+
+void Embedding::back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                    const vector<pair<type*, dimensions>>&,
+                                    unique_ptr<LayerForwardPropagationCuda>&,
+                                    unique_ptr<LayerBackPropagationCuda>&) const
+{
+    // @todo
+}
+
+
+void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
+                                     Index& index,
+                                     float* gradient) const
+{
+    EmbeddingLayerBackPropagationCuda* embedding_layer_back_propagation =
+        static_cast<EmbeddingLayerBackPropagationCuda*>(back_propagation_cuda.get());
+
+    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weights_derivatives_device, weights.size(), index);
+}
+
+
+void Embedding::set_parameters_cuda(const float* new_parameters, Index& index)
+{
+    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+}
+
+
+void Embedding::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
+{
+    // @todo
+}
+
+
+void Embedding::allocate_parameters_device()
+{
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
+
+    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Synaptic weights allocation error" << endl;
+}
+
+
+void Embedding::free_parameters_device()
+{
+    cudaFree(weights_device);
+
+    weights_device = nullptr;
+}
+
+
+void Embedding::copy_parameters_device()
+{
+    if (weights_device == nullptr)
+        cout << "Weights device is null" << endl;
+
+    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "Weights device copy error" << endl;
+}
+
+
+void Embedding::copy_parameters_host()
+{
+    if (weights_device == nullptr)
+        cout << "Synaptic weights is null" << endl;
+
+    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Weights host copy error" << endl;
+}
+
+
+// CUDA structs
+
+EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    // @todo
+}
+
+
+void EmbeddingLayerForwardPropagationCuda::print() const
+{
+    // @todo
+}
+
+
+pair<type*, dimensions> EmbeddingLayerForwardPropagationCuda::get_outputs_pair_device() const
+{
+    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
+
+    const Index sequence_length = embedding_layer->get_sequence_length();
+
+    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
+
+    return { outputs, {batch_size, sequence_length, embedding_dimension} };
+}
+
+
+EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+    : LayerBackPropagationCuda()
+{
+    set(new_batch_samples_number, new_layer);
+}
+
+
+void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+{
+    // @todo
+}
+
+
+vector<pair<type*, dimensions>> EmbeddingLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+{
+    return vector<pair<type*, dimensions>>();
+}
+
+
+void EmbeddingLayerBackPropagationCuda::print() const
+{
+    // @todo
+}
+
+#endif
 
 }
 

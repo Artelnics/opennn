@@ -29,7 +29,8 @@ public:
         ScaledExponentialLinear,
         SoftPlus,
         SoftSign,
-        HardSigmoid
+        HardSigmoid,
+        Softmax
     };
 
     Perceptron(const dimensions& = {0},
@@ -74,17 +75,16 @@ public:
         Tensor<type, 2>& outputs) const
     {
 
-        const Eigen::array<Index, 2> rows({ outputs.dimension(0), 1 });
+        const array<Index, 2> rows({outputs.dimension(0), 1});
 
-        const Eigen::array<int, 1> axis_x({ 0 });
+        const array<int, 1> axis_x({0});
 
         means.device(*thread_pool_device) = outputs.mean(axis_x);
 
         standard_deviations.device(*thread_pool_device)
             = (outputs - means.broadcast(rows)).square().mean(axis_x).sqrt();
-        
-       
-        outputs = inputs;// -means.broadcast(Eigen::array<Index, 2>({ outputs.dimension(0), 1 }));
+               
+        outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
             //shifts.broadcast(rows);
                 //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
         
@@ -142,7 +142,7 @@ public:
                               Index&,
                               float*) const override;
 
-    void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, Index&);
 
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 
@@ -176,8 +176,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    const Eigen::array<Index, 1> sum_dimensions_1 = {0};
 };
 
 
@@ -248,7 +246,7 @@ struct PerceptronLayerForwardPropagationCuda : public LayerForwardPropagationCud
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
@@ -271,9 +269,11 @@ struct PerceptronLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    float* biases_derivatives_cuda = nullptr;
-    float* weights_derivatives_cuda = nullptr;
-    float* error_combinations_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_device = nullptr;
+
+    float* biases_derivatives_device = nullptr;
+    float* weights_derivatives_device = nullptr;
+    
     float* ones = nullptr;
     float one = 1.0f;
 

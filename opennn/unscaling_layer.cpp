@@ -7,23 +7,21 @@
 //   artelnics@artelnics.com
 
 #include "unscaling_layer.h"
-#include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
 #include "descriptives.h"
-#include "statistics.h"
 
 namespace opennn
 {
 
-UnscalingLayer::UnscalingLayer(const dimensions& new_input_dimensions, const string& layer_name)
+Unscaling::Unscaling(const dimensions& new_input_dimensions, const string& layer_name)
     : Layer()
 {
     set(new_input_dimensions[0], layer_name);
 }
 
 
-dimensions UnscalingLayer::get_input_dimensions() const
+dimensions Unscaling::get_input_dimensions() const
 {
     const Index neurons_number = descriptives.size();
 
@@ -31,7 +29,7 @@ dimensions UnscalingLayer::get_input_dimensions() const
 }
 
 
-dimensions UnscalingLayer::get_output_dimensions() const
+dimensions Unscaling::get_output_dimensions() const
 {
     const Index neurons_number = descriptives.size();
 
@@ -39,13 +37,13 @@ dimensions UnscalingLayer::get_output_dimensions() const
 }
 
 
-vector<Descriptives> UnscalingLayer::get_descriptives() const
+vector<Descriptives> Unscaling::get_descriptives() const
 {
     return descriptives;
 }
 
 
-Tensor<type, 1> UnscalingLayer::get_minimums() const
+Tensor<type, 1> Unscaling::get_minimums() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -59,7 +57,7 @@ Tensor<type, 1> UnscalingLayer::get_minimums() const
 }
 
 
-Tensor<type, 1> UnscalingLayer::get_maximums() const
+Tensor<type, 1> Unscaling::get_maximums() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -73,13 +71,13 @@ Tensor<type, 1> UnscalingLayer::get_maximums() const
 }
 
 
-vector<Scaler> UnscalingLayer::get_unscaling_method() const
+vector<Scaler> Unscaling::get_unscaling_method() const
 {
     return scalers;
 }
 
 
-string UnscalingLayer::get_expression(const vector<string>& new_input_names,
+string Unscaling::get_expression(const vector<string>& new_input_names,
                                       const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
@@ -156,7 +154,7 @@ string UnscalingLayer::get_expression(const vector<string>& new_input_names,
 }
 
 
-vector<string> UnscalingLayer::write_unscaling_methods() const
+vector<string> Unscaling::write_unscaling_methods() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -169,7 +167,7 @@ vector<string> UnscalingLayer::write_unscaling_methods() const
 }
 
 
-vector<string> UnscalingLayer::write_unscaling_method_text() const
+vector<string> Unscaling::write_unscaling_method_text() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -193,19 +191,19 @@ vector<string> UnscalingLayer::write_unscaling_method_text() const
 }
 
 
-void UnscalingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
+void Unscaling::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     descriptives.resize(new_input_dimensions[0]);
 }
 
 
-void UnscalingLayer::set_output_dimensions(const dimensions& new_output_dimensions)
+void Unscaling::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     descriptives.resize(new_output_dimensions[0]);
 }
 
 
-void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name)
+void Unscaling::set(const Index& new_neurons_number, const string& new_name)
 {
     descriptives.resize(new_neurons_number);
 
@@ -221,26 +219,26 @@ void UnscalingLayer::set(const Index& new_neurons_number, const string& new_name
 }
 
 
-void UnscalingLayer::set_min_max_range(const type min, const type max)
+void Unscaling::set_min_max_range(const type min, const type max)
 {
     min_range = min;
     max_range = max;
 }
 
 
-void UnscalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
+void Unscaling::set_descriptives(const vector<Descriptives>& new_descriptives)
 {
     descriptives = new_descriptives;
 }
 
 
-void UnscalingLayer::set_scalers(const vector<Scaler>& new_unscaling_method)
+void Unscaling::set_scalers(const vector<Scaler>& new_unscaling_method)
 {
     scalers = new_unscaling_method;
 }
 
 
-void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
+void Unscaling::set_scalers(const string& new_scaling_methods_string)
 {
     if(new_scaling_methods_string == "None")
         set_scalers(Scaler::None);
@@ -257,7 +255,7 @@ void UnscalingLayer::set_scalers(const string& new_scaling_methods_string)
 }
 
 
-void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
+void Unscaling::set_scalers(const vector<string>& new_scalers)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -266,7 +264,7 @@ void UnscalingLayer::set_scalers(const vector<string>& new_scalers)
 }
 
 
-void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
+void Unscaling::set_scalers(const Scaler& new_unscaling_method)
 {
     const Index outputs_number = get_outputs_number();
 
@@ -275,13 +273,13 @@ void UnscalingLayer::set_scalers(const Scaler& new_unscaling_method)
 }
 
 
-bool UnscalingLayer::is_empty() const
+bool Unscaling::is_empty() const
 {
     return get_output_dimensions()[0] == 0;
 }
 
 
-void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
 {
@@ -339,7 +337,7 @@ void UnscalingLayer::forward_propagate(const vector<pair<type*, dimensions>>& in
 }
 
 
-vector<string> UnscalingLayer::write_scalers_text() const
+vector<string> Unscaling::write_scalers_text() const
 {
     const Index outputs_number = get_outputs_number();
 
@@ -363,7 +361,7 @@ vector<string> UnscalingLayer::write_scalers_text() const
 }
 
 
-void UnscalingLayer::print() const
+void Unscaling::print() const
 {
     cout << "Unscaling layer" << endl;
 
@@ -381,7 +379,7 @@ void UnscalingLayer::print() const
 }
 
 
-void UnscalingLayer::to_XML(XMLPrinter& printer) const
+void Unscaling::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Unscaling");
 
@@ -405,7 +403,7 @@ void UnscalingLayer::to_XML(XMLPrinter& printer) const
 }
 
 
-void UnscalingLayer::from_XML(const XMLDocument& document)
+void Unscaling::from_XML(const XMLDocument& document)
 {
     const XMLElement* root_element = document.FirstChildElement("Unscaling");
 
@@ -468,7 +466,7 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
 {
     layer = new_layer;
 
-    const dimensions output_dimensions = static_cast<UnscalingLayer*>(layer)->get_output_dimensions();
+    const dimensions output_dimensions = static_cast<Unscaling*>(layer)->get_output_dimensions();
 
     batch_size = new_batch_size;
 

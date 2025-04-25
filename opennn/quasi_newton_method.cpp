@@ -210,15 +210,15 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMethodData& opt
     Tensor<type, 0> parameters_difference_dot_gradient_difference;
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = parameters_difference.contract(gradient_difference, AT_B);
+        = parameters_difference.contract(gradient_difference, axes(0,0));
 
     old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, A_B);
+            = old_inverse_hessian.contract(gradient_difference, axes(1,0));
 
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B); 
+        = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
 
     // Calculate approximation
 
@@ -250,13 +250,13 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& op
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = parameters_difference.contract(gradient_difference, AT_B);
+            = parameters_difference.contract(gradient_difference, axes(0,0));
 
     old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = old_inverse_hessian.contract(gradient_difference, A_B);
+            = old_inverse_hessian.contract(gradient_difference, axes(0,0));
 
     gradient_dot_hessian_dot_gradient.device(*thread_pool_device)
-            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, AT_B);
+            = gradient_difference.contract(old_inverse_hessian_dot_gradient_difference, axes(0,0));
 
     BFGS.device(*thread_pool_device)
             = parameters_difference/parameters_difference_dot_gradient_difference(0)
@@ -279,11 +279,10 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMethodData& op
 }
 
 
-void QuasiNewtonMethod::update_parameters(
-        const Batch& batch,
-        ForwardPropagation& forward_propagation,
-        BackPropagation& back_propagation,
-        QuasiNewtonMethodData& optimization_data) const
+void QuasiNewtonMethod::update_parameters(const Batch& batch,
+                                          ForwardPropagation& forward_propagation,
+                                          BackPropagation& back_propagation,
+                                          QuasiNewtonMethodData& optimization_data) const
 {
     Tensor<type, 1>& parameters = back_propagation.parameters;
     const Tensor<type, 1>& gradient = back_propagation.gradient;
@@ -313,9 +312,9 @@ void QuasiNewtonMethod::update_parameters(
         ? set_identity(inverse_hessian)
         : calculate_inverse_hessian_approximation(optimization_data);
 
-    training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, A_B);
+    training_direction.device(*thread_pool_device) = -inverse_hessian.contract(gradient, axes(1,0));
 
-    training_slope.device(*thread_pool_device) = gradient.contract(training_direction, AT_B);
+    training_slope.device(*thread_pool_device) = gradient.contract(training_direction, axes(0,0));
 
     if(training_slope(0) >= type(0))
         training_direction.device(*thread_pool_device) = -gradient;
@@ -645,6 +644,12 @@ void QuasiNewtonMethod::from_XML(const XMLDocument& document)
 }
 
 
+QuasiNewtonMethodData::QuasiNewtonMethodData(QuasiNewtonMethod* new_quasi_newton_method)
+{
+    set(new_quasi_newton_method);
+}
+
+
 void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 {
     quasi_newton_method = new_quasi_newton_method;
@@ -685,6 +690,62 @@ void QuasiNewtonMethodData::set(QuasiNewtonMethod* new_quasi_newton_method)
 
     old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
 }
+
+
+void QuasiNewtonMethodData::print() const
+{
+    cout << "Training Direction:" << endl
+        << training_direction << endl
+        << "Learning rate:" << endl
+        << learning_rate << endl;
+}
+
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults QuasiNewtonMethod::perform_training_cuda()
+{
+    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: QuasiNewtonMethod");
+}
+
+
+void QuasiNewtonMethod::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
+                                                QNMOptimizationDataCuda& optimization_data_cuda) const
+{
+    // @todo
+}
+
+
+QNMOptimizationDataCuda::QNMOptimizationDataCuda(QuasiNewtonMethod* new_quasi_newton_method)
+{
+    set(new_quasi_newton_method);
+}
+
+
+void QNMOptimizationDataCuda::set(QuasiNewtonMethod* new_quasi_newton_method)
+{
+    quasi_newton_method = new_quasi_newton_method;
+
+    const Index parameters_number = new_quasi_newton_method->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    // Gradient
+
+    // @todo
+}
+
+
+void QNMOptimizationDataCuda::free()
+{
+    // @todo
+}
+
+
+void QNMOptimizationDataCuda::print() const
+{
+    // @todo
+}
+
+#endif
 
 }
 

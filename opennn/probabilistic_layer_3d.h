@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct ProbabilisticLayer3DForwardPropagationCuda;
-//struct ProbabilisticLayer3DBackPropagationCuda;
-//#endif
-
-
 class Probabilistic3d : public Layer
 {
 
@@ -108,9 +102,9 @@ public:
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
 
-    //#ifdef OPENNN_CUDA
-    //   #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_cuda.h"
-    //#endif
+    #ifdef OPENNN_CUDA_test
+       // @todo
+    #endif
 
 private:
 
@@ -121,12 +115,6 @@ private:
    Tensor<type, 2> weights;
 
    Activation activation_function = Activation::Softmax;
-
-   const Eigen::array<IndexPair<Index>, 2> double_contraction_indices = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-   const Eigen::array<IndexPair<Index>, 1> single_contraction_indices = { IndexPair<Index>(2, 1) };
-
-   const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 0) };
-   const Eigen::array<Index, 2> sum_dimensions = { 0, 1 };
 };
 
 
@@ -165,10 +153,9 @@ struct Probabilistic3dBackPropagation : LayerBackPropagation
     Tensor<type, 2> weight_derivatives;
 };
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_forward_propagation_cuda.h"
-//    #include "../../opennn_cuda/opennn_cuda/probabilistic_layer_3d_back_propagation_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 }
 

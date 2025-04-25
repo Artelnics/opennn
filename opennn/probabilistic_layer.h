@@ -14,14 +14,14 @@
 namespace opennn
 {
 
-class ProbabilisticLayer : public Layer
+class Probabilistic : public Layer
 {
 
 public:
 
     enum class Activation { Binary, Logistic, Competitive, Softmax };
 
-    ProbabilisticLayer(const dimensions& = {0},
+    Probabilistic(const dimensions& = {0},
                        const dimensions& = {0},
                        const string& = "probabilistic_layer");
 
@@ -98,8 +98,6 @@ private:
 
     type decision_threshold;
 
-    const Eigen::array<Index, 1> sum_dimensions = {0};
-
 #ifdef OPENNN_CUDA_test
 
 public:
@@ -117,7 +115,7 @@ public:
                               Index&,
                               float*) const override;
 
-    void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, Index&);
 
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 
@@ -202,7 +200,7 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair() const override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
 
     cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
@@ -226,12 +224,14 @@ struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     void free() override;
 
-    float* targets = nullptr;
-    float* error_combinations_derivatives_cuda = nullptr;
+    float* error_combinations_derivatives_device = nullptr;
+
+    float* biases_derivatives_device = nullptr;
+    float* weights_derivatives_device = nullptr;
+
+    float* input_derivatives = nullptr;
+
     float* ones = nullptr;
-    float* biases_derivatives_cuda = nullptr;
-    float* weights_derivatives_cuda = nullptr;
-    float* inputs_derivatives = nullptr;
     float one = 1.0f;
 
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;

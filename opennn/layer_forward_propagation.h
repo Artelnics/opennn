@@ -31,11 +31,11 @@ struct LayerForwardPropagationCuda
 
     virtual ~LayerForwardPropagationCuda() {}
 
-    virtual void free() {}
-
     virtual void print() const {}
 
-    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+    virtual void free() {}
+
+    virtual pair<type*, dimensions> get_outputs_pair_device() const = 0;
 
     Index batch_size = type(0);
 

@@ -216,7 +216,7 @@ void Probabilistic3d::set_parameters_glorot()
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
                                                   Tensor<type, 3>& combinations) const
 {
-    combinations.device(*thread_pool_device) = inputs.contract(weights, contraction_indices);
+    combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
     sum_matrices(thread_pool_device.get(), biases, combinations);
 }
 
@@ -294,13 +294,13 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
     bias_derivatives.device(*thread_pool_device)
-        = combination_deltas.sum(sum_dimensions);
+        = combination_deltas.sum(array<Index, 2>({0,1}));
 
     weight_derivatives.device(*thread_pool_device)
-        = inputs.contract(combination_deltas, double_contraction_indices);
+        = inputs.contract(combination_deltas, axes(0,0,1,1));
 
     input_derivatives.device(*thread_pool_device)
-        = combination_deltas.contract(weights, single_contraction_indices);
+        = combination_deltas.contract(weights, axes(2,1));
 }
 
 

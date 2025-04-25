@@ -14,24 +14,20 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/struct_recurrent_layer_cuda.h"
-//#endif
-
 class Recurrent : public Layer
 {
 
 public:
 
     enum class Activation{Logistic, 
-                                  HyperbolicTangent,
-                                  Linear, 
-                                  RectifiedLinear, 
-                                  ExponentialLinear,
-                                  ScaledExponentialLinear, 
-                                  SoftPlus, 
-                                  SoftSign, 
-                                  HardSigmoid};
+                          HyperbolicTangent,
+                          Linear, 
+                          RectifiedLinear, 
+                          ExponentialLinear,
+                          ScaledExponentialLinear, 
+                          SoftPlus, 
+                          SoftSign, 
+                          HardSigmoid};
 
    Recurrent(const dimensions & = {0}, const dimensions& = {0});
 
@@ -90,25 +86,23 @@ public:
 
 private:
 
-   Index time_steps = 1;
+    Index time_steps = 1;
 
-   Tensor<type, 1> biases;
+    Index batch_size=type(10);
 
-   Tensor<type, 1> output_biases;
+    Tensor<type, 1> biases;
 
-   Tensor<type, 2> input_weights;
+    Tensor<type, 2> input_weights;
 
-   Tensor<type, 2> recurrent_weights;
+    Tensor<type, 2> recurrent_weights;
 
-   Tensor<type, 2> output_weights;
+    Activation activation_function = Activation::HyperbolicTangent;
 
-   Activation activation_function = Activation::HyperbolicTangent;
+    Tensor<type, 2> hidden_states;
 
-   Tensor<type, 2> hidden_states;
-
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 };
 
@@ -125,10 +119,10 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
     Tensor<type, 2> outputs;
 
-    Tensor<type, 2> current_inputs;
-    Tensor<type, 2> current_activations_derivatives;
+    Tensor<type, 3> current_inputs;
+    Tensor<type, 3> current_activations_derivatives;
 
-    Tensor<type, 3> activation_derivatives;
+    Tensor<type, 2> activation_derivatives;
 };
 
 
@@ -142,10 +136,11 @@ struct RecurrentBackPropagation : LayerBackPropagation
 
     void print() const override;
 
-    //Tensor<type, 1> current_deltas;
+    Tensor<type, 2> current_deltas;
+    Tensor<type, 2> current_targets;
 
     Tensor<type, 2> combination_deltas;
-    Tensor<type, 1> current_combinations_derivatives;
+    Tensor<type, 2> current_combinations_derivatives;
 
     Tensor<type, 2> combinations_bias_derivatives;
     Tensor<type, 3> combinations_input_weight_derivatives;
@@ -157,8 +152,14 @@ struct RecurrentBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> recurrent_weight_derivatives;
 
-    Tensor<type, 3> input_derivatives;
+    Tensor<type, 2> input_derivatives;
+
 };
+
+
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 }
 

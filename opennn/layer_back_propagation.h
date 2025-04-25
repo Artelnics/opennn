@@ -41,7 +41,7 @@ struct LayerBackPropagationCuda
 
     bool is_first_layer = false;
 
-    float* inputs_derivatives = nullptr;
+    float* input_derivatives = nullptr;
     cudnnTensorDescriptor_t inputs_derivatives_tensor_descriptor = nullptr;
 };
 

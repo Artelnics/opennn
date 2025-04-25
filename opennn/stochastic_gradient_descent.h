@@ -16,7 +16,7 @@ namespace opennn
 
 struct StochasticGradientDescentData;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 struct SGDOptimizationDataCuda;
 #endif
 
@@ -85,29 +85,13 @@ private:
 
    type maximum_time = type(3600000);
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
 
     TrainingResults perform_training_cuda();
 
-protected:
-
-    void update_parameteres_cuda(LossIndex::BackPropagationCuda& back_propagation_cuda,
-        SGDOptimizationDataCuda& optimization_data_cuda);
-
-    bool display = true;
-    Index display_period = 1;
-    Index maximum_epochs_number = 1000;
-    Index batch_samples_number = 64;
-    float initial_learning_rate = 0.01f;
-    float training_loss_goal = 0.01f;
-    float maximum_time = 3600.0f;
-    Index maximum_selection_failures = 10;
-    Index save_period = 10;
-    //std::string neural_network_file_name = "network.nn";
-
-    LossIndex* loss_index = nullptr;
+    void update_parameters_cuda(BackPropagationCuda&, SGDOptimizationDataCuda&) const;
 
 #endif
 
@@ -128,17 +112,25 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
     Tensor<type, 1> last_parameters_increment;
 };
 
-#ifdef OPENNN_CUDA
+
+#ifdef OPENNN_CUDA_test
 
 struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 {
-    explicit SGDOptimizationDataCuda(OptimizationAlgorithm* new_optimization_algorithm);
-    virtual ~SGDOptimizationDataCuda();
+    SGDOptimizationDataCuda(StochasticGradientDescent* = nullptr);
+
+    void set(StochasticGradientDescent* = nullptr);
 
     void free();
 
-    OptimizationAlgorithm* optimization_algorithm = nullptr;
+    void print() const;
+
+    StochasticGradientDescent* stochastic_gradient_descent = nullptr;
+
     Index iteration = 0;
+
+    float* parameters_increment = nullptr;
+    float* last_parameters_increment = nullptr;
 };
 
 #endif

@@ -14,12 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//struct EmbeddingLayerForwardPropagationCuda;
-//struct EmbeddingLayerBackPropagationCuda;
-//#endif
-
-
 class Embedding : public Layer
 {
 
@@ -70,43 +64,40 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 public:
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
-    void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const;
+    void insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>&,
+                              Index&,
+                              float*) const override;
 
-    void set_parameters_cuda(const float*, const Index&);
+    void set_parameters_cuda(const float*, Index&);
 
     void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
 
-    void allocate_parameters_device();
-    void free_parameters_device();
-    void copy_parameters_device();
     void copy_parameters_host();
 
-    float* get_embedding_weights_device() const;
+    void copy_parameters_device();
 
-    bool positional_encoding = false;
+    void allocate_parameters_device();
+
+    void free_parameters_device();
 
 private:
 
-    float* embedding_weights_device = nullptr;
+    float* weights_device = nullptr;
 
-    Index get_inputs_number() const;
-    Index get_neurons_number() const;
-    Index get_depth() const;
-    Index get_input_dimension() const;
-    Index get_parameters_number() const;
+    float* positional_encoding_device = nullptr;
 
 #endif
 
@@ -119,8 +110,6 @@ private:
     Tensor<type, 2> positional_encoding;
 
     type dropout_rate;
-
-    const Eigen::array<IndexPair<Index>, 1> contraction_indices = { IndexPair<Index>(2, 1) };
 };
 
 
@@ -152,37 +141,31 @@ struct EmbeddingBackPropagation : LayerBackPropagation
     Tensor<type, 2> weight_derivatives;
 };
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
 struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    explicit EmbeddingLayerForwardPropagationCuda(const Index&, Layer*);
+    EmbeddingLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    pair<type*, dimensions> get_outputs_pair_device() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
-
-    void free() override;
-
-    pair<type*, dimensions> get_outputs_pair() const;
-
-    type* outputs = nullptr;
-    type* positional_encoding_cuda = nullptr;
-    bool built_positional_encoding_matrix = false;
 };
 
 struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
-    explicit EmbeddingLayerBackPropagationCuda(const Index&, Layer*);
+    EmbeddingLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    void set(const Index&, Layer*) override;
+    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+    void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
 
-    void free() override;
-
-    type* sample_deltas_cuda = nullptr;
-    type* embedding_weights_derivatives_cuda = nullptr;
+    type* sample_deltas_device = nullptr;
+    type* weights_derivatives_device = nullptr;
 };
 
 #endif

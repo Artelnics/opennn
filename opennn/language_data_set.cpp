@@ -287,10 +287,8 @@ void LanguageDataSet::print() const
     else
     {
         cout << "Language data set" << endl;
-
         cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
         cout << "Target size: " << get_target_length() << endl;
-
         cout << "Input lenght: " << get_input_length() << endl;
         cout << "Target categories: 0, 1"<<endl;
     }
@@ -534,6 +532,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
     if(completion_vocabulary_element)
     {
         target_vocabulary.clear();
+
         for (const XMLElement* word_element = completion_vocabulary_element->FirstChildElement(); word_element; word_element = word_element->NextSiblingElement())
         {
 //            if (word_element->GetText())
@@ -661,6 +660,7 @@ void LanguageDataSet::read_csv()
     const Index decoder_variables_number = maximum_target_length - 1;
     const Index target_variables_number = has_decoder ? maximum_target_length - 1
                                                       : maximum_target_length;
+
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
     data.resize(samples_number, variables_number);
@@ -753,7 +753,6 @@ void LanguageDataSet::read_csv()
 
     sample_uses.resize(samples_number);
 
-
     target_dimensions = {get_target_length()};
     has_decoder ? decoder_dimensions = {get_target_length()}
                 : decoder_dimensions = {};
@@ -766,7 +765,6 @@ void LanguageDataSet::read_csv()
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

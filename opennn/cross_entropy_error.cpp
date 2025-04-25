@@ -10,7 +10,7 @@
 #include "forward_propagation.h"
 #include "back_propagation.h"
 #include "tensors.h"
-#include "probabilistic_layer.h"
+//#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -232,7 +232,7 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
 
     Tensor<type, 0>& error = back_propagation_cuda.error;
 
-    const Index size = samples_number * outputs_pair.second[1];
+    const size_t size = samples_number * outputs_pair.second[1];
 
     const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
@@ -247,6 +247,7 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     float* numerator = back_propagation_cuda.numerator;
     float* numerator_2 = back_propagation_cuda.numerator_2;
     float* numerator_3 = back_propagation_cuda.numerator_3;
+    float* outputs_plus_epsilon = back_propagation_cuda.outputs_plus_epsilon;
     float* one_minus_targets = back_propagation_cuda.one_minus_targets;
     float* one_minus_outputs = back_propagation_cuda.one_minus_outputs;
     float* numerator_reduce = back_propagation_cuda.numerator_reduce;
@@ -256,34 +257,17 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     const float alpha_minus_one = -1.0f;
     const float beta = 0.0f;
 
-    // 1 - targets
-    cudnnOpTensor(cudnn_handle,
-        operator_sum_descriptor,
-        &alpha_minus_one,
-        outputs_tensor_descriptor,
-        targets,
-        &alpha,
-        outputs_tensor_descriptor,
-        ones,
-        &beta,
-        outputs_tensor_descriptor,
-        one_minus_targets);
+    const float epsilon = type(1e-5);
 
-    // 1 - outputs
-    cudnnOpTensor(cudnn_handle,
-        operator_sum_descriptor,
-        &alpha_minus_one,
-        outputs_tensor_descriptor,
-        outputs,
-        &alpha,
-        outputs_tensor_descriptor,
-        ones,
-        &beta,
-        outputs_tensor_descriptor,
-        one_minus_outputs);
+    cudaMemcpy(one_minus_outputs, ones, size * sizeof(float), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(one_minus_targets, ones, size * sizeof(float), cudaMemcpyDeviceToDevice);
 
-    // (1 - outputs).log()
-    log(size, one_minus_outputs, numerator_2);
+    cublasSaxpy(cublas_handle, size, &alpha_minus_one, outputs, 1, one_minus_outputs, 1); // 1 - outputs
+    cublasSaxpy(cublas_handle, size, &epsilon, ones, 1, one_minus_outputs, 1); // (1 - outputs) + epsilon
+
+    cublasSaxpy(cublas_handle, size, &alpha_minus_one, targets, 1, one_minus_targets, 1); // 1 - targets
+
+    log(size, one_minus_outputs, numerator_2); // (1 - outputs).log()
 
     // (1 - targets) * (1 - outputs).log()
     cudnnOpTensor(cudnn_handle,
@@ -298,8 +282,12 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
         outputs_tensor_descriptor,
         numerator);
 
+    // outputs + epsilon
+    cudaMemcpy(outputs_plus_epsilon, outputs, size * sizeof(float), cudaMemcpyDeviceToDevice);
+    cublasSaxpy(cublas_handle, size, &epsilon, ones, 1, outputs_plus_epsilon, 1);
+
     // outputs.log()
-    log(size, outputs, numerator_2);
+    log(size, outputs_plus_epsilon, numerator_2);
 
     // target * outputs.log()
     cudnnOpTensor(cudnn_handle,
@@ -365,7 +353,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 
     Tensor<type, 0>& error = back_propagation_cuda.error;
 
-    const Index size = samples_number * outputs_pair.second[1];
+    const size_t size = samples_number * outputs_pair.second[1];
 
     const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
@@ -376,15 +364,25 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
     void* workspace = back_propagation_cuda.workspace;
     size_t workspaceSize = back_propagation_cuda.workspaceSize;
 
-    type* numerator = back_propagation_cuda.numerator;
-    type* numerator_2 = back_propagation_cuda.numerator_2;
-    type* numerator_reduce = back_propagation_cuda.numerator_reduce;
+    float* numerator = back_propagation_cuda.numerator;
+    float* numerator_2 = back_propagation_cuda.numerator_2;
+    float* numerator_reduce = back_propagation_cuda.numerator_reduce;
+    float* outputs_plus_epsilon = back_propagation_cuda.outputs_plus_epsilon;
+    float* ones = back_propagation_cuda.ones;
 
     float alpha = 1.0f;
     const float beta = 0.0f;
 
-    log(size, outputs, numerator_2);
+    const float epsilon = type(1e-5);
 
+    // outputs + epsilon
+    cudaMemcpy(outputs_plus_epsilon, outputs, size * sizeof(float), cudaMemcpyDeviceToDevice);
+    cublasSaxpy(cublas_handle, size, &epsilon, ones, 1, outputs_plus_epsilon, 1);
+
+    // (outputs + epsilon).log()
+    log(size, outputs_plus_epsilon, numerator_2);
+
+    // targets * ((outputs + epsilon).log())
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
@@ -397,6 +395,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
         outputs_tensor_descriptor,
         numerator);
 
+    // (targets * ((outputs + epsilon).log())).sum()
     cudnnReduceTensor(cudnn_handle,
         reduce_tensor_descriptor,
         nullptr, 0,
@@ -457,6 +456,8 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
     float* numerator = back_propagation_cuda.numerator;
     float* numerator_2 = back_propagation_cuda.numerator_2;
     float* numerator_3 = back_propagation_cuda.numerator_3;
+
+    // Already calculated in calculate_error_cuda
     float* one_minus_targets = back_propagation_cuda.one_minus_targets;
     float* one_minus_outputs = back_propagation_cuda.one_minus_outputs;
 
@@ -519,19 +520,36 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
 
     const float* outputs = outputs_pair.first;
 
-    const size_t size = samples_number * outputs_pair.second[1];
-
     // Back propagation
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation_cuda.get_output_deltas_pair_device();
 
     float* output_deltas = output_deltas_pair.first;
 
-    const type coefficient = -type(1) / type(samples_number);
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
 
-    division(size, targets, outputs, output_deltas);
+    const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
 
-    cublasSscal(cublas_handle, size, &coefficient, output_deltas, 1);
+    const type alpha = 1.0f;
+    const type beta = 0.0f;
+    const type beta_minus_one = -1.0f;
+
+    // outputs - targets
+    cudnnOpTensor(cudnn_handle,
+        operator_sum_descriptor,
+        &alpha,
+        outputs_tensor_descriptor,
+        outputs,
+        &beta_minus_one,
+        outputs_tensor_descriptor,
+        targets,
+        &beta,
+        outputs_tensor_descriptor,
+        output_deltas);
+
+    // (outputs - targets) / samples_number
+    const float scale_factor = 1.0f / static_cast<float>(samples_number);
+    cudnnScaleTensor(cudnn_handle,outputs_tensor_descriptor,output_deltas,&scale_factor);
 }
 
 #endif

@@ -151,7 +151,7 @@ void LossIndex::calculate_squared_errors_lm(const Batch&,
 
     Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
 
-    squared_errors.device(*thread_pool_device) = errors.square().sum(rows_sum).sqrt();
+    squared_errors.device(*thread_pool_device) = errors.square().sum(array<int, 1>({1})).sqrt();
 }
 
 
@@ -303,7 +303,7 @@ void LossIndex::calculate_error_gradient_lm(const Batch&,
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
 
-    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, AT_B);
+    gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0));
 }
 
 
@@ -421,7 +421,6 @@ void LossIndex::calculate_layers_error_gradient(const Batch& batch,
                                   layer_delta_pairs[i],
                                   forward_propagation.layers[i],
                                   back_propagation.neural_network.layers[i]);
-
 }
 
 
@@ -433,10 +432,10 @@ void LossIndex::assemble_layers_error_gradient(BackPropagation& back_propagation
 
     Index index = 0;
 
-    for(Index i = 0; i < layers_number; i++)
+    for (Index i = 0; i < layers_number; i++)
         layers[i]->insert_gradient(back_propagation.neural_network.layers[i],
-                                   index,
-                                   back_propagation.gradient);
+            index,
+            back_propagation.gradient);
 }
 
 
@@ -1478,8 +1477,8 @@ void LossIndex::assemble_layers_error_gradient_cuda(BackPropagationCuda& back_pr
 
     for (Index i = 0; i < layers_number; i++)
         layers[i]->insert_gradient_cuda(back_propagation_cuda.neural_network.layers[i],
-                                        index,
-                                        back_propagation_cuda.gradient);
+            index,
+            back_propagation_cuda.gradient);
 }
 
 
@@ -1750,10 +1749,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     if (cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "Numerator 3 allocation error" << endl;
 
-    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_targets allocation error" << endl;
+    if (cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "outputs_plus_epsilon allocation error" << endl;
+
     if (cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "one_minus_outputs allocation error" << endl;
+    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "one_minus_targets allocation error" << endl;
 
     if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
         cout << "Numerator reduce allocation error" << endl;
@@ -1787,9 +1789,8 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     if (cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "aux ones allocation error" << endl;
 
-    for (Index i = 0; i < samples_number; i++) {
+    for (Index i = 0; i < samples_number; i++)
         cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
-    }
 
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{
@@ -1894,17 +1895,26 @@ void BackPropagationCuda::print()
 
 void BackPropagationCuda::free()
 {
-    cudaFree(loss_index);
     cudaFree(errors);
     cudaFree(gradient);
     cudaFree(parameters);
     cudaFree(parameters_square);
     cudaFree(output_deltas);
     cudaFree(numerator);
+    cudaFree(numerator_2);
+    cudaFree(numerator_3);
+    cudaFree(outputs_plus_epsilon);
+    cudaFree(one_minus_targets);
+    cudaFree(one_minus_outputs);
+    cudaFree(numerator_reduce);
+    cudaFree(regularization_gradient);
+    cudaFree(ones);
+    cudaFree(workspace);
     //cudaFree(predictions);
     //cudaFree(matches);
     //cudaFree(mask);
 
+    cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_sum_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_multiplication_descriptor);
     cudnnDestroyOpTensorDescriptor(operator_square_root_descriptor);

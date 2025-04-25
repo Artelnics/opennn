@@ -312,6 +312,7 @@
     <ClInclude Include="minkowski_error.h" />
     <ClCompile Include="minkowski_error.cpp" />
     <ClInclude Include="model_selection.h" />
+    <ClCompile Include="model_expression.cpp" />
     <ClCompile Include="model_selection.cpp" />
     <ClInclude Include="multihead_attention_layer.h" />
     <ClCompile Include="multihead_attention_layer.cpp" />

@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-#ifdef OPENNN_CUDA
-struct MultiheadAttentionForwardPropagationCuda;
-struct MultiheadAttentionBackPropagationCuda;
-#endif
-
 class MultiHeadAttention : public Layer
 {
 
@@ -44,7 +39,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
-    Tensor<type, 1> get_parameters() const override;
+    Tensor<type, 1> get_parameters() const;
 
     void set(const Index& = 0,
              const Index& = 0,
@@ -90,9 +85,9 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    //#ifdef OPENNN_CUDA
-    //    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_cuda.h"
-    //#endif
+    #ifdef OPENNN_CUDA_test
+       // @todo
+    #endif
 
 private:
 
@@ -120,15 +115,6 @@ private:
     Tensor<type, 2> causal_mask;
 
     type dropout_rate = type(0);
-
-    // type iteration = 0;
-
-    // const Eigen::array<Index, 1> projection_sum_index = { 3 };
-    const Eigen::array<Index, 2> bias_derivatives_sum_indices = { 0, 2 };
-    const Eigen::array<Index, 2> projection_bias_derivatives_sum_indices = { 0, 1 };
-
-    const Eigen::array<IndexPair<Index>, 2> projection_weight_derivatives_contraction_indices = { IndexPair<Index>(2, 0), IndexPair<Index>(0, 1) };
-    const Eigen::array<IndexPair<Index>, 2> transformation_weight_derivatives_contraction_indices = { IndexPair<Index>(1, 0), IndexPair<Index>(0, 2) };
 
     const type minus_inf = -numeric_limits<float>::infinity();
 };
@@ -199,10 +185,9 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 3> input_source_derivatives;
 };
 
-//#ifdef OPENNN_CUDA
-//    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_forward_propagation_cuda.h"
-//    #include "../../opennn_cuda/opennn_cuda/multihead_attention_layer_back_propagation_cuda.h"
-//#endif
+#ifdef OPENNN_CUDA_test
+    // @todo
+#endif
 
 }
 

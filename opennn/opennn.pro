@@ -23,7 +23,7 @@ CONFIG(debug, debug|release) {
 DEFINES += __Cpp17__
 
 win32:{
-QMAKE_CXXFLAGS += -bigobj
+#QMAKE_CXXFLAGS += -bigobj
 }
 
 # OpenMP library

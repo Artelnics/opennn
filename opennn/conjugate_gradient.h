@@ -17,6 +17,10 @@ namespace opennn
 
 struct ConjugateGradientData;
 
+#ifdef OPENNN_CUDA_test
+struct CGOptimizationDataCuda;
+#endif
+
 class ConjugateGradient : public OptimizationAlgorithm
 {
 
@@ -118,6 +122,17 @@ private:
    Index maximum_epochs_number;
 
    type maximum_time = type(360000);
+
+#ifdef OPENNN_CUDA_test
+
+public:
+
+    TrainingResults perform_training_cuda();
+
+    void update_parameters_cuda(BackPropagationCuda&, CGOptimizationDataCuda&) const;
+
+#endif
+
 };
 
 
@@ -127,7 +142,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     void set(ConjugateGradient* = nullptr);
 
-    virtual void print() const;
+    void print() const;
 
     ConjugateGradient* conjugate_gradient = nullptr;  
 
@@ -144,6 +159,36 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
 
     Tensor<type, 0> training_slope;
 };
+
+#ifdef OPENNN_CUDA_test
+
+struct CGOptimizationDataCuda : public OptimizationAlgorithmData
+{
+    CGOptimizationDataCuda(ConjugateGradient* = nullptr);
+
+    void set(ConjugateGradient* = nullptr);
+
+    void free();
+
+    void print() const;
+
+    ConjugateGradient* conjugate_gradient = nullptr;
+
+    float* parameters_increment = nullptr;
+
+    float* old_gradient = nullptr;
+
+    float* old_training_direction = nullptr;
+
+    Index epoch = 0;
+
+    type learning_rate = type(0);
+    type old_learning_rate = type(0);
+
+    Tensor<type, 0> training_slope;
+};
+
+#endif
 
 }
 

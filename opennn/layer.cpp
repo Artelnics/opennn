@@ -58,11 +58,11 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Recurrent:
         return "Recurrent";
 
-    case Type::Scaling2D:
-        return "Scaling2D";
+    case Type::Scaling2d:
+        return "Scaling2d";
 
-    case Type::Scaling4D:
-        return "Scaling4D";
+    case Type::Scaling4d:
+        return "Scaling4d";
 
     case Type::Unscaling:
         return "Unscaling";
@@ -70,17 +70,17 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Flatten3D:
-        return "Flatten3D";
+    case Type::Flatten3d:
+        return "Flatten3d";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
 
-    case Type::Addition3D:
-        return "Addition3D";
+    case Type::Addition3d:
+        return "Addition3d";
 
-    case Type::Normalization3D:
-        return "Normalization3D";
+    case Type::Normalization3d:
+        return "Normalization3d";
 
     case Type::Embedding:
         return "Embedding";
@@ -91,7 +91,6 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     default:
         throw runtime_error("Unknown layer type.");
     }
-
 }
 
 
@@ -124,11 +123,11 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Recurrent")
         return Type::Recurrent;
 
-    if(this_layer_type == "Scaling2D")
-        return Type::Scaling2D;
+    if(this_layer_type == "Scaling2d")
+        return Type::Scaling2d;
 
-    if(this_layer_type == "Scaling4D")
-        return Type::Scaling4D;
+    if(this_layer_type == "Scaling4d")
+        return Type::Scaling4d;
 
     if(this_layer_type == "Unscaling")
         return Type::Unscaling;
@@ -136,17 +135,17 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Flatten")
         return Type::Flatten;
 
-    if(this_layer_type == "Flatten3D")
-        return Type::Flatten3D;
+    if(this_layer_type == "Flatten3d")
+        return Type::Flatten3d;
 
     if(this_layer_type == "NonMaxSuppression")
         return Type::NonMaxSuppression;
 
-    if(this_layer_type == "Addition3D")
-        return Type::Addition3D;
+    if(this_layer_type == "Addition3d")
+        return Type::Addition3d;
 
-    if(this_layer_type == "Normalization3D")
-        return Type::Normalization3D;
+    if(this_layer_type == "Normalization3d")
+        return Type::Normalization3d;
 
     if(this_layer_type == "Embedding")
         return Type::Embedding;
@@ -201,11 +200,11 @@ string Layer::get_type_string() const
     case Type::Recurrent:
         return "Recurrent";
 
-    case Type::Scaling2D:
-        return "Scaling2D";
+    case Type::Scaling2d:
+        return "Scaling2d";
 
-    case Type::Scaling4D:
-        return "Scaling4D";
+    case Type::Scaling4d:
+        return "Scaling4d";
 
     case Type::Unscaling:
         return "Unscaling";
@@ -213,17 +212,17 @@ string Layer::get_type_string() const
     case Type::Flatten:
         return "Flatten";
 
-    case Type::Flatten3D:
-        return "Flatten3D";
+    case Type::Flatten3d:
+        return "Flatten3d";
 
     case Type::NonMaxSuppression:
         return "NonMaxSuppression";
 
-    case Type::Addition3D:
-        return "Addition3D";
+    case Type::Addition3d:
+        return "Addition3d";
 
-    case Type::Normalization3D:
-        return "Normalization3D";
+    case Type::Normalization3d:
+        return "Normalization3d";
 
     case Type::Embedding:
         return "Embedding";
@@ -364,51 +363,41 @@ void Layer::competitive(Tensor<type, 2>& y) const
 
 
 void Layer::softmax(Tensor<type, 2>& y) const
-{
-    const Eigen::array<Index, 1> softmax_dimension{{1}};
-    
+{    
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     
-    const Eigen::array<Index, 2> range_2{ { rows_number, 1 }};
-    const Eigen::array<Index, 2> expand_softmax_dim{ { 1, columns_number} };
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({1}))
                                          .eval()
-                                         .reshape(range_2)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 2>({rows_number, 1}))
+                                         .broadcast(array<Index, 2>({1, columns_number}));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
                                          .eval()
-                                         .reshape(range_2)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 2>({rows_number, 1}))
+                                         .broadcast(array<Index, 2>({1, columns_number}));
 }
 
 
 void Layer::softmax(Tensor<type, 3>& y) const
 {
-    const Eigen::array<Index, 1> softmax_dimension{{2}}; 
-    
     const Index rows_number = y.dimension(0);
     const Index columns_number = y.dimension(1);
     const Index channels = y.dimension(2);
     
-    const Eigen::array<Index, 3> range_3{ { rows_number, columns_number, 1 }};
-    const Eigen::array<Index, 3> expand_softmax_dim{ { 1, 1, channels }};
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({2}))
                                          .eval()
-                                         .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                         .broadcast(array<Index, 3>({1, 1, channels}));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({2}))
                                          .eval()
-                                         .reshape(range_3)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 3>({rows_number, columns_number, 1}))
+                                         .broadcast(array<Index, 3>({1, 1, channels}));
 }
 
 
@@ -419,21 +408,17 @@ void Layer::softmax(Tensor<type, 4>& y) const
     const Index channels = y.dimension(2);
     const Index blocks_number = y.dimension(3);
 
-    const Eigen::array<Index, 1> softmax_dimension{{0}};
-    const Eigen::array<Index, 4> range_4{{1, columns_number, channels, blocks_number}};
-    const Eigen::array<Index, 4> expand_softmax_dim{{rows_number, 1, 1, 1 }};
-
-    y.device(*thread_pool_device) = y - y.maximum(softmax_dimension)
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({0}))
                                          .eval()
-                                         .reshape(range_4)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
+                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
 
     y.device(*thread_pool_device) = y.exp();
 
-    y.device(*thread_pool_device) = y / y.sum(softmax_dimension)
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({0}))
                                          .eval()
-                                         .reshape(range_4)
-                                         .broadcast(expand_softmax_dim);
+                                         .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
+                                         .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
 }
 
 
@@ -563,7 +548,8 @@ cudnnHandle_t Layer::get_cudnn_handle()
 #endif
 
 }
- // namespace opennn
+
+// namespace opennn
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.
 //

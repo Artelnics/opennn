@@ -9,7 +9,7 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-#include "language_data_set.h"
+//#include "language_data_set.h"
 #include "layer.h"
 
 namespace opennn
@@ -91,7 +91,7 @@ public:
    void set_forecasting(const dimensions&, const dimensions&, const dimensions&);
    void set_auto_association(const dimensions&, const dimensions&, const dimensions&);
    void set_image_classification(const dimensions&, const dimensions&, const dimensions&);
-   void set_text_classification_transformer(const dimensions&, const dimensions&, const dimensions&);
+   void set_text_classification(const dimensions&, const dimensions&, const dimensions&);
 
    void set(const filesystem::path&);
 
@@ -201,8 +201,8 @@ public:
 
 public:
 
-    void create_cuda();
-    void destroy_cuda();
+    void create_cuda() const;
+    void destroy_cuda() const;
 
     void allocate_parameters_device();
     void free_parameters_device();
@@ -214,7 +214,7 @@ public:
                                 const bool& = false) const;
 
     void get_parameters_cuda(Tensor<type, 1>&);
-    void set_parameters_cuda(float*);
+    void set_parameters_cuda(const float*);
 
 protected:
 

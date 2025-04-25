@@ -12,39 +12,39 @@
 namespace opennn
 {
 
-Flatten3D::Flatten3D(const dimensions& new_input_dimensions) : Layer()
+Flatten3d::Flatten3d(const dimensions& new_input_dimensions) : Layer()
 {
     set(new_input_dimensions);
 }
 
 
-dimensions Flatten3D::get_input_dimensions() const
+dimensions Flatten3d::get_input_dimensions() const
 {
     return input_dimensions;
 }
 
 
-dimensions Flatten3D::get_output_dimensions() const
+dimensions Flatten3d::get_output_dimensions() const
 {
     return { input_dimensions[0] * input_dimensions[1] };
 }
 
 
-Index Flatten3D::get_input_height() const
+Index Flatten3d::get_input_height() const
 {
     return input_dimensions[0];
 }
 
 
-Index Flatten3D::get_input_width() const
+Index Flatten3d::get_input_width() const
 {
     return input_dimensions[1];
 }
 
 
-void Flatten3D::set(const dimensions& new_input_dimensions)
+void Flatten3d::set(const dimensions& new_input_dimensions)
 {
-    layer_type = Type::Flatten3D;
+    layer_type = Type::Flatten3d;
 
     set_name("flatten_layer");
 
@@ -52,22 +52,22 @@ void Flatten3D::set(const dimensions& new_input_dimensions)
 }
 
 
-void Flatten3D::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Flatten3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                   const bool&)
 {
-    const Index samples_number = layer_forward_propagation->batch_size;
+    const Index batch_size = layer_forward_propagation->batch_size;
 
     const Index outputs_number = get_outputs_number();
 
     Flatten3dForwardPropagation* flatten_layer_3d_forward_propagation =
         static_cast<Flatten3dForwardPropagation*>(layer_forward_propagation.get());
 
-    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, samples_number, outputs_number);
+    flatten_layer_3d_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
 }
 
 
-void Flatten3D::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Flatten3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                const vector<pair<type*, dimensions>>& delta_pairs,
                                unique_ptr<LayerForwardPropagation>&,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -88,9 +88,9 @@ void Flatten3D::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 }
 
 
-void Flatten3D::to_XML(XMLPrinter& printer) const
+void Flatten3d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Flatten3D");
+    printer.OpenElement("Flatten3d");
 
     add_xml_element(printer, "InputHeight", to_string(get_input_height()));
     add_xml_element(printer, "InputWidth", to_string(get_input_width()));
@@ -99,12 +99,12 @@ void Flatten3D::to_XML(XMLPrinter& printer) const
 }
 
 
-void Flatten3D::from_XML(const XMLDocument& document)
+void Flatten3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* flatten_layer_3d_element = document.FirstChildElement("Flatten3D");
+    const XMLElement* flatten_layer_3d_element = document.FirstChildElement("Flatten3d");
 
     if (!flatten_layer_3d_element)
-        throw runtime_error("Flatten3D element is nullptr.\n");
+        throw runtime_error("Flatten3d element is nullptr.\n");
 
     const Index input_height = read_xml_index(flatten_layer_3d_element, "InputHeight");
     const Index input_width = read_xml_index(flatten_layer_3d_element, "InputWidth");
@@ -113,9 +113,9 @@ void Flatten3D::from_XML(const XMLDocument& document)
 }
 
 
-void Flatten3D::print() const
+void Flatten3d::print() const
 {
-    cout << "Flatten3D layer" << endl;
+    cout << "Flatten3d layer" << endl;
 
     cout << "Input dimensions: " << endl;
     print_vector(input_dimensions);
@@ -154,7 +154,7 @@ void Flatten3dForwardPropagation::set(const Index& new_batch_size, Layer* new_la
 
 void Flatten3dForwardPropagation::print() const
 {
-    cout << "Flatten3D Outputs:" << endl
+    cout << "Flatten3d Outputs:" << endl
          << outputs.dimensions() << endl;
 }
 
@@ -165,7 +165,7 @@ void Flatten3dBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     batch_size = new_batch_size;
 
-    const Flatten3D* flatten_layer_3d = static_cast<Flatten3D*>(layer);
+    const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 
     const dimensions input_dimensions = flatten_layer_3d->get_input_dimensions();
 
@@ -189,7 +189,7 @@ Flatten3dBackPropagation::Flatten3dBackPropagation(const Index& new_batch_size, 
 
 vector<pair<type*, dimensions>> Flatten3dBackPropagation::get_input_derivative_pairs() const
 {
-    const Flatten3D* flatten_layer_3d = static_cast<Flatten3D*>(layer);
+    const Flatten3d* flatten_layer_3d = static_cast<Flatten3d*>(layer);
 
     const dimensions input_dimensions = flatten_layer_3d->get_input_dimensions();
 

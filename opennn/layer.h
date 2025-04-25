@@ -25,10 +25,10 @@ class Layer
 public:
 
     enum class Type{None,
-                    Scaling2D,
-                    Scaling4D,
-                    Addition3D,
-                    Normalization3D,
+                    Scaling2d,
+                    Scaling4d,
+                    Addition3d,
+                    Normalization3d,
                     Convolutional,
                     Perceptron,
                     Perceptron3d,
@@ -40,7 +40,7 @@ public:
                     Unscaling,
                     Bounding,
                     Flatten,
-                    Flatten3D,
+                    Flatten3d,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
@@ -154,7 +154,7 @@ protected:
 
 
     template <int Rank>
-    void linear(Tensor<type, Rank>& y, Tensor<type, Rank>& dy_dx) const
+    void linear(Tensor<type, Rank>&, Tensor<type, Rank>& dy_dx) const
     {
         if (dy_dx.size() == 0) return;
 
@@ -305,11 +305,6 @@ protected:
         }
     }
 
-    const Eigen::array<IndexPair<Index>, 1> A_B = { IndexPair<Index>(1, 0) };
-    const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
-    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-
-
 #ifdef OPENNN_CUDA_test
 
 public:
@@ -319,14 +314,12 @@ public:
 
     cudnnHandle_t get_cudnn_handle();
 
-    /*
     virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
                                         unique_ptr<LayerForwardPropagationCuda>&,
-                                        const bool&) = 0;
-                                        */
-    virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
-        unique_ptr<LayerForwardPropagationCuda>&,
-        const bool&) {}
+                                        const bool&) 
+    {
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_type_string());
+    }
 
     virtual void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
                                      const vector<pair<type*, dimensions>>&,
@@ -337,7 +330,7 @@ public:
                                       Index&,
                                       float*) const {}
 
-    virtual void set_parameters_cuda(const float*, const Index&) {}
+    virtual void set_parameters_cuda(const float*, Index&) {}
 
     virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&) {}
 

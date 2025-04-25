@@ -399,10 +399,8 @@ namespace opennn
 
     vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
         const Index& batch_size,
-        const bool& shuffle,
-        const Index& new_buffer_size) const
+        const bool& shuffle) const
     {
-
         if (!shuffle) return split_samples(sample_indices, batch_size);
 
         random_device rng;
@@ -421,8 +419,6 @@ namespace opennn
         vector<vector<Index>> batches(batches_number);
         
         vector<Index> samples_copy(sample_indices);
-
-        // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
@@ -518,8 +514,8 @@ namespace opennn
 
     void DataSet::set_sample_uses(const vector<Index>& indices, const SampleUse& sample_use)
     {
-        for (size_t i = 0; i < indices.size(); i++)
-            set_sample_use(indices[i], sample_use);
+        for (const auto& i : indices)
+            set_sample_use(i, sample_use);
     }
 
 
@@ -664,6 +660,50 @@ namespace opennn
         }
     }
 
+    void DataSet::set_default_raw_variables_uses_forecasting()
+    {
+        const Index raw_variables_number = raw_variables.size();
+
+        bool target = false;
+        bool timeRawVariable = false;
+
+        if (raw_variables_number == 0)
+            return;
+
+        if (raw_variables_number == 1)
+        {
+            raw_variables[0].set_use(VariableUse::None);
+            return;
+        }
+
+        set(VariableUse::Input);
+
+        for (Index i = raw_variables.size() - 1; i >= 0; i--)
+        {
+            if (raw_variables[i].type == RawVariableType::DateTime && !timeRawVariable)
+            {
+                raw_variables[i].set_use(VariableUse::Time);
+
+                timeRawVariable = true;
+                continue;
+            }
+
+            if (raw_variables[i].type == RawVariableType::Constant)
+            {
+                raw_variables[i].set_use(VariableUse::None);
+                continue;
+            }
+
+            if (!target)
+            {
+                raw_variables[i].set_use(VariableUse::Target);
+
+                target = true;
+
+                continue;
+            }
+        }
+    }
 
     void DataSet::set_default_raw_variable_names()
     {
@@ -676,8 +716,6 @@ namespace opennn
 
     vector<string> DataSet::get_variable_names() const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         const Index variables_number = get_variables_number();
 
         vector<string> variable_names(variables_number);
@@ -700,8 +738,6 @@ namespace opennn
         const Index variables_number = get_variables_number(variable_use);
 
         vector<string> variable_names(variables_number);
-
-        const Index raw_variables_number = get_raw_variables_number();
 
         Index index = 0;
 
@@ -886,8 +922,6 @@ namespace opennn
 
     vector<string> DataSet::get_raw_variable_names(const VariableUse& variable_use) const
     {
-        const Index raw_variables_number = get_raw_variables_number();
-
         const Index count = get_raw_variables_number(variable_use);
 
         vector<string> names(count);
@@ -1577,8 +1611,8 @@ namespace opennn
         if (raw_variables[raw_variable_index].type == RawVariableType::Categorical)
             raw_variables_number = raw_variables[raw_variable_index].get_categories_number();
 
-        const Eigen::array<Index, 2> extents = { rows_number, raw_variables_number };
-        const Eigen::array<Index, 2> offsets = { 0, get_variable_indices(raw_variable_index)[0] };
+        const array<Index, 2> offsets = { 0, get_variable_indices(raw_variable_index)[0] };
+        const array<Index, 2> extents = { rows_number, raw_variables_number };
 
         return data.slice(offsets, extents);
     }
@@ -1988,13 +2022,13 @@ namespace opennn
     {
         vector<string> unused_raw_variables;
 
-        for (Index i = 0; i < original_variable_indices.size(); i++)
+        for (Index i = 0; i < (Index)original_variable_indices.size(); i++)
         {
             const Index original_raw_variable_index = original_variable_indices[i];
 
             bool found = false;
 
-            for (Index j = 0; j < override_variable_indices.size(); j++)
+            for (Index j = 0; j < (Index)override_variable_indices.size(); j++)
             {
                 if (original_raw_variable_index == override_variable_indices[j])
                 {
@@ -2019,7 +2053,6 @@ namespace opennn
 
     vector<Histogram> DataSet::calculate_raw_variable_distributions(const Index& bins_number) const
     {
-        const Index raw_variables_number = raw_variables.size();
         const Index used_raw_variables_number = get_used_raw_variables_number();
         const vector<Index> used_sample_indices = get_used_sample_indices();
         const Index used_samples_number = used_sample_indices.size();
@@ -2617,7 +2650,6 @@ namespace opennn
 
         return correlations_spearman;
     }
-
 
     void DataSet::print_inputs_correlations() const
     {
@@ -3584,13 +3616,10 @@ namespace opennn
 
         for (Index i = 0; i < used_variables_number; i++)
         {
-            const Index variable_index = used_variable_indices[i];
-
             for (Index j = 0; j < used_samples_number; j++)
             {
                 sample_index = used_sample_indices[j];
 
-                //const type value = data(sample_index, variable_index);
                 const type value = data(sample_index, i);
 
                 if (get_sample_use(sample_index) == SampleUse::None
