@@ -17,12 +17,12 @@ namespace opennn
 //struct Flatten3dForwardPropagation;
 //struct Flatten3dBackPropagation;
 
-class Flatten3D : public Layer
+class Flatten3d : public Layer
 {
 
 public:
 
-    Flatten3D(const dimensions& = {0,0});
+    Flatten3d(const dimensions& = {0,0});
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;

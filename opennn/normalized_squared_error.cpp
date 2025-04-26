@@ -25,7 +25,7 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
 
-    neural_network->has(Layer::Type::Recurrent) || neural_network->has(Layer::Type::LongShortTermMemory)
+    neural_network->has(Layer::Type::Recurrent)
         ? set_time_series_normalization_coefficient()
         : set_normalization_coefficient();
 }
@@ -215,9 +215,6 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
     output_deltas.device(*thread_pool_device) = errors
         / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
                         .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
-
-//output_deltas.device(*thread_pool_device) = errors;
-//    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
@@ -291,6 +288,26 @@ void NormalizedSquaredError::from_XML(const XMLDocument& document) const
     if(!root_element)
         throw runtime_error("Normalized squared element is nullptr.\n");
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+void NormalizedSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
+                                                  const ForwardPropagationCuda& forward_propagation_cuda,
+                                                  BackPropagationCuda& back_propagation_cuda) const
+{
+    throw runtime_error("CUDA calculate_error_cuda not implemented for loss index type: NormalizedSquaredError");
+}
+
+
+void NormalizedSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
+                                                         ForwardPropagationCuda& forward_propagation_cuda,
+                                                         BackPropagationCuda& back_propagation_cuda) const
+{
+    throw runtime_error("CUDA calculate_output_delta_cuda not implemented for loss index type: NormalizedSquaredError");
+}
+
+#endif
 
 }
 

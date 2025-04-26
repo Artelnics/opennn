@@ -25,22 +25,21 @@ class Layer
 public:
 
     enum class Type{None,
-                    Scaling2D,
-                    Scaling4D,
-                    Addition3D,
-                    Normalization3D,
+                    Scaling2d,
+                    Scaling4d,
+                    Addition3d,
+                    Normalization3d,
                     Convolutional,
                     Perceptron,
                     Perceptron3d,
                     Pooling,
                     Probabilistic,
                     Probabilistic3d,
-                    LongShortTermMemory,
                     Recurrent,
                     Unscaling,
                     Bounding,
                     Flatten,
-                    Flatten3D,
+                    Flatten3d,
                     NonMaxSuppression,
                     MultiheadAttention,
                     Embedding};
@@ -314,14 +313,12 @@ public:
 
     cudnnHandle_t get_cudnn_handle();
 
-    /*
     virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
                                         unique_ptr<LayerForwardPropagationCuda>&,
-                                        const bool&) = 0;
-                                        */
-    virtual void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
-        unique_ptr<LayerForwardPropagationCuda>&,
-        const bool&) {}
+                                        const bool&) 
+    {
+        throw runtime_error("CUDA forward propagation not implemented for layer type: " + this->get_type_string());
+    }
 
     virtual void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
                                      const vector<pair<type*, dimensions>>&,

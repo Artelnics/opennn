@@ -38,9 +38,9 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
     output_conditions.resize(outputs_number);
     output_conditions.setConstant(Condition::None);
 
-    if(neural_network->has(Layer::Type::Scaling2D))
+    if(neural_network->has(Layer::Type::Scaling2d))
     {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
 
         input_minimums = scaling_layer_2d->get_minimums();
         input_maximums = scaling_layer_2d->get_maximums();
@@ -57,7 +57,7 @@ void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_d
 
     if(neural_network->has(Layer::Type::Bounding))
     {
-        BoundingLayer* bounding_layer = static_cast<BoundingLayer*>(neural_network->get_first(Layer::Type::Bounding));
+        Bounding* bounding_layer = static_cast<Bounding*>(neural_network->get_first(Layer::Type::Bounding));
 
         output_minimums = bounding_layer->get_lower_bounds();
         output_maximums = bounding_layer->get_upper_bounds();

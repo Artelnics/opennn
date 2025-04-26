@@ -108,9 +108,6 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
     output_deltas.device(*thread_pool_device) = errors
         / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
                         .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
-
-    //    output_deltas.device(*thread_pool_device) = errors;
-    //    divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
 
 
@@ -123,14 +120,10 @@ void MeanSquaredError::calculate_error_gradient_lm(const Batch& batch,
 
     const type coefficient = type(2)/type(samples_number);
 
-    // const Tensor<type, 2>& errors = back_propagation_lm.errors;
     const Tensor<type, 1>& squared_errors = back_propagation_lm.squared_errors;
     const Tensor<type, 2>& squared_errors_jacobian = back_propagation_lm.squared_errors_jacobian;
 
     Tensor<type, 1>& gradient = back_propagation_lm.gradient;
-
-    // cout << "Errors dimensions: " << errors.dimensions() << endl;
-    // cout << "Squared errors dimensions: " << squared_errors.dimensions() << endl;
 
     gradient.device(*thread_pool_device) = squared_errors_jacobian.contract(squared_errors, axes(1,0))*coefficient;
 }

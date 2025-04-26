@@ -249,7 +249,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         optimization_data.epoch = epoch;
@@ -259,8 +258,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation,
                                           is_training);
-        // cout << "Epoch " << epoch << endl;
-        // training_forward_propagation.print();
 
         // Loss index
 
@@ -268,25 +265,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                       training_forward_propagation,
                                       training_back_propagation_lm);
 
-        // training_back_propagation_lm.print();
-
-/*
-        // Numerical Jacobian and Hessian
-        Tensor<type, 2> numerical_hessian = loss_index->calculate_numerical_hessian();
-        Tensor<type, 2> numerical_jacobian = loss_index->calculate_numerical_jacobian();
-
-        cout << "Jacobian:\n" << training_back_propagation_lm.squared_errors_jacobian << endl;
-
-        cout << "Numerical Jacobian:\n" << numerical_jacobian << endl;
-
-        cout << "Hessian:\n" << training_back_propagation_lm.hessian << endl;
-
-        cout << "Numerical Hessian:\n" << numerical_hessian << endl;
-
-        cout << "Hessian - numerical Hessian:\n" << training_back_propagation_lm.hessian - numerical_hessian << endl;
-
-        throw runtime_error("Checking the numerical Hessian.");
-*/
         results.training_error_history(epoch) = training_back_propagation_lm.error();
 
         if(has_selection)
@@ -565,6 +543,53 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     potential_parameters.resize(parameters_number);
     parameters_increment.resize(parameters_number);
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
+{
+    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
+}
+
+
+void LevenbergMarquardtAlgorithm::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
+                                                         LMAOptimizationDataCuda& optimization_data_cuda) const
+{
+    // @todo
+}
+
+
+LMAOptimizationDataCuda::LMAOptimizationDataCuda(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm)
+{
+    set(new_Levenberg_Marquardt_algorithm);
+}
+
+
+void LMAOptimizationDataCuda::set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm)
+{
+    Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_algorithm;
+
+    const Index parameters_number = Levenberg_Marquardt_algorithm->get_loss_index()->get_neural_network()->get_parameters_number();
+
+    // Gradient
+
+    // @todo
+}
+
+
+void LMAOptimizationDataCuda::free()
+{
+    // @todo
+}
+
+
+void LMAOptimizationDataCuda::print() const
+{
+    // @todo
+}
+
+#endif
 
 }
 

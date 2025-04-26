@@ -14,11 +14,6 @@
 namespace opennn
 {
 
-//#ifdef OPENNN_CUDA
-//    struct AdditionLayer3DForwardPropagationCuda;
-//    struct AdditionLayer3DBackPropagationCuda;
-//#endif
-
 class Addition3d : public Layer
 {
 
@@ -46,20 +41,18 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
-    void forward_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                                LayerForwardPropagationCuda*,
-                                const bool&) final;
+public:
 
-    void back_propagate_cuda(const Tensor<pair<type*, dimensions>, 1>&,
-                             const Tensor<pair<type*, dimensions>, 1>&,
-                             LayerForwardPropagationCuda*,
-                             LayerBackPropagationCuda*) const final;
+    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                                unique_ptr<LayerForwardPropagationCuda>&,
+                                const bool&) override;
 
-    Index get_inputs_number() const;
-
-    Index get_inputs_depth() const;
+    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
+                             const vector<pair<type*, dimensions>>&,
+                             unique_ptr<LayerForwardPropagationCuda>&,
+                             unique_ptr<LayerBackPropagationCuda>&) const override;
 
 #endif
 
@@ -100,33 +93,29 @@ struct Addition3dBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA
+#ifdef OPENNN_CUDA_test
 
     struct AdditionLayer3DForwardPropagationCuda : public LayerForwardPropagationCuda
     {
-        explicit AdditionLayer3DForwardPropagationCuda(const Index&, Layer*);
+        AdditionLayer3DForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-        void set(const Index&, Layer*) override;
+        pair<type*, dimensions> get_outputs_pair_device() const override;
+
+        void set(const Index & = 0, Layer* = nullptr);
 
         void print() const override;
-
-        void free() override;
-
-        pair<type*, dimensions> get_outputs_pair() const;
-
-        type* outputs = nullptr;
     };
 
 
     struct AdditionLayer3DBackPropagationCuda : public LayerBackPropagationCuda
     {
-        explicit AdditionLayer3DBackPropagationCuda(const Index&, Layer*);
+        AdditionLayer3DBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
-        void set(const Index&, Layer*) override;
+        vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
+
+        void set(const Index & = 0, Layer* = nullptr);
 
         void print() const override;
-
-        void free() override;
 
         type* inputs_1_derivatives = nullptr;
         type* inputs_2_derivatives = nullptr;

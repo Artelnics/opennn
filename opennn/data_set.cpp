@@ -399,10 +399,8 @@ namespace opennn
 
     vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
         const Index& batch_size,
-        const bool& shuffle,
-        const Index& new_buffer_size) const
+        const bool& shuffle) const
     {
-
         if (!shuffle) return split_samples(sample_indices, batch_size);
 
         random_device rng;
@@ -421,8 +419,6 @@ namespace opennn
         vector<vector<Index>> batches(batches_number);
         
         vector<Index> samples_copy(sample_indices);
-
-        // Shuffle
 
         std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), urng);
 
@@ -518,8 +514,8 @@ namespace opennn
 
     void DataSet::set_sample_uses(const vector<Index>& indices, const SampleUse& sample_use)
     {
-        for (size_t i = 0; i < indices.size(); i++)
-            set_sample_use(indices[i], sample_use);
+        for (const auto& i : indices)
+            set_sample_use(i, sample_use);
     }
 
 
@@ -1187,15 +1183,6 @@ namespace opennn
 
     void DataSet::set(const VariableUse& variable_use)
     {
-        /*
-        for (DataSet::RawVariable& raw_variable : raw_variables)
-        {
-            if (raw_variable.type == RawVariableType::Constant)
-                continue;
-
-            raw_variable.set_use(variable_use);
-        }
-        */
         const Index raw_variables_number = get_raw_variables_number();
 
         for (Index i = 0; i < raw_variables_number; i++)

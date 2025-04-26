@@ -79,7 +79,7 @@ public:
 
         Scaler scaler = Scaler::None;
 
-        bool has_raw_variables_names = false;
+        bool has_raw_variable_names = false;
 
         // Methods
 
@@ -168,7 +168,7 @@ public:
 
     vector<Scaler> get_variable_scalers(const VariableUse&) const;
 
-    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&, const Index& = 100) const;
+    vector<vector<Index>> get_batches(const vector<Index>&, const Index&, const bool&) const;
 
     const Tensor<type, 2>& get_data() const;
     Tensor<type, 2>* get_data_p();

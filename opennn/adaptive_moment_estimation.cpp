@@ -225,14 +225,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
-    if(neural_network->has(Layer::Type::LongShortTermMemory)
-    || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
-
+    
     optimization_data.iteration = 1;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
@@ -243,20 +242,20 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
-
+        
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // cout << "Iteration " << iteration << "/" << training_batches_number << endl;
 
             // Data set
-
+            
             training_batch.fill(training_batches[iteration],
                                 input_variable_indices,
                                 decoder_variable_indices,
                                 target_variable_indices);
 
             // Neural network
-
+            
             neural_network->forward_propagate(training_batch.get_input_pairs(),
                                               training_forward_propagation,
                                               is_training);
@@ -286,7 +285,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
             update_parameters(training_back_propagation, optimization_data);
         }
-        
+
         // Loss
 
         training_error /= type(training_batches_number);
@@ -402,7 +401,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(epoch != 0 && epoch % save_period == 0) neural_network->save(neural_network_file_name);
     }
-
+    
     set_unscaling();
 
     if(display) results.print();
@@ -642,10 +641,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     type elapsed_time = type(0);
 
-    bool shuffle = false;
+    bool shuffle = true;
 
-    if (neural_network->has(Layer::Type::LongShortTermMemory)
-        || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
@@ -689,7 +687,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
             // Optimization algorithm
 
-            update_parameteres_cuda(training_back_propagation_cuda, optimization_data_cuda);
+            update_parameters_cuda(training_back_propagation_cuda, optimization_data_cuda);
 
         }
 
@@ -820,7 +818,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 }
 
 
-void AdaptiveMomentEstimation::update_parameteres_cuda(BackPropagationCuda& back_propagation_cuda,
+void AdaptiveMomentEstimation::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
                                                        ADAMOptimizationDataCuda& optimization_data_cuda) const
 {
     NeuralNetwork* neural_network = loss_index->get_neural_network();

@@ -17,7 +17,7 @@ Normalization3d::Normalization3d(const Index& new_sequence_length,
                                  const Index& new_embedding_dimension,
                                  const string& new_name) : Layer()
 {
-    layer_type = Type::Normalization3D;
+    layer_type = Type::Normalization3d;
 
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
@@ -238,10 +238,10 @@ void Normalization3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_pro
 
 void Normalization3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* normalization_layer_element = document.FirstChildElement("Normalization3D");
+    const XMLElement* normalization_layer_element = document.FirstChildElement("Normalization3d");
 
     if(!normalization_layer_element)
-        throw runtime_error("Normalization3D element is nullptr.\n");
+        throw runtime_error("Normalization3d element is nullptr.\n");
 
     const string new_name = read_xml_string(normalization_layer_element, "Name");
     const Index new_sequence_length = read_xml_index(normalization_layer_element, "SequenceLength");
@@ -257,7 +257,7 @@ void Normalization3d::from_XML(const XMLDocument& document)
 
 void Normalization3d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Normalization3D");
+    printer.OpenElement("Normalization3d");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "SequenceLength", to_string(get_sequence_length()));

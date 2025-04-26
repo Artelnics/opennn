@@ -127,11 +127,10 @@ void Probabilistic3d::set_inputs_number(const Index new_inputs_number)
 }
 
 
+
 void Probabilistic3d::set_input_dimensions(const dimensions& new_input_dimensions)
 {
-/*
-    inputs_number = new_inputs_number;
-*/
+    // @todo
 }
 
 

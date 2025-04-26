@@ -21,6 +21,8 @@ public:
 
    CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
+   // Error
+
    void calculate_error(const Batch&,
                         const ForwardPropagation&,
                         BackPropagation&) const override;
@@ -56,9 +58,12 @@ public:
 
    void to_XML(XMLPrinter&) const override;
 
+
 #ifdef OPENNN_CUDA_test
 
 public:
+
+    // Error
 
     void calculate_error_cuda(const BatchCuda&,
                               const ForwardPropagationCuda&,

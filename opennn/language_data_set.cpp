@@ -75,7 +75,6 @@ void LanguageDataSet::set_target_vocabulary(const unordered_map<string, Index>& 
 void LanguageDataSet::set_data_random()
 {
 /*
-
     for(Index i = 0; i < batch_size; i++)
     {
         for(Index j = 0; j < decoder_length; j++)
@@ -287,10 +286,8 @@ void LanguageDataSet::print() const
     else
     {
         cout << "Language data set" << endl;
-
         cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
         cout << "Target size: " << get_target_length() << endl;
-
         cout << "Input lenght: " << get_input_length() << endl;
         cout << "Target categories: 0, 1"<<endl;
     }

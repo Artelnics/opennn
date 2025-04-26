@@ -365,10 +365,6 @@ void GeneticAlgorithm::evaluate_population()
 
         raw_inputs_number(i) = individual_raw_variables_indices.size();
 
-        // Neural network
-
-        // data_set->scrub_missing_values();
-
         data_set->set_raw_variable_indices(individual_raw_variables_indices,
                                            original_target_raw_variable_indices);
 
@@ -376,7 +372,7 @@ void GeneticAlgorithm::evaluate_population()
 
         const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-        neural_network->set_input_dimensions({ input_variables_number }/*{ data_set->get_variables_number(DataSet::VariableUse::Input) }*/);
+        neural_network->set_input_dimensions({input_variables_number});
 
         neural_network->set_input_names(input_names);
 
@@ -669,7 +665,7 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
             data_set->set_raw_variable_indices(optimal_inputs_raw_variables_indices, original_target_raw_variable_indices);
 
-            input_selection_results.optimal_input_raw_variables_names
+            input_selection_results.optimal_input_raw_variable_names
                 = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
 
             input_selection_results.optimal_parameters = parameters(optimal_individual_index);
@@ -756,9 +752,9 @@ InputsSelectionResults GeneticAlgorithm::perform_input_selection()
 
     neural_network->set_input_names(data_set->get_variable_names(DataSet::VariableUse::Input));
 
-    if(neural_network->has(Layer::Type::Scaling2D))
+    if(neural_network->has(Layer::Type::Scaling2d))
     {
-        ScalingLayer2D* scaling_layer_2d = static_cast<ScalingLayer2D*>(neural_network->get_first(Layer::Type::Scaling2D));
+        Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
         scaling_layer_2d->set_scalers(input_variable_scalers);
     }

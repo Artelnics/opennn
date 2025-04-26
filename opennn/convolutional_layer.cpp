@@ -73,7 +73,8 @@ void Convolutional::calculate_convolutions(const Tensor<type, 4>& inputs,
 void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                               const bool& is_training)
 {
-/*
+    // @todo This method does not work
+
     ConvolutionalForwardPropagation* this_forward_propagation =
         static_cast<ConvolutionalForwardPropagation*>(layer_forward_propagation.get());
 
@@ -89,6 +90,7 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
+    }
 
     const Index kernels_number = get_kernels_number();
 
@@ -98,16 +100,16 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
         if(is_training)
         {
-            TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
+            //TensorMap<Tensor<type, 0>> mean(&means(kernel_index));
 
-            TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
+            //TensorMap<Tensor<type, 0>> standard_deviation(&standard_deviations(kernel_index));
 
-            mean.device(*thread_pool_device) = kernel_output.mean();
+            //mean.device(*thread_pool_device) = kernel_output.mean();
 
-            standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
+            //standard_deviation.device(*thread_pool_device) = (kernel_output - mean(0)).square().mean().sqrt();
 
-            kernel_output.device(*thread_pool_device)
-                = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
+            //kernel_output.device(*thread_pool_device)
+            //    = (kernel_output - means(kernel_index))/(standard_deviations(kernel_index) + epsilon);
         }
         else
         {
@@ -118,19 +120,17 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
     if(is_training)
     {
-        moving_means.device(*thread_pool_device)
-            = momentum * moving_means + (type(1) - momentum) * means;
+        //moving_means.device(*thread_pool_device)
+        //    = momentum * moving_means + (type(1) - momentum) * means;
 
-        moving_standard_deviations.device(*thread_pool_device)
-            = momentum * moving_standard_deviations + (type(1) - momentum) * standard_deviations;
+        //moving_standard_deviations.device(*thread_pool_device)
+        //    = momentum * moving_standard_deviations + (type(1) - momentum) * standard_deviations;
     }
     else
     {
         outputs.device(*thread_pool_device)
-            = (outputs - moving_means)
-            / (moving_standard_deviations + epsilon);
+            = (outputs - moving_means)/(moving_standard_deviations + epsilon);
     }
-*/
 }
 
 
@@ -932,6 +932,691 @@ void ConvolutionalBackPropagation::print() const
          << "Synaptic weights derivatives:\n" << endl
          << weight_derivatives << endl;
 }
+
+
+#ifdef OPENNN_CUDA_test
+
+void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                           unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                           const bool& is_training)
+{
+    // Inputs
+
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index height = inputs_pair_device[0].second[1];
+    const Index width = inputs_pair_device[0].second[2];
+    const Index channels = inputs_pair_device[0].second[3];
+
+    const type* inputs_device = inputs_pair_device[0].first;
+
+    // Forward propagation
+
+    ConvolutionalLayerForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
+        = static_cast<ConvolutionalLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    Convolutional* convolutional_layer = static_cast<Convolutional*>(convolutional_layer_forward_propagation_cuda->layer);
+
+    type* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
+    type* outputs = convolutional_layer_forward_propagation_cuda->outputs;
+
+    void* workspace = convolutional_layer_forward_propagation_cuda->workspace;
+    size_t workspace_bytes = convolutional_layer_forward_propagation_cuda->workspace_bytes;
+
+    const cudnnActivationDescriptor_t& activation_descriptor = convolutional_layer_forward_propagation_cuda->activation_descriptor;
+    const cudnnTensorDescriptor_t& inputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->inputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& biases_tensor_descriptor = convolutional_layer_forward_propagation_cuda->biases_tensor_descriptor;
+    const cudnnFilterDescriptor_t& kernel_descriptor = convolutional_layer_forward_propagation_cuda->kernel_descriptor;
+    const cudnnConvolutionDescriptor_t& convolution_descriptor = convolutional_layer_forward_propagation_cuda->convolution_descriptor;
+    const cudnnConvolutionFwdAlgo_t& convolution_algorithm = convolutional_layer_forward_propagation_cuda->convolution_algorithm;
+
+    //cudnnConvolutionForward
+
+    const float alpha = 1.0f, beta = 0.0f;
+
+    cudnnStatus_t status = cudnnConvolutionForward(cudnn_handle,
+        &alpha,
+        inputs_tensor_descriptor,
+        inputs_device,
+        kernel_descriptor,
+        weights_device,
+        convolution_descriptor,
+        convolution_algorithm,
+        workspace, workspace_bytes,
+        &beta,
+        outputs_tensor_descriptor,
+        convolutions);
+
+    if (status != CUDNN_STATUS_SUCCESS)
+        cout << "cudnnConvolutionForward failed: " << cudnnGetErrorString(status) << endl;
+
+    // Biases
+
+    cudnnAddTensor(cudnn_handle,
+        &alpha,
+        biases_tensor_descriptor,
+        biases_device,
+        &alpha,
+        outputs_tensor_descriptor,
+        convolutions);
+
+    // Activations
+
+    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    {
+        cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
+            activation_descriptor,
+            &alpha,
+            outputs_tensor_descriptor,
+            convolutions,
+            &beta,
+            outputs_tensor_descriptor,
+            outputs);
+
+        if (activationStatus != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
+    }
+    else
+    {  
+        const Index outputs_number = get_outputs_number();
+
+        cudaMemcpy(outputs, convolutions, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+    }
+}
+
+
+void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+                                        const vector<pair<type*, dimensions>>& deltas_pair_device,
+                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                        unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
+{
+    // Inputs
+    const Index batch_samples_number = inputs_pair_device[0].second[0];
+
+    const type* inputs_device = inputs_pair_device[0].first;
+    const type* deltas_device = deltas_pair_device[0].first;
+
+    // Forward propagation
+
+    ConvolutionalLayerForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
+        = static_cast<ConvolutionalLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+
+    Convolutional* convolutional_layer = static_cast<Convolutional*>(convolutional_layer_forward_propagation_cuda->layer);
+
+    const type* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
+    const type* outputs = convolutional_layer_forward_propagation_cuda->outputs;
+
+    const cudnnActivationDescriptor_t& activation_descriptor = convolutional_layer_forward_propagation_cuda->activation_descriptor;
+    const cudnnTensorDescriptor_t& biases_tensor_descriptor = convolutional_layer_forward_propagation_cuda->biases_tensor_descriptor;
+
+    // Back propagation
+
+    ConvolutionalLayerBackPropagationCuda* convolutional_layer_back_propagation_cuda
+        = static_cast<ConvolutionalLayerBackPropagationCuda*>(back_propagation_cuda.get());
+
+    void* backward_data_workspace = convolutional_layer_back_propagation_cuda->backward_data_workspace;
+    void* backward_filter_workspace = convolutional_layer_back_propagation_cuda->backward_filter_workspace;
+    size_t backward_data_workspace_bytes = convolutional_layer_back_propagation_cuda->backward_data_workspace_bytes;
+    size_t backward_filter_workspace_bytes = convolutional_layer_back_propagation_cuda->backward_filter_workspace_bytes;
+
+    type* error_combinations_derivatives_device = convolutional_layer_back_propagation_cuda->error_combinations_derivatives_device;
+    type* weights_derivatives_device = convolutional_layer_back_propagation_cuda->weights_derivatives_device;
+    type* biases_derivatives_device = convolutional_layer_back_propagation_cuda->biases_derivatives_device;
+    type* input_derivatives = convolutional_layer_back_propagation_cuda->input_derivatives;
+
+    const cudnnTensorDescriptor_t& deltas_device_tensor_descriptor = convolutional_layer_back_propagation_cuda->deltas_device_tensor_descriptor;
+    const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = convolutional_layer_back_propagation_cuda->error_combinations_derivatives_tensor_descriptor;
+    const cudnnTensorDescriptor_t& inputs_tensor_descriptor = convolutional_layer_back_propagation_cuda->inputs_tensor_descriptor;
+
+    const cudnnFilterDescriptor_t& kernel_descriptor = convolutional_layer_back_propagation_cuda->kernel_descriptor;
+
+    const cudnnConvolutionDescriptor_t& convolution_descriptor = convolutional_layer_back_propagation_cuda->convolution_descriptor;
+
+    // Error combinations derivatives
+
+    const float alpha = 1.0f, beta = 0.0f;
+
+    if (convolutional_layer->get_activation_function() != Activation::Linear)
+    {
+        cudnnActivationBackward(cudnn_handle,
+            activation_descriptor,
+            &alpha,
+            error_combinations_derivatives_tensor_descriptor,
+            outputs,
+            deltas_device_tensor_descriptor,
+            deltas_device,
+            error_combinations_derivatives_tensor_descriptor,
+            convolutions,
+            &beta,
+            error_combinations_derivatives_tensor_descriptor,
+            error_combinations_derivatives_device);
+
+    }
+    else
+    {
+        const Index outputs_number = get_outputs_number();
+
+        cudaMemcpy(error_combinations_derivatives_device, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+    }
+
+    // Convolution backwards for weights derivatives
+
+    cudnnConvolutionBackwardFilter(cudnn_handle,
+        &alpha,
+        inputs_tensor_descriptor,
+        inputs_device,
+        error_combinations_derivatives_tensor_descriptor,
+        error_combinations_derivatives_device,
+        convolution_descriptor,
+        CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+        backward_filter_workspace, backward_filter_workspace_bytes,
+        &beta,
+        kernel_descriptor, weights_derivatives_device);
+
+    // Biases gradients
+
+    cudnnConvolutionBackwardBias(cudnn_handle,
+        &alpha,
+        error_combinations_derivatives_tensor_descriptor,
+        error_combinations_derivatives_device,
+        &beta,
+        biases_tensor_descriptor,
+        biases_derivatives_device);
+
+    //cout << "kernel_synaptic_weights_derivatives:\n" << matrix_3d_from_device(kernel_synaptic_weights_derivatives, 2, 2, 1) << endl;
+    //cout << "biases_derivatives:\n" << matrix_3d_from_device(biases_derivatives, 1, 1, 1) << endl;
+    //system("pause");
+
+    // Convolution backwards for input derivatives
+
+    cudnnConvolutionBackwardData(cudnn_handle,
+        &alpha,
+        kernel_descriptor,
+        weights_device,
+        error_combinations_derivatives_tensor_descriptor,
+        error_combinations_derivatives_device,
+        convolution_descriptor,
+        CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+        backward_data_workspace, backward_data_workspace_bytes,
+        &beta,
+        inputs_tensor_descriptor, input_derivatives);
+}
+
+
+void Convolutional::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
+                                         Index& index,
+                                         float* gradient) const
+{
+    ConvolutionalLayerBackPropagationCuda* convolutional_layer_back_propagation =
+        static_cast<ConvolutionalLayerBackPropagationCuda*>(back_propagation_cuda.get());
+
+    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->weights_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->biases_derivatives_device, biases.size(), index);
+}
+
+
+void Convolutional::set_parameters_cuda(const float* new_parameters, Index& index)
+{
+    copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
+    copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
+}
+
+
+void Convolutional::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
+{
+    // @todo
+}
+
+
+void Convolutional::allocate_parameters_device()
+{
+    const Index inputs_number = get_inputs_number();
+    const Index outputs_number = get_outputs_number();
+
+    if (cudaMalloc(&biases_device, outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Biases allocation error" << endl;
+
+    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "Synaptic weights allocation error" << endl;
+}
+
+
+void Convolutional::free_parameters_device()
+{
+    cudaFree(biases_device);
+    cudaFree(weights_device);
+
+    biases_device = nullptr;
+    weights_device = nullptr;
+}
+
+
+void Convolutional::copy_parameters_device()
+{
+    if (biases_device == nullptr)
+        cout << "Biases device is null" << endl;
+
+    if (weights_device == nullptr)
+        cout << "Weights device is null" << endl;
+
+    if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "Biases device copy error" << endl;
+
+    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "Weights device copy error" << endl;
+}
+
+
+void Convolutional::copy_parameters_host()
+{
+    if (biases_device == nullptr)
+        cout << "Biases is null" << endl;
+
+    if (weights_device == nullptr)
+        cout << "Synaptic weights is null" << endl;
+
+    if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Biases host copy error" << endl;
+
+    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
+        cout << "Weights host copy error" << endl;
+}
+
+
+float* Convolutional::get_weights_device() const
+{
+    return weights_device;
+}
+
+float* Convolutional::get_biases_device() const
+{
+    return biases_device;
+}
+
+
+// CUDA structs
+
+ConvolutionalLayerForwardPropagationCuda::ConvolutionalLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerForwardPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void ConvolutionalLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
+
+    const Index input_height = convolutional_layer->get_input_height();
+    const Index input_width = convolutional_layer->get_input_width();
+    const Index channels = convolutional_layer->get_input_channels();
+
+    const Index kernel_height = convolutional_layer->get_kernel_height();
+    const Index kernel_width = convolutional_layer->get_kernel_width();
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+
+    const Index pad_height = convolutional_layer->get_padding_height();
+    const Index pad_width = convolutional_layer->get_padding_width();
+
+    const Index stride_row = convolutional_layer->get_row_stride();
+    const Index stride_column = convolutional_layer->get_column_stride();
+
+    // Inputs
+
+    cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(inputs_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        channels,
+        input_height,
+        input_width);
+
+    // Biases
+
+    cudnnCreateTensorDescriptor(&biases_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(biases_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        1,
+        kernels_number,
+        1,
+        1);
+
+    // Kernel descriptor
+
+    cudnnCreateFilterDescriptor(&kernel_descriptor);
+
+    cudnnSetFilter4dDescriptor(kernel_descriptor,
+        CUDNN_DATA_FLOAT,
+        CUDNN_TENSOR_NCHW,
+        kernels_number,
+        channels,
+        kernel_height,
+        kernel_width);
+
+    // Convolution descriptor
+
+    cudnnCreateConvolutionDescriptor(&convolution_descriptor);
+
+    cudnnSetConvolution2dDescriptor(convolution_descriptor,
+        pad_height, pad_width,
+        stride_row, stride_column,
+        1, 1,
+        CUDNN_CONVOLUTION,
+        CUDNN_DATA_FLOAT);
+
+    cudnnGetConvolution2dForwardOutputDim(convolution_descriptor,
+        inputs_tensor_descriptor,
+        kernel_descriptor,
+        &output_batch_size,
+        &output_channels,
+        &output_height,
+        &output_width);
+
+    // Outputs
+
+    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        output_channels,
+        output_width,
+        output_height);
+
+    const size_t size = batch_size * output_height * output_width * output_channels;
+
+    if (cudaMalloc(&outputs, size * sizeof(float)) != cudaSuccess)
+        cout << "outputs allocation error" << endl;
+
+    if (cudaMalloc(&convolutions, size * sizeof(float)) != cudaSuccess)
+        cout << "convolutions allocation error" << endl;
+
+    // Activations
+
+    cudnnCreateActivationDescriptor(&activation_descriptor);
+
+    switch (convolutional_layer->get_activation_function())
+    {
+
+    case Convolutional::Activation::Linear:
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_IDENTITY, CUDNN_PROPAGATE_NAN, 0.0);
+        break;
+
+    case Convolutional::Activation::Logistic:
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
+        break;
+
+    case Convolutional::Activation::HyperbolicTangent:
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_TANH, CUDNN_PROPAGATE_NAN, 0.0);
+        break;
+
+    case Convolutional::Activation::RectifiedLinear:
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_RELU, CUDNN_PROPAGATE_NAN, 0.0);
+        break;
+
+    case Convolutional::Activation::ExponentialLinear:
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_ELU, CUDNN_PROPAGATE_NAN, 0.0);
+        break;
+
+        //case ActivationFunction::Swish:
+        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_SWISH, CUDNN_PROPAGATE_NAN, 0.0);
+        //    break;
+
+        //case ActivationFunction::ClippedRectifiedLinear:
+        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_CLIPPED_RELU, CUDNN_PROPAGATE_NAN, 0.0);
+        //    break;
+
+    }
+
+    // Convolution algorithm
+
+    cudnnFindConvolutionForwardAlgorithm(convolutional_layer->get_cudnn_handle(),
+        inputs_tensor_descriptor,
+        kernel_descriptor,
+        convolution_descriptor,
+        outputs_tensor_descriptor,
+        CUDNN_CONVOLUTION_FWD_ALGO_COUNT,
+        &returnedAlgoCount,
+        perfResults.data());
+
+    if (returnedAlgoCount != 0)
+        convolution_algorithm = perfResults[0].algo;
+    else
+        convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+
+    // Workspace
+
+    cudnnGetConvolutionForwardWorkspaceSize(convolutional_layer->get_cudnn_handle(),
+        inputs_tensor_descriptor,
+        kernel_descriptor,
+        convolution_descriptor,
+        outputs_tensor_descriptor,
+        convolution_algorithm,
+        &workspace_bytes);
+
+    if (cudaMalloc(&workspace, workspace_bytes) != cudaSuccess)
+        cout << "workspace allocation error" << endl;
+}
+
+
+void ConvolutionalLayerForwardPropagationCuda::print() const
+{
+    // @todo
+}
+
+
+void ConvolutionalLayerForwardPropagationCuda::free()
+{
+    cudaFree(outputs);
+    cudaFree(convolutions);
+    cudaFree(workspace);
+
+    cudnnDestroyActivationDescriptor(activation_descriptor);
+    cudnnDestroyTensorDescriptor(inputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
+    cudnnDestroyFilterDescriptor(kernel_descriptor);
+    cudnnDestroyConvolutionDescriptor(convolution_descriptor);
+}
+
+
+pair<type*, dimensions> ConvolutionalLayerForwardPropagationCuda::get_outputs_pair_device() const
+{
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    return pair<type*, dimensions>(outputs, { {batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]} });
+}
+
+
+ConvolutionalLayerBackPropagationCuda::ConvolutionalLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+    : LayerBackPropagationCuda()
+{
+    set(new_batch_size, new_layer);
+}
+
+
+void ConvolutionalLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+{
+    batch_size = new_batch_size;
+
+    layer = new_layer;
+
+    Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
+
+    const Index input_height = convolutional_layer->get_input_height();
+    const Index input_width = convolutional_layer->get_input_width();
+    const Index channels = convolutional_layer->get_input_channels();
+
+    const Index kernels_number = convolutional_layer->get_kernels_number();
+    const Index kernel_height = convolutional_layer->get_kernel_height();
+    const Index kernel_width = convolutional_layer->get_kernel_width();
+
+    const Index output_height = convolutional_layer->get_output_height();
+    const Index output_width = convolutional_layer->get_output_width();
+
+    const Index pad_height = convolutional_layer->get_padding_height();
+    const Index pad_width = convolutional_layer->get_padding_width();
+
+    const Index stride_height = convolutional_layer->get_row_stride();
+    const Index stride_width = convolutional_layer->get_column_stride();
+
+    const size_t input_size = batch_size * channels * input_height * input_width;
+    const size_t kernel_size = kernels_number * channels * kernel_height * kernel_width;
+
+    // Inputs
+
+    if (cudaMalloc(&input_derivatives, input_size * sizeof(float)) != cudaSuccess)
+        cout << "input derivatives allocation error" << endl;
+
+    cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(inputs_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        channels,
+        input_height,
+        input_width);
+
+    // Deltas
+
+    cudnnCreateTensorDescriptor(&deltas_device_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(deltas_device_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        kernels_number,
+        output_height,
+        output_width);
+
+    // Error combinations derivatives
+
+    if (cudaMalloc(&error_combinations_derivatives_device, batch_size * output_height * output_width * kernels_number * sizeof(float)) != cudaSuccess)
+        cout << "error_combinations_derivatives allocation error" << endl;
+
+    cudnnCreateTensorDescriptor(&error_combinations_derivatives_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(error_combinations_derivatives_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        batch_size,
+        kernels_number,
+        output_height,
+        output_width);
+
+    // Biases
+
+    if (cudaMalloc(&biases_derivatives_device, kernels_number * sizeof(float)) != cudaSuccess)
+        cout << "biases_derivatives allocation error" << endl;
+
+    // Kernel descriptor
+
+    cudnnCreateFilterDescriptor(&kernel_descriptor);
+
+    cudnnSetFilter4dDescriptor(kernel_descriptor,
+        CUDNN_DATA_FLOAT,
+        CUDNN_TENSOR_NCHW,
+        kernels_number,
+        channels,
+        kernel_height,
+        kernel_width);
+
+    // Kernel derivatives
+
+    if (cudaMalloc(&weights_derivatives_device, kernel_size * sizeof(float)) != cudaSuccess)
+        cout << "kernel derivatives allocation error" << endl;
+
+    cudnnCreateFilterDescriptor(&weights_derivatives_tensor_descriptor);
+
+    cudnnSetFilter4dDescriptor(weights_derivatives_tensor_descriptor,
+        CUDNN_DATA_FLOAT,
+        CUDNN_TENSOR_NCHW,
+        kernels_number,
+        channels,
+        kernel_height,
+        kernel_width);
+
+    // Convolution descriptor
+
+    cudnnCreateConvolutionDescriptor(&convolution_descriptor);
+
+    cudnnSetConvolution2dDescriptor(convolution_descriptor,
+        pad_height, pad_width,
+        stride_height, stride_width,
+        1, 1,
+        CUDNN_CROSS_CORRELATION,
+        CUDNN_DATA_FLOAT);
+
+    // Workspace
+
+    cudnnGetConvolutionBackwardDataWorkspaceSize(convolutional_layer->get_cudnn_handle(),
+        kernel_descriptor,
+        inputs_derivatives_tensor_descriptor,
+        convolution_descriptor,
+        inputs_tensor_descriptor,
+        CUDNN_CONVOLUTION_BWD_DATA_ALGO_0,
+        &backward_data_workspace_bytes);
+
+    cudnnGetConvolutionBackwardFilterWorkspaceSize(convolutional_layer->get_cudnn_handle(),
+        inputs_tensor_descriptor,
+        inputs_derivatives_tensor_descriptor,
+        convolution_descriptor,
+        weights_derivatives_tensor_descriptor,
+        CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,
+        &backward_filter_workspace_bytes);
+
+    // Workspace memory
+
+    if (cudaMalloc(&backward_data_workspace, backward_data_workspace_bytes) != cudaSuccess)
+        cout << "backward data workspace allocation error" << endl;
+
+    if (cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes) != cudaSuccess)
+        cout << "backward filter workspace allocation error" << endl;
+}
+
+
+vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+{
+    const dimensions input_dimensions = layer->get_input_dimensions();
+
+    return { {input_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}}};
+}
+
+
+void ConvolutionalLayerBackPropagationCuda::print() const
+{
+    // @todo
+}
+
+
+void ConvolutionalLayerBackPropagationCuda::free()
+{
+    cudaFree(input_derivatives);
+    cudaFree(error_combinations_derivatives_device);
+    cudaFree(biases_derivatives_device);
+    cudaFree(weights_derivatives_device);
+    cudaFree(backward_data_workspace);
+    cudaFree(backward_filter_workspace);
+
+    cudnnDestroyTensorDescriptor(deltas_device_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(error_combinations_derivatives_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(inputs_tensor_descriptor);
+    cudnnDestroyFilterDescriptor(kernel_descriptor);
+    cudnnDestroyFilterDescriptor(weights_derivatives_tensor_descriptor);
+    cudnnDestroyConvolutionDescriptor(convolution_descriptor);
+}
+
+#endif
 
 }
 

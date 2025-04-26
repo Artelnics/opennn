@@ -12,55 +12,55 @@
 namespace opennn
 {
 
-BoundingLayer::BoundingLayer(const dimensions& output_dimensions, const string& new_name) : Layer()
+Bounding::Bounding(const dimensions& output_dimensions, const string& new_name) : Layer()
 {
     set(output_dimensions, new_name);
 }
 
 
-const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method() const
+const Bounding::BoundingMethod& Bounding::get_bounding_method() const
 {
     return bounding_method;
 }
 
 
-dimensions BoundingLayer::get_input_dimensions() const
+dimensions Bounding::get_input_dimensions() const
 {
     return { lower_bounds.dimension(0) };
 }
 
 
-type BoundingLayer::get_lower_bound(const Index& i) const
+type Bounding::get_lower_bound(const Index& i) const
 {
     return lower_bounds[i];
 }
 
 
-const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
+const Tensor<type, 1>& Bounding::get_lower_bounds() const
 {
     return lower_bounds;
 }
 
 
-dimensions BoundingLayer::get_output_dimensions() const
+dimensions Bounding::get_output_dimensions() const
 {
     return { lower_bounds.dimension(0) };
 }
 
 
-type BoundingLayer::get_upper_bound(const Index& i) const
+type Bounding::get_upper_bound(const Index& i) const
 {
     return upper_bounds(i);
 }
 
 
-const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
+const Tensor<type, 1>& Bounding::get_upper_bounds() const
 {
     return upper_bounds;
 }
 
 
-void BoundingLayer::set(const dimensions& new_output_dimensions, const string& new_name)
+void Bounding::set(const dimensions& new_output_dimensions, const string& new_name)
 {
     set_output_dimensions(new_output_dimensions);
 
@@ -72,13 +72,13 @@ void BoundingLayer::set(const dimensions& new_output_dimensions, const string& n
 }
 
 
-void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
+void Bounding::set_bounding_method(const BoundingMethod& new_method)
 {
     bounding_method = new_method;
 }
 
 
-void BoundingLayer::set_bounding_method(const string& new_method_string)
+void Bounding::set_bounding_method(const string& new_method_string)
 {
     if(new_method_string == "NoBounding" || new_method_string == "No bounding")
         bounding_method = BoundingMethod::NoBounding;
@@ -89,14 +89,14 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 }
 
 
-void BoundingLayer::set_input_dimensions(const dimensions& new_input_dimensions)
+void Bounding::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     lower_bounds.resize(new_input_dimensions[0]);
     upper_bounds.resize(new_input_dimensions[0]);
 }
 
 
-void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bound)
+void Bounding::set_lower_bound(const Index& index, const type& new_lower_bound)
 {
     const dimensions output_dimensions = get_output_dimensions();
 
@@ -110,13 +110,13 @@ void BoundingLayer::set_lower_bound(const Index& index, const type& new_lower_bo
 }
 
 
-void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
+void Bounding::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
     lower_bounds = new_lower_bounds;
 }
 
 
-void BoundingLayer::set_output_dimensions(const dimensions& new_output_dimensions)
+void Bounding::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     lower_bounds.resize(new_output_dimensions[0]);
     upper_bounds.resize(new_output_dimensions[0]);
@@ -126,13 +126,13 @@ void BoundingLayer::set_output_dimensions(const dimensions& new_output_dimension
 }
 
 
-void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
+void Bounding::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
     upper_bounds = new_upper_bounds;
 }
 
 
-void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bound)
+void Bounding::set_upper_bound(const Index& index, const type& new_upper_bound)
 {
     const dimensions output_dimensions = get_output_dimensions();
 
@@ -146,7 +146,7 @@ void BoundingLayer::set_upper_bound(const Index& index, const type& new_upper_bo
 }
 
 
-void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
                                       const bool&)
 {
@@ -180,7 +180,7 @@ void BoundingLayer::forward_propagate(const vector<pair<type*, dimensions>>& inp
 }
 
 
-string BoundingLayer::get_bounding_method_string() const
+string Bounding::get_bounding_method_string() const
 {
     if(bounding_method == BoundingMethod::Bounding)
         return "Bounding";
@@ -191,11 +191,11 @@ string BoundingLayer::get_bounding_method_string() const
 }
 
 
-string BoundingLayer::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
+string Bounding::get_expression(const vector<string>& new_input_names, const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
-    ? get_default_input_names()
-    : new_input_names;
+        ? get_default_input_names()
+        : new_input_names;
 
     const vector<string> output_names = new_output_names.empty()
                                             ? get_default_output_names()
@@ -219,7 +219,7 @@ string BoundingLayer::get_expression(const vector<string>& new_input_names, cons
 }
 
 
-void BoundingLayer::print() const
+void Bounding::print() const
 {
     cout << "Bounding layer" << endl
          << "Lower bounds: " << lower_bounds << endl
@@ -227,7 +227,7 @@ void BoundingLayer::print() const
 }
 
 
-void BoundingLayer::to_XML(XMLPrinter& printer) const
+void Bounding::to_XML(XMLPrinter& printer) const
 {
     printer.OpenElement("Bounding");
 
@@ -252,7 +252,7 @@ void BoundingLayer::to_XML(XMLPrinter& printer) const
 }
 
 
-void BoundingLayer::from_XML(const XMLDocument& document)
+void Bounding::from_XML(const XMLDocument& document)
 {
     const auto* root_element = document.FirstChildElement("Bounding");
     
@@ -302,7 +302,7 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_size, Layer* ne
 {
     layer = new_layer;
 
-    const Index neurons_number = static_cast<BoundingLayer*>(layer)->get_output_dimensions()[0];
+    const Index neurons_number = static_cast<Bounding*>(layer)->get_output_dimensions()[0];
 
     batch_size = new_batch_size;
 
