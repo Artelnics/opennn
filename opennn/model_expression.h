@@ -69,10 +69,10 @@ public:
     string get_expression_javascript(const NeuralNetwork& );
 
     // other functions
-    string replace_reserved_keywords(const string& );
+    string replace_reserved_keywords(const string&);
     vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&);
-    void fix_input_names(vector<string>& );
-    void fix_output_names(vector<string>& );
+    vector<string> fix_input_names(vector<string>& );
+    vector<string> fix_output_names(vector<string>& );
 
     void save_expression(const string&, const ProgrammingLanguage&, const NeuralNetwork* );
 };

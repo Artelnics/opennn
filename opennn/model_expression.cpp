@@ -945,7 +945,8 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     const Index inputs_number = neural_network.get_inputs_number();
     const Index outputs_number = neural_network.get_outputs_number();
 
-    ostringstream buffer_to_fix;
+    vector<string> fixes_input_names = fix_input_names(input_names);
+    vector<string> fixes_output_names = fix_output_names(output_names);
 
     string token;
     string expression = neural_network.get_expression();
@@ -980,23 +981,22 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << input_names[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << input_names[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << fixes_input_names[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "_text')\" />" << endl
+                   << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
     }
     else
-    {
         for(int i = 0; i < inputs_number; i++)
             buffer << "<!-- "<< to_string(i) <<"no scaling layer -->" << endl
                    << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << input_names[i] << " </td>" << endl
                    << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << input_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << input_names[i] << "')\">" << endl
+                   << "<input type=\"range\" id=\"" << fixes_input_names[i] << "\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "_text')\" />" << endl
+                   << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"0\" min=\"-1\" max=\"1\" step=\"0.01\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
-    }
+
 
     buffer << "</table>" << endl
            << "</form>\n" << endl;
@@ -1006,7 +1006,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         buffer << "<!-- HIDDEN INPUTS -->" << endl;
 
         for(int i = 0; i < outputs_number; i++)
-            buffer << "<input type=\"hidden\" id=\"" << output_names[i] << "\" value=\"\">" << endl;
+            buffer << "<input type=\"hidden\" id=\"" << fixes_output_names[i] << "\" value=\"\">" << endl;
 
         buffer << "\n" << endl;
     }
@@ -1040,15 +1040,14 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "</tr>\n" << endl;
     }
     else
-    {
         for(int i = 0; i < outputs_number; i++)
             buffer << "<tr style=\"height:3.5em\">" << endl
                    << "<td> " << output_names[i] << " </td>" << endl
                    << "<td>" << endl
-                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
+                   << "<input style=\"text-align:right; padding-right:20px;\" id=\"" << fixes_output_names[i] << "\" value=\"\" type=\"text\"  disabled/>" << endl
                    << "</td>" << endl
                    << "</tr>\n" << endl;
-    }
+
 
     buffer << "</table>\n" << endl
            << "</form>" << endl
@@ -1063,8 +1062,8 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                << "\tvar selectedValueElement = document.getElementById(\"selected_value\");" << endl;
 
         for(int i = 0; i < outputs_number; i++)
-            buffer << "\tif(selectedCategory === \"" << output_names[i] << "\") {" << endl
-                   << "\t\tselectedValueElement.value = document.getElementById(\"" << output_names[i] << "\").value;" << endl
+            buffer << "\tif(selectedCategory === \"" << fixes_output_names[i] << "\") {" << endl
+                   << "\t\tselectedValueElement.value = document.getElementById(\"" << fixes_output_names[i] << "\").value;" << endl
                    << "\t}" << endl;
 
         buffer << "}\n" << endl;
@@ -1075,25 +1074,19 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
            << "\t" << "var inputs = [];" << endl;
 
     for(int i = 0; i < inputs_number; i++)
-        buffer << "\t" << "var " << input_names[i] << " =" << " document.getElementById(\"" << input_names[i] << "\").value; " << endl
-               << "\t" << "inputs.push(" << input_names[i] << ");" << endl;
+        buffer << "\t" << "var " << fixes_input_names[i] << " =" << " document.getElementById(\"" << fixes_input_names[i] << "\").value; " << endl
+               << "\t" << "inputs.push(" << fixes_input_names[i] << ");" << endl;
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
-
-    for(int i = 0; i < outputs_number; i++)
-        buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl
-               << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
 
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-    {
        for(int i = 0; i < outputs_number; i++)
-       {
-           buffer << "\t" << "var " << output_names[i] << " = document.getElementById(\"" << output_names[i] << "\");" << endl;
-           buffer << "\t" << output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-       }
-    }
+            buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
+                   << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
+
+
 
     while(getline(ss, token, '\n'))
     {
@@ -1106,11 +1099,12 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         lines.push_back(token);
     }
 
-    buffer << "function calculate_outputs(inputs)" << endl
+    buffer << "}" << endl
+           << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
     for(int i = 0; i < inputs_number; i++)
-        buffer << "\t" << "var " << input_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
+        buffer << "\t" << "var " << fixes_input_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
@@ -1164,6 +1158,31 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             replace_all_appearances(line, key_word, new_word);
         }
 
+        for (int i = 0; i < input_names.size(); ++i)
+            if(line.find(input_names[i]) != string::npos){
+                string original_input_name = input_names[i];
+                string fix_input_name = replace_reserved_keywords(original_input_name);
+                int pos = 0;
+
+                while((pos = line.find(original_input_name, pos)) != string::npos){
+                    line.replace(pos, original_input_name.length(), fix_input_name);
+                    pos += fix_input_name.length();
+                }
+
+            }
+
+        for (int i = 0; i < output_names.size(); ++i)
+            if(line.find(output_names[i]) != string::npos){
+                string original_output_name = output_names[i];
+                string fix_output_name = replace_reserved_keywords(original_output_name);
+                int pos = 0;
+
+                while((pos = line.find(original_output_name, pos)) != string::npos){
+                    line.replace(pos, original_output_name.length(), fix_output_name);
+                    pos += fix_output_name.length();
+                }
+            }
+
         line.size() <= 1
             ? buffer << endl
             : buffer << "\t" << "var " << line << endl;
@@ -1177,7 +1196,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     buffer << "\t" << "var out = [];" << endl;
 
     for(int i = 0; i < outputs_number; i++)
-        buffer << "\t" << "out.push(" << output_names[i] << ");" << endl;
+        buffer << "\t" << "out.push(" << fixes_output_names[i] << ");" << endl;
 
     buffer << "\n\t" << "return out;" << endl
            << "}\n" << endl;
@@ -1510,122 +1529,20 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 
 string ModelExpression::replace_reserved_keywords(const string& str)
 {
-    string language;
+    string out;
 
-    vector<string> out;
-    vector<string> tokens;
-    vector<string> found_tokens;
-    /*
-    string token;
-    string out_string;
-    string new_variable;
-    string old_variable;
-    string expression = str;
-
-    stringstream ss(expression);
-
-    int option = 0;
-
-    if (language == "javascript")
-        option = 1;
-    else if (language == "php")
-        option = 2;
-    else if (language == "python")
-        option = 3;
-    else if (language == "c")
-        option = 4;
-
-    size_t dimension = outputs_number;
-
-    while (getline(ss, token, '\n'))
-    {
-        if (token.size() > 1 && token.back() == '{')
-            break;
-
-        if (token.size() > 1 && token.back() != ';')
-            token += ';';
-
-        tokens.push_back(token);
+    for(char c : str){
+        if(isalnum(c) || c == '_')
+            out += c;
+        else if(c == ' ' || c == '-' || c == '+' || c == '/'|| c == '*')
+            out += '_';
     }
 
-    for (Index i = 0; i < tokens.size(); i++)
-    {
-        string s = tokens[i];
-        string word;
+    if(!out.empty() && isdigit(out[0]))
+        out = '_' + out;
 
-        for (char& c : s)
-            if (c != ' ' && c != '=')
-                word += c;
-            else
-                break;
-
-        if (word.size() > 1)
-            found_tokens.push_back(word);
-    }
-
-    new_variable = found_tokens[found_tokens.size() - 1];
-    old_variable = outputs[dimension - 1];
-
-    if (new_variable != old_variable)
-    {
-        Index j = found_tokens.size();
-
-        for (Index i = dimension; i-- > 0;)
-        {
-            j -= 1;
-
-            new_variable = found_tokens[j];
-            old_variable = outputs[i];
-
-            switch (option)
-            {
-                //JavaScript
-            case 1:
-                out_string = "\tvar "
-                 + old_variable
-                 + " = "
-                 + new_variable
-                 + ";";
-                out.push_back(out_string);
-                break;
-
-                //Php
-            case 2:
-                out_string = "$"
-                 + old_variable
-                 + " = "
-                 + "$"
-                 + new_variable
-                 + ";";
-                out.push_back(out_string);
-                break;
-
-                //Python
-            case 3:
-                out_string = old_variable
-                 + " = "
-                 + new_variable;
-                out.push_back(out_string);
-                break;
-
-                //C
-            case 4:
-                out_string = "double "
-                 + old_variable
-                 + " = "
-                 + new_variable
-                 + ";";
-                out.push_back(out_string);
-                break;
-
-            default:
-                break;
-            }
-        }
-    }
     return out;
-*/
-    return string();
+
 }
 
 
@@ -1677,7 +1594,6 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
     new_variable = found_tokens[found_tokens.size()-1];
     old_variable = outputs[dimension-1];
-
 
     if(new_variable != old_variable)
     {
@@ -1738,35 +1654,37 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 }
 
 
-void ModelExpression::fix_input_names(vector<string>& input_names)
+vector<string> ModelExpression::fix_input_names(vector<string>& input_names)
 {
-    /*
-    const Index inputs_number = input_names.size();
 
-    vector<string> input_names(inputs_number);
+    const Index inputs_number = input_names.size();
+    vector<string> fixes_input_names(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
         if(input_names[i].empty())
-            input_names[i] = "input_" + to_string(i);
+            fixes_input_names[i] = "input_" + to_string(i);
         else
-            input_names[i] = replace_reserved_keywords(input_names[i]);
-*/
+            fixes_input_names[i] = replace_reserved_keywords(input_names[i]);
+
+    return fixes_input_names;
+
 }
 
 
-void ModelExpression::fix_output_names(vector<string>& output_names)
+vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 {
-    /*
+
     const Index outputs_number = output_names.size();
 
-    vector<string> output_names(outputs_number);
+    vector<string> fixes_output_names(outputs_number);
 
     for (int i = 0; i < outputs_number; i++)
         if (output_names[i].empty())
-            output_names[i] = "output_" + to_string(i);
+            fixes_output_names[i] = "output_" + to_string(i);
         else
-            input_names[i] = replace_reserved_keywords(input_names[i]);
-*/
+            fixes_output_names[i] = replace_reserved_keywords(output_names[i]);
+
+    return fixes_output_names;
 }
 
 void ModelExpression::save_expression(const string& file_name,
@@ -1779,19 +1697,19 @@ void ModelExpression::save_expression(const string& file_name,
         throw runtime_error("Cannot open expression text file.\n");
 
     switch (programming_language) {
-    case ProgrammingLanguage::Python:
-        file << get_expression_python(*neural_network);
-        break;
-    case ProgrammingLanguage::C:
-        file << get_expression_c(*neural_network);
-        break;
-    case ProgrammingLanguage::JavaScript:
-        file << get_expression_javascript(*neural_network);
-        break;
-    case ProgrammingLanguage::PHP:
-        file << get_expression_api(*neural_network);
-        break;
-    }
+        case ProgrammingLanguage::Python:
+            file << get_expression_python(*neural_network);
+            break;
+        case ProgrammingLanguage::C:
+            file << get_expression_c(*neural_network);
+            break;
+        case ProgrammingLanguage::JavaScript:
+            file << get_expression_javascript(*neural_network);
+            break;
+        case ProgrammingLanguage::PHP:
+            file << get_expression_api(*neural_network);
+            break;
+        }
 
     file.close();
 }

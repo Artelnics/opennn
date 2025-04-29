@@ -57,6 +57,11 @@ const Index& TimeSeriesDataSet::get_steps_ahead() const
 }
 
 
+const string& TimeSeriesDataSet::get_time_raw_variable() const
+{
+    return time_raw_variable;
+}
+
 void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
 {
     lags_number = new_lags_number;
@@ -75,7 +80,7 @@ void TimeSeriesDataSet::set_time_raw_variable_index(const Index& new_time_raw_va
 
 void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
 {
-//    time_raw_variable = new_time_column;
+    time_raw_variable = new_time_column;
 }
 
 
@@ -125,7 +130,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
     add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
     add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
-    //add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
+    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
     add_xml_element(printer, "GroupByRawVariable", "");
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();

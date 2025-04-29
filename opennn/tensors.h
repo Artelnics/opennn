@@ -52,9 +52,8 @@ void set_row(Tensor<type, 2, RowMajor>&, const Tensor<type, 1>&, const Index&);
 
 Tensor<type, 2> delete_row(const Tensor<type, 2>&, const Index&);
 
-//void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
-//void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
-
+void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+void sum_columns(const ThreadPoolDevice*, const Tensor<type, 1>&, TensorMap<Tensor<type, 2>>&);
 void sum_matrices(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 3>&);
 
 void substract_matrices(const ThreadPoolDevice*, const Tensor<type, 2>&, Tensor<type, 3>&);
@@ -73,8 +72,8 @@ void batch_matrix_multiplication(const ThreadPoolDevice*, const Tensor<type, 4>&
 
 Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice*, const Tensor<type, 1>&);
 
-//void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
-//void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
+void divide_columns(const ThreadPoolDevice*, Tensor<type, 2>&, const Tensor<type, 1>&);
+void divide_columns(const ThreadPoolDevice*, TensorMap<Tensor<type, 2>>&, const Tensor<type, 1>&);
 
 template <int Rank>
 bool is_binary(const Tensor<type, Rank>& tensor)
