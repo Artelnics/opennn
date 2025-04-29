@@ -550,14 +550,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     neural_network.set_parameters_constant(type(0.001));
 
-//    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
-
-//    scaling_layer_2d->set_display(false);
-
-//    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
-
-//    probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
-
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
 
@@ -570,7 +562,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     training_strategy.set_maximum_epochs_number(1000);
 
     training_strategy.perform_training();
-    
+
     const Tensor<type, 2> inputs = data_set.get_data(DataSet::VariableUse::Input);
 
     const Tensor<type, 2> targets = data_set.get_data(DataSet::VariableUse::Target);
@@ -637,15 +629,21 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
 
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
+    // NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, {1}, {}, {1});
 
-    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
+    // Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    scaling_layer_2d->set_display(false);
+    // scaling_layer_2d->set_display(false);
 
-    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
+    // Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
 
-    probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
+    // probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
+
+    NeuralNetwork neural_network;
+    dimensions dim1 = { 1 };
+    dimensions dim2 = { 1 };
+    neural_network.add_layer(make_unique<Scaling2d>(dim1));
+    neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::Activation::Logistic));
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);

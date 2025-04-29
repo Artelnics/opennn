@@ -40,13 +40,16 @@ int main()
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
 
-        TrainingResults results = training_strategy.perform_training();
+        // TrainingResults results = training_strategy.perform_training();
 
-        const Tensor<string, 2> final_results = results.write_override_results(4);
+        // const Tensor<string, 2> final_results = results.write_override_results(4);
 
-        cout << "Final results:\n" << final_results << endl;
+        // cout << "Final results:\n" << final_results << endl;
+
+        GeneticAlgorithm genetic_algorithm(&training_strategy);
+        genetic_algorithm.perform_input_selection();
         
         cout << "Good bye!" << endl;
 

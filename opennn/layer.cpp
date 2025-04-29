@@ -52,9 +52,6 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Convolutional:
         return "Convolutional";
 
-    case Type::LongShortTermMemory:
-        return "LongShortTermMemory";
-
     case Type::Recurrent:
         return "Recurrent";
 
@@ -116,9 +113,6 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 
     if(this_layer_type == "Convolutional")
         return Type::Convolutional;
-
-    if(this_layer_type == "LongShortTermMemory")
-        return Type::LongShortTermMemory;
 
     if(this_layer_type == "Recurrent")
         return Type::Recurrent;
@@ -193,9 +187,6 @@ string Layer::get_type_string() const
 
     case Type::Convolutional:
         return "Convolutional";
-
-    case Type::LongShortTermMemory:
-        return "LongShortTermMemory";
 
     case Type::Recurrent:
         return "Recurrent";

@@ -35,7 +35,6 @@ public:
                     Pooling,
                     Probabilistic,
                     Probabilistic3d,
-                    LongShortTermMemory,
                     Recurrent,
                     Unscaling,
                     Bounding,

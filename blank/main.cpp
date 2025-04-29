@@ -26,41 +26,15 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        Index batch_size = 1;
-        Index seq_len = 3;
-        Index embed_dim = 4;
-        Index num_heads = 2;
+        // Index batch_size = 1;
+        // Index seq_len = 3;
+        // Index embed_dim = 4;
+        // Index num_heads = 2;
 
-        Tensor<type, 3> x(1,3,4);
-        x(0,0,0) = 1;
-        x(0,0,1) = 2;
-        x(0,0,2) = 3;
-        x(0,0,3) = 4;
-        x(0,1,0) = 5;
-        x(0,1,1) = 6;
-        x(0,1,2) = 7;
-        x(0,1,3) = 8;
-        x(0,2,0) = 9;
-        x(0,2,1) = 10;
-        x(0,2,2) = 11;
-        x(0,2,3) = 12;
-
-        NeuralNetwork nn;
-
-        nn.add_layer(make_unique<MultiHeadAttention>(seq_len,seq_len,embed_dim, num_heads, false));
-
-        nn.set_parameters_constant(0.1);
-
-
-
-        Tensor<type,3 > outputs = nn.calculate_outputs(x);
-
-        cout << "Outputs:\n" << outputs << endl;
-
+        Tensor<type, 1> x;
+        x.resize(0);
 
         cout << "Bye!" << endl;
-
-        cout << nn.get_parameters()<<endl;
 
         return 0;
     }

@@ -226,7 +226,7 @@ void LossIndex::back_propagate_lm(const Batch& batch,
                                   BackPropagationLM& back_propagation_lm) const
 {
     calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);

@@ -259,19 +259,29 @@ void MultiHeadAttention::apply_causal_mask(Tensor<type, 4>& attention_scores) co
 
 void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Tensor<type, 4>& query) const
 {
+    const Index batch_size = query_input.dimension(0);
+
+    // Verify embedding dimension matches
+    assert(embedding_dimension == query_weights.dimension(0));
+
+    // Tensor contraction dimensions:
+    // query_input: (batch_size, query_sequence_length, embedding_dimension)
+    // query_weights: (embedding_dimension, hidden_depth, heads_number)
+    Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+
+    Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
+
+    query = query_input.contract(query_weights, contract_dims)
+                            .shuffle(shuffle_dims);
+
     // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 
     const Index hidden_depth = get_hidden_depth();
 
-    // Tensor contraction dimensions:
-    // query_input: (batch_size, query_sequence_length, embedding_dimension)
-    // query_weights: (embedding_dimension, hidden_depth, heads_number)
-
-    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
-
     // @todo try this
-
+/*
     query.device(*thread_pool_device)
         = query_input
         .contract(query_weights, axes(2, 0))
@@ -284,9 +294,7 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
     // Here, query.dimension(0) is query_sequence_length and query.dimension(2) is batch_size.
 
     // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
-/*
-    const Index batch_size = query_input.dimension(0);
-
+*/
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);
@@ -298,12 +306,29 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
             sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
         }
     }
-*/
+
 }
 
 
 void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tensor<type, 4>& key) const
 {
+    const Index batch_size = source_input.dimension(0);
+
+
+    // Verify embedding dimension matches
+    assert(embedding_dimension == key_weights.dimension(0));
+
+    // Tensor contraction dimensions:
+    // query_input: (batch_size, query_sequence_length, embedding_dimension)
+    // query_weights: (embedding_dimension, hidden_depth, heads_number)
+    Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
+
+    Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
+    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
+
+    key = source_input.contract(key_weights, contract_dims)
+                .shuffle(shuffle_dims);
+/*
     // Verify embedding dimension matches
     assert(embedding_dimension == key_weights.dimension(0));
 
@@ -323,7 +348,7 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
         + key_biases
         .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
         .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
-/*
+*/
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 1>> head_key_biases = tensor_map(key_biases, head_index);
@@ -335,13 +360,13 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
             sum_columns(thread_pool_device.get(), head_key_biases, head_sample_key);
         }
     }
-*/
 }
 
 
 void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Tensor<type, 4>& value) const
 {
     const Index batch_size = source_input.dimension(0);
+
     const Index source_sequence_length = source_input.dimension(1);
     const Index hidden_depth = get_hidden_depth();
     assert(embedding_dimension == query_weights.dimension(0));
