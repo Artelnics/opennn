@@ -200,27 +200,10 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
 {
     const Index samples_number = inputs.dimension(0);
 
-/*    cout << "inputs dimensions: " << inputs.dimensions() << endl;
-    cout << "input_weights dimensions: " << input_weights.dimensions() << endl;
-    cout << "hidden_states dimensions: " << hidden_states.dimensions() << endl;
-    cout << "recurrent_weights dimensions: " << recurrent_weights.dimensions() << endl;
-    cout << "biases dimensions: " << biases.dimensions() << endl;
-
-    cout << "combinations before biases: " << combinations << endl;
-
-    combinations.device(*thread_pool_device) = biases
-                                             + inputs.contract(input_weights, axes(0,0))
-                                             + hidden_states.contract(recurrent_weights, axes(0,0));
-*/
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
-    cout << "combinations: " << combinations << endl;
-
     combinations = input_weights.contract(inputs, axes(1, 1))
                  + recurrent_weights.contract(hidden_states, axes(1, 1))
                  + biases.broadcast(array<Index, 2>{samples_number, 1});
-
-    cout << "combinations after: " << combinations << endl;
-
 }
 
 
@@ -294,7 +277,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    cout << "backward" << endl;
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
