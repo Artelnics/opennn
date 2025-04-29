@@ -2438,6 +2438,7 @@ namespace opennn
 
         for (Index i = 0; i < input_raw_variables_number; i++)
         {
+            cout << "correlacion: " << i << endl;
             const Index input_raw_variable_index = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_raw_variable_data
