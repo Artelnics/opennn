@@ -69,8 +69,8 @@ int main()
         neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
-        neural_network.add_layer(make_unique<Flatten3D>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<ProbabilisticLayer>(neural_network.get_output_dimensions(), outputs_number));
+        neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
+        neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
 
         // Training Strategy
 

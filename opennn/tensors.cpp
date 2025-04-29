@@ -216,7 +216,7 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     return matrix;
 }
 
-/*
+
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
@@ -236,7 +236,7 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
     }
 }
 
-/*
+
 void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
 {
     const Index columns_number = matrix.dimension(1);
@@ -262,7 +262,7 @@ void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 
         column.device(*thread_pool_device) = column + vector(i);
     }
 }
-*/
+
 
 void sum_matrices(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 3>& tensor)
 {

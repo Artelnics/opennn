@@ -221,7 +221,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network);
-    
+
     // Loss index
 
     loss_index->set_normalization_coefficient();
@@ -244,7 +244,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     type elapsed_time = type(0);
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
-    
+
     // Main loop
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
@@ -259,7 +259,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                           training_forward_propagation,
                                           is_training);
 
-        // cout << "Epoch " << epoch << endl;
+        // cout << "Exits the fprop of epoch " << epoch << endl;
         // training_forward_propagation.print();
 
         // Loss index
@@ -269,20 +269,20 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
                                       training_back_propagation_lm);
 
         // training_back_propagation_lm.print();
-/*
-        // Numerical Jacobian and Hessian
 
-        Tensor<type, 2> numerical_hessian = loss_index->calculate_numerical_hessian();
-        Tensor<type, 2> numerical_jacobian = loss_index->calculate_numerical_jacobian();
+        // // Numerical Jacobian and Hessian
 
-        cout << "Jacobian:\n" << training_back_propagation_lm.squared_errors_jacobian << endl;
-        cout << "Numerical Jacobian:\n" << numerical_jacobian << endl;
-        cout << "Hessian:\n" << training_back_propagation_lm.hessian << endl;
-        cout << "Numerical Hessian:\n" << numerical_hessian << endl;
-        cout << "Hessian - numerical Hessian:\n" << training_back_propagation_lm.hessian - numerical_hessian << endl;
+        // Tensor<type, 2> numerical_hessian = loss_index->calculate_numerical_hessian();
+        // Tensor<type, 2> numerical_jacobian = loss_index->calculate_numerical_jacobian();
 
-        throw runtime_error("Checking the numerical Hessian.");
-*/
+        // cout << "Jacobian:\n" << training_back_propagation_lm.squared_errors_jacobian << endl;
+        // cout << "Numerical Jacobian:\n" << numerical_jacobian << endl;
+        // cout << "Hessian:\n" << training_back_propagation_lm.hessian << endl;
+        // cout << "Numerical Hessian:\n" << numerical_hessian << endl;
+        // cout << "Hessian - numerical Hessian:\n" << training_back_propagation_lm.hessian - numerical_hessian << endl;
+
+        // throw runtime_error("Checking the numerical Hessian.");
+
         results.training_error_history(epoch) = training_back_propagation_lm.error();
 
         if(has_selection)
@@ -377,6 +377,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     set_unscaling();
 
     if(display) results.print();
+
+    cout << "WHYYYY?? (LM)" << endl;
 
     return results;
 }

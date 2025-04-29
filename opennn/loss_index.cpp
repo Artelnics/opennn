@@ -226,13 +226,13 @@ void LossIndex::back_propagate_lm(const Batch& batch,
                                   BackPropagationLM& back_propagation_lm) const
 {
     calculate_errors_lm(batch, forward_propagation, back_propagation_lm);
-    
+
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
     // cout << "OK 2" << endl;
 
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
- 
+
     calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
 
     calculate_error_gradient_lm(batch, back_propagation_lm);

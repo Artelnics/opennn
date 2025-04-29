@@ -274,20 +274,14 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     query = query_input.contract(query_weights, contract_dims)
                             .shuffle(shuffle_dims);
-/*
+
     // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 
     const Index hidden_depth = get_hidden_depth();
 
-    // Tensor contraction dimensions:
-    // query_input: (batch_size, query_sequence_length, embedding_dimension)
-    // query_weights: (embedding_dimension, hidden_depth, heads_number)
-
-    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
-
     // @todo try this
-
+/*
     query.device(*thread_pool_device)
         = query_input
         .contract(query_weights, axes(2, 0))
@@ -301,8 +295,6 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
 */
-    const Index batch_size = query_input.dimension(0);
-
     for (Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);

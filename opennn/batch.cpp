@@ -30,8 +30,8 @@ void Batch::fill(const vector<Index>& sample_indices,
     const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
-    input_tensor.resize(batch_size * sequence_length * input_size);
-    target_tensor.resize(batch_size * sequence_length * target_indices.size());
+    // input_tensor.resize(batch_size * sequence_length * input_size);
+    // target_tensor.resize(batch_size * sequence_length * target_indices.size());
 
     if (!decoder_indices.empty())
         decoder_tensor.resize(batch_size * sequence_length * decoder_indices.size());
