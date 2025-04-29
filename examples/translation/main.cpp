@@ -54,8 +54,8 @@ int main()
 
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
-        const Index embedding_dimension = /*4*/32;
-        const Index heads_number = /*2*/4;
+        const Index embedding_dimension = 32;
+        const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
 
         NeuralNetwork neural_network;
@@ -80,7 +80,7 @@ int main()
         // adaptive_moment_estimation->set_loss_goal(0.3);
         adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
-        adaptive_moment_estimation->set_batch_samples_number(/*4*/12);
+        adaptive_moment_estimation->set_batch_samples_number(12);
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();
@@ -123,7 +123,6 @@ int main()
         testing_data(2,9) = 0;
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-
 /*
         const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
@@ -144,7 +143,6 @@ int main()
         transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
         transformer.set_dropout_rate(0);
 
-/*
         const filesystem::path& file_name = "/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml";
 
         ofstream file(file_name);
@@ -206,8 +204,6 @@ int main()
 
         cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
 
-
-
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;
@@ -252,7 +248,7 @@ int main()
         cout<<prediction<<endl;
         cout<<"Target: bad"<<endl;
         cout<<endl;
-/*
+
         // Data Set
 
         LanguageDataSet language_data_set({0},{0});

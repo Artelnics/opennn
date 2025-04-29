@@ -365,10 +365,6 @@ void GeneticAlgorithm::evaluate_population()
 
         raw_inputs_number(i) = individual_raw_variables_indices.size();
 
-        // Neural network
-
-        // data_set->scrub_missing_values();
-
         data_set->set_raw_variable_indices(individual_raw_variables_indices,
                                            original_target_raw_variable_indices);
 
@@ -376,7 +372,7 @@ void GeneticAlgorithm::evaluate_population()
 
         const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
 
-        neural_network->set_input_dimensions({ input_variables_number }/*{ data_set->get_variables_number(DataSet::VariableUse::Input) }*/);
+        neural_network->set_input_dimensions({input_variables_number});
 
         neural_network->set_input_names(input_names);
 

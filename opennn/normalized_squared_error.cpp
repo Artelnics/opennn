@@ -25,7 +25,7 @@ void NormalizedSquaredError::set_data_set(DataSet* new_data_set)
 {
     data_set = new_data_set;
 
-    neural_network->has(Layer::Type::Recurrent) || neural_network->has(Layer::Type::LongShortTermMemory)
+    neural_network->has(Layer::Type::Recurrent)
         ? set_time_series_normalization_coefficient()
         : set_normalization_coefficient();
 }
@@ -211,10 +211,6 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
-
-    // output_deltas.device(*thread_pool_device) = errors
-    //     / squared_errors.reshape(array<Index, 2>({1, squared_errors.size()}))
-    //                     .broadcast(array<Index, 2>({output_deltas.dimension(0), 1}));
 
     output_deltas.device(*thread_pool_device) = errors;
        divide_columns(thread_pool_device.get(), output_deltas, squared_errors);

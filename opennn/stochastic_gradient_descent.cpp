@@ -267,8 +267,7 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     bool shuffle = false;
 
-    if(neural_network->has(Layer::Type::LongShortTermMemory)
-    || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop
@@ -617,8 +616,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     bool shuffle = false;
 
-    if (neural_network->has(Layer::Type::LongShortTermMemory)
-        || neural_network->has(Layer::Type::Recurrent))
+    if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
 
     // Main loop

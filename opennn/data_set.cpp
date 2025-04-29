@@ -1183,15 +1183,6 @@ namespace opennn
 
     void DataSet::set(const VariableUse& variable_use)
     {
-        /*
-        for (DataSet::RawVariable& raw_variable : raw_variables)
-        {
-            if (raw_variable.type == RawVariableType::Constant)
-                continue;
-
-            raw_variable.set_use(variable_use);
-        }
-        */
         const Index raw_variables_number = get_raw_variables_number();
 
         for (Index i = 0; i < raw_variables_number; i++)

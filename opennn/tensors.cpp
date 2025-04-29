@@ -216,7 +216,6 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     return matrix;
 }
 
-
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)

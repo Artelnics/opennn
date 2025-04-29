@@ -27,7 +27,6 @@
 #include "bounding_layer.h"
 #include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
-#include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
 #include "probabilistic_layer.h"
 #include "probabilistic_layer_3d.h"
@@ -56,8 +55,6 @@
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
 #include "weighted_squared_error.h"
-
-#include "conjugate_gradient.h"
 
 #include "levenberg_marquardt_algorithm.h"
 #include "quasi_newton_method.h"

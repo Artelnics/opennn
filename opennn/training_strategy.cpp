@@ -9,7 +9,6 @@
 #include "training_strategy.h"
 #include "optimization_algorithm.h"
 #include "recurrent_layer.h"
-#include "long_short_term_memory_layer.h"
 
 namespace opennn
 {
@@ -57,8 +56,6 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm()
 {
     switch(optimization_method)
     {
-    case OptimizationMethod::CONJUGATE_GRADIENT: return &conjugate_gradient;
-
     case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
 
     case OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
@@ -81,12 +78,6 @@ bool TrainingStrategy::has_neural_network() const
 bool TrainingStrategy::has_data_set() const
 {
     return data_set;
-}
-
-
-ConjugateGradient* TrainingStrategy::get_conjugate_gradient()
-{
-    return &conjugate_gradient;
 }
 
 
@@ -185,10 +176,7 @@ string TrainingStrategy::write_loss_method() const
 string TrainingStrategy::write_optimization_method() const
 {
     switch (optimization_method)
-    { 
-    case OptimizationMethod::CONJUGATE_GRADIENT:
-        return "CONJUGATE_GRADIENT";
-    
+    {     
     case OptimizationMethod::QUASI_NEWTON_METHOD:
         return "QUASI_NEWTON_METHOD";
     
@@ -212,9 +200,6 @@ string TrainingStrategy::write_optimization_method_text() const
 {
     switch (optimization_method)
     {
-    case OptimizationMethod::CONJUGATE_GRADIENT:
-        return "conjugate gradient";
-
     case OptimizationMethod::QUASI_NEWTON_METHOD:
         return "quasi-Newton method";
 
@@ -280,7 +265,6 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_
 
     LossIndex* new_loss_index = get_loss_index();
 
-    conjugate_gradient.set_loss_index(new_loss_index);
     stochastic_gradient_descent.set_loss_index(new_loss_index);
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
@@ -321,9 +305,7 @@ void TrainingStrategy::set_optimization_method(const OptimizationMethod& new_opt
 
 void TrainingStrategy::set_optimization_method(const string& new_optimization_method)
 {
-    if(new_optimization_method == "CONJUGATE_GRADIENT")
-        set_optimization_method(OptimizationMethod::CONJUGATE_GRADIENT);
-    else if(new_optimization_method == "QUASI_NEWTON_METHOD")
+    if(new_optimization_method == "QUASI_NEWTON_METHOD")
         set_optimization_method(OptimizationMethod::QUASI_NEWTON_METHOD);
     else if(new_optimization_method == "LEVENBERG_MARQUARDT_ALGORITHM")
         set_optimization_method(OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
@@ -344,7 +326,6 @@ void TrainingStrategy::set_threads_number(const int& new_threads_number)
     weighted_squared_error.set_threads_number(new_threads_number);
     cross_entropy_error.set_threads_number(new_threads_number);
 
-    conjugate_gradient.set_threads_number(new_threads_number);
     quasi_Newton_method.set_threads_number(new_threads_number);
     Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
     stochastic_gradient_descent.set_threads_number(new_threads_number);
@@ -384,7 +365,6 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 
 void TrainingStrategy::set_loss_index(LossIndex* new_loss_index)
 {
-    conjugate_gradient.set_loss_index(new_loss_index);
     stochastic_gradient_descent.set_loss_index(new_loss_index);
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
@@ -406,7 +386,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     // Optimization algorithm
 
-    conjugate_gradient.set_display(display);
     stochastic_gradient_descent.set_display(display);
     adaptive_moment_estimation.set_display(display);
     quasi_Newton_method.set_display(display);
@@ -416,7 +395,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 
 void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
-    conjugate_gradient.set_loss_goal(new_loss_goal);
     quasi_Newton_method.set_loss_goal(new_loss_goal);
     Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
 }
@@ -424,7 +402,6 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 
 void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
     quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
     Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
 }
@@ -432,7 +409,6 @@ void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_sele
 
 void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
 {
-    conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
     stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
     adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
     quasi_Newton_method.set_maximum_epochs_number(maximum_epochs_number);
@@ -448,7 +424,6 @@ void TrainingStrategy::set_display_period(const int & display_period)
 
 void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
-    conjugate_gradient.set_maximum_time(maximum_time);
     stochastic_gradient_descent.set_maximum_time(maximum_time);
     adaptive_moment_estimation.set_maximum_time(maximum_time);
     quasi_Newton_method.set_maximum_time(maximum_time);
@@ -476,17 +451,13 @@ TrainingResults TrainingStrategy::perform_training()
     if(!has_data_set())
         throw runtime_error("Data set is null.");
 
-    if(neural_network->has(Layer::Type::Recurrent)
-    || neural_network->has(Layer::Type::LongShortTermMemory))
+    if(neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
     set_display(true);
 
     switch(optimization_method)
     {  
-        case OptimizationMethod::CONJUGATE_GRADIENT:
-            return conjugate_gradient.perform_training();
-
         case OptimizationMethod::QUASI_NEWTON_METHOD:
             return quasi_Newton_method.perform_training();
         
@@ -511,8 +482,6 @@ void TrainingStrategy::fix_forecasting()
 
     if(neural_network->has(Layer::Type::Recurrent))
         time_steps = static_cast<Recurrent*>(neural_network->get_first(Layer::Type::Recurrent))->get_timesteps();
-    else if(neural_network->has(Layer::Type::LongShortTermMemory))
-        time_steps = static_cast<LongShortTermMemory*>(neural_network->get_first(Layer::Type::LongShortTermMemory))->get_timesteps();
     else
         return;
 
@@ -588,7 +557,6 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
 
     add_xml_element(printer, "OptimizationMethod", write_optimization_method());
 
-    conjugate_gradient.to_XML(printer);
     stochastic_gradient_descent.to_XML(printer);
     adaptive_moment_estimation.to_XML(printer);
     quasi_Newton_method.to_XML(printer);
@@ -682,24 +650,12 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     set_optimization_method(read_xml_string(optimization_algorithm_element, "OptimizationMethod"));
 
-    // Conjugate gradient
-
-    const XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
-    if (conjugate_gradient_element) {
-        XMLDocument conjugate_gradient_document;
-        XMLElement* conjugate_gradient_element_copy = conjugate_gradient_document.NewElement("ConjugateGradient");
-
-        for (const XMLNode* node = conjugate_gradient_element->FirstChild(); node; node = node->NextSibling())
-            conjugate_gradient_element_copy->InsertEndChild(node->DeepClone(&conjugate_gradient_document));
-
-        conjugate_gradient_document.InsertEndChild(conjugate_gradient_element_copy);
-        conjugate_gradient.from_XML(conjugate_gradient_document);
-    }
-
     // Stochastic gradient descent
 
     const XMLElement* stochastic_gradient_descent_element = optimization_algorithm_element->FirstChildElement("StochasticGradientDescent");
-    if (stochastic_gradient_descent_element) {
+
+    if (stochastic_gradient_descent_element)
+    {
         XMLDocument stochastic_gradient_document;
         XMLElement* stochastic_gradient_element_copy = stochastic_gradient_document.NewElement("StochasticGradientDescent");
 
@@ -800,23 +756,13 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 
     get_optimization_algorithm()->create_cuda();
 
-    if (neural_network->has(Layer::Type::Recurrent)
-        || neural_network->has(Layer::Type::LongShortTermMemory))
+    if (neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
     set_display(true);
 
     switch (optimization_method)
     {
-    //case OptimizationMethod::CONJUGATE_GRADIENT:
-    //    return conjugate_gradient.perform_training();
-
-    //case OptimizationMethod::QUASI_NEWTON_METHOD:
-    //    return quasi_Newton_method.perform_training();
-
-    //case OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM:
-    //    return Levenberg_Marquardt_algorithm.perform_training();
-
     case OptimizationMethod::STOCHASTIC_GRADIENT_DESCENT:
         //return stochastic_gradient_descent.perform_training_cuda();
 
@@ -829,7 +775,6 @@ TrainingResults TrainingStrategy::perform_training_cuda()
 }
 
 #endif
-
 
 }
 

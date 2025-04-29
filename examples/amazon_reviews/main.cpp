@@ -57,8 +57,8 @@ int main()
 
         const Index maximum_sequence_length = text_data_set.get_input_length();
         const Index vocabulary_size = text_data_set.get_input_vocabulary_size();
-        const Index embedding_dimension = 128/*32*/;
-        const Index heads_number = 8/*4*/;
+        const Index embedding_dimension = 128;
+        const Index heads_number = 8;
         const dimensions outputs_number = { 1 };
 
         cout << "Maximum seq: " << maximum_sequence_length << endl;
@@ -86,9 +86,9 @@ int main()
 
         text_data_set.set(DataSet::SampleUse::Training);
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.4);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100/*3000*/);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32/*64*/);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
 
         training_strategy.get_adaptive_moment_estimation()->set_display(true);
         training_strategy.get_adaptive_moment_estimation()->set_display_period(1);

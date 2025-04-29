@@ -22,18 +22,7 @@ int main()
         cout << "OpenNN. National Institute of Standards and Techonology (MNIST) Example." << endl;
 
         // Data set
-        /*
-        const Index samples_number = 2;
 
-        const Index image_height = 4;
-        const Index image_width = 4;
-        const Index channels = 3;
-        const Index targets = 2;
-
-        ImageDataSet image_data_set(samples_number, {image_height, image_width, channels}, {targets});
-
-        image_data_set.set_data_random();
-        */
         ImageDataSet image_data_set;
 
         image_data_set.set_data_path("data");
