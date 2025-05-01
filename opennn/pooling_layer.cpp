@@ -719,7 +719,7 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
         &alpha,
         outputs_tensor_descriptor,
         outputs,
-        inputs_tensor_descriptor,
+        outputs_tensor_descriptor,
         deltas_device,
         inputs_tensor_descriptor,
         inputs_device,
