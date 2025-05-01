@@ -390,7 +390,7 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
         {
             const Tensor<type, 1> input = inputs.chip(input_index,1);
 
-            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight 
+            TensorMap<Tensor<type, 1>> squared_errors_jacobian_synaptic_weight
                 = tensor_map(squared_errors_Jacobian, weight_index++);
 
             squared_errors_jacobian_synaptic_weight.device(*thread_pool_device) 

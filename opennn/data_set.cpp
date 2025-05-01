@@ -2429,6 +2429,7 @@ namespace opennn
 
         for (Index i = 0; i < input_raw_variables_number; i++)
         {
+            cout << "correlacion: " << i << endl;
             const Index input_raw_variable_index = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_raw_variable_data
@@ -2451,6 +2452,8 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
     {
+        cout << "Calculating correlations..." << endl;
+
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
 
@@ -3981,11 +3984,9 @@ namespace opennn
             set_default_raw_variable_names();
         }
         // Rest of lines
-        
         while (getline(file, line))
         {
             prepare_line(line);
-
             if (line.empty()) continue;
 
             check_separators(line);
