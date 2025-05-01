@@ -493,7 +493,7 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void Layer::create_cuda()
 {

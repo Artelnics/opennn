@@ -23,7 +23,7 @@ struct LayerBackPropagation
     bool is_first_layer = false;
 };
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct LayerBackPropagationCuda
 {

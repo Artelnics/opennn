@@ -23,7 +23,7 @@ struct LayerForwardPropagation
     Layer* layer = nullptr;
 };
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct LayerForwardPropagationCuda
 {

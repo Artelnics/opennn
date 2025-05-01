@@ -69,6 +69,19 @@ void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
+
+    /*
+    const size_t cpu_output_size = flatten_layer_forward_propagation->outputs.size();
+    vector<float> host_cpu_combinations(cpu_output_size);
+    memcpy(host_cpu_combinations.data(), flatten_layer_forward_propagation->outputs.data(), cpu_output_size * sizeof(float));
+    cout << "\n--- CPU Flatten forward (Linear Dump) ---" << endl;
+    cout << "[";
+    for (size_t i = 0; i < host_cpu_combinations.size(); ++i)
+        cout << fixed << setprecision(6) << host_cpu_combinations[i] << ", ";
+    cout << "]" << endl;
+
+    system("pause");
+    */
 }
 
 
@@ -205,7 +218,7 @@ vector<pair<type*, dimensions>> FlattenLayerBackPropagation::get_input_derivativ
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
@@ -216,7 +229,7 @@ void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     const Index batch_samples_number = input_pairs_device[0].second[0];
 
     const Index outputs_number = get_outputs_number();
-
+    
     type* inputs_device = input_pairs_device[0].first;
 
     // Forward propagation
@@ -227,6 +240,17 @@ void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
 
     reorganize_inputs_cuda(inputs_device, outputs_device, batch_samples_number, outputs_number);
+    /*
+    vector<float> host_outputs_gpu(outputs_number * batch_samples_number);
+    cudaMemcpy(host_outputs_gpu.data(), outputs_device, outputs_number * batch_samples_number * sizeof(float), cudaMemcpyDeviceToHost);
+    cout << "\n--- GPU flatten outputs (Linear Dump) ---" << endl;
+    cout << "[";
+    for (size_t i = 0; i < host_outputs_gpu.size(); ++i)
+        cout << fixed << setprecision(6) << host_outputs_gpu[i] << ", ";
+    cout << "]" << endl;
+
+    system("pause");
+    */
 }
 
 

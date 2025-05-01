@@ -167,7 +167,7 @@ void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
                                             const ForwardPropagationCuda& forward_propagation_cuda,

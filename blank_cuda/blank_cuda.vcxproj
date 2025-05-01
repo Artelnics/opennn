@@ -102,7 +102,6 @@
     <ClCompile Include="..\opennn\auto_associative_neural_network.cpp" />
     <ClCompile Include="..\opennn\batch.cpp" />
     <ClCompile Include="..\opennn\bounding_layer.cpp" />
-    <ClCompile Include="..\opennn\conjugate_gradient.cpp" />
     <ClCompile Include="..\opennn\convolutional_layer.cpp" />
     <ClCompile Include="..\opennn\correlations.cpp" />
     <ClCompile Include="..\opennn\cross_entropy_error.cpp" />
@@ -122,7 +121,6 @@
     <ClCompile Include="..\opennn\layer.cpp" />
     <ClCompile Include="..\opennn\learning_rate_algorithm.cpp" />
     <ClCompile Include="..\opennn\levenberg_marquardt_algorithm.cpp" />
-    <ClCompile Include="..\opennn\long_short_term_memory_layer.cpp" />
     <ClCompile Include="..\opennn\loss_index.cpp" />
     <ClCompile Include="..\opennn\mean_squared_error.cpp" />
     <ClCompile Include="..\opennn\minkowski_error.cpp" />
@@ -174,7 +172,6 @@
     <ClInclude Include="..\opennn\bounding_layer.h" />
     <ClInclude Include="..\opennn\box_plot.h" />
     <ClInclude Include="..\opennn\config.h" />
-    <ClInclude Include="..\opennn\conjugate_gradient.h" />
     <ClInclude Include="..\opennn\convolutional_layer.h" />
     <ClInclude Include="..\opennn\correlation.h" />
     <ClInclude Include="..\opennn\correlations.h" />
@@ -202,7 +199,6 @@
     <ClInclude Include="..\opennn\layer_forward_propagation.h" />
     <ClInclude Include="..\opennn\learning_rate_algorithm.h" />
     <ClInclude Include="..\opennn\levenberg_marquardt_algorithm.h" />
-    <ClInclude Include="..\opennn\long_short_term_memory_layer.h" />
     <ClInclude Include="..\opennn\loss_index.h" />
     <ClInclude Include="..\opennn\mean_squared_error.h" />
     <ClInclude Include="..\opennn\minkowski_error.h" />

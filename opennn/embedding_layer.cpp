@@ -353,7 +353,7 @@ void EmbeddingBackPropagation::print() const
 {
 }
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,

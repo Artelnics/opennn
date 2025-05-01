@@ -740,7 +740,7 @@ void TrainingStrategy::load(const filesystem::path& file_name)
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 TrainingResults TrainingStrategy::perform_training_cuda()
 {

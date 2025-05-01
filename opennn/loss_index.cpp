@@ -1333,7 +1333,7 @@ BackPropagationLM::BackPropagationLM(const Index &new_batch_size, LossIndex *new
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void LossIndex::back_propagate_cuda(const BatchCuda& batch_cuda,
                                     ForwardPropagationCuda& forward_propagation_cuda,

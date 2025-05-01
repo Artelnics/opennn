@@ -412,9 +412,9 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
                                       "demapping_layer"));
 
     add_layer(make_unique<Perceptron>(dimensions{ mapping_neurons_number },
-                                           dimensions{ output_dimensions }, 
-                                           Perceptron::Activation::Linear,
-                                           "output_layer"));
+                                      dimensions{ output_dimensions }, 
+                                      Perceptron::Activation::Linear,
+                                      "output_layer"));
 
     add_layer(make_unique<Unscaling>(output_dimensions));
 }
@@ -433,18 +433,17 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     
     for (Index i = 0; i < complexity_size; i++)
     {
-        /*
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
         const dimensions stride_dimensions = { 1, 1 };
         const Convolutional::Convolution convolution_type = Convolutional::Convolution::Valid;
-
+        /*
         add_layer(make_unique<Convolutional>(get_output_dimensions(),
-                                                  kernel_dimensions,
-                                                  Convolutional::Activation::Linear,
-                                                  stride_dimensions,
-                                                  convolution_type,
-                                                  "convolutional_layer_" + to_string(i+1)));
-
+                                             kernel_dimensions,
+                                             Convolutional::Activation::Linear,
+                                             stride_dimensions,
+                                             convolution_type,
+                                             "convolutional_layer_" + to_string(i+1)));
+        */
         const dimensions pool_dimensions = { 2, 2 };
         const dimensions pooling_stride_dimensions = { 2, 2 };
         const dimensions padding_dimensions = { 0, 0 };
@@ -456,14 +455,13 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        padding_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
-        */
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));
 
     add_layer(make_unique<Probabilistic>(get_output_dimensions(),
-                                              output_dimensions,
-                                              "probabilistic_layer"));
+                                         output_dimensions,
+                                         "probabilistic_layer"));
 }
 
 
@@ -2031,7 +2029,7 @@ void NeuralNetworkBackPropagationLM::set(const Index& new_batch_size,
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void NeuralNetwork::allocate_parameters_device()
 {
@@ -2213,11 +2211,11 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             break;
 
         case Layer::Type::Convolutional:
-            //layers[i] = make_unique<ConvolutionalForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<ConvolutionalLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Pooling:
-            //layers[i] = make_unique<PoolingForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<PoolingLayerForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Flatten:
@@ -2412,11 +2410,11 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
             break;
 
         case Layer::Type::Convolutional:
-            //layers[i] = make_unique <ConvolutionalBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique <ConvolutionalLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Pooling:
-            //layers[i] = make_unique <PoolingLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique <PoolingLayerBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Flatten:

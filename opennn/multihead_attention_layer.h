@@ -85,7 +85,7 @@ public:
     void from_XML(const XMLDocument&) override;
     void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA_test
+    #ifdef OPENNN_CUDA
        // @todo
     #endif
 
@@ -185,7 +185,7 @@ struct MultiheadAttentionBackPropagation : LayerBackPropagation
     Tensor<type, 3> input_source_derivatives;
 };
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
     // @todo
 #endif
 

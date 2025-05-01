@@ -20,7 +20,7 @@ namespace opennn
 struct BackPropagation;
 struct BackPropagationLM;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct BackPropagationCuda;
 #endif
 
@@ -161,7 +161,7 @@ public:
    Tensor<type, 2> calculate_numerical_hessian();
    Tensor<type, 2> calculate_inverse_hessian();
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 

@@ -145,7 +145,7 @@ public:
 
    void print() const override;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
     public:
 
@@ -256,7 +256,7 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
