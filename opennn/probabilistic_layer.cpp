@@ -96,6 +96,8 @@ void Probabilistic::set(const dimensions& new_input_dimensions,
     weights.resize(new_input_dimensions[0], new_output_dimensions[0]);
 
     set_parameters_random();
+    //biases.setRandom();
+    //weights.setRandom();
 
     layer_type = Layer::Type::Probabilistic;
 
@@ -624,7 +626,7 @@ void ProbabilisticLayerBackPropagationLM::print() const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
                                                 unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,

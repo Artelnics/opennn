@@ -88,7 +88,7 @@ public:
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
 
-    #ifdef OPENNN_CUDA_test
+    #ifdef OPENNN_CUDA
         // @todo
     #endif
 
@@ -139,7 +139,7 @@ struct Perceptron3dBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
     // @todo
 #endif
 

@@ -100,7 +100,7 @@ private:
 
     Tensor<type, 2> hidden_states;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
     // @todo
 #endif
 
@@ -157,7 +157,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
     // @todo
 #endif
 

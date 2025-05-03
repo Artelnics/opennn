@@ -204,7 +204,7 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
      {(type*)input_2_derivatives.data(), {batch_size, sequence_length, embedding_dimension}}};
 }
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void Addition3d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,

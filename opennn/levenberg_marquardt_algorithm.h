@@ -16,7 +16,7 @@ namespace opennn
 
 struct LevenbergMarquardtAlgorithmData;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct LMAOptimizationDataCuda;
 #endif
 
@@ -107,7 +107,7 @@ private:
 
    type maximum_time = type(360000);
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -146,7 +146,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct LMAOptimizationDataCuda : public OptimizationAlgorithmData
 {

@@ -133,7 +133,7 @@ void MinkowskiError::from_XML(const XMLDocument& document)
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void MinkowskiError::calculate_error_cuda(const BatchCuda& batch_cuda,
                                           const ForwardPropagationCuda& forward_propagation_cuda,

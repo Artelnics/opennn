@@ -105,7 +105,7 @@ public:
 
     void print() const override;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -174,7 +174,7 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct PoolingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
