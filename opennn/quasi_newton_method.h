@@ -17,7 +17,7 @@ namespace opennn
 
 struct QuasiNewtonMethodData;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct QNMOptimizationDataCuda;
 #endif
 
@@ -111,7 +111,7 @@ private:
 
    type maximum_time = type(360000);
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -164,7 +164,7 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct QNMOptimizationDataCuda : public OptimizationAlgorithmData
 {

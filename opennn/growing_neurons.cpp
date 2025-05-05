@@ -101,7 +101,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         neural_network->get_layer(last_trainable_layer_index - 1).get()->set_output_dimensions({ neurons_number });
         neural_network->get_layer(last_trainable_layer_index).get()->set_input_dimensions({ neurons_number });
 
-        neural_network->print();
+        //neural_network->print();
         // throw runtime_error("Checking the network");
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;

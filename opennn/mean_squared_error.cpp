@@ -105,7 +105,6 @@ void MeanSquaredError::calculate_output_delta_lm(const Batch&,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
-
     output_deltas.device(*thread_pool_device) = errors;
     divide_columns(thread_pool_device.get(), output_deltas, squared_errors);
 }
@@ -167,7 +166,7 @@ void MeanSquaredError::to_XML(XMLPrinter& file_stream) const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
                                             const ForwardPropagationCuda& forward_propagation_cuda,

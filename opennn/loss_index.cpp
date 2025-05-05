@@ -229,8 +229,6 @@ void LossIndex::back_propagate_lm(const Batch& batch,
 
     calculate_squared_errors_lm(batch, forward_propagation, back_propagation_lm);
 
-    // cout << "OK 2" << endl;
-
     calculate_error_lm(batch, forward_propagation, back_propagation_lm);
 
     calculate_layers_squared_errors_jacobian_lm(batch, forward_propagation, back_propagation_lm);
@@ -1333,7 +1331,7 @@ BackPropagationLM::BackPropagationLM(const Index &new_batch_size, LossIndex *new
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void LossIndex::back_propagate_cuda(const BatchCuda& batch_cuda,
                                     ForwardPropagationCuda& forward_propagation_cuda,

@@ -316,7 +316,6 @@ void trim(string& text)
     // Prefixing spaces
 
     text.erase(0, text.find_first_not_of(" \t\n\r\f\v\b"));
-
     // Surfixing spaces
 
     text.erase(text.find_last_not_of(" \t\n\r\f\v\b") + 1);
@@ -358,8 +357,7 @@ void replace_double_char_with_label(string &str, const string &target_char, cons
     const string new_pattern = target_char + missing_label + target_char;
 
     size_t position = 0;
-
-    while(position = str.find(target_pattern, position) != string::npos)
+    while((position = str.find(target_pattern, position)) != string::npos)
     {
         str.replace(position, target_pattern.length(), new_pattern);
         position += new_pattern.length();

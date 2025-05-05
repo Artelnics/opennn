@@ -22,8 +22,8 @@ public:
     enum class Activation { Binary, Logistic, Competitive, Softmax };
 
     Probabilistic(const dimensions& = {0},
-                       const dimensions& = {0},
-                       const string& = "probabilistic_layer");
+                  const dimensions& = {0},
+                  const string& = "probabilistic_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -98,7 +98,7 @@ private:
 
     type decision_threshold;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -188,7 +188,7 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {

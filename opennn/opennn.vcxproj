@@ -261,8 +261,6 @@
     <ClInclude Include="model_expression.h" />
     <ClInclude Include="normalization_layer_3d.h" />
     <ClInclude Include="normalized_squared_error.h" />
-    <ClInclude Include="conjugate_gradient.h" />
-    <ClCompile Include="conjugate_gradient.cpp" />
     <ClInclude Include="convolutional_layer.h" />
     <ClCompile Include="convolutional_layer.cpp" />
     <ClInclude Include="correlations.h" />
@@ -302,8 +300,6 @@
     <ClCompile Include="learning_rate_algorithm.cpp" />
     <ClInclude Include="levenberg_marquardt_algorithm.h" />
     <ClCompile Include="levenberg_marquardt_algorithm.cpp" />
-    <ClInclude Include="long_short_term_memory_layer.h" />
-    <ClCompile Include="long_short_term_memory_layer.cpp" />
     <ClInclude Include="loss_index.h" />
     <ClCompile Include="loss_index.cpp" />
     <ClInclude Include="back_propagation.h" />

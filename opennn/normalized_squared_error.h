@@ -67,7 +67,7 @@ protected:
    type normalization_coefficient = type(1);
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
    // Error
 

@@ -33,6 +33,7 @@ public:
 
     const Index& get_lags_number() const;
     const Index& get_steps_ahead() const;
+    const string& get_time_raw_variable() const;
 
     const Index& get_time_raw_variable_index() const;
 
@@ -64,6 +65,8 @@ private:
     Index time_raw_variable_index = 0;
 
     Index group_raw_variable_index = 0;
+
+    string time_raw_variable = " ";
 };
 
 }

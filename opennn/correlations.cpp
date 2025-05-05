@@ -587,10 +587,10 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
 
     const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
-    correlation.a = coefficients(0);
-    correlation.b = coefficients(1);
+    correlation.a = coefficients(1);
+    correlation.b = coefficients(0);
 
-    // if(correlation.b < type(0))
+    // if(correlation.a < type(0))
     //     correlation.r *= type(-1);
 
     return correlation;
