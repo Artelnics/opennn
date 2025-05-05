@@ -261,7 +261,6 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 {
     const Index batch_size = query_input.dimension(0);
 
-    // Verify embedding dimension matches
     assert(embedding_dimension == query_weights.dimension(0));
 
     // Tensor contraction dimensions:
@@ -270,15 +269,12 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
     Eigen::array<IndexPair<Index>, 1> contract_dims = { IndexPair<Index>(2, 0) };
 
     Eigen::array<Index, 4> shuffle_dims = { 1, 2, 0, 3 };
-    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
 
+    // Perform contraction to get (batch_size, query_sequence_length, hidden_depth, heads_number)
     query = query_input.contract(query_weights, contract_dims)
                             .shuffle(shuffle_dims);
 
-    // Verify embedding dimension matches
-    assert(embedding_dimension == query_weights.dimension(0));
-
-    const Index hidden_depth = get_hidden_depth();
+    // const Index hidden_depth = get_hidden_depth();
 
     // @todo try this
 /*
@@ -329,9 +325,6 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
     key = source_input.contract(key_weights, contract_dims)
                 .shuffle(shuffle_dims);
 /*
-    // Verify embedding dimension matches
-    assert(embedding_dimension == key_weights.dimension(0));
-
     const Index batch_size = source_input.dimension(0);
     const Index hidden_depth = get_hidden_depth();
 
@@ -695,7 +688,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     auto result = heads_result.sum(array<int, 1>({0}));
 
-    input_query_derivatives.device(*thread_pool_device) += result;
+    input_query_derivatives.device(*thread_pool_device) = result;
 */
     // INPUT SOURCE DERIVATIVES
 
