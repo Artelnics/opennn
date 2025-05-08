@@ -10,6 +10,7 @@
 #define MODELEXPRESSION_H
 
 #include "neural_network.h"
+#include "data_set.h"
 
 //#include "tensors.h"
 //#include <unordered_map>
@@ -66,15 +67,15 @@ public:
     string softsign_javascript();
     string header_javascript();
     string subheader_javascript();
-    string get_expression_javascript(const NeuralNetwork& );
+    string get_expression_javascript(const NeuralNetwork&, const vector<DataSet::RawVariable>& );
 
     // other functions
-    string replace_reserved_keywords(const string&);
+    string replace_reserved_keywords(string&);
     vector<string> fix_get_expression_outputs(const string& ,const vector<string>& ,const ProgrammingLanguage&);
     vector<string> fix_input_names(vector<string>& );
     vector<string> fix_output_names(vector<string>& );
 
-    void save_expression(const string&, const ProgrammingLanguage&, const NeuralNetwork* );
+    void save_expression(const string&, const ProgrammingLanguage&, const NeuralNetwork*, const vector<DataSet::RawVariable>& );
 };
 
 }

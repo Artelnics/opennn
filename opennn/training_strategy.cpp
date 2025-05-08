@@ -435,7 +435,7 @@ void TrainingStrategy::set_default()
 {
     loss_method = LossMethod::MEAN_SQUARED_ERROR;
 
-    optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
+    optimization_method = OptimizationMethod::QUASI_NEWTON_METHOD;
 
     if(has_neural_network())
         if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)

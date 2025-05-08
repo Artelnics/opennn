@@ -1833,9 +1833,8 @@ namespace opennn
         if (new_data.dimension(0) != get_samples_number())
             throw runtime_error("Rows number is not equal to samples number");
 
-        if (new_data.dimension(1) != get_variables_number()) {
+        if (new_data.dimension(1) != get_variables_number())
             throw runtime_error("Columns number is not equal to variables number");
-        }
 
         data = new_data;
     }
@@ -2581,7 +2580,7 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-            //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+            cout << "Calculating " << raw_variables[current_input_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -2620,7 +2619,7 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
 
-            //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+            cout << "Calculating " << raw_variables[input_raw_variable_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 

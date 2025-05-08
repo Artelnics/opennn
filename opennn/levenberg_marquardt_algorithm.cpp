@@ -360,8 +360,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(display) results.print();
 
-    cout << "WHYYYY?? (LM)" << endl;
-
     return results;
 }
 

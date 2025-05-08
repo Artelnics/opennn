@@ -1040,6 +1040,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     ForwardPropagation forward_propagation(batch_size, this);
 
     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+
     forward_propagate({input_pair}, forward_propagation, false);
 
     const pair<type*, dimensions> outputs_pair

@@ -175,9 +175,6 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device,
 
         cross_correlation[i] = linear_correlation(thread_pool_device, column_x, column_y).r;
     }
-    cout << "cross correlatio calculate" << endl;
-    cout << cross_correlation << endl;
-    cout << "-----------------------" << endl;
 
     return cross_correlation;
 }
