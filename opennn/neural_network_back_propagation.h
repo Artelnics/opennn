@@ -26,7 +26,7 @@ struct NeuralNetworkBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct NeuralNetworkBackPropagationCuda
 {

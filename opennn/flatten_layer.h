@@ -51,7 +51,7 @@ public:
 
     void print() const override;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -108,7 +108,7 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {

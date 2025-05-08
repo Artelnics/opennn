@@ -45,7 +45,7 @@ struct Batch
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 };
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
     struct BatchCuda
     {

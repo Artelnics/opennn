@@ -52,7 +52,7 @@ public:
    string get_loss_method() const override;
    string get_error_type_text() const override;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
    void calculate_error_cuda(const BatchCuda&,
                              const ForwardPropagationCuda&,

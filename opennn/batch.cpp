@@ -257,7 +257,7 @@ pair<type*, dimensions> Batch::get_target_pair() const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& input_indices,

@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = true;
+    bool shuffle = 0;
 
     if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
@@ -238,6 +238,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+
+        // cout << "Training_batches phrases:" << endl;
+        // print_vector(training_batches);
+        // throw runtime_error("");
 
         training_error = type(0);
 
@@ -274,7 +278,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
             // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
             // cout << "MHA Gradient - numerical gradient:" << endl;
-            // for(Index i = numerical_gradient.size()-600; i < numerical_gradient.size()-321;i++)
+            // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
             //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
             // throw runtime_error("\nChecking the gradient and numerical gradient.");
@@ -544,7 +548,7 @@ void AdaptiveMomentEstimationData::print() const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 {

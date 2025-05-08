@@ -112,7 +112,7 @@ public:
     // Training
 
     TrainingResults perform_training();
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
     TrainingResults perform_training_cuda();
 #endif
 

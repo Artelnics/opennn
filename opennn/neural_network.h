@@ -19,7 +19,7 @@ struct ForwardPropagation;
 struct NeuralNetworkBackPropagation;
 struct NeuralNetworkBackPropagationLM;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct ForwardPropagationCuda;
 struct NeuralNetworkBackPropagationCuda;
 #endif
@@ -197,7 +197,7 @@ public:
    string get_expression() const;
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 

@@ -16,7 +16,7 @@ namespace opennn
 
 struct AdaptiveMomentEstimationData;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct ADAMOptimizationDataCuda;
 #endif
 
@@ -111,7 +111,7 @@ private:
 
    Index batch_size = 1000;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
     public:
 
@@ -144,7 +144,7 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     Index learning_rate_iteration = 0;
 };
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
     struct ADAMOptimizationDataCuda : public OptimizationAlgorithmData
     {

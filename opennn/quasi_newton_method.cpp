@@ -700,7 +700,7 @@ void QuasiNewtonMethodData::print() const
 }
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 TrainingResults QuasiNewtonMethod::perform_training_cuda()
 {

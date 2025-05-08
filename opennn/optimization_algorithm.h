@@ -110,7 +110,7 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 protected:
 

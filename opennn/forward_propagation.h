@@ -29,7 +29,7 @@ struct ForwardPropagation
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct ForwardPropagationCuda
 {

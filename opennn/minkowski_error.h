@@ -47,7 +47,7 @@ private:
    type minkowski_parameter;
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
    // Error
 

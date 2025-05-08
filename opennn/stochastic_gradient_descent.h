@@ -16,7 +16,7 @@ namespace opennn
 
 struct StochasticGradientDescentData;
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 struct SGDOptimizationDataCuda;
 #endif
 
@@ -85,7 +85,7 @@ private:
 
    type maximum_time = type(3600000);
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 public:
 
@@ -113,7 +113,7 @@ struct StochasticGradientDescentData : public OptimizationAlgorithmData
 };
 
 
-#ifdef OPENNN_CUDA_test
+#ifdef OPENNN_CUDA
 
 struct SGDOptimizationDataCuda : public OptimizationAlgorithmData
 {
