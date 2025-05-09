@@ -155,7 +155,8 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
             output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
     }
 
-    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    // Scaling factor only used in transformer models, if it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
+    // outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 }
 
 
@@ -182,8 +183,9 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     Tensor<type, 3>& outputs = embedding_forward_propagation->outputs;
 
     embedding_lookup(inputs, outputs);
-        
-    add_positional_encodings(outputs);
+
+    // Positional encoding used in transformer models. If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
+    // add_positional_encodings(outputs);
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs, dropout_rate);
@@ -219,7 +221,7 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     for(Index i = 0; i < batch_size; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);// * sqrt(type(embedding_dimension));  //Scaling factor only used in transformer models, if it's not one, leave commented
 
         for(Index j = 0; j < inputs_number; j++)
             weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
