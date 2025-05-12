@@ -2910,7 +2910,7 @@ namespace opennn
         add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
         vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
-        for(int i = 0; i < data_file_preview.size(); i++){
+        for(size_t i = 0; i < data_file_preview.size(); i++){
             printer.OpenElement("Row");
             printer.PushAttribute("Item", to_string(i + 1).c_str());
             printer.PushText(vector_data_file_preview[i].data());

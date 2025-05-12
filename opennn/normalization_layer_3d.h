@@ -68,7 +68,7 @@ private:
 
     Tensor<type, 1> betas;
 
-    const type epsilon = type(0.001);
+    const type epsilon = type(1e-6);//type(0.001);
 };
 
 
