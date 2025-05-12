@@ -174,7 +174,6 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error();
 
     // Regularization
-
     add_regularization(back_propagation);
 
 }
@@ -336,7 +335,7 @@ string LossIndex::write_regularization_method() const
 
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
-{   
+{
     switch(regularization_method)
     {
         case RegularizationMethod::NoRegularization: 

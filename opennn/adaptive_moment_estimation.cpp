@@ -436,7 +436,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     Index& iteration = optimization_data.iteration;
     
