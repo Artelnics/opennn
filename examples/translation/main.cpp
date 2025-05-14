@@ -29,15 +29,6 @@ int main()
     {
         cout << "OpenNN. Translation Example." << endl;
 
-        // Tensor<type, 2> a(3, 3);
-        // a.setConstant(1);
-
-        // Tensor<type, 1> b(3);
-        // b.setConstant(2);
-
-        // cout << a + b << endl;
-
-
         // Data set
 
         // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
@@ -52,6 +43,8 @@ int main()
         // const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         // const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
+        // Sentiment analysis case
+
         const Index maximum_sequence_length = 10;
         const Index vocabulary_size = 50;
         const Index embedding_dimension = 32;
@@ -65,6 +58,8 @@ int main()
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
+
+        cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
@@ -124,6 +119,7 @@ int main()
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
 /*
+ *    // Translation case
         const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
         const Index heads_number = 4;

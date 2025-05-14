@@ -10,6 +10,7 @@
 #include "descriptives.h"
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
+#include "data_set.h"
 
 namespace opennn {
 
@@ -933,17 +934,24 @@ string ModelExpression::subheader_javascript()
 }
 
 
-string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network)
+string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network, const vector<DataSet::RawVariable>& raw_variables)
 {
     vector<string> lines;
     vector<string> found_tokens;
     vector<string> found_mathematical_expressions;
 
-    vector<string> input_names = neural_network.get_input_names();
-    vector<string> output_names = neural_network.get_output_names();
+    vector<string> input_names;
+    vector<string> output_names;
 
-    const Index inputs_number = neural_network.get_inputs_number();
-    const Index outputs_number = neural_network.get_outputs_number();
+    for (const auto& raw_variable : raw_variables)
+        if(raw_variable.use == DataSet::VariableUse::Input)
+            input_names.push_back(raw_variable.name);
+        else if(raw_variable.use == DataSet::VariableUse::Target)
+            output_names.push_back(raw_variable.name);
+
+
+    const Index inputs_number = input_names.size();
+    const Index outputs_number = output_names.size();
 
     vector<string> fixes_input_names = fix_input_names(input_names);
     vector<string> fixes_output_names = fix_output_names(output_names);
@@ -968,23 +976,121 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     buffer << header_javascript();
 
     for(int i = 0; i < inputs_number; i++)
-        buffer << "\n\t " << i << ")  " << input_names[i];
+        buffer << "\n\t " << i + 1 << ")  " << input_names[i];
 
     buffer << subheader_javascript();
 
     if(neural_network.has(Layer::Type::Scaling2d) || neural_network.has(Layer::Type::Scaling4d))
     {
-        const vector<Descriptives> inputs_descriptives= static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d))->get_descriptives();
+        const vector<Descriptives> inputs_descriptives = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d))->get_descriptives();
 
-        for(int i = 0; i < inputs_number; i++)
-            buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl
-                   << "<tr style=\"height:3.5em\">" << endl
-                   << "<td> " << input_names[i] << " </td>" << endl
-                   << "<td style=\"text-align:center\">" << endl
-                   << "<input type=\"range\" id=\"" << fixes_input_names[i] << "\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "_text')\" />" << endl
-                   << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[i] << "_text\" value=\"" << (inputs_descriptives[i].minimum + inputs_descriptives[i].maximum)/2 << "\" min=\"" << inputs_descriptives[i].minimum << "\" max=\"" << inputs_descriptives[i].maximum << "\" step=\"" << (inputs_descriptives[i].maximum - inputs_descriptives[i].minimum)/type(100) << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[i] << "')\">" << endl
-                   << "</td>" << endl
-                   << "</tr>\n" << endl;
+        float min_value;
+        float max_value;
+
+        Index i = 0; // Input vector pointers index
+        Index j = 0; // Number of categorical & binary variables found
+
+        for (int k = 0; k < inputs_number; ++k) {
+
+            const vector<string> raw_variable_categories = raw_variables[k].categories;
+
+            if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+            {
+                min_value = inputs_descriptives[i].minimum;
+                max_value = inputs_descriptives[i].maximum;
+
+                buffer << "<!-- "<< to_string(i) <<"scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+                buffer << "<td> " << input_names[k] << " </td>" << endl;
+                buffer << "<td style=\"text-align:center\">" << endl;
+
+                if (min_value==0 && min_value==0)
+                {
+                    buffer << "<input type=\"range\" id=\"" << fixes_input_names[k] << "\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[k] << "_text')\" />" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[k] << "_text\" value=\"" << min_value << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[k] << "')\">" << endl;
+                }
+                else
+                {
+                    buffer << "<input type=\"range\" id=\"" << fixes_input_names[k] << "\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[k] << "_text')\" />" << endl;
+                    buffer << "<input class=\"tabla\" type=\"number\" id=\"" << fixes_input_names[k] << "_text\" value=\"" << (min_value + max_value)/2 << "\" min=\"" << min_value << "\" max=\"" << max_value << "\" step=\"" << (max_value - min_value)/100 << "\" onchange=\"updateTextInput1(this.value, '" << fixes_input_names[k] << "')\">" << endl;
+                }
+
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+                buffer << "\n" << endl;
+
+                i += 1;
+            }
+            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
+                     ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0")))// INPUT & BINARY (1,0)
+            {
+                buffer << "<!-- ComboBox Ultima pasada-->" << endl;
+                buffer << "<!-- 5scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+
+                buffer << "<td> " << input_names[k] << " </td>" << endl;
+
+                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<select id=\"Select" << j << "\">" << endl;
+
+                buffer << "<option value=\"" << 0 << "\">" << 0 << "</option>" << endl;
+                buffer << "<option value=\"" << 1 << "\">" << 1 << "</option>" << endl;
+
+                buffer << "</select>" << endl;
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+                buffer << "\n" << endl;
+
+                j += 1;
+                i += 1;
+            }
+            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
+            {
+                buffer << "<!-- ComboBox Ultima pasada-->" << endl;
+                buffer << "<!-- 5scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+
+                buffer << "<td> " << input_names[k] << " </td>" << endl;
+
+                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<select id=\"Select" << j << "\">" << endl;
+
+                buffer << "<option value=\"" << 0 << "\">" << raw_variable_categories[0] << "</option>" << endl;
+                buffer << "<option value=\"" << 1 << "\">" << raw_variable_categories[1] << "</option>" << endl;
+
+                buffer << "</select>" << endl;
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+                buffer << "\n" << endl;
+
+                j += 1;
+                i += 1;
+            }
+            else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+            {
+                buffer << "<!-- ComboBox Ultima pasada-->" << endl;
+                buffer << "<!-- 5scaling layer -->" << endl;
+                buffer << "<tr style=\"height:3.5em\">" << endl;
+
+                buffer << "<td> " << input_names[k] << " </td>" << endl;
+
+                buffer << "<td style=\"text-align:center\">" << endl;
+                buffer << "<select id=\"Select" << j << "\">" << endl;
+
+                for (int l = 0; l < raw_variable_categories.size(); ++l)
+                {
+                    buffer << "<option value=\"" << l << "\">" << raw_variable_categories[l] << "</option>" << endl;
+                }
+
+                buffer << "</select>" << endl;
+                buffer << "</td>" << endl;
+                buffer << "</tr>" << endl;
+                buffer << "\n" << endl;
+
+                j += 1;
+                i += raw_variable_categories.size();
+            }
+        }
     }
     else
         for(int i = 0; i < inputs_number; i++)
@@ -1073,20 +1179,101 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
            << "{" << endl
            << "\t" << "var inputs = [];" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
-        buffer << "\t" << "var " << fixes_input_names[i] << " =" << " document.getElementById(\"" << fixes_input_names[i] << "\").value; " << endl
-               << "\t" << "inputs.push(" << fixes_input_names[i] << ");" << endl;
+    Index j = 0;
+
+    vector<string> variables_input_fixed;
+    vector<string> variables_input;
+
+    for (int k = 0; k < inputs_number; ++k) {
+
+        const vector<string> raw_variable_categories = raw_variables[k].categories;
+
+        if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+        {
+            buffer << "\t" << "var " << fixes_input_names[k] << " =" << " document.getElementById(\"" << fixes_input_names[k] << "\").value; " << endl;
+            buffer << "\t" << "inputs.push(" << fixes_input_names[k] << ");" << endl;
+
+            variables_input_fixed.push_back(fixes_input_names[k]);
+            variables_input.push_back(input_names[k]);
+        }
+        else if (raw_variables[k].type == DataSet::RawVariableType::Binary)// INPUT BINARY
+        {
+            string aux_buffer = "";
+
+            buffer << "\t" << "var selectElement" << j << "= document.getElementById('Select" << j << "');" << endl;
+            buffer << "\t" << "var selectedValue" << j << "= +selectElement" << j << ".value;" << endl;
+
+            buffer << "\t" << "var " << fixes_input_names[k] << "= 0;" << endl;
+            aux_buffer = aux_buffer + "inputs.push(" + fixes_input_names[k] + ");" + "\n";
+
+            buffer << "switch (selectedValue" << j << "){" << endl;
+
+            buffer << "\t" << "case " << 0 << ":";
+            buffer << "\n" << "\t\t" << fixes_input_names[k] << " = " << "0;" << endl;
+            buffer << "\tbreak;" << endl;
+
+            buffer << "case " << 1 << ":";
+            buffer << "\n" << "\t\t" << fixes_input_names[k] << " = " << "1;" << endl;
+            buffer << "\tbreak;" << endl;
+
+            buffer << "\t" << "default:" << endl;
+            buffer << "\t" << "\tbreak;" << endl;
+            buffer << "\t" << "}\n" << endl;
+
+            buffer << aux_buffer << endl;
+
+            j += 1;
+            variables_input_fixed.push_back(fixes_input_names[k]);
+            variables_input.push_back(input_names[k]);
+        }
+        else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+        {
+            string aux_buffer = "";
+
+            buffer << "\t" << "var selectElement" << j << "= document.getElementById('Select" << j << "');" << endl;
+            buffer << "\t" << "var selectedValue" << j << "= +selectElement" << j << ".value;" << endl;
+
+            for (int l = 0; l < raw_variable_categories.size(); ++l)
+            {
+                string category = raw_variable_categories[l];
+                string fixed_category = replace_reserved_keywords(category);
+
+                buffer << "\t" << "var " << fixed_category << "= 0;" << endl;
+                aux_buffer = aux_buffer + "inputs.push(" + fixed_category + ");" + "\n";
+                variables_input_fixed.push_back(fixed_category);
+                variables_input.push_back(category);
+            }
+
+            buffer << "switch (selectedValue" << j << "){" << endl;
+
+            for (int l = 0; l < raw_variable_categories.size(); ++l)
+            {
+                string category = raw_variable_categories[l];
+                string fixed_category = replace_reserved_keywords(category);
+
+                buffer << "\t" << "case " << l << ":";
+                buffer << "\n" << "\t\t" << fixed_category << " = " << "1;" << endl;
+                buffer << "\t" << "\tbreak;" << endl;
+            }
+
+            buffer << "\t" << "default:" << endl;
+            buffer << "\t" << "\tbreak;" << endl;
+            buffer << "\t" << "}" << endl;
+
+            buffer << aux_buffer << endl;
+
+            j += 1;
+        }
+    }
 
     buffer << "\n" << "\t" << "var outputs = calculate_outputs(inputs); " << endl;
 
     if(outputs_number > maximum_output_variable_numbers)
         buffer << "\t" << "updateSelectedCategory();" << endl;
     else
-       for(int i = 0; i < outputs_number; i++)
+        for(int i = 0; i < outputs_number; i++)
             buffer << "\t" << "var " << fixes_output_names[i] << " = document.getElementById(\"" << fixes_output_names[i] << "\");" << endl
                    << "\t" << fixes_output_names[i] << ".value = outputs[" << to_string(i) << "].toFixed(4);" << endl;
-
-
 
     while(getline(ss, token, '\n'))
     {
@@ -1099,12 +1286,16 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         lines.push_back(token);
     }
 
+    vector<string> variable_scaled(variables_input.size());
+    for (int i = 0; i < variables_input.size(); ++i)
+        variable_scaled[i] = "scaled_" + variables_input[i];
+
     buffer << "}" << endl
            << "function calculate_outputs(inputs)" << endl
            << "{" << endl;
 
-    for(int i = 0; i < inputs_number; i++)
-        buffer << "\t" << "var " << fixes_input_names[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
+    for(int i = 0; i < variables_input_fixed.size(); i++)
+        buffer << "\t" << "var " << variables_input_fixed[i] << " = " << "+inputs[" << to_string(i) << "];" << endl;
 
     buffer << endl;
 
@@ -1151,37 +1342,51 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
         if(substring_length_4 < line.size() && substring_length_4!=0) ExpLinear = true;
         if(substring_length_5 < line.size() && substring_length_5!=0) SExpLinear = true;
 
+        for (int i = 0; i < variables_input.size(); ++i)
+            if(line.find(variables_input[i]) != string::npos)
+            {
+                string original_input_name = variables_input[i];
+                string fix_input_name = replace_reserved_keywords(original_input_name);
+                int position = 0;
+
+                while((position = line.find(original_input_name, position)) != string::npos){
+                    line.replace(position, original_input_name.length(), fix_input_name);
+                    position += fix_input_name.length();
+                }
+            }
+
+        for (int i = 0; i < variable_scaled.size(); ++i)
+            if(line.find(variable_scaled[i]) != string::npos)
+            {
+                string original_input_name = variable_scaled[i];
+                string fix_input_name = replace_reserved_keywords(original_input_name);
+                int position = 0;
+
+                while((position = line.find(original_input_name, position)) != string::npos){
+                    line.replace(position, original_input_name.length(), fix_input_name);
+                    position += fix_input_name.length();
+                }
+            }
+
+        for (int i = 0; i < output_names.size(); ++i)
+            if(line.find(output_names[i]) != string::npos)
+            {
+                string original_output_name = output_names[i];
+                string fix_output_name = replace_reserved_keywords(original_output_name);
+                int position = 0;
+
+                while((position = line.find(original_output_name, position)) != string::npos){
+                    line.replace(position, original_output_name.length(), fix_output_name);
+                    position += fix_output_name.length();
+                }
+            }
+
         for(int i = 0; i < found_mathematical_expressions.size(); i++)
         {
             string key_word = found_mathematical_expressions[i];
             string new_word = sufix + key_word;
             replace_all_appearances(line, key_word, new_word);
         }
-
-        for (int i = 0; i < input_names.size(); ++i)
-            if(line.find(input_names[i]) != string::npos){
-                string original_input_name = input_names[i];
-                string fix_input_name = replace_reserved_keywords(original_input_name);
-                int pos = 0;
-
-                while((pos = line.find(original_input_name, pos)) != string::npos){
-                    line.replace(pos, original_input_name.length(), fix_input_name);
-                    pos += fix_input_name.length();
-                }
-
-            }
-
-        for (int i = 0; i < output_names.size(); ++i)
-            if(line.find(output_names[i]) != string::npos){
-                string original_output_name = output_names[i];
-                string fix_output_name = replace_reserved_keywords(original_output_name);
-                int pos = 0;
-
-                while((pos = line.find(original_output_name, pos)) != string::npos){
-                    line.replace(pos, original_output_name.length(), fix_output_name);
-                    pos += fix_output_name.length();
-                }
-            }
 
         line.size() <= 1
             ? buffer << endl
@@ -1527,19 +1732,63 @@ string ModelExpression::get_expression_python(const NeuralNetwork& neural_networ
 }
 
 
-string ModelExpression::replace_reserved_keywords(const string& str)
+string ModelExpression::replace_reserved_keywords(string& s)
 {
-    string out;
+    string out = "";
 
-    for(char c : str){
-        if(isalnum(c) || c == '_')
-            out += c;
-        else if(c == ' ' || c == '-' || c == '+' || c == '/'|| c == '*')
-            out += '_';
+    if(s[0] == '$')
+        out=s;
+
+    for (char c : s) {
+        // if (c == '1') out += "_one_";
+        // else if (c == '2') out += "_two_";
+        // else if (c == '3') out += "_three_";
+        // else if (c == '4') out += "_four_";
+        // else if (c == '5') out += "_five_";
+        // else if (c == '6') out += "_six_";
+        // else if (c == '7') out += "_seven_";
+        // else if (c == '8') out += "_eight_";
+        // else if (c == '9') out += "_nine_";
+        // else if (c == '0') out += "_zero_";
+
+        if (c == ' ') out += "_";
+        else if (c == '.') out += "_dot_";
+        else if (c == '/') out += "_div_";
+        else if (c == '*') out += "_mul_";
+        else if (c == '+') out += "_sum_";
+        else if (c == '-') out += "_res_";
+        else if (c == '=') out += "_equ_";
+        else if (c == '!') out += "_not_";
+        else if (c == ',') out += "_colon_";
+        else if (c == ';') out += "_semic_";
+        else if (c == '\\') out += "_slash_";
+        else if (c == '&') out += "_amprsn_";
+        else if (c == '?') out += "_ntrgtn_";
+        else if (c == '<') out += "_lower_";
+        else if (c == '>') out += "_higher_";
+
+        //else if (isalpha(c) || c == '_') out += c;
+        else if (isalnum(c) || c == '_') out += c;
     }
+
 
     if(!out.empty() && isdigit(out[0]))
         out = '_' + out;
+
+    unordered_map<std::string, std::string> sprcialWords = {
+        {"min", "mi_n"},
+        {"max", "ma_x"},
+        {"exp", "ex_p"},
+        {"tanh", "ta_nh"}
+    };
+
+    for (const auto& pair : sprcialWords) {
+        int position = 0;
+        while ((position = out.find(pair.first, position)) != std::string::npos) {
+            out.replace(position, pair.first.length(), pair.second);
+            position += pair.second.length();
+        }
+    }
 
     return out;
 
@@ -1656,7 +1905,6 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
 
 vector<string> ModelExpression::fix_input_names(vector<string>& input_names)
 {
-
     const Index inputs_number = input_names.size();
     vector<string> fixes_input_names(inputs_number);
 
@@ -1689,7 +1937,8 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 
 void ModelExpression::save_expression(const string& file_name,
                                       const ProgrammingLanguage& programming_language,
-                                      const NeuralNetwork* neural_network)
+                                      const NeuralNetwork* neural_network,
+                                      const vector<DataSet::RawVariable>& raw_variables)
 {
     ofstream file(file_name);
 
@@ -1704,7 +1953,7 @@ void ModelExpression::save_expression(const string& file_name,
             file << get_expression_c(*neural_network);
             break;
         case ProgrammingLanguage::JavaScript:
-            file << get_expression_javascript(*neural_network);
+            file << get_expression_javascript(*neural_network, raw_variables);
             break;
         case ProgrammingLanguage::PHP:
             file << get_expression_api(*neural_network);

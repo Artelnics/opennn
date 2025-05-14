@@ -509,7 +509,6 @@ void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<typ
 type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
 {
     Tensor<type, 0> norm;
-
     norm.device(*thread_pool_device) = vector.square().sum().sqrt();
 
     if(isnan(norm(0)))

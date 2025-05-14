@@ -14,6 +14,7 @@
 #include <time.h>
 
 #include "../../opennn/opennn.h"
+#include "addition_layer_3d.h"
 
 using namespace opennn;
 
@@ -30,6 +31,7 @@ int main()
         // text_data_set.set_data_path("../data/amazon_cells_reduced.txt");
         // text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
         text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
+        // text_data_set.set_data_path("/Users/artelnics/Desktop/cleaned_tweets.txt");
 
         text_data_set.set_separator(DataSet::Separator::Tab);
 
@@ -57,7 +59,7 @@ int main()
 
         const Index maximum_sequence_length = text_data_set.get_input_length();
         const Index vocabulary_size = text_data_set.get_input_vocabulary_size();
-        const Index embedding_dimension = 128;
+        const Index embedding_dimension = 64;
         const Index heads_number = 8;
         const dimensions outputs_number = { 1 };
 
@@ -66,9 +68,12 @@ int main()
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
+        // neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
+        neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
+        neural_network.add_layer(make_unique<Addition3d>(maximum_sequence_length, embedding_dimension, "Addition"));
+        neural_network.set_layer_inputs_indices("Addition", {"Embedding", "Multihead_attention"});
+        neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
         neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
 
@@ -84,8 +89,8 @@ int main()
 
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        text_data_set.set(DataSet::SampleUse::Training);
-        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.4);
+        text_data_set.split_samples_sequential(0.8,0,0.2);
+        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);

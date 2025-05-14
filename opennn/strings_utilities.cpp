@@ -280,7 +280,6 @@ void replace_all_appearances(string& text, string const& to_replace, string cons
     size_t previous_position;
 
     // Reserves rough estimate of override size of string
-
     buffer.reserve(text.size());
 
     while(true)
