@@ -1833,9 +1833,8 @@ namespace opennn
         if (new_data.dimension(0) != get_samples_number())
             throw runtime_error("Rows number is not equal to samples number");
 
-        if (new_data.dimension(1) != get_variables_number()) {
+        if (new_data.dimension(1) != get_variables_number())
             throw runtime_error("Columns number is not equal to variables number");
-        }
 
         data = new_data;
     }
@@ -2581,7 +2580,7 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-            //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+            cout << "Calculating " << raw_variables[current_input_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -2620,7 +2619,7 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
 
-            //if(display) cout << "Calculating " << raw_variables(current_input_index_i).name << " correlations. " << endl;
+            cout << "Calculating " << raw_variables[input_raw_variable_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -2839,8 +2838,30 @@ namespace opennn
 
     void DataSet::set_data_constant(const type& new_value)
     {
-        data.setConstant(new_value);
-        data.dimensions();
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+                data(i, index) = new_value;
+    }
+
+
+    void DataSet::set_data_ascending()
+    {
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        type new_value = 1;
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+            {
+                data(i, index) = new_value;
+                new_value++;
+            }
     }
 
 
@@ -2911,7 +2932,7 @@ namespace opennn
         add_xml_element(printer, "PreviewSize", to_string(data_file_preview.size()));
 
         vector<string> vector_data_file_preview = convert_string_vector(data_file_preview,",");
-        for(int i = 0; i < data_file_preview.size(); i++){
+        for(size_t i = 0; i < data_file_preview.size(); i++){
             printer.OpenElement("Row");
             printer.PushAttribute("Item", to_string(i + 1).c_str());
             printer.PushText(vector_data_file_preview[i].data());

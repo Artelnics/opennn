@@ -76,7 +76,7 @@ struct umeyama_transform_matrix_type {
  *
  * \todo Should the return type of umeyama() become a Transform?
  *
- * \param src Source points \f$ \mathbf{x} = \left( x_1, \hdots, x_n \right) \f$.
+ * \param source Source points \f$ \mathbf{x} = \left( x_1, \hdots, x_n \right) \f$.
  * \param dst Destination points \f$ \mathbf{y} = \left( y_1, \hdots, y_n \right) \f$.
  * \param with_scaling Sets \f$ c=1 \f$ when <code>false</code> is passed.
  * \return The homogeneous transformation
@@ -88,7 +88,7 @@ struct umeyama_transform_matrix_type {
  */
 template <typename Derived, typename OtherDerived>
 typename internal::umeyama_transform_matrix_type<Derived, OtherDerived>::type umeyama(
-    const MatrixBase<Derived>& src, const MatrixBase<OtherDerived>& dst, bool with_scaling = true) {
+    const MatrixBase<Derived>& source, const MatrixBase<OtherDerived>& dst, bool with_scaling = true) {
   typedef typename internal::umeyama_transform_matrix_type<Derived, OtherDerived>::type TransformationMatrixType;
   typedef typename internal::traits<TransformationMatrixType>::Scalar Scalar;
   typedef typename NumTraits<Scalar>::Real RealScalar;
@@ -104,22 +104,22 @@ typename internal::umeyama_transform_matrix_type<Derived, OtherDerived>::type um
   typedef Matrix<Scalar, Dimension, Dimension> MatrixType;
   typedef typename internal::plain_matrix_type_row_major<Derived>::type RowMajorMatrixType;
 
-  const Index m = src.rows();  // dimension
-  const Index n = src.cols();  // number of measurements
+  const Index m = source.rows();  // dimension
+  const Index n = source.cols();  // number of measurements
 
   // required for demeaning ...
   const RealScalar one_over_n = RealScalar(1) / static_cast<RealScalar>(n);
 
   // computation of mean
-  const VectorType src_mean = src.rowwise().sum() * one_over_n;
+  const VectorType source_mean = source.rowwise().sum() * one_over_n;
   const VectorType dst_mean = dst.rowwise().sum() * one_over_n;
 
-  // demeaning of src and dst points
-  const RowMajorMatrixType src_demean = src.colwise() - src_mean;
+  // demeaning of source and dst points
+  const RowMajorMatrixType source_demean = source.colwise() - source_mean;
   const RowMajorMatrixType dst_demean = dst.colwise() - dst_mean;
 
   // Eq. (38)
-  const MatrixType sigma = one_over_n * dst_demean * src_demean.transpose();
+  const MatrixType sigma = one_over_n * dst_demean * source_demean.transpose();
 
   JacobiSVD<MatrixType, ComputeFullU | ComputeFullV> svd(sigma);
 
@@ -139,18 +139,18 @@ typename internal::umeyama_transform_matrix_type<Derived, OtherDerived>::type um
 
   if (with_scaling) {
     // Eq. (36)-(37)
-    const Scalar src_var = src_demean.rowwise().squaredNorm().sum() * one_over_n;
+    const Scalar source_var = source_demean.rowwise().squaredNorm().sum() * one_over_n;
 
     // Eq. (42)
-    const Scalar c = Scalar(1) / src_var * svd.singularValues().dot(S);
+    const Scalar c = Scalar(1) / source_var * svd.singularValues().dot(S);
 
     // Eq. (41)
     Rt.col(m).head(m) = dst_mean;
-    Rt.col(m).head(m).noalias() -= c * Rt.topLeftCorner(m, m) * src_mean;
+    Rt.col(m).head(m).noalias() -= c * Rt.topLeftCorner(m, m) * source_mean;
     Rt.block(0, 0, m, m) *= c;
   } else {
     Rt.col(m).head(m) = dst_mean;
-    Rt.col(m).head(m).noalias() -= Rt.topLeftCorner(m, m) * src_mean;
+    Rt.col(m).head(m).noalias() -= Rt.topLeftCorner(m, m) * source_mean;
   }
 
   return Rt;

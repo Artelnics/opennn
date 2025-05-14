@@ -165,7 +165,7 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device> {
     if (m_is_identity) {
       return m_impl.coeff(index);
     } else {
-      return m_impl.coeff(srcCoeff(index));
+      return m_impl.coeff(sourceCoeff(index));
     }
   }
 
@@ -236,12 +236,12 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device> {
         TensorBlock::prepareStorage(desc, scratch, /*allow_strided_storage=*/root_of_expr_ast);
 
     typename TensorBlockIO::Dimensions input_strides(m_unshuffledInputStrides);
-    TensorBlockIOSrc src(input_strides, m_impl.data(), srcCoeff(desc.offset()));
+    TensorBlockIOSrc source(input_strides, m_impl.data(), sourceCoeff(desc.offset()));
 
     TensorBlockIODst dst(block_storage.dimensions(), block_storage.strides(), block_storage.data());
 
-    typename TensorBlockIO::DimensionsMap dst_to_src_dim_map(m_shuffle);
-    TensorBlockIO::Copy(dst, src, dst_to_src_dim_map);
+    typename TensorBlockIO::DimensionsMap dst_to_source_dim_map(m_shuffle);
+    TensorBlockIO::Copy(dst, source, dst_to_source_dim_map);
 
     return block_storage.AsTensorMaterializedBlock();
   }
@@ -280,7 +280,7 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device> {
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index sourceCoeff(Index index) const {
     Index inputIndex = 0;
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       for (int i = NumDims - 1; i > 0; --i) {
@@ -345,7 +345,7 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
   EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device) : Base(op, device) {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType& coeffRef(Index index) const {
-    return this->m_impl.coeffRef(this->srcCoeff(index));
+    return this->m_impl.coeffRef(this->sourceCoeff(index));
   }
 
   template <int StoreMode>
@@ -369,7 +369,7 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
     const Scalar* block_buffer = block.data();
 
     // TODO(ezhulenev): TensorBlockIO should be able to read from any Eigen
-    // expression with coefficient and packet access as `src`.
+    // expression with coefficient and packet access as `source`.
     void* mem = NULL;
     if (block_buffer == NULL) {
       mem = this->m_device.allocate(desc.size() * sizeof(Scalar));
@@ -386,7 +386,7 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
     }
 
     // Read from block.
-    TensorBlockIOSrc src(internal::strides<Layout>(desc.dimensions()), block_buffer);
+    TensorBlockIOSrc source(internal::strides<Layout>(desc.dimensions()), block_buffer);
 
     // Write to the output buffer.
     typename TensorBlockIO::Dimensions output_strides(this->m_unshuffledInputStrides);
@@ -394,14 +394,14 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
     for (int i = 0; i < NumDims; ++i) {
       output_dimensions[this->m_shuffle[i]] = desc.dimension(i);
     }
-    TensorBlockIODst dst(output_dimensions, output_strides, this->m_impl.data(), this->srcCoeff(desc.offset()));
+    TensorBlockIODst dst(output_dimensions, output_strides, this->m_impl.data(), this->sourceCoeff(desc.offset()));
 
     // Reorder dimensions according to the shuffle.
-    typename TensorBlockIO::DimensionsMap dst_to_src_dim_map;
+    typename TensorBlockIO::DimensionsMap dst_to_source_dim_map;
     for (int i = 0; i < NumDims; ++i) {
-      dst_to_src_dim_map[i] = static_cast<int>(this->m_inverseShuffle[i]);
+      dst_to_source_dim_map[i] = static_cast<int>(this->m_inverseShuffle[i]);
     }
-    TensorBlockIO::Copy(dst, src, dst_to_src_dim_map);
+    TensorBlockIO::Copy(dst, source, dst_to_source_dim_map);
 
     // Deallocate temporary buffer used for the block materialization.
     if (mem != NULL) this->m_device.deallocate(mem);

@@ -33,27 +33,32 @@ int main()
         /*
         const Index samples_number = 2;
 
-        const Index image_height = 4;
-        const Index image_width = 4;
-        const Index channels = 1;
+        const Index image_height = 3;
+        const Index image_width = 3;
+        const Index channels = 3;
         const Index targets = 2;
 
         ImageDataSet data_set(samples_number, {image_height, image_width, channels}, {targets});
 
         data_set.set_data_random();
+        data_set.set_data_ascending();
+
+        data_set.set(DataSet::SampleUse::Training);
         */
-        
         ImageDataSet data_set;
 
-        data_set.set_data_path("../examples/mnist/data_bin");
+        //data_set.set_data_path("C:/testbmp");
+        data_set.set_data_path("../examples/mnist/data");
+        //data_set.set_data_path("C:/catvsdog_bmp");
+        //data_set.set_data_path("C:/melanoma_dataset_bmp_small");
 
         data_set.read_bmp();
-       
+
         // Neural network
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 1,1 },
+            { 4 },
             data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
@@ -64,8 +69,8 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        training_strategy.set_display_period(10);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
+        training_strategy.set_display_period(1);
 
         //training_strategy.perform_training();
         training_strategy.perform_training_cuda();

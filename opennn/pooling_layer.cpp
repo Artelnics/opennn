@@ -777,12 +777,12 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(inputs_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
+                               CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(channels),
-                               static_cast<int>(input_height),
-                               static_cast<int>(input_width));
+                               batch_size, 
+                               channels, 
+                               input_height, 
+                               input_width);
 
     // Outputs
 
@@ -792,12 +792,12 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
+                               CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(channels),
-                               static_cast<int>(output_height),
-                               static_cast<int>(output_width));
+                               batch_size,
+                               channels,
+                               output_height,
+                               output_width);
 
     // Pooling descriptor
 
@@ -806,12 +806,9 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnSetPooling2dDescriptor(pooling_descriptor,
                                 pooling_mode,
                                 CUDNN_PROPAGATE_NAN,
-                                static_cast<int>(pool_height),
-                                static_cast<int>(pool_width),
-                                static_cast<int>(padding_height),
-                                static_cast<int>(padding_width),
-                                static_cast<int>(row_stride),
-                                static_cast<int>(column_stride));
+                                pool_height, pool_width,
+                                padding_height, padding_width,
+                                row_stride, column_stride);
 }
 
 
@@ -852,6 +849,8 @@ PoolingLayerBackPropagationCuda::PoolingLayerBackPropagationCuda(const Index& ne
 
 void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (new_batch_size == 0) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;

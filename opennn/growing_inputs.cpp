@@ -83,8 +83,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     const LossIndex* loss_index = training_strategy->get_loss_index();
 
-
-//    type previus_selection_error = numeric_limits< type>::max();
+    type previus_selection_error = numeric_limits< type>::max();
     type previus_training_error = numeric_limits< type>::max();
 
     // Data set
@@ -230,7 +229,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         else
         {
             previus_training_error = minimum_training_error;
-//                previus_selection_error = minimum_selection_error;
+            previus_selection_error = minimum_selection_error;
 
             input_selection_results.training_error_history(input_raw_variables_number) = minimum_training_error;
             input_selection_results.selection_error_history(input_raw_variables_number) = minimum_selection_error;

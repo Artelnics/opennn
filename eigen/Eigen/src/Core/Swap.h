@@ -29,7 +29,7 @@ class generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT,
       Base;
   using Base::m_dst;
   using Base::m_functor;
-  using Base::m_src;
+  using Base::m_source;
 
  public:
   typedef typename Base::Scalar Scalar;
@@ -37,22 +37,22 @@ class generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT,
   typedef swap_assign_op<Scalar> Functor;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE generic_dense_assignment_kernel(DstEvaluatorTypeT &dst,
-                                                                        const SrcEvaluatorTypeT &src,
+                                                                        const SrcEvaluatorTypeT &source,
                                                                         const Functor &func, DstXprType &dstExpr)
-      : Base(dst, src, func, dstExpr) {}
+      : Base(dst, source, func, dstExpr) {}
 
   template <int StoreMode, int LoadMode, typename PacketType>
   EIGEN_STRONG_INLINE void assignPacket(Index row, Index col) {
-    PacketType tmp = m_src.template packet<LoadMode, PacketType>(row, col);
-    const_cast<SrcEvaluatorTypeT &>(m_src).template writePacket<LoadMode>(
+    PacketType tmp = m_source.template packet<LoadMode, PacketType>(row, col);
+    const_cast<SrcEvaluatorTypeT &>(m_source).template writePacket<LoadMode>(
         row, col, m_dst.template packet<StoreMode, PacketType>(row, col));
     m_dst.template writePacket<StoreMode>(row, col, tmp);
   }
 
   template <int StoreMode, int LoadMode, typename PacketType>
   EIGEN_STRONG_INLINE void assignPacket(Index index) {
-    PacketType tmp = m_src.template packet<LoadMode, PacketType>(index);
-    const_cast<SrcEvaluatorTypeT &>(m_src).template writePacket<LoadMode>(
+    PacketType tmp = m_source.template packet<LoadMode, PacketType>(index);
+    const_cast<SrcEvaluatorTypeT &>(m_source).template writePacket<LoadMode>(
         index, m_dst.template packet<StoreMode, PacketType>(index));
     m_dst.template writePacket<StoreMode>(index, tmp);
   }

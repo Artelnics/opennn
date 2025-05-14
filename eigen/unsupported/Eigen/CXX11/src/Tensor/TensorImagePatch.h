@@ -48,10 +48,10 @@ struct ImagePatchCopyOp {
   typedef typename Self::Impl Impl;
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Self& self, const Index num_coeff_to_copy,
                                                         const Index dst_index, Scalar* dst_data,
-                                                        const Index src_index) {
+                                                        const Index source_index) {
     const Impl& impl = self.impl();
     for (Index i = 0; i < num_coeff_to_copy; ++i) {
-      dst_data[dst_index + i] = impl.coeff(src_index + i);
+      dst_data[dst_index + i] = impl.coeff(source_index + i);
     }
   }
 };
@@ -64,16 +64,16 @@ struct ImagePatchCopyOp<Self, true> {
   typedef typename packet_traits<Scalar>::type Packet;
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void Run(const Self& self, const Index num_coeff_to_copy,
                                                         const Index dst_index, Scalar* dst_data,
-                                                        const Index src_index) {
+                                                        const Index source_index) {
     const Impl& impl = self.impl();
     const Index packet_size = internal::unpacket_traits<Packet>::size;
     const Index vectorized_size = (num_coeff_to_copy / packet_size) * packet_size;
     for (Index i = 0; i < vectorized_size; i += packet_size) {
-      Packet p = impl.template packet<Unaligned>(src_index + i);
+      Packet p = impl.template packet<Unaligned>(source_index + i);
       internal::pstoret<Scalar, Packet, Unaligned>(dst_data + dst_index + i, p);
     }
     for (Index i = vectorized_size; i < num_coeff_to_copy; ++i) {
-      dst_data[dst_index + i] = impl.coeff(src_index + i);
+      dst_data[dst_index + i] = impl.coeff(source_index + i);
     }
   }
 };

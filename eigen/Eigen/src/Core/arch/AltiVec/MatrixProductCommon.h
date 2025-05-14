@@ -46,13 +46,13 @@ EIGEN_ALWAYS_INLINE void gemm_complex_extra_cols(const DataMapper& res, const Sc
                                                  const Packet& pMask);
 
 template <typename DataMapper>
-EIGEN_ALWAYS_INLINE void convertArrayBF16toF32(float* result, Index cols, Index rows, const DataMapper& src);
+EIGEN_ALWAYS_INLINE void convertArrayBF16toF32(float* result, Index cols, Index rows, const DataMapper& source);
 
 template <const Index size, bool non_unit_stride, Index delta>
 EIGEN_ALWAYS_INLINE void storeBF16fromResult(bfloat16* dst, Packet8bf data, Index resInc, Index extra = 0);
 
 template <bool non_unit_stride = false>
-EIGEN_ALWAYS_INLINE void convertArrayPointerBF16toF32(float* result, Index cols, Index rows, bfloat16* src,
+EIGEN_ALWAYS_INLINE void convertArrayPointerBF16toF32(float* result, Index cols, Index rows, bfloat16* source,
                                                       Index resInc = 1);
 
 template <bool rhsExtraCols, bool lhsExtraRows>

@@ -264,11 +264,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
+            // cout << "xeee" << endl;
+
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
+
+            // cout << "xexexexe" << endl;
 
             // // if(epoch == 50)
             // // {
@@ -436,7 +440,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     Index& iteration = optimization_data.iteration;
     
