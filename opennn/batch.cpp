@@ -279,20 +279,10 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
             //fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
         }
         else
-        {
             fill_tensor_data_row_major(data, sample_indices, input_indices, inputs_host);
-
-            const Index height = image_data_set->get_image_height();
-            const Index width = image_data_set->get_image_width();
-            const Index channels = image_data_set->get_channels_number();
-
-            //fill_tensor_data_row_major_corrected(data,sample_indices,input_indices,height, width, channels,inputs_host);
-        }
     }
     else
-    {
         fill_tensor_data(data, sample_indices, input_indices, inputs_host);
-    }
 
     if (is_instance_of<LanguageDataSet>(data_set))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_host);

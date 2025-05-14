@@ -672,67 +672,6 @@ void fill_tensor_data(const Tensor<type, 2>& matrix,
 }
 
 
-void fill_tensor_data_row_major_corrected(const Tensor<type, 2>& matrix,
-                                          const vector<Index>& row_indices,
-                                          const vector<Index>& column_indices,
-                                          const Index H,
-                                          const Index W,
-                                          const Index C,
-                                          type* tensor_data
-)
-{
-    const Index N = row_indices.size();
-    const Index FeaturesPerSample = H * W * C;
-    const Index FeaturesPerChannel = H * W;
-
-    if (column_indices.empty() || N == 0 || FeaturesPerSample == 0) {
-        return;
-    }
-
-    // Asumimos que column_indices[0] da el índice de la columna para (h=0, w=0, c=0)
-    // según el layout HWC aplanado en las columnas de matrix.
-    const Index first_feature_col_idx = column_indices[0];
-
-#pragma omp parallel for // Paralelizar por muestra
-    for (Index n_idx = 0; n_idx < N; ++n_idx)
-    {
-        const Index source_row_idx = row_indices[n_idx]; // Fila actual en matrix
-
-        // Iterar en el orden NCHW para escribir en el destino
-        for (Index c_dst = 0; c_dst < C; ++c_dst) // Canal destino
-        {
-            for (Index h_dst = 0; h_dst < H; ++h_dst) // Fila destino
-            {
-                for (Index w_dst = 0; w_dst < W; ++w_dst) // Columna destino
-                {
-                    // --- Calcular el índice de la COLUMNA ORIGEN ---
-                    // Necesitamos encontrar la columna en 'matrix' que corresponde
-                    // a la coordenada (h_dst, w_dst, c_dst).
-                    // Basado en la ASUNCIÓN de layout HWC contiguo en columnas:
-                    // El offset lineal HWC para (h_dst, w_dst, c_dst) es: h_dst*W*C + w_dst*C + c_dst
-                    Index hwc_source_feature_offset = h_dst * W * C + w_dst * C + c_dst;
-                    Index source_col_idx = first_feature_col_idx + hwc_source_feature_offset;
-                    // -------------------------------------------------
-
-                    // Obtener el valor de la matrix origen (ColumnMajor)
-                    type value = matrix(source_row_idx, source_col_idx);
-
-                    // --- Calcular el índice lineal NCHW en el DESTINO ---
-                    Index nchw_target_idx = n_idx * FeaturesPerSample +   // Offset muestra
-                        c_dst * FeaturesPerChannel + // Offset canal
-                        h_dst * W +                  // Offset fila
-                        w_dst;                       // Offset columna
-                    // ----------------------------------------------------
-
-                    // Asignar el valor al buffer destino
-                    tensor_data[nchw_target_idx] = value;
-                }
-            }
-        }
-    }
-}
-
-
 void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
                                 const vector<Index>& row_indices,
                                 const vector<Index>& column_indices,
