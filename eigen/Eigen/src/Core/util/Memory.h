@@ -186,9 +186,9 @@ EIGEN_DEVICE_FUNC inline void* handmade_aligned_realloc(void* ptr, std::size_t n
   std::size_t offset = alignment - (reinterpret_cast<std::size_t>(original) & (alignment - 1));
   void* aligned = static_cast<void*>(static_cast<uint8_t*>(original) + offset);
   if (offset != old_offset) {
-    const void* src = static_cast<const void*>(static_cast<uint8_t*>(original) + old_offset);
+    const void* source = static_cast<const void*>(static_cast<uint8_t*>(original) + old_offset);
     std::size_t count = (std::min)(new_size, old_size);
-    std::memmove(aligned, src, count);
+    std::memmove(aligned, source, count);
   }
   // Store offset - 1, since it is guaranteed to be at least 1.
   *(static_cast<uint8_t*>(aligned) - 1) = static_cast<uint8_t>(offset - 1);
@@ -359,10 +359,10 @@ EIGEN_DEVICE_FUNC inline T* default_construct_elements_of_array(T* ptr, std::siz
  * The \a size parameter tells on how many objects to copy.
  */
 template <typename T>
-EIGEN_DEVICE_FUNC inline T* copy_construct_elements_of_array(T* ptr, const T* src, std::size_t size) {
+EIGEN_DEVICE_FUNC inline T* copy_construct_elements_of_array(T* ptr, const T* source, std::size_t size) {
   std::size_t i = 0;
   EIGEN_TRY {
-    for (i = 0; i < size; ++i) ::new (ptr + i) T(*(src + i));
+    for (i = 0; i < size; ++i) ::new (ptr + i) T(*(source + i));
   }
   EIGEN_CATCH(...) {
     destruct_elements_of_array(ptr, i);
@@ -375,10 +375,10 @@ EIGEN_DEVICE_FUNC inline T* copy_construct_elements_of_array(T* ptr, const T* sr
  * The \a size parameter tells on how many objects to move.
  */
 template <typename T>
-EIGEN_DEVICE_FUNC inline T* move_construct_elements_of_array(T* ptr, T* src, std::size_t size) {
+EIGEN_DEVICE_FUNC inline T* move_construct_elements_of_array(T* ptr, T* source, std::size_t size) {
   std::size_t i = 0;
   EIGEN_TRY {
-    for (i = 0; i < size; ++i) ::new (ptr + i) T(std::move(*(src + i)));
+    for (i = 0; i < size; ++i) ::new (ptr + i) T(std::move(*(source + i)));
   }
   EIGEN_CATCH(...) {
     destruct_elements_of_array(ptr, i);
@@ -948,7 +948,7 @@ class aligned_allocator {
 
 #if EIGEN_COMP_GNUC_STRICT && EIGEN_GNUC_STRICT_AT_LEAST(7, 0, 0)
   // In gcc std::allocator::max_size() is bugged making gcc triggers a warning:
-  // eigen/Eigen/src/Core/util/Memory.h:189:12: warning: argument 1 value '18446744073709551612' exceeds maximum object
+  // eigen/Eigen/source/Core/util/Memory.h:189:12: warning: argument 1 value '18446744073709551612' exceeds maximum object
   // size 9223372036854775807 See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87544
   size_type max_size() const { return (std::numeric_limits<std::ptrdiff_t>::max)() / sizeof(T); }
 #endif

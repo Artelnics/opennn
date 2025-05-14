@@ -26,6 +26,12 @@ typedef float type;
 
 // Utilities
 
+__global__ void reorder_inputs_kernel(const float* __restrict__, float* __restrict__ , int, int, int, int);
+void reorder_inputs_cuda(const float* source, float* destination, int, int, int, int);
+
+__global__ void invert_reorder_inputs_kernel(const float* __restrict__, float* __restrict__, const int, const int, const int, const int);
+void invert_reorder_inputs_cuda(const float* source, float* destination, int N, int C, int H, int W);
+
 __global__ void reverse_kernel(type*, int, int, int);
 void reverse_cuda(int, int, int, type*);
 

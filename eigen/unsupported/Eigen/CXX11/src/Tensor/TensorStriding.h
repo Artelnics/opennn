@@ -136,7 +136,7 @@ struct TensorEvaluator<const TensorStridingOp<Strides, ArgType>, Device> {
   EIGEN_STRONG_INLINE void cleanup() { m_impl.cleanup(); }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
-    return m_impl.coeff(srcCoeff(index));
+    return m_impl.coeff(sourceCoeff(index));
   }
 
   template <int LoadMode>
@@ -203,7 +203,7 @@ struct TensorEvaluator<const TensorStridingOp<Strides, ArgType>, Device> {
   EIGEN_DEVICE_FUNC typename Storage::Type data() const { return NULL; }
 
  protected:
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index sourceCoeff(Index index) const {
     Index inputIndex = 0;
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       EIGEN_UNROLL_LOOP
@@ -259,7 +259,7 @@ struct TensorEvaluator<TensorStridingOp<Strides, ArgType>, Device>
   static constexpr int PacketSize = PacketType<CoeffReturnType, Device>::size;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar& coeffRef(Index index) const {
-    return this->m_impl.coeffRef(this->srcCoeff(index));
+    return this->m_impl.coeffRef(this->sourceCoeff(index));
   }
 
   template <int StoreMode>

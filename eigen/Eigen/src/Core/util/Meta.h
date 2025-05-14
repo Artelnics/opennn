@@ -23,7 +23,7 @@
 #endif
 
 #if defined(EIGEN_HIP_DEVICE_COMPILE)
-#include "Eigen/src/Core/arch/HIP/hcc/math_constants.h"
+#include "Eigen/source/Core/arch/HIP/hcc/math_constants.h"
 #endif
 
 #endif

@@ -1268,19 +1268,19 @@ lapack_int LAPACKE_chptrs(int matrix_order, char uplo, lapack_int n, lapack_int 
 lapack_int LAPACKE_zhptrs(int matrix_order, char uplo, lapack_int n, lapack_int nrhs, const lapack_complex_double* ap,
                           const lapack_int* ipiv, lapack_complex_double* b, lapack_int ldb);
 
-lapack_int LAPACKE_shsein(int matrix_order, char job, char eigsrc, char initv, lapack_logical* select, lapack_int n,
+lapack_int LAPACKE_shsein(int matrix_order, char job, char eigsource, char initv, lapack_logical* select, lapack_int n,
                           const float* h, lapack_int ldh, float* wr, const float* wi, float* vl, lapack_int ldvl,
                           float* vr, lapack_int ldvr, lapack_int mm, lapack_int* m, lapack_int* ifaill,
                           lapack_int* ifailr);
-lapack_int LAPACKE_dhsein(int matrix_order, char job, char eigsrc, char initv, lapack_logical* select, lapack_int n,
+lapack_int LAPACKE_dhsein(int matrix_order, char job, char eigsource, char initv, lapack_logical* select, lapack_int n,
                           const double* h, lapack_int ldh, double* wr, const double* wi, double* vl, lapack_int ldvl,
                           double* vr, lapack_int ldvr, lapack_int mm, lapack_int* m, lapack_int* ifaill,
                           lapack_int* ifailr);
-lapack_int LAPACKE_chsein(int matrix_order, char job, char eigsrc, char initv, const lapack_logical* select,
+lapack_int LAPACKE_chsein(int matrix_order, char job, char eigsource, char initv, const lapack_logical* select,
                           lapack_int n, const lapack_complex_float* h, lapack_int ldh, lapack_complex_float* w,
                           lapack_complex_float* vl, lapack_int ldvl, lapack_complex_float* vr, lapack_int ldvr,
                           lapack_int mm, lapack_int* m, lapack_int* ifaill, lapack_int* ifailr);
-lapack_int LAPACKE_zhsein(int matrix_order, char job, char eigsrc, char initv, const lapack_logical* select,
+lapack_int LAPACKE_zhsein(int matrix_order, char job, char eigsource, char initv, const lapack_logical* select,
                           lapack_int n, const lapack_complex_double* h, lapack_int ldh, lapack_complex_double* w,
                           lapack_complex_double* vl, lapack_int ldvl, lapack_complex_double* vr, lapack_int ldvr,
                           lapack_int mm, lapack_int* m, lapack_int* ifaill, lapack_int* ifailr);
@@ -4104,20 +4104,20 @@ lapack_int LAPACKE_zhptrs_work(int matrix_order, char uplo, lapack_int n, lapack
                                const lapack_complex_double* ap, const lapack_int* ipiv, lapack_complex_double* b,
                                lapack_int ldb);
 
-lapack_int LAPACKE_shsein_work(int matrix_order, char job, char eigsrc, char initv, lapack_logical* select,
+lapack_int LAPACKE_shsein_work(int matrix_order, char job, char eigsource, char initv, lapack_logical* select,
                                lapack_int n, const float* h, lapack_int ldh, float* wr, const float* wi, float* vl,
                                lapack_int ldvl, float* vr, lapack_int ldvr, lapack_int mm, lapack_int* m, float* work,
                                lapack_int* ifaill, lapack_int* ifailr);
-lapack_int LAPACKE_dhsein_work(int matrix_order, char job, char eigsrc, char initv, lapack_logical* select,
+lapack_int LAPACKE_dhsein_work(int matrix_order, char job, char eigsource, char initv, lapack_logical* select,
                                lapack_int n, const double* h, lapack_int ldh, double* wr, const double* wi, double* vl,
                                lapack_int ldvl, double* vr, lapack_int ldvr, lapack_int mm, lapack_int* m, double* work,
                                lapack_int* ifaill, lapack_int* ifailr);
-lapack_int LAPACKE_chsein_work(int matrix_order, char job, char eigsrc, char initv, const lapack_logical* select,
+lapack_int LAPACKE_chsein_work(int matrix_order, char job, char eigsource, char initv, const lapack_logical* select,
                                lapack_int n, const lapack_complex_float* h, lapack_int ldh, lapack_complex_float* w,
                                lapack_complex_float* vl, lapack_int ldvl, lapack_complex_float* vr, lapack_int ldvr,
                                lapack_int mm, lapack_int* m, lapack_complex_float* work, float* rwork,
                                lapack_int* ifaill, lapack_int* ifailr);
-lapack_int LAPACKE_zhsein_work(int matrix_order, char job, char eigsrc, char initv, const lapack_logical* select,
+lapack_int LAPACKE_zhsein_work(int matrix_order, char job, char eigsource, char initv, const lapack_logical* select,
                                lapack_int n, const lapack_complex_double* h, lapack_int ldh, lapack_complex_double* w,
                                lapack_complex_double* vl, lapack_int ldvl, lapack_complex_double* vr, lapack_int ldvr,
                                lapack_int mm, lapack_int* m, lapack_complex_double* work, double* rwork,
@@ -8873,19 +8873,19 @@ void LAPACK_chseqr(char* job, char* compz, lapack_int* n, lapack_int* ilo, lapac
 void LAPACK_zhseqr(char* job, char* compz, lapack_int* n, lapack_int* ilo, lapack_int* ihi, lapack_complex_double* h,
                    lapack_int* ldh, lapack_complex_double* w, lapack_complex_double* z, lapack_int* ldz,
                    lapack_complex_double* work, lapack_int* lwork, lapack_int* info);
-void LAPACK_shsein(char* job, char* eigsrc, char* initv, lapack_logical* select, lapack_int* n, const float* h,
+void LAPACK_shsein(char* job, char* eigsource, char* initv, lapack_logical* select, lapack_int* n, const float* h,
                    lapack_int* ldh, float* wr, const float* wi, float* vl, lapack_int* ldvl, float* vr,
                    lapack_int* ldvr, lapack_int* mm, lapack_int* m, float* work, lapack_int* ifaill, lapack_int* ifailr,
                    lapack_int* info);
-void LAPACK_dhsein(char* job, char* eigsrc, char* initv, lapack_logical* select, lapack_int* n, const double* h,
+void LAPACK_dhsein(char* job, char* eigsource, char* initv, lapack_logical* select, lapack_int* n, const double* h,
                    lapack_int* ldh, double* wr, const double* wi, double* vl, lapack_int* ldvl, double* vr,
                    lapack_int* ldvr, lapack_int* mm, lapack_int* m, double* work, lapack_int* ifaill,
                    lapack_int* ifailr, lapack_int* info);
-void LAPACK_chsein(char* job, char* eigsrc, char* initv, const lapack_logical* select, lapack_int* n,
+void LAPACK_chsein(char* job, char* eigsource, char* initv, const lapack_logical* select, lapack_int* n,
                    const lapack_complex_float* h, lapack_int* ldh, lapack_complex_float* w, lapack_complex_float* vl,
                    lapack_int* ldvl, lapack_complex_float* vr, lapack_int* ldvr, lapack_int* mm, lapack_int* m,
                    lapack_complex_float* work, float* rwork, lapack_int* ifaill, lapack_int* ifailr, lapack_int* info);
-void LAPACK_zhsein(char* job, char* eigsrc, char* initv, const lapack_logical* select, lapack_int* n,
+void LAPACK_zhsein(char* job, char* eigsource, char* initv, const lapack_logical* select, lapack_int* n,
                    const lapack_complex_double* h, lapack_int* ldh, lapack_complex_double* w, lapack_complex_double* vl,
                    lapack_int* ldvl, lapack_complex_double* vr, lapack_int* ldvr, lapack_int* mm, lapack_int* m,
                    lapack_complex_double* work, double* rwork, lapack_int* ifaill, lapack_int* ifailr,

@@ -353,6 +353,7 @@ public:
     // Initialization
 
     void set_data_constant(const type&);
+    void set_data_ascending();
 
     // Descriptives
 

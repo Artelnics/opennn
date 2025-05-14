@@ -69,19 +69,6 @@ void Flatten::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
             static_cast<FlattenLayerForwardPropagation*>(layer_forward_propagation.get());
 
     flatten_layer_forward_propagation->outputs = TensorMap<Tensor<type, 2>>(input_pairs[0].first, batch_size, outputs_number);
-
-    /*
-    const size_t cpu_output_size = flatten_layer_forward_propagation->outputs.size();
-    vector<float> host_cpu_combinations(cpu_output_size);
-    memcpy(host_cpu_combinations.data(), flatten_layer_forward_propagation->outputs.data(), cpu_output_size * sizeof(float));
-    cout << "\n--- CPU Flatten forward (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_cpu_combinations.size(); ++i)
-        cout << fixed << setprecision(6) << host_cpu_combinations[i] << ", ";
-    cout << "]" << endl;
-
-    system("pause");
-    */
 }
 
 
@@ -227,6 +214,9 @@ void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     // Inputs
 
     const Index batch_samples_number = input_pairs_device[0].second[0];
+    const Index height = input_pairs_device[0].second[1];
+    const Index width = input_pairs_device[0].second[2];
+    const Index channels = input_pairs_device[0].second[3];
 
     const Index outputs_number = get_outputs_number();
     
@@ -237,20 +227,12 @@ void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     FlattenLayerForwardPropagationCuda* flatten_layer_forward_propagation_cuda =
         static_cast<FlattenLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
 
+    type* reordered_inputs = flatten_layer_forward_propagation_cuda->reordered_inputs;
     type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
 
-    reorganize_inputs_cuda(inputs_device, outputs_device, batch_samples_number, outputs_number);
-    /*
-    vector<float> host_outputs_gpu(outputs_number * batch_samples_number);
-    cudaMemcpy(host_outputs_gpu.data(), outputs_device, outputs_number * batch_samples_number * sizeof(float), cudaMemcpyDeviceToHost);
-    cout << "\n--- GPU flatten outputs (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_outputs_gpu.size(); ++i)
-        cout << fixed << setprecision(6) << host_outputs_gpu[i] << ", ";
-    cout << "]" << endl;
+    invert_reorder_inputs_cuda(inputs_device, reordered_inputs, batch_samples_number, channels, height, width);
 
-    system("pause");
-    */
+    reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_samples_number, outputs_number);  
 }
 
 
@@ -295,11 +277,17 @@ void FlattenLayerForwardPropagationCuda::set(const Index& new_batch_samples_numb
 
     const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
-    const Index neurons_number = flatten_layer->get_outputs_number();
+    const Index inputs_number = flatten_layer->get_inputs_number();
+    const Index outputs_number = flatten_layer->get_outputs_number();
+
+    // Reordered inputs
+
+    if (cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
+        cout << "outputs allocation error" << endl;
 
     // Outputs
 
-    if (cudaMalloc(&outputs, batch_size * neurons_number * sizeof(float)) != cudaSuccess)
+    if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
 }
 

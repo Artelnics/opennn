@@ -67,9 +67,9 @@ struct PacketConverter<TensorEvaluator, SrcPacket, TgtPacket, 2, 1> {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TgtPacket packet(Index index) const {
     const int SrcPacketSize = internal::unpacket_traits<SrcPacket>::size;
 
-    SrcPacket src1 = m_impl.template packet<LoadMode>(index);
-    SrcPacket src2 = m_impl.template packet<LoadMode>(index + SrcPacketSize);
-    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(src1, src2);
+    SrcPacket source1 = m_impl.template packet<LoadMode>(index);
+    SrcPacket source2 = m_impl.template packet<LoadMode>(index + SrcPacketSize);
+    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(source1, source2);
     return result;
   }
 
@@ -85,11 +85,11 @@ struct PacketConverter<TensorEvaluator, SrcPacket, TgtPacket, 4, 1> {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TgtPacket packet(Index index) const {
     const int SrcPacketSize = internal::unpacket_traits<SrcPacket>::size;
 
-    SrcPacket src1 = m_impl.template packet<LoadMode>(index);
-    SrcPacket src2 = m_impl.template packet<LoadMode>(index + SrcPacketSize);
-    SrcPacket src3 = m_impl.template packet<LoadMode>(index + 2 * SrcPacketSize);
-    SrcPacket src4 = m_impl.template packet<LoadMode>(index + 3 * SrcPacketSize);
-    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(src1, src2, src3, src4);
+    SrcPacket source1 = m_impl.template packet<LoadMode>(index);
+    SrcPacket source2 = m_impl.template packet<LoadMode>(index + SrcPacketSize);
+    SrcPacket source3 = m_impl.template packet<LoadMode>(index + 2 * SrcPacketSize);
+    SrcPacket source4 = m_impl.template packet<LoadMode>(index + 3 * SrcPacketSize);
+    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(source1, source2, source3, source4);
     return result;
   }
 
@@ -105,15 +105,15 @@ struct PacketConverter<TensorEvaluator, SrcPacket, TgtPacket, 8, 1> {
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TgtPacket packet(Index index) const {
     const int SrcPacketSize = internal::unpacket_traits<SrcPacket>::size;
 
-    SrcPacket src1 = m_impl.template packet<LoadMode>(index);
-    SrcPacket src2 = m_impl.template packet<LoadMode>(index + 1 * SrcPacketSize);
-    SrcPacket src3 = m_impl.template packet<LoadMode>(index + 2 * SrcPacketSize);
-    SrcPacket src4 = m_impl.template packet<LoadMode>(index + 3 * SrcPacketSize);
-    SrcPacket src5 = m_impl.template packet<LoadMode>(index + 4 * SrcPacketSize);
-    SrcPacket src6 = m_impl.template packet<LoadMode>(index + 5 * SrcPacketSize);
-    SrcPacket src7 = m_impl.template packet<LoadMode>(index + 6 * SrcPacketSize);
-    SrcPacket src8 = m_impl.template packet<LoadMode>(index + 7 * SrcPacketSize);
-    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(src1, src2, src3, src4, src5, src6, src7, src8);
+    SrcPacket source1 = m_impl.template packet<LoadMode>(index);
+    SrcPacket source2 = m_impl.template packet<LoadMode>(index + 1 * SrcPacketSize);
+    SrcPacket source3 = m_impl.template packet<LoadMode>(index + 2 * SrcPacketSize);
+    SrcPacket source4 = m_impl.template packet<LoadMode>(index + 3 * SrcPacketSize);
+    SrcPacket source5 = m_impl.template packet<LoadMode>(index + 4 * SrcPacketSize);
+    SrcPacket source6 = m_impl.template packet<LoadMode>(index + 5 * SrcPacketSize);
+    SrcPacket source7 = m_impl.template packet<LoadMode>(index + 6 * SrcPacketSize);
+    SrcPacket source8 = m_impl.template packet<LoadMode>(index + 7 * SrcPacketSize);
+    TgtPacket result = internal::pcast<SrcPacket, TgtPacket>(source1, source2, source3, source4, source5, source6, source7, source8);
     return result;
   }
 

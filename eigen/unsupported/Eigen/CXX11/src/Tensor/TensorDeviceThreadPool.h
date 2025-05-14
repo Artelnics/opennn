@@ -79,9 +79,9 @@ struct ThreadPoolDevice {
     return data;
   }
 
-  EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpy(void* dst, const void* source, size_t n) const {
 #ifdef __ANDROID__
-    ::memcpy(dst, src, n);
+    ::memcpy(dst, source, n);
 #else
     // TODO(rmlarsen): Align blocks on cache lines.
     // We have observed that going beyond 4 threads usually just wastes
@@ -90,26 +90,26 @@ struct ThreadPoolDevice {
     const size_t kMinBlockSize = 32768;
     const size_t num_threads = CostModel::numThreads(n, TensorOpCost(1.0, 1.0, 0), 4);
     if (n <= kMinBlockSize || num_threads < 2) {
-      ::memcpy(dst, src, n);
+      ::memcpy(dst, source, n);
     } else {
-      const char* src_ptr = static_cast<const char*>(src);
+      const char* source_ptr = static_cast<const char*>(source);
       char* dst_ptr = static_cast<char*>(dst);
       const size_t blocksize = (n + (num_threads - 1)) / num_threads;
       Barrier barrier(static_cast<int>(num_threads - 1));
       // Launch the last 3 blocks on worker threads.
       for (size_t i = 1; i < num_threads; ++i) {
-        enqueue_with_barrier(&barrier, [n, i, src_ptr, dst_ptr, blocksize] {
-          ::memcpy(dst_ptr + i * blocksize, src_ptr + i * blocksize, numext::mini(blocksize, n - (i * blocksize)));
+        enqueue_with_barrier(&barrier, [n, i, source_ptr, dst_ptr, blocksize] {
+          ::memcpy(dst_ptr + i * blocksize, source_ptr + i * blocksize, numext::mini(blocksize, n - (i * blocksize)));
         });
       }
       // Launch the first block on the main thread.
-      ::memcpy(dst_ptr, src_ptr, blocksize);
+      ::memcpy(dst_ptr, source_ptr, blocksize);
       barrier.Wait();
     }
 #endif
   }
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const { memcpy(dst, src, n); }
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const { memcpy(dst, src, n); }
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* source, size_t n) const { memcpy(dst, source, n); }
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* source, size_t n) const { memcpy(dst, source, n); }
 
   EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const { ::memset(buffer, c, n); }
 

@@ -1135,27 +1135,27 @@ EIGEN_STRONG_INLINE void pstoreu<double>(double* to, const Packet8d& from, uint8
 }
 
 template <typename Scalar, typename Packet>
-EIGEN_DEVICE_FUNC inline Packet pgather(const Packet& src, const Scalar* from, Index stride,
+EIGEN_DEVICE_FUNC inline Packet pgather(const Packet& source, const Scalar* from, Index stride,
                                         typename unpacket_traits<Packet>::mask_t umask);
 template <>
-EIGEN_DEVICE_FUNC inline Packet16f pgather<float, Packet16f>(const Packet16f& src, const float* from, Index stride,
+EIGEN_DEVICE_FUNC inline Packet16f pgather<float, Packet16f>(const Packet16f& source, const float* from, Index stride,
                                                              uint16_t umask) {
   Packet16i stride_vector = _mm512_set1_epi32(convert_index<int>(stride));
   Packet16i stride_multiplier = _mm512_set_epi32(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
   Packet16i indices = _mm512_mullo_epi32(stride_vector, stride_multiplier);
   __mmask16 mask = static_cast<__mmask16>(umask);
 
-  return _mm512_mask_i32gather_ps(src, mask, indices, from, 4);
+  return _mm512_mask_i32gather_ps(source, mask, indices, from, 4);
 }
 template <>
-EIGEN_DEVICE_FUNC inline Packet8d pgather<double, Packet8d>(const Packet8d& src, const double* from, Index stride,
+EIGEN_DEVICE_FUNC inline Packet8d pgather<double, Packet8d>(const Packet8d& source, const double* from, Index stride,
                                                             uint8_t umask) {
   Packet8i stride_vector = _mm256_set1_epi32(convert_index<int>(stride));
   Packet8i stride_multiplier = _mm256_set_epi32(7, 6, 5, 4, 3, 2, 1, 0);
   Packet8i indices = _mm256_mullo_epi32(stride_vector, stride_multiplier);
   __mmask8 mask = static_cast<__mmask8>(umask);
 
-  return _mm512_mask_i32gather_pd(src, mask, indices, from, 8);
+  return _mm512_mask_i32gather_pd(source, mask, indices, from, 8);
 }
 
 template <>
@@ -2947,7 +2947,7 @@ EIGEN_STRONG_INLINE Packet16bf preverse(const Packet16bf& a) {
   Packet16bf res;
   // Swap hi and lo first because shuffle is in 128-bit lanes.
   res = _mm256_permute2x128_si256(a, a, 1);
-  // Shuffle 8-bit values in src within 2*128-bit lanes.
+  // Shuffle 8-bit values in source within 2*128-bit lanes.
   return _mm256_shuffle_epi8(res, m);
 }
 
