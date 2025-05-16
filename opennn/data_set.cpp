@@ -2428,7 +2428,6 @@ namespace opennn
 
         for (Index i = 0; i < input_raw_variables_number; i++)
         {
-            cout << "correlacion: " << i << endl;
             const Index input_raw_variable_index = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_raw_variable_data
@@ -2580,7 +2579,7 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-            cout << "Calculating " << raw_variables[current_input_index_i].name << " correlations. " << endl;
+            cout << "adri 71 - Calculating " << raw_variables[current_input_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -2589,6 +2588,7 @@ namespace opennn
 
             for (Index j = i + 1; j < input_raw_variables_number; j++)
             {
+                cout << "adri71 - " << j << endl;
                 const Index current_input_index_j = input_raw_variable_indices[j];
 
                 const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
@@ -2618,8 +2618,6 @@ namespace opennn
             const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
-
-            cout << "Calculating " << raw_variables[input_raw_variable_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -3137,7 +3135,7 @@ namespace opennn
 
     void DataSet::print_data() const
     {
-        if (display) cout << data << endl;
+         cout << data << endl;
     }
 
 

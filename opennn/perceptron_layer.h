@@ -176,6 +176,7 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
+
 };
 
 
