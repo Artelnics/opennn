@@ -322,13 +322,13 @@ template <typename DstXprType, typename ArgType, typename Scalar>
 struct Assignment<DstXprType, Homogeneous<ArgType, Vertical>, internal::assign_op<Scalar, typename ArgType::Scalar>,
                   Dense2Dense> {
   typedef Homogeneous<ArgType, Vertical> SrcXprType;
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src,
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source,
                                     const internal::assign_op<Scalar, typename ArgType::Scalar>&) {
-    Index dstRows = src.rows();
-    Index dstCols = src.cols();
+    Index dstRows = source.rows();
+    Index dstCols = source.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    dst.template topRows<ArgType::RowsAtCompileTime>(src.nestedExpression().rows()) = src.nestedExpression();
+    dst.template topRows<ArgType::RowsAtCompileTime>(source.nestedExpression().rows()) = source.nestedExpression();
     dst.row(dst.rows() - 1).setOnes();
   }
 };
@@ -338,13 +338,13 @@ template <typename DstXprType, typename ArgType, typename Scalar>
 struct Assignment<DstXprType, Homogeneous<ArgType, Horizontal>, internal::assign_op<Scalar, typename ArgType::Scalar>,
                   Dense2Dense> {
   typedef Homogeneous<ArgType, Horizontal> SrcXprType;
-  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& src,
+  EIGEN_DEVICE_FUNC static void run(DstXprType& dst, const SrcXprType& source,
                                     const internal::assign_op<Scalar, typename ArgType::Scalar>&) {
-    Index dstRows = src.rows();
-    Index dstCols = src.cols();
+    Index dstRows = source.rows();
+    Index dstCols = source.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
-    dst.template leftCols<ArgType::ColsAtCompileTime>(src.nestedExpression().cols()) = src.nestedExpression();
+    dst.template leftCols<ArgType::ColsAtCompileTime>(source.nestedExpression().cols()) = source.nestedExpression();
     dst.col(dst.cols() - 1).setOnes();
   }
 };

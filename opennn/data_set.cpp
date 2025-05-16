@@ -2836,8 +2836,30 @@ namespace opennn
 
     void DataSet::set_data_constant(const type& new_value)
     {
-        data.setConstant(new_value);
-        data.dimensions();
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+                data(i, index) = new_value;
+    }
+
+
+    void DataSet::set_data_ascending()
+    {
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        type new_value = 1;
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+            {
+                data(i, index) = new_value;
+                new_value++;
+            }
     }
 
 

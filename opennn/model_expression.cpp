@@ -334,8 +334,8 @@ string ModelExpression::write_subheader_api(){
         "<meta charset = \"utf-8\">\n"
         "<meta name = \"viewport\" content = \"width=device-width, initial-scale=1\">\n"
         "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">\n"
-        "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>\n"
-        "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>\n"
+        "<script source = \"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>\n"
+        "<script source = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>\n"
         "</head>\n"
         "<style>\n"
         ".btn{\n"
@@ -1420,7 +1420,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
            << "}\n" << endl
            << "window.onresize = showDiv;\n" << endl
            << "</script>\n" << endl
-           << "<!--script src=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << endl
+           << "<!--script source=\"https://www.neuraldesigner.com/app/htmlparts/footer.js\"></script-->\n" << endl
            << "</body>\n" << endl
            << "</html>" << endl;
 

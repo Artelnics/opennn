@@ -124,13 +124,13 @@ template <typename DstXprType, typename Lhs, typename Rhs, int Options, typename
 struct Assignment<DstXprType, Product<Lhs, Rhs, Options>, internal::assign_op<Scalar, Scalar>, Dense2Dense,
                   std::enable_if_t<(Options == DefaultProduct || Options == AliasFreeProduct)>> {
   typedef Product<Lhs, Rhs, Options> SrcXprType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
                                                         const internal::assign_op<Scalar, Scalar>&) {
-    Index dstRows = src.rows();
-    Index dstCols = src.cols();
+    Index dstRows = source.rows();
+    Index dstCols = source.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
     // FIXME shall we handle nested_eval here?
-    generic_product_impl<Lhs, Rhs>::evalTo(dst, src.lhs(), src.rhs());
+    generic_product_impl<Lhs, Rhs>::evalTo(dst, source.lhs(), source.rhs());
   }
 };
 
@@ -139,11 +139,11 @@ template <typename DstXprType, typename Lhs, typename Rhs, int Options, typename
 struct Assignment<DstXprType, Product<Lhs, Rhs, Options>, internal::add_assign_op<Scalar, Scalar>, Dense2Dense,
                   std::enable_if_t<(Options == DefaultProduct || Options == AliasFreeProduct)>> {
   typedef Product<Lhs, Rhs, Options> SrcXprType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
                                                         const internal::add_assign_op<Scalar, Scalar>&) {
-    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
     // FIXME shall we handle nested_eval here?
-    generic_product_impl<Lhs, Rhs>::addTo(dst, src.lhs(), src.rhs());
+    generic_product_impl<Lhs, Rhs>::addTo(dst, source.lhs(), source.rhs());
   }
 };
 
@@ -152,11 +152,11 @@ template <typename DstXprType, typename Lhs, typename Rhs, int Options, typename
 struct Assignment<DstXprType, Product<Lhs, Rhs, Options>, internal::sub_assign_op<Scalar, Scalar>, Dense2Dense,
                   std::enable_if_t<(Options == DefaultProduct || Options == AliasFreeProduct)>> {
   typedef Product<Lhs, Rhs, Options> SrcXprType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
                                                         const internal::sub_assign_op<Scalar, Scalar>&) {
-    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    eigen_assert(dst.rows() == source.rows() && dst.cols() == source.cols());
     // FIXME shall we handle nested_eval here?
-    generic_product_impl<Lhs, Rhs>::subTo(dst, src.lhs(), src.rhs());
+    generic_product_impl<Lhs, Rhs>::subTo(dst, source.lhs(), source.rhs());
   }
 };
 
@@ -174,9 +174,9 @@ struct Assignment<DstXprType,
                         const CwiseNullaryOp<internal::scalar_constant_op<ScalarBis>, Plain>,
                         const Product<Lhs, Rhs, DefaultProduct>>
       SrcXprType;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
                                                         const AssignFunc& func) {
-    call_assignment_no_alias(dst, (src.lhs().functor().m_other * src.rhs().lhs()) * src.rhs().rhs(), func);
+    call_assignment_no_alias(dst, (source.lhs().functor().m_other * source.rhs().lhs()) * source.rhs().rhs(), func);
   }
 };
 
@@ -205,10 +205,10 @@ struct evaluator_assume_aliasing<
 template <typename DstXprType, typename OtherXpr, typename ProductType, typename Func1, typename Func2>
 struct assignment_from_xpr_op_product {
   template <typename SrcXprType, typename InitialFunc>
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source,
                                                         const InitialFunc& /*func*/) {
-    call_assignment_no_alias(dst, src.lhs(), Func1());
-    call_assignment_no_alias(dst, src.rhs(), Func2());
+    call_assignment_no_alias(dst, source.lhs(), Func1());
+    call_assignment_no_alias(dst, source.rhs(), Func2());
   }
 };
 
@@ -289,21 +289,21 @@ struct generic_product_impl<Lhs, Rhs, DenseShape, DenseShape, OuterProduct> {
   // TODO it would be nice to be able to exploit our *_assign_op functors for that purpose
   struct set {
     template <typename Dst, typename Src>
-    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& src) const {
-      dst.const_cast_derived() = src;
+    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& source) const {
+      dst.const_cast_derived() = source;
     }
   };
   struct add {
     /** Add to dst. */
     template <typename Dst, typename Src>
-    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& src) const {
-      dst.const_cast_derived() += src;
+    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& source) const {
+      dst.const_cast_derived() += source;
     }
   };
   struct sub {
     template <typename Dst, typename Src>
-    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& src) const {
-      dst.const_cast_derived() -= src;
+    EIGEN_DEVICE_FUNC void operator()(const Dst& dst, const Src& source) const {
+      dst.const_cast_derived() -= source;
     }
   };
   /** Scaled add. */
@@ -313,8 +313,8 @@ struct generic_product_impl<Lhs, Rhs, DenseShape, DenseShape, OuterProduct> {
     explicit adds(const Scalar& s) : m_scale(s) {}
     /** Scaled add to dst. */
     template <typename Dst, typename Src>
-    void EIGEN_DEVICE_FUNC operator()(const Dst& dst, const Src& src) const {
-      dst.const_cast_derived() += m_scale * src;
+    void EIGEN_DEVICE_FUNC operator()(const Dst& dst, const Src& source) const {
+      dst.const_cast_derived() += m_scale * source;
     }
   };
 

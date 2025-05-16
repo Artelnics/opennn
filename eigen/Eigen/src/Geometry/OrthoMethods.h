@@ -178,15 +178,15 @@ struct unitOrthogonal_selector {
   typedef typename traits<Derived>::Scalar Scalar;
   typedef typename NumTraits<Scalar>::Real RealScalar;
   typedef Matrix<Scalar, 2, 1> Vector2;
-  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& src) {
-    VectorType perp = VectorType::Zero(src.size());
+  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& source) {
+    VectorType perp = VectorType::Zero(source.size());
     Index maxi = 0;
     Index sndi = 0;
-    src.cwiseAbs().maxCoeff(&maxi);
+    source.cwiseAbs().maxCoeff(&maxi);
     if (maxi == 0) sndi = 1;
-    RealScalar invnm = RealScalar(1) / (Vector2() << src.coeff(sndi), src.coeff(maxi)).finished().norm();
-    perp.coeffRef(maxi) = -numext::conj(src.coeff(sndi)) * invnm;
-    perp.coeffRef(sndi) = numext::conj(src.coeff(maxi)) * invnm;
+    RealScalar invnm = RealScalar(1) / (Vector2() << source.coeff(sndi), source.coeff(maxi)).finished().norm();
+    perp.coeffRef(maxi) = -numext::conj(source.coeff(sndi)) * invnm;
+    perp.coeffRef(sndi) = numext::conj(source.coeff(maxi)) * invnm;
 
     return perp;
   }
@@ -197,7 +197,7 @@ struct unitOrthogonal_selector<Derived, 3> {
   typedef typename plain_matrix_type<Derived>::type VectorType;
   typedef typename traits<Derived>::Scalar Scalar;
   typedef typename NumTraits<Scalar>::Real RealScalar;
-  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& src) {
+  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& source) {
     VectorType perp;
     /* Let us compute the crossed product of *this with a vector
      * that is not too close to being colinear to *this.
@@ -206,10 +206,10 @@ struct unitOrthogonal_selector<Derived, 3> {
     /* unless the x and y coords are both close to zero, we can
      * simply take ( -y, x, 0 ) and normalize it.
      */
-    if ((!isMuchSmallerThan(src.x(), src.z())) || (!isMuchSmallerThan(src.y(), src.z()))) {
-      RealScalar invnm = RealScalar(1) / src.template head<2>().norm();
-      perp.coeffRef(0) = -numext::conj(src.y()) * invnm;
-      perp.coeffRef(1) = numext::conj(src.x()) * invnm;
+    if ((!isMuchSmallerThan(source.x(), source.z())) || (!isMuchSmallerThan(source.y(), source.z()))) {
+      RealScalar invnm = RealScalar(1) / source.template head<2>().norm();
+      perp.coeffRef(0) = -numext::conj(source.y()) * invnm;
+      perp.coeffRef(1) = numext::conj(source.x()) * invnm;
       perp.coeffRef(2) = 0;
     }
     /* if both x and y are close to zero, then the vector is close
@@ -217,10 +217,10 @@ struct unitOrthogonal_selector<Derived, 3> {
      * So we take the crossed product with (1,0,0) and normalize it.
      */
     else {
-      RealScalar invnm = RealScalar(1) / src.template tail<2>().norm();
+      RealScalar invnm = RealScalar(1) / source.template tail<2>().norm();
       perp.coeffRef(0) = 0;
-      perp.coeffRef(1) = -numext::conj(src.z()) * invnm;
-      perp.coeffRef(2) = numext::conj(src.y()) * invnm;
+      perp.coeffRef(1) = -numext::conj(source.z()) * invnm;
+      perp.coeffRef(2) = numext::conj(source.y()) * invnm;
     }
 
     return perp;
@@ -230,8 +230,8 @@ struct unitOrthogonal_selector<Derived, 3> {
 template <typename Derived>
 struct unitOrthogonal_selector<Derived, 2> {
   typedef typename plain_matrix_type<Derived>::type VectorType;
-  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& src) {
-    return VectorType(-numext::conj(src.y()), numext::conj(src.x())).normalized();
+  EIGEN_DEVICE_FUNC static inline VectorType run(const Derived& source) {
+    return VectorType(-numext::conj(source.y()), numext::conj(source.x())).normalized();
   }
 };
 

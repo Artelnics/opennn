@@ -126,9 +126,9 @@ class QueueInterface {
   /// The destination pointer could be deleted before the copy happened which is
   /// why a callback function is needed. By default if none is provided, the
   /// function is blocking.
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void *dst, const void *src, size_t n,
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void *dst, const void *source, size_t n,
                                               std::function<void()> callback) const {
-    auto e = m_queue.memcpy(dst, src, n);
+    auto e = m_queue.memcpy(dst, source, n);
     synchronize_and_callback(e, callback);
   }
 
@@ -136,24 +136,24 @@ class QueueInterface {
   /// The source pointer could be deleted before the copy happened which is
   /// why a callback function is needed. By default if none is provided, the
   /// function is blocking.
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void *dst, const void *src, size_t n,
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void *dst, const void *source, size_t n,
                                               std::function<void()> callback) const {
     if (n == 0) {
       if (callback) callback();
       return;
     }
-    auto e = m_queue.memcpy(dst, src, n);
+    auto e = m_queue.memcpy(dst, source, n);
     synchronize_and_callback(e, callback);
   }
 
   /// The memcpy function.
   /// No callback is required here as both arguments are on the device
   /// and SYCL can handle the dependency.
-  EIGEN_STRONG_INLINE void memcpy(void *dst, const void *src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpy(void *dst, const void *source, size_t n) const {
     if (n == 0) {
       return;
     }
-    m_queue.memcpy(dst, src, n).wait();
+    m_queue.memcpy(dst, source, n).wait();
   }
 
   /// the memset function.
@@ -485,20 +485,20 @@ struct SyclDevice : public SyclDeviceBase {
 
   /// memcpyHostToDevice
   template <typename Index>
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(Index *dst, const Index *src, size_t n,
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(Index *dst, const Index *source, size_t n,
                                               std::function<void()> callback = {}) const {
-    queue_stream()->memcpyHostToDevice(dst, src, n, callback);
+    queue_stream()->memcpyHostToDevice(dst, source, n, callback);
   }
   /// memcpyDeviceToHost
   template <typename Index>
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void *dst, const Index *src, size_t n,
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void *dst, const Index *source, size_t n,
                                               std::function<void()> callback = {}) const {
-    queue_stream()->memcpyDeviceToHost(dst, src, n, callback);
+    queue_stream()->memcpyDeviceToHost(dst, source, n, callback);
   }
   /// the memcpy function
   template <typename Index>
-  EIGEN_STRONG_INLINE void memcpy(void *dst, const Index *src, size_t n) const {
-    queue_stream()->memcpy(dst, src, n);
+  EIGEN_STRONG_INLINE void memcpy(void *dst, const Index *source, size_t n) const {
+    queue_stream()->memcpy(dst, source, n);
   }
   /// the memset function
   EIGEN_STRONG_INLINE void memset(void *data, int c, size_t n) const { queue_stream()->memset(data, c, n); }

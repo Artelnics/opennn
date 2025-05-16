@@ -534,9 +534,9 @@ struct Assignment<
     Dense2Dense> {
   typedef PartialPivLU<MatrixType, PermutationIndex> LuType;
   typedef Inverse<LuType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& src,
+  static void run(DstXprType& dst, const SrcXprType& source,
                   const internal::assign_op<typename DstXprType::Scalar, typename LuType::Scalar>&) {
-    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
+    dst = source.nestedExpression().solve(MatrixType::Identity(source.rows(), source.cols()));
   }
 };
 }  // end namespace internal

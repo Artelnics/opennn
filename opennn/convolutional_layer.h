@@ -286,6 +286,9 @@ struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagation
 
     void* workspace = nullptr;
     size_t workspace_bytes = 0;
+
+    bool is_first_layer = false;
+    type* reordered_inputs_device = nullptr;
 };
 
 

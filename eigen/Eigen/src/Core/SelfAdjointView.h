@@ -269,7 +269,7 @@ class triangular_dense_assignment_kernel<UpLo, SelfAdjoint, SetOpposite, DstEval
   typedef typename Base::SrcXprType SrcXprType;
   using Base::m_dst;
   using Base::m_functor;
-  using Base::m_src;
+  using Base::m_source;
 
  public:
   typedef typename Base::DstEvaluatorType DstEvaluatorType;
@@ -277,13 +277,13 @@ class triangular_dense_assignment_kernel<UpLo, SelfAdjoint, SetOpposite, DstEval
   typedef typename Base::Scalar Scalar;
   typedef typename Base::AssignmentTraits AssignmentTraits;
 
-  EIGEN_DEVICE_FUNC triangular_dense_assignment_kernel(DstEvaluatorType& dst, const SrcEvaluatorType& src,
+  EIGEN_DEVICE_FUNC triangular_dense_assignment_kernel(DstEvaluatorType& dst, const SrcEvaluatorType& source,
                                                        const Functor& func, DstXprType& dstExpr)
-      : Base(dst, src, func, dstExpr) {}
+      : Base(dst, source, func, dstExpr) {}
 
   EIGEN_DEVICE_FUNC void assignCoeff(Index row, Index col) {
     eigen_internal_assert(row != col);
-    Scalar tmp = m_src.coeff(row, col);
+    Scalar tmp = m_source.coeff(row, col);
     m_functor.assignCoeff(m_dst.coeffRef(row, col), tmp);
     m_functor.assignCoeff(m_dst.coeffRef(col, row), numext::conj(tmp));
   }

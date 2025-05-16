@@ -119,6 +119,8 @@ struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
     void set(const Index & = 0, Layer* = nullptr);
 
     void print() const override;
+
+    type* reordered_inputs = nullptr;
 };
 
 
