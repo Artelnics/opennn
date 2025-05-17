@@ -13,8 +13,8 @@
 namespace opennn
 {
 
-Recurrent::Recurrent(const dimensions& new_input_dimensions, 
-                               const dimensions& new_output_dimensions) : Layer()
+Recurrent::Recurrent(const dimensions& new_input_dimensions,
+                     const dimensions& new_output_dimensions) : Layer()
 {
     set(new_input_dimensions, new_output_dimensions);
 }
@@ -86,6 +86,8 @@ string Recurrent::get_activation_function_string() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
+    batch_size=type(10);
+
     time_steps = get_timesteps();
 
     biases.resize(new_output_dimensions[0]);
@@ -193,33 +195,34 @@ void Recurrent::set_parameters_random()
 }
 
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
-                                            Tensor<type, 2>& combinations) const
+                                       Tensor<type, 2>& combinations) const
 {
     const Index samples_number = inputs.dimension(0);
-    Eigen::array<Eigen::IndexPair<Index>,1> axes{{{1,0}}};
+    array<IndexPair<Index>,1> axes{{{1,0}}};
 
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
     combinations = inputs.contract(input_weights, axes)
-                    + previous_hidden_states.contract(recurrent_weights, axes)
-                    + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
-                            .broadcast(Eigen::array<Index,2>{samples_number, 1});
+                   + previous_hidden_states.contract(recurrent_weights, axes)
+                   + biases.reshape(DSizes<Index,2>{1, biases.dimension(0)})
+                         .broadcast(array<Index,2>{samples_number, 1});
+
 }
 
 void Recurrent::calculate_activations(Tensor<type, 2>& activations,
-                                           Tensor<type, 2>& activation_derivatives) const
+                                      Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
-        case Activation::Linear: linear(activations, activation_derivatives); return;
-        case Activation::Logistic: logistic(activations, activation_derivatives); return;
-        case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-        case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-        case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-        case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
-        case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-        case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-        case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-        default: throw runtime_error("Unknown activation function");
+    case Activation::Linear: linear(activations, activation_derivatives); return;
+    case Activation::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
+    case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
+    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
+    case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
+    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
+    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
+    case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
+    default: throw runtime_error("Unknown activation function");
     }
 }
 
@@ -244,21 +247,26 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     Tensor<type, 3>& current_inputs = recurrent_forward->current_inputs;
 
+    array<IndexPair<Index>,1> axes_inp{{{1,0}}};
+
     for(Index t = 0; t < time_steps; t++)
     {
         current_inputs.chip(t, 1) = inputs.chip(t, 1);
 
         if (t == 0)
-            outputs = current_inputs.chip(t, 1).contract(input_weights, axes(1, 0));
+            outputs = current_inputs.chip(t, 1).contract(input_weights, axes_inp)
+                      + biases
+                            .reshape(DSizes<Index, 2>{1, biases.dimension(0)})
+                            .broadcast(array<Index, 2>({ batch_size, 1 }));
         else
         {
-            previous_hidden_states=hidden_states.chip(t,1);
+            previous_hidden_states = (t>0
+                                        ? hidden_states.chip(t-1,1)
+                                        : Tensor<type,2>(batch_size, output_size).setZero()
+                                      );
+
             calculate_combinations(current_inputs.chip(t, 1),outputs);
         }
-
-        outputs.device(*thread_pool_device) += biases
-                                                .reshape(Eigen::DSizes<Index, 2>{1, biases.dimension(0)})
-                                                   .broadcast(array<Index, 2>({ batch_size, 1 }));
 
         current_activations_derivatives = activation_derivatives.chip(t, 1);
 
@@ -268,6 +276,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         hidden_states.chip(t,1) = outputs;
     }
+
+    cout << "Forward terminado. Outputs: " << recurrent_forward->outputs(0) << endl;
 }
 
 
@@ -300,31 +310,39 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
     Tensor<type, 3>& activation_derivatives = recurrent_forward->activation_derivatives;
     Tensor<type, 3>& current_inputs = recurrent_forward->current_inputs;
 
-    Eigen::array<Eigen::IndexPair<int>,1> axes{{{1,0}}};
+    array<IndexPair<Index>,1> axes_hidden{{{1,0}}};
+    array<IndexPair<Index>,1> axes_batch{{{0,0}}};
+
+    current_deltas = deltas;
 
     for(Index t = time_steps - 1; t >= 0; --t)
     {
-        if(t == time_steps - 1)
-            current_deltas = deltas;
-        else
-            current_deltas = current_combinations_derivatives;
-
-        combination_deltas.device(*thread_pool_device) = current_deltas*activation_derivatives.chip(t,1);
+        combination_deltas.device(*thread_pool_device) =
+            current_deltas * activation_derivatives.chip(t,1);
 
         // Need
 
-        input_weights_derivatives += combination_deltas.contract(current_inputs.chip(t, 1), axes);
+        input_weights_derivatives += current_inputs.chip(t,1).contract(combination_deltas, axes_batch);
 
         if(t > 0)
         {
-            recurrent_weight_derivatives.device(*thread_pool_device) +=combination_deltas.contract(hidden_states.chip(t-1,1), axes);
+            recurrent_weight_derivatives.device(*thread_pool_device) +=
+                hidden_states.chip(t-1,1)
+                .contract(combination_deltas, axes_batch);
 
-            current_combinations_derivatives.device(*thread_pool_device) = combination_deltas.contract(recurrent_weights.shuffle(array<Index, 2>{1, 0}), axes);
+            current_combinations_derivatives.device(*thread_pool_device) =
+                combination_deltas.contract(recurrent_weights, axes_hidden);
+
+            current_deltas = current_combinations_derivatives;
         }
 
         bias_derivatives.device(*thread_pool_device) += combination_deltas.sum(array<Index, 1>({ 0 }));
 
-        input_derivatives.device(*thread_pool_device) = combination_deltas.contract(input_weights.shuffle(array<Index, 2>{1, 0}), axes);
+        input_derivatives.chip(t,1).device(*thread_pool_device) =
+            combination_deltas.contract(
+                input_weights.shuffle(array<Index,2>{{1,0}}),
+                axes_hidden
+                );
     }
 }
 
@@ -342,7 +360,7 @@ void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
 
 
 string Recurrent::get_expression(const vector<string>& input_names,
-                                        const vector<string>& output_names) const
+                                 const vector<string>& output_names) const
 {
     ostringstream buffer;
 
@@ -353,7 +371,7 @@ string Recurrent::get_expression(const vector<string>& input_names,
         buffer << output_names[j] << " = " << get_activation_function_string_expression() << "( " << biases(j) << " +";
 
         for(size_t i = 0; i < input_names.size() - 1; i++)
-           buffer << " (" << input_names[i] << "*" << weights_column(i) << ") +";
+            buffer << " (" << input_names[i] << "*" << weights_column(i) << ") +";
 
         buffer << " (" << input_names[input_names.size() - 1] << "*" << weights_column[input_names.size() - 1] << "));\n";
     }
@@ -366,11 +384,11 @@ string Recurrent::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
-        case Activation::HyperbolicTangent: return "tanh";
+    case Activation::HyperbolicTangent: return "tanh";
 
-        case Activation::Linear: return string();
+    case Activation::Linear: return string();
 
-        default: return get_activation_function_string();
+    default: return get_activation_function_string();
     }
 }
 
