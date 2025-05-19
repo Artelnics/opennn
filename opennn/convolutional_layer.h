@@ -281,13 +281,12 @@ struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagation
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
-    vector<cudnnConvolutionFwdAlgoPerf_t> perfResults;
-    int returnedAlgoCount = 0;
 
     void* workspace = nullptr;
     size_t workspace_bytes = 0;
 
     bool is_first_layer = false;
+
     type* reordered_inputs_device = nullptr;
 };
 

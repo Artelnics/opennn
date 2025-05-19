@@ -625,10 +625,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     // Loss Index
 
     loss_index->set_normalization_coefficient();
-    
+
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
     BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -638,9 +638,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     Index selection_failures = 0;
 
     // Optimization algorithm
-    
+
     ADAMOptimizationDataCuda optimization_data_cuda(this);
-    
+
     bool stop_training = false;
     bool is_training = true;
 

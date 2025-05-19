@@ -517,7 +517,7 @@ void Convolutional::set(const dimensions& new_input_dimensions,
     if (new_kernel_dimensions[2] != new_input_dimensions[2])
         throw runtime_error("kernel_channels must match input_channels dimension");
 
-    if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[0])
+    if (new_stride_dimensions[0] > new_input_dimensions[0] || new_stride_dimensions[1] > new_input_dimensions[1])
         throw runtime_error("Stride dimensions cannot be bigger than input dimensions");
     
     input_dimensions = new_input_dimensions;
@@ -1225,13 +1225,17 @@ void Convolutional::get_parameters_cuda(const Tensor<type, 1>& new_parameters, c
 
 void Convolutional::allocate_parameters_device()
 {
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
+    const Index C = get_input_channels();
+    const Index R = get_kernel_height();
+    const Index S = get_kernel_width();
+    const Index K = get_kernels_number();
 
-    if (cudaMalloc(&biases_device, outputs_number * sizeof(float)) != cudaSuccess)
+    if (cudaMalloc(&biases_device, K * sizeof(float)) != cudaSuccess)
         cout << "Biases allocation error" << endl;
 
-    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+    const size_t weights_size = static_cast<size_t>(R) * S * C * K;
+
+    if (cudaMalloc(&weights_device, weights_size * sizeof(float)) != cudaSuccess)
         cout << "Synaptic weights allocation error" << endl;
 }
 
@@ -1266,11 +1270,11 @@ void Convolutional::copy_parameters_device()
     const Index kernel_height = weights.dimension(0);
     const Index kernel_width = weights.dimension(1);
     const Index channels = weights.dimension(2);
-    const Index kernerls_number = weights.dimension(3);
+    const Index kernels_number = weights.dimension(3);
 
-    Tensor<type, 4> weights_for_cudnn_layout(kernel_width, kernel_height, channels, kernerls_number);
+    Tensor<type, 4> weights_for_cudnn_layout(kernel_width, kernel_height, channels, kernels_number);
 
-    for (Index kernel_index = 0; kernel_index < kernerls_number; ++kernel_index)
+    for (Index kernel_index = 0; kernel_index < kernels_number; ++kernel_index)
         for (Index channel_index = 0; channel_index < channels; ++channel_index)
             for (Index kernel_height_index = 0; kernel_height_index < kernel_height; ++kernel_height_index)
                 for (Index kernel_width_index = 0; kernel_width_index < kernel_width; ++kernel_width_index)
@@ -1295,14 +1299,14 @@ void Convolutional::copy_parameters_host()
     const Index kernel_height = weights.dimension(0);
     const Index kernel_width = weights.dimension(1);
     const Index channels = weights.dimension(2);
-    const Index kernerls_number = weights.dimension(3);
+    const Index kernels_number = weights.dimension(3);
 
-    Tensor<type, 4> weights_cudnn_layout(kernel_width, kernel_height, channels, kernerls_number);
+    Tensor<type, 4> weights_cudnn_layout(kernel_width, kernel_height, channels, kernels_number);
 
     if (cudaMemcpy(weights_cudnn_layout.data(), weights_device, weights_cudnn_layout.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Weights host copy error" << endl;
 
-    for (Index k = 0; k < kernerls_number; ++k)
+    for (Index k = 0; k < kernels_number; ++k)
         for (Index c = 0; c < channels; ++c)
             for (Index h = 0; h < kernel_height; ++h)
                 for (Index w = 0; w < kernel_width; ++w)
@@ -1434,18 +1438,7 @@ void ConvolutionalLayerForwardPropagationCuda::set(const Index& new_batch_size, 
 
     // Workspace
 
-    perfResults.resize(CUDNN_CONVOLUTION_FWD_ALGO_COUNT);
-    cudnnFindConvolutionForwardAlgorithm(
-        convolutional_layer->get_cudnn_handle(),
-        inputs_tensor_descriptor, kernel_descriptor,
-        convolution_descriptor, outputs_tensor_descriptor,
-        CUDNN_CONVOLUTION_FWD_ALGO_COUNT,
-        &returnedAlgoCount, perfResults.data()
-    );
-
-    convolution_algorithm = (perfResults[0].status == CUDNN_STATUS_SUCCESS)
-        ? perfResults[0].algo
-        : CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+    convolution_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
 
     cudnnGetConvolutionForwardWorkspaceSize(
         convolutional_layer->get_cudnn_handle(),
