@@ -859,7 +859,6 @@ void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* ne
 
     const Index input_height = pooling_layer->get_input_height();
     const Index input_width = pooling_layer->get_input_width();
-
     const Index channels = pooling_layer->get_channels_number();
 
     // Inputs derivatives

@@ -225,7 +225,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = 0;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
@@ -625,10 +625,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     // Loss Index
 
     loss_index->set_normalization_coefficient();
-    
+
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
     BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -638,9 +638,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     Index selection_failures = 0;
 
     // Optimization algorithm
-    
+
     ADAMOptimizationDataCuda optimization_data_cuda(this);
-    
+
     bool stop_training = false;
     bool is_training = true;
 
@@ -670,6 +670,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
         for (Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch_cuda.fill(training_batches[iteration],
@@ -996,10 +997,11 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     // Aux ones
 
     if (cudaMalloc(&ones, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "aux ones allocation error" << endl;
+        cout << "aux ones device allocation error" << endl;
 
-    for (Index i = 0; i < parameters_number; i++)
-        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
+    vector<float> host_ones(parameters_number, 1.0f);
+    if (cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "aux ones cudaMemcpy error" << endl;
 }
 
 

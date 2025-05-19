@@ -271,6 +271,8 @@ FlattenLayerForwardPropagationCuda::FlattenLayerForwardPropagationCuda(const Ind
 
 void FlattenLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
+    if (new_batch_samples_number == 0) return;
+
     layer = new_layer;
 
     batch_size = new_batch_samples_number;
@@ -301,6 +303,13 @@ void FlattenLayerForwardPropagationCuda::print() const
 }
 
 
+void FlattenLayerForwardPropagationCuda::free()
+{
+    cudaFree(reordered_inputs);
+    cudaFree(outputs);
+}
+
+
 pair<type*, dimensions> FlattenLayerForwardPropagationCuda::get_outputs_pair_device() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
@@ -328,6 +337,8 @@ vector<pair<type*, dimensions>> FlattenLayerBackPropagationCuda::get_input_deriv
 
 void FlattenLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
+    if (new_batch_samples_number == 0) return;
+
     layer = new_layer;
 
     batch_size = new_batch_samples_number;
@@ -349,6 +360,12 @@ void FlattenLayerBackPropagationCuda::print() const
 
     cout << "Flatten Input derivatives:" << endl
         << matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]) << endl;
+}
+
+
+void FlattenLayerBackPropagationCuda::free()
+{
+    cudaFree(input_derivatives);
 }
 
 #endif

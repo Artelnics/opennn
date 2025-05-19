@@ -47,18 +47,17 @@ int main()
         */
         ImageDataSet data_set;
 
-        //data_set.set_data_path("C:/testbmp");
-        data_set.set_data_path("../examples/mnist/data");
-        //data_set.set_data_path("C:/catvsdog_bmp");
-        //data_set.set_data_path("C:/melanoma_dataset_bmp_small");
+        data_set.set_data_path("C:/melanoma_dataset_bmp");
 
         data_set.read_bmp();
+
+        data_set.split_samples_random(0.8, 0.0, 0.2);
 
         // Neural network
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 4 },
+            { 16,8,4 },
             data_set.get_dimensions(DataSet::VariableUse::Target));
 
         // Training strategy
@@ -68,7 +67,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(64);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
