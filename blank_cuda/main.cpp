@@ -51,7 +51,7 @@ int main()
 
         data_set.read_bmp();
 
-        data_set.split_samples_random(0.6, 0.0, 0.4);
+        data_set.split_samples_random(0.8, 0.0, 0.2);
 
         // Neural network
         
