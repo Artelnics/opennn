@@ -75,9 +75,9 @@ private:
 };
 
 
-struct UnscalingLayerForwardPropagation : LayerForwardPropagation
+struct UnscalingForwardPropagation : LayerForwardPropagation
 {
-    UnscalingLayerForwardPropagation(const Index& = 0, Layer* = 0);
+    UnscalingForwardPropagation(const Index& = 0, Layer* = 0);
     
     pair<type*, dimensions> get_outputs_pair() const override;
 

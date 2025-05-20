@@ -304,8 +304,8 @@ TEST(Transformer, ForwardPropagate)
 
     transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
-    ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
-        = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
+    Probabilistic3DForwardPropagation* probabilistic_layer_forward_propagation
+        = static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
         
     Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
         
@@ -373,8 +373,8 @@ TEST(Transformer, ForwardPropagate)
 
         transformer.forward_propagate(batch.get_input_pairs(), forward_propagation, is_training);
 
-        ProbabilisticLayer3DForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
+        Probabilistic3DForwardPropagation* probabilistic_layer_forward_propagation
+            = static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.layers[transformer.get_layers_number() - 1]);
 
         Tensor<type, 3> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 

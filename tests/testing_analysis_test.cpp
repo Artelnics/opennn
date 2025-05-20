@@ -15,7 +15,7 @@ TEST(TestingAnalysis, ErrorData)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { inputs_number }, {}, { targets_number });
     neural_network.set_parameters_constant(type(0));
 
-    opennn::TestingAnalysis testing_analysis(&neural_network, &data_set);
+    TestingAnalysis testing_analysis(&neural_network, &data_set);
 
     Tensor<type, 3> error_data = testing_analysis.calculate_error_data();
 
