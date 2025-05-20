@@ -1124,9 +1124,9 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
         {
             pair<type*, dimensions> scaled_inputs_tensor(scaled_inputs_data, {inputs_dimensions[0], inputs_dimensions[1]});
 
-            // const Tensor<Index, 0> size = inputs_dimensions.prod();
+            const Tensor<Index, 0> size = inputs_dimensions.prod();
 
-            // memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
+            memcpy(scaled_inputs_tensor.first, scaled_inputs_data, static_cast<size_t>(size(0)*sizeof(type)) );
 
             layers[0]->forward_propagate({scaled_inputs_tensor}, forward_propagation.layers[0], is_training);
 
@@ -1152,9 +1152,9 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 pair<type*, dimensions> inputs_tensor(last_layer_outputs.data(), {last_layer_outputs_dimensions[0], last_layer_outputs_dimensions[1]});
 
-                // const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
+                const Tensor<Index, 0> sizeT = last_layer_outputs_dimensions.prod();
 
-                // memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
+                memcpy(inputs_tensor.first, last_layer_outputs.data() , static_cast<size_t>(sizeT(0)*sizeof(type)) );
 
                 layers[i]->forward_propagate({inputs_tensor}, forward_propagation.layers[i], is_training);
 
@@ -1641,7 +1641,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
-    //const vector<string> output_names = get_output_names();
+    const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index batch_size = inputs.dimension(0);
