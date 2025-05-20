@@ -80,9 +80,9 @@ private:
 };
 
 
-struct BoundingLayerForwardPropagation : LayerForwardPropagation
+struct BoundingForwardPropagation : LayerForwardPropagation
 {
-    BoundingLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+    BoundingForwardPropagation(const Index& = 0, Layer* = nullptr);
         
     pair<type*, dimensions> get_outputs_pair() const override;
 

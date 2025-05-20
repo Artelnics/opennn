@@ -6,13 +6,13 @@ TEST(MultiHeadAttention, DefaultConstructor) {
     MultiHeadAttention multihead_attention_layer;
 
     EXPECT_EQ(multihead_attention_layer.get_heads_number(), 0);
-    EXPECT_EQ(multihead_attention_layer.get_input_size(), 0);
-    EXPECT_EQ(multihead_attention_layer.get_context_size(), 0);
-    EXPECT_EQ(multihead_attention_layer.get_depth(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_source_sequence_length(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_query_sequence_length(), 0);
+    EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), 0);
     EXPECT_EQ(multihead_attention_layer.get_hidden_depth(), 0);
 
     EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{0});
-    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({multihead_attention_layer.get_input_size(), multihead_attention_layer.get_depth()}));
+    EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({multihead_attention_layer.get_source_sequence_length(), multihead_attention_layer.get_embedding_dimension()}));
 }
 
 
@@ -27,9 +27,9 @@ TEST(MultiHeadAttention, GeneralConstructor)
     MultiHeadAttention multihead_attention_layer(input_size,context_size,depth,heads_number,use_causal_mask);
 
     EXPECT_EQ(multihead_attention_layer.get_heads_number(), heads_number);
-    EXPECT_EQ(multihead_attention_layer.get_input_size(), input_size);
-    EXPECT_EQ(multihead_attention_layer.get_context_size(), context_size);
-    EXPECT_EQ(multihead_attention_layer.get_depth(), depth);
+    EXPECT_EQ(multihead_attention_layer.get_source_sequence_length(), input_size);
+    EXPECT_EQ(multihead_attention_layer.get_query_sequence_length(), context_size);
+    EXPECT_EQ(multihead_attention_layer.get_embedding_dimension(), depth);
 
     EXPECT_EQ(multihead_attention_layer.get_input_dimensions(), dimensions{input_size});
     EXPECT_EQ(multihead_attention_layer.get_output_dimensions(), dimensions({input_size, depth}));

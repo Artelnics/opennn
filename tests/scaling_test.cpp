@@ -6,7 +6,7 @@
 
 using namespace opennn;
 
-TEST(ScalingTest, ScaleDataMeanStandardDeviation)
+TEST(Scaling2dTest, ScaleDataMeanStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -27,7 +27,7 @@ TEST(ScalingTest, ScaleDataMeanStandardDeviation)
     
 }
 
-TEST(ScalingTest, ScaleDataMinimumMaximum)
+TEST(Scaling2dTest, ScaleDataMinimumMaximum)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -52,7 +52,7 @@ TEST(ScalingTest, ScaleDataMinimumMaximum)
     EXPECT_NEAR(abs(matrix_descriptives[0].maximum), type(1), NUMERIC_LIMITS_MIN);
 }
 
-TEST(ScalingTest, ScaleDataNoScaling)
+TEST(Scaling2dTest, ScaleDataNoScaling2d)
 {   
     Index samples_number = 1 + rand() % 10;
 
@@ -74,7 +74,7 @@ TEST(ScalingTest, ScaleDataNoScaling)
 }
 
 
-TEST(ScalingTest, ScaleDataStandardDeviation)
+TEST(Scaling2dTest, ScaleDataStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -93,7 +93,7 @@ TEST(ScalingTest, ScaleDataStandardDeviation)
 }
 
 
-TEST(ScalingTest, ScaleDataLogarithmic)
+TEST(Scaling2dTest, ScaleDataLogarithmic)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -120,7 +120,7 @@ TEST(ScalingTest, ScaleDataLogarithmic)
 
 }
 
-TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
+TEST(Scaling2dTest, UnscaleDataMeanStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -147,7 +147,7 @@ TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 }
 
 
-TEST(ScalingTest, UnscaleDataMinimumMaximum)
+TEST(Scaling2dTest, UnscaleDataMinimumMaximum)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -176,7 +176,7 @@ TEST(ScalingTest, UnscaleDataMinimumMaximum)
 }
 
 
-TEST(ScalingTest, UnscaleDataNoScaling)
+TEST(Scaling2dTest, UnscaleDataNoScaling2d)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -201,7 +201,7 @@ TEST(ScalingTest, UnscaleDataNoScaling)
 }
 
 
-TEST(ScalingTest, UnscaleDataStandardDeviation)
+TEST(Scaling2dTest, UnscaleDataStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -225,7 +225,7 @@ TEST(ScalingTest, UnscaleDataStandardDeviation)
 
 }
 
-TEST(ScalingTest, UnscaleDataLogarithmic)
+TEST(Scaling2dTest, UnscaleDataLogarithmic)
 {
     Index samples_number = 1 + rand() % 10;
 

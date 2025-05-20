@@ -1,7 +1,7 @@
-#include "back_propagation.h"
-#include "forward_propagation.h"
 #include "pch.h"
 
+#include "../opennn/forward_propagation.h"
+#include "../opennn/back_propagation.h"
 #include "../opennn/weighted_squared_error.h"
 #include "gtest/gtest.h"
 

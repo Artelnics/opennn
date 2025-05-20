@@ -679,7 +679,6 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                 += sample_query_derivatives.contract(head_query_weights, axes(1,1));
         }
     }
-
 /*
     // @todo try this
 

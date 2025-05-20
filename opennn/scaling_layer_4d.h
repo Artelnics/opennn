@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef ScalingLayer4D_H
-#define ScalingLayer4D_H
+#ifndef Scaling4d_H
+#define Scaling4d_H
 
 #include "layer.h"
 
@@ -49,9 +49,9 @@ private:
 };
 
 
-struct ScalingLayer4DForwardPropagation : LayerForwardPropagation
+struct Scaling4dForwardPropagation : LayerForwardPropagation
 {   
-    ScalingLayer4DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Scaling4dForwardPropagation(const Index& = 0, Layer* = nullptr);
         
     pair<type*, dimensions> get_outputs_pair() const override;
 

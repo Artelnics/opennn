@@ -61,8 +61,8 @@ void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
                                        const bool&)
 {
-    ScalingLayer4DForwardPropagation* scaling_layer_forward_propagation =
-        static_cast<ScalingLayer4DForwardPropagation*>(forward_propagation.get());
+    Scaling4dForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<Scaling4dForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
@@ -102,14 +102,14 @@ void Scaling4d::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer4DForwardPropagation::ScalingLayer4DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Scaling4dForwardPropagation::Scaling4dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Scaling4dForwardPropagation::get_outputs_pair() const
 {
     const Scaling4d* scaling_layer_4d = static_cast<Scaling4d*>(layer);
 
@@ -119,7 +119,7 @@ pair<type*, dimensions> ScalingLayer4DForwardPropagation::get_outputs_pair() con
 }
 
 
-void ScalingLayer4DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling4dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     batch_size = new_batch_size;
 
@@ -131,7 +131,7 @@ void ScalingLayer4DForwardPropagation::set(const Index& new_batch_size, Layer* n
 }
 
 
-void ScalingLayer4DForwardPropagation::print() const
+void Scaling4dForwardPropagation::print() const
 {
     cout << "Scaling Outputs:" << endl
          << outputs.dimensions() << endl;

@@ -734,7 +734,12 @@ type TestingAnalysis::calculate_weighted_squared_error(const Tensor<type, 2>& ta
         const Index positives_number = target_distribution[1];
 
         negatives_weight = type(1);
-        positives_weight = type(negatives_number/positives_number);
+
+        if(negatives_number == 0 || positives_number == 0)
+            positives_weight = type(0);
+        else
+            positives_weight = type(negatives_number/positives_number);
+
     }
     else
     {

@@ -950,8 +950,8 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     
     // Forward propagation
 
-    ConvolutionalLayerForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
-        = static_cast<ConvolutionalLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    ConvolutionalForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
+        = static_cast<ConvolutionalForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     Convolutional* convolutional_layer = static_cast<Convolutional*>(convolutional_layer_forward_propagation_cuda->layer);
 
@@ -968,16 +968,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     const cudnnFilterDescriptor_t& kernel_descriptor = convolutional_layer_forward_propagation_cuda->kernel_descriptor;
     const cudnnConvolutionDescriptor_t& convolution_descriptor = convolutional_layer_forward_propagation_cuda->convolution_descriptor;
     const cudnnConvolutionFwdAlgo_t& convolution_algorithm = convolutional_layer_forward_propagation_cuda->convolution_algorithm;
-    /*
-    // Linear dump inputs
-    vector<float> host_inputs(get_inputs_number() * batch_samples_number);
-    cudaMemcpy(host_inputs.data(), inputs_device, get_inputs_number() * batch_samples_number * sizeof(float), cudaMemcpyDeviceToHost);
-    cout << "\n--- GPU inputs before reorder (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_inputs.size(); ++i)
-        cout << fixed << setprecision(6) << host_inputs[i] << ", ";
-    cout << "]" << endl;
-    */
+
     if (convolutional_layer_forward_propagation_cuda->is_first_layer)
     {
         type* reordered_inputs_device = convolutional_layer_forward_propagation_cuda->reordered_inputs_device;
@@ -986,36 +977,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
         inputs_device = reordered_inputs_device;
     }
-    /*
-    // Linear dump inputs
-    cudaMemcpy(host_inputs.data(), inputs_device, get_inputs_number() * batch_samples_number * sizeof(float), cudaMemcpyDeviceToHost);
 
-    cout << "\n--- GPU inputs after reorder (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_inputs.size(); ++i)
-        cout << fixed << setprecision(6) << host_inputs[i] << ", ";
-    cout << "]" << endl;
-
-    // Linear dump weights
-    vector<float> host_weights(weights.size());
-    cudaMemcpy(host_weights.data(), weights_device, weights.size() * sizeof(float), cudaMemcpyDeviceToHost);
-
-    cout << "\n--- GPU weights (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_weights.size(); ++i)
-        cout << fixed << setprecision(6) << host_weights[i] << ", ";
-    cout << "]" << endl;
-
-    // Linear dump biases
-    vector<float> host_biases(biases.size());
-    cudaMemcpy(host_biases.data(), biases_device, biases.size() * sizeof(float), cudaMemcpyDeviceToHost);
-    
-    cout << "\n--- GPU biases (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_biases.size(); ++i)
-        cout << fixed << setprecision(6) << host_biases[i] << ", ";
-    cout << "]" << endl;
-     */
     //cudnnConvolutionForward
 
     const float alpha = 1.0f;
@@ -1058,7 +1020,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
             convolutions,
             &beta,
             outputs_tensor_descriptor,
-            convolutions);
+            outputs);
 
         if (activationStatus != CUDNN_STATUS_SUCCESS)
             cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
@@ -1069,18 +1031,6 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
         cudaMemcpy(outputs, convolutions, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     }
-    /*
-    // Linear dump
-    const size_t output_size = static_cast<size_t>(batch_samples_number) * get_output_height() * get_output_width() * get_kernels_number();
-    vector<float> host_gpu_convolutions_bias(output_size);
-    cudaMemcpy(host_gpu_convolutions_bias.data(), convolutions, output_size * sizeof(float), cudaMemcpyDeviceToHost);
-
-    cout << "\n--- GPU Convolutions + biases (Linear Dump) ---" << endl;
-    cout << "[";
-    for (size_t i = 0; i < host_gpu_convolutions_bias.size(); ++i)
-        cout << fixed << setprecision(6) << host_gpu_convolutions_bias[i] << ", ";
-    cout << "]" << endl;
-    */
 }
 
 
@@ -1097,8 +1047,8 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    ConvolutionalLayerForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
-        = static_cast<ConvolutionalLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    ConvolutionalForwardPropagationCuda* convolutional_layer_forward_propagation_cuda
+        = static_cast<ConvolutionalForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     Convolutional* convolutional_layer = static_cast<Convolutional*>(convolutional_layer_forward_propagation_cuda->layer);
 
@@ -1110,8 +1060,8 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Back propagation
 
-    ConvolutionalLayerBackPropagationCuda* convolutional_layer_back_propagation_cuda
-        = static_cast<ConvolutionalLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    ConvolutionalBackPropagationCuda* convolutional_layer_back_propagation_cuda
+        = static_cast<ConvolutionalBackPropagationCuda*>(back_propagation_cuda.get());
 
     void* backward_data_workspace = convolutional_layer_back_propagation_cuda->backward_data_workspace;
     void* backward_filter_workspace = convolutional_layer_back_propagation_cuda->backward_filter_workspace;
@@ -1202,8 +1152,8 @@ void Convolutional::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& b
                                          Index& index,
                                          float* gradient) const
 {
-    ConvolutionalLayerBackPropagationCuda* convolutional_layer_back_propagation =
-        static_cast<ConvolutionalLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    ConvolutionalBackPropagationCuda* convolutional_layer_back_propagation =
+        static_cast<ConvolutionalBackPropagationCuda*>(back_propagation_cuda.get());
 
     copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->weights_derivatives_device, weights.size(), index);
     copy_to_vector_cuda(gradient, convolutional_layer_back_propagation->biases_derivatives_device, biases.size(), index);
@@ -1327,14 +1277,14 @@ float* Convolutional::get_biases_device() const
 
 // CUDA structs
 
-ConvolutionalLayerForwardPropagationCuda::ConvolutionalLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+ConvolutionalForwardPropagationCuda::ConvolutionalForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void ConvolutionalLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (new_batch_size == 0) return;
 
@@ -1452,13 +1402,13 @@ void ConvolutionalLayerForwardPropagationCuda::set(const Index& new_batch_size, 
 }
 
 
-void ConvolutionalLayerForwardPropagationCuda::print() const
+void ConvolutionalForwardPropagationCuda::print() const
 {
     // @todo
 }
 
 
-void ConvolutionalLayerForwardPropagationCuda::free()
+void ConvolutionalForwardPropagationCuda::free()
 {
     cudaFree(outputs);
     cudaFree(convolutions);
@@ -1474,7 +1424,7 @@ void ConvolutionalLayerForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> ConvolutionalLayerForwardPropagationCuda::get_outputs_pair_device() const
+pair<type*, dimensions> ConvolutionalForwardPropagationCuda::get_outputs_pair_device() const
 {
     const Convolutional* convolutional_layer = static_cast<Convolutional*>(layer);
 
@@ -1486,14 +1436,14 @@ pair<type*, dimensions> ConvolutionalLayerForwardPropagationCuda::get_outputs_pa
 }
 
 
-ConvolutionalLayerBackPropagationCuda::ConvolutionalLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+ConvolutionalBackPropagationCuda::ConvolutionalBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void ConvolutionalLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (new_batch_size == 0) return;
 
@@ -1636,7 +1586,7 @@ void ConvolutionalLayerBackPropagationCuda::set(const Index& new_batch_size, Lay
 }
 
 
-vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+vector<pair<type*, dimensions>> ConvolutionalBackPropagationCuda::get_input_derivative_pairs_device() const
 {
     const dimensions input_dimensions = layer->get_input_dimensions();
 
@@ -1644,13 +1594,13 @@ vector<pair<type*, dimensions>> ConvolutionalLayerBackPropagationCuda::get_input
 }
 
 
-void ConvolutionalLayerBackPropagationCuda::print() const
+void ConvolutionalBackPropagationCuda::print() const
 {
     // @todo
 }
 
 
-void ConvolutionalLayerBackPropagationCuda::free()
+void ConvolutionalBackPropagationCuda::free()
 {
     cudaFree(input_derivatives);
     cudaFree(error_combinations_derivatives_device);

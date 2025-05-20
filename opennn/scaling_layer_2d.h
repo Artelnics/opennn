@@ -58,6 +58,8 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
 
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>& );
+
    string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
 
    string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
@@ -84,9 +86,9 @@ private:
 };
 
 
-struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
+struct Scaling2dForwardPropagation : LayerForwardPropagation
 {
-    ScalingLayer2DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Scaling2dForwardPropagation(const Index& = 0, Layer* = nullptr);
        
     pair<type*, dimensions> get_outputs_pair() const override;
 

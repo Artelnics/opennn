@@ -80,9 +80,9 @@ private:
 };
 
 
-struct FlattenLayerForwardPropagation : LayerForwardPropagation
+struct FlattenForwardPropagation : LayerForwardPropagation
 {
-   FlattenLayerForwardPropagation(const Index& = 0, Layer* = nullptr);
+   FlattenForwardPropagation(const Index& = 0, Layer* = nullptr);
       
    pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -94,9 +94,9 @@ struct FlattenLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct FlattenLayerBackPropagation : LayerBackPropagation
+struct FlattenBackPropagation : LayerBackPropagation
 {
-    FlattenLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    FlattenBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -110,9 +110,9 @@ struct FlattenLayerBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    FlattenLayerForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    FlattenForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
@@ -126,9 +126,9 @@ struct FlattenLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
-struct FlattenLayerBackPropagationCuda : public LayerBackPropagationCuda
+struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
 {
-    FlattenLayerBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    FlattenBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
