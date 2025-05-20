@@ -6,7 +6,7 @@
 #include "../opennn/layer.h"
 #include "../opennn/data_set.h"
 #include "../opennn/batch.h"
-#include "probabilistic_layer.h"
+#include "../opennn/probabilistic_layer.h"
 
 
 TEST(NeuralNetworkTest, DefaultConstructor)
@@ -25,7 +25,7 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
@@ -37,7 +37,7 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
 
         switch (i) {
         case 0:
-            EXPECT_EQ(type, Layer::Type::Scaling2D);
+            EXPECT_EQ(type, Layer::Type::Scaling2d);
             break;    
         case 1:
             EXPECT_EQ(type, Layer::Type::Perceptron);
@@ -65,7 +65,7 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification, { 1 }, { 4 }, { 2 });
     
     EXPECT_EQ(neural_network.get_layers_number(), 3);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Probabilistic);
 }
@@ -76,7 +76,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Forecasting, { 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
@@ -89,7 +89,7 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
     NeuralNetwork neural_network(NeuralNetwork::ModelType::AutoAssociation, { 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(neural_network.get_layers_number(), 6);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Perceptron);
@@ -112,7 +112,7 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
         {height, width, channels}, {blocks}, { outputs_number });
  
     EXPECT_EQ(neural_network.get_layers_number(), 5); 
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling4D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling4d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Convolutional);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Pooling);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Flatten);
@@ -174,15 +174,15 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     NeuralNetwork neural_network_0(NeuralNetwork::ModelType::Classification, {inputs_number}, {neurons_number}, {outputs_number});
 
-    ProbabilisticLayer* probabilistic_layer =static_cast<ProbabilisticLayer*>(neural_network_0.get_first(Layer::Type::Probabilistic));
-    probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
+    Probabilistic* probabilistic_layer =static_cast<Probabilistic*>(neural_network_0.get_first(Layer::Type::Probabilistic));
+    probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
 
     ForwardPropagation forward_propagation_0(data_set.get_samples_number(), &neural_network_0);
 
     neural_network_0.forward_propagate(batch.get_input_pairs(), forward_propagation_0, is_training);
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-        = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation_0.layers[2].get());
+    ProbabilisticForwardPropagation* probabilistic_layer_forward_propagation
+        = static_cast<ProbabilisticForwardPropagation*>(forward_propagation_0.layers[2].get());
 
     Tensor <type, 2> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 
@@ -423,7 +423,7 @@ TEST(NeuralNetworkTest, test_save)
     neural_network.save(file_name);
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
@@ -439,7 +439,7 @@ TEST(NeuralNetworkTest, test_save)
     neural_network.save(file_name); 
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
-    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
@@ -574,8 +574,8 @@ TEST(NeuralNetworkTest, test_forward_propagate)
         perceptron_layer->set_activation_function(Perceptron::Activation::Logistic);
         const Index neurons_number_perceptron = perceptron_layer->get_neurons_number();
 
-        ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(outputs_number, outputs_number);
-        probabilistic_layer->set_activation_function(ProbabilisticLayer::Activation::Softmax);
+        Probabilistic* probabilistic_layer = new Probabilistic(outputs_number, outputs_number);
+        probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
         const Index neurons_number_probabilistic = probabilistic_layer->get_neurons_number();
 
         Tensor<unique_ptr<Layer>, 1> layers(2);
@@ -591,8 +591,8 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         Tensor<type, 2> perceptron_activations = perceptron_layer_forward_propagation->outputs;
 
-        ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation
-            = static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers[1]);
+        ProbabilisticForwardPropagation* probabilistic_layer_forward_propagation
+            = static_cast<ProbabilisticForwardPropagation*>(forward_propagation.layers[1]);
 
         Tensor<type, 2> probabilistic_activations = probabilistic_layer_forward_propagation->outputs;
 

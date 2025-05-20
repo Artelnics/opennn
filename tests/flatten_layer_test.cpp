@@ -28,8 +28,8 @@ public:
     void SetUp() override 
     {
         flatten_layer = make_unique<Flatten>(input_dimensions);
-        flatten_layer_forward_propagation = make_unique<FlattenLayerForwardPropagation>(batch_size, flatten_layer.get());
-        flatten_layer_back_propagation = make_unique<FlattenLayerBackPropagation>(batch_size, flatten_layer.get());
+        flatten_layer_forward_propagation = make_unique<FlattenForwardPropagation>(batch_size, flatten_layer.get());
+        flatten_layer_back_propagation = make_unique<FlattenBackPropagation>(batch_size, flatten_layer.get());
 
         inputs.resize(batch_size, height, width, channels);
         inputs.setRandom();

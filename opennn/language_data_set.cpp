@@ -281,7 +281,7 @@ void LanguageDataSet::print() const
         cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
 
         cout << "Input length: " << get_input_length() << endl;
-        cerr << "Target length: " << get_target_length() << endl;
+        cout << "Target length: " << get_target_length() << endl;
     }
     else
     {
@@ -609,9 +609,6 @@ void LanguageDataSet::read_csv()
     if (!file.is_open())
         throw runtime_error("Cannot open data file: " + data_path.string() + "\n");
 
-    if(data_path.extension() == ".csv")
-        separator = Separator::Semicolon;
-
     string line;
 
     vector<string> tokens;
@@ -630,7 +627,7 @@ void LanguageDataSet::read_csv()
         tokens = get_tokens(line, separator_string);
 
         if (tokens.size() != 2)
-            throw runtime_error("Tokens number must be two.");
+            throw runtime_error("Tokens number must be two: " + to_string(tokens.size()));
 
         input_documents_tokens[sample_index] = tokenize(tokens[0]);
 

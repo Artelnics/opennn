@@ -140,9 +140,9 @@ protected:
 };
 
 
-struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
+struct ProbabilisticForwardPropagation : LayerForwardPropagation
 {
-    ProbabilisticLayerForwardPropagation(const Index & = 0, Layer* = nullptr);
+    ProbabilisticForwardPropagation(const Index & = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -155,9 +155,9 @@ struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 };
 
 
-struct ProbabilisticLayerBackPropagation : LayerBackPropagation
+struct ProbabilisticBackPropagation : LayerBackPropagation
 {
-    ProbabilisticLayerBackPropagation(const Index & = 0, Layer* = nullptr);
+    ProbabilisticBackPropagation(const Index & = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -190,9 +190,9 @@ struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 
 #ifdef OPENNN_CUDA
 
-struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+struct ProbabilisticForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    explicit ProbabilisticLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    explicit ProbabilisticForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 
@@ -212,9 +212,9 @@ struct ProbabilisticLayerForwardPropagationCuda : public LayerForwardPropagation
 };
 
 
-struct ProbabilisticLayerBackPropagationCuda : public LayerBackPropagationCuda
+struct ProbabilisticBackPropagationCuda : public LayerBackPropagationCuda
 {
-    explicit ProbabilisticLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    explicit ProbabilisticBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 

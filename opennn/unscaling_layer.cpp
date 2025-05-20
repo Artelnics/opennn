@@ -285,8 +285,8 @@ void Unscaling::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 {
     const Index outputs_number = get_outputs_number();
 
-    UnscalingLayerForwardPropagation* unscaling_layer_forward_propagation =
-            static_cast<UnscalingLayerForwardPropagation*>(forward_propagation.get());
+    UnscalingForwardPropagation* unscaling_layer_forward_propagation =
+            static_cast<UnscalingForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -447,14 +447,14 @@ void Unscaling::from_XML(const XMLDocument& document)
 }
 
 
-UnscalingLayerForwardPropagation::UnscalingLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+UnscalingForwardPropagation::UnscalingForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> UnscalingForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -462,7 +462,7 @@ pair<type*, dimensions> UnscalingLayerForwardPropagation::get_outputs_pair() con
 }
 
 
-void UnscalingLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void UnscalingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -474,7 +474,7 @@ void UnscalingLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
 }
 
 
-void UnscalingLayerForwardPropagation::print() const
+void UnscalingForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
         << outputs << endl;

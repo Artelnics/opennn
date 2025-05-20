@@ -136,11 +136,11 @@ Correlation correlation_spearman(const ThreadPoolDevice* thread_pool_device,
             return linear_correlation_spearman(thread_pool_device, x_vector, y_vector);
     }
 
-    if(x_columns == 1)
-        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
-
-    if(y_columns == 1)
+    if(x_columns == 1 && y_columns != 1)
         return logistic_correlation_vector_matrix(thread_pool_device, x.reshape(vector), y);
+
+    if(x_columns != 1 && y_columns == 1)
+        return logistic_correlation_matrix_vector(thread_pool_device, x, y.reshape(vector));
 
     if(x_columns != 1 && y_columns != 1)
         return logistic_correlation_matrix_matrix(thread_pool_device, x, y);
@@ -848,7 +848,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
     for(Index i = 0; i < y_filtered.dimension(1); i++)
         target_columns_indices[i] = x_filtered.dimension(1)+i;
 
-    DataSet data_set(x_filtered.dimension(0), { x_filtered.dimension(1) }, { x_filtered.dimension(1) });
+    DataSet data_set(x_filtered.dimension(0), { x_filtered.dimension(1) }, { y_filtered.dimension(1) });
 
     data_set.set_data(data);
 
@@ -874,7 +874,7 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
-    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
 
