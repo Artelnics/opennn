@@ -257,8 +257,8 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 {
     const Index outputs_number = get_outputs_number();
 
-    ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
-        static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.get());
+    Scaling2dForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -503,14 +503,14 @@ void Scaling2d::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Scaling2dForwardPropagation::Scaling2dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Scaling2dForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -518,7 +518,7 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 }
 
 
-void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling2dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -530,7 +530,7 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* n
 }
 
 
-void ScalingLayer2DForwardPropagation::print() const
+void Scaling2dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl;

@@ -31,7 +31,7 @@ struct ConvolutionalLayerConfig {
 
 class ConvolutionalLayerTest : public ::testing::TestWithParam<ConvolutionalLayerConfig> {};
 
-INSTANTIATE_TEST_SUITE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
+INSTANTIATE_TEST_CASE_P(ConvolutionalLayerTests, ConvolutionalLayerTest, ::testing::Values(
     ConvolutionalLayerConfig{
         {4, 4, 1}, {3, 3, 1, 1}, {1, 1}, Convolutional::Activation::Linear, Convolutional::Convolution::Valid, "ConvolutionLayer",
         ([] {

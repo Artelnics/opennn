@@ -218,8 +218,8 @@ void Probabilistic::forward_propagate(const vector<pair<type*, dimensions>>& inp
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
+    ProbabilisticForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticForwardPropagation*>(forward_propagation.get());
 
     Tensor<type, 2>& outputs = probabilistic_layer_forward_propagation->outputs;
 
@@ -256,13 +256,13 @@ void Probabilistic::back_propagate(const vector<pair<type*, dimensions>>& input_
 
     // Forward propagation
 
-    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
-        static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.get());
+    ProbabilisticForwardPropagation* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticForwardPropagation*>(forward_propagation.get());
 
     // Back propagation
 
-    ProbabilisticLayerBackPropagation* probabilistic_back_propagation =
-            static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
+    ProbabilisticBackPropagation* probabilistic_back_propagation =
+            static_cast<ProbabilisticBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& input_derivatives = probabilistic_back_propagation->input_derivatives;
 
@@ -289,8 +289,8 @@ void Probabilistic::insert_gradient(unique_ptr<LayerBackPropagation>& back_propa
                                          Index& index,
                                          Tensor<type, 1>& gradient) const
 {
-    const ProbabilisticLayerBackPropagation* probabilistic_back_propagation =
-        static_cast<ProbabilisticLayerBackPropagation*>(back_propagation.get());
+    const ProbabilisticBackPropagation* probabilistic_back_propagation =
+        static_cast<ProbabilisticBackPropagation*>(back_propagation.get());
 
     copy_to_vector(gradient, probabilistic_back_propagation->weight_derivatives, index);
     copy_to_vector(gradient, probabilistic_back_propagation->bias_derivatives, index);
@@ -504,7 +504,7 @@ string Probabilistic::get_expression(const vector<string>& input_names,
 }
 
 
-ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
+ProbabilisticForwardPropagation::ProbabilisticForwardPropagation(
     const Index& new_batch_size, Layer *new_layer)
     : LayerForwardPropagation()
 {
@@ -512,7 +512,7 @@ ProbabilisticLayerForwardPropagation::ProbabilisticLayerForwardPropagation(
 }
 
 
-pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> ProbabilisticForwardPropagation::get_outputs_pair() const
 {
     const Index outputs_number = layer->get_outputs_number();
 
@@ -520,7 +520,7 @@ pair<type *, dimensions> ProbabilisticLayerForwardPropagation::get_outputs_pair(
 }
 
 
-void ProbabilisticLayerForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
+void ProbabilisticForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
     layer = new_layer;
 
@@ -537,7 +537,7 @@ void ProbabilisticLayerForwardPropagation::set(const Index& new_batch_size, Laye
 }
 
 
-void ProbabilisticLayerForwardPropagation::print() const
+void ProbabilisticForwardPropagation::print() const
 {
     cout << "Probabilistic layer forward-propagation" << endl
          << "Outputs dimensions:" << endl
@@ -551,14 +551,14 @@ void ProbabilisticLayerForwardPropagation::print() const
 }
 
 
-ProbabilisticLayerBackPropagation::ProbabilisticLayerBackPropagation(const Index &new_batch_size, Layer *new_layer)
+ProbabilisticBackPropagation::ProbabilisticBackPropagation(const Index &new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void ProbabilisticLayerBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
+void ProbabilisticBackPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
     layer = new_layer;
 
@@ -575,7 +575,7 @@ void ProbabilisticLayerBackPropagation::set(const Index& new_batch_size, Layer *
 }
 
 
-vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> ProbabilisticBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -583,7 +583,7 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagation::get_input_der
 }
 
 
-void ProbabilisticLayerBackPropagation::print() const
+void ProbabilisticBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
          << bias_derivatives << endl
@@ -643,8 +643,8 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
     // Forward propagation
 
-    ProbabilisticLayerForwardPropagationCuda* probabilistic_layer_forward_propagation_cuda =
-        static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    ProbabilisticForwardPropagationCuda* probabilistic_layer_forward_propagation_cuda =
+        static_cast<ProbabilisticForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     float* combinations = probabilistic_layer_forward_propagation_cuda->combinations;
     float* outputs = probabilistic_layer_forward_propagation_cuda->outputs;
@@ -719,8 +719,6 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
         break;
     }
-    //cout << "CUDA outputs:\n" << matrix_from_device(outputs, batch_samples_number, outputs_number) << endl;
-    //system("pause");
 }
 
 
@@ -744,8 +742,8 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    ProbabilisticLayerForwardPropagationCuda* probabilistic_layer_forward_propagation =
-        static_cast<ProbabilisticLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    ProbabilisticForwardPropagationCuda* probabilistic_layer_forward_propagation =
+        static_cast<ProbabilisticForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     const float* combinations = probabilistic_layer_forward_propagation->combinations;
     const float* outputs = probabilistic_layer_forward_propagation->outputs;
@@ -756,8 +754,8 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Back propagation
 
-    ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation =
-        static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    ProbabilisticBackPropagationCuda* probabilistic_layer_back_propagation =
+        static_cast<ProbabilisticBackPropagationCuda*>(back_propagation_cuda.get());
 
     const float* ones = probabilistic_layer_back_propagation->ones;
     float* error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives_device;
@@ -840,8 +838,8 @@ void Probabilistic::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& b
                                               Index& index,
                                               float* gradient) const
 {
-    ProbabilisticLayerBackPropagationCuda* probabilistic_layer_back_propagation_cuda =
-        static_cast<ProbabilisticLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    ProbabilisticBackPropagationCuda* probabilistic_layer_back_propagation_cuda =
+        static_cast<ProbabilisticBackPropagationCuda*>(back_propagation_cuda.get());
 
     copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->weights_derivatives_device, weights.size(), index);
     copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->biases_derivatives_device, biases.size(), index);
@@ -941,14 +939,14 @@ float* Probabilistic::get_biases_device() const
 
 // CUDA structs
 
-ProbabilisticLayerForwardPropagationCuda::ProbabilisticLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+ProbabilisticForwardPropagationCuda::ProbabilisticForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ProbabilisticForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_size = new_batch_samples_number;
 
@@ -1019,7 +1017,7 @@ void ProbabilisticLayerForwardPropagationCuda::set(const Index& new_batch_sample
 }
 
 
-void ProbabilisticLayerForwardPropagationCuda::print() const
+void ProbabilisticForwardPropagationCuda::print() const
 {
 
     const Index outputs_number = layer->get_outputs_number();
@@ -1032,7 +1030,7 @@ void ProbabilisticLayerForwardPropagationCuda::print() const
 }
 
 
-void ProbabilisticLayerForwardPropagationCuda::free()
+void ProbabilisticForwardPropagationCuda::free()
 {
     cudaFree(outputs);
 
@@ -1044,7 +1042,7 @@ void ProbabilisticLayerForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> ProbabilisticLayerForwardPropagationCuda::get_outputs_pair_device() const
+pair<type*, dimensions> ProbabilisticForwardPropagationCuda::get_outputs_pair_device() const
 {
     const Index outputs_number = layer->get_outputs_number();
 
@@ -1052,14 +1050,14 @@ pair<type*, dimensions> ProbabilisticLayerForwardPropagationCuda::get_outputs_pa
 }
 
 
-ProbabilisticLayerBackPropagationCuda::ProbabilisticLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+ProbabilisticBackPropagationCuda::ProbabilisticBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-void ProbabilisticLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void ProbabilisticBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
 
     batch_size = new_batch_samples_number;
@@ -1120,7 +1118,7 @@ void ProbabilisticLayerBackPropagationCuda::set(const Index& new_batch_samples_n
 }
 
 
-vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+vector<pair<type*, dimensions>> ProbabilisticBackPropagationCuda::get_input_derivative_pairs_device() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -1128,7 +1126,7 @@ vector<pair<type*, dimensions>> ProbabilisticLayerBackPropagationCuda::get_input
 }
 
 
-void ProbabilisticLayerBackPropagationCuda::print() const
+void ProbabilisticBackPropagationCuda::print() const
 {
     const Index inputs_number = layer->get_inputs_number();
     const Index outputs_number = layer->get_outputs_number();
@@ -1149,7 +1147,7 @@ void ProbabilisticLayerBackPropagationCuda::print() const
 }
 
 
-void ProbabilisticLayerBackPropagationCuda::free()
+void ProbabilisticBackPropagationCuda::free()
 {
     cudaFree(error_combinations_derivatives_device);
     cudaFree(biases_derivatives_device);

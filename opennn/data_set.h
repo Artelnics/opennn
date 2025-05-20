@@ -407,7 +407,7 @@ public:
 
     Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    // Scaling
+    // Scaling2d
 
     void set_default_raw_variables_scalers();
 
