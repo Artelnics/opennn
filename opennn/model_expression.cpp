@@ -1826,7 +1826,7 @@ vector<string> ModelExpression::fix_get_expression_outputs(const string& str,
         tokens.push_back(token);
     }
 
-    for(Index i = 0; i < static_cast<Index>(tokens.size()); i++)
+    for(size_t i = 0; i < tokens.size(); i++)
     {
         string s = tokens[i];
         string word;
