@@ -146,17 +146,16 @@ void Embedding::embedding_lookup(const Tensor<type, 2>& inputs, Tensor<type, 3>&
     const Index batch_size = inputs.dimension(0);
     const Index embedding_dimension = outputs.dimension(2);
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (Index row = 0; row < batch_size; row++)
     {
         auto output_slice = outputs.chip(row, 0);
-
         for (Index input_position = 0; input_position < sequence_length; input_position++)
             output_slice.chip(input_position, 0) = weights.chip(inputs(row, input_position), 0);
     }
 
     // Scaling factor only used in transformer models, if it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
-    // outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
+    outputs.device(*thread_pool_device) = outputs * sqrt(type(embedding_dimension));
 }
 
 
@@ -185,7 +184,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     embedding_lookup(inputs, outputs);
 
     // Positional encoding used in transformer models. If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
-    // add_positional_encodings(outputs);
+    add_positional_encodings(outputs);
 
     if(dropout_rate > 0 && is_training)
         dropout(outputs, dropout_rate);
@@ -221,7 +220,7 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     for(Index i = 0; i < batch_size; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0);// * sqrt(type(embedding_dimension));  //Scaling factor only used in transformer models, if it's not one, leave commented
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));  //Scaling factor only used in transformer models, if it's not one, leave commented
 
         for(Index j = 0; j < inputs_number; j++)
             weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)

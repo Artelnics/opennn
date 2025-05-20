@@ -87,6 +87,12 @@ void AdaptiveMomentEstimation::set_default()
 }
 
 
+void AdaptiveMomentEstimation::set_display(const bool& new_display)
+{
+    display = new_display;
+}
+
+
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
     epsilon = new_epsilon;
@@ -225,7 +231,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     type elapsed_time = type(0);
 
-    bool shuffle = 0;
+    bool shuffle = true;
 
     if(neural_network->has(Layer::Type::Recurrent))
         shuffle = false;
@@ -264,28 +270,24 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
-            // cout << "xeee" << endl;
-
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            // cout << "xexexexe" << endl;
-
             // // if(epoch == 50)
             // // {
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
-            // cout << "MHA Gradient - numerical gradient:" << endl;
-            // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
-            //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
+            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // // cout << "MHA Gradient - numerical gradient:" << endl;
+            // // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
+            // //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
-            // throw runtime_error("\nChecking the gradient and numerical gradient.");
+            // // throw runtime_error("\nChecking the gradient and numerical gradient.");
             // // }
             training_error += training_back_propagation.error();
 

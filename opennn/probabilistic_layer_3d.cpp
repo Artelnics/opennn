@@ -279,8 +279,8 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
     Tensor<type, 2>& weight_derivatives = probabilistic_3d_back_propagation->weight_derivatives;
     Tensor<type, 3>& input_derivatives = probabilistic_3d_back_propagation->input_derivatives;
 
-    if(!built_mask)
-    {
+    // if(!built_mask)
+    // {
         mask.device(*thread_pool_device) = (targets != targets.constant(0)).cast<type>();
  
         const Tensor<type, 0> mask_sum = mask.sum();
@@ -288,7 +288,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
         mask.device(*thread_pool_device) = mask / mask_sum(0);
         
         built_mask = true;
-    }
+    // }
 
     calculate_combination_deltas(outputs, targets, mask, combination_deltas);
 
@@ -311,7 +311,7 @@ void Probabilistic3d::calculate_combination_deltas(const Tensor<type, 3>& output
     const Index batch_size = outputs.dimension(0);
     const Index outputs_number = outputs.dimension(1);
 
-    combination_deltas.device(*thread_pool_device) = outputs;
+    combination_deltas = outputs;
 
     #pragma omp parallel for collapse(2)
 
