@@ -203,9 +203,8 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
     // Compute the new hidden state: h_t = tanh(W_x * x_t + W_h * h_t + b)
     combinations = inputs.contract(input_weights, axes)
                    + previous_hidden_states.contract(recurrent_weights, axes)
-                   + biases.reshape(DSizes<Index,2>{1, biases.dimension(0)})
-                         .broadcast(array<Index,2>{samples_number, 1});
-
+                   + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
+                         .broadcast(Eigen::array<Index,2>{samples_number, 1});
 }
 
 void Recurrent::calculate_activations(Tensor<type, 2>& activations,
@@ -261,8 +260,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
         else
         {
             previous_hidden_states = (t>0
-                                        ? hidden_states.chip(t-1,1)
-                                        : Tensor<type,2>(batch_size, output_size).setZero()
+                                          ? hidden_states.chip(t-1,1)
+                                          : Tensor<type,2>(batch_size, output_size).setZero()
                                       );
 
             calculate_combinations(current_inputs.chip(t, 1),outputs);
@@ -276,8 +275,6 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         hidden_states.chip(t,1) = outputs;
     }
-
-    cout << "Forward terminado. Outputs: " << recurrent_forward->outputs(0) << endl;
 }
 
 
@@ -328,7 +325,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         {
             recurrent_weight_derivatives.device(*thread_pool_device) +=
                 hidden_states.chip(t-1,1)
-                .contract(combination_deltas, axes_batch);
+                    .contract(combination_deltas, axes_batch);
 
             current_combinations_derivatives.device(*thread_pool_device) =
                 combination_deltas.contract(recurrent_weights, axes_hidden);
@@ -475,6 +472,8 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];
     const Index time_steps = layer->get_input_dimensions()[0];
+
+    //current_deltas.resize(neurons_number);
 
     combinations_bias_derivatives.resize(outputs_number, outputs_number);
 
