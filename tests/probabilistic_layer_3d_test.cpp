@@ -2,7 +2,7 @@
 
 #include "../opennn/probabilistic_layer_3d.h"
 
-TEST(ProbabilisticLayer3DTest, DefaultConstructor)
+TEST(Probabilistic3DTest, DefaultConstructor)
 {
 
     Probabilistic3d probabilistic_layer_3d;
@@ -14,7 +14,7 @@ TEST(ProbabilisticLayer3DTest, DefaultConstructor)
 }
 
 
-TEST(ProbabilisticLayer3DTest, GeneralConstructor)
+TEST(Probabilistic3DTest, GeneralConstructor)
 {
 
     Probabilistic3d probabilistic_layer_3d(1, 2, 3);
@@ -26,7 +26,7 @@ TEST(ProbabilisticLayer3DTest, GeneralConstructor)
 }
 
 
-TEST(ProbabilisticLayer3DTest, Combinations)
+TEST(Probabilistic3DTest, Combinations)
 {
 /*
     Tensor<type, 1> biases(1);
@@ -53,7 +53,7 @@ TEST(ProbabilisticLayer3DTest, Combinations)
 }
 
 
-TEST(ProbabilisticLayer3DTest, Activations)
+TEST(Probabilistic3DTest, Activations)
 {
     Tensor<type, 3> combinations;
     Tensor<type, 3> activations;
@@ -172,7 +172,7 @@ TEST(ProbabilisticLayer3DTest, Activations)
 }
 
 
-TEST(ProbabilisticLayer3DTest, SoftmaxDerivatives)
+TEST(Probabilistic3DTest, SoftmaxDerivatives)
 {
 /*
     Tensor<type, 3>& activations;
@@ -204,7 +204,7 @@ TEST(ProbabilisticLayer3DTest, SoftmaxDerivatives)
 }
 
 
-TEST(ProbabilisticLayer3DTest, ForwardPropagate)
+TEST(Probabilistic3DTest, ForwardPropagate)
 {
 /*
     bool is_training = true;

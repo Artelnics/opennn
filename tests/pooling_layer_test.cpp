@@ -209,7 +209,7 @@ TEST_P(PoolingLayerTest, BackPropagate) {
         make_unique<PoolingForwardPropagation>(batch_size, &pooling_layer);
 
     unique_ptr<LayerBackPropagation> back_propagation =
-        make_unique<PoolingLayerBackPropagation>(batch_size, &pooling_layer);
+        make_unique<PoolingBackPropagation>(batch_size, &pooling_layer);
 
     pair<type*, dimensions> input_pair( parameters.input_data.data(),
         { batch_size,

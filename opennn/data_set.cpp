@@ -427,7 +427,7 @@ namespace opennn
         {
             batches[i].resize(new_batch_size);
 
-            const Index offset = i * batches_number;
+            const Index offset = i * new_batch_size;
 
             for (Index j = 0; j < new_batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];

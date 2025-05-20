@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef ProbabilisticLayer3D_H
-#define ProbabilisticLayer3D_H
+#ifndef Probabilistic3D_H
+#define Probabilistic3D_H
 
 #include "layer.h"
 
@@ -118,9 +118,9 @@ private:
 };
 
 
-struct ProbabilisticLayer3DForwardPropagation : LayerForwardPropagation
+struct Probabilistic3DForwardPropagation : LayerForwardPropagation
 {
-    ProbabilisticLayer3DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Probabilistic3DForwardPropagation(const Index& = 0, Layer* = nullptr);
     
     pair<type*, dimensions> get_outputs_pair() const override;
 

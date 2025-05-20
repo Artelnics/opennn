@@ -86,9 +86,9 @@ private:
 };
 
 
-struct ScalingLayer2DForwardPropagation : LayerForwardPropagation
+struct Scaling2dForwardPropagation : LayerForwardPropagation
 {
-    ScalingLayer2DForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Scaling2dForwardPropagation(const Index& = 0, Layer* = nullptr);
        
     pair<type*, dimensions> get_outputs_pair() const override;
 

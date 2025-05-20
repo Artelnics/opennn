@@ -158,9 +158,9 @@ struct PoolingForwardPropagation : LayerForwardPropagation
 };
 
 
-struct PoolingLayerBackPropagation : LayerBackPropagation
+struct PoolingBackPropagation : LayerBackPropagation
 {
-    PoolingLayerBackPropagation(const Index& = 0, Layer* = nullptr);
+    PoolingBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -176,9 +176,9 @@ struct PoolingLayerBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-struct PoolingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PoolingLayerForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    PoolingForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
@@ -196,9 +196,9 @@ struct PoolingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
-struct PoolingLayerBackPropagationCuda : public LayerBackPropagationCuda
+struct PoolingBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PoolingLayerBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    PoolingBackPropagationCuda(const Index & = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
