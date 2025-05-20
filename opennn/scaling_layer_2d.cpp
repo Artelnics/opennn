@@ -368,9 +368,7 @@ void Scaling2d::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inp
         }
     }
     else
-    {
         throw runtime_error("Input dimension must be 2 or 4.\n");
-    }
 }
 
 string Scaling2d::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const

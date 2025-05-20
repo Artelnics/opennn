@@ -1641,7 +1641,7 @@ void NeuralNetwork::save_outputs(Tensor<type, 2>& inputs, const filesystem::path
     if(!file.is_open())
         throw runtime_error("Cannot open " + file_name.string() + " file.\n");
 
-    //const vector<string> output_names = get_output_names();
+    const vector<string> output_names = get_output_names();
 
     const Index outputs_number = get_outputs_number();
     const Index batch_size = inputs.dimension(0);
