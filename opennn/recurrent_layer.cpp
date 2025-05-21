@@ -230,6 +230,8 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool& is_training)
 {
+    cout << "forward" << endl;
+
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
@@ -259,10 +261,9 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                             .broadcast(array<Index, 2>({ batch_size, 1 }));
         else
         {
-            previous_hidden_states = (t>0
+            previous_hidden_states = t > 0
                                           ? hidden_states.chip(t-1,1)
-                                          : Tensor<type,2>(batch_size, output_size).setZero()
-                                      );
+                                          : Tensor<type,2>(batch_size, output_size).setZero();
 
             calculate_combinations(current_inputs.chip(t, 1),outputs);
         }
@@ -271,10 +272,11 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         calculate_activations(outputs, current_activations_derivatives);
 
-        activation_derivatives.chip(t,1)=current_activations_derivatives;
+        activation_derivatives.chip(t,1) = current_activations_derivatives;
 
         hidden_states.chip(t,1) = outputs;
     }
+    cout << "forward done" << endl;
 }
 
 
@@ -283,6 +285,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
+    cout << "backward" << endl;
+
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
@@ -341,6 +345,8 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                 axes_hidden
                 );
     }
+
+    cout << "backward done" << endl;
 }
 
 void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
@@ -445,8 +451,6 @@ void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* n
     const Index inputs_number = layer->get_input_dimensions()[1];
     const Index time_steps = layer->get_input_dimensions()[0];
 
-    batch_size = new_batch_size;
-
     current_inputs.resize(batch_size, time_steps, inputs_number);
 
     current_activations_derivatives.resize(batch_size, outputs_number);
@@ -467,13 +471,9 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 {
     layer = new_layer;
 
-    batch_size = new_batch_size;
-
     const Index outputs_number = layer->get_outputs_number();
     const Index inputs_number = layer->get_input_dimensions()[1];
     const Index time_steps = layer->get_input_dimensions()[0];
-
-    //current_deltas.resize(neurons_number);
 
     combinations_bias_derivatives.resize(outputs_number, outputs_number);
 
