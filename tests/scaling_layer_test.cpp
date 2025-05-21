@@ -7,32 +7,32 @@
 #include "../opennn/statistics.h"
 
 
-TEST(ScalingLayerTest, DefaultConstructor)
+TEST(Scaling2dTest, DefaultConstructor)
 {
-    ScalingLayer2D scaling_layer_2d;
+    Scaling2d scaling_layer_2d;
 
     EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{0});
     EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{0});
 }
 
 
-TEST(ScalingLayerTest, GeneralConstructor)
+TEST(Scaling2dTest, GeneralConstructor)
 {
-    ScalingLayer2D scaling_layer_2d({1});
+    Scaling2d scaling_layer_2d({1});
 
     EXPECT_EQ(scaling_layer_2d.get_input_dimensions(), dimensions{ 1 });
     EXPECT_EQ(scaling_layer_2d.get_output_dimensions(), dimensions{ 1 });
-    EXPECT_EQ(scaling_layer_2d.get_type(), Layer::Type::Scaling2D);
+    EXPECT_EQ(scaling_layer_2d.get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(scaling_layer_2d.get_descriptives().size(), 1);
     EXPECT_EQ(scaling_layer_2d.get_scaling_methods().size(), 1);
 }
 
-TEST(ScalingLayerTest, ForwardPropagate)
+TEST(Scaling2dTest, ForwardPropagate)
 {
     Index inputs_number = 3;
     Index samples_number = 1;
 
-    ScalingLayer2D scaling_layer_2d({ inputs_number });
+    Scaling2d scaling_layer_2d({ inputs_number });
 
     Tensor<type, 2> outputs;
 
@@ -45,7 +45,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
     inputs.setConstant(type(10));
 
     unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+        make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
 
@@ -76,7 +76,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     scaling_layer_2d.set_scalers(Scaler::MinimumMaximum);
 
-    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
@@ -108,7 +108,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     scaling_layer_2d.set_scalers(Scaler::MeanStandardDeviation);
 
-    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
@@ -138,7 +138,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     scaling_layer_2d.set_scalers(Scaler::StandardDeviation);
 
-    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
@@ -171,7 +171,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     scaling_layer_2d.set_scalers(Scaler::Logarithm);
 
-    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 
@@ -204,7 +204,7 @@ TEST(ScalingLayerTest, ForwardPropagate)
 
     scaling_layer_2d.set_scalers(Scaler::ImageMinMax);
 
-    forward_propagation = make_unique<ScalingLayer2DForwardPropagation>(samples_number, &scaling_layer_2d);
+    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
 
     input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
 

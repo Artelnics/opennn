@@ -390,26 +390,26 @@ struct AssignmentKind<DenseShape, DiagonalShape> {
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, Diagonal2Dense> {
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    Index dstRows = src.rows();
-    Index dstCols = src.cols();
+    Index dstRows = source.rows();
+    Index dstCols = source.cols();
     if ((dst.rows() != dstRows) || (dst.cols() != dstCols)) dst.resize(dstRows, dstCols);
 
     dst.setZero();
-    dst.diagonal() = src.diagonal();
+    dst.diagonal() = source.diagonal();
   }
 
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::add_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.diagonal() += src.diagonal();
+    dst.diagonal() += source.diagonal();
   }
 
   static EIGEN_DEVICE_FUNC void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::sub_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.diagonal() -= src.diagonal();
+    dst.diagonal() -= source.diagonal();
   }
 };
 

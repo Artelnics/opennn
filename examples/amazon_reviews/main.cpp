@@ -26,39 +26,30 @@ int main()
 
         // Data set
 
-        LanguageDataSet text_data_set;
+        // LanguageDataSet language_dataset("../../../datasets/masked.txt");
 
-        // text_data_set.set_data_path("../data/amazon_cells_reduced.txt");
-        // text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
-        // text_data_set.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
-        text_data_set.set_data_path("/Users/artelnics/Desktop/cleaned_tweets.txt");
+        // language_dataset.set_data_path("../data/amazon_cells_reduced.txt");
+        // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
+        // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
+        LanguageDataSet language_dataset("/Users/artelnics/Desktop/cleaned_tweets.txt");
 
-        text_data_set.set_separator(DataSet::Separator::Tab);
 
-        text_data_set.read_csv();
+//        language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
+//        language_dataset.read_csv();
 
-        // const vector<string> input_words = text_data_set.get_raw_variable_names(DataSet::VariableUse::Input);
-        // const vector<string> targets_names = text_data_set.get_variable_names(DataSet::VariableUse::Target);
+        // const vector<string> input_words = language_dataset.get_raw_variable_names(DataSet::VariableUse::Input);
+        // const vector<string> targets_names = language_dataset.get_variable_names(DataSet::VariableUse::Target);
 
-        // const Index words_number = text_data_set.get_variables_number(DataSet::VariableUse::Input);
-        // const Index target_variables_number = text_data_set.get_variables_number(DataSet::VariableUse::Target);
+        // const Index words_number = language_dataset.get_variables_number(DataSet::VariableUse::Input);
+        // const Index target_variables_number = language_dataset.get_variables_number(DataSet::VariableUse::Target);
 
         // cout<<words_number<<endl;
         // cout<<target_variables_number<<endl;
 
-        // // Neural Network
-
-        // const Index hidden_neurons_number = 6;
-
-        // NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-        //                              { words_number }, { hidden_neurons_number }, { target_variables_number });
-
-        // neural_network.print();
-
         // Neural Network
 
-        const Index maximum_sequence_length = text_data_set.get_input_length();
-        const Index vocabulary_size = text_data_set.get_input_vocabulary_size();
+        const Index maximum_sequence_length = language_dataset.get_input_length();
+        const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index embedding_dimension = 64;
         const Index heads_number = 4;
         const dimensions outputs_number = { 1 };
@@ -68,7 +59,6 @@ int main()
 
         NeuralNetwork neural_network;
         neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        // neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
         // neural_network.add_layer(make_unique<Addition3d>(maximum_sequence_length, embedding_dimension, "Addition"));
@@ -79,7 +69,7 @@ int main()
 
         // Training Strategy
 
-        TrainingStrategy training_strategy(&neural_network, &text_data_set);
+        TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
 
@@ -89,7 +79,7 @@ int main()
 
         // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
 
-        text_data_set.split_samples_sequential(0.8,0,0.2);
+        language_dataset.split_samples_sequential(0.8,0,0.2);
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
@@ -100,15 +90,14 @@ int main()
 
         TrainingResults training_results = training_strategy.perform_training();
 
-        // text_data_set.set(DataSet::SampleUse::Testing);
+        // language_dataset.set(DataSet::SampleUse::Testing);
 
-        const TestingAnalysis testing_analysis(&neural_network, &text_data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &language_dataset);
 
         TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
 
         cout << "TESTING ANALYSIS:" << endl;
         cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
-
 
         // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
 

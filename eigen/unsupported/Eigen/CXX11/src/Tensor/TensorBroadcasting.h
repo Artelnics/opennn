@@ -981,10 +981,10 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device> {
     // given broadcast strides (strides with zeroes).
     typedef internal::TensorBlockIO<ScalarNoConst, Index, 2 * NumDims, Layout> TensorBlockIO;
 
-    typename TensorBlockIO::Src src(bcast_input_strides, input_buffer);
+    typename TensorBlockIO::Src source(bcast_input_strides, input_buffer);
     typename TensorBlockIO::Dst dst(bcast_block_sizes, bcast_block_strides, materialized_output + offset);
 
-    return TensorBlockIO::Copy(dst, src);
+    return TensorBlockIO::Copy(dst, source);
   }
 
  protected:

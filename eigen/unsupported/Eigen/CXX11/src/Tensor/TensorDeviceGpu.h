@@ -229,27 +229,27 @@ struct GpuDevice {
 
   EIGEN_STRONG_INLINE unsigned int* semaphore() const { return stream_->semaphore(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* source, size_t n) const {
 #ifndef EIGEN_GPU_COMPILE_PHASE
-    gpuError_t err = gpuMemcpyAsync(dst, src, n, gpuMemcpyDeviceToDevice, stream_->stream());
+    gpuError_t err = gpuMemcpyAsync(dst, source, n, gpuMemcpyDeviceToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     gpu_assert(err == gpuSuccess);
 #else
     EIGEN_UNUSED_VARIABLE(dst);
-    EIGEN_UNUSED_VARIABLE(src);
+    EIGEN_UNUSED_VARIABLE(source);
     EIGEN_UNUSED_VARIABLE(n);
     eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
   }
 
-  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-    gpuError_t err = gpuMemcpyAsync(dst, src, n, gpuMemcpyHostToDevice, stream_->stream());
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* source, size_t n) const {
+    gpuError_t err = gpuMemcpyAsync(dst, source, n, gpuMemcpyHostToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     gpu_assert(err == gpuSuccess);
   }
 
-  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-    gpuError_t err = gpuMemcpyAsync(dst, src, n, gpuMemcpyDeviceToHost, stream_->stream());
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* source, size_t n) const {
+    gpuError_t err = gpuMemcpyAsync(dst, source, n, gpuMemcpyDeviceToHost, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     gpu_assert(err == gpuSuccess);
   }

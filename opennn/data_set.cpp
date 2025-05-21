@@ -427,7 +427,7 @@ namespace opennn
         {
             batches[i].resize(new_batch_size);
 
-            const Index offset = i * batches_number;
+            const Index offset = i * new_batch_size;
 
             for (Index j = 0; j < new_batch_size; j++)
                 batches[i][j] = samples_copy[offset + j];
@@ -1767,6 +1767,8 @@ namespace opennn
             }
         }
 
+        read_csv();
+
         sample_uses.resize(new_samples_number);
 
         split_samples_random();
@@ -2428,7 +2430,6 @@ namespace opennn
 
         for (Index i = 0; i < input_raw_variables_number; i++)
         {
-            cout << "correlacion: " << i << endl;
             const Index input_raw_variable_index = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_raw_variable_data
@@ -2580,8 +2581,6 @@ namespace opennn
 
             const Tensor<type, 2> input_i = get_raw_variable_data(current_input_index_i);
 
-            cout << "Calculating " << raw_variables[current_input_index_i].name << " correlations. " << endl;
-
             if (is_constant(input_i)) continue;
 
             correlations_pearson(i, i).set_perfect();
@@ -2618,8 +2617,6 @@ namespace opennn
             const Index input_raw_variable_index_i = input_raw_variable_indices[i];
 
             const Tensor<type, 2> input_i = get_raw_variable_data(input_raw_variable_index_i);
-
-            cout << "Calculating " << raw_variables[input_raw_variable_index_i].name << " correlations. " << endl;
 
             if (is_constant(input_i)) continue;
 
@@ -2838,8 +2835,30 @@ namespace opennn
 
     void DataSet::set_data_constant(const type& new_value)
     {
-        data.setConstant(new_value);
-        data.dimensions();
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+                data(i, index) = new_value;
+    }
+
+
+    void DataSet::set_data_ascending()
+    {
+        const vector<Index> input_indices = get_variable_indices(VariableUse::Input);
+
+        const Index samples_number = get_samples_number();
+
+        type new_value = 1;
+
+        for (Index i = 0; i < samples_number; ++i)
+            for (Index index : input_indices)
+            {
+                data(i, index) = new_value;
+                new_value++;
+            }
     }
 
 
@@ -3137,7 +3156,7 @@ namespace opennn
 
     void DataSet::print_data() const
     {
-        if (display) cout << data << endl;
+         cout << data << endl;
     }
 
 
@@ -3296,16 +3315,17 @@ namespace opennn
         {
             class_distribution.resize(2);
 
-            const Index target_index = target_variable_indices[0];
+            Index target_index = target_variable_indices[0];
 
             Index positives = 0;
             Index negatives = 0;
 
-            for (Index sample_index = 0; sample_index < samples_number; sample_index++)
+            for (Index sample_index = 0; sample_index < samples_number; sample_index++){
                 if (!isnan(data(sample_index, target_index)))
                     (data(sample_index, target_index) < type(0.5))
                     ? negatives++
                     : positives++;
+            }
 
             class_distribution(0) = negatives;
             class_distribution(1) = positives;
@@ -3331,7 +3351,6 @@ namespace opennn
                 }
             }
         }
-
         return class_distribution;
     }
 

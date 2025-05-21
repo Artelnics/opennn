@@ -384,8 +384,6 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
                                               unique_ptr<LayerForwardPropagation>& forward_propagation,
                                               unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    //auto start = chrono::high_resolution_clock::now();
-
     const Index batch_size = inputs.dimension(0);
 
     const Index channels = inputs.dimension(3);
@@ -402,8 +400,8 @@ void Pooling::back_propagate_max_pooling(const Tensor<type, 4>& inputs,
 
     // Back propagation
 
-    PoolingLayerBackPropagation* pooling_layer_back_propagation =
-        static_cast<PoolingLayerBackPropagation*>(back_propagation.get());
+    PoolingBackPropagation* pooling_layer_back_propagation =
+        static_cast<PoolingBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
@@ -447,8 +445,8 @@ void Pooling::back_propagate_average_pooling(const Tensor<type, 4>& inputs,
 
     // Back propagation
 
-    PoolingLayerBackPropagation* pooling_layer_back_propagation =
-        static_cast<PoolingLayerBackPropagation*>(back_propagation.get());
+    PoolingBackPropagation* pooling_layer_back_propagation =
+        static_cast<PoolingBackPropagation*>(back_propagation.get());
 
     Tensor<type, 4>& input_derivatives = pooling_layer_back_propagation->input_derivatives;
 
@@ -582,20 +580,18 @@ void PoolingForwardPropagation::print() const
 {
     cout << "Pooling layer forward propagation" << endl
          << "Outputs:" << endl
-         << outputs(0) << endl
-         << "Image patches" << endl
-         << image_patches << endl;
+         << outputs(0) << endl;
 }
 
 
-PoolingLayerBackPropagation::PoolingLayerBackPropagation(const Index& new_batch_size, Layer* new_layer)
+PoolingBackPropagation::PoolingBackPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void PoolingLayerBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void PoolingBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     batch_size = new_batch_size;
 
@@ -612,7 +608,7 @@ void PoolingLayerBackPropagation::set(const Index& new_batch_size, Layer* new_la
 }
 
 
-vector<pair<type*, dimensions>> PoolingLayerBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> PoolingBackPropagation::get_input_derivative_pairs() const
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
@@ -623,7 +619,7 @@ vector<pair<type*, dimensions>> PoolingLayerBackPropagation::get_input_derivativ
 }
 
 
-void PoolingLayerBackPropagation::print() const
+void PoolingBackPropagation::print() const
 {
     cout << "Pooling layer back propagation" << endl;
     cout << "Input derivatives:" << endl
@@ -648,8 +644,8 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    PoolingLayerForwardPropagationCuda* pooling_layer_forward_propagation_cuda
-        = static_cast<PoolingLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda
+        = static_cast<PoolingForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
@@ -693,8 +689,8 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
 
     // Forward propagation
 
-    PoolingLayerForwardPropagationCuda* pooling_layer_forward_propagation_cuda
-        = static_cast<PoolingLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda
+        = static_cast<PoolingForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     const type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
@@ -704,8 +700,8 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
 
     // Back propagation
 
-    PoolingLayerBackPropagationCuda* pooling_layer_back_propagation_cuda
-        = static_cast<PoolingLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    PoolingBackPropagationCuda* pooling_layer_back_propagation_cuda
+        = static_cast<PoolingBackPropagationCuda*>(back_propagation_cuda.get());
 
     type* inputs_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
 
@@ -735,14 +731,14 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
 // CUDA structs
 
 
-PoolingLayerForwardPropagationCuda::PoolingLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+PoolingForwardPropagationCuda::PoolingForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
     if (new_batch_size == 0) return;
 
@@ -777,12 +773,12 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(inputs_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
+                               CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(channels),
-                               static_cast<int>(input_height),
-                               static_cast<int>(input_width));
+                               batch_size, 
+                               channels, 
+                               input_height, 
+                               input_width);
 
     // Outputs
 
@@ -792,12 +788,12 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
-                               CUDNN_TENSOR_NHWC,
+                               CUDNN_TENSOR_NCHW,
                                CUDNN_DATA_FLOAT,
-                               static_cast<int>(batch_size),
-                               static_cast<int>(channels),
-                               static_cast<int>(output_height),
-                               static_cast<int>(output_width));
+                               batch_size,
+                               channels,
+                               output_height,
+                               output_width);
 
     // Pooling descriptor
 
@@ -806,22 +802,27 @@ void PoolingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer*
     cudnnSetPooling2dDescriptor(pooling_descriptor,
                                 pooling_mode,
                                 CUDNN_PROPAGATE_NAN,
-                                static_cast<int>(pool_height),
-                                static_cast<int>(pool_width),
-                                static_cast<int>(padding_height),
-                                static_cast<int>(padding_width),
-                                static_cast<int>(row_stride),
-                                static_cast<int>(column_stride));
+                                pool_height, pool_width,
+                                padding_height, padding_width,
+                                row_stride, column_stride);
 }
 
 
-void PoolingLayerForwardPropagationCuda::print() const
+void PoolingForwardPropagationCuda::print() const
 {
-    // @todo
+    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
+
+    const Index output_height = pooling_layer->get_output_height();
+    const Index output_width = pooling_layer->get_output_width();
+    const Index channels = pooling_layer->get_channels_number();
+
+    cout << "Pooling layer forward propagation CUDA" << endl
+        << "Outputs:" << endl
+        << matrix_4d_from_device(outputs, batch_size, output_height, output_width, channels) << endl;
 }
 
 
-void PoolingLayerForwardPropagationCuda::free()
+void PoolingForwardPropagationCuda::free()
 {
     cudaFree(outputs);
 
@@ -831,7 +832,7 @@ void PoolingLayerForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> PoolingLayerForwardPropagationCuda::get_outputs_pair_device() const
+pair<type*, dimensions> PoolingForwardPropagationCuda::get_outputs_pair_device() const
 {
     const Pooling* pooling_layer = static_cast<Pooling*>(layer);
 
@@ -843,15 +844,17 @@ pair<type*, dimensions> PoolingLayerForwardPropagationCuda::get_outputs_pair_dev
 }
 
 
-PoolingLayerBackPropagationCuda::PoolingLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
+PoolingBackPropagationCuda::PoolingBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
+void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
+    if (new_batch_size == 0) return;
+
     batch_size = new_batch_size;
 
     layer = new_layer;
@@ -860,7 +863,6 @@ void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* ne
 
     const Index input_height = pooling_layer->get_input_height();
     const Index input_width = pooling_layer->get_input_width();
-
     const Index channels = pooling_layer->get_channels_number();
 
     // Inputs derivatives
@@ -870,7 +872,7 @@ void PoolingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* ne
 }
 
 
-vector<pair<type*, dimensions>> PoolingLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+vector<pair<type*, dimensions>> PoolingBackPropagationCuda::get_input_derivative_pairs_device() const
 {
     const dimensions input_dimensions = layer->get_input_dimensions();
 
@@ -878,13 +880,21 @@ vector<pair<type*, dimensions>> PoolingLayerBackPropagationCuda::get_input_deriv
 }
 
 
-void PoolingLayerBackPropagationCuda::print() const
+void PoolingBackPropagationCuda::print() const
 {
-    // @todo
+    const Pooling* pooling_layer = static_cast<const Pooling*>(layer);
+
+    const Index input_height = pooling_layer->get_input_height();
+    const Index input_width = pooling_layer->get_input_width();
+    const Index channels = pooling_layer->get_channels_number();
+
+    cout << "Pooling layer back propagation CUDA" << endl;
+    cout << "Input derivatives:" << endl
+        << matrix_4d_from_device(input_derivatives, batch_size, input_height, input_width, channels) << endl;
 }
 
 
-void PoolingLayerBackPropagationCuda::free()
+void PoolingBackPropagationCuda::free()
 {
     cudaFree(input_derivatives);
 }

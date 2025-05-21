@@ -5,6 +5,62 @@
 #include "kernel.cuh"
 
 
+__global__ void reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
+    const int batch_samples_number, const int channels, const int height, const int width)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int total = batch_samples_number * channels * width * height;
+    if (idx >= total) return;
+
+    int tmp = idx;
+    int h = tmp % height;    tmp /= height;
+    int w = tmp % width;     tmp /= width;
+    int c = tmp % channels;
+    int b = tmp / channels;
+
+    int in_idx = ((b * channels + c) * height + h) * width + w;
+
+    destination[idx] = source[in_idx];
+}
+
+
+void reorder_inputs_cuda(const float* source, float* destination, int N,int C,int H,int W)
+{
+    int total = N * H * W * C;
+    const int threads_per_block = 256;
+    int blocks = (total + threads_per_block - 1) / threads_per_block;
+
+    reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
+}
+
+
+__global__ void invert_reorder_inputs_kernel(const float* __restrict__ source, float* __restrict__ destination,
+    const int batch_samples_number, const int channels, const int height, const int width)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int total = batch_samples_number * channels * height * width;
+    if (idx >= total) return;
+
+    int tmp = idx;
+    int h = tmp % height;    tmp /= height;
+    int w = tmp % width;     tmp /= width;
+    int c = tmp % channels;  tmp /= channels;
+    int b = tmp;
+
+    int dest_idx = ((b * channels + c) * height + h) * width + w;
+    destination[dest_idx] = source[idx];
+}
+
+
+void invert_reorder_inputs_cuda(const float* source, float* destination, int N, int C, int H, int W)
+{
+    int total = N * C * H * W;
+    const int threads_per_block = 256;
+    int blocks = (total + threads_per_block - 1) / threads_per_block;
+    invert_reorder_inputs_kernel << <blocks, threads_per_block >> > (source, destination, N, C, H, W);
+}
+
+
 __global__ void reverse_kernel(type* d_kernel, int width, int height, int channels) 
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;

@@ -258,9 +258,9 @@ struct ConvolutionalBackPropagation : LayerBackPropagation
 
 #ifdef OPENNN_CUDA
 
-struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagationCuda
+struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    ConvolutionalLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    ConvolutionalForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair_device() const;
 
@@ -281,17 +281,19 @@ struct ConvolutionalLayerForwardPropagationCuda : public LayerForwardPropagation
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
-    vector<cudnnConvolutionFwdAlgoPerf_t> perfResults;
-    int returnedAlgoCount = 0;
 
     void* workspace = nullptr;
     size_t workspace_bytes = 0;
+
+    bool is_first_layer = false;
+
+    type* reordered_inputs_device = nullptr;
 };
 
 
-struct ConvolutionalLayerBackPropagationCuda : public LayerBackPropagationCuda
+struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 {
-    ConvolutionalLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    ConvolutionalBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 

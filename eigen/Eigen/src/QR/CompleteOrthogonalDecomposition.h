@@ -614,12 +614,12 @@ struct Assignment<DstXprType, Inverse<CompleteOrthogonalDecomposition<MatrixType
                   Dense2Dense> {
   typedef CompleteOrthogonalDecomposition<MatrixType, PermutationIndex> CodType;
   typedef Inverse<CodType> SrcXprType;
-  static void run(DstXprType& dst, const SrcXprType& src,
+  static void run(DstXprType& dst, const SrcXprType& source,
                   const internal::assign_op<typename DstXprType::Scalar, typename CodType::Scalar>&) {
     typedef Matrix<typename CodType::Scalar, CodType::RowsAtCompileTime, CodType::RowsAtCompileTime, 0,
                    CodType::MaxRowsAtCompileTime, CodType::MaxRowsAtCompileTime>
         IdentityMatrixType;
-    dst = src.nestedExpression().solve(IdentityMatrixType::Identity(src.cols(), src.cols()));
+    dst = source.nestedExpression().solve(IdentityMatrixType::Identity(source.cols(), source.cols()));
   }
 };
 

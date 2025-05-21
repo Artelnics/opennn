@@ -257,8 +257,8 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 {
     const Index outputs_number = get_outputs_number();
 
-    ScalingLayer2DForwardPropagation* scaling_layer_forward_propagation =
-        static_cast<ScalingLayer2DForwardPropagation*>(forward_propagation.get());
+    Scaling2dForwardPropagation* scaling_layer_forward_propagation =
+        static_cast<Scaling2dForwardPropagation*>(forward_propagation.get());
 
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -306,6 +306,70 @@ void Scaling2d::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
 }
 
+
+void Scaling2d::calculate_outputs(type* inputs_data, const Tensor<Index, 1>& inputs_dimensions,
+                                  type* outputs_data, const Tensor<Index, 1>& outputs_dimensions)
+{
+    const Index input_rank = inputs_dimensions.size();
+
+    if(input_rank == 2)
+    {
+        const Index points_number = inputs_dimensions(0);
+        const Index neurons_number = get_inputs_number();
+
+        const Tensor<Index, 0> input_size = inputs_dimensions.prod();
+
+        const TensorMap<Tensor<type, 2>> inputs(inputs_data, inputs_dimensions(0), inputs_dimensions(1));
+        TensorMap<Tensor<type, 2>> outputs(outputs_data, outputs_dimensions[0], outputs_dimensions(1));
+
+        if(outputs_dimensions[0] != points_number || outputs_dimensions(1) != neurons_number)
+        {
+            throw runtime_error("Outputs dimensions must be equal");
+        }
+
+        for(Index i = 0; i < neurons_number; i++)
+        {
+            const Scaler scaler = scalers[i];
+
+            Tensor<type, 1> column = inputs.chip(i, 1);
+
+            if(scaler == Scaler::None)
+                column = inputs.chip(i,1);
+            else if(scaler == Scaler::MinimumMaximum)
+                column = (inputs.chip(i, 1) - descriptives[i].minimum) / (descriptives[i].maximum - descriptives[i].minimum);
+            else if(scaler == Scaler::MeanStandardDeviation)
+                column = (inputs.chip(i, 1) - descriptives[i].mean) / descriptives[i].standard_deviation;
+            else if(scaler == Scaler::StandardDeviation)
+                column = (1/descriptives[i].standard_deviation) * inputs.chip(i, 1);
+            else if(scaler == Scaler::Logarithm)
+                column = inputs.chip(i,1).log();
+            else
+                throw runtime_error("Unknown scaling method.\n");
+
+            outputs.chip(i, 1) = column;
+        }
+    }
+    else if(input_rank == 4)
+    {
+        const Tensor<bool, 0> equal_dimensions = (inputs_dimensions == outputs_dimensions).any().all();
+
+        if(!equal_dimensions(0))
+        {
+            throw runtime_error("Input and output data must have the same dimensions.\n");
+        }
+
+        TensorMap<Tensor<type, 4>> input(inputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+
+        TensorMap<Tensor<type, 4>> output(outputs_data, inputs_dimensions(0), inputs_dimensions(1), inputs_dimensions(2), inputs_dimensions(3));
+
+        for(Index i = 0; i < input.size(); i++)
+        {
+            output(i) = -static_cast<type>(1) + static_cast<type>(2*input(i)/255);
+        }
+    }
+    else
+        throw runtime_error("Input dimension must be 2 or 4.\n");
+}
 
 string Scaling2d::write_no_scaling_expression(const vector<string>& input_names, const vector<string>& output_names) const
 {
@@ -503,14 +567,14 @@ void Scaling2d::from_XML(const XMLDocument& document)
 }
 
 
-ScalingLayer2DForwardPropagation::ScalingLayer2DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Scaling2dForwardPropagation::Scaling2dForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Scaling2dForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -518,7 +582,7 @@ pair<type*, dimensions> ScalingLayer2DForwardPropagation::get_outputs_pair() con
 }
 
 
-void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Scaling2dForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -530,7 +594,7 @@ void ScalingLayer2DForwardPropagation::set(const Index& new_batch_size, Layer* n
 }
 
 
-void ScalingLayer2DForwardPropagation::print() const
+void Scaling2dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl;

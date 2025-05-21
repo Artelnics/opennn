@@ -237,7 +237,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-    
+
     optimization_data.iteration = 1;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
@@ -442,7 +442,7 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
                                                  AdaptiveMomentEstimationData& optimization_data) const
 {
-    NeuralNetwork* neural_network = loss_index->get_neural_network();
+    NeuralNetwork* neural_network = back_propagation.loss_index->get_neural_network();
 
     Index& iteration = optimization_data.iteration;
     
@@ -464,7 +464,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
 
-    type effective_learning_rate = learning_rate * bias_correction;
+    type effective_learning_rate = type(learning_rate * bias_correction);
 
     if(use_custom_learning_rate)
     {
@@ -480,7 +480,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     optimization_data.iteration++;
 
     // Update parameters
-
     neural_network->set_parameters(parameters);
 }
 
@@ -627,10 +626,10 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     // Loss Index
 
     loss_index->set_normalization_coefficient();
-    
+
     BackPropagationCuda training_back_propagation_cuda(training_batch_samples_number, loss_index);
     BackPropagationCuda selection_back_propagation_cuda(selection_batch_samples_number, loss_index);
-    
+
     type training_error = type(0);
     type training_accuracy = type(0);
 
@@ -640,9 +639,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     Index selection_failures = 0;
 
     // Optimization algorithm
-    
+
     ADAMOptimizationDataCuda optimization_data_cuda(this);
-    
+
     bool stop_training = false;
     bool is_training = true;
 
@@ -672,6 +671,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
         for (Index iteration = 0; iteration < training_batches_number; iteration++)
         {
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch_cuda.fill(training_batches[iteration],
@@ -998,10 +998,11 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
     // Aux ones
 
     if (cudaMalloc(&ones, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "aux ones allocation error" << endl;
+        cout << "aux ones device allocation error" << endl;
 
-    for (Index i = 0; i < parameters_number; i++)
-        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
+    vector<float> host_ones(parameters_number, 1.0f);
+    if (cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
+        cout << "aux ones cudaMemcpy error" << endl;
 }
 
 

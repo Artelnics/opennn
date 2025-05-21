@@ -471,7 +471,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
                                           is_training);
 
         // Loss index
-
         loss_index->back_propagate(training_batch, 
                                    training_forward_propagation, 
                                    training_back_propagation);

@@ -843,13 +843,13 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE bool(isfinite)(const Eigen::half& h) {
 #endif
 
 template <>
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half bit_cast<Eigen::half, uint16_t>(const uint16_t& src) {
-  return Eigen::half(Eigen::half_impl::raw_uint16_to_half(src));
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half bit_cast<Eigen::half, uint16_t>(const uint16_t& source) {
+  return Eigen::half(Eigen::half_impl::raw_uint16_to_half(source));
 }
 
 template <>
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC uint16_t bit_cast<uint16_t, Eigen::half>(const Eigen::half& src) {
-  return Eigen::half_impl::raw_half_as_uint16(src);
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC uint16_t bit_cast<uint16_t, Eigen::half>(const Eigen::half& source) {
+  return Eigen::half_impl::raw_half_as_uint16(source);
 }
 
 }  // namespace numext
@@ -870,10 +870,10 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC uint16_t bit_cast<uint16_t, Eigen::half>(c
 
 #if defined(EIGEN_HAS_CUDA_FP16) && EIGEN_CUDA_SDK_VER >= 90000
 
-__device__ EIGEN_STRONG_INLINE Eigen::half __shfl_sync(unsigned mask, Eigen::half var, int srcLane,
+__device__ EIGEN_STRONG_INLINE Eigen::half __shfl_sync(unsigned mask, Eigen::half var, int sourceLane,
                                                        int width = warpSize) {
   const __half h = var;
-  return static_cast<Eigen::half>(__shfl_sync(mask, h, srcLane, width));
+  return static_cast<Eigen::half>(__shfl_sync(mask, h, sourceLane, width));
 }
 
 __device__ EIGEN_STRONG_INLINE Eigen::half __shfl_up_sync(unsigned mask, Eigen::half var, unsigned int delta,
@@ -896,9 +896,9 @@ __device__ EIGEN_STRONG_INLINE Eigen::half __shfl_xor_sync(unsigned mask, Eigen:
 
 #else  // HIP or CUDA SDK < 9.0
 
-__device__ EIGEN_STRONG_INLINE Eigen::half __shfl(Eigen::half var, int srcLane, int width = warpSize) {
+__device__ EIGEN_STRONG_INLINE Eigen::half __shfl(Eigen::half var, int sourceLane, int width = warpSize) {
   const int ivar = static_cast<int>(Eigen::numext::bit_cast<Eigen::numext::uint16_t>(var));
-  return Eigen::numext::bit_cast<Eigen::half>(static_cast<Eigen::numext::uint16_t>(__shfl(ivar, srcLane, width)));
+  return Eigen::numext::bit_cast<Eigen::half>(static_cast<Eigen::numext::uint16_t>(__shfl(ivar, sourceLane, width)));
 }
 
 __device__ EIGEN_STRONG_INLINE Eigen::half __shfl_up(Eigen::half var, unsigned int delta, int width = warpSize) {

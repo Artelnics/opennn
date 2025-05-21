@@ -63,22 +63,22 @@ template <typename DstXprType, typename Lhs, typename Rhs, int Options, typename
 struct AssignmentWithDevice<DstXprType, Product<Lhs, Rhs, Options>, Functor, Device, Dense2Dense, Weak> {
   using SrcXprType = Product<Lhs, Rhs, Options>;
   using Base = Assignment<DstXprType, SrcXprType, Functor>;
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src, const Functor& func,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source, const Functor& func,
                                                         Device&) {
-    Base::run(dst, src, func);
+    Base::run(dst, source, func);
   };
 };
 
 // specialization for coeffcient-wise assignment
 template <typename DstXprType, typename SrcXprType, typename Functor, typename Device, typename Weak>
 struct AssignmentWithDevice<DstXprType, SrcXprType, Functor, Device, Dense2Dense, Weak> {
-  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& src, const Functor& func,
+  static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void run(DstXprType& dst, const SrcXprType& source, const Functor& func,
                                                         Device& device) {
 #ifndef EIGEN_NO_DEBUG
-    internal::check_for_aliasing(dst, src);
+    internal::check_for_aliasing(dst, source);
 #endif
 
-    call_dense_assignment_loop(dst, src, func, device);
+    call_dense_assignment_loop(dst, source, func, device);
   }
 };
 
@@ -93,7 +93,7 @@ struct dense_assignment_loop_with_device {
 // entry point for a generic expression with device
 template <typename Dst, typename Src, typename Func, typename Device>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_alias(DeviceWrapper<Dst, Device> dst,
-                                                                                    const Src& src, const Func& func) {
+                                                                                    const Src& source, const Func& func) {
   enum {
     NeedToTranspose = ((int(Dst::RowsAtCompileTime) == 1 && int(Src::ColsAtCompileTime) == 1) ||
                        (int(Dst::ColsAtCompileTime) == 1 && int(Src::RowsAtCompileTime) == 1)) &&
@@ -110,29 +110,29 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_assignment_no_al
   EIGEN_CHECK_BINARY_COMPATIBILIY(Func, typename ActualDstTypeCleaned::Scalar, typename Src::Scalar);
 
   // this provides a mechanism for specializing simple assignments, matrix products, etc
-  AssignmentWithDevice<ActualDstTypeCleaned, Src, Func, Device>::run(actualDst, src, func, dst.device());
+  AssignmentWithDevice<ActualDstTypeCleaned, Src, Func, Device>::run(actualDst, source, func, dst.device());
 }
 
 // copy and pasted from AssignEvaluator except forward device to kernel
 template <typename DstXprType, typename SrcXprType, typename Functor, typename Device>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE EIGEN_CONSTEXPR void call_dense_assignment_loop(DstXprType& dst,
-                                                                                      const SrcXprType& src,
+                                                                                      const SrcXprType& source,
                                                                                       const Functor& func,
                                                                                       Device& device) {
   using DstEvaluatorType = evaluator<DstXprType>;
   using SrcEvaluatorType = evaluator<SrcXprType>;
 
-  SrcEvaluatorType srcEvaluator(src);
+  SrcEvaluatorType sourceEvaluator(source);
 
   // NOTE To properly handle A = (A*A.transpose())/s with A rectangular,
   // we need to resize the destination after the source evaluator has been created.
-  resize_if_allowed(dst, src, func);
+  resize_if_allowed(dst, source, func);
 
   DstEvaluatorType dstEvaluator(dst);
 
   using Kernel = generic_dense_assignment_kernel<DstEvaluatorType, SrcEvaluatorType, Functor>;
 
-  Kernel kernel(dstEvaluator, srcEvaluator, func, dst.const_cast_derived());
+  Kernel kernel(dstEvaluator, sourceEvaluator, func, dst.const_cast_derived());
 
   dense_assignment_loop_with_device<Kernel, Device>::run(kernel, device);
 }

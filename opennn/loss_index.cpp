@@ -163,28 +163,19 @@ void LossIndex::back_propagate(const Batch& batch,
 
     // Loss index
 
-    // cout << "eee" << endl;
-
     calculate_error(batch, forward_propagation, back_propagation);
 
-    // cout << "ex" << endl;
-
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
-
-    // cout << "exex" << endl;
-
-    assemble_layers_error_gradient(back_propagation);
-
-    // cout << "exexex" << endl;
 
     // Loss
 
     back_propagation.loss = back_propagation.error();
 
     // Regularization
-
     add_regularization(back_propagation);
 
+    // Assemble gradient
+    assemble_layers_error_gradient(back_propagation);
 }
 
 
@@ -344,7 +335,7 @@ string LossIndex::write_regularization_method() const
 
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
-{   
+{
     switch(regularization_method)
     {
         case RegularizationMethod::NoRegularization: 

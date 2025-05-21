@@ -705,8 +705,8 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Forward propagation
 
-    PerceptronLayerForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
-        static_cast<PerceptronLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    PerceptronForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
+        static_cast<PerceptronForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
 
@@ -795,8 +795,8 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    PerceptronLayerForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
-        static_cast<PerceptronLayerForwardPropagationCuda*>(forward_propagation_cuda.get());
+    PerceptronForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
+        static_cast<PerceptronForwardPropagationCuda*>(forward_propagation_cuda.get());
 
     Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
 
@@ -807,8 +807,8 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Back propagation
 
-    PerceptronLayerBackPropagationCuda* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    PerceptronBackPropagationCuda* perceptron_layer_back_propagation =
+        static_cast<PerceptronBackPropagationCuda*>(back_propagation_cuda.get());
 
     float* ones = perceptron_layer_back_propagation->ones;
     float* error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives_device;
@@ -890,8 +890,8 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
                                       Index& index, 
                                       float* gradient) const
 {
-    PerceptronLayerBackPropagationCuda* perceptron_layer_back_propagation =
-        static_cast<PerceptronLayerBackPropagationCuda*>(back_propagation_cuda.get());
+    PerceptronBackPropagationCuda* perceptron_layer_back_propagation =
+        static_cast<PerceptronBackPropagationCuda*>(back_propagation_cuda.get());
 
     copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weights_derivatives_device, weights.size(), index);
     copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->biases_derivatives_device, biases.size(), index);
@@ -990,14 +990,14 @@ float* Perceptron::get_biases_device() const
 
 // CUDA structs
 
-PerceptronLayerForwardPropagationCuda::PerceptronLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+PerceptronForwardPropagationCuda::PerceptronForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-void PerceptronLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_size = new_batch_samples_number;
 
@@ -1086,13 +1086,13 @@ void PerceptronLayerForwardPropagationCuda::set(const Index& new_batch_samples_n
     }
 }
 
-void PerceptronLayerForwardPropagationCuda::print() const
+void PerceptronForwardPropagationCuda::print() const
 {
     // @todo
 }
 
 
-void PerceptronLayerForwardPropagationCuda::free()
+void PerceptronForwardPropagationCuda::free()
 {
     cudaFree(combinations);
     cudaFree(outputs);
@@ -1105,7 +1105,7 @@ void PerceptronLayerForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> PerceptronLayerForwardPropagationCuda::get_outputs_pair_device() const
+pair<type*, dimensions> PerceptronForwardPropagationCuda::get_outputs_pair_device() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -1113,14 +1113,14 @@ pair<type*, dimensions> PerceptronLayerForwardPropagationCuda::get_outputs_pair_
 }
 
 
-PerceptronLayerBackPropagationCuda::PerceptronLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+PerceptronBackPropagationCuda::PerceptronBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
     set(new_batch_samples_number, new_layer);
 }
 
 
-void PerceptronLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void PerceptronBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
     batch_size = new_batch_samples_number;
 
@@ -1183,7 +1183,7 @@ void PerceptronLayerBackPropagationCuda::set(const Index& new_batch_samples_numb
 }
 
 
-vector<pair<type*, dimensions>> PerceptronLayerBackPropagationCuda::get_input_derivative_pairs_device() const
+vector<pair<type*, dimensions>> PerceptronBackPropagationCuda::get_input_derivative_pairs_device() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -1191,13 +1191,13 @@ vector<pair<type*, dimensions>> PerceptronLayerBackPropagationCuda::get_input_de
 }
 
 
-void PerceptronLayerBackPropagationCuda::print() const
+void PerceptronBackPropagationCuda::print() const
 {
     // @todo
 }
 
 
-void PerceptronLayerBackPropagationCuda::free()
+void PerceptronBackPropagationCuda::free()
 {
     cudaFree(biases_derivatives_device);
     cudaFree(weights_derivatives_device);

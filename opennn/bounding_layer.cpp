@@ -153,8 +153,8 @@ void Bounding::forward_propagate(const vector<pair<type*, dimensions>>& input_pa
 
     const TensorMap<Tensor<type,2>> inputs = tensor_map_2(input_pairs[0]);
 
-    BoundingLayerForwardPropagation* bounding_layer_forward_propagation =
-        static_cast<BoundingLayerForwardPropagation*>(forward_propagation.get());
+    BoundingForwardPropagation* bounding_layer_forward_propagation =
+        static_cast<BoundingForwardPropagation*>(forward_propagation.get());
 
     Tensor<type,2>& outputs = bounding_layer_forward_propagation->outputs;
 
@@ -283,14 +283,14 @@ void Bounding::from_XML(const XMLDocument& document)
 }
 
 
-BoundingLayerForwardPropagation::BoundingLayerForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+BoundingForwardPropagation::BoundingForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> BoundingForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
 
@@ -298,7 +298,7 @@ pair<type*, dimensions> BoundingLayerForwardPropagation::get_outputs_pair() cons
 }
 
 
-void BoundingLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void BoundingForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -310,7 +310,7 @@ void BoundingLayerForwardPropagation::set(const Index& new_batch_size, Layer* ne
 }
 
 
-void BoundingLayerForwardPropagation::print() const
+void BoundingForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl;

@@ -372,19 +372,19 @@ struct check_transpose_aliasing_compile_time_selector<DestIsTransposed, CwiseBin
 
 template <typename Scalar, bool DestIsTransposed, typename OtherDerived>
 struct check_transpose_aliasing_run_time_selector {
-  EIGEN_DEVICE_FUNC static bool run(const Scalar* dest, const OtherDerived& src) {
+  EIGEN_DEVICE_FUNC static bool run(const Scalar* dest, const OtherDerived& source) {
     return (bool(blas_traits<OtherDerived>::IsTransposed) != DestIsTransposed) &&
-           (dest != 0 && dest == (const Scalar*)extract_data(src));
+           (dest != 0 && dest == (const Scalar*)extract_data(source));
   }
 };
 
 template <typename Scalar, bool DestIsTransposed, typename BinOp, typename DerivedA, typename DerivedB>
 struct check_transpose_aliasing_run_time_selector<Scalar, DestIsTransposed, CwiseBinaryOp<BinOp, DerivedA, DerivedB> > {
-  EIGEN_DEVICE_FUNC static bool run(const Scalar* dest, const CwiseBinaryOp<BinOp, DerivedA, DerivedB>& src) {
+  EIGEN_DEVICE_FUNC static bool run(const Scalar* dest, const CwiseBinaryOp<BinOp, DerivedA, DerivedB>& source) {
     return ((blas_traits<DerivedA>::IsTransposed != DestIsTransposed) &&
-            (dest != 0 && dest == (const Scalar*)extract_data(src.lhs()))) ||
+            (dest != 0 && dest == (const Scalar*)extract_data(source.lhs()))) ||
            ((blas_traits<DerivedB>::IsTransposed != DestIsTransposed) &&
-            (dest != 0 && dest == (const Scalar*)extract_data(src.rhs())));
+            (dest != 0 && dest == (const Scalar*)extract_data(source.rhs())));
   }
 };
 
@@ -413,9 +413,9 @@ struct checkTransposeAliasing_impl<Derived, OtherDerived, false> {
 };
 
 template <typename Dst, typename Src>
-EIGEN_DEVICE_FUNC inline void check_for_aliasing(const Dst& dst, const Src& src) {
+EIGEN_DEVICE_FUNC inline void check_for_aliasing(const Dst& dst, const Src& source) {
   if ((!Dst::IsVectorAtCompileTime) && dst.rows() > 1 && dst.cols() > 1)
-    internal::checkTransposeAliasing_impl<Dst, Src>::run(dst, src);
+    internal::checkTransposeAliasing_impl<Dst, Src>::run(dst, source);
 }
 
 }  // end namespace internal

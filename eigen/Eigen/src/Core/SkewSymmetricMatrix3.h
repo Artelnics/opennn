@@ -348,13 +348,13 @@ struct AssignmentKind<DenseShape, SkewSymmetricShape> {
 template <typename DstXprType, typename SrcXprType, typename Functor>
 struct Assignment<DstXprType, SrcXprType, Functor, SkewSymmetric2Dense> {
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
     if ((dst.rows() != 3) || (dst.cols() != 3)) {
       dst.resize(3, 3);
     }
     dst.diagonal().setZero();
-    const typename SrcXprType::SkewSymmetricVectorType v = src.vector();
+    const typename SrcXprType::SkewSymmetricVectorType v = source.vector();
     dst(0, 1) = -v(2);
     dst(1, 0) = v(2);
     dst(0, 2) = v(1);
@@ -363,15 +363,15 @@ struct Assignment<DstXprType, SrcXprType, Functor, SkewSymmetric2Dense> {
     dst(2, 1) = v(0);
   }
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::add_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.vector() += src.vector();
+    dst.vector() += source.vector();
   }
 
   EIGEN_DEVICE_FUNC static void run(
-      DstXprType& dst, const SrcXprType& src,
+      DstXprType& dst, const SrcXprType& source,
       const internal::sub_assign_op<typename DstXprType::Scalar, typename SrcXprType::Scalar>& /*func*/) {
-    dst.vector() -= src.vector();
+    dst.vector() -= source.vector();
   }
 };
 

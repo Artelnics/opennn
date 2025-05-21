@@ -239,8 +239,8 @@ void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    ProbabilisticLayer3DForwardPropagation* this_forward_propagation =
-        static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
+    Probabilistic3DForwardPropagation* this_forward_propagation =
+        static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.get());
     
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -259,8 +259,8 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
 
     // Forward propagation
 
-    ProbabilisticLayer3DForwardPropagation* this_forward_propagation =
-            static_cast<ProbabilisticLayer3DForwardPropagation*>(forward_propagation.get());
+    Probabilistic3DForwardPropagation* this_forward_propagation =
+            static_cast<Probabilistic3DForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
@@ -372,14 +372,14 @@ void Probabilistic3d::to_XML(XMLPrinter& printer) const
 }
 
 
-ProbabilisticLayer3DForwardPropagation::ProbabilisticLayer3DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
+Probabilistic3DForwardPropagation::Probabilistic3DForwardPropagation(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair() const
+pair<type*, dimensions> Probabilistic3DForwardPropagation::get_outputs_pair() const
 {
     Probabilistic3d* probabilistic_layer_3d = static_cast<Probabilistic3d*>(layer);
 
@@ -390,7 +390,7 @@ pair<type*, dimensions> ProbabilisticLayer3DForwardPropagation::get_outputs_pair
 }
 
 
-void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
+void Probabilistic3DForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
     layer = new_layer;
 
@@ -405,7 +405,7 @@ void ProbabilisticLayer3DForwardPropagation::set(const Index& new_batch_size, La
 }
 
 
-void ProbabilisticLayer3DForwardPropagation::print() const
+void Probabilistic3DForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl;
