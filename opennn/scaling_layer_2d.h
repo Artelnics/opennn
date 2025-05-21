@@ -58,6 +58,8 @@ public:
                           unique_ptr<LayerForwardPropagation>&,
                           const bool&) override;
 
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>& );
+
    string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
 
    string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;

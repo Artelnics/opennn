@@ -1014,9 +1014,9 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
     return hist;
 }
 
+/*
 Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
 {
-    /*
     const Index size = vector.dimension(0);
 
     Tensor<type, 1> minimums(bins_number);
@@ -1119,11 +1119,11 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
 
-    */
     
     Histogram histogram(bins_number);
     return histogram;
 }
+*/
 
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
@@ -1240,10 +1240,13 @@ vector<Histogram> histograms(const Tensor<type, 2>& matrix, const Index& bins_nu
     const Index columns_number = matrix.dimension(1);
 
     vector<Histogram> histograms(columns_number);
-/*
+
     for(Index i = 0; i < columns_number; i++)
-        histograms(i) = histogram(tensor_map(matrix, i), bins_number);
-*/
+    {
+        Tensor<type, 1> column = Tensor<type, 1>(tensor_map(matrix, i));
+        histograms[i] = histogram(column, bins_number);
+    }
+
     return histograms;
 }
 

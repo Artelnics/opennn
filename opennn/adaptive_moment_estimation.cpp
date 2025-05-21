@@ -231,7 +231,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         shuffle = false;
 
     // Main loop
-    
+
     optimization_data.iteration = 1;
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
@@ -462,7 +462,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     square_gradient_exponential_decay.device(*thread_pool_device)
         = gradient.square() * (type(1) - beta_2) + square_gradient_exponential_decay * beta_2;
 
-    type effective_learning_rate = learning_rate * bias_correction;
+    type effective_learning_rate = type(learning_rate * bias_correction);
 
     if(use_custom_learning_rate)
     {
@@ -478,7 +478,6 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     optimization_data.iteration++;
 
     // Update parameters
-
     neural_network->set_parameters(parameters);
 }
 
