@@ -155,15 +155,11 @@ void Scaling2d::set(const dimensions& new_input_dimensions)
     const Index new_inputs_number = accumulate(new_input_dimensions.begin(), new_input_dimensions.end(), 1, multiplies<Index>());
 
     descriptives.resize(new_inputs_number);
-
-    //new:
-    // for(Index i = 0; i < new_inputs_number; i++){
-    //     set_minimum(i,type(-1.0));
-    //     set_maximum(i,type(1));
-    //     set_mean(i,type(0));
-    //     set_standard_deviation(i,type(1));
-    // }
-    //end new
+    
+    for(Index i = 0; i < new_inputs_number; i++)
+    {
+        descriptives[i].set(type(-1.0), type(1), type(0), type(1));
+    }
 
     scalers.resize(new_inputs_number, Scaler::MeanStandardDeviation);
 

@@ -1688,8 +1688,8 @@ namespace opennn
 
 
     void DataSet::set(const Index& new_samples_number,
-        const dimensions& new_input_dimensions,
-        const dimensions& new_target_dimensions)
+                      const dimensions& new_input_dimensions,
+                      const dimensions& new_target_dimensions)
     {
         if (new_samples_number == 0
             || new_input_dimensions.empty()
@@ -2412,7 +2412,7 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
     {
-        cout << "Calculating correlations..." << endl;
+        if (display) cout << "Calculating correlations..." << endl;
 
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2450,7 +2450,7 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
     {
-        cout << "Calculating correlations..." << endl;
+        if (display) cout << "Calculating correlations..." << endl;
 
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);

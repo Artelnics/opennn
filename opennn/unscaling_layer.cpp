@@ -207,6 +207,9 @@ void Unscaling::set(const Index& new_neurons_number, const string& new_name)
 {
     descriptives.resize(new_neurons_number);
 
+    for (Index i = 0; i < new_neurons_number; i++)
+        descriptives[i].set(type(-1.0), type(1), type(0), type(1));
+
     scalers.resize(new_neurons_number, Scaler::MinimumMaximum);
 
     name = new_name;

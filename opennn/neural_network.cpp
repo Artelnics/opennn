@@ -768,8 +768,6 @@ Index NeuralNetwork::get_inputs_number() const
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
-    print_vector(input_dimensions);
-
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
 }
 

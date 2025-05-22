@@ -26,7 +26,6 @@ Descriptives::Descriptives(const type& new_minimum,
     maximum = new_maximum;
     mean = new_mean;
     standard_deviation = new_standard_deviation;
-
 }
 
 
@@ -46,7 +45,6 @@ void Descriptives::set(const type& new_minimum, const type& new_maximum,
     maximum = new_maximum;
     mean = new_mean;
     standard_deviation = new_standard_deviation;
-
 }
 
 

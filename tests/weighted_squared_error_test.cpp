@@ -3,7 +3,7 @@
 #include "../opennn/forward_propagation.h"
 #include "../opennn/back_propagation.h"
 #include "../opennn/weighted_squared_error.h"
-#include "gtest/gtest.h"
+
 
 TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
@@ -24,6 +24,7 @@ TEST(WeightedSquaredErrorTest, GeneralConstructor)
     EXPECT_EQ(weighted_squared_error.has_neural_network(), true);
     EXPECT_EQ(weighted_squared_error.has_data_set(), true);
 }
+
 
 TEST(WeightedSquaredErrorTest, BackPropagate)
 {
@@ -65,7 +66,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     EXPECT_EQ(back_propagation.errors.dimension(0), samples_number);
     EXPECT_EQ(back_propagation.errors.dimension(1), outputs_number);
-    //std::cout << "Back Propagation Error: " << back_propagation.error() << std::endl;
+
     EXPECT_NEAR((abs(back_propagation.error()) - type(0.25)), type(0), NUMERIC_LIMITS_MIN);
     EXPECT_EQ(are_equal(back_propagation.gradient, numerical_gradient, type(1.0e-2)), true);
 
@@ -110,7 +111,7 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
 
     EXPECT_EQ(back_propagation_rand.errors.dimension(0), samples_number_rand);
     EXPECT_EQ(back_propagation_rand.errors.dimension(1), outputs_number_rand);
-    //std::cout << "Back Propagation Error Random: " << back_propagation_rand.error() << std::endl;
+
     EXPECT_EQ(are_equal(back_propagation_rand.gradient, numerical_gradient_rand, type(1.0e-2)), true);
 }
 
