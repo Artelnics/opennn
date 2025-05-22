@@ -1767,8 +1767,6 @@ namespace opennn
             }
         }
 
-        read_csv();
-
         sample_uses.resize(new_samples_number);
 
         split_samples_random();
