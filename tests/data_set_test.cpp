@@ -288,6 +288,7 @@ TEST(DataSet, ReadCSV_Basic)
     data_set.set_has_ids(false);
     data_set.set_missing_values_label("NA");
     data_set.set_codification(DataSet::Codification::UTF8);
+    data_set.set_display(false);
 
     ASSERT_NO_THROW(data_set.read_csv());
 
@@ -407,6 +408,7 @@ TEST(DataSet, ReadCSV_OnlyHeader)
     data_set.set_data_path(temp_csv_file_path);
     data_set.set_separator(DataSet::Separator::Comma);
     data_set.set_has_header(true);
+    data_set.set_display(false);
 
     ASSERT_NO_THROW(data_set.read_csv());
 
@@ -446,6 +448,7 @@ TEST(DataSet, ReadCSV_SpaceSeparator)
     data_set.set_data_path(temp_csv_file_path);
     data_set.set_separator(DataSet::Separator::Space);
     data_set.set_has_header(true);
+    data_set.set_display(false);
 
     ASSERT_NO_THROW(data_set.read_csv());
 
@@ -489,6 +492,7 @@ TEST(DataSet, ReadCSV_WithSampleIDs)
     data_set.set_separator(DataSet::Separator::Comma);
     data_set.set_has_header(true);
     data_set.set_has_ids(true);
+    data_set.set_display(false);
 
     ASSERT_NO_THROW(data_set.read_csv());
 
@@ -534,6 +538,7 @@ TEST(DataSet, ReadCSV_EmptyLinesAndWhitespaceSkipped)
     data_set.set_data_path(temp_csv_file_path);
     data_set.set_separator(opennn::DataSet::Separator::Comma);
     data_set.set_has_header(true);
+    data_set.set_display(false);
 
     ASSERT_NO_THROW(data_set.read_csv());
 
