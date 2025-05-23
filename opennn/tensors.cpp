@@ -187,7 +187,6 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     return matrix;
 }
 
-
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
@@ -666,14 +665,14 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 
 
 void fill_tensor_3D(const Tensor<type, 2>& matrix,
-                   const vector<Index>& rows_indices,
-                   const vector<Index>& columns_indices,
-                   type* tensor_data)
+                    const vector<Index>& rows_indices,
+                    const vector<Index>& columns_indices,
+                    type* tensor_data)
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
-    const Index batch_size = static_cast<Index>(ceil(rows_number * 0.1));
+    const Index batch_size=rows_indices.size();
     const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
@@ -686,14 +685,13 @@ void fill_tensor_3D(const Tensor<type, 2>& matrix,
         {
             Index actual_row = i + j * batch_size;
 
-            for (Index k = 0; k <= input_size; k++)
+            for (Index k = 0; k < input_size; k++)
             {
-                batch(i, j, k) = matrix(actual_row, k);
+                batch(i, j, k) = matrix(actual_row, columns_indices[k]);
             }
         }
     }
 }
-
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {

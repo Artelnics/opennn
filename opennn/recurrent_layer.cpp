@@ -189,7 +189,9 @@ void Recurrent::set_parameters_random()
 
     set_random(input_weights);
 
-    set_random(recurrent_weights);
+    recurrent_weights.setConstant(type(1));
+
+    //set_random(recurrent_weights);
 }
 
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
@@ -227,8 +229,6 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
                                   unique_ptr<LayerForwardPropagation>& forward_propagation,
                                   const bool& is_training)
 {
-    cout << "forward" << endl;
-
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
@@ -264,7 +264,6 @@ void Recurrent::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
         hidden_states.chip(t,1) = outputs;
     }
-    cout << "forward done" << endl;
 }
 
 
@@ -273,8 +272,6 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
                                unique_ptr<LayerForwardPropagation>& forward_propagation,
                                unique_ptr<LayerBackPropagation>& back_propagation) const
 {
-    cout << "backward" << endl;
-
     const Index batch_size = input_pairs[0].second[0];
     const Index time_steps = input_pairs[0].second[1];
     const Index input_size = input_pairs[0].second[2];
@@ -289,7 +286,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
-    Tensor<type, 2>& input_derivatives = recurrent_backward->input_derivatives;
+    Tensor<type, 3>& input_derivatives = recurrent_backward->input_derivatives;
     Tensor<type, 2>& input_weights_derivatives = recurrent_backward->input_weight_derivatives;
     Tensor<type, 2>& recurrent_weight_derivatives = recurrent_backward->recurrent_weight_derivatives;
     Tensor<type, 1>& bias_derivatives = recurrent_backward->bias_derivatives;
@@ -302,6 +299,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     for(Index t = time_steps - 1; t >= 0; --t)
     {
+
         combination_deltas.device(*thread_pool_device) =
             current_deltas * activation_derivatives.chip(t,1);
 
@@ -323,13 +321,11 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
         bias_derivatives.device(*thread_pool_device) += combination_deltas.sum(array<Index, 1>({ 0 }));
 
-        input_derivatives.device(*thread_pool_device) =
+        input_derivatives.chip(t,1).device(*thread_pool_device) =
             combination_deltas.contract(
                 input_weights.shuffle(array<Index,2>{{1,0}}),
             axes(1,0));
     }
-
-    cout << "backward done" << endl;
 }
 
 void Recurrent::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
@@ -428,6 +424,8 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 
 void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size=new_batch_size;
+
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
@@ -452,6 +450,8 @@ void RecurrentLayerForwardPropagation::print() const
 
 void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
+    batch_size=new_batch_size;
+
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
@@ -474,7 +474,7 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
 
     recurrent_weight_derivatives.resize(outputs_number, outputs_number);
 
-    input_derivatives.resize(batch_size, inputs_number);
+    input_derivatives.resize(batch_size, time_steps, inputs_number);
 
     input_weight_derivatives.setZero();
     recurrent_weight_derivatives.setZero();
