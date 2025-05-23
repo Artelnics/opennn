@@ -147,6 +147,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
         Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
         const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+
         if (input_raw_variables_number < minimum_inputs_number)
         {
             raw_variable_index++;
@@ -178,7 +179,6 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             if(data_set->has_nan())
                 data_set->scrub_missing_values();
-
             training_results = training_strategy->perform_training();
 
             if(training_results.get_selection_error() < minimum_selection_error)

@@ -86,8 +86,6 @@ string Recurrent::get_activation_function_string() const
 
 void Recurrent::set(const dimensions& new_input_dimensions, const dimensions& new_output_dimensions)
 {
-    batch_size=type(10);
-
     time_steps = get_timesteps();
 
     biases.resize(new_output_dimensions[0]);
@@ -430,7 +428,6 @@ pair<type*, dimensions> RecurrentLayerForwardPropagation::get_outputs_pair() con
 
 void RecurrentLayerForwardPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
-    batch_size=type(10);
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();
@@ -455,7 +452,6 @@ void RecurrentLayerForwardPropagation::print() const
 
 void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 {
-    batch_size=type(10);
     layer = new_layer;
 
     const Index outputs_number = layer->get_outputs_number();

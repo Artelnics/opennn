@@ -239,7 +239,7 @@ Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
         if(layer->get_type() == layer_type)
             return layer.get();
 
-    throw runtime_error("Neural network does not have layer type.");
+    throw runtime_error("Neural network must have at least one Perceptron Layer to perform this task.");
 }
 
 

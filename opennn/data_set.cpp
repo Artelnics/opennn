@@ -1767,9 +1767,6 @@ namespace opennn
             }
         }
 
-        if (!data_path.empty())
-            read_csv();
-
         sample_uses.resize(new_samples_number);
 
         split_samples_random();
@@ -3279,7 +3276,7 @@ namespace opennn
 
     void DataSet::load_data_binary()
     {
-        ifstream file(data_path);
+        ifstream file(data_path, ios::binary);
 
         if (!file.is_open())
             throw runtime_error("Failed to open file: " + data_path.string());
