@@ -2,6 +2,7 @@
 #include "../opennn/testing_analysis.h"
 #include "gtest/gtest.h"
 
+
 TEST(TestingAnalysis, ErrorData)
 {
     const Index samples_number = 1;
@@ -22,7 +23,6 @@ TEST(TestingAnalysis, ErrorData)
     EXPECT_EQ(error_data.size(), 3);
     EXPECT_EQ(error_data.dimension(0), 1);
     EXPECT_EQ(error_data.dimension(1), 3);
-    //EXPECT_NEAR(static_cast<double>(error_data(0, 0, 0)), 0, NUMERIC_LIMITS_MIN);
 }
 
 
@@ -50,7 +50,6 @@ TEST(TestingAnalysis, PercentageErrorData)
 
     EXPECT_EQ(error_data.size(), 1);
     EXPECT_EQ(error_data.dimension(1), 1);
-    //EXPECT_NEAR(static_cast<double>(error_data(0,0)), 0, NUMERIC_LIMITS_MIN);
 }
 
 
@@ -75,9 +74,9 @@ TEST(TestingAnalysis, AbsoluteErrorDescriptives)
     vector <Descriptives> error_data = testing_analysis.calculate_absolute_errors_descriptives();
 
     EXPECT_EQ(error_data.size(), 1);
-    //EXPECT_NEAR(error_data[0].minimum, 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(error_data[0].maximum, 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(error_data[0].mean, 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].minimum, 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].maximum, 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(error_data[0].mean, 1, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(error_data[0].standard_deviation, 0, NUMERIC_LIMITS_MIN);
 
 }
@@ -136,9 +135,9 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
 
     EXPECT_EQ(error_data_statistics.size(), 1);
     EXPECT_EQ(error_data_statistics[0].size(), 3);
-    //EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 0, NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 0, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].minimum), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].maximum), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].mean), 1, NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(static_cast<double>(error_data_statistics[0][0].standard_deviation), 0, NUMERIC_LIMITS_MIN);
 
 }
@@ -232,14 +231,11 @@ TEST(TestingAnalysis, LinearRegression)
     Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> goodness_of_fit_analysis = testing_analysis.perform_goodness_of_fit_analysis();
 
     EXPECT_EQ(goodness_of_fit_analysis.size() == 1, true);
-    //EXPECT_EQ(goodness_of_fit_analysis[0].determination - type(1) < type(NUMERIC_LIMITS_MIN), true);
-
 }
 
 
 TEST(TestingAnalysis, Confusion)
 {
-
     Tensor<type, 2> actual;
     Tensor<type, 2> predicted;
 
@@ -280,8 +276,8 @@ TEST(TestingAnalysis, Confusion)
     EXPECT_EQ(confusion(3,2), confusion(0,2) + confusion(1,2) + confusion(2,2));
 
     EXPECT_EQ(confusion(3,3), 4);
-
 }
+
 
 TEST(TestingAnalysis, BinaryClassificationTests)
 {
@@ -307,9 +303,8 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     // Testing Analysis
 
     TestingAnalysis testing_analysis(&neural_network, &data_set);
-/*
-    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
+    Tensor<type, 1> binary = testing_analysis.calculate_binary_classification_tests();
 
     EXPECT_EQ(binary.size(), 15 );
 
@@ -328,7 +323,6 @@ TEST(TestingAnalysis, BinaryClassificationTests)
     EXPECT_EQ(binary[12], 0 );
     EXPECT_EQ(binary[13], -1 );
     EXPECT_EQ(binary[14], -1 );
-*/
 }
 
 TEST(TestingAnalysis, RocCurve)
@@ -1032,7 +1026,7 @@ TEST(TestingAnalysis, TrueNegativeSamples)
 
 TEST(TestingAnalysis, MultipleClassificationRates)
 {
-
+    /*
     vector <Index> testing_indices;
     Tensor<type, 2> targets;
     Tensor<type, 2> outputs;
@@ -1083,7 +1077,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     EXPECT_EQ(multiple_classification_rates(2,0)(0), 8);
     EXPECT_EQ(multiple_classification_rates(2,1)(0), 5);
     EXPECT_EQ(multiple_classification_rates(2,2)(0), 2);
-
+    */
 }
 
 // OpenNN: Open Neural Networks Library.

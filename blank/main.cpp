@@ -23,7 +23,6 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
-
         // Data set
 
         LanguageDataSet text_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");

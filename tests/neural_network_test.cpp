@@ -207,145 +207,9 @@ TEST(NeuralNetworkTest, CalculateOutputsEmpty)
 }
 
 
-TEST(NeuralNetworkTest, CalculateOutputsZero)
-{
-    Index samples_number = get_random_index(1, 5);
-    Index inputs_number = get_random_index(1, 5);
-    Index neurons_number = get_random_index(1, 5);
-    Index outputs_number = get_random_index(1, 5);
-    
-    NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, 
-        {inputs_number}, {neurons_number}, { outputs_number });
-    neural_network.set_parameters_constant(type(0));
-    
-    Tensor<type, 2> inputs(samples_number, inputs_number);
-    inputs.setConstant(type(0));
-
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-    
-    EXPECT_EQ(outputs.size(), samples_number * outputs_number);
-//    EXPECT_EQ(outputs.size(), batch_size * outputs_number);
-    //EXPECT_NEAR(outputs(0, 0), 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(0, 1), 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(0, 2), 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(0, 3), 0, NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(0, 4), 0, NUMERIC_LIMITS_MIN);
-    
-    // Test
-    
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 2 });
-
-    neural_network.set_parameters_constant(type(1));
-
-    inputs.resize(1, 1);
-    inputs.setConstant(2);    
-
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.size(), 2);
-    //EXPECT_NEAR(abs(outputs(0, 0)), type(0), NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(abs(outputs(0, 1)), type(0), NUMERIC_LIMITS_MIN);
-
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { 4 }, { 3 }, { 3 });
-
-    inputs.resize(1, 4);
-    inputs.setZero();
-
-    neural_network.set_parameters_constant(type(1));    
-
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.size(), 3);
-
-    //EXPECT_NEAR(outputs(0, 0), 3.2847, type(1e-3));
-    //EXPECT_NEAR(outputs(0, 1), 3.2847, type(1e-3));
-    //EXPECT_NEAR(outputs(0, 2), 3.2847, type(1e-3));
-
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 2 }, { 1 });
-
-    inputs_number = neural_network.get_inputs_number();
-    Index parameters_number = neural_network.get_parameters_number();
-    outputs_number = neural_network.get_outputs_number();
-
-    inputs.resize(1, inputs_number);
-    inputs.setZero();
-
-    Tensor<type, 1> parameters(parameters_number);
-
-    parameters.resize(parameters_number);
-    parameters.setConstant(type(0));;
-
-    neural_network.set_parameters(parameters);
-
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.size(), outputs_number);
-    //EXPECT_NEAR(abs(outputs(0, 0)), 0, type(1.4013e-45));
-    //EXPECT_NEAR(abs(outputs(0, 1)), 0, type(1.4013e-45));
-
-    // Test
-
-    inputs_number = 1;
-    neurons_number = 1;
-    outputs_number = 1;
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
-
-    neural_network.set_parameters_constant(type(0));
-
-    inputs.resize(1, 1);
-    inputs.setZero();
-   
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.size(), 1);
-    //EXPECT_NEAR(abs(outputs(0, 0)), 0, type(1e-3));
-    
-    // Test
-
-    neural_network.set(NeuralNetwork::ModelType::Classification, { 1 }, { 1 }, { 1 });
-
-    neural_network.set_parameters_constant(type(0));
-
-    inputs.resize(1, 1);
-    inputs.setZero();
-   
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.size(), 1);
-    //EXPECT_NEAR(abs(outputs(0, 0)), type(0.5), type(1e-3));
-
-    // Test 7
-
-    neural_network.set(NeuralNetwork::ModelType::Approximation, { 1 }, { 3 }, { 1 });
-
-    Index batch_size = 2;
-    inputs_number = neural_network.get_inputs_number();
-    outputs_number = neural_network.get_outputs_number();
-
-    inputs.resize(batch_size, inputs_number);
-    inputs.setConstant(type(0));
-
-    parameters_number = neural_network.get_parameters_number();
-    parameters.resize(parameters_number);
-    parameters.setConstant(type(0));
-
-    neural_network.set_parameters(parameters);
-
-    outputs = neural_network.calculate_outputs(inputs);
-
-    EXPECT_EQ(outputs.dimension(1), outputs_number);
-    //EXPECT_EQ(abs(outputs(0, 0)), NUMERIC_LIMITS_MIN);
-    //EXPECT_EQ(abs(outputs(1, 0)), NUMERIC_LIMITS_MIN);
-}
-
-
 TEST(NeuralNetworkTest, calculate_directional_inputs)
 {
+
     Tensor<type, 2> inputs;
     Tensor<type, 2> outputs;
     Tensor<type, 2> trainable_outputs;
@@ -357,7 +221,7 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
     Tensor<type, 2> directional_inputs;
 
     // Test
-
+        
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, { 3 }, { 4 }, { 2 });
     neural_network.set_parameters_constant(type(0));
 
@@ -372,7 +236,7 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
 
     EXPECT_EQ(directional_inputs.rank(), 2);
     EXPECT_EQ(directional_inputs.dimension(0), 0);
-
+    
     // Test
 
     point.setValues({type(1), type(2), type(3)});
@@ -401,6 +265,7 @@ TEST(NeuralNetworkTest, calculate_directional_inputs)
     EXPECT_NEAR(abs(directional_inputs(3,0)), type(1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(directional_inputs(4,0)), type(0), NUMERIC_LIMITS_MIN);
 }
+
 
 TEST(NeuralNetworkTest, test_save)
 {

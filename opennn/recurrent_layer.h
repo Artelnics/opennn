@@ -154,7 +154,7 @@ struct RecurrentBackPropagation : LayerBackPropagation
 
     Tensor<type, 2> recurrent_weight_derivatives;
 
-    Tensor<type, 2> input_derivatives;
+    Tensor<type, 3> input_derivatives;
 
 };
 

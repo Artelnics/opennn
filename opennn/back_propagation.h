@@ -105,7 +105,6 @@ struct BackPropagationCuda
     float* ones = nullptr;
     float one = 1.0f;
 
-    // @todo
     Tensor<type, 0> accuracy;
     float* predictions = nullptr;
     float* matches = nullptr;

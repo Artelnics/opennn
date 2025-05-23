@@ -360,7 +360,7 @@ void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& in
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                        const bool& is_training)
 {
-    // @todo
+
 }
 
 
@@ -369,7 +369,7 @@ void Embedding::back_propagate_cuda(const vector<pair<type*, dimensions>>&,
                                     unique_ptr<LayerForwardPropagationCuda>&,
                                     unique_ptr<LayerBackPropagationCuda>&) const
 {
-    // @todo
+
 }
 
 
@@ -392,7 +392,7 @@ void Embedding::set_parameters_cuda(const float* new_parameters, Index& index)
 
 void Embedding::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
 {
-    // @todo
+
 }
 
 
@@ -445,13 +445,13 @@ EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const
 
 void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
 void EmbeddingLayerForwardPropagationCuda::print() const
 {
-    // @todo
+
 }
 
 
@@ -476,7 +476,7 @@ EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index
 
 void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
@@ -488,7 +488,7 @@ vector<pair<type*, dimensions>> EmbeddingLayerBackPropagationCuda::get_input_der
 
 void EmbeddingLayerBackPropagationCuda::print() const
 {
-    // @todo
+
 }
 
 #endif

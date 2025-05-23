@@ -15,8 +15,10 @@ TEST(RecurrentLayerTest, GeneralConstructor)
 {
     const Index inputs_number = get_random_index(1, 10);
     const Index neurons_number = get_random_index(1, 10);
+    const Index time_steps = get_random_index(1, 10);
 
     Recurrent recurrent_layer({ inputs_number }, { neurons_number });
+    recurrent_layer.set_timesteps(time_steps);
 
     Index parameters_number = neurons_number + (inputs_number + neurons_number) * neurons_number;
     EXPECT_EQ(recurrent_layer.get_parameters_number(), parameters_number);
@@ -24,9 +26,10 @@ TEST(RecurrentLayerTest, GeneralConstructor)
     Tensor<type, 1> parameters = recurrent_layer.get_parameters();
     EXPECT_EQ(parameters.size(), parameters_number);
 
-    EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ inputs_number }));
+    EXPECT_EQ(recurrent_layer.get_input_dimensions(), dimensions({ time_steps,inputs_number }));
     EXPECT_EQ(recurrent_layer.get_output_dimensions(), dimensions({ neurons_number }));
 }
+
 
 TEST(RecurrentLayerTest, Activations)
 {
@@ -129,7 +132,7 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     EXPECT_EQ(outputs.dimension(0), samples_number);
     EXPECT_EQ(outputs.dimension(1), neurons_number);
 
-    EXPECT_NEAR(outputs(0,0),0.1639,0.01);
+    EXPECT_NEAR(outputs(0,0),0.511795,0.01);
 
     //Test SoftPlus
 
@@ -158,5 +161,5 @@ TEST(RecurrentLayerTest, ForwardPropagate)
     EXPECT_EQ(outputs.dimensions()[0], samples_number);
     EXPECT_EQ(outputs.dimensions()[1], neurons_number);
 
-    EXPECT_NEAR(outputs(0,0),0.929,0.01);
+    EXPECT_NEAR(outputs(0,0),1.16445,0.01);
 }

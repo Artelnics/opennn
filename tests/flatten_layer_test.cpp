@@ -32,7 +32,7 @@ public:
         flatten_layer_back_propagation = make_unique<FlattenBackPropagation>(batch_size, flatten_layer.get());
 
         inputs.resize(batch_size, height, width, channels);
-        inputs.setRandom();
+        inputs.setConstant(1.0f);
         input_pair = { inputs.data(), { batch_size, height, width, channels } };
     }
 };
@@ -40,11 +40,9 @@ public:
 
 TEST_F(FlattenLayerTest, Constructor) 
 {
-    
     EXPECT_EQ(flatten_layer->get_input_dimensions(), input_dimensions);
     EXPECT_EQ(flatten_layer->get_type(), Layer::Type::Flatten);
     EXPECT_EQ(flatten_layer->get_name(), "flatten_layer");
-    
 }
 
 
@@ -63,7 +61,7 @@ TEST_F(FlattenLayerTest, BackPropagate)
 {
     output_pair = flatten_layer_forward_propagation->get_outputs_pair();
 
-    flatten_layer->back_propagate({ output_pair }, { output_pair }, flatten_layer_forward_propagation, flatten_layer_back_propagation);
+    flatten_layer->back_propagate({ input_pair }, { output_pair }, flatten_layer_forward_propagation, flatten_layer_back_propagation);
 
     input_derivatives_pair = flatten_layer_back_propagation.get()->get_input_derivative_pairs();
 

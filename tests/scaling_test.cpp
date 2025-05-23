@@ -6,7 +6,7 @@
 
 using namespace opennn;
 
-TEST(Scaling2dTest, ScaleDataMeanStandardDeviation)
+TEST(ScalingTest, ScaleDataMeanStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -24,10 +24,10 @@ TEST(Scaling2dTest, ScaleDataMeanStandardDeviation)
 
     EXPECT_NEAR(matrix_descriptives[0].mean, type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(matrix_descriptives[0].standard_deviation, type(1), NUMERIC_LIMITS_MIN);
-    
 }
 
-TEST(Scaling2dTest, ScaleDataMinimumMaximum)
+
+TEST(ScalingTest, ScaleDataMinimumMaximum)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -45,14 +45,12 @@ TEST(Scaling2dTest, ScaleDataMinimumMaximum)
 
     vector<Descriptives> matrix_descriptives = data_set.calculate_variable_descriptives();
 
-    //std::cout <<"Maximum after scaling:"<< matrix_descriptives[0].maximum<<std::endl;
-    //std::cout <<"Minimum after scaling:"<< matrix_descriptives[0].minimum<<std::endl;
-
     EXPECT_NEAR(abs(matrix_descriptives[0].minimum), type(0), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(abs(matrix_descriptives[0].maximum), type(1), NUMERIC_LIMITS_MIN);
 }
 
-TEST(Scaling2dTest, ScaleDataNoScaling2d)
+
+TEST(ScalingTest, ScaleDataNoScaling2d)
 {   
     Index samples_number = 1 + rand() % 10;
 
@@ -74,7 +72,7 @@ TEST(Scaling2dTest, ScaleDataNoScaling2d)
 }
 
 
-TEST(Scaling2dTest, ScaleDataStandardDeviation)
+TEST(ScalingTest, ScaleDataStandardDeviation)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -93,7 +91,7 @@ TEST(Scaling2dTest, ScaleDataStandardDeviation)
 }
 
 
-TEST(Scaling2dTest, ScaleDataLogarithmic)
+TEST(ScalingTest, ScaleDataLogarithmic)
 {
     Index samples_number = 10 + rand() % 10;
 
@@ -117,10 +115,9 @@ TEST(Scaling2dTest, ScaleDataLogarithmic)
         solution_matrix(i) = log(matrix(i));
 
     EXPECT_EQ(are_equal(scaled_matrix, solution_matrix, NUMERIC_LIMITS_MIN),true);
-
 }
 
-TEST(Scaling2dTest, UnscaleDataMeanStandardDeviation)
+TEST(ScalingTest, UnscaleDataMeanStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -143,11 +140,10 @@ TEST(Scaling2dTest, UnscaleDataMeanStandardDeviation)
     unscaled_matrix = data_set.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
-
 }
 
 
-TEST(Scaling2dTest, UnscaleDataMinimumMaximum)
+TEST(ScalingTest, UnscaleDataMinimumMaximum)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -168,15 +164,11 @@ TEST(Scaling2dTest, UnscaleDataMinimumMaximum)
 
     unscaled_matrix = data_set.get_data();
 
-    //std::cout<<"Matrix:\n"<<matrix<<std::endl;
-    //std::cout<<"Unscaled Matrix:\n"<<unscaled_matrix<<std::endl;
-
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
-
 }
 
 
-TEST(Scaling2dTest, UnscaleDataNoScaling2d)
+TEST(ScalingTest, UnscaleDataNoScaling2d)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -201,7 +193,7 @@ TEST(Scaling2dTest, UnscaleDataNoScaling2d)
 }
 
 
-TEST(Scaling2dTest, UnscaleDataStandardDeviation)
+TEST(ScalingTest, UnscaleDataStandardDeviation)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -222,10 +214,10 @@ TEST(Scaling2dTest, UnscaleDataStandardDeviation)
     unscaled_matrix = data_set.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
-
 }
 
-TEST(Scaling2dTest, UnscaleDataLogarithmic)
+
+TEST(ScalingTest, UnscaleDataLogarithmic)
 {
     Index samples_number = 1 + rand() % 10;
 
@@ -247,6 +239,4 @@ TEST(Scaling2dTest, UnscaleDataLogarithmic)
     unscaled_matrix = data_set.get_data();
 
     EXPECT_EQ(are_equal(matrix, unscaled_matrix,NUMERIC_LIMITS_MIN),true);
-
 }
-

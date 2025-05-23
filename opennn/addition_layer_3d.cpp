@@ -269,13 +269,13 @@ AdditionLayer3DForwardPropagationCuda::AdditionLayer3DForwardPropagationCuda(con
 
 void AdditionLayer3DForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
 void AdditionLayer3DForwardPropagationCuda::print() const
 {
-    // @todo
+
 }
 
 
@@ -296,7 +296,7 @@ AdditionLayer3DBackPropagationCuda::AdditionLayer3DBackPropagationCuda(const Ind
 
 void AdditionLayer3DBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
@@ -310,7 +310,7 @@ vector<pair<type*, dimensions>> AdditionLayer3DBackPropagationCuda::get_input_de
 
 void AdditionLayer3DBackPropagationCuda::print() const
 {
-    // @todo
+ 
 }
 
 #endif 

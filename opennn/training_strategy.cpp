@@ -454,8 +454,6 @@ TrainingResults TrainingStrategy::perform_training()
     if(neural_network->has(Layer::Type::Recurrent))
         fix_forecasting();
 
-    // set_display(true);
-
     switch(optimization_method)
     {  
         case OptimizationMethod::QUASI_NEWTON_METHOD:

@@ -3,6 +3,8 @@
 #include "../opennn/unscaling_layer.h"
 #include "../opennn/scaling_layer_2d.h"
 #include "../opennn/descriptives.h"
+#include "../opennn/statistics.h"
+#include "../opennn/forward_propagation.h"
 
 TEST(UnscalingTest, DefaultConstructor)
 {
@@ -10,10 +12,9 @@ TEST(UnscalingTest, DefaultConstructor)
 
     EXPECT_EQ(unscaling_layer.get_type(), Layer::Type::Unscaling);
     EXPECT_EQ(unscaling_layer.get_descriptives().size(), 0);
-    EXPECT_EQ(unscaling_layer.get_input_dimensions(), dimensions{0});
-    EXPECT_EQ(unscaling_layer.get_output_dimensions(), dimensions{0});
+    EXPECT_EQ(unscaling_layer.get_input_dimensions(), dimensions{ 0 });
+    EXPECT_EQ(unscaling_layer.get_output_dimensions(), dimensions{ 0 });
 }
-
 
 TEST(UnscalingTest, GeneralConstructor)
 {
@@ -27,390 +28,263 @@ TEST(UnscalingTest, GeneralConstructor)
 
 TEST(UnscalingTest, ForwardPropagate)
 {
-    Index inputs_number = 3;
-    Index samples_number = 1;
-
-    Unscaling unscaling_layer({ inputs_number });
-
-    Tensor<type, 2> outputs;
-
-    Tensor<Descriptives, 1> inputs_descriptives;
-
-    //Test None
-
-    unscaling_layer.set_scalers(Scaler::None);
-
-    Tensor<type, 2> inputs(samples_number, inputs_number);
-    inputs.setConstant(type(10));
-
-    unique_ptr<LayerForwardPropagation> forward_propagation =
-        make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
-
-    pair<type*, dimensions> input_pairs = { inputs.data(), {{samples_number, inputs_number}} };
-
+    Index inputs_number;
+    Index samples_number;
     bool is_training = true;
 
-    unscaling_layer.forward_propagate({ input_pairs }, forward_propagation, is_training);
-
-    pair<type*, dimensions> output_pair = forward_propagation->get_outputs_pair();
-
-    outputs = tensor_map_2(output_pair);
-
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
-
-    EXPECT_NEAR(abs(outputs(0, 0)), inputs(0, 0), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(outputs(0, 1)), inputs(0, 1), NUMERIC_LIMITS_MIN);
-    EXPECT_NEAR(abs(outputs(0, 2)), inputs(0, 2), NUMERIC_LIMITS_MIN);
-
-    //Test MinimumMaximum
-
-    inputs_number = 1;
-    samples_number = 3;
-
-    Scaling2d scaling_layer_2d({ inputs_number });
-
-    inputs(samples_number,inputs_number);
-    inputs.setValues({{type(2)},{type(4)},{type(6)}});
-
-    scaling_layer_2d.set_scalers(Scaler::MinimumMaximum);
-
-    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer_2d.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
-
-    unscaling_layer.set({inputs_number});
-
-    inputs(samples_number,inputs_number);
-    inputs.setValues({{type(1.5)},{type(2.5)},{type(3.5)}});
-
-    unscaling_layer.set_scalers(Scaler::MinimumMaximum);
-
-    forward_propagation = make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    Tensor<type, 1> minimuns = scaling_layer_2d.get_minimums();
-    Tensor<type, 1> maximuns = scaling_layer_2d.get_maximums();
-    Tensor<type, 1> means = scaling_layer_2d.get_means();
-    Tensor<type, 1> std_devs = scaling_layer_2d.get_standard_deviations();
-
-    Descriptives desc;
-    vector<Descriptives> descriptives;
-
-    for(Index i = 0; i < inputs_number; i++)
+    // Test Unscaling Scaler::None
     {
-        type mean=means[i];
-        type std_dev=std_devs[i];
-        type min_range=minimuns[i];
-        type max_range=maximuns[i];
-        desc.set(min_range, max_range, mean, std_dev);
-        descriptives.push_back(desc);
+        inputs_number = 3;
+        samples_number = 1;
+
+        Unscaling unscaling_layer_none({ inputs_number });
+        unscaling_layer_none.set_scalers(Scaler::None);
+
+        vector<Descriptives> none_descriptives(inputs_number);
+        for (Index i = 0; i < inputs_number; ++i) {
+            none_descriptives[i].set(type(0), type(1), type(0.5), type(1.0));
+        }
+        unscaling_layer_none.set_descriptives(none_descriptives);
+
+        Tensor<type, 2> data_to_unscale(samples_number, inputs_number);
+        data_to_unscale.setConstant(type(10));
+
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_none);
+        pair<type*, dimensions> input_pair_unscale = { data_to_unscale.data(), {{samples_number, inputs_number}} };
+
+        unscaling_layer_none.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
+
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_NEAR(unscaled_data(0, 0), data_to_unscale(0, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(0, 1), data_to_unscale(0, 1), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(0, 2), data_to_unscale(0, 2), NUMERIC_LIMITS_MIN);
     }
 
-    unscaling_layer.set_descriptives(descriptives);
+    // Test Unscaling Scaler::MinimumMaximum
+    {
+        inputs_number = 1;
+        samples_number = 3;
 
-    unscaling_layer.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
+        Scaling2d helper_scaling_layer({ inputs_number });
+        Unscaling unscaling_layer_minmax({ inputs_number });
 
-    output_pair = forward_propagation->get_outputs_pair();
+        Tensor<type, 2> original_data(samples_number, inputs_number);
+        original_data.setValues({ {type(2)}, {type(4)}, {type(6)} });
 
-    outputs = tensor_map_2(output_pair);
+        vector<Descriptives> actual_descriptives = descriptives(original_data);
 
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
+        helper_scaling_layer.set_descriptives(actual_descriptives);
+        helper_scaling_layer.set_scalers(Scaler::MinimumMaximum);
 
-    //EXPECT_NEAR(outputs(0), type(2), NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(1), type(4), NUMERIC_LIMITS_MIN);
-    //EXPECT_NEAR(outputs(2), type(6), NUMERIC_LIMITS_MIN);
+        unique_ptr<LayerForwardPropagation> fw_prop_scale =
+            make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
+        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_outputs_pair();
+        Tensor<type, 2> scaled_data = tensor_map_2(output_pair_scale);
 
-  //Test MeanStandardDeviation
+        // (2-2)/(6-2) = 0/4 = 0
+        // (4-2)/(6-2) = 2/4 = 0.5
+        // (6-2)/(6-2) = 4/4 = 1
+        EXPECT_NEAR(scaled_data(0, 0), type(0.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(1, 0), type(0.5), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(2, 0), type(1.0), NUMERIC_LIMITS_MIN);
 
-    inputs_number = 2;
-    samples_number = 2;
+        unscaling_layer_minmax.set_descriptives(actual_descriptives);
+        unscaling_layer_minmax.set_scalers(Scaler::MinimumMaximum);
 
-    scaling_layer_2d.set({inputs_number});
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_minmax);
+        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        unscaling_layer_minmax.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(0),type(0)},
-                      {type(2),type(2)}});
-
-    scaling_layer_2d.set_scalers(Scaler::MeanStandardDeviation);
-
-    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer_2d.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    minimuns = scaling_layer_2d.get_minimums();
-    maximuns = scaling_layer_2d.get_maximums();
-    means = scaling_layer_2d.get_means();
-    std_devs = scaling_layer_2d.get_standard_deviations();
-
-    vector<Descriptives> descriptivess;
-
-    for(Index i = 0; i < inputs_number; i++){
-        type mean=means[i];
-        type std_dev=std_devs[i];
-        type min_range=minimuns[i];
-        type max_range=maximuns[i];
-        desc.set(min_range, max_range, mean, std_dev);
-        descriptivess.push_back(desc);
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(2, 0), original_data(2, 0), NUMERIC_LIMITS_MIN);
     }
 
-    unscaling_layer.set_descriptives(descriptivess);
+    // Test Unscaling Scaler::MeanStandardDeviation
+    {
+        inputs_number = 2;
+        samples_number = 2;
 
-    unscaling_layer.set({inputs_number});
+        Scaling2d helper_scaling_layer({ inputs_number });
+        Unscaling unscaling_layer_msd({ inputs_number });
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(-0.707), type(-0.707)},{type(0.707), type(0.707)}});
+        Tensor<type, 2> original_data(samples_number, inputs_number);
+        original_data.setValues({ {type(0), type(10)},
+                                  {type(2), type(30)} });
 
-    unscaling_layer.set_scalers(Scaler::MeanStandardDeviation);
+        vector<Descriptives> actual_descriptives = descriptives(original_data);
+        // Col 0: {0,2} -> mean=1, std=sqrt(2)
+        // Col 1: {10,30} -> mean=20, std=sqrt(200)
 
-    forward_propagation = make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
+        helper_scaling_layer.set_descriptives(actual_descriptives);
+        helper_scaling_layer.set_scalers(Scaler::MeanStandardDeviation);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+        unique_ptr<LayerForwardPropagation> fw_prop_scale =
+            make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
+        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_outputs_pair();
+        Tensor<type, 2> scaled_data = tensor_map_2(output_pair_scale);
 
-    unscaling_layer.forward_propagate({ input_pairs },
-                                      forward_propagation,
-                                      is_training);
+        unscaling_layer_msd.set_descriptives(actual_descriptives);
+        unscaling_layer_msd.set_scalers(Scaler::MeanStandardDeviation);
 
-    output_pair = forward_propagation->get_outputs_pair();
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_msd);
+        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        unscaling_layer_msd.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
 
-    outputs = tensor_map_2(output_pair);
-
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
-
-    //EXPECT_NEAR(outputs(0,0), type(0), 0.001);
-    //EXPECT_NEAR(outputs(0,1), type(0), 0.001);
-    //EXPECT_NEAR(outputs(1,0), type(2), 0.001);
-    //EXPECT_NEAR(outputs(1,1), type(2), 0.001);
-
-    //Test StandardDeviation
-
-    inputs_number = 2;
-    samples_number = 2;
-
-    scaling_layer_2d.set({inputs_number});
-
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(0),type(0)},
-                      {type(2),type(2)}});
-
-    scaling_layer_2d.set_scalers(Scaler::StandardDeviation);
-
-    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer_2d.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
-
-    minimuns = scaling_layer_2d.get_minimums();
-    maximuns = scaling_layer_2d.get_maximums();
-    means = scaling_layer_2d.get_means();
-    std_devs = scaling_layer_2d.get_standard_deviations();
-
-    vector<Descriptives> descriptivesss;
-
-    for(Index i = 0; i < inputs_number; i++){
-        type mean=means[i];
-        type std_dev=std_devs[i];
-        type min_range=minimuns[i];
-        type max_range=maximuns[i];
-        desc.set(min_range, max_range, mean, std_dev);
-        descriptivesss.push_back(desc);
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), NUMERIC_LIMITS_MIN);
     }
 
-    unscaling_layer.set_descriptives(descriptivesss);
+    // Test Unscaling Scaler::StandardDeviation
+    {
+        inputs_number = 2;
+        samples_number = 2;
 
-    unscaling_layer.set({inputs_number});
+        Scaling2d helper_scaling_layer({ inputs_number });
+        Unscaling unscaling_layer_std({ inputs_number });
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(0), type(0)},{type(1.41421), type(1.41421)}});
+        Tensor<type, 2> original_data(samples_number, inputs_number);
+        original_data.setValues({ {type(1),type(10)},
+                                  {type(3),type(50)} });
+        // Col 0: {1,3} -> std=sqrt( ((1-2)^2 + (3-2)^2) / 1 ) = sqrt(1+1) = sqrt(2)
+        // Col 1: {10,50} -> std=sqrt( ((10-30)^2 + (50-30)^2) / 1 ) = sqrt(400+400) = sqrt(800)
 
-    unscaling_layer.set_scalers(Scaler::StandardDeviation);
+        vector<Descriptives> actual_descriptives = descriptives(original_data);
 
-    forward_propagation = make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
+        helper_scaling_layer.set_descriptives(actual_descriptives);
+        helper_scaling_layer.set_scalers(Scaler::StandardDeviation);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+        unique_ptr<LayerForwardPropagation> fw_prop_scale =
+            make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
+        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_outputs_pair();
+        Tensor<type, 2> scaled_data = tensor_map_2(output_pair_scale);
 
-    unscaling_layer.forward_propagate({ input_pairs },
-                                      forward_propagation,
-                                      is_training);
+        unscaling_layer_std.set_descriptives(actual_descriptives);
+        unscaling_layer_std.set_scalers(Scaler::StandardDeviation);
 
-    output_pair = forward_propagation->get_outputs_pair();
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_std);
+        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        unscaling_layer_std.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
 
-    outputs = tensor_map_2(output_pair);
-
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
-
-    //EXPECT_NEAR(outputs(0,0), type(0), 0.001);
-    //EXPECT_NEAR(outputs(0,1), type(0), 0.001);
-    //EXPECT_NEAR(outputs(1,0), type(2), 0.001);
-    //EXPECT_NEAR(outputs(1,1), type(2), 0.001);
-
-    //Test Logarithm
-
-    inputs_number = 2;
-    samples_number = 2;
-
-    scaling_layer_2d.set({inputs_number});
-
-    inputs(samples_number,inputs_number);
-    inputs.setValues({{type(0),type(0)},
-                      {type(2),type(2)}});
-
-    scaling_layer_2d.set_scalers(Scaler::Logarithm);
-
-    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer_2d.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
-
-    minimuns = scaling_layer_2d.get_minimums();
-    maximuns = scaling_layer_2d.get_maximums();
-    means = scaling_layer_2d.get_means();
-    std_devs = scaling_layer_2d.get_standard_deviations();
-
-    vector<Descriptives> descriptivessss;
-
-    for(Index i = 0; i < inputs_number; i++){
-        type mean=means[i];
-        type std_dev=std_devs[i];
-        type min_range=minimuns[i];
-        type max_range=maximuns[i];
-        desc.set(min_range, max_range, mean, std_dev);
-        descriptivessss.push_back(desc);
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), NUMERIC_LIMITS_MIN * 10);
     }
 
-    unscaling_layer.set_descriptives(descriptivessss);
+    // Test Unscaling Scaler::Logarithm
+    {
+        inputs_number = 2;
+        samples_number = 2;
 
-    unscaling_layer.set({inputs_number});
+        Scaling2d helper_scaling_layer({ inputs_number });
+        Unscaling unscaling_layer_log({ inputs_number });
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(0), type(0)},{type(1.0986), type(1.0986)}});
+        Tensor<type, 2> original_data(samples_number, inputs_number);
 
-    unscaling_layer.set_scalers(Scaler::Logarithm);
+        original_data.setValues({ {type(1.0),      type(exp(2.0))},     // log(1)=0, log(exp(2))=2
+                                  {type(exp(1.0)), type(exp(3.0))} });  // log(exp(1))=1, log(exp(3))=3
 
-    forward_propagation = make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
+        helper_scaling_layer.set_scalers(Scaler::Logarithm);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+        unique_ptr<LayerForwardPropagation> fw_prop_scale =
+            make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
+        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_outputs_pair();
+        Tensor<type, 2> scaled_data = tensor_map_2(output_pair_scale);
 
-    unscaling_layer.forward_propagate({ input_pairs },
-                                      forward_propagation,
-                                      is_training);
+        EXPECT_NEAR(scaled_data(0, 0), type(0.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(0, 1), type(2.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(1, 0), type(1.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(1, 1), type(3.0), NUMERIC_LIMITS_MIN);
 
-    output_pair = forward_propagation->get_outputs_pair();
+        unscaling_layer_log.set_scalers(Scaler::Logarithm);
 
-    outputs = tensor_map_2(output_pair);
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_log);
+        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        unscaling_layer_log.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
 
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
-
-    EXPECT_NEAR(outputs(0,0), type(1), 0.001);
-    EXPECT_NEAR(outputs(0,1), type(1), 0.001);
-    EXPECT_NEAR(outputs(1,0), type(3), 0.001);
-    EXPECT_NEAR(outputs(1,1), type(3), 0.001);
-
-    //Test ImageMinMax
-
-    inputs_number = 2;
-    samples_number = 2;
-
-    scaling_layer_2d.set({inputs_number});
-
-    inputs(samples_number,inputs_number);
-    inputs.setValues({{type(0),type(0)},
-                      {type(2),type(2)}});
-
-    scaling_layer_2d.set_scalers(Scaler::ImageMinMax);
-
-    forward_propagation = make_unique<Scaling2dForwardPropagation>(samples_number, &scaling_layer_2d);
-
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
-
-    scaling_layer_2d.forward_propagate({ input_pairs },
-                                       forward_propagation,
-                                       is_training);
-
-    minimuns = scaling_layer_2d.get_minimums();
-    maximuns = scaling_layer_2d.get_maximums();
-    means = scaling_layer_2d.get_means();
-    std_devs = scaling_layer_2d.get_standard_deviations();
-
-    vector<Descriptives> descriptivesssss;
-
-    for(Index i = 0; i < inputs_number; i++){
-        type mean=means[i];
-        type std_dev=std_devs[i];
-        type min_range=minimuns[i];
-        type max_range=maximuns[i];
-        desc.set(min_range, max_range, mean, std_dev);
-        descriptivesssss.push_back(desc);
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
+        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), NUMERIC_LIMITS_MIN);
     }
 
-    unscaling_layer.set_descriptives(descriptivesssss);
+    // Test Unscaling Scaler::ImageMinMax
+    {
+        inputs_number = 2;
+        samples_number = 2;
 
-    unscaling_layer.set({inputs_number});
+        Scaling2d helper_scaling_layer({ inputs_number });
+        Unscaling unscaling_layer_img({ inputs_number });
 
-    inputs.resize(samples_number,inputs_number);
-    inputs.setValues({{type(0), type(0)},{type(0.0078), type(0.0078)}});
+        Tensor<type, 2> original_data(samples_number, inputs_number);
+        original_data.setValues({ {type(0),     type(255)},
+                                  {type(127.5), type(51)} });
 
-    unscaling_layer.set_scalers(Scaler::ImageMinMax);
+        helper_scaling_layer.set_scalers(Scaler::ImageMinMax);
 
-    forward_propagation = make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer);
+        unique_ptr<LayerForwardPropagation> fw_prop_scale =
+            make_unique<Scaling2dForwardPropagation>(samples_number, &helper_scaling_layer);
+        pair<type*, dimensions> input_pair_scale = { original_data.data(), {{samples_number, inputs_number}} };
+        helper_scaling_layer.forward_propagate({ input_pair_scale }, fw_prop_scale, is_training);
+        pair<type*, dimensions> output_pair_scale = fw_prop_scale->get_outputs_pair();
+        Tensor<type, 2> scaled_data = tensor_map_2(output_pair_scale);
 
-    input_pairs = {inputs.data(), {{samples_number, inputs_number}}};
+        EXPECT_NEAR(scaled_data(0, 0), type(0.0 / 255.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(0, 1), type(255.0 / 255.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(1, 0), type(127.5 / 255.0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(scaled_data(1, 1), type(51.0 / 255.0), NUMERIC_LIMITS_MIN);
 
-    unscaling_layer.forward_propagate({ input_pairs },
-                                      forward_propagation,
-                                      is_training);
+        unscaling_layer_img.set_scalers(Scaler::ImageMinMax);
 
-    output_pair = forward_propagation->get_outputs_pair();
+        unique_ptr<LayerForwardPropagation> fw_prop_unscale =
+            make_unique<UnscalingForwardPropagation>(samples_number, &unscaling_layer_img);
+        pair<type*, dimensions> input_pair_unscale = { scaled_data.data(), {{samples_number, inputs_number}} };
+        unscaling_layer_img.forward_propagate({ input_pair_unscale }, fw_prop_unscale, is_training);
+        pair<type*, dimensions> output_pair_unscale = fw_prop_unscale->get_outputs_pair();
+        Tensor<type, 2> unscaled_data = tensor_map_2(output_pair_unscale);
 
-    outputs = tensor_map_2(output_pair);
+        EXPECT_EQ(unscaled_data.dimension(0), samples_number);
+        EXPECT_EQ(unscaled_data.dimension(1), inputs_number);
 
-    EXPECT_EQ(outputs.dimension(0), samples_number);
-    EXPECT_EQ(outputs.dimension(1), inputs_number);
-
-    EXPECT_NEAR(outputs(0,0), type(0), 0.02);
-    EXPECT_NEAR(outputs(0,1), type(0), 0.02);
-    EXPECT_NEAR(outputs(1,0), type(2), 0.02);
-    EXPECT_NEAR(outputs(1,1), type(2), 0.02);
-
+        EXPECT_NEAR(unscaled_data(0, 0), original_data(0, 0), NUMERIC_LIMITS_MIN); 
+        EXPECT_NEAR(unscaled_data(0, 1), original_data(0, 1), NUMERIC_LIMITS_MIN); 
+        EXPECT_NEAR(unscaled_data(1, 0), original_data(1, 0), NUMERIC_LIMITS_MIN);
+        EXPECT_NEAR(unscaled_data(1, 1), original_data(1, 1), NUMERIC_LIMITS_MIN * 10);
+    }
 }
-
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
