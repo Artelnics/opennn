@@ -32,6 +32,7 @@ int main()
         // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
         // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
         LanguageDataSet language_dataset("/Users/artelnics/Desktop/cleaned_tweets.txt");
+        // text_data_set.set_data_path("/Users/artelnics/Desktop/sample_200k_balanced.txt");
 
 
 //        language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");

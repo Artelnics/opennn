@@ -74,11 +74,11 @@ void CrossEntropyError3D::calculate_error(const Batch& batch,
 
     for(Index i = 0; i < samples_number; i++)
         for(Index j = 0; j < outputs_number; j++)
-            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))));
+            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))) + type(1e-6));
 
     errors.device(*thread_pool_device) = errors * mask.cast<type>();
 
-    error.device(*thread_pool_device) = errors.sum() / mask_sum(0);
+    error.device(*thread_pool_device) = errors.sum() / type(samples_number)/*mask_sum(0)*/;
 
     // Masked accuracy
 

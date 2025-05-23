@@ -256,6 +256,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
                                           unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const Index samples_number = inputs.dimension(0);
 
     // Forward propagation
 
@@ -285,7 +286,7 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
  
         const Tensor<type, 0> mask_sum = mask.sum();
         
-        mask.device(*thread_pool_device) = mask / mask_sum(0);
+        mask.device(*thread_pool_device) = mask / type(samples_number)/*mask_sum(0)*/;
         
         built_mask = true;
     // }
