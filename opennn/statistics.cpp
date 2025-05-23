@@ -1332,14 +1332,11 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
 
     vector<Descriptives> descriptives(column_indices_size);
 
-    Index row_index;
-    Index column_index;
-
     Tensor<type, 1> minimums(column_indices_size);
     minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums(column_indices_size);
-    maximums.setConstant(NUMERIC_LIMITS_MIN);
+    maximums.setConstant(numeric_limits<type>::min());
 
     Tensor<double, 1> sums(column_indices_size);
     Tensor<double, 1> squared_sums(column_indices_size);
@@ -1349,58 +1346,58 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
     squared_sums.setZero();
     count.setZero();
 
-    // @todo optimize this loop
-    for(Index i = 0; i < row_indices_size; i++)
+    #pragma omp parallel for
+    for (Index j = 0; j < column_indices_size; j++)
     {
-        row_index = row_indices[i];
+        const Index column_index = column_indices[j];
+        type& current_min = minimums(j);
+        type& current_max = maximums(j);
+        double& sum = sums(j);
+        double& squared_sum = squared_sums(j);
+        Index& cnt = count(j);
 
-        //        #pragma omp parallel for private(column_index)
-
-        for(Index j = 0; j < column_indices_size; j++)
+        for (Index i = 0; i < row_indices_size; i++)
         {
-            column_index = column_indices[j];
-
+            const Index row_index = row_indices[i];
             const type value = matrix(row_index, column_index);
 
-            if(isnan(value)) continue;
+            if (isnan(value)) continue;
 
-            minimums(j) = min(minimums(j), value);
-            maximums(j) = max(maximums(j), value);
+            current_min = min(current_min, value);
+            current_max = max(current_max, value);
 
-            sums(j) += double(value);
-            squared_sums(j) += double(value)*double(value);
-            count(j)++;
+            sum += static_cast<double>(value);
+            squared_sum += static_cast<double>(value) * static_cast<double>(value);
+            cnt++;
         }
     }
 
-    const Tensor<double, 1> mean = sums/count.cast<double>();
-
+    const Tensor<double, 1> mean = sums / count.cast<double>();
     Tensor<double, 1> standard_deviation(column_indices_size);
 
-    if(row_indices_size > 1)
+    if (row_indices_size > 1)
     {
-        //        #pragma omp parallel for
-
-        for(Index i = 0; i < column_indices_size; i++)
+        #pragma omp parallel for
+        for (Index i = 0; i < column_indices_size; i++)
         {
-            const double variance = squared_sums(i)/double(count(i)-1)
-                    - (sums(i)/double(count(i)))*(sums(i)/double(count(i)))*double(count(i))/double(count(i)-1);
-
+            const double numerator = squared_sums(i) - sums(i) * sums(i) / count(i);
+            const double variance = numerator / (count(i) - 1);
             standard_deviation(i) = sqrt(variance);
         }
     }
     else
     {
-        for(Index i = 0; i < column_indices_size; i++)
-            standard_deviation(i) = type(0);
+        standard_deviation.setZero();
     }
 
-    for(Index i = 0; i < column_indices_size; i++){
-        descriptives[i].set(type(minimums(i)), 
-                            type(maximums(i)), 
-                            type(mean(i)), 
-                            type(standard_deviation(i)));
+    for (Index i = 0; i < column_indices_size; i++)
+    {
+        descriptives[i].set(minimums(i),
+            maximums(i),
+            type(mean(i)),
+            type(standard_deviation(i)));
     }
+
     return descriptives;
 }
 

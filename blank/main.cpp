@@ -26,14 +26,6 @@ int main()
     {
         cout << "OpenNN. Blank." << endl;
 
-        // Index batch_size = 1;
-        // Index seq_len = 3;
-        // Index embed_dim = 4;
-        // Index num_heads = 2;
-
-        Tensor<type, 1> x;
-        x.resize(0);
-
         cout << "Bye!" << endl;
 
         return 0;

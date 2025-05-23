@@ -1055,13 +1055,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
 }
 
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 3>& outputs,
-                                                      const Tensor<type, 3>& targets) const
-{
-    return Tensor<Index, 2>();  // @todo
-}
-
-
 TestingAnalysis::RocAnalysis TestingAnalysis::perform_roc_analysis() const
 {
     const Tensor<type, 2> inputs = data_set->get_data(DataSet::SampleUse::Testing, DataSet::VariableUse::Input);

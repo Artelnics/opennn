@@ -358,8 +358,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
-        // @todo loss and error missmatch
-
         stop_training = true;
 
         if(epoch == maximum_epochs_number)
@@ -762,8 +760,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             if (has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
-
-        // @todo loss and error missmatch
 
         stop_training = true;
 

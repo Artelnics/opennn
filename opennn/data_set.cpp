@@ -398,8 +398,8 @@ namespace opennn
 
 
     vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
-        const Index& batch_size,
-        const bool& shuffle) const
+                                               const Index& batch_size,
+                                               const bool& shuffle) const
     {
         if (!shuffle) return split_samples(sample_indices, batch_size);
 
@@ -4191,8 +4191,6 @@ namespace opennn
     {
         if (display) cout << "Reading data file preview..." << endl;
 
-        // @todo Not implemented
-
         const string separator_string = get_separator_string();
 
         Index lines_number = has_header ? 4 : 3;
@@ -4484,15 +4482,13 @@ namespace opennn
     }
 
 
-    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
+    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const 
     {
         const Index samples_number = sample_indices.size();
-
         Index batch_size = new_batch_size;
-
         Index batches_number;
 
-        if (samples_number < batch_size)
+        if (samples_number < batch_size) 
         {
             batches_number = 1;
             batch_size = samples_number;
@@ -4502,15 +4498,12 @@ namespace opennn
 
         vector<vector<Index>> batches(batches_number);
 
-        Index count = 0;
-
-        // @todo #pragma omp parallel for ??
-        for (Index i = 0; i < batches_number; i++)
+        #pragma omp parallel for
+        for (Index i = 0; i < batches_number; i++) 
         {
             batches[i].resize(batch_size);
-
             for (Index j = 0; j < batch_size; ++j)
-                batches[i][j] = sample_indices[count++];
+                batches[i][j] = sample_indices[i * batch_size + j];
         }
 
         return batches;

@@ -1045,6 +1045,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
+
 Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
 {
     const Index layers_number = get_layers_number();
@@ -1090,9 +1091,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
+
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
     const Index inputs_dimensions_number = inputs_dimensions.size();
+
     if(inputs_dimensions_number == 2)
     {
         Tensor<type, 2> scaled_outputs;
@@ -1160,14 +1163,13 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
-
             }
         }
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
     { 
-        /// @todo CONV
+        /// @todo
         return Tensor<type, 2>();
     }
     else

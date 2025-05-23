@@ -1019,14 +1019,12 @@ void ProbabilisticForwardPropagationCuda::set(const Index& new_batch_samples_num
 
 void ProbabilisticForwardPropagationCuda::print() const
 {
-
     const Index outputs_number = layer->get_outputs_number();
 
     cout << layer->get_type_string() + " forward propagation" << endl;
 
     cout << "Outputs (Softmax forward)" << endl;
     cout << matrix_from_device(outputs, batch_size, outputs_number) << endl;
-
 }
 
 
