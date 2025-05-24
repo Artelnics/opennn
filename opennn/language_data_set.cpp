@@ -18,10 +18,11 @@ LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms,
 }
 
 
-LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSet()
+LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path, const bool& new_is_text) : DataSet()
 {
     data_path = new_data_path;
     separator = DataSet::Separator::Tab;
+    is_text = new_is_text;
 
     read_csv();
 }
@@ -273,7 +274,7 @@ void LanguageDataSet::print_vocabulary(const unordered_map<string, Index>& vocab
 
 void LanguageDataSet::print() const
 {
-    if(has_decoder)
+    if(target_vocabulary_size != 6)
     {
         cout << "Language data set" << endl;
 
@@ -641,21 +642,19 @@ void LanguageDataSet::read_csv()
 
     input_vocabulary = create_vocabulary(input_documents_tokens);
     target_vocabulary = create_vocabulary(target_documents_tokens);
-
-    has_decoder = target_vocabulary.size() == 6 ? false
-                                                : true;
     
     input_vocabulary_size = get_input_vocabulary_size();
     target_vocabulary_size = get_target_vocabulary_size();
 
     maximum_input_length = get_maximum_size(input_documents_tokens);
-    maximum_target_length = has_decoder ? get_maximum_size(target_documents_tokens)
-                                        : 1;
-
+    maximum_target_length = is_text ? get_maximum_size(target_documents_tokens)
+                                    : /*1*/19;
+// alvaros
     const Index input_variables_number = maximum_input_length;
-    const Index decoder_variables_number = maximum_target_length - 1;
-    const Index target_variables_number = has_decoder ? maximum_target_length - 1
-                                                      : maximum_target_length;
+    const Index decoder_variables_number = is_text ? maximum_target_length - 1
+                                                   : 0;
+    const Index target_variables_number = is_text ? maximum_target_length - 1
+                                                  : maximum_target_length;
 
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
 
@@ -696,7 +695,7 @@ void LanguageDataSet::read_csv()
         if(column_index < input_variables_number)
             column_index = input_variables_number;
 
-        if(has_decoder)
+        if(is_text)
         {
             // Decoder data
 
@@ -729,7 +728,7 @@ void LanguageDataSet::read_csv()
                     : data(i,column_index++) = 1;
             }
         }
-        else
+        else if(target_vocabulary_size == 6)
         {
             // Target data
 
@@ -742,7 +741,20 @@ void LanguageDataSet::read_csv()
 
                 iterator != target_vocabulary.end() && contains(negative_words, iterator->first)
                     ? data(i, column_index) = 0
-                    : data(i,column_index) = 1;
+                    : data(i, column_index) = 1;
+            }
+        }
+        else
+        {
+            for(Index j = 0; j < Index(target_document_tokens.size()); j++)
+            {
+                const auto iterator = target_vocabulary.find(target_document_tokens[j]);
+
+                if(iterator->second == 2 || iterator->second == 3)
+                    continue;
+
+                iterator != target_vocabulary.end() ? data(i, column_index) = iterator->second
+                                                    : data(i, column_index) = 1;
             }
         }
     }
@@ -750,8 +762,8 @@ void LanguageDataSet::read_csv()
     sample_uses.resize(samples_number);
 
     target_dimensions = {get_target_length()};
-    has_decoder ? decoder_dimensions = {get_target_length()}
-                : decoder_dimensions = {};
+    is_text ? decoder_dimensions = {get_target_length()}
+            : decoder_dimensions = {};
     input_dimensions = {get_input_length()};
 
     set_raw_variable_scalers(Scaler::None);

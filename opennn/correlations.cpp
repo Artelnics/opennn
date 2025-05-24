@@ -532,7 +532,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         return correlation;
     }
 
-    const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
+    const Tensor<type, 2> data = assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(x_filtered.size(), {1}, {1});
     data_set.set_data(data);
@@ -680,7 +680,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }

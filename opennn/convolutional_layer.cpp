@@ -1404,7 +1404,12 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
 
 void ConvolutionalForwardPropagationCuda::print() const
 {
-    // @todo
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    cout << layer->get_type_string() + " forward propagation" << endl;
+
+    cout << "Outputs:" << endl;
+    cout << matrix_4d_from_device(outputs, batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]) << endl;
 }
 
 
@@ -1596,7 +1601,19 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagationCuda::get_input_deri
 
 void ConvolutionalBackPropagationCuda::print() const
 {
-    // @todo
+    const dimensions input_dimensions = layer->get_input_dimensions();
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    cout << layer->get_type_string() + " back propagation" << endl;
+
+    cout << "biases_derivatives_device" << endl;
+    //vector_from_device(biases_derivatives,);
+
+    cout << "weights_derivatives_device" << endl;
+    //matrix_from_device(weights_derivatives,);
+
+    cout << "inputs derivatives" << endl;
+    matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 }
 
 

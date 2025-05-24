@@ -296,8 +296,6 @@ void GeneticAlgorithm::initialize_population_correlations()
 
     type arrow;
 
-    cout << "Arrow" << endl;
-
     for(Index i = 0; i < individuals_number; i++)
     {
         individual_raw_variables.setConstant(false);
@@ -532,11 +530,11 @@ void GeneticAlgorithm::perform_crossover()
         }
     }
 
-    cout << "Previous population:\n" << population << endl;
+    //cout << "Previous population:\n" << population << endl;
 
     population = new_population;
 
-    cout << "population:\n" << population << endl;
+    //cout << "population:\n" << population << endl;
 
     // throw runtime_error("Checking the population.");
 }

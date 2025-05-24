@@ -147,7 +147,8 @@ void OptimizationAlgorithm::set_neural_network_file_name(const string& new_neura
 
 void OptimizationAlgorithm::check() const
 {
-    // @todo
+    if (!loss_index)
+        throw runtime_error("loss_index is nullptr.\n");
 }
 
 

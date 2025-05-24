@@ -21,7 +21,7 @@ public:
 
     LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
 
-    LanguageDataSet(const filesystem::path&);
+    LanguageDataSet(const filesystem::path&, const bool& new_is_text = false);
 
     const unordered_map<string, Index>& get_input_vocabulary() const;
     const unordered_map<string, Index>& get_target_vocabulary() const;
@@ -64,7 +64,7 @@ private:
     Index target_vocabulary_size = 0;
     Index input_vocabulary_size = 0;
 
-    bool has_decoder = true;
+    bool is_text = true;
 
     const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
 

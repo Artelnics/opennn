@@ -398,8 +398,8 @@ namespace opennn
 
 
     vector<vector<Index>> DataSet::get_batches(const vector<Index>& sample_indices,
-        const Index& batch_size,
-        const bool& shuffle) const
+                                               const Index& batch_size,
+                                               const bool& shuffle) const
     {
         if (!shuffle) return split_samples(sample_indices, batch_size);
 
@@ -1688,8 +1688,8 @@ namespace opennn
 
 
     void DataSet::set(const Index& new_samples_number,
-        const dimensions& new_input_dimensions,
-        const dimensions& new_target_dimensions)
+                      const dimensions& new_input_dimensions,
+                      const dimensions& new_target_dimensions)
     {
         if (new_samples_number == 0
             || new_input_dimensions.empty()
@@ -1766,8 +1766,6 @@ namespace opennn
                     : VariableUse::Target;
             }
         }
-
-        read_csv();
 
         sample_uses.resize(new_samples_number);
 
@@ -2414,7 +2412,7 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_pearson_correlations() const
     {
-        cout << "Calculating correlations..." << endl;
+        if (display) cout << "Calculating correlations..." << endl;
 
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -2452,7 +2450,7 @@ namespace opennn
 
     Tensor<Correlation, 2> DataSet::calculate_input_target_raw_variable_spearman_correlations() const
     {
-        cout << "Calculating correlations..." << endl;
+        if (display) cout << "Calculating correlations..." << endl;
 
         const Index input_raw_variables_number = get_raw_variables_number(VariableUse::Input);
         const Index target_raw_variables_number = get_raw_variables_number(VariableUse::Target);
@@ -3278,7 +3276,7 @@ namespace opennn
 
     void DataSet::load_data_binary()
     {
-        ifstream file(data_path);
+        ifstream file(data_path, ios::binary);
 
         if (!file.is_open())
             throw runtime_error("Failed to open file: " + data_path.string());
@@ -4190,8 +4188,6 @@ namespace opennn
     {
         if (display) cout << "Reading data file preview..." << endl;
 
-        // @todo Not implemented
-
         const string separator_string = get_separator_string();
 
         Index lines_number = has_header ? 4 : 3;
@@ -4483,15 +4479,13 @@ namespace opennn
     }
 
 
-    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const
+    vector<vector<Index>> DataSet::split_samples(const vector<Index>& sample_indices, const Index& new_batch_size) const 
     {
         const Index samples_number = sample_indices.size();
-
         Index batch_size = new_batch_size;
-
         Index batches_number;
 
-        if (samples_number < batch_size)
+        if (samples_number < batch_size) 
         {
             batches_number = 1;
             batch_size = samples_number;
@@ -4501,15 +4495,12 @@ namespace opennn
 
         vector<vector<Index>> batches(batches_number);
 
-        Index count = 0;
-
-        // @todo #pragma omp parallel for ??
-        for (Index i = 0; i < batches_number; i++)
+        #pragma omp parallel for
+        for (Index i = 0; i < batches_number; i++) 
         {
             batches[i].resize(batch_size);
-
             for (Index j = 0; j < batch_size; ++j)
-                batches[i][j] = sample_indices[count++];
+                batches[i][j] = sample_indices[i * batch_size + j];
         }
 
         return batches;

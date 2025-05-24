@@ -31,18 +31,18 @@ int main()
 
         // Data set
 
-        // LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_1.txt");
-        LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
+        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
+        // LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
         // language_data_set.print_raw_variables();
         // language_data_set.print_data();
 
-        // const Index input_length = language_data_set.get_input_length();
-        // const Index decoder_length = language_data_set.get_target_length();
+        const Index input_length = language_data_set.get_input_length();
+        const Index decoder_length = language_data_set.get_target_length();
 
-        // const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
-        // const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
-
+        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
+        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
+/*
         // Sentiment analysis case
 
         const Index maximum_sequence_length = 10;
@@ -118,12 +118,13 @@ int main()
         testing_data(2,9) = 0;
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-/*
- *    // Translation case
-        const Index embedding_dimension = 64;
-        const Index perceptron_depth = 128;
+*/
+
+      // Translation case
+        const Index embedding_dimension = 64/*128*/;
+        const Index perceptron_depth = 128/*256*/;
         const Index heads_number = 4;
-        const Index layers_number = 1;
+        const Index layers_number = 1/*2*/;
       // Neural network
         
         Transformer transformer(decoder_length,
@@ -139,17 +140,7 @@ int main()
         transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
         transformer.set_dropout_rate(0);
 
-        const filesystem::path& file_name = "/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml";
-
-        ofstream file(file_name);
-
-        if (!file.is_open())
-            throw runtime_error("file not found");
-
-        XMLPrinter printer;
-        language_data_set.to_XML(printer);
-        file << printer.CStr();
-
+        language_data_set.split_samples_sequential(0.9,0.1,0);
         // Training strategy
 
         TrainingStrategy training_strategy(&transformer, &language_data_set);
@@ -162,27 +153,30 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension); 
-        adaptive_moment_estimation->set_loss_goal(0.5);
-        adaptive_moment_estimation->set_maximum_epochs_number(100);
+        // adaptive_moment_estimation->set_custom_learning_rate(embedding_dimension);
+        adaptive_moment_estimation->set_loss_goal(0.99);
+        adaptive_moment_estimation->set_maximum_epochs_number(1000);
         adaptive_moment_estimation->set_maximum_time(59400);
         adaptive_moment_estimation->set_batch_samples_number(512);
-        adaptive_moment_estimation->set_display_period(1);
-        adaptive_moment_estimation->set_display(false);
+        adaptive_moment_estimation->set_display_period(10);
+        // adaptive_moment_estimation->set_display(false);
 
-        // TrainingResults training_results = training_strategy.perform_training();
+        TrainingResults training_results = training_strategy.perform_training();
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
 
         // transformer.save("/Users/artelnics/Desktop/translation_transformer.xml");
-        transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
+        // transformer.load("/Users/artelnics/Desktop/translation_transformer.xml");
 
-        transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
+        // transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
 
-        transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
-        transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
-        transformer.set_input_length(input_length);
-        transformer.set_decoder_length(decoder_length);
+        // transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
+        // transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
+        // transformer.set_input_length(input_length);
+        // transformer.set_decoder_length(decoder_length);
+
+
+        // language_data_set.print_vocabulary(language_data_set.get_input_vocabulary());
         //Testing
 
         // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
@@ -192,14 +186,22 @@ int main()
         // cout << "Testing error: " << transformer_error_accuracy.first << endl;
         // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
-        // string prediction = transformer.calculate_outputs({"I want you to return it"});
+        string prediction = transformer.calculate_outputs({"The USA dropped an atomic bomb on Hiroshima in 1945."});
 
-        // cout << "Target: quiero que lo devuelvas" << endl << "Prediction: " << prediction << endl;
+        cout << "Target: Los Estados Unidos lanzaron una bomba atómica sobre Hiroshima en 1945." << endl << "Prediction: " << prediction << endl<<endl;
 
-        string prediction = transformer.calculate_outputs({"Tom has two girlfriends."});
+        string prediction_2 = transformer.calculate_outputs({"Tom has two girlfriends."});
 
-        cout << "\nTarget: Tom tiene dos novias." << endl << "Prediction: " << prediction << endl;
+        cout << "Target: Tom tiene dos novias." << endl << "Prediction: " << prediction_2 << endl<<endl;
 
+        string prediction_3 = transformer.calculate_outputs({"Please pass me the salt."});
+
+        cout << "Target: Por favor, pasame la sal." << endl << "Prediction: " << prediction_3 << endl<<endl;
+
+        string prediction_4 = transformer.calculate_outputs({"I have to go now."});
+
+        cout << "Target: Ahora me tengo que ir." << endl << "Prediction: " << prediction_4 << endl<<endl;
+/*
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;

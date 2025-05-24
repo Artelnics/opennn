@@ -376,18 +376,30 @@ void translate_image_x(const ThreadPoolDevice* thread_pool_device,
 }
 
 
-// @todo
-
 void translate_image_y(const ThreadPoolDevice* thread_pool_device,
                        const Tensor<type, 3>& input,
                        Tensor<type, 3>& output,
                        const Index& shift)
 {
-}
+    assert(input.dimension(0) == output.dimension(0));
+    assert(input.dimension(1) == output.dimension(1));
+    assert(input.dimension(2) == output.dimension(2));
 
+    output.setZero();
 
-void rescale_image(const ThreadPoolDevice*, const Tensor<type, 3>&, TensorMap<Tensor<type, 3>>&, const type&)
-{
+    const Index height = input.dimension(0);
+
+    const Index limit_src_rows = height - shift;
+
+    if (limit_src_rows <= 0)
+        return; 
+
+    for (Index r_src = 0; r_src < limit_src_rows; ++r_src)
+    {
+        const Index r_dest = r_src + shift;
+
+        output.template chip<0>(r_dest) = input.template chip<0>(r_src);
+    }
 }
 
 } // namespace opennn

@@ -87,6 +87,12 @@ void AdaptiveMomentEstimation::set_default()
 }
 
 
+void AdaptiveMomentEstimation::set_display(const bool& new_display)
+{
+    display = new_display;
+}
+
+
 void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
 {
     epsilon = new_epsilon;
@@ -169,7 +175,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                                  ? min(selection_samples_number, batch_size)
                                                  : 0;
 
-
     const Index training_batches_number = (training_batch_samples_number != 0)
         ? training_samples_number / training_batch_samples_number
         : 0;
@@ -177,7 +182,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Index selection_batches_number = (selection_batch_samples_number != 0)
        ? selection_samples_number / selection_batch_samples_number
        : 0;
-
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> selection_batches(selection_batches_number);
@@ -249,7 +253,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            // cout << "Iteration " << iteration << "/" << training_batches_number << endl;
+            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
 
             // Data set
             
@@ -264,29 +268,26 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                               training_forward_propagation,
                                               is_training);
 
-            // cout << "xeee" << endl;
-
             // Loss index
 
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
 
-            // cout << "xexexexe" << endl;
-
             // // if(epoch == 50)
             // // {
             // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
 
-            // // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            // // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
-            // cout << "MHA Gradient - numerical gradient:" << endl;
-            // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
-            //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
+            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
+            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
+            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
+            // // cout << "MHA Gradient - numerical gradient:" << endl;
+            // // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
+            // //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
 
-            // throw runtime_error("\nChecking the gradient and numerical gradient.");
+            // // throw runtime_error("\nChecking the gradient and numerical gradient.");
             // // }
+
             training_error += training_back_propagation.error();
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
@@ -330,7 +331,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                 loss_index->calculate_error(selection_batch,
                                             selection_forward_propagation,
                                             selection_back_propagation);
-                
+
                 selection_error += selection_back_propagation.error();
 
                 if(is_classification_model) 
@@ -357,8 +358,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             if(has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
-
-        // @todo loss and error missmatch
 
         stop_training = true;
 
@@ -762,8 +761,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
             if (has_selection && is_classification_model) cout << "Selection accuracy: " << selection_accuracy << endl;
             cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
-
-        // @todo loss and error missmatch
 
         stop_training = true;
 

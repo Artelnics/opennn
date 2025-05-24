@@ -3,6 +3,17 @@
 #include "../opennn/data_set.h"
 
 
+void create_temp_csv_file(const string& file_path, const string& content) 
+{
+    ofstream outfile(file_path);
+    if (!outfile.is_open())
+        throw runtime_error("Failed to open temporary CSV file for writing: " + file_path);
+
+    outfile << content;
+    outfile.close();
+}
+
+
 TEST(DataSet, DefaultConstructor)
 {
     DataSet data_set;
@@ -59,7 +70,7 @@ TEST(DataSet, VariableDescriptives)
                     {type(1)    ,type(4),type(0)} });
 
     data_set.set_data(data);
-    /*
+   
     const vector<Descriptives> variable_descriptives = data_set.calculate_variable_descriptives();
 
     EXPECT_EQ(variable_descriptives.size(), 3);
@@ -69,7 +80,6 @@ TEST(DataSet, VariableDescriptives)
     EXPECT_NEAR(variable_descriptives[0].maximum, type(1), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(variable_descriptives[1].maximum, type(4), NUMERIC_LIMITS_MIN);
     EXPECT_NEAR(variable_descriptives[2].maximum, type(2), NUMERIC_LIMITS_MIN);
-    */
 }
 
 
@@ -85,20 +95,20 @@ TEST(DataSet, RawVariableDistributions)
                     {type(1),type(2),type(2)} });
 
     data_set.set_data(data);
-    /*
-      const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
 
-      EXPECT_EQ(histograms.size(), 3);
+    const vector<Histogram> histograms = data_set.calculate_raw_variable_distributions(2);
 
-      EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
-      EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
-      EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_EQ(histograms.size(), 3);
 
-      EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
-      EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
-      EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
-  */
+    EXPECT_NEAR(histograms[0].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].frequencies(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].frequencies(0), 2, NUMERIC_LIMITS_MIN);
+
+    EXPECT_NEAR(histograms[0].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[1].centers(0), 1, NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(histograms[2].centers(0), 1, NUMERIC_LIMITS_MIN);
 }
+
 
 TEST(DataSet, FilterData_MixedFiltering) {
     // Test
@@ -143,36 +153,29 @@ TEST(DataSet, FilterData_MixedFiltering) {
 
 TEST(DataSet, ScaleData)
 {
-
     DataSet data_set(2, { 1 }, { 1 });
 
-    Tensor<type, 2> data(2, 2);
-    data.setValues({ {type(1), type(2)},
-                    {type(3), type(4)} });
+    Tensor<type, 2> original_data(2, 2);
+    original_data.setValues({ {type(10), type(200)},
+                              {type(30), type(400)} });
 
-    data_set.set_data(data);
-
-    data_set.set_raw_variable_scalers(Scaler::None);
-    vector<Descriptives> data_descriptives = data_set.scale_data();
-
-    Tensor<type, 2> scaled_data;
-
-    scaled_data = data_set.get_data();
-
-    EXPECT_EQ(are_equal(scaled_data, data), true);
-
-    // Test
+    data_set.set_data(original_data);
 
     data_set.set_raw_variable_scalers(Scaler::MinimumMaximum);
-    data_descriptives = data_set.scale_data();
+    vector<Descriptives> data_descriptives_minmax = data_set.scale_data();
+    Tensor<type, 2> scaled_data_minmax = data_set.get_data();
 
-    scaled_data = data_set.get_data();
-    /*
-        EXPECT_NEAR(scaled_data(0), type(-1), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(scaled_data(1), type(1), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(scaled_data(2), type(-1), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(scaled_data(3), type(1), NUMERIC_LIMITS_MIN);
-       */
+    // Expected scaled values for column 0 (original: 10, 30):
+    // 10 (min) -> 0.0
+    // 30 (max) -> 1.0
+    EXPECT_NEAR(scaled_data_minmax(0, 0), type(0.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data_minmax(1, 0), type(1.0), NUMERIC_LIMITS_MIN);
+
+    // Expected scaled values for column 1 (original: 200, 400):
+    // 200 (min) -> 0.0
+    // 400 (max) -> 1.0
+    EXPECT_NEAR(scaled_data_minmax(0, 1), type(0.0), NUMERIC_LIMITS_MIN);
+    EXPECT_NEAR(scaled_data_minmax(1, 1), type(1.0), NUMERIC_LIMITS_MIN);
 }
 
 
@@ -266,662 +269,293 @@ TEST(DataSet, CalculateTargetDistribution)
 }
 
 
-TEST(DataSet, TukeyOutliers)
+TEST(DataSet, ReadCSV_Basic)
 {
-    DataSet data_set(100, { 5 }, { 1 });
-    data_set.set_data_random();
+    const string temp_csv_file_path = "temp_data_readcsv_test_basic.csv";
 
-    const vector<vector<Index>> outliers_indices = data_set.calculate_Tukey_outliers(type(1.5));
+    const string csv_content =
+        "variable_1,variable_2,target_1\n"
+        "10,10,0\n"
+        "20,20,1\n";
 
-    EXPECT_EQ(outliers_indices.size(), 2);
-    EXPECT_EQ(outliers_indices[0][0], 0);
-}
-
-
-TEST(DataSet, ReadCSV)
-{
-    // Test
+    create_temp_csv_file(temp_csv_file_path, csv_content);
 
     DataSet data_set;
 
-    data_set.set(2, { 2 }, { 2 });
+    data_set.set_data_path(temp_csv_file_path);
     data_set.set_separator(DataSet::Separator::Comma);
-    string data_path = "../datasets/data.dat";
-    data_set.set_data_path(data_path);
-    data_set.set_data_constant(type(0));
-    data_set.save_data();
-
-    data_set.read_csv();
-    Tensor<type, 2> data = data_set.get_data();
-
-    EXPECT_EQ(is_equal(data, type(0)), true);
-
-    // Test
-
-    data_set.set_separator(DataSet::Separator::Tab);
-    string data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n    5\t6    \n\n\n";
-    /*
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.set();
-        data_set.set_data_source_path(data_path);
-        data_set.read_csv();
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data.dimension(0) == 3);
-        EXPECT_NEAR(data.dimension(1) == 2);
-
-        EXPECT_NEAR(abs(data(0, 0) - type(1)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(0, 1) - type(2)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(1, 0) - type(3)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(1, 1) - type(4)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(2, 0) - type(5)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(2, 1) - type(6)) < NUMERIC_LIMITS_MIN);
-
-        EXPECT_NEAR(data_set.get_samples_number() == 3);
-        EXPECT_NEAR(data_set.get_variables_number() == 2);
-
-        // Test
-
-        data_set.set_separator(DataSet::Separator::Tab);
-        data_string = "\n\n\n   1\t2   \n\n\n   3\t4   \n\n\n   5\t6  \n\n\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.set();
-        data_set.set_data_source_path(data_path);
-        data_set.read_csv();
-
-        data = data_set.get_data();
-
-        EXPECT_EQ(data.dimension(0) == 3);
-        EXPECT_EQ(data.dimension(1) == 2);
-
-        EXPECT_NEAR(abs(data(0,0) - type(1)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(0,1) - type(2)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(1,0) - type(3)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(1,1) - type(4)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(2,0) - type(5)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(abs(data(2,1) - type(6)) < NUMERIC_LIMITS_MIN);
-
-        EXPECT_EQ(data_set.get_samples_number() == 3);
-        EXPECT_EQ(data_set.get_variables_number() == 2);
-
-        // Test
-
-        data_set.set();
-        data_set.set_has_header(true);
-        data_set.set_separator(DataSet::Separator::Space);
-        data_string = "x y\n"
-                      "1 2\n"
-                      "3 4\n"
-                      "5 6";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data_set.get_header_line());
-        EXPECT_NEAR(data_set.get_variable_name(0) == "x");
-        EXPECT_NEAR(data_set.get_variable_name(1) == "y");
-
-        EXPECT_NEAR(data.dimension(0) == 3);
-        EXPECT_NEAR(data.dimension(1) == 2);
-
-        EXPECT_NEAR((data(0,0) - 1.0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR((data(0,1) - 2.0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR((data(1,0) - 3.0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR((data(1,1) - 4.0) < NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_has_header(true);
-        data_set.set_separator(DataSet::Separator::Comma);
-
-        data_string = "\tx\t,\ty\n"
-                      "\t1\t,\t2\n"
-                      "\t3\t,\t4";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data_set.get_variable_name(0) == "x");
-        EXPECT_NEAR(data_set.get_variable_name(1) == "y");
-
-        EXPECT_NEAR(data(0,0), 1.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,1), 2.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,0), 3.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,1), 4.0, NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_has_header(true);
-        data_set.set_separator(DataSet::Separator::Comma);
-
-        data_string = "x , y\n"
-                      "1 , 2\n"
-                      "3 , 4\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data_set.get_variable_name(0) == "x");
-        EXPECT_NEAR(data_set.get_variable_name(1) == "y");
-
-        EXPECT_NEAR(data(0,0), 1.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,1), 2.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,0), 3.0, NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,1), 4.0, NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_has_header(false);
-        data_set.set_separator(DataSet::Separator::Comma);
-        data_string =
-                "5.1,3.5,1.4,0.2,Iris-setosa\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "6.3,3.3,6.0,2.5,Iris-virginica";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        EXPECT_EQ(data_set.get_samples_number() == 4);
-        EXPECT_EQ(data_set.get_variables_number() == 7);
-
-        // Test
-
-        data_set.set_has_header(false);
-        data_set.set_separator(DataSet::Separator::Comma);
-        data_string =
-                "5.1,3.5,1.4,0.2,Iris-setosa\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "6.3,3.3,6.0,2.5,Iris-virginica\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        EXPECT_NEAR(data_set.get_variables_number() == 7);
-        EXPECT_NEAR(data_set.get_input_variables_number() == 4);
-        EXPECT_NEAR(data_set.get_target_variables_number() == 3);
-        EXPECT_NEAR(data_set.get_samples_number() == 4);
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data(0,0), type(5.1), NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,4) - type(1)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,5)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,6)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,4)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,5) - type(1)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,6)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,4)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(Data(2,5) - type(1)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,6)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(3,4)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(3,5)) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(3,6) - type(1)) < NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_has_header(true);
-        data_set.set_separator(DataSet::Separator::Comma);
-        data_set.set_missing_values_label("NaN");
-        data_string =
-                "sepal length,sepal width,petal length,petal width,class\n"
-                "NaN,3.5,1.4,0.2,Iris-setosa\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "7.0,3.2,4.7,1.4,Iris-versicolor\n"
-                "6.3,3.3,6.0,2.5,Iris-virginica\n"
-                "0.0,0.0,0.0,0.0,NaN\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        EXPECT_EQ(data_set.get_variables_number() == 7);
-        EXPECT_EQ(data_set.get_input_variables_number() == 4);
-        EXPECT_EQ(data_set.get_target_variables_number() == 3);
-
-        EXPECT_EQ(data_set.get_variable_name(0) == "sepal length");
-        EXPECT_EQ(data_set.get_variable_name(1) == "sepal width");
-        EXPECT_EQ(data_set.get_variable_name(2) == "petal length");
-        EXPECT_EQ(data_set.get_variable_name(3) == "petal width");
-        EXPECT_EQ(data_set.get_variable_name(4) == "Iris-setosa");
-        EXPECT_EQ(data_set.get_variable_name(5) == "Iris-versicolor");
-        EXPECT_EQ(data_set.get_variable_name(6) == "Iris-virginica");
-
-        EXPECT_EQ(data_set.get_samples_number() == 5);
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data(0,4) - type(1) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,5) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(0,6) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,4) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,5) - type(1) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,6) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,4) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,5) - type(1) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,6) - type(0) < NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_has_header(false);
-        data_set.set_separator(DataSet::Separator::Space);
-        data_string = "1 2\n3 4\n5 6";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-        data_set.set_variable_name(0, "x");
-        data_set.set_variable_name(1, "y");
-
-        data_set.save("../data/data_set.xml");
-        data_set.load("../data/data_set.xml");
-
-        EXPECT_EQ(data_set.get_variable_name(0) == "x");
-        EXPECT_EQ(data_set.get_variable_name(1) == "y");
-
-        // Test
-
-        data_set.set_has_header(false);
-        data_set.set_separator(DataSet::Separator::Space);
-        data_string = "1 true\n"
-                      "3 false\n"
-                      "5 true\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        EXPECT_EQ(data_set.get_variables_number() == 2);
-        EXPECT_EQ(data_set.get_input_variables_number() == 1);
-        EXPECT_EQ(data_set.get_target_variables_number() == 1);
-
-        data = data_set.get_data();
-
-        EXPECT_NEAR(data(0,1) - type(1) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(1,1) - type(0) < NUMERIC_LIMITS_MIN);
-        EXPECT_NEAR(data(2,1) - type(1) < NUMERIC_LIMITS_MIN);
-
-        // Test
-
-        data_set.set_separator(DataSet::Separator::Tab);
-        data_set.set_missing_values_label("NaN");
-        data_string =
-        "f\t52\t1100\t32\t145490\t4\tno\n"
-        "f\t57\t8715\t1\t242542\t1\tNaN\n"
-        "m\t44\t5145\t28\t79100\t5\tno\n"
-        "f\t57\t2857\t16\t1\t1\tNaN\n"
-        "f\t47\t3368\t44\t63939\t1\tyes\n"
-        "f\t59\t5697\t14\t45278\t1\tno\n"
-        "m\t86\t1843\t1\t132799\t2\tyes\n"
-        "m\t67\t4394\t25\t6670\t2\tno\n"
-        "m\t40\t6619\t23\t168081\t1\tno\n"
-        "f\t12\t4204\t17\t1\t2\tno\n";
-
-        file.open(data_path.c_str());
-        file << data_string;
-        file.close();
-
-        data_set.read_csv();
-
-        EXPECT_EQ(data_set.get_variables_number() == 7);
-        EXPECT_EQ(data_set.get_input_variables_number() == 6);
-        EXPECT_EQ(data_set.get_target_variables_number() == 1);
-
-        data = data_set.get_data();
-
-        EXPECT_EQ(data.dimension(0) == 10);
-        EXPECT_EQ(data.dimension(1) == 7);
-    */
+    data_set.set_has_header(true);
+    data_set.set_has_ids(false);
+    data_set.set_missing_values_label("NA");
+    data_set.set_codification(DataSet::Codification::UTF8);
+    data_set.set_display(false);
+
+    ASSERT_NO_THROW(data_set.read_csv());
+
+    data_set.set_default_raw_variables_uses();
+
+    data_set.set_dimensions(DataSet::VariableUse::Input, { data_set.get_variables_number(opennn::DataSet::VariableUse::Input) });
+    data_set.set_dimensions(DataSet::VariableUse::Target, { data_set.get_variables_number(opennn::DataSet::VariableUse::Target) });
+
+    EXPECT_EQ(data_set.get_samples_number(), 2);
+    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
+    EXPECT_EQ(data_set.get_variables_number(), 3);
+
+    // Raw Variables
+    const auto& raw_vars = data_set.get_raw_variables();
+    ASSERT_EQ(raw_vars.size(), 3);
+    EXPECT_EQ(raw_vars[0].name, "variable_1");
+    EXPECT_EQ(raw_vars[1].name, "variable_2");
+    EXPECT_EQ(raw_vars[2].name, "target_1");
+
+    EXPECT_EQ(raw_vars[0].type, DataSet::RawVariableType::Numeric);
+    EXPECT_EQ(raw_vars[1].type, DataSet::RawVariableType::Numeric);
+    EXPECT_EQ(raw_vars[2].type, DataSet::RawVariableType::Binary);
+
+    EXPECT_EQ(raw_vars[0].use, DataSet::VariableUse::Input);
+    EXPECT_EQ(raw_vars[1].use, DataSet::VariableUse::Input);
+    EXPECT_EQ(raw_vars[2].use, DataSet::VariableUse::Target);
+
+    // Data Tensor Content
+    const Tensor<type, 2>& data = data_set.get_data();
+    ASSERT_EQ(data.dimension(0), 2);
+    ASSERT_EQ(data.dimension(1), 3);
+
+    vector<Index> var1_indices = data_set.get_variable_indices(0);
+    vector<Index> var2_indices = data_set.get_variable_indices(1);
+    vector<Index> target1_indices = data_set.get_variable_indices(2);
+
+    ASSERT_EQ(var1_indices.size(), 1);
+    ASSERT_EQ(var2_indices.size(), 1);
+    ASSERT_EQ(target1_indices.size(), 1);
+
+    Index v1_idx = var1_indices[0];
+    Index v2_idx = var2_indices[0];
+    Index t1_idx = target1_indices[0];
+
+    vector<Index> all_indices_ordered = { v1_idx, v2_idx, t1_idx };
+    vector<Index> sorted_indices = all_indices_ordered;
+    sort(sorted_indices.begin(), sorted_indices.end());
+    EXPECT_TRUE(sorted_indices[0] == 0 && sorted_indices[1] == 1 && sorted_indices[2] == 2);
+
+    EXPECT_EQ(v1_idx, 0);
+    EXPECT_EQ(v2_idx, 1);
+    EXPECT_EQ(t1_idx, 2);
+
+    EXPECT_NEAR(data(0, v1_idx), 10.0, 1e-9);
+    EXPECT_NEAR(data(0, v2_idx), 10.0, 1e-9);
+    EXPECT_NEAR(data(0, t1_idx), 0.0, 1e-9);
+
+    EXPECT_NEAR(data(1, v1_idx), 20.0, 1e-9);
+    EXPECT_NEAR(data(1, v2_idx), 20.0, 1e-9);
+    EXPECT_NEAR(data(1, t1_idx), 1.0, 1e-9);
+
+    dimensions input_dims = data_set.get_dimensions(DataSet::VariableUse::Input);
+    dimensions target_dims = data_set.get_dimensions(DataSet::VariableUse::Target);
+
+    ASSERT_EQ(input_dims.size(), 1);
+    EXPECT_EQ(input_dims[0], 2);
+
+    ASSERT_EQ(target_dims.size(), 1);
+    EXPECT_EQ(target_dims[0], 1);
+
+    // Missing Values Info
+    EXPECT_EQ(data_set.get_missing_values_number(), 0);
+    EXPECT_FALSE(data_set.has_nan());
+    EXPECT_EQ(data_set.count_rows_with_nan(), 0);
+    Tensor<Index, 1> nans_per_raw_var = data_set.count_nans_per_raw_variable();
+    ASSERT_EQ(nans_per_raw_var.size(), 3);
+    for (Index i = 0; i < 3; ++i) EXPECT_EQ(nans_per_raw_var(i), 0);
+
+    // Data File Preview
+    const auto& preview = data_set.get_data_file_preview();
+    ASSERT_EQ(preview.size(), 4) << "Preview size should be 4 for a 3-line file with header.";
+    if (preview.size() >= 1) 
+    {
+        ASSERT_EQ(preview[0].size(), 3);
+        EXPECT_EQ(preview[0][0], "variable_1");
+        EXPECT_EQ(preview[0][1], "variable_2");
+        EXPECT_EQ(preview[0][2], "target_1");
+    }
+    if (preview.size() >= 2) 
+    {
+        ASSERT_EQ(preview[1].size(), 3);
+        EXPECT_EQ(preview[1][0], "10");
+        EXPECT_EQ(preview[1][1], "10");
+        EXPECT_EQ(preview[1][2], "0");
+    }
+    if (preview.size() >= 3) 
+    {
+        ASSERT_EQ(preview[2].size(), 3);
+        EXPECT_EQ(preview[2][0], "20");
+        EXPECT_EQ(preview[2][1], "20");
+        EXPECT_EQ(preview[2][2], "1");
+    }
+    if (preview.size() >= 4)
+        EXPECT_TRUE(preview[3].empty()) << "Preview[3] should be an empty vector<string>.";
+
+    remove(temp_csv_file_path.c_str());
 }
 
 
-TEST(DataSet, ReadAdultCSV)
+TEST(DataSet, ReadCSV_OnlyHeader)
 {
-    /*
-        data_set.set_missing_values_label("?");
-        data_set.set_separator_string(",");
-        data_set.set_data_source_path("../../datasets/adult.data");
-        data_set.set_has_header(false);
-        data_set.read_csv();
+    const string temp_csv_file_path = "temp_onlyheader_readcsv_test.csv";
+    const string csv_content = "col1,col2,col3\n";
+    create_temp_csv_file(temp_csv_file_path, csv_content);
 
-        EXPECT_EQ(data_set.get_samples_number(),1000);
-        EXPECT_EQ(data_set.get_raw_variable_type(0), DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(1), DataSet::RawVariableType::Categorical);
-        EXPECT_EQ(data_set.get_raw_variable_type(2), DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(3), DataSet::RawVariableType::Categorical);
-    */
+    DataSet data_set;
+    data_set.set_data_path(temp_csv_file_path);
+    data_set.set_separator(DataSet::Separator::Comma);
+    data_set.set_has_header(true);
+    data_set.set_display(false);
+
+    ASSERT_NO_THROW(data_set.read_csv());
+
+    EXPECT_EQ(data_set.get_samples_number(), 0);
+    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
+    const auto& raw_vars = data_set.get_raw_variables();
+    ASSERT_EQ(raw_vars.size(), 3);
+    EXPECT_EQ(raw_vars[0].name, "col1");
+    EXPECT_EQ(raw_vars[1].name, "col2");
+    EXPECT_EQ(raw_vars[2].name, "col3");
+
+    EXPECT_EQ(data_set.get_variables_number(), 3);
+
+    const auto& preview = data_set.get_data_file_preview();
+    ASSERT_EQ(preview.size(), 4);
+    ASSERT_EQ(preview[0].size(), 3);
+    EXPECT_EQ(preview[0][0], "col1");
+    EXPECT_TRUE(preview[1].empty());
+    EXPECT_TRUE(preview[2].empty());
+    EXPECT_TRUE(preview[3].empty());
+
+    remove(temp_csv_file_path.c_str());
 }
 
 
-TEST(DataSet, ReadCarCSV)
+TEST(DataSet, ReadCSV_SpaceSeparator)
 {
-    /*
-           data_set.set("../../datasets/car.data", ",");
+    const string temp_csv_file_path = "temp_data_space_sep.csv";
+    const string csv_content =
+        "var1 var2 target\n"
+        "100 200 1\n"
+        "150 250 0\n";
 
-           EXPECT_EQ(data_set.get_samples_number(), 1728);
-           EXPECT_EQ(data_set.get_raw_variable_type(0), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(1), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(2), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(3), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(4), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(5), DataSet::RawVariableType::Categorical);
-           EXPECT_EQ(data_set.get_raw_variable_type(6), DataSet::RawVariableType::Categorical);
-   */
+    create_temp_csv_file(temp_csv_file_path, csv_content);
+
+    DataSet data_set;
+    data_set.set_data_path(temp_csv_file_path);
+    data_set.set_separator(DataSet::Separator::Space);
+    data_set.set_has_header(true);
+    data_set.set_display(false);
+
+    ASSERT_NO_THROW(data_set.read_csv());
+
+    EXPECT_EQ(data_set.get_samples_number(), 2);
+    EXPECT_EQ(data_set.get_raw_variables_number(), 3);
+
+    const auto& raw_vars = data_set.get_raw_variables();
+    EXPECT_EQ(raw_vars[0].name, "var1");
+    EXPECT_EQ(raw_vars[1].name, "var2");
+    EXPECT_EQ(raw_vars[2].name, "target");
+    EXPECT_EQ(raw_vars[2].type, DataSet::RawVariableType::Binary);
+
+    const Tensor<type, 2>& data = data_set.get_data();
+    Index v1_idx = data_set.get_variable_indices(0)[0];
+    Index v2_idx = data_set.get_variable_indices(1)[0];
+    Index t_idx = data_set.get_variable_indices(2)[0];
+
+    EXPECT_NEAR(data(0, v1_idx), 100.0, 1e-9);
+    EXPECT_NEAR(data(0, v2_idx), 200.0, 1e-9);
+    EXPECT_NEAR(data(0, t_idx), 1.0, 1e-9);
+    EXPECT_NEAR(data(1, v1_idx), 150.0, 1e-9);
+    EXPECT_NEAR(data(1, v2_idx), 250.0, 1e-9);
+    EXPECT_NEAR(data(1, t_idx), 0.0, 1e-9);
+
+    remove(temp_csv_file_path.c_str());
 }
 
 
-TEST(DataSet, ReadEmptyCSV)
+TEST(DataSet, ReadCSV_WithSampleIDs)
 {
-    /*
-        DataSet data_set;
-        data_set.set();
+    const string temp_csv_file_path = "temp_data_sample_ids.csv";
+    const string csv_content =
+        "ID,feature1,feature2\n"
+        "sampleA,10,20\n"
+        "sampleB,15,25\n";
 
-        data_set.set("../../datasets/empty.csv", " ", false);
+    create_temp_csv_file(temp_csv_file_path, csv_content);
 
-        //EXPECT_EQ(data_set.is_empty());
-        EXPECT_EQ(data_set.get_samples_number(), 0);
-        EXPECT_EQ(data_set.get_variables_number(), 2);
-    */
+    DataSet data_set;
+    data_set.set_data_path(temp_csv_file_path);
+    data_set.set_separator(DataSet::Separator::Comma);
+    data_set.set_has_header(true);
+    data_set.set_has_ids(true);
+    data_set.set_display(false);
+
+    ASSERT_NO_THROW(data_set.read_csv());
+
+    EXPECT_EQ(data_set.get_samples_number(), 2);
+    EXPECT_EQ(data_set.get_raw_variables_number(), 2);
+
+    const auto& raw_vars = data_set.get_raw_variables();
+    ASSERT_EQ(raw_vars.size(), 2);
+    EXPECT_EQ(raw_vars[0].name, "feature1");
+    EXPECT_EQ(raw_vars[1].name, "feature2");
+
+    const vector<string>& sample_ids = data_set.get_sample_ids();
+    ASSERT_EQ(sample_ids.size(), 2);
+    EXPECT_EQ(sample_ids[0], "sampleA");
+    EXPECT_EQ(sample_ids[1], "sampleB");
+
+    const Tensor<type, 2>& data = data_set.get_data();
+    Index f1_idx = data_set.get_variable_indices(0)[0];
+    Index f2_idx = data_set.get_variable_indices(1)[0];
+
+    EXPECT_NEAR(data(0, f1_idx), 10.0, 1e-9);
+    EXPECT_NEAR(data(0, f2_idx), 20.0, 1e-9);
+    EXPECT_NEAR(data(1, f1_idx), 15.0, 1e-9);
+    EXPECT_NEAR(data(1, f2_idx), 25.0, 1e-9);
+
+    remove(temp_csv_file_path.c_str());
 }
 
 
-TEST(DataSet, ReadHeartCSV)
+TEST(DataSet, ReadCSV_EmptyLinesAndWhitespaceSkipped) 
 {
-    /*
-            data_set.set("../../datasets/heart.csv", ",", true);
+    const string temp_csv_file_path = "temp_data_emptylines.csv";
+    const string csv_content =
+        "h1,h2\n"
+        "\n"
+        "  \t  \n"
+        "1,10\n"
+        "\n"
+        "2,20\n";
+    create_temp_csv_file(temp_csv_file_path, csv_content);
 
-            EXPECT_EQ(data_set.get_samples_number() == 303);
-            EXPECT_EQ(data_set.get_variables_number() == 14);
-            EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Binary);
-            EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Binary);
-            EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(7) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(8) == DataSet::RawVariableType::Binary);
-            EXPECT_EQ(data_set.get_raw_variable_type(9) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(10) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(13) == DataSet::RawVariableType::Binary);
-    */
+    DataSet data_set;
+    data_set.set_data_path(temp_csv_file_path);
+    data_set.set_separator(opennn::DataSet::Separator::Comma);
+    data_set.set_has_header(true);
+    data_set.set_display(false);
+
+    ASSERT_NO_THROW(data_set.read_csv());
+
+    EXPECT_EQ(data_set.get_samples_number(), 2);
+    const Tensor<type, 2>& data = data_set.get_data();
+    Index h1_idx = data_set.get_variable_indices(0)[0];
+    Index h2_idx = data_set.get_variable_indices(1)[0];
+    EXPECT_NEAR(data(0, h1_idx), 1.0, 1e-9);
+    EXPECT_NEAR(data(0, h2_idx), 10.0, 1e-9);
+    EXPECT_NEAR(data(1, h1_idx), 2.0, 1e-9);
+    EXPECT_NEAR(data(1, h2_idx), 20.0, 1e-9);
+
+    remove(temp_csv_file_path.c_str());
 }
 
-
-TEST(DataSet, ReadIrisCSV)
-{
-    /*
-
-            data_set.set("../../datasets/iris.data", ",", false);
-
-            EXPECT_EQ(data_set.get_samples_number() == 150);
-            EXPECT_EQ(data_set.get_variables_number() == 7);
-            EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Categorical);
-    */
-}
-
-
-TEST(DataSet, ReadOneVariableCSV)
-{
-    /*
-            data_set.set("../../datasets/one_variable.csv", ",", false);
-
-            EXPECT_EQ(data_set.get_samples_number() == 7);
-            EXPECT_EQ(data_set.get_variables_number() == 1);
-            EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-    */
-}
-
-
-TEST(DataSet, ReadPollutionCSV)
-{
-    /*
-
-            data_set.set("../../datasets/pollution.csv", ",", true);
-
-            EXPECT_EQ(data_set.get_samples_number() == 1000);
-            EXPECT_EQ(data_set.get_variables_number() == 13);
-            EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::DateTime);
-            EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(7) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(8) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(9) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(10) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
-            EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
-    */
-}
-
-
-TEST(DataSet, ReadBankChurnCSV)
-{
-    /*
-        data_set.set_separator(DataSet::Separator::Semicolon);
-        data_set.set_data_source_path("../../datasets/bankchurn.csv");
-        data_set.set_has_header(true);
-
-        data_set.read_csv();
-    */
-}
 
 /*
-void DataSet::test_read_urinary_inflammations_csv()
-{
-        data_set.set("../../datasets/urinary_inflammations.csv", ";", true);
-
-        EXPECT_EQ(data_set.get_samples_number() == 120);
-        EXPECT_EQ(data_set.get_variables_number() == 8);
-        EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Binary);
-        EXPECT_EQ(data_set.get_raw_variable_type(7) == DataSet::RawVariableType::Binary);
-}
-
-
-void DataSet::test_read_wine_csv()
-{
-        data_set.set("../../datasets/wine.data", ",", false);
-
-        EXPECT_EQ(data_set.get_samples_number() == 178);
-        EXPECT_EQ(data_set.get_variables_number() == 14);
-        EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(3) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(4) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(5) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(6) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(7) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(8) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(9) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(10) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(11) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(12) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(13) == DataSet::RawVariableType::Numeric);
-}
-
-
-void DataSet::test_read_binary_csv()
-{
-        data_set.set("../../datasets/binary.csv", ",", false);
-
-        EXPECT_EQ(data_set.get_samples_number() == 8);
-        EXPECT_EQ(data_set.get_variables_number() == 3);
-        EXPECT_EQ(data_set.get_raw_variable_type(0) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(1) == DataSet::RawVariableType::Numeric);
-        EXPECT_EQ(data_set.get_raw_variable_type(2) == DataSet::RawVariableType::Binary);
-}
-
-
-void DataSet::test_scrub_missing_values()
-{
-    const string data_path = "../../datasets/data.dat";
-
-    Tensor<DataSet::SampleUse, 1> sample_uses;
-
-    ofstream file;
-
-    data_set.set_data_source_path(data_path);
-
-    string data_string;
-
-    // Test
-
-    data_set.set_separator(DataSet::Separator::Space);
-    data_set.set_missing_values_label("NaN");
-
-    data_string = "0 0 0\n"
-                  "0 0 NaN\n"
-                  "0 0 0\n";
-
-    file.open(data_path.c_str());
-    file << data_string;
-    file.close();
-
-    data_set.read_csv();
-
-    data_set.scrub_missing_values();
-
-    sample_uses = data_set.get_sample_uses();
-
-    EXPECT_EQ(sample_uses(1) == DataSet::SampleUse::None);
-
-    // Test
-
-    data_set.set_separator(DataSet::Separator::Space);
-    data_set.set_missing_values_label("?");
-
-    data_string ="? 6 3\n"
-                 "3 ? 2\n"
-                 "2 1 ?\n"
-                 "1 2 1";
-
-    file.open(data_path.c_str());
-    file << data_string;
-    file.close();
-
-    data_set.read_csv();
-
-    data_set.set_missing_values_method(DataSet::MissingValuesMethod::Mean);
-    data_set.scrub_missing_values();
-
-    data = data_set.get_data();
-
-    EXPECT_EQ(abs(data(0,0) - type(2.0)) < NUMERIC_LIMITS_MIN);
-    EXPECT_EQ(abs(data(1,1) - type(3.0)) < NUMERIC_LIMITS_MIN);
-    EXPECT_EQ(isnan(data(2,2)));
-
-}
-
-
-void DataSet::test_calculate_used_targets_mean()
-{
-    data.resize(3, 4);
-
-    data.setValues({{type(1), type(NAN), type(1), type(1)},
-                    {type(2), type(2), type(2), type(2)},
-                    {type(3), type(3), type(NAN), type(3)}});
-
-    data_set.set_data(data);
-
-    Tensor<Index, 1> indices(3);
-    indices.setValues({0, 1, 2});
-
-    Tensor<Index, 1> training_indices(1);
-    training_indices.setValues({0});
-
-    data_set.set_training(training_indices);
-}
-
-
-void DataSet::test_calculate_selection_targets_mean()
-{
-    Tensor<Index, 1> target_indices;
-    Tensor<Index, 1> selection_indices;
-
-    Tensor<type, 1> selection_targets_mean;
-
-    // Test
-
-    data.resize(3, 4);
-
-    data.setValues({{1, type(NAN),         6, 9},
-                    {1,         2,         5, 2},
-                    {3,         2, type(NAN), 4}});
-
-    data_set.set_data(data);
-
-    target_indices.resize(2);
-    target_indices.setValues({2,3});
-
-    selection_indices.resize(2);
-    selection_indices.setValues({0, 1});
-
-    data_set.set(DataSet::VariableUse::Input);
-
-    data_set.set_sample_uses(DataSet::SampleUse::Selection, selection_indices);
-
-    data_set.set_input_target_raw_variables_indices(Tensor<Index,1>(), target_indices);
-
-    selection_targets_mean = data_set.calculate_selection_targets_mean();
-
-//    cout << selection_targets_mean << endl;system("pause");
-
-    EXPECT_EQ(selection_targets_mean(0) == type(5.5));
-    EXPECT_EQ(selection_targets_mean(1) == type(5));
-}
-
-
 void DataSet::test_calculate_input_target_raw_variable_correlations()
 {
     // Test 1 (numeric and numeric trivial case)

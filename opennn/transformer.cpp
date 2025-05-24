@@ -28,8 +28,8 @@ Transformer::Transformer(const Index& decoder_length,
                          const Index& heads_number,
                          const Index& layers_number)
 {
-    set(decoder_length,                           //Bruno's input was the decoder
-        input_length,                             //Bruno's context was the input
+    set(decoder_length,                           //Bruno's input is the decoder
+        input_length,                             //Bruno's context is the input
         decoder_dimensions_xxx,
         input_dimension_xxx,
         embedding_dimension,
@@ -160,7 +160,7 @@ void Transformer::set(const Index& new_decoder_length,
                                                        new_decoder_length,
                                                        new_embedding_dimension,
                                                        new_heads_number,
-                                                       false, // chatgpt says that here uses causal mask???
+                                                       true, // chatgpt says that here uses causal mask???
                                                        "decoder_self_attention_" + to_string(i+1)));
 
         i == 0
@@ -374,6 +374,8 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
     tokenize_wordpiece(input_tokens[0], input);
     // tokenize_whitespace(input_tokens[0], input);
 
+    cout << "Input codification:\n" << input << endl;
+
     Tensor<type, 2> decoder(samples_number, decoder_length);
 
     decoder.setZero();
@@ -381,10 +383,10 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     ForwardPropagation forward_propagation(samples_number, this);
 
-    const pair<type*, dimensions> context_pair(input.data(), { samples_number, input_length });
+    const pair<type*, dimensions> input_pair(input.data(), { samples_number, input_length });
     const pair<type*, dimensions> decoder_pair(decoder.data(), { samples_number, decoder_length });
 
-    const vector<pair<type*, dimensions>> input_pairs = {decoder_pair, context_pair};
+    const vector<pair<type*, dimensions>> input_pairs = {decoder_pair, input_pair};
 
     const Index layers_number = get_layers_number();
 
@@ -399,7 +401,9 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     Tensor<Index, 0> prediction;
 
-    for(Index i = 1; i < input_length; i++)
+    cout << "Output dimensions: " << outputs.dimensions() << endl;
+
+    for(Index i = 1; i < decoder_length; i++)
     {
         forward_propagate(input_pairs, forward_propagation, false);
 
@@ -418,6 +422,9 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
     //if(!imported_vocabulary)    
     // detokenize_whitespace(input, output_string);
     //else
+
+    cout << "Output codification:\n" << decoder << endl;
+
 
     detokenize_wordpiece(decoder, output_buffer);
     // detokenize_whitespace(decoder, output_buffer);
@@ -516,7 +523,7 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     // for(Index i = 0; i < input_vocabulary.size(); i++)
     //     context_vocabulary_map[input_vocabulary[i]] = type(i);
 
-    Index token_counter = 1;
+    Index token_counter = 0;
     bool line_ended = false;
 
     string word;
@@ -575,16 +582,16 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
         }
         else
         {
-            if(j == Index(context_tokens.size())
-            || (token_counter == input_length - 1 && !line_ended))
-            {
-                context(token_counter++) = 3; // end indicator
-                line_ended = true;
-            }
-            else
-            {
+            // if(j == Index(context_tokens.size())
+            // || (token_counter == input_length - 1 && !line_ended))
+            // {
+            //     context(token_counter++) = 3; // end indicator
+            //     line_ended = true;
+            // }
+            // else
+            // {
                 break;
-            }
+            // }
         }
     }
 }

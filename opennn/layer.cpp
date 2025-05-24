@@ -410,6 +410,23 @@ void Layer::softmax(Tensor<type, 4>& y) const
                                          .eval()
                                          .reshape(array<Index, 4>({1, columns_number, channels, blocks_number}))
                                          .broadcast(array<Index, 4>({rows_number, 1, 1, 1 }));
+/*    const Index rows_number = y.dimension(0);
+    const Index columns_number = y.dimension(1);
+    const Index channels = y.dimension(2);
+    const Index blocks_number = y.dimension(3);
+
+    y.device(*thread_pool_device) = y - y.maximum(array<Index, 1>({1}))
+                                            .eval()
+                                            .reshape(array<Index, 4>({rows_number, 1, channels, blocks_number}))
+                                            .broadcast(array<Index, 4>({1, columns_number, 1, 1 }));
+
+    y.device(*thread_pool_device) = y.exp();
+
+    y.device(*thread_pool_device) = y / y.sum(array<Index, 1>({1}))
+                                            .eval()
+                                            .reshape(array<Index, 4>({rows_number, 1, channels, blocks_number}))
+                                            .broadcast(array<Index, 4>({1, columns_number, 1, 1 }));
+*/
 }
 
 
@@ -461,6 +478,8 @@ void Layer::softmax_derivatives_times_tensor(const Tensor<type, 3>& softmax,
 {
     const Index rows_number = softmax.dimension(0);
     const Index columns_number = softmax.dimension(1);
+    // const Index rows_number = softmax.dimension(1);
+    // const Index columns_number = softmax.dimension(0);
     const Index channels = softmax.dimension(2);
 
     type* softmax_data = (type*)softmax.data();

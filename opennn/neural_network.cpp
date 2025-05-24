@@ -239,7 +239,7 @@ Layer* NeuralNetwork::get_first(const Layer::Type& layer_type) const
         if(layer->get_type() == layer_type)
             return layer.get();
 
-    throw runtime_error("Neural network does not have layer type.");
+    throw runtime_error("Neural network must have at least one Perceptron Layer to perform this task.");
 }
 
 
@@ -768,8 +768,6 @@ Index NeuralNetwork::get_inputs_number() const
 
     const dimensions input_dimensions = layers[0]->get_input_dimensions();
 
-    print_vector(input_dimensions);
-
     return accumulate(input_dimensions.begin(), input_dimensions.end(), Index(1), multiplies<Index>());
 }
 
@@ -1047,6 +1045,28 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
+// CREATED JUST TO TEST THE BERT PROBLEM
+Tensor<type, 3> NeuralNetwork::calculate_output(const Tensor<type, 2>& inputs)
+{
+    const Index layers_number = get_layers_number();
+
+    if (layers_number == 0)
+        return Tensor<type, 3>();
+    const Index batch_size = inputs.dimension(0);
+    const Index inputs_number = inputs.dimension(1);
+
+    ForwardPropagation forward_propagation(batch_size, this);
+
+    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+
+    forward_propagate({input_pair}, forward_propagation, false);
+
+    const pair<type*, dimensions> outputs_pair
+        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+
+    return tensor_map_3(outputs_pair);
+}
+
 Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
 {
     const Index layers_number = get_layers_number();
@@ -1092,9 +1112,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
     return tensor_map_2(outputs_pair);
 }
 
+
 Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data, Tensor<Index, 1>& inputs_dimensions)
 {
     const Index inputs_dimensions_number = inputs_dimensions.size();
+
     if(inputs_dimensions_number == 2)
     {
         Tensor<type, 2> scaled_outputs;
@@ -1162,14 +1184,13 @@ Tensor<type, 2> NeuralNetwork::calculate_scaled_outputs(type* scaled_inputs_data
 
                 last_layer_outputs = scaled_outputs;
                 last_layer_outputs_dimensions = get_dimensions(last_layer_outputs);
-
             }
         }
         return scaled_outputs;
     }
     else if(inputs_dimensions_number == 4)
     { 
-        /// @todo CONV
+        /// @todo
         return Tensor<type, 2>();
     }
     else
