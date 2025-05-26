@@ -296,7 +296,7 @@ protected:
             mt19937 gen(random_device{}() + omp_get_thread_num());  // thread-local RNG
             uniform_real_distribution<float> dis(0.0f, 1.0f);
 
-            #pragma omp parallel for
+            #pragma omp for
             for (Index i = 0; i < tensor.size(); i++)
                 tensor(i) = (dis(gen) < dropout_rate)
                 ? 0

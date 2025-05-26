@@ -300,10 +300,8 @@ void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_
         calculate_activations(outputs, empty_2);
     }
 
-    // @todo
-// if(is_training && dropout_rate > type(0))
-//     dropout(outputs);
-
+    if(is_training && dropout_rate > type(0))
+        dropout(outputs,dropout_rate);
 }
 
 
