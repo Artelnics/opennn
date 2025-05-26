@@ -152,6 +152,8 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   Tensor<type, 3> calculate_output(const Tensor<type, 2>&);
+
    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>&);
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);

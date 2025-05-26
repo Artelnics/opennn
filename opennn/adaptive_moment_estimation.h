@@ -43,6 +43,8 @@ public:
 
    void set_default();
 
+   void set_display(const bool&) override;
+
    // Get
 
    Index get_samples_number() const;

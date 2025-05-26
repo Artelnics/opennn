@@ -276,43 +276,31 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     const Index hidden_depth = get_hidden_depth();
 
-    // @todo try this
-
     query.device(*thread_pool_device)
         = query_input
         .contract(query_weights, axes(2, 0))
-        .shuffle(array<Index, 4>({1, 2, 0, 3}))
-        + query_biases
-        .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-        .broadcast(array<Index, 4>({query.dimension(0), 1, query.dimension(2), 1 }));
+        .shuffle(array<Index, 4>({1, 2, 0, 3}));
+        // + query_biases
+        // .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+        // .broadcast(array<Index, 4>({query_sequence_length, 1, batch_size, 1 }));
 
-    // Broadcast it along the dimensions (query_sequence_length and batch_size)
-    // Here, query.dimension(0) is query_sequence_length and query.dimension(2) is batch_size.
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);
 
-    // Using Eigen's tensor expressions, the bias is now added to every appropriate slice.
+        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+        {
+            TensorMap<Tensor<type, 2>> head_sample_query = tensor_map(query, head_index, sample_index);
 
-    // for (Index head_index = 0; head_index < heads_number; head_index++)
-    // {
-    //     const TensorMap<Tensor<type, 1>> head_query_biases = tensor_map(query_biases, head_index);
-
-    //     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-    //     {
-    //         TensorMap<Tensor<type, 2>> head_sample_query = tensor_map(query, head_index, sample_index);
-
-    //         sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
-    //     }
-    // }
-
+            sum_columns(thread_pool_device.get(), head_query_biases, head_sample_query);
+        }
+    }
 }
 
 
 void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tensor<type, 4>& key) const
 {
     const Index batch_size = source_input.dimension(0);
-
-
-    // Verify embedding dimension matches
-    assert(embedding_dimension == key_weights.dimension(0));
 
     // Tensor contraction dimensions:
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
@@ -336,22 +324,23 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
     key.device(*thread_pool_device)
         = source_input
         .contract(key_weights, axes(2,0))
-        .shuffle(array<Index, 4>({1, 2, 0, 3}))
-        + key_biases
-        .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-        .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
+        .shuffle(array<Index, 4>({1, 2, 0, 3}));
+        // + key_biases
+        // .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+        // .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
 
-    // for (Index head_index = 0; head_index < heads_number; head_index++)
-    // {
-    //     const TensorMap<Tensor<type, 1>> head_key_biases = tensor_map(key_biases, head_index);
+    for (Index head_index = 0; head_index < heads_number; head_index++)
+    {
+        const TensorMap<Tensor<type, 1>> head_key_biases = tensor_map(key_biases, head_index);
 
-    //     for (Index sample_index = 0; sample_index < batch_size; sample_index++)
-    //     {
-    //         TensorMap<Tensor<type, 2>> head_sample_key = tensor_map(key, head_index, sample_index);
+        for (Index sample_index = 0; sample_index < batch_size; sample_index++)
+        {
+            TensorMap<Tensor<type, 2>> head_sample_key = tensor_map(key, head_index, sample_index);
 
-    //         sum_columns(thread_pool_device.get(), head_key_biases, head_sample_key);
-    //     }
-    // }
+            sum_columns(thread_pool_device.get(), head_key_biases, head_sample_key);
+        }
+    }
+
 }
 
 
@@ -359,9 +348,8 @@ void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Te
 {
     const Index batch_size = source_input.dimension(0);
 
-    const Index source_sequence_length = source_input.dimension(1);
+    // const Index source_sequence_length = source_input.dimension(1);
     const Index hidden_depth = get_hidden_depth();
-    assert(embedding_dimension == query_weights.dimension(0));
 
     // Tensor contraction dimensions:
     // query_input: (batch_size, query_sequence_length, embedding_dimension)
@@ -373,10 +361,10 @@ void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Te
         .contract(value_weights, axes(2,0))
         .shuffle(array<Index, 4>({1, 2, 0, 3}));
 
-    value.device(*thread_pool_device) += value_biases
-         .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-         .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
-/*
+    // value.device(*thread_pool_device) += value_biases
+    //      .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+    //      .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
+
     for(Index head_index = 0; head_index < heads_number; head_index++)
     {
         const TensorMap<Tensor<type, 1>> head_value_biases = tensor_map(value_biases, head_index);
@@ -388,7 +376,31 @@ void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Te
             sum_columns(thread_pool_device.get(), head_value_biases, head_sample_value);
         }
     }
-*/
+
+}
+
+void MultiHeadAttention::apply_key_padding_mask(const Tensor<bool, 2>& key_padding_mask,
+                                                Tensor<type, 4>&       attention_weights) const
+{
+    // @Todo (I don't know if it is building the mask correctly)
+    const Index batch_size  = attention_weights.dimension(2);
+
+    Tensor<type, 2> key_padding_mask_type(key_padding_mask.dimension(0),key_padding_mask.dimension(1));
+
+    for(Index h = 0; h < heads_number; ++h)
+    {
+        for(Index b = 0; b < batch_size; ++b)
+        {
+            TensorMap<Tensor<type, 2>> head_sample_attention_weights = tensor_map(attention_weights,h,b);
+
+            head_sample_attention_weights.device(*thread_pool_device)
+                        += key_padding_mask.chip(b, 0)
+                       .cast<type>()
+                       .reshape(array<Index,2>{source_sequence_length, 1})
+                       .broadcast(array<Index,2>{1, query_sequence_length})
+                   * type(-10e9);
+        }
+    }
 }
 
 
@@ -399,12 +411,26 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
 
     batch_matrix_multiplication(thread_pool_device.get(), key, query, attention_weights, axes<Index>(1,1));
 
+
     const type scaling_factor = get_scaling_factor();
 
     attention_weights.device(*thread_pool_device) = attention_weights * scaling_factor;
 
     if(use_causal_mask)
         apply_causal_mask(attention_weights);
+
+
+    // @Todo (The key mask is hardcoded to function on a self attention)
+    // Tensor<bool,2> key_mask(key.dimension(2), source_sequence_length);
+
+    // #pragma omp parallel for
+    // for(Index i = 0; i < key_mask.dimension(0); i++)
+    // {
+    //     for(Index j = 0; j < key_mask.dimension(1);j++)
+    //         key_mask(i,j)=(attention_weights(j,j,i,0)==0);
+    // }
+
+    // apply_key_padding_mask(key_mask, attention_weights);
 
     softmax(attention_weights);
 }
@@ -482,7 +508,6 @@ void MultiHeadAttention::forward_propagate(const vector<pair<type*, dimensions>>
 
     Tensor<type, 3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
 
-    // Tensor<type, 4>& projection_outputs = this_forward_propagation->projection_outputs;
     Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     calculate_query(query_input, query);
@@ -688,6 +713,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     input_query_derivatives.device(*thread_pool_device) = result;
 */
+
     // INPUT SOURCE DERIVATIVES
 
     for(Index head_index = 0; head_index < heads_number; head_index++)
@@ -705,6 +731,8 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
                    + sample_value_derivatives.contract(head_value_weights, axes(1,1));
         }
     }
+
+
 }
 
 

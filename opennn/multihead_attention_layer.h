@@ -39,7 +39,7 @@ public:
     dimensions get_output_dimensions() const override;
 
     Index get_parameters_number() const override;
-    Tensor<type, 1> get_parameters() const;
+    Tensor<type, 1> get_parameters() const override;
 
     void set(const Index& = 0,
              const Index& = 0,
@@ -89,11 +89,14 @@ public:
        // @todo
     #endif
 
+    void apply_key_padding_mask(const Tensor<bool, 2>&,Tensor<type, 4>&) const;
+
 private:
 
     Index query_sequence_length = 0;
 
     Index source_sequence_length = 0;
+
 
     Index heads_number = 0;
     Index embedding_dimension = 0;
@@ -113,6 +116,7 @@ private:
     bool use_causal_mask = false;
 
     Tensor<type, 2> causal_mask;
+    Tensor<bool,2> key_mask;            //Starting to implement (should be used before softmax so that the probability of the padding is zero)
 
     type dropout_rate = type(0);
 
