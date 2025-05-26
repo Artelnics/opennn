@@ -663,7 +663,7 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     const type* inputs_device = inputs_pair_device[0].first;
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index inputs_height = inputs_pair_device[0].second[1];
     const Index inputs_width = inputs_pair_device[0].second[2];
     const Index channels_number = inputs_pair_device[0].second[3];
@@ -725,7 +725,7 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
     const type* inputs_device = inputs_pair_device[0].first;
     type* deltas_device = deltas_pair_device[0].first;
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index inputs_height = inputs_pair_device[0].second[1];
     const Index inputs_width = inputs_pair_device[0].second[2];
     const Index channels_number = inputs_pair_device[0].second[3];

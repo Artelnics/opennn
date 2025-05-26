@@ -941,7 +941,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 {
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index height = inputs_pair_device[0].second[1];
     const Index width = inputs_pair_device[0].second[2];
     const Index channels = inputs_pair_device[0].second[3];
@@ -973,7 +973,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     {
         type* reordered_inputs_device = convolutional_layer_forward_propagation_cuda->reordered_inputs_device;
 
-        reorder_inputs_cuda(inputs_device, reordered_inputs_device, batch_samples_number, channels, height, width);
+        reorder_inputs_cuda(inputs_device, reordered_inputs_device, batch_size, channels, height, width);
 
         inputs_device = reordered_inputs_device;
     }
@@ -1029,7 +1029,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     {
         const Index outputs_number = get_outputs_number();
 
-        cudaMemcpy(outputs, convolutions, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(outputs, convolutions, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     }
 }
 
@@ -1040,7 +1040,7 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
     // Inputs
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     const type* inputs_device = inputs_pair_device[0].first;
     const type* deltas_device = deltas_pair_device[0].first;
@@ -1105,7 +1105,7 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     {
         const Index outputs_number = get_outputs_number();
 
-        cudaMemcpy(error_combinations_derivatives_device, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(error_combinations_derivatives_device, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     }
 
     // Convolution backwards for weights derivatives

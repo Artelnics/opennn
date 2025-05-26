@@ -697,7 +697,7 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     const type* inputs_device = inputs_pair_device[0].first;
 
@@ -724,20 +724,20 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
-        batch_samples_number, outputs_number, inputs_number,
+        batch_size, outputs_number, inputs_number,
         &alpha,
         inputs_device,
-        batch_samples_number,
+        batch_size,
         weights_device,
         inputs_number,
         &beta,
         combinations,
-        batch_samples_number);
+        batch_size);
 
     // @todo Improve by using cudnnAddTensor
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = combinations + biases_index * batch_samples_number;
+        type* outputs_batch = combinations + biases_index * batch_size;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -770,7 +770,7 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
             cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
     }
     else
-        cudaMemcpy(outputs, combinations, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 }
 
 
@@ -786,7 +786,7 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     const type* inputs_device = inputs_pair_device[0].first;
     const type* deltas_device = deltas_pair_device[0].first;
@@ -836,19 +836,19 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
             error_combinations_derivatives_tensor_descriptor,
             error_combinations_derivatives);
     else
-        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 
     // Bias derivatives 
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
         1,
-        batch_samples_number,
+        batch_size,
         &alpha,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         ones,
-        batch_samples_number,
+        batch_size,
         &beta,
         biases_derivatives,
         outputs_number);
@@ -857,12 +857,12 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
-        batch_samples_number,
+        batch_size,
         &alpha,
         inputs_device,
-        batch_samples_number,
+        batch_size,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         &beta,
         weights_derivatives,
         inputs_number);
@@ -870,17 +870,17 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     // Input derivatives
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
-        batch_samples_number,
+        batch_size,
         inputs_number,
         outputs_number,
         &alpha,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         weights_device,
         inputs_number,
         &beta,
         input_derivatives,
-        batch_samples_number);
+        batch_size);
 }
 
 

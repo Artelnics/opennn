@@ -265,13 +265,14 @@ void MultiHeadAttention::calculate_query(const Tensor<type, 3>& query_input, Ten
 
     const Index hidden_depth = get_hidden_depth();
 
-    query.device(*thread_pool_device)
-        = query_input
+    query.device(*thread_pool_device) = query_input
         .contract(query_weights, axes(2, 0))
         .shuffle(array<Index, 4>({1, 2, 0, 3}));
-        // + query_biases
-        // .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-        // .broadcast(array<Index, 4>({query_sequence_length, 1, batch_size, 1 }));
+
+    if(false)
+        query.device(*thread_pool_device) += query_biases
+            .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+            .broadcast(array<Index, 4>({query_sequence_length, 1, batch_size, 1 }));
 }
 
 
@@ -285,9 +286,11 @@ void MultiHeadAttention::calculate_key(const Tensor<type, 3>& source_input, Tens
         = source_input
         .contract(key_weights, axes(2,0))
         .shuffle(array<Index, 4>({1, 2, 0, 3}));
-        // + key_biases
-        // .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-        // .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
+
+    if(false)
+        key.device(*thread_pool_device) += key_biases
+            .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+            .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
 }
 
 
@@ -300,9 +303,10 @@ void MultiHeadAttention::calculate_value(const Tensor<type, 3>& source_input, Te
         .contract(value_weights, axes(2,0))
         .shuffle(array<Index, 4>({1, 2, 0, 3}));
 
-    // value.device(*thread_pool_device) += value_biases
-    //      .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
-    //      .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
+    if(false)
+        value.device(*thread_pool_device) += value_biases
+            .reshape(array<Index, 4>({1, hidden_depth, 1, heads_number}))
+            .broadcast(array<Index, 4>({source_sequence_length, 1, batch_size, 1}));
 }
 
 
@@ -345,7 +349,6 @@ void MultiHeadAttention::calculate_attention_weights(const Tensor<type, 4>& quer
 
     if(use_causal_mask)
         apply_causal_mask(attention_weights);
-
 
     // @Todo (The key mask is hardcoded to function on a self attention)
     // Tensor<bool,2> key_mask(key.dimension(2), source_sequence_length);
