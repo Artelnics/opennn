@@ -30,7 +30,7 @@ int main()
         cout << "OpenNN. Translation Example." << endl;
 
         // Data set
-
+/*
         LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
         // LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
@@ -42,7 +42,7 @@ int main()
 
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
-/*
+
         // Sentiment analysis case
 
         const Index maximum_sequence_length = 10;
@@ -79,7 +79,6 @@ int main()
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();
-
 
         // Prediction test
         cout << "Vocabulary:" << endl;
@@ -118,13 +117,12 @@ int main()
         testing_data(2,9) = 0;
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-*/
 
       // Translation case
-        const Index embedding_dimension = 64/*128*/;
-        const Index perceptron_depth = 128/*256*/;
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
         const Index heads_number = 4;
-        const Index layers_number = 1/*2*/;
+        const Index layers_number = 1;
       // Neural network
         
         Transformer transformer(decoder_length,
@@ -201,7 +199,7 @@ int main()
         string prediction_4 = transformer.calculate_outputs({"I have to go now."});
 
         cout << "Target: Ahora me tengo que ir." << endl << "Prediction: " << prediction_4 << endl<<endl;
-/*
+
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;

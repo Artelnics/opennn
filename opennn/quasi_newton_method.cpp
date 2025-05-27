@@ -698,53 +698,6 @@ void QuasiNewtonMethodData::print() const
         << learning_rate << endl;
 }
 
-
-#ifdef OPENNN_CUDA
-
-TrainingResults QuasiNewtonMethod::perform_training_cuda()
-{
-    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: QuasiNewtonMethod");
-}
-
-
-void QuasiNewtonMethod::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
-                                                QNMOptimizationDataCuda& optimization_data_cuda) const
-{
-    // @todo
-}
-
-
-QNMOptimizationDataCuda::QNMOptimizationDataCuda(QuasiNewtonMethod* new_quasi_newton_method)
-{
-    set(new_quasi_newton_method);
-}
-
-
-void QNMOptimizationDataCuda::set(QuasiNewtonMethod* new_quasi_newton_method)
-{
-    quasi_newton_method = new_quasi_newton_method;
-
-    const Index parameters_number = new_quasi_newton_method->get_loss_index()->get_neural_network()->get_parameters_number();
-
-    // Gradient
-
-    // @todo
-}
-
-
-void QNMOptimizationDataCuda::free()
-{
-    // @todo
-}
-
-
-void QNMOptimizationDataCuda::print() const
-{
-    // @todo
-}
-
-#endif
-
 }
 
 // OpenNN: Open Neural Networks Library.

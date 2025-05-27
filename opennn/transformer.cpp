@@ -70,6 +70,7 @@ void Transformer::set(const Index& new_decoder_length,
                                           "decoder_embedding"));
 
     set_layer_inputs_indices("decoder_embedding", "decoder");
+
     //decoder_embedding_layer->set_dropout_rate(dropout_rate);
 
     add_layer(make_unique<Embedding>(new_input_dimension,
@@ -260,20 +261,24 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
     output_vocabulary = new_output_vocabulary;
 }
 
+
 void Transformer::set_input_length(const Index& new_input_length)
 {
     input_length = new_input_length;
 }
+
 
 void Transformer::set_decoder_length(const Index& new_decoder_length)
 {
     decoder_length = new_decoder_length;
 }
 
+
 Index Transformer::get_input_length() const
 {
     return input_length;
 }
+
 
 Index Transformer::get_decoder_length() const
 {
@@ -671,7 +676,7 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
             }
         }
 
-        (current_prediction.substr(0, 2) == "##")
+        current_prediction.substr(0, 2) == "##"
             ? buffer << current_prediction.substr(2)
             : buffer << " " << current_prediction;
     }
