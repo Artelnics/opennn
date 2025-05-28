@@ -236,14 +236,14 @@ void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 }
 
 
-void Flatten::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Flatten::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                   const vector<pair<type*, dimensions>>& deltas_pair_device,
                                   unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                   unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
     const Index outputs_number = get_outputs_number();
 

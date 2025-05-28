@@ -524,35 +524,16 @@ string Perceptron::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
-    case Activation::Logistic:
-        return "logistic";
-
-    case Activation::HyperbolicTangent:
-        return "tanh";
-
-    case Activation::Linear:
-        return string();
-
-    case Activation::RectifiedLinear:
-        return "ReLU";
-
-    case Activation::ExponentialLinear:
-        return "ELU";
-
-    case Activation::ScaledExponentialLinear:
-        return "SELU";
-
-    case Activation::SoftPlus:
-        return "soft_plus";
-
-    case Activation::SoftSign:
-        return "soft_sign";
-
-    case Activation::HardSigmoid:
-        return "hard_sigmoid";
-
-    default:
-        return string();
+    case Activation::Logistic: return "logistic";
+    case Activation::HyperbolicTangent: return "tanh";
+    case Activation::Linear: return string();
+    case Activation::RectifiedLinear: return "ReLU";
+    case Activation::ExponentialLinear: return "ELU";
+    case Activation::ScaledExponentialLinear: return "SELU";
+    case Activation::SoftPlus: return "soft_plus";
+    case Activation::SoftSign: return "soft_sign";
+    case Activation::HardSigmoid: return "hard_sigmoid";
+    default: return string();
     }
 }
 
@@ -583,7 +564,7 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 }
 
 
-PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_size,
+PerceptronForwardPropagation::PerceptronForwardPropagation(const Index&new_batch_size,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
@@ -600,7 +581,7 @@ void PerceptronForwardPropagation::print() const
 }
 
 
-PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_size, Layer *new_layer)
+PerceptronBackPropagation::PerceptronBackPropagation(const Index&new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
@@ -644,7 +625,7 @@ void PerceptronBackPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_size,
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index&new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
@@ -652,7 +633,7 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &
 }
 
 
-void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Layer *new_layer)
+void PerceptronLayerBackPropagationLM::set(const Index&new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
@@ -686,7 +667,7 @@ void PerceptronLayerBackPropagationLM::print() const
 
 #ifdef OPENNN_CUDA
 
-void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                         const bool& is_training)
 {
@@ -697,9 +678,8 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
-
-    const type* inputs_device = inputs_pair_device[0].first;
+    const Index batch_size = input_pairs_device[0].second[0];
+    const type* inputs_device = input_pairs_device[0].first;
 
     // Forward propagation
 
@@ -708,19 +688,16 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
 
-    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
     const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
+
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
     // Combinations
-
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
 
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
@@ -731,13 +708,13 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
         weights_device,
         inputs_number,
         &beta,
-        combinations,
+        outputs,
         batch_size);
 
     // @todo Improve by using cudnnAddTensor
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = combinations + biases_index * batch_size;
+        type* outputs_batch = outputs + biases_index * batch_size;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -756,25 +733,20 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
     // Activations
 
     if (perceptron_layer->get_activation_function() != Activation::Linear)
-    {
-        cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
+        cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             combinations,
-            &beta,
             outputs_tensor_descriptor,
+            outputs,
+            &beta,
+            output_tensor_descriptor,
             outputs);
-
-        if (activationStatus != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
-    }
-    else
-        cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 }
 
 
-void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                      const vector<pair<type*, dimensions>>& deltas_pair_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
@@ -786,9 +758,9 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
-    const type* inputs_device = inputs_pair_device[0].first;
+    const type* inputs_device = input_pairs_device[0].first;
     const type* deltas_device = deltas_pair_device[0].first;
 
     // Forward propagation
@@ -798,10 +770,7 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
 
-    float* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     float* outputs = perceptron_layer_forward_propagation_cuda->outputs;
-
-    const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
     // Back propagation
 
@@ -810,15 +779,13 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     float* ones = perceptron_layer_back_propagation->ones;
     float* error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives_device;
-    float* biases_derivatives = perceptron_layer_back_propagation->biases_derivatives_device;
-    float* weights_derivatives = perceptron_layer_back_propagation->weights_derivatives_device;
+
+    float* bias_derivatives = perceptron_layer_back_propagation->bias_derivatives_device;
+    float* weight_derivatives = perceptron_layer_back_propagation->weight_derivatives_device;
     float* input_derivatives = perceptron_layer_back_propagation->input_derivatives;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = perceptron_layer_back_propagation->deltas_tensor_descriptor;
     const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = perceptron_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
-
-    const float alpha = 1.0f;
-    float beta = 0.0f;
 
     // Error combinations derivatives
 
@@ -838,7 +805,8 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     else
         cudaMemcpy(error_combinations_derivatives, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 
-    // Bias derivatives 
+    // Bias derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
@@ -850,10 +818,11 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         ones,
         batch_size,
         &beta,
-        biases_derivatives,
+        bias_derivatives,
         outputs_number);
 
-    // Synaptic weights derivatives
+    // Weight derivatives
+
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
@@ -864,10 +833,11 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         error_combinations_derivatives,
         batch_size,
         &beta,
-        weights_derivatives,
+        weight_derivatives,
         inputs_number);
 
     // Input derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
         batch_size,
@@ -891,8 +861,8 @@ void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back
     PerceptronBackPropagationCuda* perceptron_layer_back_propagation =
         static_cast<PerceptronBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weights_derivatives_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->biases_derivatives_device, biases.size(), index);
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weight_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->bias_derivatives_device, biases.size(), index);
 }
 
 
@@ -900,23 +870,6 @@ void Perceptron::set_parameters_cuda(const float* new_parameters, Index& index)
 {
     copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
     copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
-}
-
-
-void Perceptron::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-    /*
-    const Index weights_number = get_weights_number();
-    const Index biases_number = get_biases_number();
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + index)),
-        weights_device, size_t(weights_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + biases_number + index)),
-        biases_device, size_t(biases_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-        */
 }
 
 
@@ -945,11 +898,9 @@ void Perceptron::free_parameters_device()
 
 void Perceptron::copy_parameters_device()
 {
-    if (biases_device == nullptr)
-        cout << "Biases device is null" << endl;
+    if (!biases_device) cout << "Biases device is null" << endl;
 
-    if (weights_device == nullptr)
-        cout << "Weights device is null" << endl;
+    if (!weights_device) cout << "Weights device is null" << endl;
 
     if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Biases device copy error" << endl;
@@ -961,10 +912,10 @@ void Perceptron::copy_parameters_device()
 
 void Perceptron::copy_parameters_host()
 {
-    if (biases_device == nullptr) 
+    if (!biases_device)
         cout << "Biases is null" << endl;
 
-    if (weights_device == nullptr) 
+    if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
     if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
@@ -974,19 +925,6 @@ void Perceptron::copy_parameters_host()
         cout << "Weights host copy error" << endl;
 }
 
-
-float* Perceptron::get_weights_device() const
-{
-    return weights_device;
-}
-
-float* Perceptron::get_biases_device() const
-{
-    return biases_device;
-}
-
-
-// CUDA structs
 
 PerceptronForwardPropagationCuda::PerceptronForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()
@@ -1018,15 +956,12 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
 
     // Outputs
 
-    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "combinations allocation error" << endl;
-
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(output_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
@@ -1052,7 +987,6 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
 
     switch (perceptron_layer->get_activation_function())
     {
-
     case Perceptron::Activation::Linear:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_IDENTITY, CUDNN_PROPAGATE_NAN, 0.0);
         break;
@@ -1072,15 +1006,6 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
     case Perceptron::Activation::ExponentialLinear:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_ELU, CUDNN_PROPAGATE_NAN, 0.0);
         break;
-
-        //case Perceptron::Activation::Swish:
-        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_SWISH, CUDNN_PROPAGATE_NAN, 0.0);
-        //    break;
-
-        //case Perceptron::Activation::ClippedRectifiedLinear:
-        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_CLIPPED_RELU, CUDNN_PROPAGATE_NAN, 0.0);
-        //    break;
-
     }
 }
 
@@ -1092,12 +1017,11 @@ void PerceptronForwardPropagationCuda::print() const
 
 void PerceptronForwardPropagationCuda::free()
 {
-    cudaFree(combinations);
     cudaFree(outputs);
 
     cudnnDestroyActivationDescriptor(activation_descriptor);
 
-    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
 }
@@ -1136,17 +1060,17 @@ void PerceptronBackPropagationCuda::set(const Index& new_batch_samples_number, L
         cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
     }
 
-    // biases_derivatives_device
+    // bias_derivatives_device
 
-    if (cudaMalloc(&biases_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "biases_derivatives perceptron allocation error" << endl;
+    if (cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "bias_derivatives perceptron allocation error" << endl;
 
-    // weights_derivatives_device
+    // weight_derivatives_device
 
-    if (cudaMalloc(&weights_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "weights_derivatives allocation error" << endl;
+    if (cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "weight_derivatives allocation error" << endl;
 
-    // Inputs derivatives
+    // Input derivatives
 
     if (cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
         cout << "inputs derivatives allocation error" << endl;
@@ -1177,7 +1101,6 @@ void PerceptronBackPropagationCuda::set(const Index& new_batch_samples_number, L
         outputs_number,
         1,
         1);
-
 }
 
 
@@ -1197,8 +1120,8 @@ void PerceptronBackPropagationCuda::print() const
 
 void PerceptronBackPropagationCuda::free()
 {
-    cudaFree(biases_derivatives_device);
-    cudaFree(weights_derivatives_device);
+    cudaFree(bias_derivatives_device);
+    cudaFree(weight_derivatives_device);
     cudaFree(error_combinations_derivatives_device);
     cudaFree(input_derivatives);
     cudaFree(ones);

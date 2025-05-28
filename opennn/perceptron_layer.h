@@ -86,8 +86,7 @@ public:
                
         outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
             //shifts.broadcast(rows);
-                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
-        
+                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);        
     }
 
 
@@ -144,8 +143,6 @@ public:
 
     void set_parameters_cuda(const float*, Index&);
 
-    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
-
     void copy_parameters_host();
 
     void copy_parameters_device();
@@ -154,13 +151,12 @@ public:
 
     void free_parameters_device();
 
-    float* get_weights_device() const;
-    float* get_biases_device() const;
-
 private:
 
     float* biases_device = nullptr;
     float* weights_device = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
 #endif
 
@@ -176,7 +172,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
 };
 
 
@@ -249,12 +244,8 @@ struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
-
-    float* combinations = nullptr;
 };
 
 
@@ -272,8 +263,8 @@ struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
 
     float* error_combinations_derivatives_device = nullptr;
 
-    float* biases_derivatives_device = nullptr;
-    float* weights_derivatives_device = nullptr;
+    float* bias_derivatives_device = nullptr;
+    float* weight_derivatives_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;
@@ -284,11 +275,9 @@ struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
 
 #endif
 
-
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

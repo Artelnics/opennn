@@ -206,16 +206,16 @@ vector<pair<type*, dimensions>> Addition3dBackPropagation::get_input_derivative_
 
 #ifdef OPENNN_CUDA
 
-void Addition3d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Addition3d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                         const bool& is_training)
 {
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
-    type* positional_encodings = inputs_pair_device[0].first;
-    type* input_embeddings = inputs_pair_device[1].first;
+    type* positional_encodings = input_pairs_device[0].first;
+    type* input_embeddings = input_pairs_device[1].first;
 
     // Forward propagation
 
@@ -229,7 +229,7 @@ void Addition3d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 }
 
 
-void Addition3d::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Addition3d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                      const vector<pair<type*, dimensions>>& deltas_pair_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
@@ -239,7 +239,7 @@ void Addition3d::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
     type* deltas_device = deltas_pair_device[0].first;
 

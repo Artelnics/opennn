@@ -536,7 +536,6 @@ void Layer::create_cuda()
         CUDNN_OP_TENSOR_ADD,
         CUDNN_DATA_FLOAT,
         CUDNN_NOT_PROPAGATE_NAN);
-
 }
 
 

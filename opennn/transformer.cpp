@@ -682,7 +682,6 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
     }
 }
 
-
 };
 
 

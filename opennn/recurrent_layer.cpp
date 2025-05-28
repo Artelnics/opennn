@@ -287,7 +287,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_derivatives = recurrent_backward->input_derivatives;
-    Tensor<type, 2>& input_weights_derivatives = recurrent_backward->input_weight_derivatives;
+    Tensor<type, 2>& input_weight_derivatives = recurrent_backward->input_weight_derivatives;
     Tensor<type, 2>& recurrent_weight_derivatives = recurrent_backward->recurrent_weight_derivatives;
     Tensor<type, 1>& bias_derivatives = recurrent_backward->bias_derivatives;
     Tensor<type, 2>& combination_deltas = recurrent_backward->combination_deltas;
@@ -305,7 +305,7 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
         // Need
 
-        input_weights_derivatives += inputs.chip(t,1).contract(combination_deltas, axes(0,0));
+        input_weight_derivatives += inputs.chip(t,1).contract(combination_deltas, axes(0,0));
 
         if(t > 0)
         {
