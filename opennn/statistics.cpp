@@ -921,7 +921,7 @@ BoxPlot box_plot(const Tensor<type, 1>& data, const vector<Index>& indices)
     return box_plot;
 }
 
-
+/*
 Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number) 
 {
     const Index size = vector.dimension(0);
@@ -1013,9 +1013,9 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 
     return hist;
 }
+*/
 
-/*
-Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
+Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
 {
     const Index size = vector.dimension(0);
 
@@ -1026,10 +1026,11 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    vector<type> unique_values;
+    std::vector<type> unique_values;
+
     unique_values.reserve(min<Index>(size, bins_number));
     unique_values.push_back(vector(0));
-    
+
     for(Index i = 1; i < size; i++)
     {
         const type value = vector(i);
@@ -1039,7 +1040,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
             unique_values.push_back(value);
 
             if (static_cast<Index>(unique_values.size()) > bins_number)
-                break; 
+                break;
         }
     }
 
@@ -1049,9 +1050,13 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     {
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
 
-        centers = unique_values;
-        minimums = unique_values;
-        maximums = unique_values;
+        Tensor<type, 1> tensor_unique(unique_values.size());
+        for (Index i = 0; i < unique_values.size(); ++i)
+            tensor_unique(i) = unique_values[i];
+
+        centers = tensor_unique;
+        minimums = tensor_unique;
+        maximums = tensor_unique;
 
         frequencies.resize(unique_values_number);
         frequencies.setZero();
@@ -1119,11 +1124,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index bins_number)
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
 
-    
-    Histogram histogram(bins_number);
     return histogram;
 }
-*/
 
 
 Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, const Index& bins_number)
