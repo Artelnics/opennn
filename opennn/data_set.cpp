@@ -358,6 +358,7 @@ namespace opennn
 
         const Index used_samples_number = samples_number - get_samples_number(SampleUse::None);
 
+        assert(used_samples_number >= 0);
         vector<Index> used_indices(used_samples_number);
 
         Index index = 0;
@@ -625,6 +626,7 @@ namespace opennn
 
     void DataSet::set_default_raw_variables_uses()
     {
+        const ModelType model_type = get_model_type();
         const Index raw_variables_number = raw_variables.size();
 
         bool target = false;
@@ -651,12 +653,15 @@ namespace opennn
 
             if (!target)
             {
-                raw_variables[i].set_use(VariableUse::Target);
-
-                target = true;
-
-                continue;
+                if (model_type != ModelType::Classification ||
+                    raw_variables[i].type == RawVariableType::Binary)
+                {
+                    raw_variables[i].set_use(VariableUse::Target);
+                    target = true;
+                    continue;
+                }
             }
+
         }
     }
 

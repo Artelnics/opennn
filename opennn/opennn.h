@@ -15,7 +15,6 @@
 
 #include "data_set.h"
 #include "time_series_data_set.h"
-#include "auto_associative_data_set.h"
 #include "image_data_set.h"
 #include "language_data_set.h"
 
@@ -38,7 +37,6 @@
 #include "unscaling_layer.h"
 #include "flatten_layer.h"
 #include "neural_network.h"
-#include "auto_associative_neural_network.h"
 #include "transformer.h"
 #include "forward_propagation.h"
 #include "flatten_layer_3d.h"

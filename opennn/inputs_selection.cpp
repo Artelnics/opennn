@@ -159,7 +159,7 @@ void InputsSelection::check() const
 }
 
 
-InputsSelectionResults::InputsSelectionResults(const Index &maximum_epochs_number)
+InputsSelectionResults::InputsSelectionResults(const Index&maximum_epochs_number)
 {
     set(maximum_epochs_number);
 }

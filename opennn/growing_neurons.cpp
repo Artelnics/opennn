@@ -153,7 +153,7 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         time(&current_time);
 
-        elapsed_time = type(difftime(current_time, beginning_time));
+        elapsed_time = type(difftime(current_time,beginning_time));
 
         // Stopping criteria
 
@@ -191,9 +191,9 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         if(end)
         {
-            neuron_selection_results.resize_history(epoch+1);
-
             neuron_selection_results.elapsed_time = write_time(elapsed_time);
+
+            neuron_selection_results.resize_history(epoch+1);
 
             break;
         }

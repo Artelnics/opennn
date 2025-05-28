@@ -55,7 +55,6 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
-    auto_associative_data_set.h \
     flatten_layer_3d.h \
     pch.h \
     codification.h \
@@ -99,7 +98,6 @@ HEADERS += \
     neural_network_forward_propagation.h \
     neural_network_back_propagation.h \
     neural_network_back_propagation_lm.h \
-    auto_associative_neural_network.h \
     loss_index.h \
     loss_index_forward_propagation.h \
     back_propagation.h \
@@ -135,7 +133,6 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
-    auto_associative_data_set.cpp \
     flatten_layer_3d.cpp \
     model_expression.cpp \
     pch.cpp \
@@ -169,7 +166,6 @@ SOURCES += \
     convolutional_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
-    auto_associative_neural_network.cpp \
     loss_index.cpp \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \

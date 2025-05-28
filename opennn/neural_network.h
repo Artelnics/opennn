@@ -215,7 +215,6 @@ public:
                                 ForwardPropagationCuda&,
                                 const bool& = false) const;
 
-    void get_parameters_cuda(Tensor<type, 1>&);
     void set_parameters_cuda(const float*);
 
 protected:

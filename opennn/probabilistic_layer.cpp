@@ -551,7 +551,7 @@ void ProbabilisticForwardPropagation::print() const
 }
 
 
-ProbabilisticBackPropagation::ProbabilisticBackPropagation(const Index &new_batch_size, Layer *new_layer)
+ProbabilisticBackPropagation::ProbabilisticBackPropagation(const Index&new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
@@ -626,7 +626,7 @@ void ProbabilisticLayerBackPropagationLM::print() const
 
 #ifdef OPENNN_CUDA
 
-void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                                 unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                                 const bool& is_training)
 {
@@ -637,27 +637,27 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
-    const type* inputs_device = inputs_pair_device[0].first;
+    const type* inputs_device = input_pairs_device[0].first;
 
     // Forward propagation
 
     ProbabilisticForwardPropagationCuda* probabilistic_layer_forward_propagation_cuda =
         static_cast<ProbabilisticForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    float* combinations = probabilistic_layer_forward_propagation_cuda->combinations;
     float* outputs = probabilistic_layer_forward_propagation_cuda->outputs;
 
+<<<<<<< HEAD
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation_cuda->activation_descriptor;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->output_tensor_descriptor;
+=======
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+>>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
     const cudnnTensorDescriptor_t& outputs_softmax_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_softmax_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
-
-    const float alpha = 1.0f;
-    float beta = 0.0f;
 
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
@@ -668,13 +668,14 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         weights_device,
         inputs_number,
         &beta,
-        combinations,
+        outputs,
         batch_size);
 
     // @todo Improve by using cudnnAddTensor
+
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = combinations + biases_index * batch_size;
+        type* outputs_batch = outputs + biases_index * batch_size;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -698,8 +699,13 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
+<<<<<<< HEAD
             output_tensor_descriptor,
             combinations,
+=======
+            outputs_tensor_descriptor,
+            outputs,
+>>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
             &beta,
             output_tensor_descriptor,
             outputs);
@@ -712,7 +718,7 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
             CUDNN_SOFTMAX_MODE_CHANNEL,
             &alpha,
             outputs_softmax_tensor_descriptor,
-            combinations,
+            outputs,
             &beta,
             outputs_softmax_tensor_descriptor,
             outputs);
@@ -722,7 +728,7 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 }
 
 
-void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                              const vector<pair<type*, dimensions>>& deltas_pair_device,
                                              unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                              unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
@@ -734,9 +740,9 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     // Inputs
 
-    const Index batch_size = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
-    const float* inputs_device = inputs_pair_device[0].first;
+    const float* inputs_device = input_pairs_device[0].first;
 
     const float* deltas_device = deltas_pair_device[0].first;
 
@@ -745,12 +751,15 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     ProbabilisticForwardPropagationCuda* probabilistic_layer_forward_propagation =
         static_cast<ProbabilisticForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    const float* combinations = probabilistic_layer_forward_propagation->combinations;
     const float* outputs = probabilistic_layer_forward_propagation->outputs;
 
+<<<<<<< HEAD
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation->activation_descriptor;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation->output_tensor_descriptor;
+=======
+    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = probabilistic_layer_forward_propagation->outputs_tensor_descriptor;
+>>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     // Back propagation
 
@@ -759,14 +768,11 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     const float* ones = probabilistic_layer_back_propagation->ones;
     float* error_combinations_derivatives = probabilistic_layer_back_propagation->error_combinations_derivatives_device;
-    float* weights_derivatives = probabilistic_layer_back_propagation->weights_derivatives_device;
-    float* biases_derivatives = probabilistic_layer_back_propagation->biases_derivatives_device;
+    float* weight_derivatives = probabilistic_layer_back_propagation->weight_derivatives_device;
+    float* bias_derivatives = probabilistic_layer_back_propagation->bias_derivatives_device;
     float* input_derivatives = probabilistic_layer_back_propagation->input_derivatives;
 
     const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = probabilistic_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
-
-    float alpha = 1.0f;
-    const float beta = 0.0f;
 
     // Error combinations
 
@@ -788,7 +794,8 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     else
         cudaMemcpy(error_combinations_derivatives, deltas_device, batch_size * outputs_number * sizeof(float), cudaMemcpyDeviceToDevice);
 
-    //Synaptic weights derivatives
+    // Weight derivatives
+
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
@@ -799,10 +806,11 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
         error_combinations_derivatives,
         batch_size,
         &beta,
-        weights_derivatives,
+        weight_derivatives,
         inputs_number);
 
-    //Bias derivatives
+    // Bias derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
@@ -814,10 +822,11 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
         ones,
         batch_size,
         &beta,
-        biases_derivatives,
+        bias_derivatives,
         outputs_number);
 
-    // Inputs derivatives
+    // Input derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
         batch_size,
@@ -841,8 +850,8 @@ void Probabilistic::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& b
     ProbabilisticBackPropagationCuda* probabilistic_layer_back_propagation_cuda =
         static_cast<ProbabilisticBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->weights_derivatives_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->biases_derivatives_device, biases.size(), index);
+    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->weight_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, probabilistic_layer_back_propagation_cuda->bias_derivatives_device, biases.size(), index);
 }
 
 
@@ -868,11 +877,9 @@ void Probabilistic::allocate_parameters_device()
 
 void Probabilistic::copy_parameters_device()
 {
-    if (biases_device == nullptr)
-        cout << "Biases is null" << endl;
+    if (!biases_device) cout << "Biases is null" << endl;
 
-    if (weights_device == nullptr)
-        cout << "Weights is null" << endl;
+    if (!weights_device) cout << "Weights is null" << endl;
 
     if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Biases copy error" << endl;
@@ -884,11 +891,9 @@ void Probabilistic::copy_parameters_device()
 
 void Probabilistic::copy_parameters_host()
 {
-    if (biases_device == nullptr)
-        cout << "Biases device is null" << endl;
+    if (!biases_device) cout << "Biases device is null" << endl;
 
-    if (weights_device == nullptr)
-        cout << "Weights device is null" << endl;
+    if (!weights_device) cout << "Weights device is null" << endl;
 
     if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(float), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Biases copy error" << endl;
@@ -907,37 +912,6 @@ void Probabilistic::free_parameters_device()
     weights_device = nullptr;
 }
 
-
-void Probabilistic::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-    /*
-    const Index weights_number = get_weights_number();
-    const Index biases_number = get_biases_number();
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + index)),
-        weights_device, size_t(weights_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + biases_number + index)),
-        biases_device, size_t(biases_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-    */
-}
-
-
-float* Probabilistic::get_weights_device() const
-{
-    return weights_device;
-}
-
-
-float* Probabilistic::get_biases_device() const
-{
-    return biases_device;
-}
-
-
-// CUDA structs
 
 ProbabilisticForwardPropagationCuda::ProbabilisticForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()
@@ -969,9 +943,6 @@ void ProbabilisticForwardPropagationCuda::set(const Index& new_batch_samples_num
         1);
 
     // Outputs
-
-    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "combinations allocation error" << endl;
 
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
@@ -1057,7 +1028,6 @@ ProbabilisticBackPropagationCuda::ProbabilisticBackPropagationCuda(const Index& 
 
 void ProbabilisticBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-
     batch_size = new_batch_samples_number;
 
     layer = new_layer;
@@ -1090,17 +1060,17 @@ void ProbabilisticBackPropagationCuda::set(const Index& new_batch_samples_number
         1,
         1);
 
-    // biases_derivatives_device
+    // bias_derivatives_device
 
-    if (cudaMalloc(&biases_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "biases_derivatives probabilistic allocation error" << endl;
+    if (cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "bias_derivatives probabilistic allocation error" << endl;
 
-    // weights_derivatives_device
+    // weight_derivatives_device
 
-    if (cudaMalloc(&weights_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "weights_derivatives allocation error" << endl;
+    if (cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "weight_derivatives allocation error" << endl;
 
-    // Inputs derivatives
+    // Input derivatives
 
     if (cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
         cout << "inputs derivatives allocation error" << endl;
@@ -1108,7 +1078,7 @@ void ProbabilisticBackPropagationCuda::set(const Index& new_batch_samples_number
     // Aux ones vector
 
     if (cudaMalloc(&ones, batch_size * sizeof(float)) != cudaSuccess)
-        cout << "biases_derivatives allocation error" << endl;
+        cout << "bias_derivatives allocation error" << endl;
 
     for (Index i = 0; i < batch_size; i++) {
         cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
@@ -1131,11 +1101,11 @@ void ProbabilisticBackPropagationCuda::print() const
 
     cout << layer->get_type_string() + " back propagation" << endl;
 
-    cout << "biases_derivatives_device" << endl;
-    cout << matrix_from_device(biases_derivatives_device, outputs_number, 1) << endl;
+    cout << "bias_derivatives_device" << endl;
+    cout << matrix_from_device(bias_derivatives_device, outputs_number, 1) << endl;
 
-    cout << "weights_derivatives_device" << endl;
-    cout << matrix_from_device(weights_derivatives_device, inputs_number, outputs_number) << endl;
+    cout << "weight_derivatives_device" << endl;
+    cout << matrix_from_device(weight_derivatives_device, inputs_number, outputs_number) << endl;
 
     cout << "inputs derivatives" << endl;
     cout << matrix_from_device(input_derivatives, batch_size, outputs_number) << endl;
@@ -1148,8 +1118,8 @@ void ProbabilisticBackPropagationCuda::print() const
 void ProbabilisticBackPropagationCuda::free()
 {
     cudaFree(error_combinations_derivatives_device);
-    cudaFree(biases_derivatives_device);
-    cudaFree(weights_derivatives_device);
+    cudaFree(bias_derivatives_device);
+    cudaFree(weight_derivatives_device);
     cudaFree(input_derivatives);
     cudaFree(ones);
 
