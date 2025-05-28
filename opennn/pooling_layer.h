@@ -23,12 +23,12 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    Pooling(const dimensions& = {2, 2, 1},      // Input dimensions {height,width,channels}
-                 const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
-                 const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
-                 const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
-                 const PoolingMethod& = PoolingMethod::MaxPooling,
-                 const string = "pooling_layer");
+    Pooling(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+            const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
+            const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
+            const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
+            const PoolingMethod& = PoolingMethod::MaxPooling,
+            const string = "pooling_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -197,20 +197,10 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-<<<<<<< HEAD
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-
-
-    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-    void* dropout_states = nullptr;
-    size_t dropout_states_size = 0;
-    void* dropout_reserve_space = nullptr;
-    size_t dropout_reserve_space_size = 0;
-    unsigned long long dropout_seed = 1337ULL;
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
 };
 

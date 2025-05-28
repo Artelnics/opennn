@@ -120,18 +120,10 @@ void Embedding::set_parameters_random()
 {
     if(weights.size() == 0) return;
 
-    const type minimum = type(-0.05);
-    const type maximum = type(0.05);
-
     // First row must be 0s because input value 0 is padding
 
-    weights.chip(0, 0).setConstant(0);
-
-    #pragma omp parallel for
-
-    for (Index i = 1; i < weights.dimension(0); i++)
-        for (Index j = 0; j < weights.dimension(1); j++)
-            weights(i, j) = get_random_type(minimum, maximum);
+    weights.setRandom();
+    weights.chip(0, 0).setZero();
 }
 
 
@@ -189,7 +181,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     // If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
     add_positional_encodings(outputs);
 
-    if(dropout_rate > 0 && is_training)
+    if(is_training && dropout_rate > 0)
         dropout(outputs, dropout_rate);
 }
 

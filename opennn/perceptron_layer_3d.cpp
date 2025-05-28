@@ -19,8 +19,6 @@ Perceptron3d::Perceptron3d(const Index& new_sequence_length,
                            const Perceptron3d::Activation& new_activation_function,
                            const string& new_name) : Layer()
 {
-    layer_type = Type::Perceptron3d;
-
     set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
 }
 

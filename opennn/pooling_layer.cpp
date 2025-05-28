@@ -256,8 +256,8 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 
 
 void Pooling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                     unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                     const bool& is_training)
+                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                const bool& is_training)
 {
     const TensorMap<Tensor<type, 4>> inputs = tensor_map_4(input_pairs[0]);
 
@@ -653,7 +653,6 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     cudnnTensorDescriptor_t& input_tensor_descriptor = pooling_layer_forward_propagation_cuda->input_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
-    cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
 
@@ -670,23 +669,6 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnPoolingForward failed: " << cudnnGetErrorString(status) << endl;
-
-    // Dropout
-
-    if (is_training && get_dropout_rate() > type(0))
-    {
-        status = cudnnDropoutForward(cudnn_handle,
-            pooling_layer_forward_propagation_cuda->dropout_descriptor,
-            output_tensor_descriptor,
-            outputs,
-            output_tensor_descriptor,
-            outputs,
-            pooling_layer_forward_propagation_cuda->dropout_reserve_space,
-            pooling_layer_forward_propagation_cuda->dropout_reserve_space_size);
-
-        if (status != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
-    }
 }
 
 
@@ -714,7 +696,6 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
 
     cudnnTensorDescriptor_t& input_tensor_descriptor = pooling_layer_forward_propagation_cuda->input_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
-    cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
 
@@ -722,25 +703,6 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
 
     PoolingBackPropagationCuda* pooling_layer_back_propagation_cuda
         = static_cast<PoolingBackPropagationCuda*>(back_propagation_cuda.get());
-
-    type* inputs_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
-
-    // Dropout
-
-    if (get_dropout_rate() > type(0))
-    {
-        cudnnStatus_t dstatus = cudnnDropoutBackward(cudnn_handle,
-            pooling_layer_forward_propagation_cuda->dropout_descriptor,
-            output_tensor_descriptor,
-            outputs,
-            output_tensor_descriptor,
-            deltas_device,
-            pooling_layer_forward_propagation_cuda->dropout_reserve_space,
-            pooling_layer_forward_propagation_cuda->dropout_reserve_space_size);
-
-        if (dstatus != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(dstatus) << endl;
-    }
 
     type* input_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
 
@@ -840,28 +802,6 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
                                 pool_height, pool_width,
                                 padding_height, padding_width,
                                 row_stride, column_stride);
-<<<<<<< HEAD
-
-    // Dropout
-
-    if (dropout_rate > type(0))
-    {
-        cudnnCreateDropoutDescriptor(&dropout_descriptor);
-
-        cudnnDropoutGetStatesSize(pooling_layer->get_cudnn_handle(), &dropout_states_size);
-
-        cudaMalloc(&dropout_states, dropout_states_size);
-
-        cudnnSetDropoutDescriptor(dropout_descriptor,
-                                  pooling_layer->get_cudnn_handle(),
-                                  static_cast<float>(dropout_rate),
-                                  dropout_states,
-                                  dropout_states_size,
-                                  dropout_seed);
-
-        cudnnDropoutGetReserveSpaceSize(output_tensor_descriptor, &dropout_reserve_space_size);
-        cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size);
-    }
 }
 
 

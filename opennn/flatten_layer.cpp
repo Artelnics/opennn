@@ -183,7 +183,7 @@ void FlattenBackPropagation::set(const Index& new_batch_size, Layer* new_layer)
 void FlattenBackPropagation::print() const
 {
     cout << "Flatten Input derivatives:" << endl
-        << input_derivatives.dimensions() << endl;
+         << input_derivatives.dimensions() << endl;
 }
 
 

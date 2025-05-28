@@ -231,9 +231,9 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 #ifdef OPENNN_CUDA
 
-struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
+struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PerceptronForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 
@@ -248,9 +248,9 @@ struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
-struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
+struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PerceptronBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 

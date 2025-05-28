@@ -2182,7 +2182,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:
-            layers[i] = make_unique<PerceptronForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
+            layers[i] = make_unique<Dense2dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Perceptron3d:
@@ -2379,7 +2379,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
         switch (neural_network_layers[i]->get_type())
         {
         case Layer::Type::Dense2d:
-            layers[i] = make_unique<PerceptronBackPropagationCuda>(batch_size, neural_network_layers[i].get());
+            layers[i] = make_unique<Dense2dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Perceptron3d:

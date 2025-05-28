@@ -26,22 +26,22 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
+
         // Data set
 
-        LanguageDataSet text_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
+        LanguageDataSet language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
 
-        const Index input_length = text_data_set.get_input_length();
-        const Index target_length = text_data_set.get_target_length();
-        const Index input_vocabulary_size = text_data_set.get_input_vocabulary_size();
-        const Index target_vocabulary_size = text_data_set.get_target_vocabulary_size();
+        const Index input_length = language_data_set.get_input_length();
+        const Index target_length = language_data_set.get_target_length();
+        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
+        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
         cout << input_length << endl;
 
-        // text_data_set.print();
+        // language_data_set.print();
 
-        // text_data_set.print_vocabulary(text_data_set.get_target_vocabulary());
+        // language_data_set.print_vocabulary(text_data_set.get_target_vocabulary());
         // throw runtime_error("");
-
 
         // NeuralNetwork
 
@@ -60,7 +60,7 @@ int main()
 
         // Training Strategy
 
-        TrainingStrategy training_strategy(&neural_network, &text_data_set);
+        TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
 
@@ -68,7 +68,7 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        text_data_set.split_samples_sequential(0.8,0.2,0);
+        language_data_set.split_samples_sequential(0.8, 0.2, 0);
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
@@ -79,21 +79,20 @@ int main()
 
         TrainingResults training_results = training_strategy.perform_training();
 
-        Tensor<type, 2> one_word = text_data_set.get_data(DataSet::VariableUse::Input).chip(1000,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word = language_data_set.get_data(DataSet::VariableUse::Input).chip(1000,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word:\n " << one_word << endl;
 
         cout <<"One word output:\n" << neural_network.calculate_output(one_word).argmax(2) << endl;
 
-        Tensor<type, 2> one_word_2 = text_data_set.get_data(DataSet::VariableUse::Input).chip(11000,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word_2 = language_data_set.get_data(DataSet::VariableUse::Input).chip(11000,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word_2:\n" << one_word_2 << endl;
 
         cout << "One word output_2:\n" << neural_network.calculate_output(one_word_2).argmax(2) << endl;
 
-        Tensor<type, 2> one_word_3 = text_data_set.get_data(DataSet::VariableUse::Input).chip(1450,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word_3 = language_data_set.get_data(DataSet::VariableUse::Input).chip(1450,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word_3:\n" << one_word_3 << endl;
 
         cout <<"One word output_3:\n" << neural_network.calculate_output(one_word).argmax(2) << endl;
-
 
         // text_data_set.set(DataSet::SampleUse::Testing);
 
