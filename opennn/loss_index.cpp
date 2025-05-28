@@ -6,10 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "forward_propagation.h"
 #include "tensors.h"
 #include "loss_index.h"
-#include "back_propagation.h"
 #include "cross_entropy_error_3d.h"
 
 namespace opennn

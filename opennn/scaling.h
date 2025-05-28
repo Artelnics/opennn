@@ -9,7 +9,7 @@
 #ifndef SCALING_H
 #define SCALING_H
 
-#include "descriptives.h"
+#include "statistics.h"
 
 namespace opennn
 {
@@ -18,7 +18,6 @@ namespace opennn
     string scaler_to_string(const Scaler& scaler);
 
     Scaler string_to_scaler(const string& new_scaler);
-
 
     void scale_mean_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);
     void scale_standard_deviation(Tensor<type, 2>&, const Index&, const Descriptives&);

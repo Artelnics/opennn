@@ -6,11 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "neural_network.h"
 #include "cross_entropy_error.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 #include "tensors.h"
-//#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -27,7 +25,7 @@ void CrossEntropyError::calculate_error(const Batch& batch,
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
-    (outputs_number == 1)
+    outputs_number == 1
         ? calculate_binary_error(batch, forward_propagation, back_propagation)
         : calculate_multiple_error(batch, forward_propagation, back_propagation);
 }
@@ -96,7 +94,7 @@ void CrossEntropyError::calculate_output_delta(const Batch& batch,
 {
      const Index outputs_number = neural_network->get_outputs_number();
 
-     (outputs_number == 1)
+     outputs_number == 1
          ? calculate_binary_output_delta(batch, forward_propagation, back_propagation)
          : calculate_multiple_output_delta(batch, forward_propagation, back_propagation);
 }
@@ -206,7 +204,7 @@ void CrossEntropyError::calculate_error_cuda(const BatchCuda& batch_cuda,
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
-    (outputs_number == 1)
+    outputs_number == 1
         ? calculate_binary_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda)
         : calculate_multiple_error_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
 }
@@ -419,7 +417,7 @@ void CrossEntropyError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
 {
     const Index outputs_number = neural_network->get_outputs_number();
 
-    (outputs_number == 1)
+    outputs_number == 1
         ? calculate_binary_output_delta_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda)
         : calculate_multiple_output_delta_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
 }

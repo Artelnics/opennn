@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {

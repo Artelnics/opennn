@@ -6,9 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "neural_network.h"
 #include "stochastic_gradient_descent.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

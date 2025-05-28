@@ -8,8 +8,6 @@
 
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

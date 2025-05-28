@@ -11,6 +11,7 @@
 
 namespace opennn
 {
+
     string scaler_to_string(const Scaler& scaler)
     {
         switch (scaler)

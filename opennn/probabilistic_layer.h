@@ -130,6 +130,8 @@ protected:
     float* biases_device = nullptr;
     float* weights_device = nullptr;
 
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
+
 #endif
 
 };
@@ -200,8 +202,6 @@ struct ProbabilisticForwardPropagationCuda : public LayerForwardPropagationCuda
     cudnnTensorDescriptor_t outputs_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
-
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
 };
 
 

@@ -89,7 +89,6 @@ public:
                 //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);        
     }
 
-
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
 
