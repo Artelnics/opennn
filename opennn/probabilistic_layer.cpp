@@ -651,7 +651,7 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation_cuda->activation_descriptor;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->output_tensor_descriptor;
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_softmax_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_softmax_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = probabilistic_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
@@ -698,7 +698,7 @@ void Probabilistic::forward_propagate_cuda(const vector<pair<type*, dimensions>>
             &alpha,
             output_tensor_descriptor,
             combinations,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             outputs,
             &beta,
             output_tensor_descriptor,
@@ -750,7 +750,7 @@ void Probabilistic::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     const cudnnActivationDescriptor_t& activation_descriptor = probabilistic_layer_forward_propagation->activation_descriptor;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation->output_tensor_descriptor;
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = probabilistic_layer_forward_propagation->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = probabilistic_layer_forward_propagation->output_tensor_descriptor;
 
     // Back propagation
 

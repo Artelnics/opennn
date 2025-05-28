@@ -4538,7 +4538,8 @@ namespace opennn
 
     // AutoAssociation Models
     void DataSet::transform_associative_dataset() {}
-    void DataSet::save_auto_associative_data_binary(const string&) const {};
+    void DataSet::save_auto_associative_data_binary(const string&) const {};    
+
 
 } // namespace opennn
 

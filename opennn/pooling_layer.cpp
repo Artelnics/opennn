@@ -655,7 +655,7 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
     cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
-    cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
 
     // Pooling
 
@@ -716,7 +716,7 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
     cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
-    cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
 
     // Back propagation
 

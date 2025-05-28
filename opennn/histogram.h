@@ -6,49 +6,5 @@
 namespace opennn
 {
 
-struct Histogram
-{
-  Histogram(const Index& = 0);
-
-  Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
-
-  Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
-
-  Histogram(const Tensor<type, 1>&, const Index&);
-
-  Histogram(const Tensor<type, 1>&);
-
-  // Methods
-
-  Index get_bins_number() const;
-
-  Index count_empty_bins() const;
-
-  Index calculate_minimum_frequency() const;
-
-  Index calculate_maximum_frequency() const;
-
-  Index calculate_most_populated_bin() const;
-
-  Tensor<type, 1> calculate_minimal_centers() const;
-
-  Tensor<type, 1> calculate_maximal_centers() const;
-
-  Index calculate_bin(const type&) const;
-
-  Index calculate_frequency(const type&) const;
-
-  void save(const filesystem::path&) const;
-
-  Tensor<type, 1> minimums;
-
-  Tensor<type, 1> maximums;
-
-  Tensor<type, 1> centers;
-
-  Tensor<Index, 1> frequencies;
-};
-
-
 }
 #endif

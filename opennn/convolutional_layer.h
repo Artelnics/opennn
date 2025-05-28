@@ -271,14 +271,12 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     int output_batch_size, output_channels, output_height, output_width = 0;
 
-<<<<<<< HEAD
     type* convolutions = nullptr;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
-=======
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
+
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
 

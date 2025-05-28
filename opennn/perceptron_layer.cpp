@@ -80,32 +80,15 @@ string Perceptron::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case Activation::Logistic:
-        return "Logistic";
-
-    case Activation::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case Activation::Linear:
-        return "Linear";
-
-    case Activation::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case Activation::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case Activation::SoftPlus:
-        return "SoftPlus";
-
-    case Activation::SoftSign:
-        return "SoftSign";
-
-    case Activation::HardSigmoid:
-        return "HardSigmoid";
-
-    case Activation::ExponentialLinear:
-        return "ExponentialLinear";
+    case Activation::Logistic: return "Logistic";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::Linear: return "Linear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
+    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case Activation::SoftPlus: return "SoftPlus";
+    case Activation::SoftSign: return "SoftSign";
+    case Activation::HardSigmoid: return "HardSigmoid";
+    case Activation::ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
@@ -253,23 +236,15 @@ void Perceptron::calculate_activations(Tensor<type, 2>& activations,
     switch(activation_function)
     {
     case Activation::Linear: linear(activations, activation_derivatives); return;
-
     case Activation::Logistic: logistic(activations, activation_derivatives);return;
-
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
     case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-
     case Activation::SoftPlus: soft_plus(activations, activation_derivatives);return;
-
     case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-
     case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-
     case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-
+    case Activation::Softmax: softmax(activations); return;
     default: return;
     }
 }
@@ -281,27 +256,20 @@ void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    PerceptronForwardPropagation* perceptron_layer_forward_propagation =
+    PerceptronForwardPropagation* this_forward_propagation =
         static_cast<PerceptronForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
+    Tensor<type, 2>& outputs = this_forward_propagation->outputs;
 
     calculate_combinations(inputs,
                            outputs);
 
-    if(is_training)
-    {
-        Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
-
-        calculate_activations(outputs, activation_derivatives);
-    }
-    else
-    {
-        calculate_activations(outputs, empty_2);
-    }
+    is_training
+        ? calculate_activations(outputs, this_forward_propagation->activation_derivatives)
+        : calculate_activations(outputs, empty_2);
 
     if(is_training && dropout_rate > type(0))
-        dropout(outputs,dropout_rate);
+        dropout(outputs, dropout_rate);
 }
 
 
@@ -333,7 +301,8 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& input_derivatives = perceptron_back_propagation->input_derivatives;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    if(activation_function != Activation::Softmax)
+        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
     bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
@@ -690,8 +659,6 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
-    const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
-
     const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
 
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
@@ -712,6 +679,7 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
         batch_size);
 
     // @todo Improve by using cudnnAddTensor
+
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
         type* outputs_batch = outputs + biases_index * batch_size;
@@ -737,8 +705,8 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
             activation_descriptor,
             &alpha,
             output_tensor_descriptor,
-            combinations,
-            outputs_tensor_descriptor,
+            outputs,
+            output_tensor_descriptor,
             outputs,
             &beta,
             output_tensor_descriptor,

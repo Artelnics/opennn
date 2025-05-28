@@ -16,6 +16,100 @@
 namespace opennn
 {
 
+struct Descriptives
+{
+    Descriptives(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
+
+    Tensor<type, 1> to_tensor() const;
+
+    void set(const type& = type(NAN), const type& = type(NAN), const type& = type(NAN), const type& = type(NAN));
+
+    void save(const filesystem::path&) const;
+
+    void print(const string& = "Descriptives:") const;
+
+    string name = "Descriptives";
+
+    type minimum = type(-1.0);
+
+    type maximum = type(1);
+
+    type mean = type(0);
+
+    type standard_deviation = type(1);
+
+};
+
+
+struct BoxPlot
+{
+    BoxPlot(const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN),
+            const type& = type(NAN));
+
+    void set(const type& = type(NAN),
+             const type& = type(NAN),
+             const type& = type(NAN),
+             const type& = type(NAN),
+             const type& = type(NAN));
+
+    type minimum = type(NAN);
+
+    type first_quartile = type(NAN);
+
+    type median = type(NAN);
+
+    type third_quartile = type(NAN);
+
+    type maximum = type(NAN);
+};
+
+
+struct Histogram
+{
+    Histogram(const Index& = 0);
+
+    Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
+
+    Histogram(const Tensor<Index, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    Histogram(const Tensor<type, 1>&, const Index&);
+
+    Histogram(const Tensor<type, 1>&);
+
+    // Methods
+
+    Index get_bins_number() const;
+
+    Index count_empty_bins() const;
+
+    Index calculate_minimum_frequency() const;
+
+    Index calculate_maximum_frequency() const;
+
+    Index calculate_most_populated_bin() const;
+
+    Tensor<type, 1> calculate_minimal_centers() const;
+
+    Tensor<type, 1> calculate_maximal_centers() const;
+
+    Index calculate_bin(const type&) const;
+
+    Index calculate_frequency(const type&) const;
+
+    void save(const filesystem::path&) const;
+
+    Tensor<type, 1> minimums;
+
+    Tensor<type, 1> maximums;
+
+    Tensor<type, 1> centers;
+
+    Tensor<Index, 1> frequencies;
+};
+
 // Minimum
 
  type minimum(const Tensor<type, 1>&);

@@ -943,13 +943,12 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     void* workspace = convolutional_layer_forward_propagation_cuda->workspace;
     size_t workspace_bytes = convolutional_layer_forward_propagation_cuda->workspace_bytes;
 
-    const cudnnActivationDescriptor_t& activation_descriptor = convolutional_layer_forward_propagation_cuda->activation_descriptor;
     const cudnnTensorDescriptor_t& input_tensor_descriptor = convolutional_layer_forward_propagation_cuda->input_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_tensor_descriptor = convolutional_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = convolutional_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
     const cudnnTensorDescriptor_t& inputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->inputs_tensor_descriptor;
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = convolutional_layer_forward_propagation_cuda->output_tensor_descriptor;
 
     const cudnnFilterDescriptor_t& kernel_descriptor = convolutional_layer_forward_propagation_cuda->kernel_descriptor;
     const cudnnConvolutionDescriptor_t& convolution_descriptor = convolutional_layer_forward_propagation_cuda->convolution_descriptor;
@@ -998,7 +997,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
             &alpha,
             output_tensor_descriptor,
             convolutions,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             outputs,
             &beta,
             output_tensor_descriptor,
