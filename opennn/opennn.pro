@@ -65,9 +65,6 @@ HEADERS += \
     strings_utilities.h \
     images.h \
     statistics.h \
-    descriptives.h \
-    box_plot.h \
-    histogram.h \
     scaling.h \
     correlations.h \
     correlation.h \
@@ -78,9 +75,6 @@ HEADERS += \
     image_data_set.h \
     language_data_set.h \
     layer.h \
-    layer_forward_propagation.h \
-    layer_back_propagation.h \
-    layer_back_propagation_lm.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
     transformer.h \
@@ -95,12 +89,7 @@ HEADERS += \
     recurrent_layer.h \
     neural_network.h \
     model_expression.h \
-    neural_network_forward_propagation.h \
-    neural_network_back_propagation.h \
-    neural_network_back_propagation_lm.h \
     loss_index.h \
-    loss_index_forward_propagation.h \
-    back_propagation.h \
     optimization_algorithm.h \
     normalized_squared_error.h\
     minkowski_error.h \

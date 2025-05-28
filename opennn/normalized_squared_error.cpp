@@ -8,8 +8,6 @@
 
 #include "tensors.h"
 #include "normalized_squared_error.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {

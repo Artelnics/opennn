@@ -8,9 +8,6 @@
 
 #include "statistics.h"
 #include "tensors.h"
-#include "descriptives.h"
-#include "box_plot.h"
-#include "histogram.h"
 
 using namespace std;
 

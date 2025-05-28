@@ -12,8 +12,6 @@
 #include "pch.h"
 
 #include "tinyxml2.h"
-#include "histogram.h"
-#include "box_plot.h"
 #include "correlation.h"
 #include "scaling.h"
 

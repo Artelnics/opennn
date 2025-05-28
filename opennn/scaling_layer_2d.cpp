@@ -9,7 +9,6 @@
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
 #include "tensors.h"
-#include "descriptives.h"
 #include "statistics.h"
 
 namespace opennn

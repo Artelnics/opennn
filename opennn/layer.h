@@ -10,9 +10,6 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
-#include "layer_back_propagation_lm.h"
 
 using namespace tinyxml2;
 
