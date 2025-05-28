@@ -651,14 +651,11 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
-<<<<<<< HEAD
     cudnnTensorDescriptor_t& input_tensor_descriptor = pooling_layer_forward_propagation_cuda->input_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
     cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
-=======
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
     cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     // Pooling
 
@@ -673,7 +670,6 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnPoolingForward failed: " << cudnnGetErrorString(status) << endl;
-<<<<<<< HEAD
 
     // Dropout
 
@@ -691,8 +687,6 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         if (status != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
     }
-=======
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 }
 
 
@@ -718,21 +712,17 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
 
     const type* outputs = pooling_layer_forward_propagation_cuda->outputs;
 
-<<<<<<< HEAD
     cudnnTensorDescriptor_t& input_tensor_descriptor = pooling_layer_forward_propagation_cuda->input_tensor_descriptor;
     cudnnTensorDescriptor_t& output_tensor_descriptor = pooling_layer_forward_propagation_cuda->output_tensor_descriptor;
     cudnnPoolingDescriptor_t& pooling_descriptor = pooling_layer_forward_propagation_cuda->pooling_descriptor;
-=======
     cudnnTensorDescriptor_t& inputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->inputs_tensor_descriptor;
     cudnnTensorDescriptor_t& outputs_tensor_descriptor = pooling_layer_forward_propagation_cuda->outputs_tensor_descriptor;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     // Back propagation
 
     PoolingBackPropagationCuda* pooling_layer_back_propagation_cuda
         = static_cast<PoolingBackPropagationCuda*>(back_propagation_cuda.get());
 
-<<<<<<< HEAD
     type* inputs_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
 
     // Dropout
@@ -751,9 +741,8 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
         if (dstatus != CUDNN_STATUS_SUCCESS)
             cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(dstatus) << endl;
     }
-=======
+
     type* input_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     // Pooling
 
@@ -767,13 +756,10 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
         input_tensor_descriptor,
         inputs_device,
         &beta,
-<<<<<<< HEAD
         input_tensor_descriptor,
         inputs_derivatives);
-=======
         inputs_tensor_descriptor,
         input_derivatives);
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnPoolingBackward failed: " << cudnnGetErrorString(status) << endl;
@@ -876,8 +862,6 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         cudnnDropoutGetReserveSpaceSize(output_tensor_descriptor, &dropout_reserve_space_size);
         cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size);
     }
-=======
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 }
 
 

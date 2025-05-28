@@ -690,13 +690,10 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
-<<<<<<< HEAD
     const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
-=======
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_tensor_descriptor;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
+
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
@@ -739,13 +736,10 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
         cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
-<<<<<<< HEAD
             output_tensor_descriptor,
             combinations,
-=======
             outputs_tensor_descriptor,
             outputs,
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
             &beta,
             output_tensor_descriptor,
             outputs);

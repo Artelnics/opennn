@@ -943,15 +943,14 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     void* workspace = convolutional_layer_forward_propagation_cuda->workspace;
     size_t workspace_bytes = convolutional_layer_forward_propagation_cuda->workspace_bytes;
 
-<<<<<<< HEAD
     const cudnnActivationDescriptor_t& activation_descriptor = convolutional_layer_forward_propagation_cuda->activation_descriptor;
     const cudnnTensorDescriptor_t& input_tensor_descriptor = convolutional_layer_forward_propagation_cuda->input_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_tensor_descriptor = convolutional_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_tensor_descriptor = convolutional_layer_forward_propagation_cuda->biases_tensor_descriptor;
-=======
+
     const cudnnTensorDescriptor_t& inputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->inputs_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_tensor_descriptor = convolutional_layer_forward_propagation_cuda->outputs_tensor_descriptor;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
+
     const cudnnFilterDescriptor_t& kernel_descriptor = convolutional_layer_forward_propagation_cuda->kernel_descriptor;
     const cudnnConvolutionDescriptor_t& convolution_descriptor = convolutional_layer_forward_propagation_cuda->convolution_descriptor;
     const cudnnConvolutionFwdAlgo_t& convolution_algorithm = convolutional_layer_forward_propagation_cuda->convolution_algorithm;
@@ -975,13 +974,8 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         convolution_algorithm,
         workspace, workspace_bytes,
         &beta,
-<<<<<<< HEAD
         output_tensor_descriptor,
         convolutions);
-=======
-        outputs_tensor_descriptor,
-        outputs);
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnConvolutionForward failed: " << cudnnGetErrorString(status) << endl;
@@ -993,13 +987,8 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         biases_tensor_descriptor,
         biases_device,
         &alpha,
-<<<<<<< HEAD
         output_tensor_descriptor,
         convolutions);
-=======
-        outputs_tensor_descriptor,
-        outputs);
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 
     // Activations
 
@@ -1007,13 +996,10 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
-<<<<<<< HEAD
             output_tensor_descriptor,
             convolutions,
-=======
             outputs_tensor_descriptor,
             outputs,
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
             &beta,
             output_tensor_descriptor,
             outputs);
@@ -1534,13 +1520,8 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
         &backward_data_workspace_bytes);
 
     cudnnGetConvolutionBackwardFilterWorkspaceSize(convolutional_layer->get_cudnn_handle(),
-<<<<<<< HEAD
-        input_tensor_descriptor,
-        inputs_derivatives_tensor_descriptor,
-=======
         inputs_tensor_descriptor,
         input_derivatives_tensor_descriptor,
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
         convolution_descriptor,
         weight_derivatives_tensor_descriptor,
         CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0,

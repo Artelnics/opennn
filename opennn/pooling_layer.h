@@ -211,9 +211,7 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
     void* dropout_reserve_space = nullptr;
     size_t dropout_reserve_space_size = 0;
     unsigned long long dropout_seed = 1337ULL;
-=======
     cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
->>>>>>> fbb095e41b16f9a56a0677e3b3c308b070c7fce4
 };
 
 
