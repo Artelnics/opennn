@@ -1757,9 +1757,9 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
         cout << "Numerator reduce allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(output_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         samples_number,
@@ -1777,7 +1777,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, outputs_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
+    cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, output_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
 
     cudaMalloc(&workspace, workspaceSize);
 
@@ -1917,7 +1917,7 @@ void BackPropagationCuda::free()
     cudnnDestroyOpTensorDescriptor(operator_square_root_descriptor);
     cudnnDestroyTensorDescriptor(gradient_tensor_descriptor);
     cudnnDestroyTensorDescriptor(parameters_tensor_descriptor);
-    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_reduce_tensor_descriptor);
 }
 

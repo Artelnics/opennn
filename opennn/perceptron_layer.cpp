@@ -713,7 +713,7 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 
     const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
@@ -760,10 +760,10 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
         cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             combinations,
             &beta,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             outputs);
 
         if (activationStatus != CUDNN_STATUS_SUCCESS)
@@ -1024,9 +1024,9 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(output_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
@@ -1097,7 +1097,7 @@ void PerceptronForwardPropagationCuda::free()
 
     cudnnDestroyActivationDescriptor(activation_descriptor);
 
-    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
 }

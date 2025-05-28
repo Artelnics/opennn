@@ -194,7 +194,7 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 

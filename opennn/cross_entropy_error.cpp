@@ -234,7 +234,7 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
 
     const size_t size = samples_number * outputs_pair.second[1];
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = back_propagation_cuda.output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
 
     const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
@@ -273,13 +273,13 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         one_minus_targets,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_2,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator);
 
     // outputs + epsilon
@@ -293,26 +293,26 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         targets,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_2,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_3);
 
     // (target * outputs.log()) + ((1 - targets) * (1 - outputs).log())
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_3,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_2);
 
     // (target * outputs.log()) + ((1 - targets) * (1 - outputs).log()).sum()
@@ -321,7 +321,7 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
         nullptr, 0,
         workspace, workspaceSize,
         &alpha,
-        outputs_tensor_descriptor, numerator_2,
+        output_tensor_descriptor, numerator_2,
         &beta,
         output_reduce_tensor_descriptor, numerator_reduce);
 
@@ -355,7 +355,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 
     const size_t size = samples_number * outputs_pair.second[1];
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = back_propagation_cuda.output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_reduce_tensor_descriptor = back_propagation_cuda.output_reduce_tensor_descriptor;
 
     const cudnnOpTensorDescriptor_t& operator_multiplication_descriptor = back_propagation_cuda.operator_multiplication_descriptor;
@@ -386,13 +386,13 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
     cudnnOpTensor(cudnn_handle,
         operator_multiplication_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_2,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         targets,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator);
 
     // (targets * ((outputs + epsilon).log())).sum()
@@ -401,7 +401,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
         nullptr, 0,
         workspace, workspaceSize,
         &alpha,
-        outputs_tensor_descriptor, numerator,
+        output_tensor_descriptor, numerator,
         &beta,
         output_reduce_tensor_descriptor, numerator_reduce);
 
@@ -449,7 +449,7 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
 
     float* output_deltas = output_deltas_pair.first;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = back_propagation_cuda.output_tensor_descriptor;
 
     const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
 
@@ -474,13 +474,13 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &beta,
-        outputs_tensor_descriptor, 
+        output_tensor_descriptor, 
         numerator_2,
         &beta_minus_one,
-        outputs_tensor_descriptor, 
+        output_tensor_descriptor, 
         targets,
         &beta,
-        outputs_tensor_descriptor, 
+        output_tensor_descriptor, 
         numerator_2);
 
     // (-targets / (outputs)
@@ -490,13 +490,13 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator_3,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         numerator,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         output_deltas);
 
     // output_deltas / samples_number
@@ -526,7 +526,7 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
 
     float* output_deltas = output_deltas_pair.first;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = back_propagation_cuda.output_tensor_descriptor;
 
     const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
 
@@ -538,18 +538,18 @@ void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& ba
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         outputs,
         &beta_minus_one,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         targets,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         output_deltas);
 
     // (outputs - targets) / samples_number
     const float scale_factor = 1.0f / static_cast<float>(samples_number);
-    cudnnScaleTensor(cudnn_handle,outputs_tensor_descriptor,output_deltas,&scale_factor);
+    cudnnScaleTensor(cudnn_handle,output_tensor_descriptor,output_deltas,&scale_factor);
 }
 
 #endif

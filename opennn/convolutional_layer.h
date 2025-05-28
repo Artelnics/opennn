@@ -274,7 +274,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     type* convolutions = nullptr;
 
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
@@ -315,7 +315,7 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 
     cudnnTensorDescriptor_t deltas_device_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnFilterDescriptor_t weights_derivatives_tensor_descriptor = nullptr;
     cudnnConvolutionDescriptor_t convolution_descriptor = nullptr;
