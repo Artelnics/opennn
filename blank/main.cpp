@@ -13,8 +13,11 @@
 #include <string>
 #include <time.h>
 
-#include "opennn.h"
-#include "addition_layer_3d.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/embedding_layer.h"
+#include "../opennn/multihead_attention_layer.h"
+#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/training_strategy.h"
 
 using namespace opennn;
 

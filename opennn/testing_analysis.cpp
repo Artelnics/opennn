@@ -7,15 +7,13 @@
 //   artelnics@artelnics.com
 
 #include "testing_analysis.h"
-//#include "scaling_layer_2d.h"
+#include "perceptron_layer.h"
 #include "tensors.h"
 #include "correlations.h"
 #include "language_data_set.h"
 #include "transformer.h"
 #include "statistics.h"
 #include "unscaling_layer.h"
-#include "probabilistic_layer.h"
-
 
 namespace opennn
 {
@@ -1036,14 +1034,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
                                                       const Tensor<type, 2>& targets) const
 {
+/*
     const Index outputs_number = neural_network->get_outputs_number();
 
     if (outputs_number == 1)
     {
-        Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network->get_first(Layer::Type::Probabilistic));
+        Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network->get_first(Layer::Type::Dense2d));
 
-        const type decision_threshold = probabilistic_layer
-                                        ? probabilistic_layer->get_decision_threshold()
+        const type decision_threshold = dense_2d_layer
+                                        ? dense_2d_layer->get_decision_threshold()
                                         : type(0.5);
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
@@ -1052,6 +1051,8 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
     {
         return calculate_confusion_multiple_classification(targets, outputs);
     }
+*/
+    return Tensor<Index, 2>();
 }
 
 
@@ -1552,19 +1553,19 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const vector<Index> testing_indices = data_set->get_sample_indices(DataSet::SampleUse::Testing);
 
-    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network->get_first(Layer::Type::Probabilistic));
-
-    const type decision_threshold = probabilistic_layer
-                                  ? probabilistic_layer->get_decision_threshold()
-                                  : type(0.5);
+    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network->get_first(Layer::Type::Dense2d));
 
     BinaryClassificationRates binary_classification_rates;
+/*
+    const type decision_threshold = dense_2d_layer
+                                        ? dense_2d_layer->get_decision_threshold()
+                                        : type(0.5);
 
     binary_classification_rates.true_positives_indices = calculate_true_positive_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.false_positives_indices = calculate_false_positive_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.false_negatives_indices = calculate_false_negative_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.true_negatives_indices = calculate_true_negative_samples(targets, outputs, testing_indices, decision_threshold);
-
+*/
     return binary_classification_rates;
 }
 

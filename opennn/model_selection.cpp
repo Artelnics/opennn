@@ -156,7 +156,7 @@ void ModelSelection::check() const
         throw runtime_error("Pointer to neural network is nullptr.\n");
 
     if(neural_network->is_empty())
-        throw runtime_error("Multilayer Perceptron is empty.\n");
+        throw runtime_error("Multilayer Dense2d is empty.\n");
 
     // Data set
 

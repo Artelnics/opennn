@@ -13,7 +13,7 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/opennn.h"
+#include "../../opennn/training_strategy.h"
 
 using namespace opennn;
 
