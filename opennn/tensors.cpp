@@ -168,35 +168,6 @@ void batch_matrix_multiplication(const ThreadPoolDevice* thread_pool_device,
             C_matrix.device(*thread_pool_device) = A_matrix.contract(B_matrix, contraction_axes);
         }
     }
-
-    // @todo try this
-/*
-    const Index A_rows   = A.dimension(0);
-    const Index A_cols   = A.dimension(1);
-    const Index channels = A.dimension(2);
-    const Index blocks   = A.dimension(3);
-    const Index batch    = channels * blocks;  // merged batch dimension
-
-    const Index B_rows   = B.dimension(0);
-    const Index B_cols   = B.dimension(1);
-
-    // Merge the last two dimensions of A and B by shuffling to bring channels and blocks to the front,
-    // then reshape to a 3D tensor with the first dimension as the merged batch.
-    auto A_reshaped = A.shuffle(array<Index, 4>{2, 0, 1, 3})
-                       .reshape(DSizes<Index, 3>{batch, A_rows, A_cols});
-
-    auto B_reshaped = B.shuffle(array<Index, 4>{2, 0, 1, 3})
-                       .reshape(DSizes<Index, 3>{batch, B_rows, B_cols});
-
-    // Perform batch contraction:
-    // For standard matrix multiplication, contract the last dimension of A_reshaped with
-    // the middle dimension of B_reshaped.
-    const array<IndexPair<Index>, 1> contract_dims = {IndexPair<Index>(2, 1)};
-    auto C_batch = A_reshaped.contract(B_reshaped, contract_dims);  // shape: (batch, A_rows, B_cols)
-
-    // Reshape back to the 4D tensor: (A_rows, B_cols, channels, blocks)
-    C.device(*thread_pool_device) = C_batch.reshape(DSizes<Index, 4>{A_rows, B_cols, channels, blocks});
-*/
 }
 
 
@@ -215,7 +186,6 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
 
     return matrix;
 }
-
 
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
@@ -550,8 +520,6 @@ void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, Tensor<type, 1>
 
 type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 {
-    // @todo add thread pool
-
     if(x.size() != y.size())
         throw runtime_error("x and y vector must  have the same dimensions.\n");
 
@@ -565,8 +533,6 @@ type l2_distance(const Tensor<type, 1>&x, const Tensor<type, 1>&y)
 
 type l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-    // @todo add thread pool
-
     Tensor<type, 0> distance;
 
     distance = (x-y).square().sum().sqrt();
@@ -583,8 +549,6 @@ type l2_distance(const type& x, const type& y)
 
 Tensor<type, 1> l2_distance(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const Index& size)
 {
-    // @todo optimize using thread pool and
-
     Tensor<type, 1> distance(size);
 
     const Tensor<type, 2> difference = x - y;
@@ -701,14 +665,14 @@ void fill_tensor_data_row_major(const Tensor<type, 2>& matrix,
 
 
 void fill_tensor_3D(const Tensor<type, 2>& matrix,
-                   const vector<Index>& rows_indices,
-                   const vector<Index>& columns_indices,
-                   type* tensor_data)
+                    const vector<Index>& rows_indices,
+                    const vector<Index>& columns_indices,
+                    type* tensor_data)
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
 
-    const Index batch_size = static_cast<Index>(ceil(rows_number * 0.1));
+    const Index batch_size=rows_indices.size();
     const Index sequence_length = rows_number / batch_size;
     const Index input_size = columns_number;
 
@@ -721,14 +685,13 @@ void fill_tensor_3D(const Tensor<type, 2>& matrix,
         {
             Index actual_row = i + j * batch_size;
 
-            for (Index k = 0; k <= input_size; k++)
+            for (Index k = 0; k < input_size; k++)
             {
-                batch(i, j, k) = matrix(actual_row, k);
+                batch(i, j, k) = matrix(actual_row, columns_indices[k]);
             }
         }
     }
 }
-
 
 vector<Index> join_vector_vector(const vector<Index>& x, const vector<Index>& y)
 {

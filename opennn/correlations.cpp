@@ -680,7 +680,7 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
     correlation.a = coefficients(0);
     correlation.b = coefficients(1);
 
-    if(correlation.b < type(0)) correlation.r *= type(-1);
+    //if(correlation.b < type(0)) correlation.r *= type(-1);
 
     return correlation;
 }

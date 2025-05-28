@@ -120,6 +120,12 @@ Pooling::PoolingMethod Pooling::get_pooling_method() const
 }
 
 
+type Pooling::get_dropout_rate() const
+{
+    return dropout_rate;
+}
+
+
 dimensions Pooling::get_input_dimensions() const
 {
     return input_dimensions;
@@ -255,6 +261,14 @@ void Pooling::set_pooling_method(const string& new_pooling_method)
 }
 
 
+void Pooling::set_dropout_rate(const type& new_dropout_rate)
+{
+    if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
+        throw runtime_error("Dropout rate must be in [0,1).");
+    dropout_rate = new_dropout_rate;
+}
+
+
 void Pooling::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                      unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                      const bool& is_training)
@@ -302,6 +316,11 @@ void Pooling::forward_propagate_average_pooling(const Tensor<type, 4>& inputs,
     outputs.device(*thread_pool_device) = image_patches
         .mean(array<Index, 2>({1, 2}))
         .reshape(array<Index, 4>({outputs.dimension(0), outputs.dimension(1), outputs.dimension(2), outputs.dimension(3)}));
+
+    // Dropout
+
+    if (is_training && dropout_rate > type(0))
+        dropout(outputs, dropout_rate);
 }
 
 
@@ -334,6 +353,13 @@ void Pooling::forward_propagate_max_pooling(const Tensor<type, 4>& inputs,
         .reshape(array<Index, 4>({batch_size, output_width, output_height, channels}));
 
     if (!is_training) return;
+
+    // Dropout
+
+    if (dropout_rate > type(0))
+        dropout(outputs, dropout_rate);
+
+    // Maximal indices
 
     Tensor<Index, 4>& maximal_indices = pooling_layer_forward_propagation->maximal_indices;
 
@@ -637,7 +663,7 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     const type* inputs_device = inputs_pair_device[0].first;
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index inputs_height = inputs_pair_device[0].second[1];
     const Index inputs_width = inputs_pair_device[0].second[2];
     const Index channels_number = inputs_pair_device[0].second[3];
@@ -669,6 +695,23 @@ void Pooling::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     if (status != CUDNN_STATUS_SUCCESS)
         cout << "cudnnPoolingForward failed: " << cudnnGetErrorString(status) << endl;
+
+    // Dropout
+
+    if (is_training && get_dropout_rate() > type(0))
+    {
+        status = cudnnDropoutForward(cudnn_handle,
+            pooling_layer_forward_propagation_cuda->dropout_descriptor,
+            outputs_tensor_descriptor,
+            outputs,
+            outputs_tensor_descriptor,
+            outputs,
+            pooling_layer_forward_propagation_cuda->dropout_reserve_space,
+            pooling_layer_forward_propagation_cuda->dropout_reserve_space_size);
+
+        if (status != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
+    }
 }
 
 
@@ -680,9 +723,9 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
     // Inputs
 
     const type* inputs_device = inputs_pair_device[0].first;
-    const type* deltas_device = deltas_pair_device[0].first;
+    type* deltas_device = deltas_pair_device[0].first;
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index inputs_height = inputs_pair_device[0].second[1];
     const Index inputs_width = inputs_pair_device[0].second[2];
     const Index channels_number = inputs_pair_device[0].second[3];
@@ -704,6 +747,23 @@ void Pooling::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_
         = static_cast<PoolingBackPropagationCuda*>(back_propagation_cuda.get());
 
     type* inputs_derivatives = pooling_layer_back_propagation_cuda->input_derivatives;
+
+    // Dropout
+
+    if (get_dropout_rate() > type(0))
+    {
+        cudnnStatus_t dstatus = cudnnDropoutBackward(cudnn_handle,
+            pooling_layer_forward_propagation_cuda->dropout_descriptor,
+            outputs_tensor_descriptor,
+            outputs,
+            outputs_tensor_descriptor,
+            deltas_device,
+            pooling_layer_forward_propagation_cuda->dropout_reserve_space,
+            pooling_layer_forward_propagation_cuda->dropout_reserve_space_size);
+
+        if (dstatus != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(dstatus) << endl;
+    }
 
     // Pooling
 
@@ -768,6 +828,8 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         ? CUDNN_POOLING_MAX
         : CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 
+    const type dropout_rate = pooling_layer->get_dropout_rate();
+
     // Inputs
 
     cudnnCreateTensorDescriptor(&inputs_tensor_descriptor);
@@ -805,6 +867,27 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
                                 pool_height, pool_width,
                                 padding_height, padding_width,
                                 row_stride, column_stride);
+
+    // Dropout
+
+    if (dropout_rate > type(0))
+    {
+        cudnnCreateDropoutDescriptor(&dropout_descriptor);
+
+        cudnnDropoutGetStatesSize(pooling_layer->get_cudnn_handle(), &dropout_states_size);
+
+        cudaMalloc(&dropout_states, dropout_states_size);
+
+        cudnnSetDropoutDescriptor(dropout_descriptor,
+                                  pooling_layer->get_cudnn_handle(),
+                                  static_cast<float>(dropout_rate),
+                                  dropout_states,
+                                  dropout_states_size,
+                                  dropout_seed);
+
+        cudnnDropoutGetReserveSpaceSize(outputs_tensor_descriptor, &dropout_reserve_space_size);
+        cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size);
+    }
 }
 
 
@@ -829,6 +912,13 @@ void PoolingForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(inputs_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
     cudnnDestroyPoolingDescriptor(pooling_descriptor);
+
+    if (dropout_reserve_space)
+        cudaFree(dropout_reserve_space);
+    if (dropout_states)
+        cudaFree(dropout_states);
+    if (dropout_descriptor)
+        cudnnDestroyDropoutDescriptor(dropout_descriptor);
 }
 
 

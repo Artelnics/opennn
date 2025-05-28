@@ -1792,9 +1792,9 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{
         /* @todo CudaMalloc GPU
-        predictions (batch_samples_number, outputs_number);
-        matches (batch_samples_number, outputs_number);
-        mask (batch_samples_number, outputs_number);
+        predictions (batch_size, outputs_number);
+        matches (batch_size, outputs_number);
+        mask (batch_size, outputs_number);
         */
     //}
 

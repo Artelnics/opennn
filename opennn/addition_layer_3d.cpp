@@ -212,7 +212,7 @@ void Addition3d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
 {
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     type* positional_encodings = inputs_pair_device[0].first;
     type* input_embeddings = inputs_pair_device[1].first;
@@ -239,7 +239,7 @@ void Addition3d::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     type* deltas_device = deltas_pair_device[0].first;
 
@@ -251,7 +251,7 @@ void Addition3d::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     type* inputs_1_derivatives = addition_layer_3d_back_propagation->inputs_1_derivatives;
     type* inputs_2_derivatives = addition_layer_3d_back_propagation->inputs_2_derivatives;
 
-    Index elements_number = batch_samples_number * inputs_number * inputs_depth;
+    Index elements_number = batch_size * inputs_number * inputs_depth;
 
     cudaMemcpy(inputs_1_derivatives, deltas_device, elements_number * sizeof(type), cudaMemcpyDeviceToDevice);
     cudaMemcpy(inputs_2_derivatives, deltas_device, elements_number * sizeof(type), cudaMemcpyDeviceToDevice);
@@ -269,13 +269,13 @@ AdditionLayer3DForwardPropagationCuda::AdditionLayer3DForwardPropagationCuda(con
 
 void AdditionLayer3DForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
 void AdditionLayer3DForwardPropagationCuda::print() const
 {
-    // @todo
+
 }
 
 
@@ -296,7 +296,7 @@ AdditionLayer3DBackPropagationCuda::AdditionLayer3DBackPropagationCuda(const Ind
 
 void AdditionLayer3DBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
 {
-    // @todo
+
 }
 
 
@@ -310,7 +310,7 @@ vector<pair<type*, dimensions>> AdditionLayer3DBackPropagationCuda::get_input_de
 
 void AdditionLayer3DBackPropagationCuda::print() const
 {
-    // @todo
+ 
 }
 
 #endif 

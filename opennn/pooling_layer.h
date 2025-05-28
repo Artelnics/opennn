@@ -52,6 +52,8 @@ public:
 
     PoolingMethod get_pooling_method() const;
 
+    type get_dropout_rate() const;
+
     string write_pooling_method() const;
 
     void set(const dimensions& = {0, 0, 0},
@@ -73,6 +75,8 @@ public:
 
     void set_pooling_method(const PoolingMethod&);
     void set_pooling_method(const string&);
+
+    void set_dropout_rate(const type& new_dropout_rate);
 
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
@@ -137,6 +141,8 @@ private:
     Index column_stride = 1;
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
+
+    type dropout_rate = type(0);
 };
 
 
@@ -193,6 +199,14 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+
+
+    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
+    void* dropout_states = nullptr;
+    size_t dropout_states_size = 0;
+    void* dropout_reserve_space = nullptr;
+    size_t dropout_reserve_space_size = 0;
+    unsigned long long dropout_seed = 1337ULL;
 };
 
 

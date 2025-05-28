@@ -941,7 +941,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 {
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
     const Index height = inputs_pair_device[0].second[1];
     const Index width = inputs_pair_device[0].second[2];
     const Index channels = inputs_pair_device[0].second[3];
@@ -973,7 +973,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     {
         type* reordered_inputs_device = convolutional_layer_forward_propagation_cuda->reordered_inputs_device;
 
-        reorder_inputs_cuda(inputs_device, reordered_inputs_device, batch_samples_number, channels, height, width);
+        reorder_inputs_cuda(inputs_device, reordered_inputs_device, batch_size, channels, height, width);
 
         inputs_device = reordered_inputs_device;
     }
@@ -1029,7 +1029,7 @@ void Convolutional::forward_propagate_cuda(const vector<pair<type*, dimensions>>
     {
         const Index outputs_number = get_outputs_number();
 
-        cudaMemcpy(outputs, convolutions, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(outputs, convolutions, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     }
 }
 
@@ -1040,7 +1040,7 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
     // Inputs
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = inputs_pair_device[0].second[0];
 
     const type* inputs_device = inputs_pair_device[0].first;
     const type* deltas_device = deltas_pair_device[0].first;
@@ -1105,7 +1105,7 @@ void Convolutional::back_propagate_cuda(const vector<pair<type*, dimensions>>& i
     {
         const Index outputs_number = get_outputs_number();
 
-        cudaMemcpy(error_combinations_derivatives_device, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(error_combinations_derivatives_device, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
     }
 
     // Convolution backwards for weights derivatives
@@ -1404,7 +1404,12 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
 
 void ConvolutionalForwardPropagationCuda::print() const
 {
-    // @todo
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    cout << layer->get_type_string() + " forward propagation" << endl;
+
+    cout << "Outputs:" << endl;
+    cout << matrix_4d_from_device(outputs, batch_size, output_dimensions[0], output_dimensions[1], output_dimensions[2]) << endl;
 }
 
 
@@ -1596,7 +1601,19 @@ vector<pair<type*, dimensions>> ConvolutionalBackPropagationCuda::get_input_deri
 
 void ConvolutionalBackPropagationCuda::print() const
 {
-    // @todo
+    const dimensions input_dimensions = layer->get_input_dimensions();
+    const dimensions output_dimensions = layer->get_output_dimensions();
+
+    cout << layer->get_type_string() + " back propagation" << endl;
+
+    cout << "biases_derivatives_device" << endl;
+    //vector_from_device(biases_derivatives,);
+
+    cout << "weights_derivatives_device" << endl;
+    //matrix_from_device(weights_derivatives,);
+
+    cout << "inputs derivatives" << endl;
+    matrix_4d_from_device(input_derivatives, batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]);
 }
 
 

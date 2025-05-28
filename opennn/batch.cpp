@@ -23,18 +23,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     const Tensor<type, 2>& data = data_set->get_data();
 
-    const Index rows_number = data.dimension(0);
-    const Index columns_number = data.dimension(1);
-
-    const Index batch_size = static_cast<Index>(ceil(rows_number * 0.1));
-    const Index sequence_length = rows_number / batch_size;
-    const Index input_size = columns_number;
-
-    // input_tensor.resize(batch_size * sequence_length * input_size);
-    // target_tensor.resize(batch_size * sequence_length * target_indices.size());
-
-    if (!decoder_indices.empty())
-        decoder_tensor.resize(batch_size * sequence_length * decoder_indices.size());
+    const Index batch_size = sample_indices.size();
+    const Index sequence_length = sample_indices.size() / batch_size;
+    const Index input_size = data.dimension(1);
 
     if(is_instance_of<ImageDataSet>(data_set))
     {
@@ -53,16 +44,19 @@ void Batch::fill(const vector<Index>& sample_indices,
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
         }
     }
-    else if(is_instance_of<TimeSeriesDataSet>(data_set))
+    else if(is_instance_of<TimeSeriesDataSet>(data_set)){
+        //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
         fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
+        input_dimensions = { batch_size, sequence_length, input_size };
+    }
     else
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
     if (is_instance_of<LanguageDataSet>(data_set))
-            fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 
-    fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
-    
+    //fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+    fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
 }
 
 

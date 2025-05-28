@@ -93,6 +93,7 @@ TEST(GeneticAlgorithmTest, Selection)
     Index individuals_number = 4;
 
     DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
@@ -145,6 +146,7 @@ TEST(GeneticAlgorithmTest, Crossover)
     Index individuals_number = 4;
 
     DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
@@ -188,6 +190,7 @@ TEST(GeneticAlgorithmTest, Mutation)
     Index individuals_number = 4;
 
     DataSet data_set(samples_number, {inputs_number}, {targets_number});
+    data_set.set_display(false);
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {targets_number});
 
