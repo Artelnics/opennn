@@ -361,6 +361,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) || is_constant(y))
         return Correlation();
+
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
@@ -531,12 +532,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         correlation.form = Correlation::Form::Logistic;
         return correlation;
     }
-<<<<<<< HEAD
-    const Tensor<type, 2> data = opennn::assemble_vector_vector(x_filtered, y_filtered);
-=======
-
     const Tensor<type, 2> data = assemble_vector_vector(x_filtered, y_filtered);
->>>>>>> 06c009234125ac920e67fb9b488655d95ae989eb
 
     DataSet data_set(x_filtered.size(), {1}, {1});
     data_set.set_data(data);
