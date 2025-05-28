@@ -8,8 +8,6 @@
 
 #include "cross_entropy_error_3d.h"
 #include "adaptive_moment_estimation.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -243,18 +241,12 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
-        // cout << "Training_batches phrases:" << endl;
-        // print_vector(training_batches);
-        // throw runtime_error("");
-
         training_error = type(0);
 
         if(is_classification_model) training_accuracy = type(0); 
         
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
-
             // Data set
             
             training_batch.fill(training_batches[iteration],
@@ -273,20 +265,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             loss_index->back_propagate(training_batch,
                                        training_forward_propagation,
                                        training_back_propagation);
-
-            // // if(epoch == 50)
-            // // {
-            // Tensor<type, 1> numerical_gradient = loss_index->calculate_numerical_gradient();
-
-            // cout << "gradient:\n" << training_back_propagation.gradient << endl;
-            // cerr << "numerical gradient:\n" << numerical_gradient<< endl;
-            // cout << "gradient - numerical gradient :\n" << training_back_propagation.gradient - numerical_gradient << endl;
-            // // cout << "MHA Gradient - numerical gradient:" << endl;
-            // // for(Index i = numerical_gradient.size()-4565; i < numerical_gradient.size()-321;i++)
-            // //     cout << training_back_propagation.gradient(i) - numerical_gradient(i) << " ";
-
-            // // throw runtime_error("\nChecking the gradient and numerical gradient.");
-            // // }
 
             training_error += training_back_propagation.error();
 
@@ -668,7 +646,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
         for (Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            //cout << "Iteration " << iteration << "/" << training_batches_number << endl;
             // Data set
 
             training_batch_cuda.fill(training_batches[iteration],

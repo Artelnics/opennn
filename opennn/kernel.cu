@@ -190,6 +190,7 @@ Tensor<type, 1> vector_from_device(const type* pointer, const size_t& new_size)
     return vector;
 }
 
+
 void print_device_data(const type* pointer, const size_t size) {
     type* host_data = new type[size];
     cudaMemcpy(host_data, pointer, size * sizeof(type), cudaMemcpyDeviceToHost);

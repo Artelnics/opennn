@@ -137,6 +137,15 @@ private:
     Index column_stride = 1;
 
     PoolingMethod pooling_method = PoolingMethod::AveragePooling;
+
+#ifdef OPENNN_CUDA
+
+    cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
+
+    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+
+#endif
+
 };
 
 
@@ -178,31 +187,41 @@ struct PoolingBackPropagation : LayerBackPropagation
 
 struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PoolingForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    PoolingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
+<<<<<<< HEAD
+    cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
 
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
 
     cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
+
+
+    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
+    void* dropout_states = nullptr;
+    size_t dropout_states_size = 0;
+    void* dropout_reserve_space = nullptr;
+    size_t dropout_reserve_space_size = 0;
+    unsigned long long dropout_seed = 1337ULL;
+    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
 };
 
 
 struct PoolingBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PoolingBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    PoolingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

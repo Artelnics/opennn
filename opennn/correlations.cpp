@@ -13,7 +13,6 @@
 #include "neural_network.h"
 #include "training_strategy.h"
 #include "scaling_layer_2d.h"
-#include "probabilistic_layer.h"
 
 namespace opennn
 {
@@ -361,6 +360,7 @@ Correlation linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     if(is_constant(x) || is_constant(y))
         return Correlation();
+
     const pair<Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values_vector_vector(x,y);
 
     const Tensor<double, 1> x_filter = filter_vectors.first.cast<double>();
@@ -531,7 +531,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
         correlation.form = Correlation::Form::Logistic;
         return correlation;
     }
-
     const Tensor<type, 2> data = assemble_vector_vector(x_filtered, y_filtered);
 
     DataSet data_set(x_filtered.size(), {1}, {1});
@@ -543,7 +542,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
-    neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::Activation::Logistic));
+    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
 
     neural_network.set_parameters_constant(type(0.001));
 
@@ -632,15 +631,15 @@ Correlation logistic_correlation_vector_vector_spearman(const ThreadPoolDevice* 
 
     // scaling_layer_2d->set_display(false);
 
-    // Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
+    // Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    // probabilistic_layer->set_activation_function(Probabilistic::Activation::Logistic);
+    // dense_2d_layer->set_activation_function(Dense2d::Activation::Logistic);
 
     NeuralNetwork neural_network;
     dimensions dim1 = { 1 };
     dimensions dim2 = { 1 };
     neural_network.add_layer(make_unique<Scaling2d>(dim1));
-    neural_network.add_layer(make_unique<Perceptron>(dim1, dim2, Perceptron::Activation::Logistic));
+    neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
     training_strategy.set_display(false);
@@ -744,9 +743,9 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
 
     // Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    // Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
+    // Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    // probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
+    // dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
     // scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -864,9 +863,9 @@ Correlation logistic_correlation_matrix_matrix(const ThreadPoolDevice* thread_po
 
     Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    Probabilistic* probabilistic_layer = static_cast<Probabilistic*>(neural_network.get_first(Layer::Type::Probabilistic));
+    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    probabilistic_layer->set_activation_function(Probabilistic::Activation::Softmax);
+    dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
 
     scaling_layer_2d->set_display(false);
 

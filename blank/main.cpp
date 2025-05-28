@@ -13,8 +13,11 @@
 #include <string>
 #include <time.h>
 
-#include "../opennn/opennn.h"
-#include "../opennn/addition_layer_3d.h"
+#include "../opennn/language_data_set.h"
+#include "../opennn/embedding_layer.h"
+#include "../opennn/multihead_attention_layer.h"
+#include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/training_strategy.h"
 
 using namespace opennn;
 
@@ -65,8 +68,8 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        text_data_set.split_samples_sequential(0.8F, 0.2F, 0);
-        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3F);
+        text_data_set.split_samples_sequential(0.8,0.2,0);
+        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);

@@ -17,8 +17,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
-#include "../../opennn/normalization_layer_3d.h"
+#include "../../opennn/training_strategy.h"
 
 using namespace std;
 using namespace opennn;
@@ -30,7 +29,7 @@ int main()
         cout << "OpenNN. Translation Example." << endl;
 
         // Data set
-
+/*
         LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
         // LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
@@ -42,7 +41,7 @@ int main()
 
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
-/*
+
         // Sentiment analysis case
 
         const Index maximum_sequence_length = 10;
@@ -57,7 +56,7 @@ int main()
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
+        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 
@@ -79,7 +78,6 @@ int main()
         adaptive_moment_estimation->set_display_period(1);
 
         training_strategy.perform_training();
-
 
         // Prediction test
         cout << "Vocabulary:" << endl;
@@ -118,13 +116,12 @@ int main()
         testing_data(2,9) = 0;
 
         cout << "Outputs:\n" << neural_network.calculate_outputs(testing_data).round()<<endl;
-*/
 
       // Translation case
-        const Index embedding_dimension = 64/*128*/;
-        const Index perceptron_depth = 128/*256*/;
+        const Index embedding_dimension = 64;
+        const Index perceptron_depth = 128;
         const Index heads_number = 4;
-        const Index layers_number = 1/*2*/;
+        const Index layers_number = 1;
       // Neural network
         
         Transformer transformer(decoder_length,
@@ -201,7 +198,7 @@ int main()
         string prediction_4 = transformer.calculate_outputs({"I have to go now."});
 
         cout << "Target: Ahora me tengo que ir." << endl << "Prediction: " << prediction_4 << endl<<endl;
-/*
+
         string prediction = testing_analysis.test_transformer({"Good case, Excellent value."},false);
         cout<<prediction<<endl;
         cout<<"Target: good"<<endl;

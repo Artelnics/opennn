@@ -8,8 +8,6 @@
 
 #include "tensors.h"
 #include "mean_squared_error.h"
-#include "forward_propagation.h"
-#include "back_propagation.h"
 
 namespace opennn
 {
@@ -193,7 +191,7 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
 
     Tensor<type,0>& error = back_propagation_cuda.error;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = back_propagation_cuda.outputs_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = back_propagation_cuda.output_tensor_descriptor;
 
     const cudnnOpTensorDescriptor_t& operator_sum_descriptor = back_propagation_cuda.operator_sum_descriptor;
 
@@ -204,13 +202,13 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &alpha_minus_one,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         targets,
         &alpha,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         outputs,
         &beta,
-        outputs_tensor_descriptor,
+        output_tensor_descriptor,
         errors_device);
 
     float mean_square_error = 0.0f;

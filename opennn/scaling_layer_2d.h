@@ -10,6 +10,7 @@
 #define SCALINGLAYER2D_H
 
 #include "layer.h"
+#include "statistics.h"
 #include "scaling.h"
 
 namespace opennn

@@ -9,7 +9,6 @@
 #include "unscaling_layer.h"
 #include "strings_utilities.h"
 #include "tensors.h"
-#include "descriptives.h"
 
 namespace opennn
 {

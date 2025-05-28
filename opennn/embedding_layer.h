@@ -83,8 +83,6 @@ public:
 
     void set_parameters_cuda(const float*, Index&);
 
-    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
-
     void copy_parameters_host();
 
     void copy_parameters_device();
@@ -149,10 +147,11 @@ struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 };
+
 
 struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
@@ -160,12 +159,12 @@ struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     type* sample_deltas_device = nullptr;
-    type* weights_derivatives_device = nullptr;
+    type* weight_derivatives_device = nullptr;
 };
 
 #endif

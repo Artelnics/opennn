@@ -13,10 +13,10 @@
 namespace opennn
 {
 
-Perceptron::Perceptron(const dimensions& new_input_dimensions,
-                       const dimensions& new_output_dimensions,
-                       const Activation& new_activation_function,
-                       const string& new_layer_name) : Layer()
+Dense2d::Dense2d(const dimensions& new_input_dimensions,
+                 const dimensions& new_output_dimensions,
+                 const Activation& new_activation_function,
+                 const string& new_layer_name) : Layer()
 {
     set(new_input_dimensions,
         new_output_dimensions,
@@ -25,37 +25,37 @@ Perceptron::Perceptron(const dimensions& new_input_dimensions,
 }
 
 
-dimensions Perceptron::get_input_dimensions() const
+dimensions Dense2d::get_input_dimensions() const
 {
     return { weights.dimension(0) };
 }
 
 
-dimensions Perceptron::get_output_dimensions() const
+dimensions Dense2d::get_output_dimensions() const
 {
     return { biases.size() };
 }
 
 
-void Perceptron::set_dropout_rate(const type& new_dropout_rate)
+void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
     dropout_rate = new_dropout_rate;
 }
 
 
-Index Perceptron::get_parameters_number() const
+Index Dense2d::get_parameters_number() const
 {
     return biases.size() + weights.size();
 }
 
 
-type Perceptron::get_dropout_rate() const
+type Dense2d::get_dropout_rate() const
 {
     return dropout_rate;
 }
 
 
-Tensor<type, 1> Perceptron::get_parameters() const
+Tensor<type, 1> Dense2d::get_parameters() const
 {
     const Index parameters_number = get_parameters_number();
 
@@ -70,51 +70,34 @@ Tensor<type, 1> Perceptron::get_parameters() const
 }
 
 
-const Perceptron::Activation& Perceptron::get_activation_function() const
+const Dense2d::Activation& Dense2d::get_activation_function() const
 {
     return activation_function;
 }
 
 
-string Perceptron::get_activation_function_string() const
+string Dense2d::get_activation_function_string() const
 {
     switch(activation_function)
     {
-    case Activation::Logistic:
-        return "Logistic";
-
-    case Activation::HyperbolicTangent:
-        return "HyperbolicTangent";
-
-    case Activation::Linear:
-        return "Linear";
-
-    case Activation::RectifiedLinear:
-        return "RectifiedLinear";
-
-    case Activation::ScaledExponentialLinear:
-        return "ScaledExponentialLinear";
-
-    case Activation::SoftPlus:
-        return "SoftPlus";
-
-    case Activation::SoftSign:
-        return "SoftSign";
-
-    case Activation::HardSigmoid:
-        return "HardSigmoid";
-
-    case Activation::ExponentialLinear:
-        return "ExponentialLinear";
+    case Activation::Logistic: return "Logistic";
+    case Activation::HyperbolicTangent: return "HyperbolicTangent";
+    case Activation::Linear: return "Linear";
+    case Activation::RectifiedLinear: return "RectifiedLinear";
+    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
+    case Activation::SoftPlus: return "SoftPlus";
+    case Activation::SoftSign: return "SoftSign";
+    case Activation::HardSigmoid: return "HardSigmoid";
+    case Activation::ExponentialLinear: return "ExponentialLinear";
     }
 
     return string();
 }
 
 
-void Perceptron::set(const dimensions& new_input_dimensions,
+void Dense2d::set(const dimensions& new_input_dimensions,
                      const dimensions& new_output_dimensions,
-                     const Perceptron::Activation& new_activation_function,
+                     const Dense2d::Activation& new_activation_function,
                      const string& new_name)
 {
     if (new_input_dimensions.size() != 1)
@@ -132,11 +115,11 @@ void Perceptron::set(const dimensions& new_input_dimensions,
 
     set_name(new_name);
     
-    layer_type = Layer::Type::Perceptron;
+    layer_type = Layer::Type::Dense2d;
 }
 
 
-void Perceptron::set_input_dimensions(const dimensions& new_input_dimensions)
+void Dense2d::set_input_dimensions(const dimensions& new_input_dimensions)
 {
     const Index inputs_number = new_input_dimensions[0];
     const Index outputs_number = get_outputs_number();
@@ -147,7 +130,7 @@ void Perceptron::set_input_dimensions(const dimensions& new_input_dimensions)
 }
 
 
-void Perceptron::set_output_dimensions(const dimensions& new_output_dimensions)
+void Dense2d::set_output_dimensions(const dimensions& new_output_dimensions)
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = new_output_dimensions[0];
@@ -158,20 +141,20 @@ void Perceptron::set_output_dimensions(const dimensions& new_output_dimensions)
 }
 
 
-void Perceptron::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
+void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index)
 {   
     copy_from_vector(weights, new_parameters, index);
     copy_from_vector(biases, new_parameters, index);
 }
 
 
-void Perceptron::set_activation_function(const Perceptron::Activation& new_activation_function)
+void Dense2d::set_activation_function(const Dense2d::Activation& new_activation_function)
 {
     activation_function = new_activation_function;
 }
 
 
-void Perceptron::set_activation_function(const string& new_activation_function_name)
+void Dense2d::set_activation_function(const string& new_activation_function_name)
 {
     if(new_activation_function_name == "Logistic")
         activation_function = Activation::Logistic;
@@ -196,7 +179,7 @@ void Perceptron::set_activation_function(const string& new_activation_function_n
 }
 
 
-void Perceptron::set_parameters_constant(const type& value)
+void Dense2d::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
 
@@ -204,7 +187,7 @@ void Perceptron::set_parameters_constant(const type& value)
 }
 
 
-void Perceptron::set_parameters_random()
+void Dense2d::set_parameters_random()
 {
     set_random(biases);
 
@@ -212,7 +195,7 @@ void Perceptron::set_parameters_random()
 }
 
 
-void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
+void Dense2d::calculate_combinations(const Tensor<type, 2>& inputs,
                                         Tensor<type, 2>& combinations) const
 {
     const Index batch_size = combinations.dimension(0);
@@ -225,7 +208,7 @@ void Perceptron::calculate_combinations(const Tensor<type, 2>& inputs,
 }
 
 /*
-void Perceptron::batch_normalization(Tensor<type, 1>& means, 
+void Dense2d::batch_normalization(Tensor<type, 1>& means,
     Tensor<type, 1>& standard_deviations,
     const Tensor<type, 2>& inputs,
     Tensor<type, 2>& outputs) const
@@ -247,67 +230,50 @@ void Perceptron::batch_normalization(Tensor<type, 1>& means,
 }
 */
 
-void Perceptron::calculate_activations(Tensor<type, 2>& activations,
+void Dense2d::calculate_activations(Tensor<type, 2>& activations,
                                        Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
     case Activation::Linear: linear(activations, activation_derivatives); return;
-
     case Activation::Logistic: logistic(activations, activation_derivatives);return;
-
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
-
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-
     case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-
     case Activation::SoftPlus: soft_plus(activations, activation_derivatives);return;
-
     case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-
     case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
-
     case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
-
+    case Activation::Softmax: softmax(activations); return;
     default: return;
     }
 }
 
 
-void Perceptron::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                    unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                    const bool& is_training)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    PerceptronForwardPropagation* perceptron_layer_forward_propagation =
+    PerceptronForwardPropagation* this_forward_propagation =
         static_cast<PerceptronForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 2>& outputs = perceptron_layer_forward_propagation->outputs;
+    Tensor<type, 2>& outputs = this_forward_propagation->outputs;
 
     calculate_combinations(inputs,
                            outputs);
 
-    if(is_training)
-    {
-        Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
+    is_training
+        ? calculate_activations(outputs, this_forward_propagation->activation_derivatives)
+        : calculate_activations(outputs, empty_2);
 
-        calculate_activations(outputs, activation_derivatives);
-    }
-    else
-    {
-        calculate_activations(outputs, empty_2);
-    }
-
-    // @todo
-// if(is_training && dropout_rate > type(0))
-//     dropout(outputs);
-
+    if(is_training && dropout_rate > type(0))
+        dropout(outputs, dropout_rate);
 }
 
 
-void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
+void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                 const vector<pair<type*, dimensions>>& delta_pairs,
                                 unique_ptr<LayerForwardPropagation>& forward_propagation,
                                 unique_ptr<LayerBackPropagation>& back_propagation) const
@@ -335,7 +301,8 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
 
     Tensor<type, 2>& input_derivatives = perceptron_back_propagation->input_derivatives;
 
-    deltas.device(*thread_pool_device) = deltas * activation_derivatives;
+    if(activation_function != Activation::Softmax)
+        deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
     bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 1>({0}));
 
@@ -346,7 +313,7 @@ void Perceptron::back_propagate(const vector<pair<type*, dimensions>>& input_pai
 }
 
 
-void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
+void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pairs,
                                         const vector<pair<type*, dimensions>>& delta_pairs,
                                         unique_ptr<LayerForwardPropagation>& forward_propagation,
                                         unique_ptr<LayerBackPropagationLM>& back_propagation) const
@@ -410,7 +377,7 @@ void Perceptron::back_propagate_lm(const vector<pair<type*, dimensions>>& input_
 }
 
 
-void Perceptron::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
+void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation,
                                  Index& index,
                                  Tensor<type, 1>& gradient) const
 {
@@ -422,7 +389,7 @@ void Perceptron::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagat
 }
 
 
-void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
+void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationLM>& back_propagation,
                                                    const Index& index,
                                                    Tensor<type, 2>& squared_errors_Jacobian) const
 {
@@ -440,7 +407,7 @@ void Perceptron::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagati
 }
 
 
-string Perceptron::get_expression(const vector<string>& new_input_names,
+string Dense2d::get_expression(const vector<string>& new_input_names,
                                        const vector<string>& new_output_names) const
 {
     const vector<string> input_names = new_input_names.empty()
@@ -472,9 +439,9 @@ string Perceptron::get_expression(const vector<string>& new_input_names,
 }
 
 
-void Perceptron::print() const
+void Dense2d::print() const
 {
-    cout << "Perceptron layer" << endl
+    cout << "Dense2d layer" << endl
          << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
@@ -490,12 +457,12 @@ void Perceptron::print() const
 }
 
 
-void Perceptron::from_XML(const XMLDocument& document)
+void Dense2d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* perceptron_layer_element = document.FirstChildElement("Perceptron");
+    const XMLElement* perceptron_layer_element = document.FirstChildElement("Dense2d");
 
     if(!perceptron_layer_element)
-        throw runtime_error("Perceptron element is nullptr.\n");
+        throw runtime_error("Dense2d element is nullptr.\n");
 
     set_name(read_xml_string(perceptron_layer_element, "Name"));
     set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
@@ -508,9 +475,9 @@ void Perceptron::from_XML(const XMLDocument& document)
 }
 
 
-void Perceptron::to_XML(XMLPrinter& printer) const
+void Dense2d::to_XML(XMLPrinter& printer) const
 {
-    printer.OpenElement("Perceptron");
+    printer.OpenElement("Dense2d");
 
     add_xml_element(printer, "Name", name);
     add_xml_element(printer, "InputsNumber", to_string(get_input_dimensions()[0]));
@@ -522,39 +489,20 @@ void Perceptron::to_XML(XMLPrinter& printer) const
 }
 
 
-string Perceptron::get_activation_function_string_expression() const
+string Dense2d::get_activation_function_string_expression() const
 {
     switch(activation_function)
     {
-    case Activation::Logistic:
-        return "logistic";
-
-    case Activation::HyperbolicTangent:
-        return "tanh";
-
-    case Activation::Linear:
-        return string();
-
-    case Activation::RectifiedLinear:
-        return "ReLU";
-
-    case Activation::ExponentialLinear:
-        return "ELU";
-
-    case Activation::ScaledExponentialLinear:
-        return "SELU";
-
-    case Activation::SoftPlus:
-        return "soft_plus";
-
-    case Activation::SoftSign:
-        return "soft_sign";
-
-    case Activation::HardSigmoid:
-        return "hard_sigmoid";
-
-    default:
-        return string();
+    case Activation::Logistic: return "logistic";
+    case Activation::HyperbolicTangent: return "tanh";
+    case Activation::Linear: return string();
+    case Activation::RectifiedLinear: return "ReLU";
+    case Activation::ExponentialLinear: return "ELU";
+    case Activation::ScaledExponentialLinear: return "SELU";
+    case Activation::SoftPlus: return "soft_plus";
+    case Activation::SoftSign: return "soft_sign";
+    case Activation::HardSigmoid: return "hard_sigmoid";
+    default: return string();
     }
 }
 
@@ -585,7 +533,7 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 }
 
 
-PerceptronForwardPropagation::PerceptronForwardPropagation(const Index &new_batch_size,
+PerceptronForwardPropagation::PerceptronForwardPropagation(const Index&new_batch_size,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
@@ -602,7 +550,7 @@ void PerceptronForwardPropagation::print() const
 }
 
 
-PerceptronBackPropagation::PerceptronBackPropagation(const Index &new_batch_size, Layer *new_layer)
+PerceptronBackPropagation::PerceptronBackPropagation(const Index&new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
@@ -646,7 +594,7 @@ void PerceptronBackPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &new_batch_size,
+PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index&new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
@@ -654,7 +602,7 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index &
 }
 
 
-void PerceptronLayerBackPropagationLM::set(const Index &new_samples_number, Layer *new_layer)
+void PerceptronLayerBackPropagationLM::set(const Index&new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
@@ -688,58 +636,53 @@ void PerceptronLayerBackPropagationLM::print() const
 
 #ifdef OPENNN_CUDA
 
-void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                         unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                         const bool& is_training)
 {
-    // Perceptron layer
+    // Dense2d layer
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
-
-    const type* inputs_device = inputs_pair_device[0].first;
+    const Index batch_size = input_pairs_device[0].second[0];
+    const type* inputs_device = input_pairs_device[0].first;
 
     // Forward propagation
 
     PerceptronForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
         static_cast<PerceptronForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
 
-    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
-    const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
 
-    const cudnnTensorDescriptor_t& outputs_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
     // Combinations
 
-    const float alpha = 1.0f;
-    const float beta = 0.0f;
-
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_N,
-        batch_samples_number, outputs_number, inputs_number,
+        batch_size, outputs_number, inputs_number,
         &alpha,
         inputs_device,
-        batch_samples_number,
+        batch_size,
         weights_device,
         inputs_number,
         &beta,
-        combinations,
-        batch_samples_number);
+        outputs,
+        batch_size);
 
     // @todo Improve by using cudnnAddTensor
+
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = combinations + biases_index * batch_samples_number;
+        type* outputs_batch = outputs + biases_index * batch_size;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -758,39 +701,34 @@ void Perceptron::forward_propagate_cuda(const vector<pair<type*, dimensions>>& i
     // Activations
 
     if (perceptron_layer->get_activation_function() != Activation::Linear)
-    {
-        cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
+        cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
-            outputs_tensor_descriptor,
-            combinations,
+            output_tensor_descriptor,
+            outputs,
+            output_tensor_descriptor,
+            outputs,
             &beta,
-            outputs_tensor_descriptor,
+            output_tensor_descriptor,
             outputs);
-
-        if (activationStatus != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
-    }
-    else
-        cudaMemcpy(outputs, combinations, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 }
 
 
-void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                      const vector<pair<type*, dimensions>>& deltas_pair_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
-    // Perceptron layer
+    // Dense2d layer
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
     // Inputs
 
-    const Index batch_samples_number = inputs_pair_device[0].second[0];
+    const Index batch_size = input_pairs_device[0].second[0];
 
-    const type* inputs_device = inputs_pair_device[0].first;
+    const type* inputs_device = input_pairs_device[0].first;
     const type* deltas_device = deltas_pair_device[0].first;
 
     // Forward propagation
@@ -798,12 +736,9 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     PerceptronForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
         static_cast<PerceptronForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Perceptron* perceptron_layer = static_cast<Perceptron*>(perceptron_layer_forward_propagation_cuda->layer);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
 
-    float* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     float* outputs = perceptron_layer_forward_propagation_cuda->outputs;
-
-    const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
     // Back propagation
 
@@ -812,15 +747,13 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     float* ones = perceptron_layer_back_propagation->ones;
     float* error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives_device;
-    float* biases_derivatives = perceptron_layer_back_propagation->biases_derivatives_device;
-    float* weights_derivatives = perceptron_layer_back_propagation->weights_derivatives_device;
+
+    float* bias_derivatives = perceptron_layer_back_propagation->bias_derivatives_device;
+    float* weight_derivatives = perceptron_layer_back_propagation->weight_derivatives_device;
     float* input_derivatives = perceptron_layer_back_propagation->input_derivatives;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = perceptron_layer_back_propagation->deltas_tensor_descriptor;
     const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = perceptron_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
-
-    const float alpha = 1.0f;
-    float beta = 0.0f;
 
     // Error combinations derivatives
 
@@ -838,91 +771,77 @@ void Perceptron::back_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
             error_combinations_derivatives_tensor_descriptor,
             error_combinations_derivatives);
     else
-        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_samples_number * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 
-    // Bias derivatives 
+    // Bias derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_T, CUBLAS_OP_N,
         outputs_number,
         1,
-        batch_samples_number,
+        batch_size,
         &alpha,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         ones,
-        batch_samples_number,
+        batch_size,
         &beta,
-        biases_derivatives,
+        bias_derivatives,
         outputs_number);
 
-    // Synaptic weights derivatives
+    // Weight derivatives
+
     cublasSgemm(cublas_handle, CUBLAS_OP_T, CUBLAS_OP_N,
         inputs_number,
         outputs_number,
-        batch_samples_number,
+        batch_size,
         &alpha,
         inputs_device,
-        batch_samples_number,
+        batch_size,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         &beta,
-        weights_derivatives,
+        weight_derivatives,
         inputs_number);
 
     // Input derivatives
+
     cublasSgemm(cublas_handle,
         CUBLAS_OP_N, CUBLAS_OP_T,
-        batch_samples_number,
+        batch_size,
         inputs_number,
         outputs_number,
         &alpha,
         error_combinations_derivatives,
-        batch_samples_number,
+        batch_size,
         weights_device,
         inputs_number,
         &beta,
         input_derivatives,
-        batch_samples_number);
+        batch_size);
 }
 
 
-void Perceptron::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda, 
+void Dense2d::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda,
                                       Index& index, 
                                       float* gradient) const
 {
     PerceptronBackPropagationCuda* perceptron_layer_back_propagation =
         static_cast<PerceptronBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weights_derivatives_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->biases_derivatives_device, biases.size(), index);
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weight_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->bias_derivatives_device, biases.size(), index);
 }
 
 
-void Perceptron::set_parameters_cuda(const float* new_parameters, Index& index)
+void Dense2d::set_parameters_cuda(const float* new_parameters, Index& index)
 {
     copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
     copy_from_vector_cuda(biases_device, new_parameters, biases.size(), index);
 }
 
 
-void Perceptron::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-    /*
-    const Index weights_number = get_weights_number();
-    const Index biases_number = get_biases_number();
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + index)),
-        weights_device, size_t(weights_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-
-    if (cudaMemcpy(const_cast<void*>(static_cast<const void*>(new_parameters.data() + biases_number + index)),
-        biases_device, size_t(biases_number) * sizeof(type), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "new_parameters copy error" << endl;
-        */
-}
-
-
-void Perceptron::allocate_parameters_device()
+void Dense2d::allocate_parameters_device()
 {
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
@@ -935,7 +854,7 @@ void Perceptron::allocate_parameters_device()
 }
 
 
-void Perceptron::free_parameters_device()
+void Dense2d::free_parameters_device()
 {
     cudaFree(biases_device);
     cudaFree(weights_device);
@@ -945,13 +864,11 @@ void Perceptron::free_parameters_device()
 }
 
 
-void Perceptron::copy_parameters_device()
+void Dense2d::copy_parameters_device()
 {
-    if (biases_device == nullptr)
-        cout << "Biases device is null" << endl;
+    if (!biases_device) cout << "Biases device is null" << endl;
 
-    if (weights_device == nullptr)
-        cout << "Weights device is null" << endl;
+    if (!weights_device) cout << "Weights device is null" << endl;
 
     if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
         cout << "Biases device copy error" << endl;
@@ -961,12 +878,12 @@ void Perceptron::copy_parameters_device()
 }
 
 
-void Perceptron::copy_parameters_host()
+void Dense2d::copy_parameters_host()
 {
-    if (biases_device == nullptr) 
+    if (!biases_device)
         cout << "Biases is null" << endl;
 
-    if (weights_device == nullptr) 
+    if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
     if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
@@ -976,19 +893,6 @@ void Perceptron::copy_parameters_host()
         cout << "Weights host copy error" << endl;
 }
 
-
-float* Perceptron::get_weights_device() const
-{
-    return weights_device;
-}
-
-float* Perceptron::get_biases_device() const
-{
-    return biases_device;
-}
-
-
-// CUDA structs
 
 PerceptronForwardPropagationCuda::PerceptronForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()
@@ -1020,15 +924,12 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
 
     // Outputs
 
-    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "combinations allocation error" << endl;
-
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&outputs_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(outputs_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(output_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         batch_size,
@@ -1050,39 +951,29 @@ void PerceptronForwardPropagationCuda::set(const Index& new_batch_samples_number
 
     cudnnCreateActivationDescriptor(&activation_descriptor);
 
-    Perceptron* perceptron_layer = static_cast<Perceptron*>(layer);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(layer);
 
     switch (perceptron_layer->get_activation_function())
     {
-
-    case Perceptron::Activation::Linear:
+    case Dense2d::Activation::Linear:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_IDENTITY, CUDNN_PROPAGATE_NAN, 0.0);
         break;
 
-    case Perceptron::Activation::Logistic:
+    case Dense2d::Activation::Logistic:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
         break;
 
-    case Perceptron::Activation::HyperbolicTangent:
+    case Dense2d::Activation::HyperbolicTangent:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_TANH, CUDNN_PROPAGATE_NAN, 0.0);
         break;
 
-    case Perceptron::Activation::RectifiedLinear:
+    case Dense2d::Activation::RectifiedLinear:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_RELU, CUDNN_PROPAGATE_NAN, 0.0);
         break;
 
-    case Perceptron::Activation::ExponentialLinear:
+    case Dense2d::Activation::ExponentialLinear:
         cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_ELU, CUDNN_PROPAGATE_NAN, 0.0);
         break;
-
-        //case Perceptron::Activation::Swish:
-        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_SWISH, CUDNN_PROPAGATE_NAN, 0.0);
-        //    break;
-
-        //case Perceptron::Activation::ClippedRectifiedLinear:
-        //    cudnnSetActivationDescriptor(activation_derivatives_descriptor, CUDNN_ACTIVATION_CLIPPED_RELU, CUDNN_PROPAGATE_NAN, 0.0);
-        //    break;
-
     }
 }
 
@@ -1094,12 +985,11 @@ void PerceptronForwardPropagationCuda::print() const
 
 void PerceptronForwardPropagationCuda::free()
 {
-    cudaFree(combinations);
     cudaFree(outputs);
 
     cudnnDestroyActivationDescriptor(activation_descriptor);
 
-    cudnnDestroyTensorDescriptor(outputs_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
 }
@@ -1138,17 +1028,17 @@ void PerceptronBackPropagationCuda::set(const Index& new_batch_samples_number, L
         cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
     }
 
-    // biases_derivatives_device
+    // bias_derivatives_device
 
-    if (cudaMalloc(&biases_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "biases_derivatives perceptron allocation error" << endl;
+    if (cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "bias_derivatives perceptron allocation error" << endl;
 
-    // weights_derivatives_device
+    // weight_derivatives_device
 
-    if (cudaMalloc(&weights_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "weights_derivatives allocation error" << endl;
+    if (cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "weight_derivatives allocation error" << endl;
 
-    // Inputs derivatives
+    // Input derivatives
 
     if (cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
         cout << "inputs derivatives allocation error" << endl;
@@ -1179,7 +1069,6 @@ void PerceptronBackPropagationCuda::set(const Index& new_batch_samples_number, L
         outputs_number,
         1,
         1);
-
 }
 
 
@@ -1199,8 +1088,8 @@ void PerceptronBackPropagationCuda::print() const
 
 void PerceptronBackPropagationCuda::free()
 {
-    cudaFree(biases_derivatives_device);
-    cudaFree(weights_derivatives_device);
+    cudaFree(bias_derivatives_device);
+    cudaFree(weight_derivatives_device);
     cudaFree(error_combinations_derivatives_device);
     cudaFree(input_derivatives);
     cudaFree(ones);

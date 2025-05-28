@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "layer.h"
-#include "layer_back_propagation_lm.h"
 
 namespace opennn
 {
@@ -31,8 +30,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
 {
     switch(this_layer_type)
     {
-    case Type::Perceptron:
-        return "Perceptron";
+    case Type::Dense2d:
+        return "Dense2d";
 
     case Type::Perceptron3d:
         return "Perceptron3d";
@@ -42,9 +41,6 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
 
     case Type::Pooling:
         return "Pooling";
-
-    case Type::Probabilistic:
-        return "Probabilistic";
 
     case Type::Probabilistic3d:
         return "Probabilistic3d";
@@ -93,8 +89,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
 
 Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
 {
-    if(this_layer_type == "Perceptron")
-        return Type::Perceptron;
+    if(this_layer_type == "Dense2d")
+        return Type::Dense2d;
 
     if(this_layer_type == "Perceptron3d")
         return Type::Perceptron3d;
@@ -105,8 +101,8 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Pooling")
         return Type::Pooling;
 
-    if(this_layer_type == "Probabilistic")
-        return Type::Probabilistic;
+    if(this_layer_type == "Dense2d")
+        return Type::Dense2d;
 
     if(this_layer_type == "Probabilistic3d")
         return Type::Probabilistic3d;
@@ -167,62 +163,24 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-    case Type::Perceptron:
-        return "Perceptron";
-
-    case Type::Perceptron3d:
-        return "Perceptron3d";
-
-    case Type::Bounding:
-        return "Bounding";
-
-    case Type::Pooling:
-        return "Pooling";
-
-    case Type::Probabilistic:
-        return "Probabilistic";
-
-    case Type::Probabilistic3d:
-        return "Probabilistic3d";
-
-    case Type::Convolutional:
-        return "Convolutional";
-
-    case Type::Recurrent:
-        return "Recurrent";
-
-    case Type::Scaling2d:
-        return "Scaling2d";
-
-    case Type::Scaling4d:
-        return "Scaling4d";
-
-    case Type::Unscaling:
-        return "Unscaling";
-
-    case Type::Flatten:
-        return "Flatten";
-
-    case Type::Flatten3d:
-        return "Flatten3d";
-
-    case Type::NonMaxSuppression:
-        return "NonMaxSuppression";
-
-    case Type::Addition3d:
-        return "Addition3d";
-
-    case Type::Normalization3d:
-        return "Normalization3d";
-
-    case Type::Embedding:
-        return "Embedding";
-
-    case Type::MultiheadAttention:
-        return "MultiheadAttention";
-
-    default:
-        return "Unkown type";
+    case Type::Dense2d: return "Dense2d";
+    case Type::Perceptron3d: return "Perceptron3d";
+    case Type::Bounding: return "Bounding";
+    case Type::Pooling: return "Pooling";
+    case Type::Probabilistic3d: return "Probabilistic3d";
+    case Type::Convolutional: return "Convolutional";
+    case Type::Recurrent: return "Recurrent";
+    case Type::Scaling2d: return "Scaling2d";
+    case Type::Scaling4d: return "Scaling4d";
+    case Type::Unscaling: return "Unscaling";
+    case Type::Flatten: return "Flatten";
+    case Type::Flatten3d: return "Flatten3d";
+    case Type::NonMaxSuppression: return "NonMaxSuppression";
+    case Type::Addition3d: return "Addition3d";
+    case Type::Normalization3d: return "Normalization3d";
+    case Type::Embedding: return "Embedding";
+    case Type::MultiheadAttention: return "MultiheadAttention";
+    default: return "Unkown type";
     }
 }
 
@@ -536,7 +494,6 @@ void Layer::create_cuda()
         CUDNN_OP_TENSOR_ADD,
         CUDNN_DATA_FLOAT,
         CUDNN_NOT_PROPAGATE_NAN);
-
 }
 
 
