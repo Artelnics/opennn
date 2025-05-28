@@ -114,7 +114,6 @@ HEADERS += \
     flatten_layer.h \
     bounding_box_regressor_layer.h \
     bounding_box.h \
-    unscaling_layer_forward_propagation.h \
     word_bag.h \
     addition_layer_3d.h \
     normalization_layer_3d.h \

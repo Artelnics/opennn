@@ -14,7 +14,6 @@
 #include "addition_layer_3d.h"
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
-#include "forward_propagation.h"
 
 namespace opennn
 {

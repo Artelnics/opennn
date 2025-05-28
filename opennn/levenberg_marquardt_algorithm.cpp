@@ -8,7 +8,6 @@
 
 #include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
-#include "forward_propagation.h"
 
 namespace opennn
 {

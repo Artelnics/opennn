@@ -9,7 +9,6 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-//#include "language_data_set.h"
 #include "layer.h"
 
 namespace opennn
