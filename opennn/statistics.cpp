@@ -1048,7 +1048,7 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index& bins_number)
         sort(unique_values.data(), unique_values.data() + unique_values.size(), less<type>());
 
         Tensor<type, 1> tensor_unique(unique_values.size());
-        for (Index i = 0; i < unique_values.size(); ++i)
+        for (size_t i = 0; i < unique_values.size(); ++i)
             tensor_unique(i) = unique_values[i];
 
         centers = tensor_unique;
