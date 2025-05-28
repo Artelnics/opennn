@@ -2138,27 +2138,6 @@ void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>
 }
 
 
-void NeuralNetwork::get_parameters_cuda(Tensor<type, 1>& parameters)
-{
-    /*
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers = get_trainable_layers();
-
-    const Tensor<Index, 1> trainable_layers_parameters_numbers = get_trainable_layers_parameters_numbers();
-
-    Index index = 0;
-
-    for (Index i = 0; i < trainable_layers_number; i++)
-    {
-        trainable_layers(i)->get_parameters_cuda(parameters, index);
-
-        index += trainable_layers_parameters_numbers(i);
-    }
-    */
-}
-
-
 void NeuralNetwork::set_parameters_cuda(const float* new_parameters)
 {
     Index index = 0;
@@ -2380,10 +2359,8 @@ void ForwardPropagationCuda::free()
     const Index layers_number = layers.size();
 
     for (Index i = 0; i < layers_number; i++)
-    {
-        if (layers[i] != nullptr)
+        if (!layers[i])
             layers[i]->free();
-    }
 }
 
 
@@ -2495,10 +2472,8 @@ void NeuralNetworkBackPropagationCuda::free()
     const Index layers_number = layers.size();
 
     for (Index i = 0; i < layers_number; i++)
-    {
-        if (layers[i] != nullptr)
+        if (!layers[i])
             layers[i]->free();
-    }
 }
 
 #endif

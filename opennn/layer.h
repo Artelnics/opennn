@@ -331,8 +331,6 @@ public:
 
     virtual void set_parameters_cuda(const float*, Index&) {}
 
-    virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&) {}
-
     virtual void copy_parameters_host() {}
 
     virtual void copy_parameters_device() {}
@@ -350,6 +348,9 @@ protected:
 
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
 
 #endif
 

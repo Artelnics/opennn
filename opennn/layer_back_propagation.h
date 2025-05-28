@@ -29,7 +29,10 @@ struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
 
-    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const { return vector<pair<type*, dimensions>>(); } // change it to = 0; when implemented in all layers
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const
+    {
+        return vector<pair<type*, dimensions>>();
+    } // @todo change it to = 0; when implemented in all layers
 
     virtual void free() {}
 
@@ -42,7 +45,7 @@ struct LayerBackPropagationCuda
     bool is_first_layer = false;
 
     float* input_derivatives = nullptr;
-    cudnnTensorDescriptor_t inputs_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t input_derivatives_tensor_descriptor = nullptr;
 };
 
 #endif

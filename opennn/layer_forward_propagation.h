@@ -42,6 +42,7 @@ struct LayerForwardPropagationCuda
     Layer* layer = nullptr;
 
     float* outputs = nullptr;
+
     cudnnTensorDescriptor_t outputs_tensor_descriptor = nullptr;
 };
 

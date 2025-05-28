@@ -146,10 +146,6 @@ public:
 
    string write_regularization_method() const;
 
-   // Checking
-
-//   void check() const;
-
    // Numerical differentiation
 
    static type calculate_h(const type&);
@@ -226,15 +222,15 @@ protected:
     unique_ptr<ThreadPool> thread_pool;
     unique_ptr<ThreadPoolDevice> thread_pool_device;
 
-   NeuralNetwork* neural_network = nullptr;
+    NeuralNetwork* neural_network = nullptr;
 
-   DataSet* data_set = nullptr;
+    DataSet* data_set = nullptr;
 
-   RegularizationMethod regularization_method = RegularizationMethod::L2;
+    RegularizationMethod regularization_method = RegularizationMethod::L2;
 
-   type regularization_weight = type(0.01);
+    type regularization_weight = type(0.01);
 
-   bool display = true;
+    bool display = true;
 };
 
 

@@ -97,11 +97,11 @@ struct Addition3dBackPropagation : LayerBackPropagation
 
     struct AdditionLayer3DForwardPropagationCuda : public LayerForwardPropagationCuda
     {
-        AdditionLayer3DForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+        AdditionLayer3DForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
         pair<type*, dimensions> get_outputs_pair_device() const override;
 
-        void set(const Index & = 0, Layer* = nullptr);
+        void set(const Index& = 0, Layer* = nullptr);
 
         void print() const override;
     };
@@ -109,11 +109,11 @@ struct Addition3dBackPropagation : LayerBackPropagation
 
     struct AdditionLayer3DBackPropagationCuda : public LayerBackPropagationCuda
     {
-        AdditionLayer3DBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+        AdditionLayer3DBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
         vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
-        void set(const Index & = 0, Layer* = nullptr);
+        void set(const Index& = 0, Layer* = nullptr);
 
         void print() const override;
 

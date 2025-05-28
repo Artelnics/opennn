@@ -117,8 +117,6 @@ public:
 
     void set_parameters_cuda(const float*, Index&);
 
-    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
-
     void copy_parameters_host();
 
     void copy_parameters_device();
@@ -126,9 +124,6 @@ public:
     void allocate_parameters_device();
 
     void free_parameters_device();
-
-    float* get_weights_device() const;
-    float* get_biases_device() const;
 
 protected:
 
@@ -142,11 +137,11 @@ protected:
 
 struct ProbabilisticForwardPropagation : LayerForwardPropagation
 {
-    ProbabilisticForwardPropagation(const Index & = 0, Layer* = nullptr);
+    ProbabilisticForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -157,11 +152,11 @@ struct ProbabilisticForwardPropagation : LayerForwardPropagation
 
 struct ProbabilisticBackPropagation : LayerBackPropagation
 {
-    ProbabilisticBackPropagation(const Index & = 0, Layer* = nullptr);
+    ProbabilisticBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -174,11 +169,11 @@ struct ProbabilisticBackPropagation : LayerBackPropagation
 
 struct ProbabilisticLayerBackPropagationLM : LayerBackPropagationLM
 {
-    ProbabilisticLayerBackPropagationLM(const Index & = 0, Layer* = nullptr);
+    ProbabilisticLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -207,8 +202,6 @@ struct ProbabilisticForwardPropagationCuda : public LayerForwardPropagationCuda
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
-
-    float* combinations = nullptr;
 };
 
 
@@ -226,8 +219,8 @@ struct ProbabilisticBackPropagationCuda : public LayerBackPropagationCuda
 
     float* error_combinations_derivatives_device = nullptr;
 
-    float* biases_derivatives_device = nullptr;
-    float* weights_derivatives_device = nullptr;
+    float* bias_derivatives_device = nullptr;
+    float* weight_derivatives_device = nullptr;
 
     float* input_derivatives = nullptr;
 

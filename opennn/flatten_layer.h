@@ -66,7 +66,6 @@ public:
 
     void insert_gradient_cuda(LayerBackPropagationCuda*, const Index&, float*) const {}
     void set_parameters_cuda(const float*, const Index&) {}
-    void get_parameters_cuda(const Tensor<type, 1>&, const Index&) {}
     void allocate_parameters_device() {}
     void free_parameters_device() {}
     void copy_parameters_device() {}
@@ -112,11 +111,11 @@ struct FlattenBackPropagation : LayerBackPropagation
 
 struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    FlattenForwardPropagationCuda(const Index & = 0, Layer* = nullptr);
+    FlattenForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
@@ -128,11 +127,11 @@ struct FlattenForwardPropagationCuda : public LayerForwardPropagationCuda
 
 struct FlattenBackPropagationCuda : public LayerBackPropagationCuda
 {
-    FlattenBackPropagationCuda(const Index & = 0, Layer* = nullptr);
+    FlattenBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
-    void set(const Index & = 0, Layer* = nullptr);
+    void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 

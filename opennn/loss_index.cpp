@@ -1261,7 +1261,7 @@ pair<type*, dimensions> BackPropagationLM::get_output_deltas_pair() const
 }
 
 
-void BackPropagationLM::set(const Index &new_samples_number,
+void BackPropagationLM::set(const Index&new_samples_number,
                             LossIndex *new_loss_index)
 {
     loss_index = new_loss_index;
@@ -1324,7 +1324,7 @@ void BackPropagationLM::set(const Index &new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index &new_batch_size, LossIndex *new_loss_index) 
+BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index) 
 {
     set(new_batch_size, new_loss_index);
 }

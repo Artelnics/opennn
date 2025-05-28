@@ -498,7 +498,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
     Tensor<type, 1>& projection_bias_derivatives = this_back_propagation->projection_bias_derivatives;
 
     const Tensor<type,3>& concatenated_attention_outputs = this_forward_propagation->concatenated_attention_outputs;
-    Tensor<type, 2>& projection_weights_derivatives = this_back_propagation->projection_weight_derivatives;
+    Tensor<type, 2>& projection_weight_derivatives = this_back_propagation->projection_weight_derivatives;
     Tensor<type,3>& concatenated_attention_output_deltas = this_back_propagation->concatenated_attention_output_deltas;
     Tensor<type,4>& attention_output_deltas = this_back_propagation->attention_output_deltas;
 
@@ -506,7 +506,7 @@ void MultiHeadAttention::back_propagate(const vector<pair<type*, dimensions>>& i
 
     projection_bias_derivatives.device(*thread_pool_device) = deltas.sum(array<Index, 2>({0,1}));
 
-    projection_weights_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, axes(2,0,0,1));
+    projection_weight_derivatives.device(*thread_pool_device) = concatenated_attention_outputs.contract(deltas, axes(2,0,0,1));
 
     for(Index sample_index = 0; sample_index < batch_size; sample_index++)
     {
