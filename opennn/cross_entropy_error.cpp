@@ -472,23 +472,13 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &beta,
-<<<<<<< HEAD
-        output_tensor_descriptor, 
+        output_tensor_descriptor,
         numerator_2,
         &beta_minus_one,
-        output_tensor_descriptor, 
+        output_tensor_descriptor,
         targets,
         &beta,
-        output_tensor_descriptor, 
-=======
-        outputs_tensor_descriptor,
-        numerator_2,
-        &beta_minus_one,
-        outputs_tensor_descriptor,
-        targets,
-        &beta,
-        outputs_tensor_descriptor,
->>>>>>> dce62f8b5 (clean language dataset)
+        output_tensor_descriptor,
         numerator_2);
 
     // (-targets / (outputs)
