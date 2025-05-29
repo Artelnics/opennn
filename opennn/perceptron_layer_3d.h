@@ -22,7 +22,8 @@ public:
     enum class Activation{HyperbolicTangent,
                           Logistic,
                           Linear,
-                          RectifiedLinear};
+                          RectifiedLinear,
+                          Softmax};
 
    Perceptron3d(const Index& = 0,
                 const Index& = 0,

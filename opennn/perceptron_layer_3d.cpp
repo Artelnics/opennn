@@ -204,19 +204,18 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
-    Perceptron3dForwardPropagation* perceptron_layer_3d_forward_propagation =
+    Perceptron3dForwardPropagation* this_forward_propagation =
         static_cast<Perceptron3dForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 3>& outputs = perceptron_layer_3d_forward_propagation->outputs;
+    Tensor<type, 3>& outputs = this_forward_propagation->outputs;
 
     calculate_combinations(inputs,
                            outputs);
 
-    if(is_training)
-    {
-        if(dropout_rate > type(0))
-            dropout(outputs, dropout_rate);
+    if(is_training && dropout_rate > type(0))
+        dropout(outputs, dropout_rate);
 
+<<<<<<< HEAD
         Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
 
         calculate_activations(outputs, activation_derivatives);
@@ -231,6 +230,11 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
     {
         calculate_activations(outputs, empty_3);
     }
+=======
+    is_training
+        ? calculate_activations(outputs, this_forward_propagation->activation_derivatives)
+        : calculate_activations(outputs, empty_3);
+>>>>>>> dce62f8b5 (clean language dataset)
 }
 
 

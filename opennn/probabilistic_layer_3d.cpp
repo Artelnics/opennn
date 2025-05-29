@@ -213,7 +213,7 @@ void Probabilistic3d::set_parameters_glorot()
 
 
 void Probabilistic3d::calculate_combinations(const Tensor<type, 3>& inputs,
-                                                  Tensor<type, 3>& combinations) const
+                                             Tensor<type, 3>& combinations) const
 {
     combinations.device(*thread_pool_device) = inputs.contract(weights, axes(2,0));
     sum_matrices(thread_pool_device.get(), biases, combinations);
@@ -234,8 +234,8 @@ void Probabilistic3d::calculate_activations(Tensor<type, 3>& activations) const
 
 
 void Probabilistic3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                             unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                             const bool&)
+                                        unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                        const bool&)
 {
     const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
 
@@ -271,7 +271,9 @@ void Probabilistic3d::back_propagate(const vector<pair<type*, dimensions>>& inpu
             static_cast<Probabilistic3dBackPropagation*>(back_propagation.get());
 
     const Tensor<type, 2>& targets = probabilistic_3d_back_propagation->targets;
+
     Tensor<type, 2>& mask = probabilistic_3d_back_propagation->mask;
+
     bool& built_mask = probabilistic_3d_back_propagation->built_mask;
 
     Tensor<type, 3>& combination_deltas = probabilistic_3d_back_propagation->combination_deltas;
@@ -399,8 +401,8 @@ void Probabilistic3DForwardPropagation::set(const Index& new_batch_size, Layer* 
 
     batch_size = new_batch_size;
 
-    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     const Index inputs_number = probabilistic_layer_3d->get_inputs_number_xxx();
+    const Index neurons_number = probabilistic_layer_3d->get_neurons_number();
     
     outputs.resize(batch_size, inputs_number, neurons_number);
 }
