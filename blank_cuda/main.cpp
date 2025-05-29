@@ -87,7 +87,7 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool1"
             );
-            pool1->set_dropout_rate(0.25f);
+            //pool1->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool1));
         }
 
@@ -111,7 +111,7 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool2"
             );
-            pool2->set_dropout_rate(0.25f);
+            //pool2->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool2));
         }
 
@@ -135,7 +135,7 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool3"
             );
-            pool3->set_dropout_rate(0.25f);
+            //pool3->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool3));
         }
 
