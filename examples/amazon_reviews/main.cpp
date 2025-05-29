@@ -29,7 +29,7 @@ int main()
         // language_dataset.set_data_path("../data/amazon_cells_reduced.txt");
         // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_reduced.txt");
         // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
-        LanguageDataSet language_dataset("/Users/artelnics/Desktop/cleaned_tweets.txt");
+        LanguageDataSet language_dataset("/home/alvaro/Desktop/mh/cleaned_tweets.txt");
         // text_data_set.set_data_path("/Users/artelnics/Desktop/sample_200k_balanced.txt");
 
 
@@ -47,7 +47,7 @@ int main()
 
         // Neural Network
 
-        const Index maximum_sequence_length = language_dataset.get_input_length();
+        const Index maximum_sequence_length = language_dataset.get_input_size();
         const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
         const Index embedding_dimension = 64;
         const Index heads_number = 4;
