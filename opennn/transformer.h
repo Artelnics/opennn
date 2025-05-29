@@ -109,7 +109,7 @@ private:
 
     Index decoder_length = 0;
 
-    type dropout_rate = 0.1;
+    type dropout_rate = type(0.1);
 
     unordered_map<string, Index> input_vocabulary;
     unordered_map<string, Index> output_vocabulary;

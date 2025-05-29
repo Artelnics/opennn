@@ -7,15 +7,15 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef PERCEPTRONLAYER_H
-#define PERCEPTRONLAYER_H
+#ifndef DENSE2D_H
+#define DENSE2D_H
 
 #include "layer.h"
 
 namespace opennn
 {
 
-class Perceptron : public Layer
+class Dense2d : public Layer
 {
 
 public:
@@ -33,10 +33,10 @@ public:
         Softmax
     };
 
-    Perceptron(const dimensions& = {0},
-               const dimensions& = {0},
-               const Activation& = Perceptron::Activation::HyperbolicTangent,
-               const string& = "perceptron_layer");
+    Dense2d(const dimensions& = {0},
+            const dimensions& = {0},
+            const Activation& = Dense2d::Activation::HyperbolicTangent,
+            const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -46,13 +46,13 @@ public:
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
-    const Perceptron::Activation& get_activation_function() const;
+    const Dense2d::Activation& get_activation_function() const;
 
     string get_activation_function_string() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
-             const Perceptron::Activation & = Perceptron::Activation::HyperbolicTangent,
+             const Dense2d::Activation & = Dense2d::Activation::HyperbolicTangent,
              const string& = "perceptron_layer");
 
     void set_input_dimensions(const dimensions&) override;
@@ -86,10 +86,8 @@ public:
                
         outputs = inputs;// -means.broadcast(array<Index, 2>({ outputs.dimension(0), 1 }));
             //shifts.broadcast(rows);
-                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);
-        
+                //+ (outputs - means.broadcast(rows))*scales.broadcast(rows)/standard_deviations.broadcast(rows);        
     }
-
 
     void calculate_activations(Tensor<type, 2>&,
                                Tensor<type, 2>&) const;
@@ -144,8 +142,6 @@ public:
 
     void set_parameters_cuda(const float*, Index&);
 
-    void get_parameters_cuda(const Tensor<type, 1>&, const Index&);
-
     void copy_parameters_host();
 
     void copy_parameters_device();
@@ -154,13 +150,12 @@ public:
 
     void free_parameters_device();
 
-    float* get_weights_device() const;
-    float* get_biases_device() const;
-
 private:
 
     float* biases_device = nullptr;
     float* weights_device = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
 
 #endif
 
@@ -176,7 +171,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
 };
 
 
@@ -237,9 +231,9 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 #ifdef OPENNN_CUDA
 
-struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
+struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PerceptronForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 
@@ -249,18 +243,14 @@ struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
 
     pair<type*, dimensions> get_outputs_pair_device() const override;
 
-    cudnnActivationDescriptor_t activation_descriptor = nullptr;
-
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
-
-    float* combinations = nullptr;
 };
 
 
-struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
+struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PerceptronBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
@@ -272,8 +262,8 @@ struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
 
     float* error_combinations_derivatives_device = nullptr;
 
-    float* biases_derivatives_device = nullptr;
-    float* weights_derivatives_device = nullptr;
+    float* bias_derivatives_device = nullptr;
+    float* weight_derivatives_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;
@@ -284,11 +274,9 @@ struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
 
 #endif
 
-
 }
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2025 Artificial Intelligence Techniques, SL.

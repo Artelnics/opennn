@@ -21,7 +21,7 @@ class OptimizationAlgorithm
 
 public:
 
-   OptimizationAlgorithm(LossIndex* = nullptr);
+    OptimizationAlgorithm(LossIndex* = nullptr);
 
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
@@ -30,64 +30,64 @@ public:
                                  MaximumEpochsNumber,
                                  MaximumTime};
 
-   LossIndex* get_loss_index() const;
+    LossIndex* get_loss_index() const;
 
-   string get_hardware_use() const;
+    string get_hardware_use() const;
 
-   void set_hardware_use(const string&);
+    void set_hardware_use(const string&);
 
-   bool has_loss_index() const;
+    bool has_loss_index() const;
 
-   const bool& get_display() const;
+    const bool& get_display() const;
 
-   const Index& get_display_period() const;
+    const Index& get_display_period() const;
 
-   const Index& get_save_period() const;
+    const Index& get_save_period() const;
 
-   const string& get_neural_network_file_name() const;
+    const string& get_neural_network_file_name() const;
 
-   string write_time(const type&) const;
+    string write_time(const type&) const;
 
-   void set(LossIndex* = nullptr);
+    void set(LossIndex* = nullptr);
 
-   virtual void set_threads_number(const int&);
+    virtual void set_threads_number(const int&);
 
-   virtual void set_loss_index(LossIndex*);
+    virtual void set_loss_index(LossIndex*);
 
-   virtual void set_display(const bool&);
+    virtual void set_display(const bool&);
 
-   void set_display_period(const Index&);
+    void set_display_period(const Index&);
 
-   void set_save_period(const Index&);
-   void set_neural_network_file_name(const string&);
+    void set_save_period(const Index&);
+    void set_neural_network_file_name(const string&);
 
-//   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
+    //   BoxPlot calculate_distances_box_plot(type* &, Tensor<Index,1>&, type* &, Tensor<Index,1>&);
 
-   // Training
+    // Training
 
-   virtual void check() const;
+    virtual void check() const;
 
-   virtual TrainingResults perform_training() = 0;
+    virtual TrainingResults perform_training() = 0;
 
-   virtual string write_optimization_algorithm_type() const;
+    virtual string write_optimization_algorithm_type() const;
 
-   virtual void print() const;
+    virtual void print() const;
 
-   virtual Tensor<string, 2> to_string_matrix() const;
+    virtual Tensor<string, 2> to_string_matrix() const;
 
-   virtual void from_XML(const XMLDocument&);
+    virtual void from_XML(const XMLDocument&);
 
-   virtual void to_XML(XMLPrinter&) const;
+    virtual void to_XML(XMLPrinter&) const;
 
-   void save(const filesystem::path&) const;
-   void load(const filesystem::path&);
+    void save(const filesystem::path&) const;
+    void load(const filesystem::path&);
 
-   static type get_elapsed_time(const time_t& beginning_time);
+    static type get_elapsed_time(const time_t& beginning_time);
 
-   void set_names();
-   void set_scaling();
-   void set_unscaling();
-   void set_vocabularies();
+    void set_names();
+    void set_scaling();
+    void set_unscaling();
+    void set_vocabularies();
 
 protected:
 

@@ -17,10 +17,6 @@ namespace opennn
 
 struct QuasiNewtonMethodData;
 
-#ifdef OPENNN_CUDA
-struct QNMOptimizationDataCuda;
-#endif
-
 class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
@@ -110,17 +106,6 @@ private:
    Index maximum_epochs_number;
 
    type maximum_time = type(360000);
-
-#ifdef OPENNN_CUDA
-
-public:
-
-    TrainingResults perform_training_cuda();
-
-    void update_parameters_cuda(BackPropagationCuda&, QNMOptimizationDataCuda&) const;
-
-#endif
-
 };
 
 
@@ -162,52 +147,6 @@ struct QuasiNewtonMethodData : public OptimizationAlgorithmData
     type learning_rate = type(0);
     type old_learning_rate = type(0);
 };
-
-
-#ifdef OPENNN_CUDA
-
-struct QNMOptimizationDataCuda : public OptimizationAlgorithmData
-{
-    QNMOptimizationDataCuda(QuasiNewtonMethod* = nullptr);
-
-    void set(QuasiNewtonMethod* = nullptr);
-
-    void free();
-
-    void print() const;
-
-    QuasiNewtonMethod* quasi_newton_method = nullptr;
-
-    // Neural network data
-
-    float* old_parameters = nullptr;
-    float* parameters_difference = nullptr;
-
-    float* parameters_increment = nullptr;
-
-    // Loss index data
-
-    float* old_gradient = nullptr;
-    float* gradient_difference = nullptr;
-
-    float* inverse_hessian = nullptr;
-    float* old_inverse_hessian = nullptr;
-
-    float* old_inverse_hessian_dot_gradient_difference = nullptr;
-
-    // Optimization algorithm data
-
-    float* BFGS = nullptr;
-
-    Index epoch = 0;
-
-    Tensor<type, 0> training_slope;
-
-    type learning_rate = type(0);
-    type old_learning_rate = type(0);
-};
-
-#endif
 
 }
 

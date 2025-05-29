@@ -16,10 +16,6 @@ namespace opennn
 
 struct LevenbergMarquardtAlgorithmData;
 
-#ifdef OPENNN_CUDA
-struct LMAOptimizationDataCuda;
-#endif
-
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 {
 
@@ -106,17 +102,6 @@ private:
    Index maximum_epochs_number = 0;
 
    type maximum_time = type(360000);
-
-#ifdef OPENNN_CUDA
-
-public:
-
-    TrainingResults perform_training_cuda();
-
-    void update_parameters_cuda(BackPropagationCuda&, LMAOptimizationDataCuda&) const;
-
-#endif
-
 };
 
 
@@ -144,39 +129,6 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Index epoch = 0;
 };
-
-
-#ifdef OPENNN_CUDA
-
-struct LMAOptimizationDataCuda : public OptimizationAlgorithmData
-{
-    LMAOptimizationDataCuda(LevenbergMarquardtAlgorithm* = nullptr);
-
-    void set(LevenbergMarquardtAlgorithm* = nullptr);
-
-    void free();
-
-    void print() const;
-
-    LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
-
-    // Neural network data
-
-    float* old_parameters = nullptr;
-    float* parameters_difference = nullptr;
-
-    float* parameters_increment = nullptr;
-
-    // Loss index data
-
-    type old_loss = type(0);
-
-    // Optimization algorithm data
-
-    Index epoch = 0;
-};
-
-#endif
 
 }
 

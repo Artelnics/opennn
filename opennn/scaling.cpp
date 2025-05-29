@@ -11,24 +11,18 @@
 
 namespace opennn
 {
+
     string scaler_to_string(const Scaler& scaler)
     {
         switch (scaler)
         {
-        case Scaler::None:
-            return "None";
-        case Scaler::MinimumMaximum:
-            return "MinimumMaximum";
-        case Scaler::MeanStandardDeviation:
-            return "MeanStandardDeviation";
-        case Scaler::StandardDeviation:
-            return "StandardDeviation";
-        case Scaler::Logarithm:
-            return "Logarithm";
-        case Scaler::ImageMinMax:
-            return "ImageMinMax";
-        default:
-            throw runtime_error("Unknown scaler\n");
+        case Scaler::None: return "None";
+        case Scaler::MinimumMaximum: return "MinimumMaximum";
+        case Scaler::MeanStandardDeviation: return "MeanStandardDeviation";
+        case Scaler::StandardDeviation: return "StandardDeviation";
+        case Scaler::Logarithm: return "Logarithm";
+        case Scaler::ImageMinMax: return "ImageMinMax";
+        default: throw runtime_error("Unknown scaler\n");
         }
     }
 

@@ -55,7 +55,6 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 INCLUDEPATH += ../eigen
 
 HEADERS += \
-    auto_associative_data_set.h \
     flatten_layer_3d.h \
     pch.h \
     codification.h \
@@ -66,12 +65,8 @@ HEADERS += \
     strings_utilities.h \
     images.h \
     statistics.h \
-    descriptives.h \
-    box_plot.h \
-    histogram.h \
     scaling.h \
     correlations.h \
-    correlation.h \
     tinyxml2.h \
     data_set.h \
     batch.h \
@@ -79,16 +74,12 @@ HEADERS += \
     image_data_set.h \
     language_data_set.h \
     layer.h \
-    layer_forward_propagation.h \
-    layer_back_propagation.h \
-    layer_back_propagation_lm.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
     transformer.h \
     unscaling_layer.h \
     perceptron_layer.h \
     perceptron_layer_3d.h \
-    probabilistic_layer.h \
     probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \
@@ -96,13 +87,7 @@ HEADERS += \
     recurrent_layer.h \
     neural_network.h \
     model_expression.h \
-    neural_network_forward_propagation.h \
-    neural_network_back_propagation.h \
-    neural_network_back_propagation_lm.h \
-    auto_associative_neural_network.h \
     loss_index.h \
-    loss_index_forward_propagation.h \
-    back_propagation.h \
     optimization_algorithm.h \
     normalized_squared_error.h\
     minkowski_error.h \
@@ -127,7 +112,6 @@ HEADERS += \
     flatten_layer.h \
     bounding_box_regressor_layer.h \
     bounding_box.h \
-    unscaling_layer_forward_propagation.h \
     word_bag.h \
     addition_layer_3d.h \
     normalization_layer_3d.h \
@@ -135,7 +119,6 @@ HEADERS += \
     opennn.h
 
 SOURCES += \
-    auto_associative_data_set.cpp \
     flatten_layer_3d.cpp \
     model_expression.cpp \
     pch.cpp \
@@ -162,14 +145,12 @@ SOURCES += \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     perceptron_layer_3d.cpp \
-    probabilistic_layer.cpp \
     probabilistic_layer_3d.cpp \
     pooling_layer.cpp \
     bounding_layer.cpp \
     convolutional_layer.cpp \
     recurrent_layer.cpp \
     neural_network.cpp \
-    auto_associative_neural_network.cpp \
     loss_index.cpp \
     stochastic_gradient_descent.cpp \
     training_strategy.cpp \

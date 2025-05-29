@@ -37,9 +37,6 @@ public:
     void set_parameters_constant(const type&) override;
     void set_parameters_random() override;
 
-    void standarization(const Tensor<type, 3>&, Tensor<type, 3>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
-    void affine_transformation(Tensor<type, 3>&) const;
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
@@ -68,7 +65,7 @@ private:
 
     Tensor<type, 1> betas;
 
-    const type epsilon = type(1e-6);//type(0.001);
+    const type epsilon = type(1e-6);
 };
 
 

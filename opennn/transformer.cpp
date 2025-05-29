@@ -14,7 +14,6 @@
 #include "addition_layer_3d.h"
 #include "perceptron_layer_3d.h"
 #include "probabilistic_layer_3d.h"
-#include "forward_propagation.h"
 
 namespace opennn
 {
@@ -70,6 +69,7 @@ void Transformer::set(const Index& new_decoder_length,
                                           "decoder_embedding"));
 
     set_layer_inputs_indices("decoder_embedding", "decoder");
+
     //decoder_embedding_layer->set_dropout_rate(dropout_rate);
 
     add_layer(make_unique<Embedding>(new_input_dimension,
@@ -117,7 +117,7 @@ void Transformer::set(const Index& new_decoder_length,
         
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i+1), "input_self_attention_addition_" + to_string(i+1));
         
-        // Perceptron
+        // Dense2d
 
         add_layer(make_unique<Perceptron3d>(new_input_length,
                                                  new_embedding_dimension,
@@ -127,7 +127,7 @@ void Transformer::set(const Index& new_decoder_length,
         
         set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "input_self_attention_normalization_" + to_string(i+1));
 
-        // Perceptron
+        // Dense2d
 
         add_layer(make_unique<Perceptron3d>(new_input_length,
                                                  new_perceptron_depth,
@@ -260,20 +260,24 @@ void Transformer::set_output_vocabulary(const unordered_map<string, Index>& new_
     output_vocabulary = new_output_vocabulary;
 }
 
+
 void Transformer::set_input_length(const Index& new_input_length)
 {
     input_length = new_input_length;
 }
+
 
 void Transformer::set_decoder_length(const Index& new_decoder_length)
 {
     decoder_length = new_decoder_length;
 }
 
+
 Index Transformer::get_input_length() const
 {
     return input_length;
 }
+
 
 Index Transformer::get_decoder_length() const
 {
@@ -671,12 +675,11 @@ void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstre
             }
         }
 
-        (current_prediction.substr(0, 2) == "##")
+        current_prediction.substr(0, 2) == "##"
             ? buffer << current_prediction.substr(2)
             : buffer << " " << current_prediction;
     }
 }
-
 
 };
 

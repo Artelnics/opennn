@@ -44,7 +44,7 @@ int main()
         data_set.set_data_ascending();
 
         data_set.set(DataSet::SampleUse::Training);
-        */
+        
         ImageDataSet data_set;
 
         data_set.set_data_path("C:/cifar10_bmp");
@@ -56,12 +56,12 @@ int main()
         const dimensions input_dimensions = data_set.get_dimensions(DataSet::VariableUse::Input);
 
         // Neural network
-        /*
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(DataSet::VariableUse::Input),
             { 256,128,32 },
             data_set.get_dimensions(DataSet::VariableUse::Target));
-        */
+        
         NeuralNetwork neural_network;
 
         // Scaling 4D
@@ -184,9 +184,8 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+        */
         #endif  
-        
         cout << "Bye!" << endl;
         
         return 0;

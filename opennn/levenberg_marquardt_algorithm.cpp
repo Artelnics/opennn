@@ -8,7 +8,6 @@
 
 #include "tensors.h"
 #include "levenberg_marquardt_algorithm.h"
-#include "forward_propagation.h"
 
 namespace opennn
 {
@@ -543,53 +542,6 @@ void LevenbergMarquardtAlgorithmData::set(LevenbergMarquardtAlgorithm* new_Leven
     potential_parameters.resize(parameters_number);
     parameters_increment.resize(parameters_number);
 }
-
-
-#ifdef OPENNN_CUDA
-
-TrainingResults LevenbergMarquardtAlgorithm::perform_training_cuda()
-{
-    throw runtime_error("CUDA perform_training_cuda not implemented for OptimizationMethod: LevenbergMarquardtAlgorithm");
-}
-
-
-void LevenbergMarquardtAlgorithm::update_parameters_cuda(BackPropagationCuda& back_propagation_cuda,
-                                                         LMAOptimizationDataCuda& optimization_data_cuda) const
-{
-    // @todo
-}
-
-
-LMAOptimizationDataCuda::LMAOptimizationDataCuda(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm)
-{
-    set(new_Levenberg_Marquardt_algorithm);
-}
-
-
-void LMAOptimizationDataCuda::set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm)
-{
-    Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_algorithm;
-
-    const Index parameters_number = Levenberg_Marquardt_algorithm->get_loss_index()->get_neural_network()->get_parameters_number();
-
-    // Gradient
-
-    // @todo
-}
-
-
-void LMAOptimizationDataCuda::free()
-{
-    // @todo
-}
-
-
-void LMAOptimizationDataCuda::print() const
-{
-    // @todo
-}
-
-#endif
 
 }
 

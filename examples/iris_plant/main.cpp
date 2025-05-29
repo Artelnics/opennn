@@ -10,7 +10,10 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/opennn.h"
+#include "../../opennn/data_set.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
+#include "../../opennn/testing_analysis.h"
 
 using namespace opennn;
 

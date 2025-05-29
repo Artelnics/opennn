@@ -9,7 +9,6 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
-//#include "language_data_set.h"
 #include "layer.h"
 
 namespace opennn
@@ -215,7 +214,6 @@ public:
                                 ForwardPropagationCuda&,
                                 const bool& = false) const;
 
-    void get_parameters_cuda(Tensor<type, 1>&);
     void set_parameters_cuda(const float*);
 
 protected:
@@ -242,6 +240,138 @@ protected:
    bool display = true;
 
 };
+
+struct NeuralNetworkBackPropagation
+{
+    NeuralNetworkBackPropagation(const Index& = 0, NeuralNetwork* = nullptr);
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    const vector<unique_ptr<LayerBackPropagation>>& get_layers() const;
+
+    void print() const;
+
+    NeuralNetwork* get_neural_network() const;
+
+    Index batch_size = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerBackPropagation>> layers;
+};
+
+
+#ifdef OPENNN_CUDA
+
+struct NeuralNetworkBackPropagationCuda
+{
+    NeuralNetworkBackPropagationCuda(const Index& = 0, NeuralNetwork* = nullptr);
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    const vector<unique_ptr<LayerBackPropagationCuda>>& get_layers() const;
+
+    void print();
+
+    void free();
+
+    Index batch_size = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerBackPropagationCuda>> layers;
+};
+
+#endif
+
+
+struct NeuralNetworkBackPropagationLM
+{
+    NeuralNetworkBackPropagationLM(NeuralNetwork* new_neural_network = nullptr)
+    {
+        neural_network = new_neural_network;
+    }
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    const vector<unique_ptr<LayerBackPropagationLM>>& get_layers() const
+    {
+        return layers;
+    }
+
+    NeuralNetwork* get_neural_network() const
+    {
+        return neural_network;
+    }
+
+
+    void print()
+    {
+        const Index layers_number = layers.size();
+
+        cout << "Layers number: " << layers_number << endl;
+
+        for(Index i = 0; i < layers_number; i++)
+        {
+            cout << "Layer " << i + 1 << endl;
+
+            layers[i]->print();
+        }
+    }
+
+    Index batch_size = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerBackPropagationLM>> layers;
+};
+
+
+struct ForwardPropagation
+{
+    ForwardPropagation(const Index& = 0, NeuralNetwork* = nullptr);
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    pair<type*, dimensions> get_last_trainable_layer_outputs_pair() const;
+
+    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs(const vector<pair<type*, dimensions>>&, const bool&) const;
+
+    void print() const;
+
+    Index samples_number = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerForwardPropagation>> layers;
+};
+
+
+#ifdef OPENNN_CUDA
+
+struct ForwardPropagationCuda
+{
+    ForwardPropagationCuda(const Index& = 0, NeuralNetwork* = nullptr);
+
+    void set(const Index& = 0, NeuralNetwork* = nullptr);
+
+    pair<type*, dimensions> get_last_trainable_layer_outputs_pair_device() const;
+
+    vector<vector<pair<type*, dimensions>>> get_layer_input_pairs_device(const vector<pair<type*, dimensions>>&, const bool&) const;
+
+    void print();
+
+    void free();
+
+    Index samples_number = 0;
+
+    NeuralNetwork* neural_network = nullptr;
+
+    vector<unique_ptr<LayerForwardPropagationCuda>> layers;
+};
+
+#endif
+
 
 }
 

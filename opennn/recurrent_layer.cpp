@@ -186,12 +186,8 @@ void Recurrent::set_parameters_constant(const type& value)
 void Recurrent::set_parameters_random()
 {
     set_random(biases);
-
     set_random(input_weights);
-
-    recurrent_weights.setConstant(type(1));
-
-    //set_random(recurrent_weights);
+    set_random(recurrent_weights);
 }
 
 void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
@@ -205,6 +201,7 @@ void Recurrent::calculate_combinations(const Tensor<type, 2>& inputs,
                    + biases.reshape(Eigen::DSizes<Index,2>{1, biases.dimension(0)})
                          .broadcast(Eigen::array<Index,2>{samples_number, 1});
 }
+
 
 void Recurrent::calculate_activations(Tensor<type, 2>& activations,
                                       Tensor<type, 2>& activation_derivatives) const
@@ -282,12 +279,13 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     RecurrentLayerForwardPropagation* recurrent_forward =
         static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.get());
+
     RecurrentBackPropagation* recurrent_backward =
         static_cast<RecurrentBackPropagation*>(back_propagation.get());
 
     Tensor<type, 2>& current_deltas = recurrent_backward->current_deltas;
     Tensor<type, 3>& input_derivatives = recurrent_backward->input_derivatives;
-    Tensor<type, 2>& input_weights_derivatives = recurrent_backward->input_weight_derivatives;
+    Tensor<type, 2>& input_weight_derivatives = recurrent_backward->input_weight_derivatives;
     Tensor<type, 2>& recurrent_weight_derivatives = recurrent_backward->recurrent_weight_derivatives;
     Tensor<type, 1>& bias_derivatives = recurrent_backward->bias_derivatives;
     Tensor<type, 2>& combination_deltas = recurrent_backward->combination_deltas;
@@ -299,13 +297,12 @@ void Recurrent::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     for(Index t = time_steps - 1; t >= 0; --t)
     {
-
         combination_deltas.device(*thread_pool_device) =
             current_deltas * activation_derivatives.chip(t,1);
 
         // Need
 
-        input_weights_derivatives += inputs.chip(t,1).contract(combination_deltas, axes(0,0));
+        input_weight_derivatives += inputs.chip(t,1).contract(combination_deltas, axes(0,0));
 
         if(t > 0)
         {
@@ -367,9 +364,7 @@ string Recurrent::get_activation_function_string_expression() const
     switch(activation_function)
     {
     case Activation::HyperbolicTangent: return "tanh";
-
     case Activation::Linear: return string();
-
     default: return get_activation_function_string();
     }
 }
@@ -459,21 +454,13 @@ void RecurrentBackPropagation::set(const Index& new_batch_size, Layer* new_layer
     const Index time_steps = layer->get_input_dimensions()[0];
 
     combinations_bias_derivatives.resize(outputs_number, outputs_number);
-
     combinations_input_weight_derivatives.resize(inputs_number, outputs_number, outputs_number);
-
     combinations_recurrent_weight_derivatives.resize(outputs_number, outputs_number, outputs_number);
-
     combination_deltas.resize(batch_size, outputs_number);
-
     current_combinations_derivatives.resize(batch_size, outputs_number);
-
     bias_derivatives.resize(outputs_number);
-
     input_weight_derivatives.resize(inputs_number, outputs_number);
-
     recurrent_weight_derivatives.resize(outputs_number, outputs_number);
-
     input_derivatives.resize(batch_size, time_steps, inputs_number);
 
     input_weight_derivatives.setZero();

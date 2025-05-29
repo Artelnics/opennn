@@ -210,10 +210,10 @@ string NeuronsSelection::write_time(const type& time) const
     const int seconds = total_seconds % 60;
 
     ostringstream elapsed_time;
-    elapsed_time << setfill('0') << setw(2)
-        << hours << ":"
-        << minutes << ":"
-        << seconds << endl;
+    elapsed_time << std::setfill('0')
+                 << std::setw(2) << hours << ":"
+                 << std::setw(2) << minutes << ":"
+                 << std::setw(2) << seconds;
 
     return elapsed_time.str();
 }
@@ -222,7 +222,7 @@ string NeuronsSelection::write_time(const type& time) const
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {
     neurons_number_history.resize(maximum_epochs_number);
-    neurons_number_history.setConstant(0);
+    neurons_number_history.setZero();
 
     training_error_history.resize(maximum_epochs_number);
     training_error_history.setConstant(type(-1));

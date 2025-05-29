@@ -120,18 +120,10 @@ void Embedding::set_parameters_random()
 {
     if(weights.size() == 0) return;
 
-    const type minimum = type(-0.05);
-    const type maximum = type(0.05);
-
     // First row must be 0s because input value 0 is padding
 
-    weights.chip(0, 0).setConstant(0);
-
-    #pragma omp parallel for
-
-    for (Index i = 1; i < weights.dimension(0); i++)
-        for (Index j = 0; j < weights.dimension(1); j++)
-            weights(i, j) = get_random_type(minimum, maximum);
+    weights.setRandom();
+    weights.chip(0, 0).setZero();
 }
 
 
@@ -183,10 +175,13 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
 
     embedding_lookup(inputs, outputs);
 
-    // Positional encoding used in transformer models. If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
+    // @todo what is this??? we cannot comment or uncomment this here
+
+    // Positional encoding used in transformer models.
+    // If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
     add_positional_encodings(outputs);
 
-    if(dropout_rate > 0 && is_training)
+    if(is_training && dropout_rate > 0)
         dropout(outputs, dropout_rate);
 }
 
@@ -220,7 +215,10 @@ void Embedding::back_propagate(const vector<pair<type*, dimensions>>& input_pair
 
     for(Index i = 0; i < batch_size; i++)
     {
-        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));  //Scaling factor only used in transformer models, if it's not one, leave commented
+        // Scaling factor only used in transformer models, if it's not one, leave commented
+        // @todo We cannot comment or uncomment here
+
+        sample_deltas.device(*thread_pool_device) = deltas.chip(i, 0) * sqrt(type(embedding_dimension));
 
         for(Index j = 0; j < inputs_number; j++)
             weight_derivatives.chip(Index(inputs(i, j)), 0).device(*thread_pool_device)
@@ -356,7 +354,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inputs_pair_device,
+void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                        const bool& is_training)
 {
@@ -380,19 +378,13 @@ void Embedding::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_
     EmbeddingLayerBackPropagationCuda* embedding_layer_back_propagation =
         static_cast<EmbeddingLayerBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weights_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, embedding_layer_back_propagation->weight_derivatives_device, weights.size(), index);
 }
 
 
 void Embedding::set_parameters_cuda(const float* new_parameters, Index& index)
 {
     copy_from_vector_cuda(weights_device, new_parameters, weights.size(), index);
-}
-
-
-void Embedding::get_parameters_cuda(const Tensor<type, 1>& new_parameters, const Index& index)
-{
-
 }
 
 
@@ -416,7 +408,7 @@ void Embedding::free_parameters_device()
 
 void Embedding::copy_parameters_device()
 {
-    if (weights_device == nullptr)
+    if (!weights_device)
         cout << "Weights device is null" << endl;
 
     if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
@@ -426,15 +418,13 @@ void Embedding::copy_parameters_device()
 
 void Embedding::copy_parameters_host()
 {
-    if (weights_device == nullptr)
+    if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
     if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
         cout << "Weights host copy error" << endl;
 }
 
-
-// CUDA structs
 
 EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
     : LayerForwardPropagationCuda()

@@ -10,14 +10,15 @@
 #define LAYER_H
 
 #include "tinyxml2.h"
-#include "layer_forward_propagation.h"
-#include "layer_back_propagation.h"
-#include "layer_back_propagation_lm.h"
 
 using namespace tinyxml2;
 
 namespace opennn
 {
+
+struct LayerForwardPropagation;
+struct LayerBackPropagation;
+struct LayerBackPropagationLM;
 
 class Layer
 {
@@ -30,10 +31,9 @@ public:
                     Addition3d,
                     Normalization3d,
                     Convolutional,
-                    Perceptron,
+                    Dense2d,
                     Perceptron3d,
                     Pooling,
-                    Probabilistic,
                     Probabilistic3d,
                     Recurrent,
                     Unscaling,
@@ -331,8 +331,6 @@ public:
 
     virtual void set_parameters_cuda(const float*, Index&) {}
 
-    virtual void get_parameters_cuda(Tensor<type, 1>&, const Index&) {}
-
     virtual void copy_parameters_host() {}
 
     virtual void copy_parameters_device() {}
@@ -351,10 +349,113 @@ protected:
     cudnnOpTensorDescriptor_t operator_multiplication_descriptor = nullptr;
     cudnnOpTensorDescriptor_t operator_sum_descriptor = nullptr;
 
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
 #endif
 
 };
 
+
+struct LayerForwardPropagation
+{
+    LayerForwardPropagation() {}
+
+    virtual ~LayerForwardPropagation() {}
+
+    virtual void print() const {}
+
+    virtual pair<type*, dimensions> get_outputs_pair() const = 0;
+
+    Index batch_size = type(0);
+
+    Layer* layer = nullptr;
+};
+
+#ifdef OPENNN_CUDA
+
+struct LayerForwardPropagationCuda
+{
+    explicit LayerForwardPropagationCuda() {}
+
+    virtual ~LayerForwardPropagationCuda() {}
+
+    virtual void print() const {}
+
+    virtual void free() {}
+
+    virtual pair<type*, dimensions> get_outputs_pair_device() const = 0;
+
+    Index batch_size = type(0);
+
+    Layer* layer = nullptr;
+
+    float* outputs = nullptr;
+
+    cudnnTensorDescriptor_t output_tensor_descriptor = nullptr;
+
+    cudnnTensorDescriptor_t output_tensor_descriptor = nullptr;
+};
+
+#endif
+
+struct LayerBackPropagation
+{
+    LayerBackPropagation() {}
+
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+
+    virtual void print() const {}
+
+    Index batch_size = 0;
+
+    Layer* layer = nullptr;
+
+    bool is_first_layer = false;
+};
+
+#ifdef OPENNN_CUDA
+
+struct LayerBackPropagationCuda
+{
+    LayerBackPropagationCuda() {}
+
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const
+    {
+        return vector<pair<type*, dimensions>>();
+    } // @todo change it to = 0; when implemented in all layers
+
+    virtual void free() {}
+
+    virtual void print() const {}
+
+    Index batch_size = 0;
+
+    Layer* layer = nullptr;
+
+    bool is_first_layer = false;
+
+    float* input_derivatives = nullptr;
+
+    cudnnTensorDescriptor_t input_derivatives_tensor_descriptor = nullptr;
+};
+
+#endif
+
+struct LayerBackPropagationLM
+{
+    LayerBackPropagationLM() {}
+
+    virtual vector<pair<type*, dimensions>> get_input_derivative_pairs() const = 0;
+
+    virtual void print() const {}
+
+    Index batch_size = 0;
+
+    Layer* layer = nullptr;
+
+    bool is_first_layer = false;
+};
 
 }
 
