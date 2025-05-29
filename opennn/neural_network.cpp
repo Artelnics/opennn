@@ -2107,10 +2107,11 @@ void NeuralNetwork::copy_parameters_host()
 }
 
 
-void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pair_device,
+void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_pair_device,
                                            ForwardPropagationCuda& forward_propagation_cuda,
                                            const bool& is_training) const
 {
+    /*
     const Index layers_number = get_layers_number();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
@@ -2125,6 +2126,7 @@ void NeuralNetwork::forward_propagate_cuda(const vector<pair<type*, dimensions>>
         layers[i]->forward_propagate_cuda(layer_input_pairs_device[i],
                                           forward_propagation_cuda.layers[i],
                                           is_training);
+    */
 }
 
 
@@ -2157,9 +2159,9 @@ void NeuralNetwork::destroy_cuda() const
 
 // CUDA structs
 
-ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_size, NeuralNetwork* new_neural_network)
 {
-    set(new_batch_samples_number, new_neural_network);
+    set(new_batch_size, new_neural_network);
 }
 
 
@@ -2187,10 +2189,6 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
 
         case Layer::Type::Perceptron3d:
             //layers[i] = make_unique<Perceptron3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique<ProbabilisticForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Probabilistic3d:
@@ -2254,7 +2252,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     }
 }
 
-
+/*
 pair<type*, dimensions> ForwardPropagationCuda::get_last_trainable_layer_outputs_pair_device() const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
@@ -2263,6 +2261,7 @@ pair<type*, dimensions> ForwardPropagationCuda::get_last_trainable_layer_outputs
 
     return layer_forward_propagation->get_outputs_pair_device();
 }
+*/
 
 
 vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_pairs_device(const vector<pair<type*, dimensions>>& batch_input_pairs_device, const bool& is_training) const
@@ -2316,13 +2315,14 @@ vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_
         const Index this_layer_inputs_number = this_layer_input_indices.size();
 
         layer_input_pairs_device[i].resize(this_layer_inputs_number);
-
+/*
         for (Index j = 0; j < this_layer_inputs_number; j++)
         {
             const Index this_layer_input_index = this_layer_input_indices[j];
 
             layer_input_pairs_device[i][j] = layers[this_layer_input_index]->get_outputs_pair_device();
         }
+*/
     }
 
     return layer_input_pairs_device;
@@ -2354,9 +2354,9 @@ void ForwardPropagationCuda::free()
 }
 
 
-NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network)
+NeuralNetworkBackPropagationCuda::NeuralNetworkBackPropagationCuda(const Index& new_batch_size, NeuralNetwork* new_neural_network)
 {
-    set(new_batch_samples_number, new_neural_network);
+    set(new_batch_size, new_neural_network);
 }
 
 
@@ -2384,10 +2384,6 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
 
         case Layer::Type::Perceptron3d:
             //layers[i] = make_unique <Perceptron3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
-            break;
-
-        case Layer::Type::Dense2d:
-            layers[i] = make_unique <ProbabilisticBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
         case Layer::Type::Probabilistic3d:

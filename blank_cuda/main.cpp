@@ -13,10 +13,10 @@
 #include <cstring>
 #include <time.h>
 
-#include "../opennn/opennn.h"
+#include "../opennn/pch.h"
 
 using namespace std;
-using namespace opennn;
+//using namespace opennn;
 using namespace chrono;
 using namespace Eigen;
 
@@ -138,7 +138,7 @@ int main()
             //pool3->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool3));
         }
-
+        
         // Flatten
         neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_dimensions()));
         

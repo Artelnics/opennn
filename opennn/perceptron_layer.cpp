@@ -18,10 +18,7 @@ Dense2d::Dense2d(const dimensions& new_input_dimensions,
                  const Activation& new_activation_function,
                  const string& new_layer_name) : Layer()
 {
-    set(new_input_dimensions,
-        new_output_dimensions,
-        new_activation_function,
-        new_layer_name);
+    set(new_input_dimensions, new_output_dimensions, new_activation_function, new_layer_name);
 }
 
 
@@ -117,6 +114,26 @@ void Dense2d::set(const dimensions& new_input_dimensions,
     set_name(new_name);
     
     layer_type = Layer::Type::Dense2d;
+
+    #ifdef OPENNN_CUDA
+    
+    // Activations
+
+    cudnnCreateActivationDescriptor(&activation_descriptor);
+
+    cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
+
+    switch (get_activation_function())
+    {
+    case Dense2d::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
+    case Dense2d::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
+    case Dense2d::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
+    case Dense2d::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
+    case Dense2d::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
+    default: break;
+    }
+
+    #endif
 }
 
 
@@ -636,7 +653,7 @@ void PerceptronLayerBackPropagationLM::print() const
 
 #ifdef OPENNN_CUDA
 
-void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
+void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      const bool& is_training)
 {
@@ -645,11 +662,6 @@ void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    // Inputs
-
-    const Index batch_size = input_pairs_device[0].second[0];
-    const type* inputs_device = input_pairs_device[0].first;
-
     // Forward propagation
 
     Dense2dForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
@@ -657,6 +669,9 @@ void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
 
     Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
 
+    const Index batch_size = perceptron_layer_forward_propagation_cuda->batch_size;
+
+    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
@@ -670,19 +685,19 @@ void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
         CUBLAS_OP_N, CUBLAS_OP_N,
         batch_size, outputs_number, inputs_number,
         &alpha,
-        inputs_device,
+        inputs_device[0],
         batch_size,
         weights_device,
         inputs_number,
         &beta,
-        outputs,
+        combinations,
         batch_size);
 
     // @todo Improve by using cudnnAddTensor
 
     for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
     {
-        type* outputs_batch = outputs + biases_index * batch_size;
+        type* outputs_batch = combinations + biases_index * batch_size;
         type* biases_batch = biases_device + biases_index;
 
         cudnnOpTensor(cudnn_handle,
@@ -698,38 +713,36 @@ void Dense2d::forward_propagate_cuda(const vector<pair<type*, dimensions>>& inpu
             outputs_batch);
     }
 
-    // Activations @todo add softmax
+    // Activations
 
     if (perceptron_layer->get_activation_function() != Activation::Linear)
-        cudnnActivationForward(cudnn_handle,
+    {
+        cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
             output_tensor_descriptor,
-            outputs,
-            output_tensor_descriptor,
-            outputs,
+            combinations,
             &beta,
             output_tensor_descriptor,
             outputs);
+
+        if (activationStatus != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
+    }
+    else
+        cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 }
 
 
-void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
-                                     const vector<pair<type*, dimensions>>& deltas_pair_device,
-                                     unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
-                                     unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
+void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
+                                  const vector<float*>& deltas_device,
+                                  unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
+                                  unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
     // Dense2d layer
 
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
-
-    // Inputs
-
-    const Index batch_size = input_pairs_device[0].second[0];
-
-    const type* inputs_device = input_pairs_device[0].first;
-    const type* deltas_device = deltas_pair_device[0].first;
 
     // Forward propagation
 
@@ -738,7 +751,10 @@ void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
 
     Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
 
-    float* outputs = perceptron_layer_forward_propagation_cuda->outputs;
+    const Index batch_size = perceptron_layer_forward_propagation_cuda->batch_size;
+
+    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
+    type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
     // Back propagation
 
@@ -746,14 +762,14 @@ void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
         static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
 
     float* ones = perceptron_layer_back_propagation->ones;
-    float* error_combinations_derivatives = perceptron_layer_back_propagation->error_combinations_derivatives_device;
+    float* error_combinations_derivatives = perceptron_layer_back_propagation->combination_deltas_device;
 
     float* bias_derivatives = perceptron_layer_back_propagation->bias_derivatives_device;
     float* weight_derivatives = perceptron_layer_back_propagation->weight_derivatives_device;
     float* input_derivatives = perceptron_layer_back_propagation->input_derivatives;
 
     const cudnnTensorDescriptor_t& deltas_tensor_descriptor = perceptron_layer_back_propagation->deltas_tensor_descriptor;
-    const cudnnTensorDescriptor_t& error_combinations_derivatives_tensor_descriptor = perceptron_layer_back_propagation->error_combinations_derivatives_tensor_descriptor;
+    const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = perceptron_layer_back_propagation->combination_deltas_tensor_descriptor;
 
     // Error combinations derivatives
 
@@ -761,17 +777,17 @@ void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
             &alpha,
-            error_combinations_derivatives_tensor_descriptor,
+            combination_deltas_tensor_descriptor,
             outputs,
             deltas_tensor_descriptor,
-            deltas_device,
-            error_combinations_derivatives_tensor_descriptor,
+            deltas_device[0],
+            combination_deltas_tensor_descriptor,
             combinations,
             &beta,
-            error_combinations_derivatives_tensor_descriptor,
+            combination_deltas_tensor_descriptor,
             error_combinations_derivatives);
     else
-        cudaMemcpy(error_combinations_derivatives, deltas_device, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(error_combinations_derivatives, deltas_device[0], batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
 
     // Bias derivatives
 
@@ -796,7 +812,7 @@ void Dense2d::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_p
         outputs_number,
         batch_size,
         &alpha,
-        inputs_device,
+        inputs_device[0],
         batch_size,
         error_combinations_derivatives,
         batch_size,
@@ -894,16 +910,16 @@ void Dense2d::copy_parameters_host()
 }
 
 
-Dense2dForwardPropagationCuda::Dense2dForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+Dense2dForwardPropagationCuda::Dense2dForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void Dense2dForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    batch_size = new_batch_samples_number;
+    batch_size = new_batch_size;
 
     layer = new_layer;
 
@@ -923,6 +939,9 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_samples_number, L
         1);
 
     // Outputs
+
+    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
+        cout << "combinations allocation error" << endl;
 
     if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "outputs allocation error" << endl;
@@ -946,35 +965,6 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_samples_number, L
         1,
         1,
         1);
-
-    // Activations
-
-    cudnnCreateActivationDescriptor(&activation_descriptor);
-
-    Dense2d* perceptron_layer = static_cast<Dense2d*>(layer);
-
-    switch (perceptron_layer->get_activation_function())
-    {
-    case Dense2d::Activation::Linear:
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_IDENTITY, CUDNN_PROPAGATE_NAN, 0.0);
-        break;
-
-    case Dense2d::Activation::Logistic:
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
-        break;
-
-    case Dense2d::Activation::HyperbolicTangent:
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_TANH, CUDNN_PROPAGATE_NAN, 0.0);
-        break;
-
-    case Dense2d::Activation::RectifiedLinear:
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_RELU, CUDNN_PROPAGATE_NAN, 0.0);
-        break;
-
-    case Dense2d::Activation::ExponentialLinear:
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_ELU, CUDNN_PROPAGATE_NAN, 0.0);
-        break;
-    }
 }
 
 void Dense2dForwardPropagationCuda::print() const
@@ -985,9 +975,8 @@ void Dense2dForwardPropagationCuda::print() const
 
 void Dense2dForwardPropagationCuda::free()
 {
+    cudaFree(combinations);
     cudaFree(outputs);
-
-    cudnnDestroyActivationDescriptor(activation_descriptor);
 
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
@@ -995,24 +984,16 @@ void Dense2dForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> Dense2dForwardPropagationCuda::get_outputs_pair_device() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    return pair<type*, dimensions>(outputs, { {batch_size, output_dimensions[0]} });
-}
-
-
-Dense2dBackPropagationCuda::Dense2dBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+Dense2dBackPropagationCuda::Dense2dBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void Dense2dBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    batch_size = new_batch_samples_number;
+    batch_size = new_batch_size;
 
     layer = new_layer;
 
@@ -1057,26 +1038,18 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_samples_number, Laye
 
     // Error combinations derivatives
 
-    if (cudaMalloc(&error_combinations_derivatives_device, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
+    if (cudaMalloc(&combination_deltas_device, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
         cout << "error combinations derivatives allocation error" << endl;
 
-    cudnnCreateTensorDescriptor(&error_combinations_derivatives_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(error_combinations_derivatives_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(combination_deltas_tensor_descriptor,
         CUDNN_TENSOR_NHWC,
         CUDNN_DATA_FLOAT,
         batch_size,
         outputs_number,
         1,
         1);
-}
-
-
-vector<pair<type*, dimensions>> Dense2dBackPropagationCuda::get_input_derivative_pairs_device() const
-{
-    const Index inputs_number = layer->get_input_dimensions()[0];
-
-    return { {input_derivatives, {batch_size, inputs_number}} };
 }
 
 
@@ -1090,11 +1063,11 @@ void Dense2dBackPropagationCuda::free()
 {
     cudaFree(bias_derivatives_device);
     cudaFree(weight_derivatives_device);
-    cudaFree(error_combinations_derivatives_device);
+    cudaFree(combination_deltas_device);
     cudaFree(input_derivatives);
     cudaFree(ones);
 
-    cudnnDestroyTensorDescriptor(error_combinations_derivatives_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(combination_deltas_tensor_descriptor);
     cudnnDestroyTensorDescriptor(deltas_tensor_descriptor);
 
 }

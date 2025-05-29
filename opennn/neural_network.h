@@ -210,7 +210,7 @@ public:
     void copy_parameters_device();
     void copy_parameters_host();
 
-    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+    void forward_propagate_cuda(const vector<float*>&,
                                 ForwardPropagationCuda&,
                                 const bool& = false) const;
 

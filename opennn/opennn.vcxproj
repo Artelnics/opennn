@@ -334,8 +334,6 @@
     <ClCompile Include="perceptron_layer_3d.cpp" />
     <ClInclude Include="pooling_layer.h" />
     <ClCompile Include="pooling_layer.cpp" />
-    <ClInclude Include="probabilistic_layer.h" />
-    <ClCompile Include="probabilistic_layer.cpp" />
     <ClInclude Include="probabilistic_layer_3d.h" />
     <ClCompile Include="probabilistic_layer_3d.cpp" />
     <ClInclude Include="quasi_newton_method.h" />

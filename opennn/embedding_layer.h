@@ -68,12 +68,12 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+    void forward_propagate_cuda(const vector<float*>&,
                                 unique_ptr<LayerForwardPropagationCuda>&,
                                 const bool&) override;
 
-    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                             const vector<pair<type*, dimensions>>&,
+    void back_propagate_cuda(const vector<float*>&,
+                             const vector<float*>&,
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
@@ -145,8 +145,6 @@ struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 {
     EmbeddingLayerForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair_device() const override;
-
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
@@ -156,8 +154,6 @@ struct EmbeddingLayerForwardPropagationCuda : public LayerForwardPropagationCuda
 struct EmbeddingLayerBackPropagationCuda : public LayerBackPropagationCuda
 {
     EmbeddingLayerBackPropagationCuda(const Index& = 0, Layer* = nullptr);
-
-    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 
