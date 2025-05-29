@@ -17,7 +17,9 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
+#include "../../opennn/time_series_data_set.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
 
 using namespace opennn;
 

@@ -19,8 +19,6 @@ Perceptron3d::Perceptron3d(const Index& new_sequence_length,
                            const Perceptron3d::Activation& new_activation_function,
                            const string& new_name) : Layer()
 {
-    layer_type = Type::Perceptron3d;
-
     set(new_sequence_length, new_input_dimension, new_output_dimension, new_activation_function, new_name);
 }
 
@@ -223,8 +221,8 @@ void Perceptron3d::forward_propagate(const vector<pair<type*, dimensions>>& inpu
 
         calculate_activations(outputs, activation_derivatives);
 
-        // cout << "Perceptron layer outputs dimensions: " << outputs.dimensions() << endl;
-        // cout << "Perceptron layer activation_derivatives dimensions: " << activation_derivatives.dimensions() << endl;
+        // cout << "Dense2d layer outputs dimensions: " << outputs.dimensions() << endl;
+        // cout << "Dense2d layer activation_derivatives dimensions: " << activation_derivatives.dimensions() << endl;
 
         // cout << "Outputs:\n" << outputs.chip(0,2) << endl;
 

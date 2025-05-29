@@ -12,7 +12,7 @@
 #include "pch.h"
 
 #include "tinyxml2.h"
-#include "correlation.h"
+#include "correlations.h"
 #include "scaling.h"
 
 using namespace tinyxml2;

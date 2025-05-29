@@ -17,8 +17,7 @@
 
 // OpenNN includes
 
-#include "../../opennn/opennn.h"
-#include "normalization_layer_3d.h"
+#include "../../opennn/training_strategy.h"
 
 using namespace std;
 using namespace opennn;
@@ -57,7 +56,7 @@ int main()
         neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
         neural_network.set_layer_inputs_indices("Multihead_attention",{"Normalization", "Normalization"});
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
+        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 

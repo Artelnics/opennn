@@ -7,15 +7,15 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef PERCEPTRONLAYER_H
-#define PERCEPTRONLAYER_H
+#ifndef DENSE2D_H
+#define DENSE2D_H
 
 #include "layer.h"
 
 namespace opennn
 {
 
-class Perceptron : public Layer
+class Dense2d : public Layer
 {
 
 public:
@@ -33,10 +33,10 @@ public:
         Softmax
     };
 
-    Perceptron(const dimensions& = {0},
-               const dimensions& = {0},
-               const Activation& = Perceptron::Activation::HyperbolicTangent,
-               const string& = "perceptron_layer");
+    Dense2d(const dimensions& = {0},
+            const dimensions& = {0},
+            const Activation& = Dense2d::Activation::HyperbolicTangent,
+            const string& = "perceptron_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -46,13 +46,13 @@ public:
     Index get_parameters_number() const override;
     type get_dropout_rate() const;
 
-    const Perceptron::Activation& get_activation_function() const;
+    const Dense2d::Activation& get_activation_function() const;
 
     string get_activation_function_string() const;
 
     void set(const dimensions& = {0},
              const dimensions& = {0},
-             const Perceptron::Activation & = Perceptron::Activation::HyperbolicTangent,
+             const Dense2d::Activation & = Dense2d::Activation::HyperbolicTangent,
              const string& = "perceptron_layer");
 
     void set_input_dimensions(const dimensions&) override;
@@ -231,9 +231,9 @@ struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
 
 #ifdef OPENNN_CUDA
 
-struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
+struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 {
-    PerceptronForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     void set(const Index& = 0, Layer* = nullptr);
 
@@ -248,9 +248,9 @@ struct PerceptronForwardPropagationCuda : public LayerForwardPropagationCuda
 };
 
 
-struct PerceptronBackPropagationCuda : public LayerBackPropagationCuda
+struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
-    PerceptronBackPropagationCuda(const Index& = 0, Layer* = nullptr);
+    Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 

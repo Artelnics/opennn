@@ -117,7 +117,7 @@ void Transformer::set(const Index& new_decoder_length,
         
         set_layer_inputs_indices("input_self_attention_normalization_" + to_string(i+1), "input_self_attention_addition_" + to_string(i+1));
         
-        // Perceptron
+        // Dense2d
 
         add_layer(make_unique<Perceptron3d>(new_input_length,
                                                  new_embedding_dimension,
@@ -127,7 +127,7 @@ void Transformer::set(const Index& new_decoder_length,
         
         set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "input_self_attention_normalization_" + to_string(i+1));
 
-        // Perceptron
+        // Dense2d
 
         add_layer(make_unique<Perceptron3d>(new_input_length,
                                                  new_perceptron_depth,

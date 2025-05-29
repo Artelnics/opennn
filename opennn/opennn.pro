@@ -67,7 +67,6 @@ HEADERS += \
     statistics.h \
     scaling.h \
     correlations.h \
-    correlation.h \
     tinyxml2.h \
     data_set.h \
     batch.h \
@@ -81,7 +80,6 @@ HEADERS += \
     unscaling_layer.h \
     perceptron_layer.h \
     perceptron_layer_3d.h \
-    probabilistic_layer.h \
     probabilistic_layer_3d.h \
     pooling_layer.h \
     convolutional_layer.h \
@@ -147,7 +145,6 @@ SOURCES += \
     unscaling_layer.cpp \
     perceptron_layer.cpp \
     perceptron_layer_3d.cpp \
-    probabilistic_layer.cpp \
     probabilistic_layer_3d.cpp \
     pooling_layer.cpp \
     bounding_layer.cpp \

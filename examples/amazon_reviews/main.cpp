@@ -12,8 +12,6 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-
-#include "../../opennn/opennn.h"
 #include "addition_layer_3d.h"
 
 using namespace opennn;
@@ -23,7 +21,7 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
-
+/*
         // Data set
 
         // LanguageDataSet language_dataset("../../../datasets/masked.txt");
@@ -66,7 +64,7 @@ int main()
         // neural_network.set_layer_inputs_indices("Addition", {"Embedding", "Multihead_attention"});
         // neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
         neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        neural_network.add_layer(make_unique<Probabilistic>(neural_network.get_output_dimensions(), outputs_number));
+        neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
 
         // Training Strategy
 
@@ -107,7 +105,7 @@ int main()
         // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
 
         // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;
