@@ -130,6 +130,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
     case Dense2d::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
     case Dense2d::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
     case Dense2d::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
+
     default: break;
     }
 
@@ -715,9 +716,28 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Activations
 
-    if (perceptron_layer->get_activation_function() != Activation::Linear)
+    switch (activation_function)
     {
-        cudnnStatus_t activationStatus = cudnnActivationForward(cudnn_handle,
+    case Activation::Linear:
+        cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+
+        break;
+
+    case Activation::Softmax:
+        cudnnSoftmaxForward(cudnn_handle,
+            CUDNN_SOFTMAX_ACCURATE,
+            CUDNN_SOFTMAX_MODE_CHANNEL,
+            &alpha,
+            output_tensor_descriptor,
+            combinations,
+            &beta,
+            output_tensor_descriptor,
+            outputs);
+
+        break;
+
+    default:
+        cudnnActivationForward(cudnn_handle,
             activation_descriptor,
             &alpha,
             output_tensor_descriptor,
@@ -726,11 +746,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             output_tensor_descriptor,
             outputs);
 
-        if (activationStatus != CUDNN_STATUS_SUCCESS)
-            cout << "cudnnActivationForward failed: " << cudnnGetErrorString(activationStatus) << endl;
-    }
-    else
-        cudaMemcpy(outputs, combinations, batch_size * outputs_number * sizeof(type), cudaMemcpyDeviceToDevice);
+        break;
+    }      
 }
 
 
