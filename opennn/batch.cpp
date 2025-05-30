@@ -27,6 +27,7 @@ void Batch::fill(const vector<Index>& sample_indices,
     const Index sequence_length = sample_indices.size() / batch_size;
     const Index input_size = data.dimension(1);
 
+    // fill inputs
     if(is_instance_of<ImageDataSet>(data_set))
     {
         ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
@@ -40,9 +41,7 @@ void Batch::fill(const vector<Index>& sample_indices,
             //fill_tensor_data(augmented_data, sample_indices, input_indices, input_data);
         }
         else
-        {
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
-        }
     }
     else if(is_instance_of<TimeSeriesDataSet>(data_set)){
         //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
@@ -52,11 +51,14 @@ void Batch::fill(const vector<Index>& sample_indices,
     else
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
-    if (is_instance_of<LanguageDataSet>(data_set))
+    // fill targets
+    if(is_instance_of<TimeSeriesDataSet>(data_set))
+        fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
+    else if (is_instance_of<LanguageDataSet>(data_set))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
+    else
+        fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 
-    //fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
-    fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
 }
 
 

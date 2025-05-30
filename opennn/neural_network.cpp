@@ -1921,14 +1921,11 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
 
 pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pair() const
 {
-    /*
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
 
     return layer_forward_propagation->get_outputs_pair();
-    */
-    return pair<type*, dimensions>();
 }
 
 

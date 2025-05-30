@@ -166,7 +166,6 @@ void LossIndex::back_propagate(const Batch& batch,
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     // Loss
-
     back_propagation.loss = back_propagation.error();
 
     // Regularization
