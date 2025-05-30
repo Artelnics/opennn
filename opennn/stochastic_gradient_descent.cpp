@@ -645,11 +645,11 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
                                      target_variable_indices);
 
             // Neural network
-
+            /*
             neural_network->forward_propagate_cuda(training_batch_cuda.get_input_pairs_device(),
                                                    training_forward_propagation_cuda,
                                                    is_training);
-
+                                                   */
             // Loss index
 
             loss_index->back_propagate_cuda(training_batch_cuda,
@@ -692,11 +692,11 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
                                           target_variable_indices);
 
                 // Neural network
-
+                /*
                 neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_pairs_device(),
                                                        selection_forward_propagation_cuda,
                                                        is_training);
-
+                                                       */
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss

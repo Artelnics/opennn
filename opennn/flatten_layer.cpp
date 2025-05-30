@@ -207,75 +207,72 @@ vector<pair<type*, dimensions>> FlattenBackPropagation::get_input_derivative_pai
 
 #ifdef OPENNN_CUDA
 
-void Flatten::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
+void Flatten::forward_propagate_cuda(const vector<float*>& inputs_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      const bool&)
 {
     // Inputs
 
-    const Index batch_size = input_pairs_device[0].second[0];
-    const Index height = input_pairs_device[0].second[1];
-    const Index width = input_pairs_device[0].second[2];
-    const Index channels = input_pairs_device[0].second[3];
+    const Index height = get_input_height();
+    const Index width = get_input_width();
+    const Index channels = get_input_channels();
 
     const Index outputs_number = get_outputs_number();
-    
-    type* inputs_device = input_pairs_device[0].first;
 
     // Forward propagation
 
     FlattenForwardPropagationCuda* flatten_layer_forward_propagation_cuda =
         static_cast<FlattenForwardPropagationCuda*>(forward_propagation_cuda.get());
 
+    const Index batch_size = flatten_layer_forward_propagation_cuda->batch_size;
+
     type* reordered_inputs = flatten_layer_forward_propagation_cuda->reordered_inputs;
     type* outputs_device = flatten_layer_forward_propagation_cuda->outputs;
 
-    invert_reorder_inputs_cuda(inputs_device, reordered_inputs, batch_size, channels, height, width);
+    invert_reorder_inputs_cuda(inputs_device[0], reordered_inputs, batch_size, channels, height, width);
 
     reorganize_inputs_cuda(reordered_inputs, outputs_device, batch_size, outputs_number);  
 }
 
 
-void Flatten::back_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
-                                  const vector<pair<type*, dimensions>>& deltas_pair_device,
+void Flatten::back_propagate_cuda(const vector<float*>& inputs_device,
+                                  const vector<float*>& deltas_device,
                                   unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                   unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
     // Inputs
 
-    const Index batch_size = input_pairs_device[0].second[0];
-
     const Index outputs_number = get_outputs_number();
-
-    type* deltas_device = deltas_pair_device[0].first;
 
     // Back propagation
 
     FlattenBackPropagationCuda* flatten_layer_back_propagation_cuda =
         static_cast<FlattenBackPropagationCuda*>(back_propagation_cuda.get());
 
+    const Index batch_size = flatten_layer_back_propagation_cuda->batch_size;
+
     type* input_derivatives = flatten_layer_back_propagation_cuda->input_derivatives;
 
-    reorganize_deltas_cuda(deltas_device, input_derivatives, batch_size, outputs_number);
+    reorganize_deltas_cuda(deltas_device[0], input_derivatives, batch_size, outputs_number);
 }
 
 
 // CUDA structs
 
-FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+FlattenForwardPropagationCuda::FlattenForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void FlattenForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    if (new_batch_samples_number == 0) return;
+    if (new_batch_size == 0) return;
 
     layer = new_layer;
 
-    batch_size = new_batch_samples_number;
+    batch_size = new_batch_size;
 
     const Flatten* flatten_layer = static_cast<Flatten*>(layer);
 
@@ -310,38 +307,20 @@ void FlattenForwardPropagationCuda::free()
 }
 
 
-pair<type*, dimensions> FlattenForwardPropagationCuda::get_outputs_pair_device() const
-{
-    const dimensions output_dimensions = layer->get_output_dimensions();
-
-    return { (type*)outputs, {batch_size, output_dimensions[0]} };
-}
-
-
-FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+FlattenBackPropagationCuda::FlattenBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-vector<pair<type*, dimensions>> FlattenBackPropagationCuda::get_input_derivative_pairs_device() const
+void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
-    const Flatten* flatten_layer = static_cast<Flatten*>(layer);
-
-    const dimensions input_dimensions = flatten_layer->get_input_dimensions();
-
-    return { {input_derivatives, {batch_size, input_dimensions[0], input_dimensions[1], input_dimensions[2]}} };
-}
-
-
-void FlattenBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
-{
-    if (new_batch_samples_number == 0) return;
+    if (new_batch_size == 0) return;
 
     layer = new_layer;
 
-    batch_size = new_batch_samples_number;
+    batch_size = new_batch_size;
 
     const Flatten* flatten_layer = static_cast<Flatten*>(new_layer);
 

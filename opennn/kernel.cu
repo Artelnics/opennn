@@ -293,99 +293,6 @@ auto tensor_from_device(const type* pointer, const int dims[])
 }
 
 
-__global__
-void scaled_exponential_linear_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    const type lambda = 1.0507;
-    const type alpha = 1.67326;
-
-    if (i < n)  x[i] < 0.0 ? y[i] = lambda * alpha * (exp(x[i]) - 1) : y[i] = lambda * x[i];
-}
-
-
-__global__
-void soft_plus_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) y[i] = log(1 + exp(x[i]));
-}
-
-
-__global__
-void soft_sign_kernel(int n, const type* x, type* y)
-{
-    const int i = blockDim.x * blockIdx.x + threadIdx.x;
-
-    if (i < n) x[i] < 0.0 ? y[i] = x[i] / (1.0 - x[i]) : y[i] = x[i] / (1.0 + x[i]);
-}
-
-
-__global__
-void hard_logistic_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n)
-    {
-        if (x[i] < -2.5)
-        {
-            y[i] = 0;
-        }
-        else if (x[i] > 2.5)
-        {
-            y[i] = 1;
-        }
-        else
-        {
-            y[i] = 0.2 * x[i] + 0.5;
-        }
-    }
-}
-
-
-// Activation derivatives kernel
-
-
-__global__
-void scaled_exponential_linear_derivative_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    const type lambda = 1.0507;
-    const type alpha = 1.67326;
-
-    if (i < n) x[i] < 0.0 ? y[i] = lambda * alpha * exp(x[i]) : y[i] = lambda;
-}
-
-
-__global__
-void soft_plus_derivative_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) y[i] = 1 / (1 + exp(-x[i]));
-}
-
-
-__global__
-void soft_sign_derivative_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) x[i] < 0.0 ? y[i] = 1 / pow((1 - x[i]), 2) : y[i] = 1 / pow((1 + x[i]), 2);
-}
-
-
-__global__
-void hard_logistic_derivative_kernel(int n, const type* x, type* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (i < n) x[i] < -2.5 || x[i] > 2.5 ? y[i] = 0.0 : y[i] = 0.2;
-}
 
 
 // Operation kernel
@@ -530,89 +437,6 @@ void sum_kernel(type* input, type* output, const size_t& size)
     if (idx < size) {
         output[0] += input[idx];
     }
-}
-
-
-// Wrappers activations
-
-void scaled_exponential_linear_cuda(const size_t& size, const type* x, type* y)
-{
-    scaled_exponential_linear_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void soft_plus_cuda(const size_t& size, const type* x, type* y)
-{
-    soft_plus_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void soft_sign_cuda(const size_t& size, const type* x, type* y)
-{
-    soft_sign_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void hard_logistic_cuda(const size_t& size, const type* x, type* y)
-{
-    hard_logistic_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-// Wrappers activations derivatives
-
-void logistic_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    //logistic_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-
-void hyperbolic_tangent_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    //hyperbolic_tangent_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void linear_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    //linear_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void rectified_linear_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    //rectified_linear_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void scaled_exponential_linear_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    scaled_exponential_linear_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void soft_plus_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    soft_plus_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void soft_sign_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    soft_sign_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void hard_logistic_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    hard_logistic_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
-}
-
-
-void exponential_linear_derivatives_cuda(const size_t& size, const type* x, type* y)
-{
-    //exponential_linear_derivative_kernel << <(size + 255) / 256, 256 >> > (size, x, y);
 }
 
 
@@ -954,21 +778,10 @@ void calculate_cross_entropy_error_derivative(const int& size, const float* erro
 }
 
 
-void sum_matrices_rows_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels) {
-
-}
-
-void sum_matrices_collums_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels) {
-
-}
-
-void sum_matrices_channels_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels) {
-
-}
-
 void divide_subtract(const size_t& n, type* parameters, const type* numerator, const type* denominator) {
     divide_subtract_kernel << <(n + 255) / 256, 256 >> > (n, parameters, numerator, denominator);
 }
+
 __global__
 void divide_subtract_kernel(int size, type* parameters, const type* numerator, const type* denominator) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;

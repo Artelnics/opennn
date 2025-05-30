@@ -127,12 +127,12 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+    void forward_propagate_cuda(const vector<float*>&,
                                 unique_ptr<LayerForwardPropagationCuda>&,
                                 const bool&) override;
 
-    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                             const vector<pair<type*, dimensions>>&,
+    void back_propagate_cuda(const vector<float*>&,
+                             const vector<float*>&,
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
@@ -171,6 +171,8 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
+
+    type decision_threshold;
 };
 
 
@@ -241,7 +243,7 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     void free() override;
 
-    pair<type*, dimensions> get_outputs_pair_device() const override;
+    type* combinations = nullptr;
 
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
@@ -252,23 +254,23 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
 {
     Dense2dBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
-
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    float* error_combinations_derivatives_device = nullptr;
-
     float* bias_derivatives_device = nullptr;
+
     float* weight_derivatives_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;
 
-    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
+
+    float* combination_deltas_device = nullptr;
+
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
 };
 

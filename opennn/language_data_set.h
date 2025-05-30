@@ -19,9 +19,8 @@ class LanguageDataSet : public DataSet
 
 public:
 
-    LanguageDataSet(const dimensions& = {0}, const dimensions& = {0});
-
-    LanguageDataSet(const filesystem::path&, const bool& new_is_text = false);
+    LanguageDataSet(const dimensions& input_dims = dimensions(0), const dimensions& target_dims = dimensions(0));
+    LanguageDataSet(const filesystem::path&);
 
     const unordered_map<string, Index>& get_input_vocabulary() const;
     const unordered_map<string, Index>& get_target_vocabulary() const;
@@ -29,8 +28,8 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
-    Index get_input_length() const;
-    Index get_target_length() const;
+    Index get_input_size() const;
+    Index get_target_size() const;
 
     void set_input_vocabulary(const unordered_map<string, Index>&);
     void set_target_vocabulary(const unordered_map<string, Index>&);
@@ -52,36 +51,29 @@ public:
 
     void print_vocabulary(const unordered_map<string, Index>& vocabulary);
 
+    inline static const string PAD_TOKEN = "[PAD]";     // 0
+    inline static const string UNK_TOKEN = "[UNK]";     // 1
+    inline static const string START_TOKEN = "[START]"; // 2
+    inline static const string END_TOKEN = "[END]";     // 3
+
+    inline static const vector<string> RESERVED_TOKENS = {
+        PAD_TOKEN, UNK_TOKEN, START_TOKEN, END_TOKEN
+    };
+
 private:
+
+    vector<vector<string>> input_tokens;
+    vector<vector<string>> target_tokens;
 
     unordered_map<string, Index> input_vocabulary;
     unordered_map<string, Index> target_vocabulary;
 
-    Index maximum_input_length = 0;
-
-    Index maximum_target_length = 0;
+    Index maximum_input_size = 0;
+    Index maximum_target_size = 0;
 
     Index target_vocabulary_size = 0;
     Index input_vocabulary_size = 0;
 
-    bool is_text = true;
-
-    const vector<string> reserved_tokens = { "[PAD]", "[UNK]", "[START]", "[END]" };
-
-    struct WordpieceAlgorithmParameters
-    {
-        Index upper_threshold = 0;
-        Index lower_threshold = 0;
-        Index iterations_number = 0;
-        Index max_input_tokens = 0;
-        Index max_token_length = 0;
-        Index max_unique_characters = 0;
-        Index vocabulary_size = 0;
-        float slack_ratio = 0;
-        bool include_joiner_token = false;
-        string joiner;
-        vector<string> reserved_tokens;
-    };
 };
 
 }

@@ -1367,11 +1367,11 @@ void LossIndex::calculate_layers_error_gradient_cuda(const BatchCuda& batch_cuda
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
-        = forward_propagation_cuda.get_layer_input_pairs_device(batch_cuda.get_input_pairs_device(), true);
+    const vector<vector<float*>> layer_input_pairs
+        = forward_propagation_cuda.get_layer_inputs_device(batch_cuda.get_input_device(), true);
 
-    const vector<vector<pair<type*, dimensions>>> layer_delta_pairs
-        = back_propagation_cuda.get_layer_delta_pairs_device();
+    const vector<vector<float*>> layer_delta_pairs
+        = back_propagation_cuda.get_layer_deltas_device();
 
     calculate_output_delta_cuda(batch_cuda, forward_propagation_cuda, back_propagation_cuda);
 
@@ -1807,7 +1807,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 }
 
 
-vector<vector<pair<type*, dimensions>>> BackPropagationCuda::get_layer_delta_pairs_device() const
+vector<vector<float*>> BackPropagationCuda::get_layer_deltas_device() const
 {
     NeuralNetwork* neural_network_ptr = loss_index->get_neural_network();
 
@@ -1817,9 +1817,9 @@ vector<vector<pair<type*, dimensions>>> BackPropagationCuda::get_layer_delta_pai
     const vector<vector<Index>> layer_output_indices = neural_network_ptr->get_layer_output_indices();
     const vector<unique_ptr<LayerBackPropagationCuda>>& layer_back_propagations = neural_network.get_layers();
 
-    vector<pair<type*, dimensions>> input_derivative_pairs;
+    vector<float*> input_derivatives;
 
-    vector<vector<pair<type*, dimensions>>> layer_delta_pairs(layers_number);
+    vector<vector<float*>> layer_deltas(layers_number);
 
     const Index first_trainable_layer_index = neural_network_ptr->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network_ptr->get_last_trainable_layer_index();
@@ -1828,7 +1828,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagationCuda::get_layer_delta_pai
     {
         if (i == last_trainable_layer_index)
         {
-            layer_delta_pairs[i].push_back(get_output_deltas_pair_device());
+            layer_deltas[i].push_back(get_output_deltas_device());
 
             continue;
         }
@@ -1838,18 +1838,18 @@ vector<vector<pair<type*, dimensions>>> BackPropagationCuda::get_layer_delta_pai
             const Index output_index = layer_output_indices[i][j];
             const Index input_index = neural_network_ptr->find_input_index(layer_input_indices[output_index], i);
 
-            input_derivative_pairs = layer_back_propagations[output_index]->get_input_derivative_pairs_device();
+            input_derivatives = layer_back_propagations[output_index]->get_input_derivatives_device();
 
-            layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
+            layer_deltas[i].push_back(input_derivatives[input_index]);
         }
     }
-    return layer_delta_pairs;
+    return layer_deltas;
 }
 
 
-pair<type*, dimensions> BackPropagationCuda::get_output_deltas_pair_device() const
+float* BackPropagationCuda::get_output_deltas_device() const
 {
-    return pair<type*, dimensions>((type*)output_deltas, output_deltas_dimensions);
+    return output_deltas;
 }
 
 

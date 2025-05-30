@@ -354,7 +354,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
+void Embedding::forward_propagate_cuda(const vector<float*>& inputs_device,
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                        const bool& is_training)
 {
@@ -362,8 +362,8 @@ void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& in
 }
 
 
-void Embedding::back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                                    const vector<pair<type*, dimensions>>&,
+void Embedding::back_propagate_cuda(const vector<float*>&,
+                                    const vector<float*>&,
                                     unique_ptr<LayerForwardPropagationCuda>&,
                                     unique_ptr<LayerBackPropagationCuda>&) const
 {
@@ -426,14 +426,14 @@ void Embedding::copy_parameters_host()
 }
 
 
-EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
@@ -445,34 +445,16 @@ void EmbeddingLayerForwardPropagationCuda::print() const
 }
 
 
-pair<type*, dimensions> EmbeddingLayerForwardPropagationCuda::get_outputs_pair_device() const
-{
-    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
-
-    const Index sequence_length = embedding_layer->get_sequence_length();
-
-    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
-
-    return { outputs, {batch_size, sequence_length, embedding_dimension} };
-}
-
-
-EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
-}
-
-
-vector<pair<type*, dimensions>> EmbeddingLayerBackPropagationCuda::get_input_derivative_pairs_device() const
-{
-    return vector<pair<type*, dimensions>>();
 }
 
 

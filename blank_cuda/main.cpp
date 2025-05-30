@@ -13,10 +13,19 @@
 #include <cstring>
 #include <time.h>
 
-#include "../opennn/opennn.h"
+#include "../opennn/pch.h"
+#include "../opennn/data_set.h"
+#include "../opennn/neural_network.h"
+#include "../opennn/training_strategy.h"
+#include "../opennn/testing_analysis.h"
+#include "../opennn/image_data_set.h"
+#include "../opennn/scaling_layer_4d.h"
+#include "../opennn/convolutional_layer.h"
+#include "../opennn/pooling_layer.h"
+#include "../opennn/flatten_layer.h"
+#include "../opennn/perceptron_layer.h"
 
 using namespace std;
-using namespace opennn;
 using namespace chrono;
 using namespace Eigen;
 
@@ -44,24 +53,27 @@ int main()
         data_set.set_data_ascending();
 
         data_set.set(DataSet::SampleUse::Training);
+        */
         
         ImageDataSet data_set;
 
-        data_set.set_data_path("C:/cifar10_bmp");
+        //data_set.set_data_path("C:/cifar10_bmp");
+        //data_set.set_data_path("../examples/mnist/data");
+        data_set.set_data_path("../examples/mnist/data_bin");
 
         data_set.read_bmp();
 
-        data_set.split_samples_random(0.8, 0.0, 0.2);
-
+        //data_set.split_samples_random(0.8, 0.0, 0.2);
+        
         const dimensions input_dimensions = data_set.get_dimensions(DataSet::VariableUse::Input);
 
         // Neural network
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 256,128,32 },
+            { 1 },
             data_set.get_dimensions(DataSet::VariableUse::Target));
-        
+        /*
         NeuralNetwork neural_network;
 
         // Scaling 4D
@@ -87,7 +99,7 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool1"
             );
-            pool1->set_dropout_rate(0.25f);
+            //pool1->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool1));
         }
 
@@ -111,7 +123,7 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool2"
             );
-            pool2->set_dropout_rate(0.25f);
+            //pool2->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool2));
         }
 
@@ -135,33 +147,33 @@ int main()
                 Pooling::PoolingMethod::MaxPooling,
                 "pool3"
             );
-            pool3->set_dropout_rate(0.25f);
+            //pool3->set_dropout_rate(0.25f);
             neural_network.add_layer(move(pool3));
         }
-
+        
         // Flatten
         neural_network.add_layer(make_unique<Flatten>(neural_network.get_output_dimensions()));
         
         // Perceptron layers
-        neural_network.add_layer(make_unique<Perceptron>(
+        neural_network.add_layer(make_unique<Dense2d>(
             neural_network.get_output_dimensions(),
             dimensions{ 512 },
-            Perceptron::Activation::RectifiedLinear,
+            Dense2d::Activation::RectifiedLinear,
             "perceptron1")
         );
-        neural_network.add_layer(make_unique<Perceptron>(
+        neural_network.add_layer(make_unique<Dense2d>(
             neural_network.get_output_dimensions(),
             dimensions{ 128 },
-            Perceptron::Activation::RectifiedLinear,
+            Dense2d::Activation::RectifiedLinear,
             "perceptron2")
         );
         
         // Probabilistic softmax
-        neural_network.add_layer(make_unique<Probabilistic>(
+        neural_network.add_layer(make_unique<Dense2d>(
             neural_network.get_output_dimensions(),
             data_set.get_dimensions(DataSet::VariableUse::Target),
             "probabilistic")
-        );
+        );*/
 
         // Training strategy
 
@@ -171,7 +183,7 @@ int main()
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(128);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
+        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 
         //training_strategy.perform_training();
@@ -184,7 +196,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-        */
+
         #endif  
         cout << "Bye!" << endl;
         

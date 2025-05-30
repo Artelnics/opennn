@@ -18,12 +18,10 @@ LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms,
 }
 
 
-LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path, const bool& new_is_text) : DataSet()
+LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSet()
 {
     data_path = new_data_path;
     separator = DataSet::Separator::Tab;
-    is_text = new_is_text;
-
     read_csv();
 }
 
@@ -45,14 +43,14 @@ Index LanguageDataSet::get_input_vocabulary_size() const
     return input_vocabulary.size();
 }
 
-Index LanguageDataSet::get_input_length() const
+Index LanguageDataSet::get_input_size() const
 {
-    return maximum_input_length;
+    return maximum_input_size;
 }
 
-Index LanguageDataSet::get_target_length() const
+Index LanguageDataSet::get_target_size() const
 {
-    return maximum_target_length;
+    return maximum_target_size;
 }
 
 Index LanguageDataSet::get_target_vocabulary_size() const
@@ -187,60 +185,51 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_length));
-    add_xml_element(printer, "targetDimensions", to_string(maximum_input_length));
+    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_size));
+    add_xml_element(printer, "targetDimensions", to_string(maximum_input_size));
 
     printer.CloseElement();
 
     time(&finish);
 }
 
-
 vector<string> LanguageDataSet::tokenize(const string& document)
 {
     vector<string> tokens;
-
-    tokens.push_back("[START]");
-
-    string currentToken;
+    string current_token;
 
     for (char c : document)
     {
         if (isalnum(c))
         {
-            // Add alphanumeric characters to the current token
-            currentToken += tolower(c);
+            current_token += tolower(c);
         }
         else
         {
-            // If the current token is not empty, add it to the tokens list
-            if (!currentToken.empty())
+            if (!current_token.empty())
             {
-                tokens.push_back(currentToken);
-                currentToken.clear();
+                tokens.emplace_back(std::move(current_token));
+                current_token.clear();
             }
-            // Treat punctuation as a separate token
 
             if (ispunct(c))
             {
-                tokens.push_back(string(1, c));
-            }
-            else if (isspace(c))
-            {
-                // Ignore spaces, they just delimit tokens
+                tokens.emplace_back(1, c);
             }
         }
     }
 
-    // Add the last token if it's not empty
-    if (!currentToken.empty())
-        tokens.push_back(currentToken);
+    if (!current_token.empty())
+    {
+        tokens.emplace_back(std::move(current_token));
+    }
 
-    // Add [END] token
-    tokens.push_back("[END]");
-
-    // if(tokens.size() == 3 || tokens.size() == 1)
-    //     tokens
+    // @todo -> this is only for encoder-decoder
+    // if (!tokens.empty())
+    // {
+    //     tokens.insert(tokens.begin(), START_TOKEN);
+    //     tokens.emplace_back(END_TOKEN);
+    // }
 
     return tokens;
 }
@@ -251,10 +240,11 @@ unordered_map<string, Index> LanguageDataSet::create_vocabulary(const vector<vec
     unordered_map<string, Index> vocabulary;
     Index id = 0;
 
-    vocabulary["[PAD]"] = id++;
-    vocabulary["[UNK]"] = id++;
-    vocabulary["[START]"] = id++;
-    vocabulary["[END]"] = id++;
+    // todo ->
+    // vocabulary[PAD_TOKEN] = id++;
+    // vocabulary[UNK_TOKEN] = id++;
+    // vocabulary[START_TOKEN] = id++;
+    // vocabulary[END_TOKEN] = id++;
 
     for (const auto& document : document_tokens)
         for (const auto& token : document)
@@ -274,24 +264,11 @@ void LanguageDataSet::print_vocabulary(const unordered_map<string, Index>& vocab
 
 void LanguageDataSet::print() const
 {
-    if(target_vocabulary_size != 6)
-    {
-        cout << "Language data set" << endl;
-
-        cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-        cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-
-        cout << "Input length: " << get_input_length() << endl;
-        cout << "Target length: " << get_target_length() << endl;
-    }
-    else
-    {
-        cout << "Language data set" << endl;
-        cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
-        cout << "Target size: " << get_target_length() << endl;
-        cout << "Input lenght: " << get_input_length() << endl;
-        cout << "Target categories: 0, 1"<<endl;
-    }
+    cout << "Language data set" << endl;
+    cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
+    cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
+    cout << "Input length: " << get_input_size() << endl;
+    cout << "Target length: " << get_target_size() << endl;
 }
 
 
@@ -558,13 +535,13 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
     if (completion_dimensions_element && completion_dimensions_element->GetText())
-        maximum_target_length = atoi(completion_dimensions_element->GetText());
+        maximum_target_size = atoi(completion_dimensions_element->GetText());
 
     // Decoder Dimensions
 
     const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
     if (decoder_dimensions_element && decoder_dimensions_element->GetText())
-        maximum_input_length = atoi(decoder_dimensions_element->GetText());
+        maximum_input_size = atoi(decoder_dimensions_element->GetText());
 
     // Display
 
@@ -594,7 +571,112 @@ Index LanguageDataSet::count_non_empty_lines() const
     return count;
 }
 
+// @todo add "decoder variables"
+void LanguageDataSet::read_csv()
+{
+    // read file
 
+    cout << "Reading .txt file..." << endl;
+
+    const Index samples_number = count_non_empty_lines();
+
+    ifstream file(data_path);
+
+    if (!file.is_open())
+        throw runtime_error("Cannot open data file: " + data_path.string());
+
+    vector<vector<string>> input_documents_tokens(samples_number);
+    vector<vector<string>> target_documents_tokens(samples_number);
+
+    string line;
+    Index sample_index = 0;
+    const string separator = get_separator_string();
+
+    while (getline(file, line))
+    {
+        if (line.empty()) continue;
+
+        const auto tokens = get_tokens(line, separator);
+        if (tokens.size() != 2)
+            throw runtime_error("Line must contain exactly 2 fields");
+
+        input_documents_tokens[sample_index] = tokenize(tokens[0]);
+        target_documents_tokens[sample_index] = tokenize(tokens[1]);
+        ++sample_index;
+    }
+
+    if (sample_index != samples_number)
+        throw runtime_error("WARNING: Expected " + to_string(samples_number) + " samples, but " + to_string(sample_index) + " were processed.");
+
+    // set vocabulary
+
+    input_vocabulary = create_vocabulary(input_documents_tokens);
+    target_vocabulary = create_vocabulary(target_documents_tokens);
+
+    // set data size
+
+    maximum_input_size = get_maximum_size(input_documents_tokens);
+    maximum_target_size = get_maximum_size(target_documents_tokens);
+    const Index maximum_size = maximum_input_size + maximum_target_size;
+
+    data.resize(samples_number, maximum_size);
+    data.setZero();
+
+    // set variable use
+
+    raw_variables.resize(maximum_size);
+
+    for(Index i = 0; i < maximum_input_size; i++)
+        set_raw_variable_use(i, VariableUse::Input);
+
+    for (Index i = maximum_input_size; i < maximum_size; i++)
+        set_raw_variable_use(i, VariableUse::Target);
+
+    // set data
+
+    const Index total_elements = samples_number * maximum_size;
+
+    for (Index i = 0; i < total_elements; ++i)
+    {
+        const Index row = i / maximum_size;
+        const Index col = i % maximum_size;
+
+        if (col < maximum_input_size)
+        {
+            const vector<string>& tokens = input_documents_tokens[row];
+            if (col < Index(tokens.size()))
+            {
+                unordered_map<string, Index>::const_iterator token_id = input_vocabulary.find(tokens[col]);
+                data(row, col) = (token_id != input_vocabulary.end()) ? token_id->second : 1;
+            }
+        }
+        else
+        {
+            const Index target_col = col - maximum_input_size;
+            const vector<string>& tokens = target_documents_tokens[row];
+            if (target_col < Index(tokens.size()))
+            {
+                unordered_map<string, Index>::const_iterator token_id = target_vocabulary.find(tokens[target_col]);
+                data(row, col) = (token_id != target_vocabulary.end()) ? token_id->second : 1;
+            }
+        }
+    }
+
+    // set config
+
+    sample_uses.resize(samples_number);
+
+    target_dimensions = {get_target_size()};
+    decoder_dimensions = {get_target_size()};
+    input_dimensions = {get_input_size()};
+
+    set_raw_variable_scalers(Scaler::None);
+    set_default_raw_variable_names();
+    split_samples_random();
+    set_binary_raw_variables();
+}
+
+/*
 void LanguageDataSet::read_csv()
 {
     cout << "Reading .txt file..." << endl;
@@ -632,6 +714,7 @@ void LanguageDataSet::read_csv()
 
         input_documents_tokens[sample_index] = tokenize(tokens[0]);
 
+
         target_documents_tokens[sample_index] = tokenize(tokens[1]);
 
         sample_index++;
@@ -642,21 +725,29 @@ void LanguageDataSet::read_csv()
 
     input_vocabulary = create_vocabulary(input_documents_tokens);
     target_vocabulary = create_vocabulary(target_documents_tokens);
-    
+
     input_vocabulary_size = get_input_vocabulary_size();
     target_vocabulary_size = get_target_vocabulary_size();
 
     maximum_input_length = get_maximum_size(input_documents_tokens);
-    maximum_target_length = is_text ? get_maximum_size(target_documents_tokens)
-                                    : /*1*/19;
-// alvaros
-    const Index input_variables_number = maximum_input_length;
-    const Index decoder_variables_number = is_text ? maximum_target_length - 1
-                                                   : 0;
-    const Index target_variables_number = is_text ? maximum_target_length - 1
-                                                  : maximum_target_length;
+    maximum_target_length = get_maximum_size(target_documents_tokens);
 
+    // const Index input_variables_number = maximum_input_length;
+    // const Index decoder_variables_number = is_text ? maximum_target_length - 1 : 0;
+    // const Index target_variables_number = is_text ? maximum_target_length - 1 : maximum_target_length;
+    // const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
+
+    const Index input_variables_number = maximum_input_length;
+    const Index decoder_variables_number = maximum_target_length;
+    const Index target_variables_number = maximum_target_length;
     const Index variables_number = input_variables_number + decoder_variables_number + target_variables_number;
+
+
+    std::cout << "input_variables_number = " << input_variables_number
+              << ", decoder_variables_number = " << decoder_variables_number
+              << ", target_variables_number = " << target_variables_number
+              << ", maximum_target_length = " << maximum_target_length
+              << ", variables_number = " << variables_number << std::endl;
 
     data.resize(samples_number, variables_number);
     data.setZero();
@@ -695,10 +786,9 @@ void LanguageDataSet::read_csv()
         if(column_index < input_variables_number)
             column_index = input_variables_number;
 
-        if(is_text)
+        // if(is_text)
+        if(true)
         {
-            // Decoder data
-
             for (Index j = 0; j < Index(target_document_tokens.size()); j++)
             {
                 const auto iterator = target_vocabulary.find(target_document_tokens[j]);
@@ -728,22 +818,6 @@ void LanguageDataSet::read_csv()
                     : data(i,column_index++) = 1;
             }
         }
-        else if(target_vocabulary_size == 6)
-        {
-            // Target data
-
-            for (Index j = 0; j < Index(target_document_tokens.size()); j++)
-            {
-                const auto iterator = target_vocabulary.find(target_document_tokens[j]);
-
-                if(iterator->second == 2||iterator->second == 3)
-                    continue;
-
-                iterator != target_vocabulary.end() && contains(negative_words, iterator->first)
-                    ? data(i, column_index) = 0
-                    : data(i, column_index) = 1;
-            }
-        }
         else
         {
             for(Index j = 0; j < Index(target_document_tokens.size()); j++)
@@ -761,9 +835,12 @@ void LanguageDataSet::read_csv()
 
     sample_uses.resize(samples_number);
 
-    target_dimensions = {get_target_length()};
-    is_text ? decoder_dimensions = {get_target_length()}
-            : decoder_dimensions = {};
+    target_dimensions = { get_target_length() };
+    decoder_dimensions = { get_target_length() };
+
+    // target_dimensions = {get_target_length()};
+    // is_text ? decoder_dimensions = {get_target_length()}
+    //         : decoder_dimensions = {};
     input_dimensions = {get_input_length()};
 
     set_raw_variable_scalers(Scaler::None);
@@ -771,6 +848,7 @@ void LanguageDataSet::read_csv()
     split_samples_random();
     set_binary_raw_variables();
 }
+*/
 
 }
 
