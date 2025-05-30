@@ -99,6 +99,9 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     const vector<string> raw_variable_names = data_set->get_raw_variable_names();
 
     vector<string> input_raw_variable_names;
+
+    if(display) cout << "Calculating correlations..." << endl;
+
     const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variable_pearson_correlations());
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
@@ -141,6 +144,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
     time(&beginning_time);
 
     bool stop = false;
+
     for(Index i = 0; i < maximum_epochs_number; i++)
     {     
         data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);

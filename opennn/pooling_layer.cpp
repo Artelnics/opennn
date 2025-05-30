@@ -786,8 +786,7 @@ void PoolingForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    if (cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)) != cudaSuccess)
-        cout << "Outputs allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * output_height * output_width * channels * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -848,8 +847,7 @@ void PoolingBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    if (cudaMalloc(&input_derivatives, batch_size * input_height * input_width * channels * sizeof(float)) != cudaSuccess)
-        cout << "Input derivatives pooling layer back propagation allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * input_height * input_width * channels * sizeof(float)));
 }
 
 

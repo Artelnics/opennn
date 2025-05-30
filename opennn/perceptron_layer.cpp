@@ -201,6 +201,8 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
         activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = Activation::ExponentialLinear;
+    else if(new_activation_function_name == "Softmax")
+        activation_function = Activation::Softmax;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -887,11 +889,8 @@ void Dense2d::allocate_parameters_device()
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    if (cudaMalloc(&biases_device, outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Biases allocation error" << endl;
-
-    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&biases_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
 }
 
 
@@ -911,27 +910,18 @@ void Dense2d::copy_parameters_device()
 
     if (!weights_device) cout << "Weights device is null" << endl;
 
-    if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Biases device copy error" << endl;
-
-    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Weights device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice));
 }
 
 
 void Dense2d::copy_parameters_host()
 {
-    if (!biases_device)
-        cout << "Biases is null" << endl;
+    if (!biases_device) cout << "Biases is null" << endl;
+    if (!weights_device) cout << "Synaptic weights is null" << endl;
 
-    if (!weights_device)
-        cout << "Synaptic weights is null" << endl;
-
-    if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Biases host copy error" << endl;
-
-    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Weights host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost))
+    CHECK_CUDA(cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
 
@@ -965,11 +955,8 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Outputs
 
-    if (cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "combinations allocation error" << endl;
-
-    if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "outputs allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -1027,27 +1014,14 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Ones
 
-    if (cudaMalloc(&ones, batch_size * sizeof(float)) != cudaSuccess)
-        cout << "ones allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&ones, batch_size * sizeof(float)));
 
-    for (Index i = 0; i < batch_size; i++) {
-        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
-    }
+    for (Index i = 0; i < batch_size; i++)
+        CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
 
-    // bias_derivatives_device
-
-    if (cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "bias_derivatives perceptron allocation error" << endl;
-
-    // weight_derivatives_device
-
-    if (cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "weight_derivatives allocation error" << endl;
-
-    // Input derivatives
-
-    if (cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
-        cout << "inputs derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&bias_derivatives_device, outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&weight_derivatives_device, inputs_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * inputs_number * sizeof(float)));
 
     // Deltas
 
@@ -1063,8 +1037,7 @@ void Dense2dBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Error combinations derivatives
 
-    if (cudaMalloc(&combination_deltas_device, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "error combinations derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * outputs_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
 

@@ -1332,10 +1332,10 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
     vector<Descriptives> descriptives(column_indices_size);
 
     Tensor<type, 1> minimums(column_indices_size);
-    minimums.setConstant(numeric_limits<type>::max());
+    minimums.setZero();
 
     Tensor<type, 1> maximums(column_indices_size);
-    maximums.setConstant(numeric_limits<type>::min());
+    maximums.setZero();
 
     Tensor<double, 1> sums(column_indices_size);
     Tensor<double, 1> squared_sums(column_indices_size);
@@ -1354,6 +1354,7 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
         double& sum = sums(j);
         double& squared_sum = squared_sums(j);
         Index& cnt = count(j);
+        bool first_iteration = true;
 
         for (Index i = 0; i < row_indices_size; i++)
         {
@@ -1362,8 +1363,16 @@ vector<Descriptives> descriptives(const Tensor<type, 2>& matrix,
 
             if (isnan(value)) continue;
 
-            current_min = min(current_min, value);
-            current_max = max(current_max, value);
+            if (first_iteration)
+            {
+                current_min = value;
+                current_max = value;
+                first_iteration = false;
+            }
+            else{
+                current_min = min(current_min, value);
+                current_max = max(current_max, value);
+            }
 
             sum += static_cast<double>(value);
             squared_sum += static_cast<double>(value) * static_cast<double>(value);

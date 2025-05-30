@@ -1738,18 +1738,8 @@ string ModelExpression::replace_reserved_keywords(string& s)
     if(s[0] == '$')
         out=s;
 
-    for (char c : s) {
-        // if (c == '1') out += "_one_";
-        // else if (c == '2') out += "_two_";
-        // else if (c == '3') out += "_three_";
-        // else if (c == '4') out += "_four_";
-        // else if (c == '5') out += "_five_";
-        // else if (c == '6') out += "_six_";
-        // else if (c == '7') out += "_seven_";
-        // else if (c == '8') out += "_eight_";
-        // else if (c == '9') out += "_nine_";
-        // else if (c == '0') out += "_zero_";
-
+    for (char c : s)
+    {
         if (c == ' ') out += "_";
         else if (c == '.') out += "_dot_";
         else if (c == '/') out += "_div_";
@@ -1765,25 +1755,25 @@ string ModelExpression::replace_reserved_keywords(string& s)
         else if (c == '?') out += "_ntrgtn_";
         else if (c == '<') out += "_lower_";
         else if (c == '>') out += "_higher_";
-
-        //else if (isalpha(c) || c == '_') out += c;
         else if (isalnum(c) || c == '_') out += c;
     }
-
 
     if(!out.empty() && isdigit(out[0]))
         out = '_' + out;
 
-    unordered_map<std::string, std::string> sprcialWords = {
+    unordered_map<string, string> sprcialWords = {
         {"min", "mi_n"},
         {"max", "ma_x"},
         {"exp", "ex_p"},
         {"tanh", "ta_nh"}
     };
 
-    for (const auto& pair : sprcialWords) {
+    for (const auto& pair : sprcialWords)
+    {
         int position = 0;
-        while ((position = out.find(pair.first, position)) != std::string::npos) {
+
+        while ((position = out.find(pair.first, position)) != string::npos)
+        {
             out.replace(position, pair.first.length(), pair.second);
             position += pair.second.length();
         }
@@ -1933,6 +1923,7 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 
     return fixes_output_names;
 }
+
 
 void ModelExpression::save_expression(const string& file_name,
                                       const ProgrammingLanguage& programming_language,

@@ -87,6 +87,7 @@ public:
    void set_display(const bool&);
 
    void set_threads_number(const int&);
+   void shutdown_threads();
 
    // Checking
 
@@ -154,8 +155,8 @@ public:
 
    Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    Tensor<Index, 2> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<Index, 2> calculate_confusion() const;
+   Tensor<Index, 2> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.50) const;
+   Tensor<Index, 2> calculate_confusion(const type& = 0.50) const;
 
    Tensor<Index, 2> calculate_sentimental_analysis_transformer_confusion() const;
 

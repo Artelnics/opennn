@@ -88,6 +88,7 @@ public:
     void set_default();
 
     void set_threads_number(const int&);
+    void shutdown_threads();
 
     void set_data_set(DataSet*);
     void set_neural_network(NeuralNetwork*);

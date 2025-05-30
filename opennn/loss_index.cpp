@@ -57,6 +57,9 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -66,8 +69,23 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    if (thread_pool != nullptr)
+        shutdown_threads();
+
+    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
+void LossIndex::shutdown_threads()
+{
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    if(thread_pool != nullptr) {
+        thread_pool.release();
+        thread_pool.reset();
+    }
 }
 
 
@@ -114,16 +132,6 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-//void LossIndex::check() const
-//{
-//    if(!neural_network)
-//        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-//    if(!data_set)
-//        throw runtime_error("Pointer to data set is nullptr.\n");
-//}
-
-
 void LossIndex::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
@@ -166,13 +174,14 @@ void LossIndex::back_propagate(const Batch& batch,
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
 
     // Loss
-
     back_propagation.loss = back_propagation.error();
 
     // Regularization
+
     add_regularization(back_propagation);
 
     // Assemble gradient
+
     assemble_layers_error_gradient(back_propagation);
 }
 
@@ -318,14 +327,9 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-    case RegularizationMethod::NoRegularization:
-        return "NO_REGULARIZATION";
-
-    case RegularizationMethod::L1:
-        return "L1_NORM";
-
-    case RegularizationMethod::L2:
-        return "L2_NORM";
+    case RegularizationMethod::NoRegularization: return "NO_REGULARIZATION";
+    case RegularizationMethod::L1: return "L1_NORM";
+    case RegularizationMethod::L2: return "L2_NORM";
 
     default: return string();
     }
@@ -372,7 +376,8 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 }
 
 
-void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
+void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters,
+                                                 Tensor<type, 2>& regularization_hessian) const
 {
     switch(regularization_method)
     {
@@ -566,19 +571,6 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     output_deltas.resize(size);
 
-//    output_deltas_dimensions.resize(output_dimensions.size() + 1);
-//    output_deltas_dimensions[0] = batch_size;
-
-//    Index size = batch_size;
-
-//    for(size_t i = 0; i < output_dimensions.size(); i++)
-//    {
-//        output_deltas_dimensions[i + 1] = output_dimensions[i];
-
-//        size *= output_dimensions[i];
-//    }
-
-
     if(is_instance_of<CrossEntropyError3D>(loss_index))
     {
         predictions.resize(samples_number, outputs_number);
@@ -661,6 +653,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
+
     if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
     {
         const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
@@ -689,7 +682,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        // cout << "Parameter " << i << endl;
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;
@@ -702,10 +694,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
-       // cout << "Forward error: " << error_forward << endl;
-
        parameters_forward(i) -= h;
-
        parameters_backward(i) -= h;
 
        neural_network->forward_propagate(batch.get_input_pairs(),
@@ -716,15 +705,16 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_backward = back_propagation.error();
 
-       // cout << "Backward error: " << error_backward << endl;
-
        parameters_backward(i) += h;
 
        numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
 
+    batch.shutdown_threads();
+
     return numerical_gradient;
 }
+
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 {
@@ -794,10 +784,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
         numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
     }
 
+    batch.shutdown_threads();
+
     return numerical_gradient_lm;
 }
 
-Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
+
+Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 {
 
     const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
@@ -851,8 +844,11 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
         numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
     }
 
+    batch.shutdown_threads();
+
     return numerical_inputs_derivatives;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
@@ -928,8 +924,11 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
     }
 
+    batch.shutdown_threads();
+
     return jacobian;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
@@ -1149,8 +1148,11 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
         for (Index j = 0; j < i; j++)
             H(i, j) = H(j, i);
 
+    batch.shutdown_threads();
+
     return H;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_inverse_hessian()
 {
@@ -1322,7 +1324,7 @@ void BackPropagationLM::set(const Index&new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index) 
+BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index)
 {
     set(new_batch_size, new_loss_index);
 }
@@ -1571,8 +1573,7 @@ void LossIndex::l2_norm_gradient_cuda(const Index parameters_number,
         cudaMemset(gradient, 0, size_t(parameters_number) * sizeof(float));
     }
 
-    if (cudaMemcpy(aux_vector, parameters, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient to aux_vector copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(aux_vector, parameters, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice));
 
     float alpha = regularization / norm;
 
@@ -1639,18 +1640,9 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     error(0) = type(0);
     regularization = type(0);
 
-    // Errors
-
-    if (cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Errors allocation error" << endl;
-
-    // Parameters
-
-    if (cudaMalloc(&parameters, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
-
-    if (cudaMalloc(&parameters_square, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_square allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&parameters_square, parameters_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&parameters_tensor_descriptor);
 
@@ -1664,8 +1656,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     parameters_host = neural_network_ptr->get_parameters();
 
-    if (cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "parameters copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
 
     // Gradient
 
@@ -1679,13 +1670,11 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    if (cudaMalloc(&gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Gradient allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&gradient, parameters_number * sizeof(float)));
 
     // Regularization gradient
 
-    if (cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "regularization_gradient allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
 
     // Outputs_delta
 
@@ -1694,8 +1683,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index size = accumulate(output_dimensions.begin(), output_dimensions.end(), samples_number, multiplies<>());
 
-    if (cudaMalloc(&output_deltas, size * sizeof(float)) != cudaSuccess)
-        cout << "output_deltas allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
 
     // Sum
 
@@ -1735,25 +1723,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         CUDNN_REDUCE_TENSOR_NO_INDICES,
         CUDNN_32BIT_INDICES);
 
-    // Numerator and aux
-
-    if (cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator allocation error" << endl;
-    if (cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator 2 allocation error" << endl;
-    if (cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator 3 allocation error" << endl;
-
-    if (cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "outputs_plus_epsilon allocation error" << endl;
-
-    if (cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_outputs allocation error" << endl;
-    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_targets allocation error" << endl;
-
-    if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
-        cout << "Numerator reduce allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_reduce, sizeof(float)));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -1777,15 +1753,11 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, output_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
 
-    cudaMalloc(&workspace, workspaceSize);
-
-    // Aux ones vector
-
-    if (cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "aux ones allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&workspace, workspaceSize));
+    CHECK_CUDA(cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)));
 
     for (Index i = 0; i < samples_number; i++)
-        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
+        CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
 
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{
@@ -1799,10 +1771,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     // Regularization @todo
     /*
     if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
-    {
-        if (cudaMalloc(&aux_regularization, parameters_number * sizeof(float)) != cudaSuccess)
-            cout << "Aux_regularization allocation error" << endl;
-    }
+        CHECK_CUDA(cudaMalloc(&aux_regularization, parameters_number * sizeof(float)));
     */
 }
 

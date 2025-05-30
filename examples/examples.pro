@@ -10,14 +10,12 @@ TEMPLATE = subdirs
 
 CONFIG += ordered
 
-SUBDIRS += airfoil_self_noise \
-    classification \
-    forecasting
+SUBDIRS += airfoil_self_noise
+SUBDIRS += forecasting
 SUBDIRS += amazon_reviews
 SUBDIRS += breast_cancer
 SUBDIRS += iris_plant
 SUBDIRS += mnist
-SUBDIRS += rosenbrock
 SUBDIRS += translation
 
 win32:{

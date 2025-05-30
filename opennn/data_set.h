@@ -240,6 +240,7 @@ public:
     void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
+    void shutdown_threads();
 
     // Samples set
 
@@ -592,6 +593,7 @@ struct Batch
     Index get_samples_number() const;
 
     void set(const Index& = 0, DataSet* = nullptr);
+    void shutdown_threads();
 
     void fill(const vector<Index>&,
               const vector<Index>&,

@@ -58,8 +58,8 @@ bool Scaling4d::is_empty() const
 
 
 void Scaling4d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                       const bool&)
+                                  unique_ptr<LayerForwardPropagation>& forward_propagation,
+                                  const bool&)
 {
     Scaling4dForwardPropagation* scaling_layer_forward_propagation =
         static_cast<Scaling4dForwardPropagation*>(forward_propagation.get());

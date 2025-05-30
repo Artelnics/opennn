@@ -23,11 +23,13 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, DataSet* new
     neural_network = new_neural_network;
     data_set = new_data_set;
 
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
-
 }
 
 
@@ -50,8 +52,23 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    if (thread_pool != nullptr)
+        shutdown_threads();
+
+    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
+void TestingAnalysis::shutdown_threads()
+{
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    if(thread_pool != nullptr) {
+        thread_pool.release();
+        thread_pool.reset();
+    }
 }
 
 
@@ -150,10 +167,6 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     {
         const TensorMap<Tensor<type, 1>> targets = tensor_map(testing_target_data, i);
         const TensorMap<Tensor<type, 1>> outputs = tensor_map(testing_output_data, i);
-
-        // cout << "Outputs:\n" << outputs << endl;
-
-        // cerr << "Targets:\n" << targets << endl;
 
         const type determination = calculate_determination(outputs, targets);
 
@@ -932,7 +945,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 }
 
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_threshold) const
 {
     check();
 
@@ -948,7 +961,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-        return calculate_confusion(outputs, targets);
+        return calculate_confusion(outputs, targets, decision_threshold);
     }
     else if(input_dimensions.size() == 3)
     {
@@ -963,7 +976,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
-        return calculate_confusion(outputs, targets);
+        return calculate_confusion(outputs, targets, decision_threshold);
     }
 
     return Tensor<Index, 2>();
@@ -1022,7 +1035,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
         //         reduced_outputs(i,j) = index;
         //     }
         // }
-        // cout<<reduced_outputs.dimensions()<<endl;
 
         return calculate_confusion(reduced_outputs, testing_target);
     }
@@ -1032,26 +1044,17 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
 
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
-                                                      const Tensor<type, 2>& targets) const
+                                                      const Tensor<type, 2>& targets,
+                                                      const type& decision_threshold) const
 {
-    /*
     const Index outputs_number = neural_network->get_outputs_number();
 
     if (outputs_number == 1)
-    {
-        Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network->get_first(Layer::Type::Dense2d));
-
-        const type decision_threshold = dense_2d_layer
-                                        ? dense_2d_layer->get_decision_threshold()
-                                        : type(0.5);
-
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
-    }
     else
-    {
         return calculate_confusion_multiple_classification(targets, outputs);
-    }
-    */
+
+    return Tensor<Index, 2>();
 }
 
 
@@ -2119,16 +2122,14 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_context.dimension(1); i++){
+    // for(Index i = 0; i < testing_context.dimension(1); i++)
     //     cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
-    // }
     // cout<<endl;
     // cout<<endl;
     // cout<<"Spanish:"<<endl;
     // cout<<testing_input.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_input.dimension(1); i++){
+    // for(Index i = 0; i < testing_input.dimension(1); i++)
     //     cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
-    // }
     // cout<<endl;
     // cout<<endl;
     // cout<<"Prediction:"<<endl;
