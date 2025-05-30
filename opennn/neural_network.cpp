@@ -26,7 +26,6 @@
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
-//#include "transformer.h"
 
 namespace opennn
 {
@@ -313,15 +312,15 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
     add_layer(make_unique<Scaling2d>(input_dimensions));
 
     for (Index i = 0; i < complexity_size; i++)
-        add_layer(make_unique<Dense2d>(/*input_dimensions*/get_output_dimensions(),
-                                               dimensions{ complexity_dimensions[i] },
-                                               Dense2d::Activation::RectifiedLinear,
-                                               "perceptron_layer_" + to_string(i + 1)));
+        add_layer(make_unique<Dense2d>(get_output_dimensions(),
+                                       dimensions{ complexity_dimensions[i] },
+                                       Dense2d::Activation::RectifiedLinear,
+                                       "perceptron_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                           output_dimensions,
-                                           Dense2d::Activation::Linear,
-                                           "perceptron_layer_" + to_string(complexity_size + 1)));
+                                   output_dimensions,
+                                   Dense2d::Activation::Linear,
+                                   "approximation_layer"));
 
     add_layer(make_unique<Unscaling>(output_dimensions));
 
@@ -342,11 +341,11 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
                                                dimensions{complexity_dimensions[i]},
                                                Dense2d::Activation::HyperbolicTangent,
                                                "perceptron_layer_" + to_string(i + 1)));
-/*
+
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                              output_dimensions,
-                                              "dense_2d_layer"));
-*/
+                                   output_dimensions,
+                                   Dense2d::Activation::Logistic,
+                                   "classification_layer"));
 }
 
 
@@ -453,7 +452,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
                                             const dimensions& complexity_dimensions,
                                             const dimensions& output_dimensions)
 {
-/*
+
     layers.resize(0);
 
     // input_names.resize(input_length + decoder_length);
@@ -466,7 +465,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     const Index perceptron_depth = 32;
     const Index heads_number = 2;
     const type dropout_rate = 0;
-
+/*
     unique_ptr<Embedding> embedding_layer
         = make_unique<Embedding>(input_dimensions[0],
                                       input_dimensions[1],
@@ -479,9 +478,6 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     add_layer(std::move(embedding_layer));
     set_layer_inputs_indices("embedding", "input");
 
-    // cout<<get_output_dimensions().size()<<endl;
-    // cout<<get_output_dimensions()[0]<<endl;
-    // cout<<get_output_dimensions()[1]<<endl;
     // Encoder
 
     for(Index i = 0; i < complexity_size; i++)

@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "strings_utilities.h"
-//#include "tensors.h"
 
 namespace opennn
 {

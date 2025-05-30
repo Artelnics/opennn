@@ -151,10 +151,6 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
         const TensorMap<Tensor<type, 1>> targets = tensor_map(testing_target_data, i);
         const TensorMap<Tensor<type, 1>> outputs = tensor_map(testing_output_data, i);
 
-        // cout << "Outputs:\n" << outputs << endl;
-
-        // cerr << "Targets:\n" << targets << endl;
-
         const type determination = calculate_determination(outputs, targets);
 
         goodness_of_fit_results[i].set(targets, outputs, determination);
@@ -1022,7 +1018,6 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
         //         reduced_outputs(i,j) = index;
         //     }
         // }
-        // cout<<reduced_outputs.dimensions()<<endl;
 
         return calculate_confusion(reduced_outputs, testing_target);
     }
@@ -2110,16 +2105,14 @@ pair<type, type> TestingAnalysis::test_transformer() const
 
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_context.dimension(1); i++){
+    // for(Index i = 0; i < testing_context.dimension(1); i++)
     //     cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
-    // }
     // cout<<endl;
     // cout<<endl;
     // cout<<"Spanish:"<<endl;
     // cout<<testing_input.chip(10,0)<<endl;
-    // for(Index i = 0; i < testing_input.dimension(1); i++){
+    // for(Index i = 0; i < testing_input.dimension(1); i++)
     //     cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
-    // }
     // cout<<endl;
     // cout<<endl;
     // cout<<"Prediction:"<<endl;

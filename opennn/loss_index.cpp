@@ -114,16 +114,6 @@ void LossIndex::set_display(const bool& new_display)
 }
 
 
-//void LossIndex::check() const
-//{
-//    if(!neural_network)
-//        throw runtime_error("Pointer to neural network is nullptr.\n");
-
-//    if(!data_set)
-//        throw runtime_error("Pointer to data set is nullptr.\n");
-//}
-
-
 void LossIndex::calculate_errors_lm(const Batch& batch,
                                     const ForwardPropagation & forward_propagation,
                                     BackPropagationLM & back_propagation) const
@@ -170,9 +160,11 @@ void LossIndex::back_propagate(const Batch& batch,
     back_propagation.loss = back_propagation.error();
 
     // Regularization
+
     add_regularization(back_propagation);
 
     // Assemble gradient
+
     assemble_layers_error_gradient(back_propagation);
 }
 
@@ -318,15 +310,9 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-    case RegularizationMethod::NoRegularization:
-        return "NO_REGULARIZATION";
-
-    case RegularizationMethod::L1:
-        return "L1_NORM";
-
-    case RegularizationMethod::L2:
-        return "L2_NORM";
-
+    case RegularizationMethod::NoRegularization: return "NO_REGULARIZATION";
+    case RegularizationMethod::L1: return "L1_NORM";
+    case RegularizationMethod::L2: return "L2_NORM";
     default: return string();
     }
 }
@@ -372,7 +358,8 @@ void LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& paramet
 }
 
 
-void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters, Tensor<type, 2>& regularization_hessian) const
+void LossIndex::calculate_regularization_hessian(Tensor<type, 1>& parameters,
+                                                 Tensor<type, 2>& regularization_hessian) const
 {
     switch(regularization_method)
     {
@@ -566,19 +553,6 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     output_deltas.resize(size);
 
-//    output_deltas_dimensions.resize(output_dimensions.size() + 1);
-//    output_deltas_dimensions[0] = batch_size;
-
-//    Index size = batch_size;
-
-//    for(size_t i = 0; i < output_dimensions.size(); i++)
-//    {
-//        output_deltas_dimensions[i + 1] = output_dimensions[i];
-
-//        size *= output_dimensions[i];
-//    }
-
-
     if(is_instance_of<CrossEntropyError3D>(loss_index))
     {
         predictions.resize(samples_number, outputs_number);
@@ -624,6 +598,7 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }
     }
+
     return layer_delta_pairs;
 }
 
@@ -661,6 +636,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
 
     Batch batch(samples_number, data_set);
+
     if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
     {
         const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
@@ -689,7 +665,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     for(Index i = 0; i < parameters_number; i++)
     {
-        // cout << "Parameter " << i << endl;
         h = calculate_h(parameters(i));
 
         parameters_forward(i) += h;
@@ -702,10 +677,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_forward = back_propagation.error();
 
-       // cout << "Forward error: " << error_forward << endl;
-
        parameters_forward(i) -= h;
-
        parameters_backward(i) -= h;
 
        neural_network->forward_propagate(batch.get_input_pairs(),
@@ -716,8 +688,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
        error_backward = back_propagation.error();
 
-       // cout << "Backward error: " << error_backward << endl;
-
        parameters_backward(i) += h;
 
        numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
@@ -725,6 +695,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
     return numerical_gradient;
 }
+
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 {
@@ -797,7 +768,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
     return numerical_gradient_lm;
 }
 
-Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
+
+Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 {
 
     const Index samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
@@ -853,6 +825,7 @@ Tensor<type, 1> LossIndex::calculate_numerical_inputs_derivatives()
 
     return numerical_inputs_derivatives;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
@@ -930,6 +903,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
     return jacobian;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
@@ -1151,6 +1125,7 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 
     return H;
 }
+
 
 Tensor<type, 2> LossIndex::calculate_inverse_hessian()
 {
