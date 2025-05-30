@@ -946,31 +946,14 @@ void ADAMOptimizationDataCuda::set(AdaptiveMomentEstimation* new_adaptive_moment
 
     // Gradient
 
-    if (cudaMalloc(&square_gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Square gradient allocation error" << endl;
-
-    if (cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "gradient_exponential_decay allocation error" << endl;
-
-    if (cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "square_gradient_exponential_decay allocation error" << endl;
-
-    if (cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "last_gradient_exponential_decay allocation error" << endl;
-
-    if (cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "last_square_gradient_exponential_decay allocation error" << endl;
-
-    if (cudaMalloc(&numerator, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "numerator allocation error" << endl;
-
-    if (cudaMalloc(&denominator, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "denominator allocation error" << endl;
-
-    // Aux ones
-
-    if (cudaMalloc(&ones, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "aux ones device allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&square_gradient, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&gradient_exponential_decay, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&square_gradient_exponential_decay, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&last_gradient_exponential_decay, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&last_square_gradient_exponential_decay, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&denominator, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&ones, parameters_number * sizeof(float)));
 
     vector<float> host_ones(parameters_number, 1.0f);
     if (cudaMemcpy(ones, host_ones.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)

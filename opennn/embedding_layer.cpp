@@ -393,8 +393,7 @@ void Embedding::allocate_parameters_device()
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
 }
 
 
@@ -411,8 +410,7 @@ void Embedding::copy_parameters_device()
     if (!weights_device)
         cout << "Weights device is null" << endl;
 
-    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Weights device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice));
 }
 
 
@@ -421,8 +419,7 @@ void Embedding::copy_parameters_host()
     if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
-    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Weights host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
 

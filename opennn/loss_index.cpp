@@ -1573,8 +1573,7 @@ void LossIndex::l2_norm_gradient_cuda(const Index parameters_number,
         cudaMemset(gradient, 0, size_t(parameters_number) * sizeof(float));
     }
 
-    if (cudaMemcpy(aux_vector, parameters, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice) != cudaSuccess)
-        cout << "gradient to aux_vector copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(aux_vector, parameters, parameters_number * sizeof(float), cudaMemcpyDeviceToDevice));
 
     float alpha = regularization / norm;
 
@@ -1641,18 +1640,9 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     error(0) = type(0);
     regularization = type(0);
 
-    // Errors
-
-    if (cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Errors allocation error" << endl;
-
-    // Parameters
-
-    if (cudaMalloc(&parameters, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Parameters allocation error" << endl;
-
-    if (cudaMalloc(&parameters_square, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_square allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&errors, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&parameters, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&parameters_square, parameters_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&parameters_tensor_descriptor);
 
@@ -1666,8 +1656,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     parameters_host = neural_network_ptr->get_parameters();
 
-    if (cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "parameters copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(parameters, parameters_host.data(), parameters_number * sizeof(float), cudaMemcpyHostToDevice));
 
     // Gradient
 
@@ -1681,13 +1670,11 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         1,
         1);
 
-    if (cudaMalloc(&gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "Gradient allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&gradient, parameters_number * sizeof(float)));
 
     // Regularization gradient
 
-    if (cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "regularization_gradient allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&regularization_gradient, parameters_number * sizeof(float)));
 
     // Outputs_delta
 
@@ -1696,8 +1683,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     const Index size = accumulate(output_dimensions.begin(), output_dimensions.end(), samples_number, multiplies<>());
 
-    if (cudaMalloc(&output_deltas, size * sizeof(float)) != cudaSuccess)
-        cout << "output_deltas allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&output_deltas, size * sizeof(float)));
 
     // Sum
 
@@ -1737,25 +1723,13 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
         CUDNN_REDUCE_TENSOR_NO_INDICES,
         CUDNN_32BIT_INDICES);
 
-    // Numerator and aux
-
-    if (cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator allocation error" << endl;
-    if (cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator 2 allocation error" << endl;
-    if (cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Numerator 3 allocation error" << endl;
-
-    if (cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "outputs_plus_epsilon allocation error" << endl;
-
-    if (cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_outputs allocation error" << endl;
-    if (cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "one_minus_targets allocation error" << endl;
-
-    if (cudaMalloc(&numerator_reduce, sizeof(float)) != cudaSuccess)
-        cout << "Numerator reduce allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&numerator, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_2, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_3, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&outputs_plus_epsilon, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&one_minus_outputs, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&one_minus_targets, samples_number * outputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&numerator_reduce, sizeof(float)));
 
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
@@ -1779,15 +1753,11 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
 
     cudnnGetReductionWorkspaceSize(loss_index->get_cudnn_handle(), reduce_tensor_descriptor, output_tensor_descriptor, output_reduce_tensor_descriptor, &workspaceSize);
 
-    cudaMalloc(&workspace, workspaceSize);
-
-    // Aux ones vector
-
-    if (cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "aux ones allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&workspace, workspaceSize));
+    CHECK_CUDA(cudaMalloc(&ones, samples_number * outputs_number * sizeof(float)));
 
     for (Index i = 0; i < samples_number; i++)
-        cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice);
+        CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
 
     //if (is_instance_of<CrossEntropyError3D>(loss_index))
     //{
@@ -1801,10 +1771,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     // Regularization @todo
     /*
     if (loss_index->regularization_method != RegularizationMethod::NoRegularization)
-    {
-        if (cudaMalloc(&aux_regularization, parameters_number * sizeof(float)) != cudaSuccess)
-            cout << "Aux_regularization allocation error" << endl;
-    }
+        CHECK_CUDA(cudaMalloc(&aux_regularization, parameters_number * sizeof(float)));
     */
 }
 

@@ -111,7 +111,11 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool&)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const Index batch_size = layer_forward_propagation->batch_size;
+//    const Index sequence_length = get_sequence_length();
+    const Index embedding_dimension = get_embedding_dimension();
+
+    const TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, sequence_length, embedding_dimension);
 
     Normalization3dForwardPropagation* this_forward_propagation =
         static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
@@ -120,10 +124,6 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& means = this_forward_propagation->means;
     Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
-
-    const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
-    const Index embedding_dimension = inputs.dimension(2);
 
     const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
     const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});

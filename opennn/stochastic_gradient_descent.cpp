@@ -815,13 +815,8 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 
     const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    // Gradient
-
-    if (cudaMalloc(&parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_increment allocation error" << endl;
-
-    if (cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "last_parameters_increment allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&parameters_increment, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)));
 }
 
 
