@@ -1331,13 +1331,8 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
         CUDNN_DATA_FLOAT,
         output_batch_size, output_channels, output_height, output_width );
 
-<<<<<<< HEAD
     CHECK_CUDA(cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
-=======
-    cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float));
-
-    cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float));
->>>>>>> 550b99690627b8f00a41df50314139c1e9506b00
+    CHECK_CUDA(cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
 
     // Workspace
 
