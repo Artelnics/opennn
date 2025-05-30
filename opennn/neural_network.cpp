@@ -455,11 +455,11 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     }
     
     add_layer(make_unique<Flatten>(get_output_dimensions()));
-/*
+
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                         output_dimensions,
-                                         "dense_2d_layer"));
-*/
+                                   output_dimensions,
+                                   Dense2d::Activation::Softmax,
+                                   "dense_2d_layer"));
 }
 
 
@@ -1923,11 +1923,14 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
 
 pair<type*, dimensions> ForwardPropagation::get_last_trainable_layer_outputs_pair() const
 {
+    /*
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const unique_ptr<LayerForwardPropagation>& layer_forward_propagation = layers[last_trainable_layer_index];
 
     return layer_forward_propagation->get_outputs_pair();
+    */
+    return pair<type*, dimensions>();
 }
 
 
@@ -2107,11 +2110,10 @@ void NeuralNetwork::copy_parameters_host()
 }
 
 
-void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_pair_device,
+void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_device,
                                            ForwardPropagationCuda& forward_propagation_cuda,
                                            const bool& is_training) const
 {
-    /*
     const Index layers_number = get_layers_number();
 
     const Index first_trainable_layer_index = get_first_trainable_layer_index();
@@ -2120,13 +2122,12 @@ void NeuralNetwork::forward_propagate_cuda(const vector<float*>& input_pair_devi
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs_device = forward_propagation_cuda.get_layer_input_pairs_device(input_pair_device, is_training);
+    const vector<vector<float*>> layer_input_device = forward_propagation_cuda.get_layer_inputs_device(input_device, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
-        layers[i]->forward_propagate_cuda(layer_input_pairs_device[i],
+        layers[i]->forward_propagate_cuda(layer_input_device[i],
                                           forward_propagation_cuda.layers[i],
                                           is_training);
-    */
 }
 
 
@@ -2252,80 +2253,78 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
     }
 }
 
-/*
-pair<type*, dimensions> ForwardPropagationCuda::get_last_trainable_layer_outputs_pair_device() const
+
+float* ForwardPropagationCuda::get_last_trainable_layer_outputs_device() const
 {
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
     const unique_ptr<LayerForwardPropagationCuda>& layer_forward_propagation = layers[last_trainable_layer_index];
 
-    return layer_forward_propagation->get_outputs_pair_device();
+    return layer_forward_propagation->get_output_device();
 }
-*/
 
 
-vector<vector<pair<type*, dimensions>>> ForwardPropagationCuda::get_layer_input_pairs_device(const vector<pair<type*, dimensions>>& batch_input_pairs_device, const bool& is_training) const
+vector<vector<float*>> ForwardPropagationCuda::get_layer_inputs_device(const vector<float*>& batch_input_device, const bool& is_training) const
 {
     const Index layers_number = neural_network->get_layers_number();
 
     if (layers_number == 0)
-        return vector<vector<pair<type*, dimensions>>>();
+        return vector<vector<float*>>();
 
     const vector<vector<Index>>& layer_input_indices = neural_network->get_layer_input_indices();
 
     const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
     const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
 
-    vector<vector<pair<type*, dimensions>>> layer_input_pairs_device(layers_number);
+    vector<vector<float*>> layer_input_device(layers_number);
 
-    layer_input_pairs_device[0] = batch_input_pairs_device;
+    layer_input_device[0] = batch_input_device;
 
     for (Index i = first_trainable_layer_index; i <= last_trainable_layer_index; i++)
     {
         const vector<Index>& this_layer_input_indices = layer_input_indices[i];
 
-        layer_input_pairs_device[i].resize(1);
+        layer_input_device[i].resize(1);
 
         if (neural_network->get_model_type_string() == "TextClassification") {
 
             if (i == first_trainable_layer_index)
             {
-                vector<pair<type*, dimensions>> batch_input_pairs1;
-                batch_input_pairs1.push_back(batch_input_pairs_device[0]);
-                layer_input_pairs_device[i] = batch_input_pairs1;
+                vector<float*> batch_input_pairs1;
+                batch_input_pairs1.push_back(batch_input_device[0]);
+                layer_input_device[i] = batch_input_pairs1;
                 continue;
             }
 
             if (i == first_trainable_layer_index + 1)
             {
-                vector<pair<type*, dimensions>> batch_input_pairs2;
-                batch_input_pairs2.push_back(batch_input_pairs_device[1]);
-                layer_input_pairs_device[i] = batch_input_pairs2;
+                vector<float*> batch_input_pairs2;
+                batch_input_pairs2.push_back(batch_input_device[1]);
+                layer_input_device[i] = batch_input_pairs2;
                 continue;
             }
         }
         else {
             if ((i == first_trainable_layer_index && is_training) || i == 0)
             {
-                layer_input_pairs_device[i] = batch_input_pairs_device;
+                layer_input_device[i] = batch_input_device;
                 continue;
             }
         };
 
         const Index this_layer_inputs_number = this_layer_input_indices.size();
 
-        layer_input_pairs_device[i].resize(this_layer_inputs_number);
-/*
+        layer_input_device[i].resize(this_layer_inputs_number);
+
         for (Index j = 0; j < this_layer_inputs_number; j++)
         {
             const Index this_layer_input_index = this_layer_input_indices[j];
 
-            layer_input_pairs_device[i][j] = layers[this_layer_input_index]->get_outputs_pair_device();
+            layer_input_device[i][j] = layers[this_layer_input_index]->get_output_device();
         }
-*/
     }
 
-    return layer_input_pairs_device;
+    return layer_input_device;
 }
 
 

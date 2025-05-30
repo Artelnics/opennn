@@ -320,9 +320,9 @@ struct BackPropagationCuda
 
     void set(const Index& = 0, LossIndex* = nullptr);
 
-    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs_device() const;
+    vector<vector<float*>> get_layer_deltas_device() const;
 
-    pair<type*, dimensions> get_output_deltas_pair_device() const;
+    float* get_output_deltas_device() const;
 
     void print();
 

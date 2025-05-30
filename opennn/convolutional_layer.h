@@ -269,7 +269,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     int output_batch_size, output_channels, output_height, output_width = 0;
 
-    type* convolutions = nullptr;
+    float* convolutions = nullptr;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
@@ -285,7 +285,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     bool is_first_layer = false;
 
-    type* reordered_inputs_device = nullptr;
+    float* reordered_inputs_device = nullptr;
 };
 
 

@@ -1034,7 +1034,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
                                                       const Tensor<type, 2>& targets) const
 {
-/*
+    /*
     const Index outputs_number = neural_network->get_outputs_number();
 
     if (outputs_number == 1)
@@ -1051,8 +1051,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& out
     {
         return calculate_confusion_multiple_classification(targets, outputs);
     }
-*/
-    return Tensor<Index, 2>();
+    */
 }
 
 
