@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 #include <cstring>
-#include <time.h>
+#include <ctime>
 
 #include "../opennn/pch.h"
 #include "../opennn/data_set.h"
