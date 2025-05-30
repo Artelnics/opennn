@@ -279,15 +279,8 @@ void FlattenForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     const Index inputs_number = flatten_layer->get_inputs_number();
     const Index outputs_number = flatten_layer->get_outputs_number();
 
-    // Reordered inputs
-
-    if (cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)) != cudaSuccess)
-        cout << "outputs allocation error" << endl;
-
-    // Outputs
-
-    if (cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "outputs allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&reordered_inputs, batch_size * inputs_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
 }
 
 
@@ -296,7 +289,7 @@ void FlattenForwardPropagationCuda::print() const
     const dimensions output_dimensions = layer->get_output_dimensions();
 
     cout << "Flatten Outputs:" << endl
-        << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
+         << matrix_from_device(outputs, batch_size, output_dimensions[0]) << endl;
 }
 
 
@@ -328,8 +321,7 @@ void FlattenBackPropagationCuda::set(const Index& new_batch_size, Layer* new_lay
 
     // Input derivatives
 
-    if (cudaMalloc(&input_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)) != cudaSuccess)
-        cout << "input_derivatives flatten layer back propagation allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&input_derivatives, batch_size * input_dimensions[0] * input_dimensions[1] * input_dimensions[2] * sizeof(float)));
 }
 
 

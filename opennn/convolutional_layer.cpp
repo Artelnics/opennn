@@ -697,7 +697,7 @@ array<pair<Index, Index>, 4> Convolutional::get_paddings() const
     const Index pad_rows = get_padding().first;
     const Index pad_columns = get_padding().second;
 
-    const array<std::pair<Index, Index>, 4> paddings =
+    const array<pair<Index, Index>, 4> paddings =
         { make_pair(0, 0),
           make_pair(pad_rows, pad_rows),
           make_pair(pad_columns, pad_columns),
@@ -1166,13 +1166,11 @@ void Convolutional::allocate_parameters_device()
     const Index S = get_kernel_width();
     const Index K = get_kernels_number();
 
-    if (cudaMalloc(&biases_device, K * sizeof(float)) != cudaSuccess)
-        cout << "Biases allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&biases_device, K * sizeof(float)));
 
     const size_t weights_size = static_cast<size_t>(R) * S * C * K;
 
-    if (cudaMalloc(&weights_device, weights_size * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&weights_device, weights_size * sizeof(float)));
 }
 
 
@@ -1200,8 +1198,7 @@ void Convolutional::copy_parameters_device()
     if (!weights.data())
         cout << "CPU weights data is null" << endl;
 
-    if (cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Biases device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(biases_device, biases.data(), biases.size() * sizeof(type), cudaMemcpyHostToDevice));
 
     const Index kernel_height = weights.dimension(0);
     const Index kernel_width = weights.dimension(1);
@@ -1217,8 +1214,7 @@ void Convolutional::copy_parameters_device()
                     weights_for_cudnn_layout(kernel_width_index, kernel_height_index, channel_index, kernel_index) 
                     = weights(kernel_height_index, kernel_width_index, channel_index, kernel_index);
 
-    if (cudaMemcpy(weights_device, weights_for_cudnn_layout.data(), weights_for_cudnn_layout.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Weights device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights_device, weights_for_cudnn_layout.data(), weights_for_cudnn_layout.size() * sizeof(type), cudaMemcpyHostToDevice));
 }
 
 
@@ -1228,8 +1224,7 @@ void Convolutional::copy_parameters_host()
 
     if (!weights_device) cout << "Weights is null" << endl;
 
-    if (cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Biases host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost));
 
     const Index kernel_height = weights.dimension(0);
     const Index kernel_width = weights.dimension(1);
@@ -1238,8 +1233,7 @@ void Convolutional::copy_parameters_host()
 
     Tensor<type, 4> weights_cudnn_layout(kernel_width, kernel_height, channels, kernels_number);
 
-    if (cudaMemcpy(weights_cudnn_layout.data(), weights_device, weights_cudnn_layout.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Weights host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights_cudnn_layout.data(), weights_device, weights_cudnn_layout.size() * sizeof(type), cudaMemcpyDeviceToHost));
 
     for (Index k = 0; k < kernels_number; ++k)
         for (Index c = 0; c < channels; ++c)
@@ -1286,7 +1280,7 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
         is_first_layer = true;
 
     if (is_first_layer)
-        cudaMalloc(&reordered_inputs_device, batch_size * input_height * input_width * channels * sizeof(float));
+        CHECK_CUDA(cudaMalloc(&reordered_inputs_device, batch_size * input_height * input_width * channels * sizeof(float)));
 
     // Inputs
 
@@ -1337,9 +1331,8 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
         CUDNN_DATA_FLOAT,
         output_batch_size, output_channels, output_height, output_width );
 
-    cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float));
-
-    cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
 
     // Workspace
 
@@ -1353,7 +1346,7 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
     );
 
     if (workspace_bytes > 0)
-        cudaMalloc(&workspace, workspace_bytes);
+        CHECK_CUDA(cudaMalloc(&workspace, workspace_bytes));
 }
 
 
@@ -1422,8 +1415,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Inputs
 
-    if (cudaMalloc(&input_derivatives, input_size * sizeof(float)) != cudaSuccess)
-        cout << "input derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&input_derivatives, input_size * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&input_tensor_descriptor);
 
@@ -1449,8 +1441,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Error combinations derivatives
 
-    if (cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)) != cudaSuccess)
-        cout << "error_combinations_derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)))
 
     cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
 
@@ -1464,8 +1455,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Biases
 
-    if (cudaMalloc(&bias_derivatives_device, kernels_number * sizeof(float)) != cudaSuccess)
-        cout << "bias_derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&bias_derivatives_device, kernels_number * sizeof(float)));
 
     // Kernel descriptor
 
@@ -1481,8 +1471,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Kernel derivatives
 
-    if (cudaMalloc(&weight_derivatives_device, kernel_size * sizeof(float)) != cudaSuccess)
-        cout << "kernel derivatives allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&weight_derivatives_device, kernel_size * sizeof(float)));
 
     cudnnCreateFilterDescriptor(&weight_derivatives_tensor_descriptor);
 
@@ -1525,11 +1514,9 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Workspace memory
 
-    if (cudaMalloc(&backward_data_workspace, backward_data_workspace_bytes) != cudaSuccess)
-        cout << "backward data workspace allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&backward_data_workspace, backward_data_workspace_bytes));
 
-    if (cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes) != cudaSuccess)
-        cout << "backward filter workspace allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&backward_filter_workspace, backward_filter_workspace_bytes));
 }
 
 

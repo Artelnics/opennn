@@ -85,6 +85,7 @@ public:
     virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
+    void shutdown_threads();
 
     // Forward propagation
 

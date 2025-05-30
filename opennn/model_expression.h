@@ -12,9 +12,6 @@
 #include "neural_network.h"
 #include "data_set.h"
 
-//#include "tensors.h"
-//#include <unordered_map>
-
 namespace opennn
 {
 

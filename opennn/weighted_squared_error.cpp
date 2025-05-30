@@ -24,6 +24,9 @@ void WeightedSquaredError::set(NeuralNetwork* new_neural_network, DataSet* new_d
 {
     const unsigned int threads_number = thread::hardware_concurrency();
 
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -31,6 +34,7 @@ void WeightedSquaredError::set(NeuralNetwork* new_neural_network, DataSet* new_d
     set_neural_network(new_neural_network);
     set_data_set(new_data_set);
 }
+
 
 type WeightedSquaredError::get_positives_weight() const
 {

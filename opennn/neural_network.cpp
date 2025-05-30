@@ -26,7 +26,6 @@
 #include "embedding_layer.h"
 #include "multihead_attention_layer.h"
 #include "recurrent_layer.h"
-//#include "transformer.h"
 
 namespace opennn
 {
@@ -110,22 +109,14 @@ string NeuralNetwork::get_model_type_string() const
 {
     switch (model_type)
     {
-        case ModelType::Default:
-            return "Default";
-        case ModelType::AutoAssociation:
-            return "AutoAssociation";
-        case ModelType::Approximation:
-            return "Approximation";
-        case ModelType::Classification:
-            return "Classification";
-        case ModelType::Forecasting:
-            return "Forecasting";
-        case ModelType::TextClassification:
-            return "TextClassification";
-        case ModelType::ImageClassification:
-            return "ImageClassification";
-        default:
-            throw runtime_error("Unkown model type");
+        case ModelType::Default: return "Default";
+        case ModelType::AutoAssociation: return "AutoAssociation";
+        case ModelType::Approximation: return "Approximation";
+        case ModelType::Classification: return "Classification";
+        case ModelType::Forecasting: return "Forecasting";
+        case ModelType::TextClassification: return "TextClassification";
+        case ModelType::ImageClassification: return "ImageClassification";
+        default: throw runtime_error("Unkown model type");
     }
 }
 
@@ -268,7 +259,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
             input_names[i] = "input_" + to_string(i+1);
     }
 
-
     const Index outputs_number = accumulate(output_dimensions.begin(),
                                             output_dimensions.end(),
                                             1,
@@ -302,18 +292,14 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     case ModelType::AutoAssociation:
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
         break;
-    
 
     case ModelType::TextClassification:
         set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
-
     default:
         break;
-
     }
-
 }
 
 
@@ -321,21 +307,20 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
                                       const dimensions& complexity_dimensions, 
                                       const dimensions& output_dimensions)
 {
-
     const Index complexity_size = complexity_dimensions.size();
 
     add_layer(make_unique<Scaling2d>(input_dimensions));
 
     for (Index i = 0; i < complexity_size; i++)
-        add_layer(make_unique<Dense2d>(/*input_dimensions*/get_output_dimensions(),
-                                               dimensions{ complexity_dimensions[i] },
-                                               Dense2d::Activation::RectifiedLinear,
-                                               "perceptron_layer_" + to_string(i + 1)));
+        add_layer(make_unique<Dense2d>(get_output_dimensions(),
+                                       dimensions{ complexity_dimensions[i] },
+                                       Dense2d::Activation::RectifiedLinear,
+                                       "perceptron_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                           output_dimensions,
-                                           Dense2d::Activation::Linear,
-                                           "perceptron_layer_" + to_string(complexity_size + 1)));
+                                   output_dimensions,
+                                   Dense2d::Activation::Linear,
+                                   "approximation_layer"));
 
     add_layer(make_unique<Unscaling>(output_dimensions));
 
@@ -356,11 +341,11 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
                                                dimensions{complexity_dimensions[i]},
                                                Dense2d::Activation::HyperbolicTangent,
                                                "perceptron_layer_" + to_string(i + 1)));
-/*
+
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                              output_dimensions,
-                                              "dense_2d_layer"));
-*/
+                                   output_dimensions,
+                                   Dense2d::Activation::Logistic,
+                                   "classification_layer"));
 }
 
 
@@ -393,7 +378,7 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
 
-    add_layer(make_unique<Dense2d>(input_dimensions, 
+    add_layer(make_unique<Dense2d>(input_dimensions,
                                       dimensions{mapping_neurons_number}, 
                                       Dense2d::Activation::HyperbolicTangent,
                                       "mapping_layer"));
@@ -467,7 +452,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
                                             const dimensions& complexity_dimensions,
                                             const dimensions& output_dimensions)
 {
-/*
+
     layers.resize(0);
 
     // input_names.resize(input_length + decoder_length);
@@ -480,7 +465,7 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     const Index perceptron_depth = 32;
     const Index heads_number = 2;
     const type dropout_rate = 0;
-
+/*
     unique_ptr<Embedding> embedding_layer
         = make_unique<Embedding>(input_dimensions[0],
                                       input_dimensions[1],
@@ -493,9 +478,6 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
     add_layer(std::move(embedding_layer));
     set_layer_inputs_indices("embedding", "input");
 
-    // cout<<get_output_dimensions().size()<<endl;
-    // cout<<get_output_dimensions()[0]<<endl;
-    // cout<<get_output_dimensions()[1]<<endl;
     // Encoder
 
     for(Index i = 0; i < complexity_size; i++)
@@ -701,6 +683,13 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
     for (const unique_ptr<Layer>& layer : layers)
         layer->set_threads_number(new_threads_number);
+}
+
+
+void NeuralNetwork::shutdown_threads()
+{
+    for (const unique_ptr<Layer>& layer : layers)
+        layer->shutdown_threads();
 }
 
 
@@ -1290,7 +1279,7 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
     {
         const Layer::Type layer_type = layers[i]->get_type();
 
-        if (layer_type != Layer::Type::Dense2d) 
+        if (layer_type != Layer::Type::Dense2d)
             continue;
 
         information(perceptron_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);
@@ -2152,8 +2141,6 @@ void NeuralNetwork::destroy_cuda() const
         layer->destroy_cuda();
 }
 
-
-// CUDA structs
 
 ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_size, NeuralNetwork* new_neural_network)
 {
