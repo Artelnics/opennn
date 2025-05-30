@@ -1366,7 +1366,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
     for (Index i = 0; i < layers_number; i++)
         layers[i]->to_XML(printer);
 
-
     // Layer input indices
 
     printer.OpenElement("LayerInputIndices");
@@ -1406,7 +1405,6 @@ void NeuralNetwork::to_XML(XMLPrinter& printer) const
 
 void NeuralNetwork::from_XML(const XMLDocument& document)
 {
-
     set();
 
     const XMLElement* neural_network_element = document.FirstChildElement("NeuralNetwork");

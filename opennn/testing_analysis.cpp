@@ -932,7 +932,7 @@ Tensor<Index, 1> TestingAnalysis::calculate_positives_negatives_rate(const Tenso
 }
 
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_threshold) const
 {
     check();
 
@@ -948,7 +948,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
     {
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs);
 
-        return calculate_confusion(outputs, targets);
+        return calculate_confusion(outputs, targets, decision_threshold);
     }
     else if(input_dimensions.size() == 3)
     {
@@ -963,7 +963,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
 
         const Tensor<type, 2> outputs = neural_network->calculate_outputs(inputs_4d);
 
-        return calculate_confusion(outputs, targets);
+        return calculate_confusion(outputs, targets, decision_threshold);
     }
 
     return Tensor<Index, 2>();
@@ -1032,26 +1032,16 @@ Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_con
 
 
 Tensor<Index, 2> TestingAnalysis::calculate_confusion(const Tensor<type, 2>& outputs,
-                                                      const Tensor<type, 2>& targets) const
+                                                      const Tensor<type, 2>& targets,
+                                                      const type& decision_threshold) const
 {
-/*
     const Index outputs_number = neural_network->get_outputs_number();
 
     if (outputs_number == 1)
-    {
-        Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network->get_first(Layer::Type::Dense2d));
-
-        const type decision_threshold = dense_2d_layer
-                                        ? dense_2d_layer->get_decision_threshold()
-                                        : type(0.5);
-
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
-    }
     else
-    {
         return calculate_confusion_multiple_classification(targets, outputs);
-    }
-*/
+
     return Tensor<Index, 2>();
 }
 

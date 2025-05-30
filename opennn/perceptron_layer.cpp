@@ -175,6 +175,8 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
         activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = Activation::ExponentialLinear;
+    else if(new_activation_function_name == "Softmax")
+        activation_function = Activation::Softmax;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
