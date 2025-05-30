@@ -66,6 +66,7 @@ public:
 
    void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
+   void shutdown_threads();
 
    void set_learning_rate_method(const LearningRateMethod&);
    void set_learning_rate_method(const string&);

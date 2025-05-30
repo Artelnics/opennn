@@ -56,6 +56,7 @@ public:
    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set_threads_number(const int&);
+   void shutdown_threads();
 
    void set_neural_network(NeuralNetwork*);
 

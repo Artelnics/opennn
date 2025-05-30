@@ -291,7 +291,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     
     case ModelType::AutoAssociation:
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
-        break;   
+        break;
 
     case ModelType::TextClassification:
         set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
@@ -378,7 +378,7 @@ void NeuralNetwork::set_auto_association(const dimensions& input_dimensions,
     const Index mapping_neurons_number = 10;
     const Index bottle_neck_neurons_number = complexity_dimensions[0];
 
-    add_layer(make_unique<Dense2d>(input_dimensions, 
+    add_layer(make_unique<Dense2d>(input_dimensions,
                                       dimensions{mapping_neurons_number}, 
                                       Dense2d::Activation::HyperbolicTangent,
                                       "mapping_layer"));
@@ -683,6 +683,13 @@ void NeuralNetwork::set_threads_number(const int& new_threads_number)
 {
     for (const unique_ptr<Layer>& layer : layers)
         layer->set_threads_number(new_threads_number);
+}
+
+
+void NeuralNetwork::shutdown_threads()
+{
+    for (const unique_ptr<Layer>& layer : layers)
+        layer->shutdown_threads();
 }
 
 
@@ -1272,7 +1279,7 @@ Tensor<string, 2> NeuralNetwork::get_perceptron_layers_information() const
     {
         const Layer::Type layer_type = layers[i]->get_type();
 
-        if (layer_type != Layer::Type::Dense2d) 
+        if (layer_type != Layer::Type::Dense2d)
             continue;
 
         information(perceptron_layer_index, 0) = to_string(layers[i]->get_input_dimensions()[0]);

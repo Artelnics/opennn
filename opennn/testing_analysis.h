@@ -87,6 +87,7 @@ public:
    void set_display(const bool&);
 
    void set_threads_number(const int&);
+   void shutdown_threads();
 
    // Checking
 

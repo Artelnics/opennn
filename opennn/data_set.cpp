@@ -1794,6 +1794,9 @@ void DataSet::set_display(const bool& new_display)
 void DataSet::set_default()
 {
     const unsigned int threads_number = thread::hardware_concurrency();
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -1946,8 +1949,23 @@ void DataSet::set_missing_values_method(const string& new_missing_values_method)
 
 void DataSet::set_threads_number(const int& new_threads_number)
 {
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    if (thread_pool != nullptr)
+        shutdown_threads();
+
+    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
+void DataSet::shutdown_threads()
+{
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    if(thread_pool != nullptr) {
+        thread_pool.release();
+        thread_pool.reset();
+    }
 }
 
 
@@ -3114,9 +3132,9 @@ void DataSet::print() const
     print_vector(get_dimensions(DataSet::VariableUse::Target));
 
     cout << "Number of training samples: " << training_samples_number << endl
-         << "Number of selection samples: " << selection_samples_number << endl
-         << "Number of testing samples: " << testing_samples_number << endl
-         << "Number of unused samples: " << unused_samples_number << endl;
+        << "Number of selection samples: " << selection_samples_number << endl
+        << "Number of testing samples: " << testing_samples_number << endl
+        << "Number of unused samples: " << unused_samples_number << endl;
 
     for (const DataSet::RawVariable& raw_variable : raw_variables)
         raw_variable.print();
@@ -3160,7 +3178,7 @@ void DataSet::print_raw_variables() const
 
 void DataSet::print_data() const
 {
-     cout << data << endl;
+    cout << data << endl;
 }
 
 

@@ -57,6 +57,9 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -66,8 +69,23 @@ void LossIndex::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    if (thread_pool != nullptr)
+        shutdown_threads();
+
+    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
+void LossIndex::shutdown_threads()
+{
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    if(thread_pool != nullptr) {
+        thread_pool.release();
+        thread_pool.reset();
+    }
 }
 
 
@@ -313,6 +331,7 @@ string LossIndex::write_regularization_method() const
     case RegularizationMethod::NoRegularization: return "NO_REGULARIZATION";
     case RegularizationMethod::L1: return "L1_NORM";
     case RegularizationMethod::L2: return "L2_NORM";
+
     default: return string();
     }
 }
@@ -598,7 +617,6 @@ vector<vector<pair<type*, dimensions>>> BackPropagation::get_layer_delta_pairs()
             layer_delta_pairs[i].push_back(input_derivative_pairs[input_index]);
         }
     }
-
     return layer_delta_pairs;
 }
 
@@ -693,6 +711,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
 
+    batch.shutdown_threads();
+
     return numerical_gradient;
 }
 
@@ -765,6 +785,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
         numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
     }
 
+    batch.shutdown_threads();
+
     return numerical_gradient_lm;
 }
 
@@ -822,6 +844,8 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 
         numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
     }
+
+    batch.shutdown_threads();
 
     return numerical_inputs_derivatives;
 }
@@ -900,6 +924,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         for(Index i = 0; i < samples_number; i++)
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
     }
+
+    batch.shutdown_threads();
 
     return jacobian;
 }
@@ -1123,6 +1149,8 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
         for (Index j = 0; j < i; j++)
             H(i, j) = H(j, i);
 
+    batch.shutdown_threads();
+
     return H;
 }
 
@@ -1297,7 +1325,7 @@ void BackPropagationLM::set(const Index&new_samples_number,
 }
 
 
-BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index) 
+BackPropagationLM::BackPropagationLM(const Index&new_batch_size, LossIndex *new_loss_index)
 {
     set(new_batch_size, new_loss_index);
 }
