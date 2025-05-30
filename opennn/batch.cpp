@@ -162,29 +162,36 @@ void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
     data_set = new_data_set;
 
     const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
-    const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
+    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
     const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {
+        cout << "data_set_input_dimensions: " << endl;
+
         input_dimensions = { samples_number};
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
 
         const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
         input_tensor.resize(input_size);
+
+        cout << "input_tensor: " << input_tensor.dimensions() << endl;
     }
 
-    if (!data_set_decoder_dimensions.empty())
-    {
-        decoder_dimensions = { samples_number };
-        decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
+    // @todo
+    // if (!data_set_decoder_dimensions.empty())
+    // {
+    //     decoder_dimensions = { samples_number };
+    //     decoder_dimensions.insert(decoder_dimensions.end(), data_set_decoder_dimensions.begin(), data_set_decoder_dimensions.end());
 
-        const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
-        decoder_tensor.resize(decoder_size);
-    }
+    //     const Index decoder_size = accumulate(decoder_dimensions.begin(), decoder_dimensions.end(), 1, multiplies<Index>());
+    //     decoder_tensor.resize(decoder_size);
+    // }
 
     if (!data_set_target_dimensions.empty())
     {
+        cout << "data_set_input_dimensions: " << endl;
+
         target_dimensions = { samples_number};
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
 

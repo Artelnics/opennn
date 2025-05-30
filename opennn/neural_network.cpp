@@ -1033,26 +1033,26 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 }
 
 // CREATED JUST TO TEST THE BERT PROBLEM
-Tensor<type, 3> NeuralNetwork::calculate_output(const Tensor<type, 2>& inputs)
-{
-    const Index layers_number = get_layers_number();
+// Tensor<type, 3> NeuralNetwork::calculate_output(const Tensor<type, 2>& inputs)
+// {
+//     const Index layers_number = get_layers_number();
 
-    if (layers_number == 0)
-        return Tensor<type, 3>();
-    const Index batch_size = inputs.dimension(0);
-    const Index inputs_number = inputs.dimension(1);
+//     if (layers_number == 0)
+//         return Tensor<type, 3>();
+//     const Index batch_size = inputs.dimension(0);
+//     const Index inputs_number = inputs.dimension(1);
 
-    ForwardPropagation forward_propagation(batch_size, this);
+//     ForwardPropagation forward_propagation(batch_size, this);
 
-    const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
+//     const pair<type*, dimensions> input_pair((type*)inputs.data(), {{batch_size, inputs_number}});
 
-    forward_propagate({input_pair}, forward_propagation, false);
+//     forward_propagate({input_pair}, forward_propagation, false);
 
-    const pair<type*, dimensions> outputs_pair
-        = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
+//     const pair<type*, dimensions> outputs_pair
+//         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
 
-    return tensor_map_3(outputs_pair);
-}
+//     return tensor_map_3(outputs_pair);
+// }
 
 Tensor<type, 3> NeuralNetwork::calculate_outputs(const Tensor<type, 3>& inputs)
 {

@@ -112,17 +112,28 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
+    // cout << "samples_number: " << samples_number << endl;
+    // cout << "targets_pair_first: " << targets_pair.first << endl;
+    // cout << "targets_pair_second: " << endl;
+    // print_vector(targets_pair.second);
+
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
+    cout << "outputs: " << outputs.dimensions() << endl;
+
     // Back propagation
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
+
+    cout << "output_deltas: " << output_deltas << endl;
+
+    // throw runtime_error("ehh");
 
     output_deltas.device(*thread_pool_device)
         = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);
@@ -460,13 +471,21 @@ void CrossEntropyError2d::calculate_binary_output_delta_cuda(const BatchCuda& ba
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &beta,
+<<<<<<< Updated upstream
         output_tensor_descriptor,
+=======
+        outputs_tensor_descriptor,
+>>>>>>> Stashed changes
         numerator_2,
         &beta_minus_one,
         output_tensor_descriptor,
         targets,
         &beta,
+<<<<<<< Updated upstream
         output_tensor_descriptor,
+=======
+        outputs_tensor_descriptor,
+>>>>>>> Stashed changes
         numerator_2);
 
     // (-targets / (outputs)
