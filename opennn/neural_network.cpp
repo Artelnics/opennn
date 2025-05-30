@@ -110,22 +110,14 @@ string NeuralNetwork::get_model_type_string() const
 {
     switch (model_type)
     {
-        case ModelType::Default:
-            return "Default";
-        case ModelType::AutoAssociation:
-            return "AutoAssociation";
-        case ModelType::Approximation:
-            return "Approximation";
-        case ModelType::Classification:
-            return "Classification";
-        case ModelType::Forecasting:
-            return "Forecasting";
-        case ModelType::TextClassification:
-            return "TextClassification";
-        case ModelType::ImageClassification:
-            return "ImageClassification";
-        default:
-            throw runtime_error("Unkown model type");
+        case ModelType::Default: return "Default";
+        case ModelType::AutoAssociation: return "AutoAssociation";
+        case ModelType::Approximation: return "Approximation";
+        case ModelType::Classification: return "Classification";
+        case ModelType::Forecasting: return "Forecasting";
+        case ModelType::TextClassification: return "TextClassification";
+        case ModelType::ImageClassification: return "ImageClassification";
+        default: throw runtime_error("Unkown model type");
     }
 }
 
@@ -268,7 +260,6 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
             input_names[i] = "input_" + to_string(i+1);
     }
 
-
     const Index outputs_number = accumulate(output_dimensions.begin(),
                                             output_dimensions.end(),
                                             1,
@@ -301,19 +292,15 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     
     case ModelType::AutoAssociation:
         set_auto_association(input_dimensions, complexity_dimensions, output_dimensions);
-        break;
-    
+        break;   
 
     case ModelType::TextClassification:
         set_text_classification(input_dimensions, complexity_dimensions, output_dimensions);
         break;
 
-
     default:
         break;
-
     }
-
 }
 
 
@@ -321,7 +308,6 @@ void NeuralNetwork::set_approximation(const dimensions& input_dimensions,
                                       const dimensions& complexity_dimensions, 
                                       const dimensions& output_dimensions)
 {
-
     const Index complexity_size = complexity_dimensions.size();
 
     add_layer(make_unique<Scaling2d>(input_dimensions));
@@ -2155,8 +2141,6 @@ void NeuralNetwork::destroy_cuda() const
         layer->destroy_cuda();
 }
 
-
-// CUDA structs
 
 ForwardPropagationCuda::ForwardPropagationCuda(const Index& new_batch_size, NeuralNetwork* new_neural_network)
 {
