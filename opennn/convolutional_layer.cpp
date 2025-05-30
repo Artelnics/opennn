@@ -949,7 +949,7 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
     const Index width = get_input_width();
     const Index channels = get_input_channels();
 
-    const type* input_device = inputs_device[0];
+    const float* input_device = inputs_device[0];
     
     // Forward propagation
 
@@ -960,8 +960,8 @@ void Convolutional::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     const Index batch_size = convolutional_layer_forward_propagation_cuda->batch_size;
 
-    type* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
-    type* outputs = convolutional_layer_forward_propagation_cuda->outputs;
+    float* convolutions = convolutional_layer_forward_propagation_cuda->convolutions;
+    float* outputs = convolutional_layer_forward_propagation_cuda->outputs;
 
     void* workspace = convolutional_layer_forward_propagation_cuda->workspace;
     size_t workspace_bytes = convolutional_layer_forward_propagation_cuda->workspace_bytes;
@@ -1331,7 +1331,13 @@ void ConvolutionalForwardPropagationCuda::set(const Index& new_batch_size, Layer
         CUDNN_DATA_FLOAT,
         output_batch_size, output_channels, output_height, output_width );
 
+<<<<<<< HEAD
     CHECK_CUDA(cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float)));
+=======
+    cudaMalloc(&outputs, output_batch_size * output_height * output_width * output_channels * sizeof(float));
+
+    cudaMalloc(&convolutions, output_batch_size * output_height * output_width * output_channels * sizeof(float));
+>>>>>>> 550b99690627b8f00a41df50314139c1e9506b00
 
     // Workspace
 
@@ -1363,6 +1369,7 @@ void ConvolutionalForwardPropagationCuda::print() const
 void ConvolutionalForwardPropagationCuda::free()
 {
     cudaFree(outputs);
+    cudaFree(convolutions);
     cudaFree(workspace);
     cudaFree(reordered_inputs_device);
 

@@ -94,9 +94,9 @@ string Dense2d::get_activation_function_string() const
 
 
 void Dense2d::set(const dimensions& new_input_dimensions,
-                     const dimensions& new_output_dimensions,
-                     const Dense2d::Activation& new_activation_function,
-                     const string& new_name)
+                  const dimensions& new_output_dimensions,
+                  const Dense2d::Activation& new_activation_function,
+                  const string& new_name)
 {
     if (new_input_dimensions.size() != 1)
         throw runtime_error("Input dimensions size is not 1");
@@ -109,7 +109,13 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     set_parameters_random();
 
-    set_activation_function(new_activation_function);
+    if (new_activation_function == Activation::Softmax)
+    {
+        new_output_dimensions[0] == 1
+            ? activation_function = Activation::Logistic
+            : activation_function = Activation::Softmax;
+    } else
+        set_activation_function(new_activation_function);
 
     set_name(new_name);
     
@@ -118,20 +124,22 @@ void Dense2d::set(const dimensions& new_input_dimensions,
     #ifdef OPENNN_CUDA
     
     // Activations
-
-    cudnnCreateActivationDescriptor(&activation_descriptor);
-
-    cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
-
-    switch (get_activation_function())
+    if (activation_function != Activation::Softmax)
     {
-    case Dense2d::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-    case Dense2d::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-    case Dense2d::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-    case Dense2d::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-    case Dense2d::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
+        cudnnCreateActivationDescriptor(&activation_descriptor);
 
-    default: break;
+        cudnnActivationMode_t activation = CUDNN_ACTIVATION_IDENTITY;
+
+        switch (get_activation_function())
+        {
+        case Dense2d::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
+        case Dense2d::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
+        case Dense2d::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
+        case Dense2d::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
+        case Dense2d::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
+
+        default: break;
+        }
     }
 
     #endif
@@ -193,6 +201,8 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
         activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = Activation::ExponentialLinear;
+    else if(new_activation_function_name == "Softmax")
+        activation_function = Activation::Softmax;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }

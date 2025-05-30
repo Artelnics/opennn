@@ -396,14 +396,14 @@ Tensor<type, 2> BatchCuda::get_targets_device() const
 }
 
 
-vector<pair<type*, dimensions>> BatchCuda::get_input_pairs_device() const
+vector<float*> BatchCuda::get_input_device() const
 {
-    vector<pair<type*, dimensions>> input_pairs = { {inputs_device, input_dimensions} };
+    vector<float*> inputs = { inputs_device };
 
     if (!decoder_dimensions.empty())
-        input_pairs.insert(input_pairs.begin(), { decoder_device, decoder_dimensions });
+        inputs.insert(inputs.begin(), decoder_device );
 
-    return input_pairs;
+    return inputs;
 }
 
 

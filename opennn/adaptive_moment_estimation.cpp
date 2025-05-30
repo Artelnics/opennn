@@ -654,11 +654,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
                                      target_variable_indices);
 
             // Neural network
-            /*
-            neural_network->forward_propagate_cuda(training_batch_cuda.get_input_pairs_device(),
+
+            neural_network->forward_propagate_cuda(training_batch_cuda.get_input_device(),
                                                    training_forward_propagation_cuda,
                                                    is_training);
-*/
+
             // Loss index
 
             loss_index->back_propagate_cuda(training_batch_cuda,
@@ -701,11 +701,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
                                           target_variable_indices);
 
                 // Neural network
-                /*
-                neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_pairs_device(),
+
+                neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_device(),
                                                        selection_forward_propagation_cuda,
                                                        is_training);
-*/
+
                 // Loss
 
                 loss_index->calculate_error_cuda(selection_batch_cuda,

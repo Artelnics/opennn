@@ -420,6 +420,8 @@ struct LayerForwardPropagationCuda
 
     virtual void free() {}
 
+    virtual float* get_output_device() { return outputs; }
+
     Index batch_size = 0;
 
     Layer* layer = nullptr;
@@ -434,9 +436,11 @@ struct LayerBackPropagationCuda
 {
     LayerBackPropagationCuda() {}
 
+    virtual void print() const {}
+
     virtual void free() {}
 
-    virtual void print() const {}
+    virtual vector<float*> get_input_derivatives_device() { return { input_derivatives }; }
 
     Index batch_size = 0;
 

@@ -654,7 +654,8 @@ namespace opennn
             if (!target)
             {
                 if (model_type != ModelType::Classification ||
-                    raw_variables[i].type == RawVariableType::Binary)
+                    (raw_variables[i].type == RawVariableType::Binary ||
+                     raw_variables[i].type == RawVariableType::Categorical))
                 {
                     raw_variables[i].set_use(VariableUse::Target);
                     target = true;

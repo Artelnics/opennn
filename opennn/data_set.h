@@ -627,7 +627,7 @@ struct BatchCuda
 {
     BatchCuda(const Index& = 0, DataSet* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_pairs_device() const;
+    vector<float*> get_input_device() const;
     pair<type*, dimensions> get_target_pair_device() const;
 
     Index get_samples_number() const;
