@@ -31,8 +31,8 @@ int main()
 
         LanguageDataSet language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
 
-        const Index input_length = language_data_set.get_input_length();
-        const Index target_length = language_data_set.get_target_length();
+        const Index input_length = language_data_set.get_input_size();
+        const Index target_length = language_data_set.get_target_size();
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
 
@@ -68,7 +68,7 @@ int main()
 
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
-        language_data_set.split_samples_sequential(0.8, 0.2, 0);
+        language_data_set.split_samples_sequential(0.8F, 0.2F, 0);
         // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(3000);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
