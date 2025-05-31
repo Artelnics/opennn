@@ -12,7 +12,7 @@
 #include "pch.h"
 
 #include "tinyxml2.h"
-#include "correlation.h"
+#include "correlations.h"
 #include "scaling.h"
 
 using namespace tinyxml2;
@@ -240,6 +240,7 @@ public:
     void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
+    void shutdown_threads();
 
     // Samples set
 
@@ -592,6 +593,7 @@ struct Batch
     Index get_samples_number() const;
 
     void set(const Index& = 0, DataSet* = nullptr);
+    void shutdown_threads();
 
     void fill(const vector<Index>&,
               const vector<Index>&,
@@ -627,7 +629,7 @@ struct BatchCuda
 {
     BatchCuda(const Index& = 0, DataSet* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_pairs_device() const;
+    vector<float*> get_input_device() const;
     pair<type*, dimensions> get_target_pair_device() const;
 
     Index get_samples_number() const;

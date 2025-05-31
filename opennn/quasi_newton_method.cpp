@@ -462,7 +462,6 @@ TrainingResults QuasiNewtonMethod::perform_training()
         optimization_data.epoch = epoch;
 
         // Neural network
-
         neural_network->forward_propagate(training_batch.get_input_pairs(),
                                           training_forward_propagation, 
                                           is_training);
@@ -566,6 +565,9 @@ TrainingResults QuasiNewtonMethod::perform_training()
     set_unscaling();
 
     if(display) results.print();
+
+    training_batch.shutdown_threads();
+    selection_batch.shutdown_threads();
 
     return results;
 }

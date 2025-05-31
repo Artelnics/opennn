@@ -58,44 +58,6 @@ Tensor<type, 4> matrix_4d_from_device(const type*, const size_t&, const size_t&,
 
 void print_device_data(const type*, const size_t);
 
-// Activations kernels
-
-//__global__ void linear_kernel(int, const type*, type*);
-
-//__global__ void hyperbolic_tangent_kernel(int, const type*, type*);
-
-//__global__ void logistic_kernel(int, const type*, type*);
-
-//__global__ void scaled_exponential_linear_kernel(int, const type*, type*);
-
-__global__ void soft_plus_kernel(int, const type*, type*);
-
-__global__ void soft_sign_kernel(int, const type*, type*);
-
-__global__ void hard_logistic_kernel(int, const type*, type*);
-
-//__global__ void exponential_linear_kernel(int, const type*, type*);
-
-// Activation derivatives kernels
-
-//__global__ void linear_derivative_kernel(int, const type*, type*);
-
-//__global__ void logistic_derivative_kernel(int, const type*, type*);
-
-//__global__ void hyperbolic_tangent_derivative_kernel(int, const type*, type*);
-
-//__global__ void rectified_linear_derivative_kernel(int, const type*, type*);
-
-__global__ void scaled_exponential_linear_derivative_kernel(int, const type*, type*);
-
-__global__ void soft_plus_derivative_kernel(int, const type*, type*);
-
-__global__ void soft_sign_derivative_kernel(int, const type*, type*);
-
-__global__ void hard_logistic_derivative_kernel(int, const type*, type*);
-
-//__global__ void exponential_linear_derivative_kernel(int, const type*, type*);
-
 
 // Operation kernel
 
@@ -135,34 +97,6 @@ __global__ void divide_in_place_kernel(int, type*, const type*); // in place
 __global__ void subtract_in_place_kernel(int, type*, type*); // in place
 
 __global__ void sum_kernel(type*, type*, const size_t&); // vector sum
-
-
-// Activations wrappers
-
-void scaled_exponential_linear_cuda(const size_t&, const type*, type*);
-
-void soft_plus_cuda(const size_t&, const type*, type*);
-
-void soft_sign_cuda(const size_t&, const type*, type*);
-
-void hard_logistic_cuda(const size_t&, const type*, type*);
-
-//void exponential_linear_cuda(const size_t&, const type*, type*);
-
-// Derivatives activations wrappers
-
-
-void scaled_exponential_linear_derivatives_cuda(const size_t&, const type*, type*);
-
-void soft_plus_derivatives_cuda(const size_t&, const type*, type*);
-
-void soft_sign_derivatives_cuda(const size_t&, const type*, type*);
-
-void hard_logistic_derivatives_cuda(const size_t&, const type*, type*);
-
-//void exponential_linear_derivatives_cuda(const size_t&, const type*, type*);
-
-void softmax_derivatives_cuda(const int&, const int&, type*, type*);
 
 
 // Wrappers operations
@@ -244,15 +178,5 @@ __global__ void cross_entropy_error_kernel(const int, const float*, const float*
 
 void calculate_cross_entropy_error_derivative(const int&, const float*, const float*, float*);
 __global__ void cross_entropy_error_derivative_kernel(const int, const float*, const float*, float*);
-
-
-// 3D Layers operations
-
-void sum_matrices_rows_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels);
-
-void sum_matrices_collums_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels);
-
-void sum_matrices_channels_cuda(float* vector_device_1d, float* vector_device_3d, const int rows, const int collums, const int channels);
-
 
 #endif // KERNEL_CUH

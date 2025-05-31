@@ -222,7 +222,7 @@ string NeuronsSelection::write_time(const type& time) const
 NeuronsSelectionResults::NeuronsSelectionResults(const Index& maximum_epochs_number)
 {
     neurons_number_history.resize(maximum_epochs_number);
-    neurons_number_history.setConstant(0);
+    neurons_number_history.setZero();
 
     training_error_history.resize(maximum_epochs_number);
     training_error_history.setConstant(type(-1));

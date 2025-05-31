@@ -428,6 +428,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     if(display) results.print();
     
+    training_batch.shutdown_threads();
+    selection_batch.shutdown_threads();
+
     return results;
 }
 
@@ -645,11 +648,11 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
                                      target_variable_indices);
 
             // Neural network
-
+            /*
             neural_network->forward_propagate_cuda(training_batch_cuda.get_input_pairs_device(),
                                                    training_forward_propagation_cuda,
                                                    is_training);
-
+                                                   */
             // Loss index
 
             loss_index->back_propagate_cuda(training_batch_cuda,
@@ -692,11 +695,11 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
                                           target_variable_indices);
 
                 // Neural network
-
+                /*
                 neural_network->forward_propagate_cuda(selection_batch_cuda.get_input_pairs_device(),
                                                        selection_forward_propagation_cuda,
                                                        is_training);
-
+                                                       */
                 results.selection_error_history(epoch) = selection_error;
 
                 // Loss
@@ -815,13 +818,8 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 
     const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    // Gradient
-
-    if (cudaMalloc(&parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_increment allocation error" << endl;
-
-    if (cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "last_parameters_increment allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&parameters_increment, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)));
 }
 
 

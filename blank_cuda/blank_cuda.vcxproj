@@ -98,8 +98,6 @@
   <ItemGroup>
     <ClCompile Include="..\opennn\adaptive_moment_estimation.cpp" />
     <ClCompile Include="..\opennn\addition_layer_3d.cpp" />
-    <ClCompile Include="..\opennn\auto_associative_data_set.cpp" />
-    <ClCompile Include="..\opennn\auto_associative_neural_network.cpp" />
     <ClCompile Include="..\opennn\batch.cpp" />
     <ClCompile Include="..\opennn\bounding_layer.cpp" />
     <ClCompile Include="..\opennn\convolutional_layer.cpp" />
@@ -136,7 +134,6 @@
     <ClCompile Include="..\opennn\perceptron_layer.cpp" />
     <ClCompile Include="..\opennn\perceptron_layer_3d.cpp" />
     <ClCompile Include="..\opennn\pooling_layer.cpp" />
-    <ClCompile Include="..\opennn\probabilistic_layer.cpp" />
     <ClCompile Include="..\opennn\probabilistic_layer_3d.cpp" />
     <ClCompile Include="..\opennn\quasi_newton_method.cpp" />
     <ClCompile Include="..\opennn\recurrent_layer.cpp" />
@@ -165,8 +162,6 @@
   <ItemGroup>
     <ClInclude Include="..\opennn\adaptive_moment_estimation.h" />
     <ClInclude Include="..\opennn\addition_layer_3d.h" />
-    <ClInclude Include="..\opennn\auto_associative_data_set.h" />
-    <ClInclude Include="..\opennn\auto_associative_neural_network.h" />
     <ClInclude Include="..\opennn\back_propagation.h" />
     <ClInclude Include="..\opennn\batch.h" />
     <ClInclude Include="..\opennn\bounding_layer.h" />
@@ -211,13 +206,11 @@
     <ClInclude Include="..\opennn\neurons_selection.h" />
     <ClInclude Include="..\opennn\normalization_layer_3d.h" />
     <ClInclude Include="..\opennn\normalized_squared_error.h" />
-    <ClInclude Include="..\opennn\opennn.h" />
     <ClInclude Include="..\opennn\optimization_algorithm.h" />
     <ClInclude Include="..\opennn\pch.h" />
     <ClInclude Include="..\opennn\perceptron_layer.h" />
     <ClInclude Include="..\opennn\perceptron_layer_3d.h" />
     <ClInclude Include="..\opennn\pooling_layer.h" />
-    <ClInclude Include="..\opennn\probabilistic_layer.h" />
     <ClInclude Include="..\opennn\probabilistic_layer_3d.h" />
     <ClInclude Include="..\opennn\quasi_newton_method.h" />
     <ClInclude Include="..\opennn\recurrent_layer.h" />

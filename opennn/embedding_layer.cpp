@@ -120,18 +120,10 @@ void Embedding::set_parameters_random()
 {
     if(weights.size() == 0) return;
 
-    const type minimum = type(-0.05);
-    const type maximum = type(0.05);
-
     // First row must be 0s because input value 0 is padding
 
-    weights.chip(0, 0).setConstant(0);
-
-    #pragma omp parallel for
-
-    for (Index i = 1; i < weights.dimension(0); i++)
-        for (Index j = 0; j < weights.dimension(1); j++)
-            weights(i, j) = get_random_type(minimum, maximum);
+    weights.setRandom();
+    weights.chip(0, 0).setZero();
 }
 
 
@@ -189,7 +181,7 @@ void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_p
     // If it's not a transformer model, leave commented (to be consistent with the TensorFlow implementation)
     add_positional_encodings(outputs);
 
-    if(dropout_rate > 0 && is_training)
+    if(is_training && dropout_rate > 0)
         dropout(outputs, dropout_rate);
 }
 
@@ -362,7 +354,7 @@ void EmbeddingBackPropagation::print() const
 
 #ifdef OPENNN_CUDA
 
-void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& input_pairs_device,
+void Embedding::forward_propagate_cuda(const vector<float*>& inputs_device,
                                        unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                        const bool& is_training)
 {
@@ -370,8 +362,8 @@ void Embedding::forward_propagate_cuda(const vector<pair<type*, dimensions>>& in
 }
 
 
-void Embedding::back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                                    const vector<pair<type*, dimensions>>&,
+void Embedding::back_propagate_cuda(const vector<float*>&,
+                                    const vector<float*>&,
                                     unique_ptr<LayerForwardPropagationCuda>&,
                                     unique_ptr<LayerBackPropagationCuda>&) const
 {
@@ -401,8 +393,7 @@ void Embedding::allocate_parameters_device()
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
 }
 
 
@@ -419,8 +410,7 @@ void Embedding::copy_parameters_device()
     if (!weights_device)
         cout << "Weights device is null" << endl;
 
-    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Weights device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice));
 }
 
 
@@ -429,19 +419,18 @@ void Embedding::copy_parameters_host()
     if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
-    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Weights host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
 
-EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingLayerForwardPropagationCuda::EmbeddingLayerForwardPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerForwardPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
 }
@@ -453,34 +442,16 @@ void EmbeddingLayerForwardPropagationCuda::print() const
 }
 
 
-pair<type*, dimensions> EmbeddingLayerForwardPropagationCuda::get_outputs_pair_device() const
-{
-    const Embedding* embedding_layer = static_cast<Embedding*>(layer);
-
-    const Index sequence_length = embedding_layer->get_sequence_length();
-
-    const Index embedding_dimension = embedding_layer->get_embedding_dimension();
-
-    return { outputs, {batch_size, sequence_length, embedding_dimension} };
-}
-
-
-EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_samples_number, Layer* new_layer)
+EmbeddingLayerBackPropagationCuda::EmbeddingLayerBackPropagationCuda(const Index& new_batch_size, Layer* new_layer)
     : LayerBackPropagationCuda()
 {
-    set(new_batch_samples_number, new_layer);
+    set(new_batch_size, new_layer);
 }
 
 
-void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_samples_number, Layer* new_layer)
+void EmbeddingLayerBackPropagationCuda::set(const Index& new_batch_size, Layer* new_layer)
 {
 
-}
-
-
-vector<pair<type*, dimensions>> EmbeddingLayerBackPropagationCuda::get_input_derivative_pairs_device() const
-{
-    return vector<pair<type*, dimensions>>();
 }
 
 

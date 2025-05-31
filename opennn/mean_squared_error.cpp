@@ -23,7 +23,6 @@ void MeanSquaredError::calculate_error(const Batch& batch,
                                        BackPropagation& back_propagation) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
-
     // Batch
 
     const Index samples_number = batch.get_samples_number();
@@ -43,7 +42,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors = back_propagation.errors;
 
     Tensor<type, 0>& error = back_propagation.error;
-    
+
     errors.device(*thread_pool_device) = outputs - targets;
     
     error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);
@@ -181,9 +180,7 @@ void MeanSquaredError::calculate_error_cuda(const BatchCuda& batch_cuda,
 
     // Forward propagation
 
-    const pair<type*, dimensions> outputs_pair = forward_propagation_cuda.get_last_trainable_layer_outputs_pair_device();
-
-    const type* outputs = outputs_pair.first;
+    const type* outputs = forward_propagation_cuda.get_last_trainable_layer_outputs_device();
 
     // Back propagatioin
 
@@ -237,9 +234,7 @@ void MeanSquaredError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
 
     type* errors_device = back_propagation_cuda.errors;
 
-    const pair<type*, dimensions> output_deltas_pair_device = back_propagation_cuda.get_output_deltas_pair_device();
-
-    type* output_deltas_device = output_deltas_pair_device.first;
+    float* output_deltas_device = back_propagation_cuda.get_output_deltas_device();
 
     const type coefficient = type(2.0) / type(outputs_number * samples_number);
 

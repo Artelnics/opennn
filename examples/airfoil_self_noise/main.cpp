@@ -90,12 +90,7 @@ int main()
 
         // inputs.setValues({{type(800), type(0), type(0.3048), type(71.3), type(0.00266337)}});
 
-        // cout << inputs << endl;
-
         // const Tensor<type, 2> outputs = new_neural_network.calculate_outputs(inputs);
-
-//        cout << outputs << endl;
-
 
         Tensor<type, 2> inputs(1, 1);
         inputs(0,0) = 0.1;

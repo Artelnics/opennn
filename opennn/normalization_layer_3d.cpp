@@ -17,8 +17,6 @@ Normalization3d::Normalization3d(const Index& new_sequence_length,
                                  const Index& new_embedding_dimension,
                                  const string& new_name) : Layer()
 {
-    layer_type = Type::Normalization3d;
-
     set(new_sequence_length, new_embedding_dimension, new_name);
 }
 
@@ -83,6 +81,8 @@ void Normalization3d::set(const Index& new_sequence_length,
     betas.setZero();
 
     name = new_name;
+
+    layer_type = Type::Normalization3d;
 }
 
 
@@ -107,42 +107,15 @@ void Normalization3d::set_parameters_random()
 }
 
 
-void Normalization3d::standarization(const Tensor<type, 3>& inputs,
-                                     Tensor<type, 3>& outputs,
-                                     Tensor<type, 2>& means,
-                                     Tensor<type, 2>& standard_deviations) const
-{
-    const Index batch_size = inputs.dimension(0);
-    const Index sequence_length = inputs.dimension(1);
-    const Index embedding_dimension = inputs.dimension(2);
-
-    const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
-    const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});
-
-    means.device(*thread_pool_device) = inputs.mean(array<Index, 1>({2}));
-
-    standard_deviations.device(*thread_pool_device)
-        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)).square().mean(array<Index, 1>({2})).sqrt();
-
-    outputs.device(*thread_pool_device)
-        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
-        / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
-}
-
-
-void Normalization3d::affine_transformation(Tensor<type, 3>& outputs) const
-{
-    multiply_matrices(thread_pool_device.get(), outputs, gammas);
-
-    sum_matrices(thread_pool_device.get(), betas, outputs);
-}
-
-
 void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
                                         unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
                                         const bool&)
 {
-    const TensorMap<Tensor<type, 3>> inputs = tensor_map_3(input_pairs[0]);
+    const Index batch_size = layer_forward_propagation->batch_size;
+//    const Index sequence_length = get_sequence_length();
+    const Index embedding_dimension = get_embedding_dimension();
+
+    const TensorMap<Tensor<type, 3>> inputs(input_pairs[0].first, batch_size, sequence_length, embedding_dimension);
 
     Normalization3dForwardPropagation* this_forward_propagation =
         static_cast<Normalization3dForwardPropagation*>(layer_forward_propagation.get());
@@ -151,10 +124,26 @@ void Normalization3d::forward_propagate(const vector<pair<type*, dimensions>>& i
 
     Tensor<type, 2>& means = this_forward_propagation->means;
     Tensor<type, 2>& standard_deviations = this_forward_propagation->standard_deviations;
- 
-    standarization(inputs, outputs, means, standard_deviations);
 
-    affine_transformation(outputs);
+    const array<Index, 3> reshape_dims({batch_size, sequence_length, 1});
+    const array<Index, 3> broadcast_dims({1, 1, embedding_dimension});
+
+    // Standarization
+
+    means.device(*thread_pool_device) = inputs.mean(array<Index, 1>({2}));
+
+    standard_deviations.device(*thread_pool_device)
+        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims)).square().mean(array<Index, 1>({2})).sqrt();
+
+    outputs.device(*thread_pool_device)
+        = (inputs - means.reshape(reshape_dims).broadcast(broadcast_dims))
+          / (standard_deviations.reshape(reshape_dims).broadcast(broadcast_dims) + epsilon);
+
+    // Affine transformation
+
+    multiply_matrices(thread_pool_device.get(), outputs, gammas);
+
+    sum_matrices(thread_pool_device.get(), betas, outputs);
 }
 
 

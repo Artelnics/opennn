@@ -14,9 +14,6 @@
 namespace opennn
 {
 
-//struct Flatten3dForwardPropagation;
-//struct Flatten3dBackPropagation;
-
 class Flatten3d : public Layer
 {
 
@@ -32,20 +29,14 @@ public:
 
     void set(const dimensions & = {0,0});
 
-    // Forward propagation
-
     void forward_propagate(const vector<pair<type*, dimensions>>&,
                            unique_ptr<LayerForwardPropagation>&,
                            const bool&) override;
-
-    // Back-propagation
 
     void back_propagate(const vector<pair<type*, dimensions>>&,
                         const vector<pair<type*, dimensions>>&,
                         unique_ptr<LayerForwardPropagation>&,
                         unique_ptr<LayerBackPropagation>&) const override;
-
-    // Serialization
 
     void from_XML(const XMLDocument&) override;
 

@@ -23,12 +23,12 @@ public:
 
     enum class PoolingMethod{MaxPooling, AveragePooling};
 
-    Pooling(const dimensions& = {2, 2, 1},      // Input dimensions {height,width,channels}
-                 const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
-                 const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
-                 const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
-                 const PoolingMethod& = PoolingMethod::MaxPooling,
-                 const string = "pooling_layer");
+    Pooling(const dimensions& = {2, 2, 1}, // Input dimensions {height,width,channels}
+            const dimensions& = { 2, 2 },  // Pool dimensions {pool_height,pool_width}
+            const dimensions& = { 2, 2 },  // Stride dimensions {row_stride, column_stride}
+            const dimensions& = { 0, 0 },  // Padding dimensions {padding_height, padding_width}
+            const PoolingMethod& = PoolingMethod::MaxPooling,
+            const string = "pooling_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -109,12 +109,12 @@ public:
 
 public:
 
-    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+    void forward_propagate_cuda(const vector<float*>&,
                                 unique_ptr<LayerForwardPropagationCuda>&,
                                 const bool&) override;
 
-    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                             const vector<pair<type*, dimensions>>&,
+    void back_propagate_cuda(const vector<float*>&,
+                             const vector<float*>&,
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
@@ -189,37 +189,21 @@ struct PoolingForwardPropagationCuda : public LayerForwardPropagationCuda
 {
     PoolingForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair_device() const override;
-
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-<<<<<<< HEAD
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
-
+    
     cudnnPoolingMode_t pooling_mode = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-
-    cudnnPoolingDescriptor_t pooling_descriptor = nullptr;
-
-
-    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
-    void* dropout_states = nullptr;
-    size_t dropout_states_size = 0;
-    void* dropout_reserve_space = nullptr;
-    size_t dropout_reserve_space_size = 0;
-    unsigned long long dropout_seed = 1337ULL;
-    cudnnTensorDescriptor_t inputs_tensor_descriptor = nullptr;
 };
 
 
 struct PoolingBackPropagationCuda : public LayerBackPropagationCuda
 {
     PoolingBackPropagationCuda(const Index& = 0, Layer* = nullptr);
-
-    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
 
     void set(const Index& = 0, Layer* = nullptr);
 

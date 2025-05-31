@@ -67,7 +67,6 @@ HEADERS += \
     statistics.h \
     scaling.h \
     correlations.h \
-    correlation.h \
     tinyxml2.h \
     data_set.h \
     batch.h \

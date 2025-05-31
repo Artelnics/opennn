@@ -149,12 +149,12 @@ public:
 
     public:
 
-    void forward_propagate_cuda(const vector<pair<type*, dimensions>>&,
+    void forward_propagate_cuda(const vector<float*>&,
                                 unique_ptr<LayerForwardPropagationCuda>&,
                                 const bool&) override;
 
-    void back_propagate_cuda(const vector<pair<type*, dimensions>>&,
-                             const vector<pair<type*, dimensions>>&,
+    void back_propagate_cuda(const vector<float*>&,
+                             const vector<float*>&,
                              unique_ptr<LayerForwardPropagationCuda>&,
                              unique_ptr<LayerBackPropagationCuda>&) const override;
 
@@ -261,8 +261,6 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 {
     ConvolutionalForwardPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    pair<type*, dimensions> get_outputs_pair_device() const;
-
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
@@ -271,7 +269,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     int output_batch_size, output_channels, output_height, output_width = 0;
 
-    type* convolutions = nullptr;
+    float* convolutions = nullptr;
 
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
@@ -287,7 +285,7 @@ struct ConvolutionalForwardPropagationCuda : public LayerForwardPropagationCuda
 
     bool is_first_layer = false;
 
-    type* reordered_inputs_device = nullptr;
+    float* reordered_inputs_device = nullptr;
 };
 
 
@@ -295,15 +293,13 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
 {
     ConvolutionalBackPropagationCuda(const Index& = 0, Layer* = nullptr);
 
-    vector<pair<type*, dimensions>> get_input_derivative_pairs_device() const override;
-
     void set(const Index& = 0, Layer* = nullptr);
 
     void print() const override;
 
     void free() override;
 
-    type* error_combinations_derivatives_device = nullptr;
+    type* combination_deltas_device = nullptr;
 
     type* bias_derivatives_device = nullptr;
     type* weight_derivatives_device = nullptr;
@@ -313,8 +309,8 @@ struct ConvolutionalBackPropagationCuda : public LayerBackPropagationCuda
     size_t backward_data_workspace_bytes = 0;
     size_t backward_filter_workspace_bytes = 0;
 
-    cudnnTensorDescriptor_t deltas_device_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t error_combinations_derivatives_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t input_tensor_descriptor = nullptr;
     cudnnFilterDescriptor_t kernel_descriptor = nullptr;
     cudnnFilterDescriptor_t weight_derivatives_tensor_descriptor = nullptr;

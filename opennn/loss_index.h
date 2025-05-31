@@ -56,6 +56,7 @@ public:
    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    void set_threads_number(const int&);
+   void shutdown_threads();
 
    void set_neural_network(NeuralNetwork*);
 
@@ -152,7 +153,7 @@ public:
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();
-   Tensor<type, 1> calculate_numerical_inputs_derivatives();
+   Tensor<type, 1> calculate_numerical_input_derivatives();
    Tensor<type, 2> calculate_numerical_hessian();
    Tensor<type, 2> calculate_inverse_hessian();
 
@@ -320,9 +321,9 @@ struct BackPropagationCuda
 
     void set(const Index& = 0, LossIndex* = nullptr);
 
-    vector<vector<pair<type*, dimensions>>> get_layer_delta_pairs_device() const;
+    vector<vector<float*>> get_layer_deltas_device() const;
 
-    pair<type*, dimensions> get_output_deltas_pair_device() const;
+    float* get_output_deltas_device() const;
 
     void print();
 
