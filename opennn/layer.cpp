@@ -36,8 +36,8 @@ string Layer::layer_type_to_string(const Layer::Type& this_layer_type)
     case Type::Dense2d:
         return "Dense2d";
 
-    case Type::Perceptron3d:
-        return "Perceptron3d";
+    case Type::Dense3d:
+        return "Dense3d";
 
     case Type::Bounding:
         return "Bounding";
@@ -95,8 +95,8 @@ Layer::Type Layer::string_to_layer_type(const string& this_layer_type)
     if(this_layer_type == "Dense2d")
         return Type::Dense2d;
 
-    if(this_layer_type == "Perceptron3d")
-        return Type::Perceptron3d;
+    if(this_layer_type == "Dense3d")
+        return Type::Dense3d;
 
     if(this_layer_type == "Bounding")
         return Type::Bounding;
@@ -164,7 +164,7 @@ string Layer::get_type_string() const
     switch(layer_type)
     {
     case Type::Dense2d: return "Dense2d";
-    case Type::Perceptron3d: return "Perceptron3d";
+    case Type::Dense3d: return "Dense3d";
     case Type::Bounding: return "Bounding";
     case Type::Pooling: return "Pooling";
     case Type::Probabilistic3d: return "Probabilistic3d";

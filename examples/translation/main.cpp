@@ -66,7 +66,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 

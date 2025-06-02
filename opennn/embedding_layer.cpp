@@ -238,6 +238,28 @@ void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
 }
 
 
+void Embedding::print() const
+{
+    cout << "Embedding Layer" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Type: Embedding" << endl;
+
+    cout << "Input dimensions: ";
+    print_vector(get_input_dimensions());
+
+    cout << "Output dimensions: ";
+    print_vector(get_output_dimensions());
+
+    cout << "Vocabulary size: " << get_vocabulary_size() << endl;
+    cout << "Sequence length: " << get_sequence_length() << endl;
+    cout << "Embedding dimension: " << get_embedding_dimension() << endl;
+
+    cout << "Dropout rate: " << dropout_rate << endl;
+
+    cout << "Weights dimensions: " << weights.dimensions() << endl;
+}
+
+
 void Embedding::from_XML(const XMLDocument& document)
 {
     const XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");

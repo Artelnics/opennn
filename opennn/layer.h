@@ -35,7 +35,7 @@ public:
                     Normalization3d,
                     Convolutional,
                     Dense2d,
-                    Perceptron3d,
+                    Dense3d,
                     Pooling,
                     Probabilistic3d,
                     Recurrent,

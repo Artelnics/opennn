@@ -466,18 +466,26 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
 //    const Index heads_number = 2;
 //    const type dropout_rate = 0;
 
-    const Index new_vocabulary_size = 1885;
-    const Index new_sequence_length = 40;
-    const Index new_embedding_dimension = 32;
+    const Index vocabulary_size = 1885;
+    const Index sequence_length = 40;
+    const Index embedding_dimension = 32;
 
-    unique_ptr<Embedding> embedding_layer
-        = make_unique<Embedding>(new_vocabulary_size,
-                                 new_sequence_length,
-                                 new_embedding_dimension,
+    unique_ptr<Embedding> embedding
+        = make_unique<Embedding>(vocabulary_size,
+                                 sequence_length,
+                                 embedding_dimension,
                                  "embedding_layer");
 
-    add_layer(std::move(embedding_layer));
+    add_layer(std::move(embedding));
 
+    unique_ptr<Dense3d> dense_3d
+        = make_unique<Dense3d>(sequence_length,
+                               embedding_dimension,
+                               output_dimensions[0],
+                               Dense3d::Activation::Logistic,
+                               "classification_layer");
+
+    add_layer(std::move(dense_3d));
 }
 
 
@@ -1325,7 +1333,7 @@ void NeuralNetwork::layers_from_XML(const XMLElement* layers_element)
      {"Scaling4d", []() -> unique_ptr<Layer> { return make_unique<Scaling4d>(); }},
      {"Convolutional", []() -> unique_ptr<Layer> { return make_unique<Convolutional>(); }},
      {"Dense2d", []() -> unique_ptr<Layer> { return make_unique<Dense2d>(); }},
-     {"Perceptron3d", []() -> unique_ptr<Layer> { return make_unique<Perceptron3d>(); }},
+     {"Dense3d", []() -> unique_ptr<Layer> { return make_unique<Dense3d>(); }},
      {"Pooling", []() -> unique_ptr<Layer> { return make_unique<Pooling>(); }},
      {"Flatten", []() -> unique_ptr<Layer> { return make_unique<Flatten>(); }},
      {"Dense2d", []() -> unique_ptr<Layer> { return make_unique<Dense2d>(); }},
@@ -1609,8 +1617,8 @@ void NeuralNetworkBackPropagation::set(const Index& new_batch_size, NeuralNetwor
             layers[i] = make_unique<PerceptronBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
-        case Layer::Type::Perceptron3d:
-            layers[i] = make_unique <Perceptron3dBackPropagation>(batch_size, neural_network_layers[i].get());
+        case Layer::Type::Dense3d:
+            layers[i] = make_unique <Dense3dBackPropagation>(batch_size, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3d:
@@ -1717,8 +1725,8 @@ void ForwardPropagation::set(const Index& new_samples_number, NeuralNetwork* new
             layers[i] = make_unique<PerceptronForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
         
-        case Layer::Type::Perceptron3d:
-            layers[i] = make_unique<Perceptron3dForwardPropagation>(samples_number, neural_network_layers[i].get());
+        case Layer::Type::Dense3d:
+            layers[i] = make_unique<Dense3dForwardPropagation>(samples_number, neural_network_layers[i].get());
         break;
 
         case Layer::Type::Probabilistic3d:
@@ -2045,7 +2053,7 @@ void ForwardPropagationCuda::set(const Index& new_samples_number, NeuralNetwork*
             layers[i] = make_unique<Dense2dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::Perceptron3d:
+        case Layer::Type::Dense3d:
             //layers[i] = make_unique<Perceptron3dForwardPropagationCuda>(samples_number, neural_network_layers[i].get());
             break;
 
@@ -2238,7 +2246,7 @@ void NeuralNetworkBackPropagationCuda::set(const Index& new_batch_size, NeuralNe
             layers[i] = make_unique<Dense2dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
-        case Layer::Type::Perceptron3d:
+        case Layer::Type::Dense3d:
             //layers[i] = make_unique <Perceptron3dBackPropagationCuda>(batch_size, neural_network_layers[i].get());
             break;
 
