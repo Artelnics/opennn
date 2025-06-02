@@ -19,7 +19,7 @@ class CrossEntropyError2d : public LossIndex
 
 public:
 
-   CrossEntropyError2d(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   CrossEntropyError2d(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    // Error
 

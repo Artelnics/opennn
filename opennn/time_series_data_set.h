@@ -14,7 +14,7 @@
 namespace opennn
 {
 
-class TimeSeriesDataSet : public DataSet
+class TimeSeriesDataSet : public Dataset
 {
 
 public:

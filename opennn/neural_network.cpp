@@ -461,148 +461,23 @@ void NeuralNetwork::set_text_classification(const dimensions& input_dimensions,
 
     // Embedding Layers
 
-    const Index embedding_dimension = 32;
-    const Index perceptron_depth = 32;
-    const Index heads_number = 2;
-    const type dropout_rate = 0;
-/*
+//    const Index embedding_dimension = 32;
+//    const Index perceptron_depth = 32;
+//    const Index heads_number = 2;
+//    const type dropout_rate = 0;
+
+    const Index new_vocabulary_size = 1885;
+    const Index new_sequence_length = 40;
+    const Index new_embedding_dimension = 32;
+
     unique_ptr<Embedding> embedding_layer
-        = make_unique<Embedding>(input_dimensions[0],
-                                      input_dimensions[1],
-                                      embedding_dimension,
-                                      true);
+        = make_unique<Embedding>(new_vocabulary_size,
+                                 new_sequence_length,
+                                 new_embedding_dimension,
+                                 "embedding_layer");
 
-    embedding_layer->set_dropout_rate(dropout_rate);
-    embedding_layer->set_name("embedding");
-    //name = embedding_layer->get_name();
     add_layer(std::move(embedding_layer));
-    set_layer_inputs_indices("embedding", "input");
 
-    // Encoder
-
-    for(Index i = 0; i < complexity_size; i++)
-    {
-        // Multi head attention
-
-        unique_ptr<MultiHeadAttention> self_attention_layer =
-            make_unique<MultiHeadAttention>(input_dimensions[1],
-                                                 input_dimensions[1],
-                                                 embedding_dimension,
-                                                 heads_number);
-
-        self_attention_layer->set_dropout_rate(dropout_rate);
-        self_attention_layer->set_name("self_attention_" + to_string(i+1));
-        //name = input_self_attention_layer->get_name();
-
-        add_layer(std::move(self_attention_layer));
-
-        if(i == 0)
-            set_layer_inputs_indices("self_attention_1", {"embedding", "embedding"});
-        else
-            set_layer_inputs_indices("self_attention_" + to_string(i+1), { "perceptron_normalization_" + to_string(i), "perceptron_normalization_" + to_string(i) });
-
-        // Addition
-
-        unique_ptr<Addition3d> self_attention_addition_layer
-            = make_unique<Addition3d>(input_dimensions[1], embedding_dimension);
-
-        self_attention_addition_layer->set_name("self_attention_addition_" + to_string(i+1));
-        //name = self_attention_addition_layer->get_name();
-
-        add_layer(std::move(self_attention_addition_layer));
-
-        if(i == 0)
-            set_layer_inputs_indices("self_attention_addition_" + to_string(i+1), { "embedding", "self_attention_" + to_string(i+1) });
-        else
-            set_layer_inputs_indices("self_attention_addition_" + to_string(i+1), { "perceptron_normalization_" + to_string(i), "self_attention_" + to_string(i+1) });
-
-        // Normalization
-
-        unique_ptr<Normalization3d> self_attention_normalization_layer
-            = make_unique<Normalization3d>(input_dimensions[1], embedding_dimension);
-
-        self_attention_normalization_layer->set_name("self_attention_normalization_" + to_string(i+1));
-        //name = self_attention_normalization_layer->get_name();
-
-        add_layer(std::move(self_attention_normalization_layer));
-
-        set_layer_inputs_indices("self_attention_normalization_" + to_string(i+1), "self_attention_addition_" + to_string(i+1));
-
-        // Dense2d
-
-        unique_ptr<Perceptron3d> encoder_internal_perceptron_layer
-            = make_unique<Perceptron3d>(input_dimensions[1], embedding_dimension, perceptron_depth, Perceptron3d::Activation::RectifiedLinear);
-
-        encoder_internal_perceptron_layer->set_name("encoder_internal_perceptron_" + to_string(i+1));
-        //name = encoder_internal_perceptron_layer->get_name();
-
-        add_layer(std::move(encoder_internal_perceptron_layer));
-
-        set_layer_inputs_indices("encoder_internal_perceptron_" + to_string(i+1), "self_attention_normalization_" + to_string(i+1));
-
-        // Dense2d
-
-        unique_ptr<Perceptron3d> encoder_external_perceptron_layer =
-            make_unique<Perceptron3d>(input_dimensions[1], perceptron_depth, embedding_dimension, Perceptron3d::Activation::RectifiedLinear);
-
-        encoder_external_perceptron_layer->set_dropout_rate(dropout_rate);
-        encoder_external_perceptron_layer->set_name("encoder_external_perceptron_" + to_string(i+1));
-        //name = encoder_external_perceptron_layer->get_name();
-
-        add_layer(std::move(encoder_external_perceptron_layer));
-
-        set_layer_inputs_indices("encoder_external_perceptron_" + to_string(i+1), "encoder_internal_perceptron_" + to_string(i+1));
-
-        // Addition
-
-        unique_ptr<Addition3d> encoder_perceptron_addition_layer
-            = make_unique<Addition3d>(input_dimensions[1], embedding_dimension);
-
-        encoder_perceptron_addition_layer->set_name("encoder_perceptron_addition_" + to_string(i+1));
-        //name = encoder_perceptron_addition_layer->get_name();
-
-        add_layer(std::move(encoder_perceptron_addition_layer));
-
-        set_layer_inputs_indices("encoder_perceptron_addition_" + to_string(i+1), { "self_attention_normalization_" + to_string(i+1), "encoder_external_perceptron_" + to_string(i+1) });
-
-        // Normalization
-
-        unique_ptr<Normalization3d> encoder_perceptron_normalization_layer
-            = make_unique<Normalization3d>(input_dimensions[1], embedding_dimension);
-
-        encoder_perceptron_normalization_layer->set_name("encoder_perceptron_normalization_" + to_string(i+1));
-        //name = encoder_perceptron_normalization_layer->get_name();
-
-        add_layer(std::move(encoder_perceptron_normalization_layer));
-
-        set_layer_inputs_indices("encoder_perceptron_normalization_" + to_string(i+1), "encoder_perceptron_addition_" + to_string(i+1));
-
-    }
-
-        // Global Average Pooling
-
-        const dimensions pool_dimensions = { 1, input_dimensions[1] };
-        const dimensions pooling_stride_dimensions = { 1, input_dimensions[1] };
-        const dimensions padding_dimensions = { 0, 0 };
-        const Pooling::PoolingMethod pooling_method = Pooling::PoolingMethod::AveragePooling;
-
-        add_layer(make_unique<Pooling>(get_output_dimensions(),
-                                            pool_dimensions,
-                                            pooling_stride_dimensions,
-                                            padding_dimensions,
-                                            pooling_method,
-                                            "pooling_layer"));
-
-        set_layer_inputs_indices("global_average_pooling", "encoder_perceptron_normalization_" + to_string(complexity_size));
-
-        add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                               output_dimensions,
-                                               Dense2d::Activation::Logistic,
-                                               "perceptron_layer_" + to_string(complexity_size + 1)));
-
-        set_layer_inputs_indices("perceptron_layer_" + to_string(complexity_size + 1), "global_average_pooling");
-    }
-*/
 }
 
 

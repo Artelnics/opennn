@@ -30,7 +30,7 @@ class TrainingStrategy
 
 public:
 
-    TrainingStrategy(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    TrainingStrategy(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     enum class LossMethod
     {
@@ -50,7 +50,7 @@ public:
         ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    DataSet* get_data_set();
+    Dataset* get_data_set();
 
     NeuralNetwork* get_neural_network() const;
 
@@ -84,13 +84,13 @@ public:
 
     // Set
 
-    void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
     void set_default();
 
     void set_threads_number(const int&);
     void shutdown_threads();
 
-    void set_data_set(DataSet*);
+    void set_data_set(Dataset*);
     void set_neural_network(NeuralNetwork*);
 
     void set_loss_index(LossIndex*);
@@ -133,7 +133,7 @@ public:
 
 private:
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

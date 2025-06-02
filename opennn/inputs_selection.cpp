@@ -150,9 +150,9 @@ void InputsSelection::check() const
     if(!loss_index->has_data_set())
         throw runtime_error("Pointer to data set is nullptr.\n");
 
-    const DataSet* data_set = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_data_set();
 
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
@@ -271,14 +271,14 @@ string InputsSelection::write_time(const type& time) const
 }
 
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number) const
+Index InputsSelection::get_input_index(const Tensor<Dataset::VariableUse, 1>& uses, const Index& inputs_number) const
 {
     Index i = 0;
     Index j = 0;
 
     while(i < uses.size())
     {
-        if (uses[i] == DataSet::VariableUse::Input)
+        if (uses[i] == Dataset::VariableUse::Input)
         {
             if (j == inputs_number)
                 break;

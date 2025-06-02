@@ -22,10 +22,10 @@ int main()
 
         // Data set
         
-        DataSet data_set("../data/airfoil_self_noise.csv", ";", true, false);
+        Dataset dataset("../data/airfoil_self_noise.csv", ";", true, false);
 
-        const Index inputs_number = data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index targets_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+        const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
+        const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
 
         // Neural network
 
@@ -36,7 +36,7 @@ int main()
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &data_set);
+        TrainingStrategy training_strategy(&neural_network, &dataset);
 
         //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
@@ -67,7 +67,7 @@ int main()
 
         // Testing analysis
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &dataset);
 
         testing_analysis.print_goodness_of_fit_analysis();
 

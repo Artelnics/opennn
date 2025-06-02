@@ -21,18 +21,18 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-    const Tensor<type, 2>& data = data_set->get_data();
+    const Tensor<type, 2>& data = dataset->get_data();
 
     const Index batch_size = sample_indices.size();
     const Index sequence_length = sample_indices.size() / batch_size;
     const Index input_size = data.dimension(1);
 
     // fill inputs
-    if(is_instance_of<ImageDataSet>(data_set))
+    if(is_instance_of<ImageDataset>(dataset))
     {
-        ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+        ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
 
-        if (image_data_set->get_augmentation())
+        if (image_dataset->get_augmentation())
         {
             // @todo
 
@@ -43,7 +43,7 @@ void Batch::fill(const vector<Index>& sample_indices,
         else
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
-    else if(is_instance_of<TimeSeriesDataSet>(data_set)){
+    else if(is_instance_of<TimeSeriesDataSet>(dataset)){
         //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
         fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
         input_dimensions = { batch_size, sequence_length, input_size };
@@ -52,9 +52,9 @@ void Batch::fill(const vector<Index>& sample_indices,
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
     // fill targets
-    if(is_instance_of<TimeSeriesDataSet>(data_set))
+    if(is_instance_of<TimeSeriesDataSet>(dataset))
         fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
-    else if (is_instance_of<LanguageDataSet>(data_set))
+    else if (is_instance_of<LanguageDataset>(dataset))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
     else
         fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
@@ -64,9 +64,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 
 Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
-    ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
+    ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
 
-    const dimensions input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
+    const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
 
     const Index input_height = input_dimensions[0];
     const Index input_width = input_dimensions[1];
@@ -78,14 +78,14 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
                                       input_width,
                                       channels);
    
-    const bool random_reflection_axis_x = image_data_set->get_random_reflection_axis_x();
-    const bool random_reflection_axis_y = image_data_set->get_random_reflection_axis_y();
-    const type random_rotation_minimum = image_data_set->get_random_rotation_minimum();
-    const type random_rotation_maximum = image_data_set->get_random_rotation_maximum();
-    const type random_horizontal_translation_minimum = image_data_set->get_random_horizontal_translation_minimum();
-    const type random_horizontal_translation_maximum = image_data_set->get_random_horizontal_translation_maximum();
-    const type random_vertical_translation_minimum = image_data_set->get_random_vertical_translation_minimum();
-    const type random_vertical_translation_maximum = image_data_set->get_random_vertical_translation_maximum();
+    const bool random_reflection_axis_x = image_dataset->get_random_reflection_axis_x();
+    const bool random_reflection_axis_y = image_dataset->get_random_reflection_axis_y();
+    const type random_rotation_minimum = image_dataset->get_random_rotation_minimum();
+    const type random_rotation_maximum = image_dataset->get_random_rotation_maximum();
+    const type random_horizontal_translation_minimum = image_dataset->get_random_horizontal_translation_minimum();
+    const type random_horizontal_translation_maximum = image_dataset->get_random_horizontal_translation_maximum();
+    const type random_vertical_translation_minimum = image_dataset->get_random_vertical_translation_minimum();
+    const type random_vertical_translation_maximum = image_dataset->get_random_vertical_translation_maximum();
 
     for(Index batch_index = 0; batch_index < samples_number; batch_index++)
     {
@@ -129,7 +129,7 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 }
 
 
-Batch::Batch(const Index& new_samples_number, DataSet* new_data_set)
+Batch::Batch(const Index& new_samples_number, Dataset* new_data_set)
 {
     if(thread_pool != nullptr)
         shutdown_threads();
@@ -154,16 +154,16 @@ void Batch::shutdown_threads()
 }
 
 
-void Batch::set(const Index& new_samples_number, DataSet* new_data_set)
+void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
 {
     if (!new_data_set) return;
 
     samples_number = new_samples_number;
-    data_set = new_data_set;
+    dataset = new_data_set;
 
-    const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
-    const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
-    const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
+    const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions(Dataset::VariableUse::Decoder);
+    const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {
@@ -275,13 +275,13 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
                      const vector<Index>& decoder_indices,
                      const vector<Index>& target_indices)
 {
-    const Tensor<type, 2>& data = data_set->get_data();
+    const Tensor<type, 2>& data = dataset->get_data();
 
-    if (is_instance_of<ImageDataSet>(data_set))
+    if (is_instance_of<ImageDataset>(dataset))
     {
-        ImageDataSet* image_data_set = dynamic_cast<ImageDataSet*>(data_set);
+        ImageDataset* image_dataset = dynamic_cast<ImageDataset*>(dataset);
 
-        if (image_data_set->get_augmentation())
+        if (image_dataset->get_augmentation())
         {
             // @todo
 
@@ -295,7 +295,7 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
     else
         fill_tensor_data(data, sample_indices, input_indices, inputs_host);
 
-    if (is_instance_of<LanguageDataSet>(data_set))
+    if (is_instance_of<LanguageDataset>(dataset))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_host);
 
     fill_tensor_data(data, sample_indices, target_indices, targets_host);
@@ -304,22 +304,22 @@ void BatchCuda::fill(const vector<Index>& sample_indices,
 }
 
 
-BatchCuda::BatchCuda(const Index& new_samples_number, DataSet* new_data_set)
+BatchCuda::BatchCuda(const Index& new_samples_number, Dataset* new_data_set)
 {
     set(new_samples_number, new_data_set);
 }
 
 
-void BatchCuda::set(const Index& new_samples_number, DataSet* new_data_set)
+void BatchCuda::set(const Index& new_samples_number, Dataset* new_data_set)
 {
     if (!new_data_set) return;
 
     samples_number = new_samples_number;
-    data_set = new_data_set;
+    dataset = new_data_set;
 
-    const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
-    const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
-    const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
+    const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions(Dataset::VariableUse::Decoder);
+    const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {
@@ -373,7 +373,7 @@ void BatchCuda::copy_device()
 
 Tensor<type, 2> BatchCuda::get_inputs_device() const
 {
-    const Index inputs_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+    const Index inputs_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
 
@@ -387,7 +387,7 @@ Tensor<type, 2> BatchCuda::get_inputs_device() const
 
 Tensor<type, 2> BatchCuda::get_decoder_device() const
 {
-    const Index decoder_number = data_set->get_raw_variables_number(DataSet::VariableUse::Decoder);
+    const Index decoder_number = dataset->get_raw_variables_number(Dataset::VariableUse::Decoder);
 
     Tensor<type, 2> decoder(samples_number, decoder_number);
 

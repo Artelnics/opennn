@@ -933,7 +933,7 @@ string ModelExpression::subheader_javascript()
 }
 
 
-string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network, const vector<DataSet::RawVariable>& raw_variables)
+string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_network, const vector<Dataset::RawVariable>& raw_variables)
 {
     vector<string> lines;
     vector<string> found_tokens;
@@ -943,9 +943,9 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
     vector<string> output_names;
 
     for (const auto& raw_variable : raw_variables)
-        if(raw_variable.use == DataSet::VariableUse::Input)
+        if(raw_variable.use == Dataset::VariableUse::Input)
             input_names.push_back(raw_variable.name);
-        else if(raw_variable.use == DataSet::VariableUse::Target)
+        else if(raw_variable.use == Dataset::VariableUse::Target)
             output_names.push_back(raw_variable.name);
 
 
@@ -993,7 +993,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
             const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-            if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+            if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
             {
                 min_value = inputs_descriptives[i].minimum;
                 max_value = inputs_descriptives[i].maximum;
@@ -1020,7 +1020,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
+            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2 &&
                      ((raw_variable_categories[0]=="1" && raw_variable_categories[1]=="0") || (raw_variable_categories[1]=="1" && raw_variable_categories[0]=="0")))// INPUT & BINARY (1,0)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
@@ -1043,7 +1043,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
+            else if (raw_variables[k].type == Dataset::RawVariableType::Binary && raw_variable_categories.size() == 2) // INPUT & BINARY (A,B)
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1065,7 +1065,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
                 j += 1;
                 i += 1;
             }
-            else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+            else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
             {
                 buffer << "<!-- ComboBox Ultima pasada-->" << endl;
                 buffer << "<!-- 5scaling layer -->" << endl;
@@ -1187,7 +1187,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
 
         const vector<string> raw_variable_categories = raw_variables[k].categories;
 
-        if (raw_variables[k].type == DataSet::RawVariableType::Numeric) // INPUT & NUMERIC
+        if (raw_variables[k].type == Dataset::RawVariableType::Numeric) // INPUT & NUMERIC
         {
             buffer << "\t" << "var " << fixes_input_names[k] << " =" << " document.getElementById(\"" << fixes_input_names[k] << "\").value; " << endl;
             buffer << "\t" << "inputs.push(" << fixes_input_names[k] << ");" << endl;
@@ -1195,7 +1195,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             variables_input_fixed.push_back(fixes_input_names[k]);
             variables_input.push_back(input_names[k]);
         }
-        else if (raw_variables[k].type == DataSet::RawVariableType::Binary)// INPUT BINARY
+        else if (raw_variables[k].type == Dataset::RawVariableType::Binary)// INPUT BINARY
         {
             string aux_buffer = "";
 
@@ -1225,7 +1225,7 @@ string ModelExpression::get_expression_javascript(const NeuralNetwork& neural_ne
             variables_input_fixed.push_back(fixes_input_names[k]);
             variables_input.push_back(input_names[k]);
         }
-        else if (raw_variables[k].type == DataSet::RawVariableType::Categorical) // INPUT & CATEGORICAL
+        else if (raw_variables[k].type == Dataset::RawVariableType::Categorical) // INPUT & CATEGORICAL
         {
             string aux_buffer = "";
 
@@ -1928,7 +1928,7 @@ vector<string> ModelExpression::fix_output_names(vector<string>& output_names)
 void ModelExpression::save_expression(const string& file_name,
                                       const ProgrammingLanguage& programming_language,
                                       const NeuralNetwork* neural_network,
-                                      const vector<DataSet::RawVariable>& raw_variables)
+                                      const vector<Dataset::RawVariable>& raw_variables)
 {
     ofstream file(file_name);
 

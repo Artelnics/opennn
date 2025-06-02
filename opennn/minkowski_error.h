@@ -19,7 +19,7 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   MinkowskiError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   MinkowskiError(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    type get_Minkowski_parameter() const;
 

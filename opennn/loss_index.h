@@ -29,7 +29,7 @@ class LossIndex
 
 public:
 
-   LossIndex(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
@@ -38,9 +38,9 @@ public:
       return neural_network;
    }
 
-   inline DataSet* get_data_set() const 
+   inline Dataset* get_data_set() const 
    {
-      return data_set;
+      return dataset;
    }
 
    const type& get_regularization_weight() const;
@@ -53,14 +53,14 @@ public:
 
    RegularizationMethod get_regularization_method() const;
 
-   void set(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    void set_threads_number(const int&);
    void shutdown_threads();
 
    void set_neural_network(NeuralNetwork*);
 
-   virtual void set_data_set(DataSet*);
+   virtual void set_data_set(Dataset*);
 
    void set_regularization_method(const RegularizationMethod&);
    void set_regularization_method(const string&);
@@ -224,7 +224,7 @@ protected:
 
     NeuralNetwork* neural_network = nullptr;
 
-    DataSet* data_set = nullptr;
+    Dataset* dataset = nullptr;
 
     RegularizationMethod regularization_method = RegularizationMethod::L2;
 

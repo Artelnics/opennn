@@ -18,7 +18,7 @@ namespace opennn
 TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
                                      const dimensions& new_input_dimensions,
                                      const dimensions& new_target_dimensions)
-    :DataSet(new_samples_number, new_input_dimensions, new_target_dimensions)
+    :Dataset(new_samples_number, new_input_dimensions, new_target_dimensions)
 {
 }
 
@@ -28,7 +28,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
                                      const bool& has_header,
                                      const bool& has_sample_ids,
                                      const Codification& data_codification)
-    :DataSet(data_path, separator, has_header, has_sample_ids, data_codification)
+    :Dataset(data_path, separator, has_header, has_sample_ids, data_codification)
 {
 }
 
@@ -106,11 +106,11 @@ void TimeSeriesDataSet::print() const
          << "Number of targets: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
-    print_vector(get_dimensions(DataSet::VariableUse::Input));
+    print_vector(get_dimensions(Dataset::VariableUse::Input));
 
     cout << "Target variables dimensions: ";
 
-    print_vector(get_dimensions(DataSet::VariableUse::Target));
+    print_vector(get_dimensions(Dataset::VariableUse::Target));
 }
 
 
@@ -119,7 +119,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     // if(model_type != ModelType::Forecasting)
     //     throw runtime_error("No forecasting model type");
 
-    printer.OpenElement("DataSet");
+    printer.OpenElement("Dataset");
 
     printer.OpenElement("DataSource");
     add_xml_element(printer, "FileType", "csv");
@@ -244,7 +244,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
 
 void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
 
@@ -431,8 +431,8 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 
     set_display(read_xml_bool(data_set_element, "Display"));
 
-    input_dimensions = { get_variables_number(DataSet::VariableUse::Input) };
-    target_dimensions = { get_variables_number(DataSet::VariableUse::Target) };
+    input_dimensions = { get_variables_number(Dataset::VariableUse::Input) };
+    target_dimensions = { get_variables_number(Dataset::VariableUse::Target) };
 
 }
 
@@ -441,8 +441,8 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_variable_indices = get_used_variable_indices();
-    const vector<Index> input_variable_indices = get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> input_variable_indices = get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = get_variable_indices(Dataset::VariableUse::Target);
 
     const Tensor<type, 1> means = mean(data, used_sample_indices, used_variable_indices);
 
@@ -526,8 +526,8 @@ void TimeSeriesDataSet::impute_missing_values_mean()
                         {
                             ostringstream buffer;
 
-                            buffer << "OpenNN Exception: DataSet class.\n"
-                                   << "void DataSet::impute_missing_values_mean() const.\n"
+                            buffer << "OpenNN Exception: Dataset class.\n"
+                                   << "void Dataset::impute_missing_values_mean() const.\n"
                                    << "The last " << (used_samples_number - i) + 1 << " samples are all missing, delete them.\n";
 
                             throw runtime_error(buffer.str());

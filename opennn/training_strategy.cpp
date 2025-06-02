@@ -13,15 +13,15 @@
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     set(new_neural_network, new_data_set);
 }
 
 
-DataSet* TrainingStrategy::get_data_set()
+Dataset* TrainingStrategy::get_data_set()
 {
-    return data_set;
+    return dataset;
 }
 
 
@@ -77,7 +77,7 @@ bool TrainingStrategy::has_neural_network() const
 
 bool TrainingStrategy::has_data_set() const
 {
-    return data_set;
+    return dataset;
 }
 
 
@@ -249,10 +249,10 @@ const bool& TrainingStrategy::get_display() const
 }
 
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     neural_network = new_neural_network;
-    data_set = new_data_set;
+    dataset = new_data_set;
 
     set_default();
 
@@ -349,16 +349,16 @@ void TrainingStrategy::shutdown_threads()
     stochastic_gradient_descent.shutdown_threads();
     adaptive_moment_estimation.shutdown_threads();
 
-    if(data_set != nullptr)
-        data_set->shutdown_threads();
+    if(dataset != nullptr)
+        dataset->shutdown_threads();
     if(neural_network != nullptr)
         neural_network->shutdown_threads();
 }
 
 
-void TrainingStrategy::set_data_set(DataSet* new_data_set)
+void TrainingStrategy::set_data_set(Dataset* new_data_set)
 {
-    data_set = new_data_set;
+    dataset = new_data_set;
 
     mean_squared_error.set_data_set(new_data_set);
 

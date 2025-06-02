@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }

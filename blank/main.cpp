@@ -29,7 +29,7 @@ int main()
 /*
         // Data set
 
-        LanguageDataSet language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
+        LanguageDataset language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
 
         const Index input_length = language_data_set.get_input_length();
         const Index target_length = language_data_set.get_target_length();
@@ -79,22 +79,22 @@ int main()
 
         TrainingResults training_results = training_strategy.perform_training();
 
-        Tensor<type, 2> one_word = language_data_set.get_data(DataSet::VariableUse::Input).chip(1000,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word = language_data_set.get_data(Dataset::VariableUse::Input).chip(1000,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word:\n " << one_word << endl;
 
         cout <<"One word output:\n" << neural_network.calculate_output(one_word).argmax(2) << endl;
 
-        Tensor<type, 2> one_word_2 = language_data_set.get_data(DataSet::VariableUse::Input).chip(11000,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word_2 = language_data_set.get_data(Dataset::VariableUse::Input).chip(11000,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word_2:\n" << one_word_2 << endl;
 
         cout << "One word output_2:\n" << neural_network.calculate_output(one_word_2).argmax(2) << endl;
 
-        Tensor<type, 2> one_word_3 = language_data_set.get_data(DataSet::VariableUse::Input).chip(1450,0).reshape(Eigen::array<Index,2>{1,15});
+        Tensor<type, 2> one_word_3 = language_data_set.get_data(Dataset::VariableUse::Input).chip(1450,0).reshape(Eigen::array<Index,2>{1,15});
         cout << "one_word_3:\n" << one_word_3 << endl;
 
         cout <<"One word output_3:\n" << neural_network.calculate_output(one_word).argmax(2) << endl;
 
-        // text_data_set.set(DataSet::SampleUse::Testing);
+        // text_data_set.set(Dataset::SampleUse::Testing);
 
         // const TestingAnalysis testing_analysis(&neural_network, &text_data_set);
 
