@@ -86,7 +86,7 @@ const Perceptron3d::Activation& Perceptron3d::get_activation_function() const
 
 string Perceptron3d::get_activation_function_string() const
 {
-    switch(activation_function)
+    switch (activation_function)
     {
     case Activation::HyperbolicTangent:
         return "HyperbolicTangent";
@@ -96,9 +96,13 @@ string Perceptron3d::get_activation_function_string() const
 
     case Activation::RectifiedLinear:
         return "RectifiedLinear";
-    }
 
-    return string();
+    case Activation::Softmax:
+        return "Softmax";
+
+    default:
+        return {};
+    }
 }
 
 
@@ -147,6 +151,8 @@ void Perceptron3d::set_activation_function(const string& new_activation_function
         activation_function = Activation::Linear;
     else if (new_activation_function_name == "RectifiedLinear")
         activation_function = Activation::RectifiedLinear;
+    else if (new_activation_function_name == "Softmax")
+        activation_function = Activation::Softmax;
     else
         throw runtime_error("Unknown activation function: " + new_activation_function_name + ".\n");
 }
@@ -193,6 +199,7 @@ void Perceptron3d::calculate_activations(Tensor<type, 3>& activations, Tensor<ty
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
     case Activation::Logistic: logistic(activations, activation_derivatives); return;
+    case Activation::Softmax: softmax(activations); return;
     default: return;
     }
 }

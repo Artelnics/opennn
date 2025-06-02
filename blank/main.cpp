@@ -15,9 +15,13 @@
 
 #include "../opennn/language_data_set.h"
 #include "../opennn/embedding_layer.h"
+#include "../opennn/perceptron_layer_3d.h"
 #include "../opennn/multihead_attention_layer.h"
 #include "../opennn/probabilistic_layer_3d.h"
+#include "../opennn/flatten_layer_3d.h"
 #include "../opennn/training_strategy.h"
+#include "../opennn/flatten_layer.h"
+#include "../opennn/perceptron_layer.h"
 
 using namespace opennn;
 
@@ -25,10 +29,8 @@ int main()
 {
     try
     {
-        cout << "OpenNN. Amazon reviews example." << endl;
-/*
-        // Data set
 
+<<<<<<< HEAD
         LanguageDataset language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
 
         const Index input_length = language_data_set.get_input_length();
@@ -103,6 +105,10 @@ int main()
         // cout << "TESTING ANALYSIS:" << endl;
         // cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
 */
+=======
+        cout << "OpenNN." << endl;
+
+>>>>>>> 943b88ec563817995b4a67a0600a71373fac7617
         cout << "Good bye!" << endl;
 
         return 0;

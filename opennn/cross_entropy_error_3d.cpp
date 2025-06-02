@@ -55,72 +55,7 @@ void CrossEntropyError3d::calculate_multiple_error(const Batch& batch,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagation& back_propagation) const
 {
-/*
-    // Batch
-
-    const Index samples_number = batch.get_samples_number();
-
-    const pair<type*, dimensions> targets_pair = batch.get_target_pair();
-
-    const Index outputs_number = targets_pair.second[1];
-
-    const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
-
-    // Forward propagation
-
-    const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
-    const TensorMap<Tensor<type, 3>> outputs = tensor_map_3(outputs_pair);
-
-    // Back propagation
-
-    const Index layers_number = back_propagation.neural_network.layers.size();
-
-    Probabilistic3dBackPropagation* probabilistic_3d_back_propagation =
-        static_cast<Probabilistic3dBackPropagation*>(back_propagation.neural_network.layers[layers_number - 1].get());
-
-    probabilistic_3d_back_propagation->targets = targets;
-
-    Tensor<type, 2>& errors = back_propagation.errors;
-    Tensor<bool, 2>& mask = back_propagation.mask;
-    bool& built_mask = back_propagation.built_mask;
-
-    errors.resize(samples_number, outputs_number);
-
-    Tensor<type, 0>& error = back_propagation.error;
-
-    // if(!built_mask)
-    // {
-    mask = targets != targets.constant(0);
-    built_mask = true;
-    // }
-
-    const Tensor<type, 0> mask_sum = mask.cast<type>().sum();
-
-#pragma omp parallel for collapse(2)
-
-    for(Index i = 0; i < samples_number; i++)
-        for(Index j = 0; j < outputs_number; j++)
-            errors(i, j) = -log(outputs(i, j, Index(targets(i, j))) + type(1e-6));
-
-    errors.device(*thread_pool_device) = errors * mask.cast<type>();
-
-//    error.device(*thread_pool_device) = errors.sum() / type(samples_number)mask_sum(0);
-
-    // Masked accuracy
-
-    Tensor<type, 2>& predictions = back_propagation.predictions;
-    Tensor<bool, 2>& matches = back_propagation.matches;
-    Tensor<type, 0>& accuracy = back_propagation.accuracy;
-
-    predictions.device(*thread_pool_device) = outputs.argmax(2).cast<type>();
-
-    matches.device(*thread_pool_device) = (predictions == targets) && mask;
-
-    accuracy.device(*thread_pool_device) = matches.cast<type>().sum() / mask_sum(0);
-
-    if(isnan(error())) throw runtime_error("Error is NAN");
-*/
+    // @todo
 }
 
 
@@ -140,6 +75,8 @@ void CrossEntropyError3d::calculate_output_delta(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&) const
 {
+    cout << "calculate_output_delta ---------------------" << endl;
+
     // Probabilistic3d does not have deltas. 
     // Error combinations derivatives are calculated directly.
 }
