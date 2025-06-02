@@ -161,15 +161,9 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     samples_number = new_samples_number;
     dataset = new_data_set;
 
-<<<<<<< HEAD
     const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
-    const dimensions& data_set_decoder_dimensions = dataset->get_dimensions(Dataset::VariableUse::Decoder);
+    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(Dataset::VariableUse::Decoder);
     const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
-=======
-    const dimensions& data_set_input_dimensions = data_set->get_dimensions(DataSet::VariableUse::Input);
-    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(DataSet::VariableUse::Decoder);
-    const dimensions& data_set_target_dimensions = data_set->get_dimensions(DataSet::VariableUse::Target);
->>>>>>> 943b88ec563817995b4a67a0600a71373fac7617
 
     if (!data_set_input_dimensions.empty())
     {

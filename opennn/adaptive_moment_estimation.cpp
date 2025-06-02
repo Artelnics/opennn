@@ -254,7 +254,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
                                        training_back_propagation);
 
             training_error += training_back_propagation.error();
-            cout << "adri71 - " << training_error << endl;
+            cout << "adri71 - " << training_error << " - " << training_back_propagation.error() << endl;
 
             if(is_classification_model) training_accuracy += training_back_propagation.accuracy(0);
 
