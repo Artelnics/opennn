@@ -19,7 +19,6 @@ SUBDIRS += examples
 SUBDIRS += blank
 #SUBDIRS += tests
 
-
 CONFIG += ordered
 
 # OpenMP library

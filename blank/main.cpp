@@ -26,7 +26,7 @@ int main()
     try
     {
         cout << "OpenNN. Amazon reviews example." << endl;
-
+/*
         // Data set
 
         LanguageDataSet language_data_set("/Users/artelnics/Desktop/masked_large_huge.txt");
@@ -102,7 +102,7 @@ int main()
 
         // cout << "TESTING ANALYSIS:" << endl;
         // cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

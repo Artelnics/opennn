@@ -63,7 +63,7 @@ public:
     MeanSquaredError* get_mean_squared_error();
     NormalizedSquaredError* get_normalized_squared_error();
     MinkowskiError* get_Minkowski_error();
-    CrossEntropyError* get_cross_entropy_error();
+    CrossEntropyError2d* get_cross_entropy_error();
     WeightedSquaredError* get_weighted_squared_error();
 
     QuasiNewtonMethod* get_quasi_Newton_method();
@@ -145,9 +145,9 @@ private:
 
     MinkowskiError Minkowski_error;
 
-    CrossEntropyError cross_entropy_error;
+    CrossEntropyError2d cross_entropy_error;
 
-    CrossEntropyError3D cross_entropy_error_3d;
+    CrossEntropyError3d cross_entropy_error_3d;
 
     WeightedSquaredError weighted_squared_error;
 

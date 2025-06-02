@@ -12,7 +12,11 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-#include "addition_layer_3d.h"
+
+#include "../../opennn/data_set.h"
+#include "../../opennn/neural_network.h"
+#include "../../opennn/training_strategy.h"
+#include "../../opennn/testing_analysis.h"
 
 using namespace opennn;
 
@@ -31,7 +35,6 @@ int main()
         // language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
         LanguageDataSet language_dataset("/home/alvaro/Desktop/mh/cleaned_tweets.txt");
         // language_dataset.set_data_path("/Users/artelnics/Desktop/sample_200k_balanced.txt");
-
 
 //        language_dataset.set_data_path("/Users/artelnics/Documents/opennn/examples/amazon_reviews/data/amazon_cells_labelled.txt");
 //        language_dataset.read_csv();

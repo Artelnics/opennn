@@ -92,7 +92,7 @@ TEST(AdaptiveMomentEstimationTest, TrainTransformer)
 
     type training_loss_goal = type(0.05);
 
-    CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_data_set);
 
     AdaptiveMomentEstimation adaptive_moment_estimation(&cross_entropy_error_3d);
 

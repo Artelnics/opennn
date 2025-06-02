@@ -12,7 +12,7 @@
 #include "../../opennn/data_set.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
-#include "../../opennn/model_selection.h"
+#include "../../opennn/testing_analysis.h"
 
 using namespace opennn;
 
@@ -24,36 +24,30 @@ int main()
 
         // Data set
 
-        // DataSet data_set("data/breast_cancer.csv", ";", true, false);
-        DataSet data_set("/Users/artelnics/Documents/opennn/examples/breast_cancer/data/breast_cancer.csv", ";", true, false);
+        DataSet data_set("../data/breast_cancer.csv", ";", true, false);
 
-        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+        const Index inputs_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index targets_number = data_set.get_variables_number(DataSet::VariableUse::Target);
         
         // Neural network
 
         const Index neurons_number = 3;
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
-                                    { input_variables_number }, { neurons_number, neurons_number }, { target_variables_number });
+                                    { inputs_number }, { neurons_number}, { targets_number });
+
+        neural_network.print();
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::WEIGHTED_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
-        // training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::L2);
+        training_strategy.perform_training();
 
-        // TrainingResults results = training_strategy.perform_training();
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        // const Tensor<string, 2> final_results = results.write_override_results(4);
+        testing_analysis.print_binary_classification_tests();
 
-        // cout << "Final results:\n" << final_results << endl;
-
-        GeneticAlgorithm genetic_algorithm(&training_strategy);
-        genetic_algorithm.perform_input_selection();
-        
         cout << "Good bye!" << endl;
 
         return 0;

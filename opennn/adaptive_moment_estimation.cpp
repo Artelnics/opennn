@@ -36,13 +36,6 @@ const type& AdaptiveMomentEstimation::get_beta_2() const
     return beta_2;
 }
 
-
-const type& AdaptiveMomentEstimation::get_epsilon() const
-{
-    return epsilon;
-}
-
-
 const type& AdaptiveMomentEstimation::get_learning_rate() const
 {
     return learning_rate;
@@ -88,12 +81,6 @@ void AdaptiveMomentEstimation::set_default()
 void AdaptiveMomentEstimation::set_display(const bool& new_display)
 {
     display = new_display;
-}
-
-
-void AdaptiveMomentEstimation::set_epsilon(const type& new_epsilon)
-{
-    epsilon = new_epsilon;
 }
 
 
@@ -155,7 +142,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     const bool has_selection = data_set->has_selection();
     
-    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
@@ -553,7 +540,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     const bool has_selection = data_set->has_selection();
 
-    const bool is_classification_model = is_instance_of<CrossEntropyError3D>(loss_index);
+    const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
     const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
     const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);

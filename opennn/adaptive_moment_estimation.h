@@ -30,7 +30,6 @@ public:
    const type& get_learning_rate() const;
    const type& get_beta_1() const;
    const type& get_beta_2() const;
-   const type& get_epsilon() const;
 
    // Stopping criteria
 
@@ -55,7 +54,6 @@ public:
    void set_custom_learning_rate(const type&);
    void set_beta_1(const type&);
    void set_beta_2(const type&);
-   void set_epsilon(const type&);
 
    // Training parameters
 
@@ -97,7 +95,7 @@ private:
 
    type beta_2 = type(0.999);
 
-   type epsilon = type(1.e-6);
+   const type epsilon = numeric_limits<type>::epsilon();
 
     // Stopping criteria
 
@@ -105,7 +103,7 @@ private:
    
    type training_accuracy_goal = type(1);
 
-   Index maximum_epochs_number = 10000;
+   Index maximum_epochs_number = 1000;
 
    Index maximum_selection_failures = numeric_limits<Index>::max();
 

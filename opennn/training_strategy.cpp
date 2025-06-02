@@ -124,7 +124,7 @@ MinkowskiError* TrainingStrategy::get_Minkowski_error()
 }
 
 
-CrossEntropyError* TrainingStrategy::get_cross_entropy_error()
+CrossEntropyError2d* TrainingStrategy::get_cross_entropy_error()
 {
     return &cross_entropy_error;
 }
@@ -621,12 +621,12 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
 
     // Cross entropy error
 
-    const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError");
+    const XMLElement* cross_entropy_element = loss_index_element->FirstChildElement("CrossEntropyError2d");
 
     if (cross_entropy_element)
     {
         XMLDocument cross_entropy_document;
-        XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError");
+        XMLElement* cross_entropy_error_element_copy = cross_entropy_document.NewElement("CrossEntropyError2d");
 
         for (const XMLNode* node = cross_entropy_element->FirstChild(); node; node = node->NextSibling())
             cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));

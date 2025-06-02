@@ -571,7 +571,7 @@ void BackPropagation::set(const Index& new_samples_number, LossIndex* new_loss_i
 
     output_deltas.resize(size);
 
-    if(is_instance_of<CrossEntropyError3D>(loss_index))
+    if(is_instance_of<CrossEntropyError3d>(loss_index))
     {
         predictions.resize(samples_number, outputs_number);
         matches.resize(samples_number, outputs_number);
@@ -1759,7 +1759,7 @@ void BackPropagationCuda::set(const Index& new_samples_number, LossIndex* new_lo
     for (Index i = 0; i < samples_number; i++)
         CHECK_CUDA(cudaMemcpy(ones + i, &one, sizeof(float), cudaMemcpyHostToDevice));
 
-    //if (is_instance_of<CrossEntropyError3D>(loss_index))
+    //if (is_instance_of<CrossEntropyError3d>(loss_index))
     //{
         /* @todo CudaMalloc GPU
         predictions (batch_size, outputs_number);

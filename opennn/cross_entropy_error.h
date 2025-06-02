@@ -1,25 +1,25 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R
+//   C R O S S   E N T R O P Y   E R R O R   2 D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef CROSSENTROPYERROR_H
-#define CROSSENTROPYERROR_H
+#ifndef CROSSENTROPYERROR2D_H
+#define CROSSENTROPYERROR2D_H
 
 #include "loss_index.h"
 
 namespace opennn
 {
 
-class CrossEntropyError : public LossIndex
+class CrossEntropyError2d : public LossIndex
 {
 
 public:
 
-   CrossEntropyError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   CrossEntropyError2d(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
    // Error
 
@@ -58,6 +58,9 @@ public:
 
    void to_XML(XMLPrinter&) const override;
 
+private:
+
+   const type epsilon = numeric_limits<type>::epsilon();
 
 #ifdef OPENNN_CUDA
 

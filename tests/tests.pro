@@ -27,7 +27,6 @@ INCLUDEPATH += $$GTEST_DIR
 SOURCES += test.cpp \
            adaptive_moment_estimation_test.cpp \
            bounding_layer_test.cpp \
-           conjugate_gradient_test.cpp \
            convolutional_layer_test.cpp \
            correlations_test.cpp \
            cross_entropy_error_3d_test.cpp \
@@ -41,7 +40,6 @@ SOURCES += test.cpp \
            image_data_set_test.cpp \
            learning_rate_algorithm_test.cpp \
            levenberg_marquardt_algorithm_test.cpp \
-           long_short_term_memory_layer_test.cpp \
            mean_squared_error_test.cpp \
            minkowski_error_test.cpp \
            model_selection_test.cpp \

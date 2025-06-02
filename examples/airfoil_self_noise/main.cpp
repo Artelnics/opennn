@@ -22,42 +22,37 @@ int main()
 
         // Data set
         
-        // DataSet data_set("data/airfoil_self_noise.csv", ";", true, false);
-        DataSet data_set("/Users/artelnics/Documents/opennn/examples/airfoil_self_noise/data/airfoil_self_noise.csv", ";", true, false);
+        DataSet data_set("../data/airfoil_self_noise.csv", ";", true, false);
 
-        const Index input_variables_number = data_set.get_variables_number(DataSet::VariableUse::Input);
-        const Index target_variables_number = data_set.get_variables_number(DataSet::VariableUse::Target);
+        const Index inputs_number = data_set.get_variables_number(DataSet::VariableUse::Input);
+        const Index targets_number = data_set.get_variables_number(DataSet::VariableUse::Target);
 
-        // data_set.set(DataSet::SampleUse::Training);
-        
         // Neural network
 
-        const Index neurons_number = 20;
+        const Index neurons_number = 6;
 
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation,
-                                     {input_variables_number}, {neurons_number}, {target_variables_number});
-
+                                     {inputs_number}, {neurons_number}, {targets_number});
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+        //training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
         // training_strategy.set_loss_method(TrainingStrategy::LossMethod::MINKOWSKI_ERROR);
 
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::QUASI_NEWTON_METHOD);
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM); //Fail-Mean Squared error / Doesnt work with MINKOWSKI_ERROR / is not implemented yet with weighted squared error
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
         // training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
 
         // training_strategy.set_maximum_epochs_number(10000);
 
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+        //training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
         training_strategy.perform_training();
 
-
+/*
         // GeneticAlgorithm genetic_algorithm(&training_strategy);
         // genetic_algorithm.perform_input_selection();
 
@@ -102,7 +97,7 @@ int main()
         cout << outputs << endl;
 
         neural_network.print();
-
+*/
         cout << "Good bye!" << endl;
 
         return 0;

@@ -14,16 +14,24 @@
 namespace opennn
 {
 
-class CrossEntropyError3D : public LossIndex
+class CrossEntropyError3d : public LossIndex
 {
 
 public:
 
-    CrossEntropyError3D(NeuralNetwork* = nullptr, DataSet* = nullptr);
+    CrossEntropyError3d(NeuralNetwork* = nullptr, DataSet* = nullptr);
 
     void calculate_error(const Batch&,
                          const ForwardPropagation&,
                          BackPropagation&) const override;
+
+    void calculate_binary_error(const Batch&,
+                                const ForwardPropagation&,
+                                BackPropagation&) const;
+
+    void calculate_multiple_error(const Batch&,
+                                  const ForwardPropagation&,
+                                  BackPropagation&) const;
 
     void calculate_output_delta(const Batch&,
                                 ForwardPropagation&,
@@ -35,7 +43,6 @@ public:
     virtual void from_XML(const XMLDocument&);
 
     void to_XML(XMLPrinter&) const override;
-
 
 #ifdef OPENNN_CUDA
 

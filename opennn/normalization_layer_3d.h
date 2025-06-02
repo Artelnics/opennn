@@ -65,7 +65,7 @@ private:
 
     Tensor<type, 1> betas;
 
-    const type epsilon = type(1e-6);
+    const type epsilon = numeric_limits<type>::epsilon();
 };
 
 
