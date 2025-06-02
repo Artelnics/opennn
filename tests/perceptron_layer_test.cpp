@@ -8,9 +8,9 @@
 
 TEST(PerceptronLayerTest, DefaultConstructor)
 {
-    Perceptron perceptron_layer;
+    Dense2d perceptron_layer;
 
-    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 0 });
     EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 0 });
 }
@@ -18,7 +18,7 @@ TEST(PerceptronLayerTest, DefaultConstructor)
 
 TEST(PerceptronLayerTest, GeneralConstructor)
 {
-    Perceptron perceptron_layer({10}, {3}, Perceptron::Activation::Linear);
+    Dense2d perceptron_layer({10}, {3}, Dense2d::Activation::Linear);
     
     EXPECT_EQ(perceptron_layer.get_activation_function_string(), "Linear");
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 10 });
@@ -34,7 +34,7 @@ TEST(PerceptronLayerTest, Combinations)
     const Index inputs_number = get_random_index(1, 10);
     const Index outputs_number = get_random_index(1, 10);
 
-    Perceptron perceptron_layer({inputs_number}, {outputs_number});
+    Dense2d perceptron_layer({inputs_number}, {outputs_number});
     perceptron_layer.set_parameters_constant(type(0));
 
     Tensor<type, 2> inputs(samples_number, inputs_number);
@@ -51,69 +51,69 @@ TEST(PerceptronLayerTest, Combinations)
 
 TEST(PerceptronLayerTest, Activations)
 {
-    Perceptron perceptron_layer({ 1 }, { 1 });
+    Dense2d perceptron_layer({ 1 }, { 1 });
     perceptron_layer.set_parameters_constant(type(1));
 
     Tensor<type, 2> activations(1, 1);
     Tensor<type, 2> activation_derivatives(1, 1);
 
-    perceptron_layer.set_activation_function(Perceptron::Activation::Logistic);
+    perceptron_layer.set_activation_function(Dense2d::Activation::Logistic);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(0.731), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.196), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::HyperbolicTangent);
+    perceptron_layer.set_activation_function(Dense2d::Activation::HyperbolicTangent);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(0.761), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.41997), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::Linear);
+    perceptron_layer.set_activation_function(Dense2d::Activation::Linear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::RectifiedLinear);
+    perceptron_layer.set_activation_function(Dense2d::Activation::RectifiedLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::ExponentialLinear);
+    perceptron_layer.set_activation_function(Dense2d::Activation::ExponentialLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::ScaledExponentialLinear);
+    perceptron_layer.set_activation_function(Dense2d::Activation::ScaledExponentialLinear);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1.05), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(1.05), 0.001);
 
-    perceptron_layer.set_activation_function(Perceptron::Activation::SoftPlus);
+    perceptron_layer.set_activation_function(Dense2d::Activation::SoftPlus);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
     EXPECT_NEAR(activations(0, 0), type(1.313), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.731), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::SoftSign);
+    perceptron_layer.set_activation_function(Dense2d::Activation::SoftSign);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
     
     EXPECT_NEAR(activations(0, 0), type(0.5), 0.001);
     EXPECT_NEAR(activation_derivatives(0, 0), type(0.25), 0.001);
     
-    perceptron_layer.set_activation_function(Perceptron::Activation::HardSigmoid);
+    perceptron_layer.set_activation_function(Dense2d::Activation::HardSigmoid);
     activations.setConstant(type(1));
     perceptron_layer.calculate_activations(activations, activation_derivatives);
 
@@ -126,7 +126,7 @@ TEST(PerceptronLayerTest, Activations)
 TEST(PerceptronLayerTest, ForwardPropagateZero)
 {
     
-    Perceptron perceptron_layer({ 1 }, { 1 }, Perceptron::Activation::Linear);
+    Dense2d perceptron_layer({ 1 }, { 1 }, Dense2d::Activation::Linear);
     perceptron_layer.set_parameters_constant(type(0));
     
     unique_ptr<LayerForwardPropagation> perceptron_layer_forward_propagation
@@ -168,7 +168,7 @@ TEST(PerceptronLayerTest, ForwardPropagateZero)
 
     EXPECT_NEAR(abs(activation_derivatives(0,0)), type(1), type(1e-3));
 
-    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(perceptron_layer.get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(perceptron_layer.get_input_dimensions(), dimensions{ 1 });
     EXPECT_EQ(perceptron_layer.get_output_dimensions(), dimensions{ 1 });
    
@@ -188,9 +188,9 @@ TEST(PerceptronLayerTest, ForwardPropagate)
     const Index neurons_number = 2;
     bool is_training = true;
 
-    Perceptron perceptron_layer({ inputs_number }, 
+    Dense2d perceptron_layer({ inputs_number },
                                      { neurons_number }, 
-                                     Perceptron::Activation::Linear);
+                                     Dense2d::Activation::Linear);
     perceptron_layer.set_parameters_constant(type(1));
 
     inputs.resize(samples_number, inputs_number);

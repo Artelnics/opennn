@@ -48,14 +48,14 @@ void GrowingInputs::set_default()
     maximum_time = type(3600);
 
     training_strategy && training_strategy->has_neural_network()
-        ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input)
+        ? maximum_inputs_number = training_strategy->get_data_set()->get_raw_variables_number(Dataset::VariableUse::Input)
         : maximum_inputs_number = 100;
 }
 
 
 void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-    const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(DataSet::VariableUse::Input);
+    const Index inputs_number = training_strategy->get_data_set()->get_raw_variables_number(Dataset::VariableUse::Input);
 
     maximum_inputs_number = min(new_maximum_inputs_number, inputs_number);
 }
@@ -88,21 +88,21 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Data set
 
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    data_set->scrub_missing_values();
+    dataset->scrub_missing_values();
 
-    const vector<Index> target_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> target_raw_variable_indices = dataset->get_raw_variable_indices(Dataset::VariableUse::Target);
 
-    const Index original_input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+    const Index original_input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
 
-    const vector<string> raw_variable_names = data_set->get_raw_variable_names();
+    const vector<string> raw_variable_names = dataset->get_raw_variable_names();
 
     vector<string> input_raw_variable_names;
 
     if(display) cout << "Calculating correlations..." << endl;
 
-    const Tensor<type, 2> correlations = get_correlation_values(data_set->calculate_input_target_raw_variable_pearson_correlations());
+    const Tensor<type, 2> correlations = get_correlation_values(dataset->calculate_input_target_raw_variable_pearson_correlations());
     const Tensor<type, 1> total_correlations = correlations.abs().chip(0,1);
 
     vector<Index> correlation_indices(original_input_raw_variables_number);
@@ -112,14 +112,14 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
          correlation_indices.data() + correlation_indices.size(),
          [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    const vector<Index> input_raw_variable_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
+    const vector<Index> input_raw_variable_indices = dataset->get_raw_variable_indices(Dataset::VariableUse::Input);
 
     Tensor<Index, 1> correlations_rank_descending(input_raw_variable_indices.size());
 
     for(Index i = 0; i < correlations_rank_descending.size(); i++) 
         correlations_rank_descending(i) = input_raw_variable_indices[correlation_indices[i]];
 
-    data_set->set_input_raw_variables_unused();
+    dataset->set_input_raw_variables_unused();
 
     Index raw_variable_index = 0;
     
@@ -147,10 +147,10 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     for(Index i = 0; i < maximum_epochs_number; i++)
     {     
-        data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::Input);
+        dataset->set_raw_variable_use(correlations_rank_descending[raw_variable_index], Dataset::VariableUse::Input);
 
-        Index input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
-        const Index input_variables_number = data_set->get_variables_number(DataSet::VariableUse::Input);
+        Index input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+        const Index input_variables_number = dataset->get_variables_number(Dataset::VariableUse::Input);
 
         if (input_raw_variables_number < minimum_inputs_number)
         {
@@ -160,7 +160,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         const Index epoch = input_raw_variables_number - minimum_inputs_number + 1;
         neural_network->set_input_dimensions({ input_variables_number });
 
-        data_set->set_dimensions(DataSet::VariableUse::Input, {input_variables_number});
+        dataset->set_dimensions(Dataset::VariableUse::Input, {input_variables_number});
 
         if(display)
         {
@@ -169,7 +169,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
                     << "Input raw_variables number: " << input_raw_variables_number << endl
                     << "Inputs: " << endl;
 
-            input_raw_variable_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+            input_raw_variable_names = dataset->get_raw_variable_names(Dataset::VariableUse::Input);
 
             print_vector(input_raw_variable_names);
         }
@@ -181,8 +181,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
         {
             neural_network->set_parameters_random();
 
-            if(data_set->has_nan())
-                data_set->scrub_missing_values();
+            if(dataset->has_nan())
+                dataset->scrub_missing_values();
             training_results = training_strategy->perform_training();
 
             if(training_results.get_selection_error() < minimum_selection_error)
@@ -199,8 +199,8 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
             {
                 // Neural network
 
-                input_selection_results.optimal_input_raw_variables_indices = data_set->get_raw_variable_indices(DataSet::VariableUse::Input);
-                input_selection_results.optimal_input_raw_variable_names = data_set->get_raw_variable_names(DataSet::VariableUse::Input);
+                input_selection_results.optimal_input_raw_variables_indices = dataset->get_raw_variable_indices(Dataset::VariableUse::Input);
+                input_selection_results.optimal_input_raw_variable_names = dataset->get_raw_variable_names(Dataset::VariableUse::Input);
 
                 input_selection_results.optimal_parameters = neural_network->get_parameters();
 
@@ -222,7 +222,7 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
             selection_failures++;
 
-            data_set->set_raw_variable_use(correlations_rank_descending[raw_variable_index], DataSet::VariableUse::None);
+            dataset->set_raw_variable_use(correlations_rank_descending[raw_variable_index], Dataset::VariableUse::None);
 
             input_raw_variables_number--;
         }
@@ -292,24 +292,24 @@ InputsSelectionResults GrowingInputs::perform_input_selection()
 
     // Set data set stuff
 
-    data_set->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
+    dataset->set_raw_variable_indices(input_selection_results.optimal_input_raw_variables_indices,
                                        target_raw_variable_indices);
 
-    data_set->set_dimensions(DataSet::VariableUse::Input, {(Index)input_selection_results.optimal_input_raw_variables_indices.size()});
+    dataset->set_dimensions(Dataset::VariableUse::Input, {(Index)input_selection_results.optimal_input_raw_variables_indices.size()});
 
-    data_set->print();
+    dataset->print();
     
-    const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
+    const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Input);
 
-    const vector<Descriptives> input_variable_descriptives = data_set->calculate_variable_descriptives(DataSet::VariableUse::Input);
+    const vector<Descriptives> input_variable_descriptives = dataset->calculate_variable_descriptives(Dataset::VariableUse::Input);
 
-    set_maximum_inputs_number(data_set->get_raw_variables_number(DataSet::VariableUse::Input));
+    set_maximum_inputs_number(dataset->get_raw_variables_number(Dataset::VariableUse::Input));
 
     // Set neural network stuff
 
-    neural_network->set_input_dimensions({ data_set->get_variables_number(DataSet::VariableUse::Input) });
+    neural_network->set_input_dimensions({ dataset->get_variables_number(Dataset::VariableUse::Input) });
 
-    neural_network->set_input_names(data_set->get_variable_names(DataSet::VariableUse::Input));
+    neural_network->set_input_names(dataset->get_variable_names(Dataset::VariableUse::Input));
 
     if(neural_network->has(Layer::Type::Scaling2d))
     {

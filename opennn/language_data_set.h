@@ -14,13 +14,14 @@
 namespace opennn
 {
 
-class LanguageDataSet : public DataSet
+class LanguageDataset : public Dataset
 {
 
 public:
 
-    LanguageDataSet(const dimensions& input_dims = dimensions(0), const dimensions& target_dims = dimensions(0));
-    LanguageDataSet(const filesystem::path&);
+    LanguageDataset(const dimensions& input_dims = dimensions(0), const dimensions& target_dims = dimensions(0));
+
+    LanguageDataset(const filesystem::path&);
 
     const unordered_map<string, Index>& get_input_vocabulary() const;
     const unordered_map<string, Index>& get_target_vocabulary() const;
@@ -28,13 +29,11 @@ public:
     Index get_input_vocabulary_size() const;
     Index get_target_vocabulary_size() const;
 
-    Index get_input_size() const;
-    Index get_target_size() const;
+    Index get_input_length() const;
+    Index get_target_length() const;
 
     void set_input_vocabulary(const unordered_map<string, Index>&);
     void set_target_vocabulary(const unordered_map<string, Index>&);
-
-    void set_data_random() override;
 
     void read_csv() override;
 
@@ -68,8 +67,8 @@ private:
     unordered_map<string, Index> input_vocabulary;
     unordered_map<string, Index> target_vocabulary;
 
-    Index maximum_input_size = 0;
-    Index maximum_target_size = 0;
+    Index maximum_input_length = 0;
+    Index maximum_target_length = 0;
 
     Index target_vocabulary_size = 0;
     Index input_vocabulary_size = 0;

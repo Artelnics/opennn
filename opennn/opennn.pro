@@ -68,10 +68,10 @@ HEADERS += \
     scaling.h \
     correlations.h \
     tinyxml2.h \
-    data_set.h \
+    dataset.h \
     batch.h \
     time_series_data_set.h \
-    image_data_set.h \
+    image_dataset.h \
     language_data_set.h \
     layer.h \
     scaling_layer_2d.h \

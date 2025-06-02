@@ -12,97 +12,76 @@
 namespace opennn
 {
 
-LanguageDataSet::LanguageDataSet(const dimensions& new_input_dimensionms,
+LanguageDataset::LanguageDataset(const dimensions& new_input_dimensionms,
                                  const dimensions& new_target_dimensionms)
 {
 }
 
 
-LanguageDataSet::LanguageDataSet(const filesystem::path& new_data_path) : DataSet()
+LanguageDataset::LanguageDataset(const filesystem::path& new_data_path) : Dataset()
 {
     data_path = new_data_path;
-    separator = DataSet::Separator::Tab;
+    separator = Dataset::Separator::Tab;
     read_csv();
 }
 
 
-const unordered_map<string, Index>& LanguageDataSet::get_input_vocabulary() const
+const unordered_map<string, Index>& LanguageDataset::get_input_vocabulary() const
 {
     return input_vocabulary;
 }
 
 
-const unordered_map<string, Index>& LanguageDataSet::get_target_vocabulary() const
+const unordered_map<string, Index>& LanguageDataset::get_target_vocabulary() const
 {
     return target_vocabulary;
 }
 
 
-Index LanguageDataSet::get_input_vocabulary_size() const
+Index LanguageDataset::get_input_vocabulary_size() const
 {
     return input_vocabulary.size();
 }
 
-Index LanguageDataSet::get_input_size() const
+
+Index LanguageDataset::get_input_length() const
 {
-    return maximum_input_size;
+    return maximum_input_length;
 }
 
-Index LanguageDataSet::get_target_size() const
+
+Index LanguageDataset::get_target_length() const
 {
-    return maximum_target_size;
+    return maximum_target_length;
 }
 
-Index LanguageDataSet::get_target_vocabulary_size() const
+
+Index LanguageDataset::get_target_vocabulary_size() const
 {
     return target_vocabulary.size();
 }
 
 
-void LanguageDataSet::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
+void LanguageDataset::set_input_vocabulary(const unordered_map<string, Index>& new_input_vocabulary)
 {
     input_vocabulary = new_input_vocabulary;
 }
 
 
-void LanguageDataSet::set_target_vocabulary(const unordered_map<string, Index>& new_target_vocabulary)
+void LanguageDataset::set_target_vocabulary(const unordered_map<string, Index>& new_target_vocabulary)
 {
     target_vocabulary = new_target_vocabulary;
 }
 
 
-void LanguageDataSet::set_data_random()
-{
-/*
-    for(Index i = 0; i < batch_size; i++)
-    {
-        for(Index j = 0; j < decoder_length; j++)
-            data(i, j) = type(rand() % context_dimension);
-
-        for(Index j = 0; j < 2 * completion_length; j++)
-            data(i, j + decoder_length) = type(rand() % completion_dimension);
-    }
-
-    for(Index i = 0; i < decoder_length; i++)
-        set_raw_variable_use(i, DataSet::VariableUse::Decoder);
-
-    for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + decoder_length, DataSet::VariableUse::Input);
-
-    for(Index i = 0; i < completion_length; i++)
-        set_raw_variable_use(i + decoder_length + completion_length, DataSet::VariableUse::Target);
-*/
-}
-
-
-void LanguageDataSet::to_XML(XMLPrinter& printer) const
+void LanguageDataset::to_XML(XMLPrinter& printer) const
 {
     ostringstream buffer;
 
     time_t start, finish;
     time(&start);
 
-    printer.OpenElement("DataSet");
+    printer.OpenElement("Dataset");
 
     // Data file
 
@@ -185,15 +164,15 @@ void LanguageDataSet::to_XML(XMLPrinter& printer) const
 
     printer.CloseElement();
 
-    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_size));
-    add_xml_element(printer, "targetDimensions", to_string(maximum_input_size));
+    add_xml_element(printer, "TargetDimensions", to_string(maximum_target_length));
+    add_xml_element(printer, "targetDimensions", to_string(maximum_input_length));
 
     printer.CloseElement();
 
     time(&finish);
 }
 
-vector<string> LanguageDataSet::tokenize(const string& document)
+vector<string> LanguageDataset::tokenize(const string& document)
 {
     vector<string> tokens;
     string current_token;
@@ -235,7 +214,7 @@ vector<string> LanguageDataSet::tokenize(const string& document)
 }
 
 
-unordered_map<string, Index> LanguageDataSet::create_vocabulary(const vector<vector<string>>& document_tokens)
+unordered_map<string, Index> LanguageDataset::create_vocabulary(const vector<vector<string>>& document_tokens)
 {
     unordered_map<string, Index> vocabulary;
     Index id = 0;
@@ -255,26 +234,29 @@ unordered_map<string, Index> LanguageDataSet::create_vocabulary(const vector<vec
 }
 
 
-void LanguageDataSet::print_vocabulary(const unordered_map<string, Index>& vocabulary)
+void LanguageDataset::print_vocabulary(const unordered_map<string, Index>& vocabulary)
 {
     for (const auto& entry : vocabulary)
         cout << entry.first << " : " << entry.second << "\n";
 }
 
 
-void LanguageDataSet::print() const
+void LanguageDataset::print() const
 {
     cout << "Language data set" << endl;
     cout << "Input vocabulary size: " << get_input_vocabulary_size() << endl;
     cout << "Target vocabulary size: " << get_target_vocabulary_size() << endl;
-    cout << "Input length: " << get_input_size() << endl;
-    cout << "Target length: " << get_target_size() << endl;
+    cout << "Input length: " << get_input_length() << endl;
+    cout << "Target length: " << get_target_length() << endl;
+
+    cout << "Input variables number: " << get_variables_number(Dataset::VariableUse::Input) << endl;
+    cout << "Target variables number: " << get_variables_number(Dataset::VariableUse::Target) << endl;
 }
 
 
-void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
+void LanguageDataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* data_set_element = data_set_document.FirstChildElement("DataSet");
+    const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
 
     if(!data_set_element)
         throw runtime_error("Data set element is nullptr.\n");
@@ -363,7 +345,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
         sample_uses.resize(new_samples_number);
 
-        set(DataSet::SampleUse::Training);
+        set(Dataset::SampleUse::Training);
     }
 
     // Samples uses
@@ -535,13 +517,13 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 
     const XMLElement* completion_dimensions_element = data_set_element->FirstChildElement("CompletionDimensions");
     if (completion_dimensions_element && completion_dimensions_element->GetText())
-        maximum_target_size = atoi(completion_dimensions_element->GetText());
+        maximum_target_length = atoi(completion_dimensions_element->GetText());
 
     // Decoder Dimensions
 
     const XMLElement* decoder_dimensions_element = data_set_element->FirstChildElement("DecoderDimensions");
     if (decoder_dimensions_element && decoder_dimensions_element->GetText())
-        maximum_input_size = atoi(decoder_dimensions_element->GetText());
+        maximum_input_length = atoi(decoder_dimensions_element->GetText());
 
     // Display
 
@@ -549,7 +531,7 @@ void LanguageDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
-Index LanguageDataSet::count_non_empty_lines() const
+Index LanguageDataset::count_non_empty_lines() const
 {
     ifstream file(data_path);
 
@@ -572,7 +554,7 @@ Index LanguageDataSet::count_non_empty_lines() const
 }
 
 // @todo add "decoder variables"
-void LanguageDataSet::read_csv()
+void LanguageDataset::read_csv()
 {
     // read file
 
@@ -615,9 +597,9 @@ void LanguageDataSet::read_csv()
 
     // set data size
 
-    maximum_input_size = get_maximum_size(input_documents_tokens);
-    maximum_target_size = get_maximum_size(target_documents_tokens);
-    const Index maximum_size = maximum_input_size + maximum_target_size;
+    maximum_input_length = get_maximum_size(input_documents_tokens);
+    maximum_target_length = get_maximum_size(target_documents_tokens);
+    const Index maximum_size = maximum_input_length + maximum_target_length;
 
     data.resize(samples_number, maximum_size);
     data.setZero();
@@ -626,10 +608,10 @@ void LanguageDataSet::read_csv()
 
     raw_variables.resize(maximum_size);
 
-    for(Index i = 0; i < maximum_input_size; i++)
+    for(Index i = 0; i < maximum_input_length; i++)
         set_raw_variable_use(i, VariableUse::Input);
 
-    for (Index i = maximum_input_size; i < maximum_size; i++)
+    for (Index i = maximum_input_length; i < maximum_size; i++)
         set_raw_variable_use(i, VariableUse::Target);
 
     // set data
@@ -641,7 +623,7 @@ void LanguageDataSet::read_csv()
         const Index row = i / maximum_size;
         const Index col = i % maximum_size;
 
-        if (col < maximum_input_size)
+        if (col < maximum_input_length)
         {
             const vector<string>& tokens = input_documents_tokens[row];
             if (col < Index(tokens.size()))
@@ -652,7 +634,7 @@ void LanguageDataSet::read_csv()
         }
         else
         {
-            const Index target_col = col - maximum_input_size;
+            const Index target_col = col - maximum_input_length;
             const vector<string>& tokens = target_documents_tokens[row];
             if (target_col < Index(tokens.size()))
             {
@@ -666,9 +648,9 @@ void LanguageDataSet::read_csv()
 
     sample_uses.resize(samples_number);
 
-    target_dimensions = {get_target_size()};
-    decoder_dimensions = {get_target_size()};
-    input_dimensions = {get_input_size()};
+    target_dimensions = {get_target_length()};
+    decoder_dimensions = {get_target_length()};
+    input_dimensions = {get_input_length()};
 
     set_raw_variable_scalers(Scaler::None);
     set_default_raw_variable_names();
@@ -677,7 +659,7 @@ void LanguageDataSet::read_csv()
 }
 
 /*
-void LanguageDataSet::read_csv()
+void LanguageDataset::read_csv()
 {
     cout << "Reading .txt file..." << endl;
 

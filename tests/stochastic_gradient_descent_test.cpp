@@ -107,7 +107,7 @@ TEST(StochasticGradientDescentTest, TrainTransformer)
 
     Transformer transformer;
 
-    CrossEntropyError3D cross_entropy_error_3d(&transformer, &language_data_set);
+    CrossEntropyError3d cross_entropy_error_3d(&transformer, &language_data_set);
 
     stochastic_gradient_descent.set_loss_index(&cross_entropy_error_3d);
 

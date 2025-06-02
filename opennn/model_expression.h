@@ -64,7 +64,7 @@ public:
     string softsign_javascript();
     string header_javascript();
     string subheader_javascript();
-    string get_expression_javascript(const NeuralNetwork&, const vector<DataSet::RawVariable>& );
+    string get_expression_javascript(const NeuralNetwork&, const vector<Dataset::RawVariable>& );
 
     // other functions
     string replace_reserved_keywords(string&);
@@ -72,7 +72,7 @@ public:
     vector<string> fix_input_names(vector<string>& );
     vector<string> fix_output_names(vector<string>& );
 
-    void save_expression(const string&, const ProgrammingLanguage&, const NeuralNetwork*, const vector<DataSet::RawVariable>& );
+    void save_expression(const string&, const ProgrammingLanguage&, const NeuralNetwork*, const vector<Dataset::RawVariable>& );
 };
 
 }

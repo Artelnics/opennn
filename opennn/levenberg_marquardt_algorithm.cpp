@@ -159,9 +159,9 @@ void LevenbergMarquardtAlgorithm::check() const
     if(!loss_index)
         throw runtime_error("Pointer to loss index is nullptr.\n");
 
-    const DataSet* data_set = loss_index->get_data_set();
+    const Dataset* dataset = loss_index->get_data_set();
 
-    if(!data_set)
+    if(!dataset)
         throw runtime_error("The loss funcional has no data set.");
 
     const NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -191,18 +191,18 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     // Data set
 
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    const bool has_selection = data_set->has_selection();
+    const bool has_selection = dataset->has_selection();
 
-    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
 
-    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
     // Neural network
 
@@ -212,10 +212,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     set_scaling();
 
-    Batch training_batch(training_samples_number, data_set);
+    Batch training_batch(training_samples_number, dataset);
     training_batch.fill(training_samples_indices, input_variable_indices, {}, target_variable_indices);
 
-    Batch selection_batch(selection_samples_number, data_set);
+    Batch selection_batch(selection_samples_number, dataset);
     selection_batch.fill(selection_samples_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation training_forward_propagation(training_samples_number, neural_network);

@@ -20,7 +20,7 @@ class TestingAnalysis
 
 public: 
 
-   TestingAnalysis(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {
@@ -75,14 +75,14 @@ public:
    // Get
 
    NeuralNetwork* get_neural_network() const;
-   DataSet* get_data_set() const;
+   Dataset* get_data_set() const;
 
    const bool& get_display() const;
 
    // Set
 
    void set_neural_network(NeuralNetwork*);
-   void set_data_set(DataSet*);
+   void set_data_set(Dataset*);
 
    void set_display(const bool&);
 
@@ -115,13 +115,13 @@ public:
 
    Tensor<type, 2> calculate_errors() const;
    Tensor<type, 1> calculate_errors(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 1> calculate_errors(const DataSet::SampleUse&) const;
+   Tensor<type, 1> calculate_errors(const Dataset::SampleUse&) const;
 
    Tensor<type, 2> calculate_binary_classification_errors() const;
-   Tensor<type, 1> calculate_binary_classification_errors(const DataSet::SampleUse&) const;
+   Tensor<type, 1> calculate_binary_classification_errors(const Dataset::SampleUse&) const;
 
    Tensor<type, 2> calculate_multiple_classification_errors() const;
-   Tensor<type, 1> calculate_multiple_classification_errors(const DataSet::SampleUse&) const;
+   Tensor<type, 1> calculate_multiple_classification_errors(const Dataset::SampleUse&) const;
 
    type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -268,7 +268,7 @@ private:
 
    NeuralNetwork* neural_network = nullptr;
 
-   DataSet* data_set = nullptr;
+   Dataset* dataset = nullptr;
 
    bool display = true;
 };

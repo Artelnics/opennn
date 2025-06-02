@@ -207,7 +207,8 @@ private:
    Tensor<type, 1> moving_standard_deviations;
 
    type momentum = type(0.9);
-   const type epsilon = type(1.0e-5);
+
+   const type epsilon = numeric_limits<type>::epsilon();
 
    Tensor<type, 1> scales;
    Tensor<type, 1> offsets;
