@@ -38,7 +38,7 @@ public:
         NORMALIZED_SQUARED_ERROR,
         MINKOWSKI_ERROR,
         WEIGHTED_SQUARED_ERROR,
-        CROSS_ENTROPY_ERROR,
+        CROSS_ENTROPY_ERROR_2D,
         CROSS_ENTROPY_ERROR_3D
     };
 
@@ -145,7 +145,7 @@ private:
 
     MinkowskiError Minkowski_error;
 
-    CrossEntropyError2d cross_entropy_error;
+    CrossEntropyError2d cross_entropy_error_2d;
 
     CrossEntropyError3d cross_entropy_error_3d;
 

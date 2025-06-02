@@ -680,9 +680,9 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
     Tensor<type, 1> targets_row(outputs_number);
     Tensor<type, 1> outputs_row(outputs_number);
 
-    type cross_entropy_error = type(0);
+    type cross_entropy_error_2d = type(0);
 
-#pragma omp parallel for reduction(+:cross_entropy_error)
+#pragma omp parallel for reduction(+:cross_entropy_error_2d)
 
     for(Index i = 0; i < testing_samples_number; i++)
     {
@@ -693,12 +693,12 @@ type TestingAnalysis::calculate_cross_entropy_error(const Tensor<type, 2>& targe
         {
             outputs_row(j) = clamp(outputs_row(j), type(1.0e-6), numeric_limits<type>::max());
 
-            cross_entropy_error -=
+            cross_entropy_error_2d -=
                     targets_row(j)*log(outputs_row(j)) + (type(1) - targets_row(j))*log(type(1) - outputs_row(j));
         }
     }
 
-    return cross_entropy_error/type(testing_samples_number);
+    return cross_entropy_error_2d/type(testing_samples_number);
 }
 
 
@@ -712,7 +712,7 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
     Tensor<bool, 2> matches(batch_size, outputs_number);
     Tensor<bool, 2> mask(batch_size, outputs_number);
 
-    Tensor<type, 0> cross_entropy_error;
+    Tensor<type, 0> cross_entropy_error_2d;
     mask = targets != targets.constant(0);
 
     Tensor<type, 0> mask_sum;
@@ -724,9 +724,9 @@ type TestingAnalysis::calculate_cross_entropy_error_3d(const Tensor<type, 3>& ou
 
     errors = errors * mask.cast<type>();
 
-    cross_entropy_error = errors.sum();
+    cross_entropy_error_2d = errors.sum();
 
-    return cross_entropy_error(0) / mask_sum(0);
+    return cross_entropy_error_2d(0) / mask_sum(0);
 }
 
 

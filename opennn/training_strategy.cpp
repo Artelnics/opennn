@@ -43,7 +43,7 @@ LossIndex* TrainingStrategy::get_loss_index()
 
         case LossMethod::WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
 
-        case LossMethod::CROSS_ENTROPY_ERROR: return &cross_entropy_error;
+        case LossMethod::CROSS_ENTROPY_ERROR_2D: return &cross_entropy_error_2d;
 
         case LossMethod::CROSS_ENTROPY_ERROR_3D: return &cross_entropy_error_3d;
 
@@ -126,7 +126,7 @@ MinkowskiError* TrainingStrategy::get_Minkowski_error()
 
 CrossEntropyError2d* TrainingStrategy::get_cross_entropy_error()
 {
-    return &cross_entropy_error;
+    return &cross_entropy_error_2d;
 }
 
 
@@ -164,8 +164,8 @@ string TrainingStrategy::write_loss_method() const
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         return "WEIGHTED_SQUARED_ERROR";
 
-    case LossMethod::CROSS_ENTROPY_ERROR:
-        return "CROSS_ENTROPY_ERROR";
+    case LossMethod::CROSS_ENTROPY_ERROR_2D:
+        return "CROSS_ENTROPY_ERROR_2D";
 
     default:
         return string();
@@ -234,7 +234,7 @@ string TrainingStrategy::write_loss_method_text() const
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         return "Weighted squared error";
 
-    case LossMethod::CROSS_ENTROPY_ERROR:
+    case LossMethod::CROSS_ENTROPY_ERROR_2D:
         return "Cross entropy error";
 
     default:
@@ -258,7 +258,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_
 
     mean_squared_error.set(new_neural_network, new_data_set);
     normalized_squared_error.set(new_neural_network, new_data_set);
-    cross_entropy_error.set(new_neural_network, new_data_set);
+    cross_entropy_error_2d.set(new_neural_network, new_data_set);
     cross_entropy_error_3d.set(new_neural_network, new_data_set);
     weighted_squared_error.set(new_neural_network, new_data_set);
     Minkowski_error.set(new_neural_network, new_data_set);
@@ -282,8 +282,8 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
         set_loss_method(LossMethod::MINKOWSKI_ERROR);
     else if(new_loss_method == "WEIGHTED_SQUARED_ERROR")
         set_loss_method(LossMethod::WEIGHTED_SQUARED_ERROR);
-    else if(new_loss_method == "CROSS_ENTROPY_ERROR")
-        set_loss_method(LossMethod::CROSS_ENTROPY_ERROR);
+    else if(new_loss_method == "CROSS_ENTROPY_ERROR_2D")
+        set_loss_method(LossMethod::CROSS_ENTROPY_ERROR_2D);
     else
         throw runtime_error("Unknown loss method: " + new_loss_method + ".\n");
 }
@@ -324,7 +324,7 @@ void TrainingStrategy::set_threads_number(const int& new_threads_number)
     normalized_squared_error.set_threads_number(new_threads_number);
     Minkowski_error.set_threads_number(new_threads_number);
     weighted_squared_error.set_threads_number(new_threads_number);
-    cross_entropy_error.set_threads_number(new_threads_number);
+    cross_entropy_error_2d.set_threads_number(new_threads_number);
     cross_entropy_error_3d.set_threads_number(new_threads_number);
 
     quasi_Newton_method.set_threads_number(new_threads_number);
@@ -340,7 +340,7 @@ void TrainingStrategy::shutdown_threads()
     normalized_squared_error.shutdown_threads();
     Minkowski_error.shutdown_threads();
     weighted_squared_error.shutdown_threads();;
-    cross_entropy_error.shutdown_threads();
+    cross_entropy_error_2d.shutdown_threads();
     cross_entropy_error_3d.shutdown_threads();
 
     quasi_Newton_method.shutdown_threads();
@@ -364,7 +364,7 @@ void TrainingStrategy::set_data_set(Dataset* new_data_set)
 
     normalized_squared_error.set_data_set(new_data_set);
 
-    cross_entropy_error.set_data_set(new_data_set);
+    cross_entropy_error_2d.set_data_set(new_data_set);
     cross_entropy_error_3d.set_data_set(new_data_set);
 
     weighted_squared_error.set_data_set(new_data_set);
@@ -379,7 +379,7 @@ void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
 
     mean_squared_error.set_neural_network(new_neural_network);
     normalized_squared_error.set_neural_network(new_neural_network);
-    cross_entropy_error.set_neural_network(new_neural_network);
+    cross_entropy_error_2d.set_neural_network(new_neural_network);
     cross_entropy_error_3d.set_neural_network(new_neural_network);
     weighted_squared_error.set_neural_network(new_neural_network);
     Minkowski_error.set_neural_network(new_neural_network);
@@ -403,7 +403,7 @@ void TrainingStrategy::set_display(const bool& new_display)
 
     mean_squared_error.set_display(display);
     normalized_squared_error.set_display(display);
-    cross_entropy_error.set_display(display);
+    cross_entropy_error_2d.set_display(display);
     weighted_squared_error.set_display(display);
     Minkowski_error.set_display(display);
 
@@ -460,9 +460,16 @@ void TrainingStrategy::set_default()
 
     optimization_method = OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION;
 
-    if(has_neural_network())
-        if(neural_network->get_model_type() == NeuralNetwork::ModelType::Classification)
-            loss_method = LossMethod::CROSS_ENTROPY_ERROR;
+    if(!has_neural_network()) return;
+
+    const NeuralNetwork::ModelType model_type = neural_network->get_model_type();
+
+    if(model_type == NeuralNetwork::ModelType::Classification
+    || model_type == NeuralNetwork::ModelType::ImageClassification)
+            loss_method = LossMethod::CROSS_ENTROPY_ERROR_2D;
+
+    if(model_type == NeuralNetwork::ModelType::TextClassification)
+        loss_method = LossMethod::CROSS_ENTROPY_ERROR_3D;
 }
 
 
@@ -549,7 +556,7 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
     mean_squared_error.to_XML(printer);
     normalized_squared_error.to_XML(printer);
     Minkowski_error.to_XML(printer);
-    cross_entropy_error.to_XML(printer);
+    cross_entropy_error_2d.to_XML(printer);
     weighted_squared_error.to_XML(printer);
 
     switch (loss_method) {
@@ -562,8 +569,8 @@ void TrainingStrategy::to_XML(XMLPrinter& printer) const
     case LossMethod::MINKOWSKI_ERROR:
         Minkowski_error.write_regularization_XML(printer);
         break;
-    case LossMethod::CROSS_ENTROPY_ERROR:
-        cross_entropy_error.write_regularization_XML(printer);
+    case LossMethod::CROSS_ENTROPY_ERROR_2D:
+        cross_entropy_error_2d.write_regularization_XML(printer);
         break;
     case LossMethod::WEIGHTED_SQUARED_ERROR:
         weighted_squared_error.write_regularization_XML(printer);
@@ -632,7 +639,7 @@ void TrainingStrategy::from_XML(const XMLDocument& document)
             cross_entropy_error_element_copy->InsertEndChild(node->DeepClone(&cross_entropy_document));
 
         cross_entropy_document.InsertEndChild(cross_entropy_error_element_copy);
-        cross_entropy_error.from_XML(cross_entropy_document);
+        cross_entropy_error_2d.from_XML(cross_entropy_document);
     }
 
     // Weighted squared error

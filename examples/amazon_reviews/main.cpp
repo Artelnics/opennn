@@ -39,55 +39,22 @@ int main()
         // cout<<words_number<<endl;
         // cout<<target_variables_number<<endl;
 
+        // @todo get input and target dimensions
+
         // Neural Network
 
-
         NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-                                     {  }, { }, {  });
+                                     { 1885, 40, 32 }, { }, { 1 });
 
-        neural_network.print();
-/*
-        // const Index maximum_sequence_length = language_dataset.get_input_length();
-        // const Index vocabulary_size = language_dataset.get_input_vocabulary_size();
-        // const Index embedding_dimension = 64;
-        // const Index heads_number = 4;
-        // const dimensions outputs_number = { 1 };
-
-        //cout << "Maximum seq: " << maximum_sequence_length << endl;
-        //cout << "Vocab size: " << vocabulary_size << endl;
-
-        //NeuralNetwork neural_network;
-        //neural_network.add_layer(make_unique<Embedding>(vocabulary_size, maximum_sequence_length, embedding_dimension, "Embedding"));
-        //neural_network.add_layer(make_unique<MultiHeadAttention>(maximum_sequence_length, maximum_sequence_length, embedding_dimension, heads_number, false, "Multihead_attention"));
-        //neural_network.set_layer_inputs_indices("Multihead_attention",{"Embedding", "Embedding"});
-        // neural_network.add_layer(make_unique<Addition3d>(maximum_sequence_length, embedding_dimension, "Addition"));
-        // neural_network.set_layer_inputs_indices("Addition", {"Embedding", "Multihead_attention"});
-        // neural_network.add_layer(make_unique<Normalization3d>(maximum_sequence_length, embedding_dimension, "Normalization"));
-        //neural_network.add_layer(make_unique<Flatten3d>(neural_network.get_output_dimensions()));
-        //neural_network.add_layer(make_unique<Dense2d>(neural_network.get_output_dimensions(), outputs_number));
+//        neural_network.print(); Improve to show something nice
 
         // Training Strategy
 
         TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.print();
 
-        training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-
-        training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
-
-        // training_strategy.get_adaptive_moment_estimation()->set_custom_learning_rate(depth);
-
-        language_dataset.split_samples_sequential(0.8,0,0.2);
-        // training_strategy.get_adaptive_moment_estimation()->set_loss_goal(0.3);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(100);
-        training_strategy.get_adaptive_moment_estimation()->set_maximum_time(244800);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(32);
-
-        training_strategy.get_adaptive_moment_estimation()->set_display(true);
-        training_strategy.get_adaptive_moment_estimation()->set_display_period(1);
-
-        TrainingResults training_results = training_strategy.perform_training();
+        //training_strategy.perform_training();
 
         // language_dataset.set(Dataset::SampleUse::Testing);
 /*
@@ -132,5 +99,5 @@ int main()
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
+// License along with this library; if not, write to the Free Software Foundation.
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
