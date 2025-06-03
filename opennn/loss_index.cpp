@@ -39,7 +39,7 @@ bool LossIndex::has_neural_network() const
 
 bool LossIndex::has_data_set() const
 {
-    return dataset;
+    return Dataset;
 }
 
 
@@ -53,7 +53,7 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {
     neural_network = new_neural_network;
 
-    dataset = new_data_set;
+    Dataset = new_data_set;
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
@@ -72,8 +72,8 @@ void LossIndex::set_threads_number(const int& new_threads_number)
     if (thread_pool != nullptr)
         shutdown_threads();
 
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -82,7 +82,8 @@ void LossIndex::shutdown_threads()
     if(thread_pool_device != nullptr)
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
+    if(thread_pool != nullptr)
+    {
         thread_pool.release();
         thread_pool.reset();
     }
@@ -97,7 +98,7 @@ void LossIndex::set_neural_network(NeuralNetwork* new_neural_network)
 
 void LossIndex::set_data_set(Dataset* new_data_set)
 {
-    dataset = new_data_set;
+    Dataset = new_data_set;
 }
 
 
@@ -643,19 +644,48 @@ void BackPropagation::print() const
 }
 
 
-Tensor<type, 1> LossIndex::calculate_numerical_gradient() 
+type LossIndex::calculate_error_xxx()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    Batch batch(samples_number, dataset);
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+
+    Batch batch(samples_number, Dataset);
+
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      forward_propagation);
+
+/*
+    BackPropagation back_propagation(samples_number, this);
+
+    calculate_error(batch, forward_propagation, back_propagation);
+
+    return back_propagation.error();
+*/
+    return 0;
+}
+
+
+Tensor<type, 1> LossIndex::calculate_numerical_gradient()
+{
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+
+    Batch batch(samples_number, Dataset);
 
     if(neural_network->get_model_type() == NeuralNetwork::ModelType::TextClassification)
     {
-        const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+        const vector<Index> decoder_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Decoder);
         batch.fill(sample_indices, input_variable_indices, decoder_variable_indices, target_variable_indices);
     }
     else
@@ -717,13 +747,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 
 Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, Dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -792,16 +822,16 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
 Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 {
 
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const dimensions inputs_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+    const dimensions inputs_dimensions = Dataset->get_dimensions(Dataset::VariableUse::Input);
 
     const Index values_number = neural_network->get_inputs_number()*samples_number;
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, Dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -851,13 +881,13 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 
 Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, Dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);
@@ -931,13 +961,13 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
 
 Tensor<type, 2> LossIndex::calculate_numerical_hessian()
 {
-    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> sample_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-    Batch batch(samples_number, dataset);
+    Batch batch(samples_number, Dataset);
     batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
 
     ForwardPropagation forward_propagation(samples_number, neural_network);

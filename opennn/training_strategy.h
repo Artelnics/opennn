@@ -133,7 +133,7 @@ public:
 
 private:
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

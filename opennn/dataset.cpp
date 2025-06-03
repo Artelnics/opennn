@@ -1952,8 +1952,8 @@ void Dataset::set_threads_number(const int& new_threads_number)
     if (thread_pool != nullptr)
         shutdown_threads();
 
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -4210,7 +4210,7 @@ string Dataset::RawVariable::get_type_string() const
 
 void Dataset::read_data_file_preview(ifstream& file)
 {
-    if (display) cout << "Reading data file preview..." << endl;
+//    if (display) cout << "Reading data file preview..." << endl;
 
     const string separator_string = get_separator_string();
 
@@ -4556,7 +4556,7 @@ void Dataset::decode(string&) const
 void Dataset::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
 
 // AutoAssociation Models
-void Dataset::transform_associative_dataset() {}
+void Dataset::transform_associative_Dataset() {}
 void Dataset::save_auto_associative_data_binary(const string&) const {};
 
 

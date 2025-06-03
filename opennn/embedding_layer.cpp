@@ -163,8 +163,8 @@ void Embedding::add_positional_encodings(Tensor<type, 3>& embeddings) const
 
 
 void Embedding::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                       unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                       const bool& is_training)
+                                  unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                  const bool& is_training)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 

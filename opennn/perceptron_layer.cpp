@@ -284,8 +284,8 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    PerceptronForwardPropagation* this_forward_propagation =
-        static_cast<PerceptronForwardPropagation*>(layer_forward_propagation.get());
+    Dense2dForwardPropagation* this_forward_propagation =
+        static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
 
     Tensor<type, 2>& outputs = this_forward_propagation->outputs;
 
@@ -311,23 +311,23 @@ void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     // Forward propagation
 
-    const PerceptronForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronForwardPropagation*>(forward_propagation.get());
+    const Dense2dForwardPropagation* dense2d_layer_forward_propagation =
+        static_cast<Dense2dForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 2>& activation_derivatives = perceptron_layer_forward_propagation->activation_derivatives;
+    const Tensor<type, 2>& activation_derivatives = dense2d_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    PerceptronBackPropagation* perceptron_back_propagation =
-        static_cast<PerceptronBackPropagation*>(back_propagation.get());
+    Dense2dBackPropagation* dense2d_back_propagation =
+        static_cast<Dense2dBackPropagation*>(back_propagation.get());
     
-    Tensor<type, 2>& weight_derivatives = perceptron_back_propagation->weight_derivatives;
+    Tensor<type, 2>& weight_derivatives = dense2d_back_propagation->weight_derivatives;
 
-    Tensor<type, 1>& bias_derivatives = perceptron_back_propagation->bias_derivatives;
+    Tensor<type, 1>& bias_derivatives = dense2d_back_propagation->bias_derivatives;
 
-    const bool& is_first_layer = perceptron_back_propagation->is_first_layer;
+    const bool& is_first_layer = dense2d_back_propagation->is_first_layer;
 
-    Tensor<type, 2>& input_derivatives = perceptron_back_propagation->input_derivatives;
+    Tensor<type, 2>& input_derivatives = dense2d_back_propagation->input_derivatives;
 
     if(activation_function != Activation::Softmax)
         deltas.device(*thread_pool_device) = deltas * activation_derivatives;
@@ -356,22 +356,22 @@ void Dense2d::back_propagate_lm(const vector<pair<type*, dimensions>>& input_pai
 
     // Forward propagation
 
-    const PerceptronForwardPropagation* perceptron_layer_forward_propagation =
-        static_cast<PerceptronForwardPropagation*>(forward_propagation.get());
+    const Dense2dForwardPropagation* dense2d_layer_forward_propagation =
+        static_cast<Dense2dForwardPropagation*>(forward_propagation.get());
 
     const Tensor<type, 2>& activation_derivatives
-        = perceptron_layer_forward_propagation->activation_derivatives;
+        = dense2d_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
-        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
+    Dense2dLayerBackPropagationLM* dense2d_layer_back_propagation_lm =
+        static_cast<Dense2dLayerBackPropagationLM*>(back_propagation.get());
 
-    Tensor<type, 2>& squared_errors_Jacobian = perceptron_layer_back_propagation_lm->squared_errors_Jacobian;
+    Tensor<type, 2>& squared_errors_Jacobian = dense2d_layer_back_propagation_lm->squared_errors_Jacobian;
 
-    const bool& is_first_layer = perceptron_layer_back_propagation_lm->is_first_layer;
+    const bool& is_first_layer = dense2d_layer_back_propagation_lm->is_first_layer;
 
-    Tensor<type, 2>& input_derivatives = perceptron_layer_back_propagation_lm->input_derivatives;
+    Tensor<type, 2>& input_derivatives = dense2d_layer_back_propagation_lm->input_derivatives;
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
@@ -409,11 +409,11 @@ void Dense2d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation
                                  Index& index,
                                  Tensor<type, 1>& gradient) const
 {
-    PerceptronBackPropagation* perceptron_back_propagation =
-        static_cast<PerceptronBackPropagation*>(back_propagation.get());
+    Dense2dBackPropagation* dense2d_back_propagation =
+        static_cast<Dense2dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, perceptron_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, perceptron_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, dense2d_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, dense2d_back_propagation->bias_derivatives, index);
 }
 
 
@@ -424,10 +424,10 @@ void Dense2d::insert_squared_errors_Jacobian_lm(unique_ptr<LayerBackPropagationL
     const Index parameters_number = get_parameters_number();
     const Index batch_size = back_propagation->batch_size;
 
-    PerceptronLayerBackPropagationLM* perceptron_layer_back_propagation_lm =
-        static_cast<PerceptronLayerBackPropagationLM*>(back_propagation.get());
+    Dense2dLayerBackPropagationLM* dense2d_layer_back_propagation_lm =
+        static_cast<Dense2dLayerBackPropagationLM*>(back_propagation.get());
 
-    type* this_squared_errors_Jacobian_data = perceptron_layer_back_propagation_lm->squared_errors_Jacobian.data();
+    type* this_squared_errors_Jacobian_data = dense2d_layer_back_propagation_lm->squared_errors_Jacobian.data();
 
     memcpy(squared_errors_Jacobian.data() + index,
            this_squared_errors_Jacobian_data,
@@ -473,11 +473,11 @@ void Dense2d::print() const
          << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
-         << "Synaptic weights dimensions: " << weights.dimensions() << endl;
+         << "Weights dimensions: " << weights.dimensions() << endl;
 
     cout << "Biases:" << endl;
     cout << biases << endl;
-    cout << "Synaptic weights:" << endl;
+    cout << "Weights:" << endl;
     cout << weights << endl;
 
     cout << "Activation function:" << endl;
@@ -487,19 +487,19 @@ void Dense2d::print() const
 
 void Dense2d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* perceptron_layer_element = document.FirstChildElement("Dense2d");
+    const XMLElement* dense2d_layer_element = document.FirstChildElement("Dense2d");
 
-    if(!perceptron_layer_element)
+    if(!dense2d_layer_element)
         throw runtime_error("Dense2d element is nullptr.\n");
 
-    set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_input_dimensions({ read_xml_index(perceptron_layer_element, "InputsNumber") });
-    set_output_dimensions({ read_xml_index(perceptron_layer_element, "NeuronsNumber") });
-    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
+    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_input_dimensions({ read_xml_index(dense2d_layer_element, "InputsNumber") });
+    set_output_dimensions({ read_xml_index(dense2d_layer_element, "NeuronsNumber") });
+    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     Index index = 0;
 
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
+    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 
@@ -535,7 +535,7 @@ string Dense2d::get_activation_function_string_expression() const
 }
 
 
-void PerceptronForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
+void Dense2dForwardPropagation::set(const Index& new_batch_size, Layer *new_layer)
 {
     layer = new_layer;
     
@@ -553,7 +553,7 @@ void PerceptronForwardPropagation::set(const Index& new_batch_size, Layer *new_l
 }
 
 
-pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
+pair<type *, dimensions> Dense2dForwardPropagation::get_outputs_pair() const
 {
     const dimensions output_dimensions = layer->get_output_dimensions();
     
@@ -561,7 +561,7 @@ pair<type *, dimensions> PerceptronForwardPropagation::get_outputs_pair() const
 }
 
 
-PerceptronForwardPropagation::PerceptronForwardPropagation(const Index&new_batch_size,
+Dense2dForwardPropagation::Dense2dForwardPropagation(const Index&new_batch_size,
                                                                      Layer *new_layer)
 : LayerForwardPropagation()
 {
@@ -569,7 +569,7 @@ PerceptronForwardPropagation::PerceptronForwardPropagation(const Index&new_batch
 }
 
 
-void PerceptronForwardPropagation::print() const
+void Dense2dForwardPropagation::print() const
 {
     cout << "Outputs:" << endl
          << outputs << endl
@@ -578,14 +578,14 @@ void PerceptronForwardPropagation::print() const
 }
 
 
-PerceptronBackPropagation::PerceptronBackPropagation(const Index&new_batch_size, Layer *new_layer)
+Dense2dBackPropagation::Dense2dBackPropagation(const Index&new_batch_size, Layer *new_layer)
     : LayerBackPropagation()
 {
     set(new_batch_size, new_layer);
 }
 
 
-void PerceptronBackPropagation::set(const Index&new_batch_size,
+void Dense2dBackPropagation::set(const Index&new_batch_size,
                                     Layer *new_layer)
 {
     layer = new_layer;
@@ -605,7 +605,7 @@ void PerceptronBackPropagation::set(const Index&new_batch_size,
 }
 
 
-vector<pair<type*, dimensions>> PerceptronBackPropagation::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> Dense2dBackPropagation::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -613,7 +613,7 @@ vector<pair<type*, dimensions>> PerceptronBackPropagation::get_input_derivative_
 }
 
 
-void PerceptronBackPropagation::print() const
+void Dense2dBackPropagation::print() const
 {
     cout << "Biases derivatives:" << endl
          << bias_derivatives << endl
@@ -622,7 +622,7 @@ void PerceptronBackPropagation::print() const
 }
 
 
-PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index&new_batch_size,
+Dense2dLayerBackPropagationLM::Dense2dLayerBackPropagationLM(const Index&new_batch_size,
                                                                    Layer *new_layer)
     : LayerBackPropagationLM()
 {
@@ -630,7 +630,7 @@ PerceptronLayerBackPropagationLM::PerceptronLayerBackPropagationLM(const Index&n
 }
 
 
-void PerceptronLayerBackPropagationLM::set(const Index&new_samples_number, Layer *new_layer)
+void Dense2dLayerBackPropagationLM::set(const Index&new_samples_number, Layer *new_layer)
 {
     layer = new_layer;
 
@@ -645,7 +645,7 @@ void PerceptronLayerBackPropagationLM::set(const Index&new_samples_number, Layer
 }
 
 
-vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_derivative_pairs() const
+vector<pair<type*, dimensions>> Dense2dLayerBackPropagationLM::get_input_derivative_pairs() const
 {
     const Index inputs_number = layer->get_input_dimensions()[0];
 
@@ -653,7 +653,7 @@ vector<pair<type*, dimensions>> PerceptronLayerBackPropagationLM::get_input_deri
 }
 
 
-void PerceptronLayerBackPropagationLM::print() const
+void Dense2dLayerBackPropagationLM::print() const
 {
     cout << "Squared errors Jacobian: " << endl
         << squared_errors_Jacobian << endl;
@@ -675,20 +675,20 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Forward propagation
 
-    Dense2dForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
+    Dense2dForwardPropagationCuda* dense2d_layer_forward_propagation_cuda =
         static_cast<Dense2dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(dense2d_layer_forward_propagation_cuda->layer);
 
-    const Index batch_size = perceptron_layer_forward_propagation_cuda->batch_size;
+    const Index batch_size = dense2d_layer_forward_propagation_cuda->batch_size;
 
-    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
-    type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
+    type* combinations = dense2d_layer_forward_propagation_cuda->combinations;
+    type* outputs = dense2d_layer_forward_propagation_cuda->outputs;
 
-    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_tensor_descriptor;
 
-    const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
-    const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
+    const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = dense2d_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
+    const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
     // Combinations
 
@@ -773,15 +773,15 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Forward propagation
 
-    Dense2dForwardPropagationCuda* perceptron_layer_forward_propagation_cuda =
+    Dense2dForwardPropagationCuda* dense2d_layer_forward_propagation_cuda =
         static_cast<Dense2dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Dense2d* perceptron_layer = static_cast<Dense2d*>(perceptron_layer_forward_propagation_cuda->layer);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(dense2d_layer_forward_propagation_cuda->layer);
 
-    const Index batch_size = perceptron_layer_forward_propagation_cuda->batch_size;
+    const Index batch_size = dense2d_layer_forward_propagation_cuda->batch_size;
 
-    type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
-    type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
+    type* combinations = dense2d_layer_forward_propagation_cuda->combinations;
+    type* outputs = dense2d_layer_forward_propagation_cuda->outputs;
 
     // Back propagation
 

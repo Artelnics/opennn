@@ -29,6 +29,8 @@ int main()
         const Index inputs_number = dataset.get_variables_number(Dataset::VariableUse::Input);
         const Index targets_number = dataset.get_variables_number(Dataset::VariableUse::Target);
 
+        cout << "targets_number: " << targets_number << endl;
+
         // Neural network
 
         const Index neurons_number = 6;

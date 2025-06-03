@@ -81,6 +81,8 @@ public:
 
    string get_activation_function_string_expression() const;
 
+   void print() const override;
+
    void from_XML(const XMLDocument&) override;
    void to_XML(XMLPrinter&) const override;
 
@@ -88,7 +90,7 @@ private:
 
     Index time_steps = type(10);
 
-    Index batch_size=type(10);
+    Index batch_size = type(10);
 
     Tensor<type, 1> biases;
 

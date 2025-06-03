@@ -739,10 +739,10 @@ void Convolutional::print() const
     cout << "Output dimensions: " << endl;
     print_vector(get_output_dimensions());
     cout << "Biases dimensions: " << biases.dimensions() << endl;
-    cout << "Synaptic weights dimensions: " << weights.dimensions() << endl;
+    cout << "Weights dimensions: " << weights.dimensions() << endl;
     cout << "biases:" << endl;
     cout << biases << endl;
-    cout << "Synaptic weights:" << endl;
+    cout << "Weights:" << endl;
     cout << weights << endl;
 }
 

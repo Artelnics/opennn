@@ -21,7 +21,7 @@ NormalizedSquaredError::NormalizedSquaredError(NeuralNetwork* new_neural_network
 
 void NormalizedSquaredError::set_data_set(Dataset* new_data_set)
 {
-    dataset = new_data_set;
+    Dataset = new_data_set;
 
     neural_network->has(Layer::Type::Recurrent)
         ? set_time_series_normalization_coefficient()
@@ -31,14 +31,14 @@ void NormalizedSquaredError::set_data_set(Dataset* new_data_set)
 
 void NormalizedSquaredError::set_normalization_coefficient()
 {
-    if (!has_data_set() || dataset->get_samples_number() == 0)
+    if (!has_data_set() || Dataset->get_samples_number() == 0)
     {
         normalization_coefficient = type(1);
         return;
     }
 
-    const Tensor<type, 1> training_target_means = dataset->calculate_means(Dataset::SampleUse::Training, Dataset::VariableUse::Target); 
-    const Tensor<type, 2> training_target_data = dataset->get_data(Dataset::SampleUse::Training, Dataset::VariableUse::Target);
+    const Tensor<type, 1> training_target_means = Dataset->calculate_means(Dataset::SampleUse::Training, Dataset::VariableUse::Target); 
+    const Tensor<type, 2> training_target_data = Dataset->get_data(Dataset::SampleUse::Training, Dataset::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(training_target_data, training_target_means);
 }
@@ -46,7 +46,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
 void NormalizedSquaredError::set_time_series_normalization_coefficient()
 {
-    const Tensor<type, 2> targets = dataset->get_data(Dataset::VariableUse::Target);
+    const Tensor<type, 2> targets = Dataset->get_data(Dataset::VariableUse::Target);
 
     const Index rows = targets.dimension(0)-1;
     const Index columns = targets.dimension(1);
@@ -89,7 +89,7 @@ type NormalizedSquaredError::calculate_time_series_normalization_coefficient(con
 
 void NormalizedSquaredError::set_default()
 {
-    if(has_neural_network() && has_data_set() && dataset->get_samples_number() != 0)
+    if(has_neural_network() && has_data_set() && Dataset->get_samples_number() != 0)
         set_normalization_coefficient();
     else
         normalization_coefficient = type(NAN);
@@ -118,7 +118,7 @@ void NormalizedSquaredError::calculate_error(const Batch& batch,
                                              const ForwardPropagation& forward_propagation,
                                              BackPropagation& back_propagation) const
 {
-    const Index total_samples_number = dataset->get_used_samples_number();
+    const Index total_samples_number = Dataset->get_used_samples_number();
 
     // Batch
 
@@ -154,7 +154,7 @@ void NormalizedSquaredError::calculate_error_lm(const Batch& batch,
                                                 const ForwardPropagation&,
                                                 BackPropagationLM& back_propagation) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
+    const Index total_samples_number = Dataset->get_samples_number();
 
     // Batch
 
@@ -179,7 +179,7 @@ void NormalizedSquaredError::calculate_output_delta(const Batch& batch,
 {
     // Data set
 
-    const Index total_samples_number = dataset->get_samples_number();
+    const Index total_samples_number = Dataset->get_samples_number();
 
     // Batch
 
@@ -218,7 +218,7 @@ void NormalizedSquaredError::calculate_output_delta_lm(const Batch& ,
 void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
                                                          BackPropagationLM& back_propagation_lm) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
+    const Index total_samples_number = Dataset->get_samples_number();
 
     // Batch
 
@@ -240,7 +240,7 @@ void NormalizedSquaredError::calculate_error_gradient_lm(const Batch& batch,
 void NormalizedSquaredError::calculate_error_hessian_lm(const Batch& batch,
                                                         BackPropagationLM& back_propagation_lm) const
 {
-    const Index total_samples_number = dataset->get_samples_number();
+    const Index total_samples_number = Dataset->get_samples_number();
 
     // Batch
 

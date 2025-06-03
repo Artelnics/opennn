@@ -26,7 +26,7 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset;//("../data");
+        ImageDataset image_dataset("../data");
 
         // Neural network
 /*

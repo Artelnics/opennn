@@ -40,7 +40,7 @@ public:
 
    inline Dataset* get_data_set() const 
    {
-      return dataset;
+      return Dataset;
    }
 
    const type& get_regularization_weight() const;
@@ -150,6 +150,9 @@ public:
 
    static type calculate_h(const type&);
 
+   type calculate_error_xxx();
+
+
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();
@@ -224,7 +227,7 @@ protected:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     RegularizationMethod regularization_method = RegularizationMethod::L2;
 
