@@ -26,9 +26,37 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        // Data set
-
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
+
+        const Index vocabulary_input_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
+        const Index neurons_number = 64;
+
+        const Index targets_number = language_dataset.get_target_length();
+        // const Index vocabulary_target_size = language_dataset.get_target_vocabulary_size();
+
+        dimensions input_dimensions      = {vocabulary_input_size, sequence_length, embedding_dimension};
+        dimensions complexity_dimensions = {neurons_number};
+        dimensions output_dimensions     = {targets_number};
+
+        NeuralNetwork neural_network(
+            NeuralNetwork::ModelType::TextClassification,
+            input_dimensions,
+            complexity_dimensions,
+            output_dimensions
+            );
+
+        neural_network.print();
+
+
+
+
+        // dimensions Addition3d::get_input_dimensions() const
+        // {
+        //     return { sequence_length, embedding_dimension };
+        // }
+
 
         // const vector<string> input_words = language_dataset.get_raw_variable_names(Dataset::VariableUse::Input);
         // const vector<string> targets_names = language_dataset.get_variable_names(Dataset::VariableUse::Target);
@@ -43,16 +71,16 @@ int main()
 
         // Neural Network
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-                                     { 1885, 40, 32 }, { }, { 1 });
+//         NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
+//                                      { 1885, 40, 32 }, { }, { 1 });
 
-//        neural_network.print(); Improve to show something nice
+// //        neural_network.print(); Improve to show something nice
 
-        // Training Strategy
+//         // Training Strategy
 
-        TrainingStrategy training_strategy(&neural_network, &language_dataset);
+//         TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
-        training_strategy.print();
+//         training_strategy.print();
 
         //training_strategy.perform_training();
 

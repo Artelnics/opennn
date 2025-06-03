@@ -166,7 +166,7 @@ public:
 
    // Serialization
 
-   Tensor<string, 2> get_perceptron_layers_information() const;
+   Tensor<string, 2> get_dense2d_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
    void from_XML(const XMLDocument&);
