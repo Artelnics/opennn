@@ -135,24 +135,24 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* Dataset = loss_index->get_data_set();
 
-    if(!dataset)
+    if(!Dataset)
         throw runtime_error("Data set is null.");
 
-    const bool has_selection = dataset->has_selection();
+    const bool has_selection = Dataset->has_selection();
     
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Decoder);
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -181,8 +181,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     set_vocabularies();
 
-    Batch training_batch(training_batch_samples_number, dataset);
-    Batch selection_batch(selection_batch_samples_number, dataset);
+    Batch training_batch(training_batch_samples_number, Dataset);
+    Batch selection_batch(selection_batch_samples_number, Dataset);
 
     ForwardPropagation training_forward_propagation(training_batch_samples_number, neural_network);
     ForwardPropagation selection_forward_propagation(selection_batch_samples_number, neural_network);
@@ -226,7 +226,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = Dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         training_error = type(0);
 
@@ -270,7 +270,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(has_selection)
         {
-            selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+            selection_batches = Dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
             
             selection_error = type(0);
             if(is_classification_model)    selection_accuracy = type(0);
@@ -532,24 +532,24 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     // Data set
 
-    Dataset* dataset = loss_index->get_data_set();
+    Dataset* Dataset = loss_index->get_data_set();
 
-    if (!dataset)
+    if (!Dataset)
         throw runtime_error("Data set is null.");
 
-    const bool has_selection = dataset->has_selection();
+    const bool has_selection = Dataset->has_selection();
 
     const bool is_classification_model = is_instance_of<CrossEntropyError3d>(loss_index);
 
-    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
-    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Decoder);
 
-    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
-    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
+    const vector<Index> training_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = Dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index training_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -578,8 +578,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
     set_vocabularies();
 
-    BatchCuda training_batch_cuda(training_batch_samples_number, dataset);
-    BatchCuda selection_batch_cuda(selection_batch_samples_number, dataset);
+    BatchCuda training_batch_cuda(training_batch_samples_number, Dataset);
+    BatchCuda selection_batch_cuda(selection_batch_samples_number, Dataset);
 
     ForwardPropagationCuda training_forward_propagation_cuda(training_batch_samples_number, neural_network);
     ForwardPropagationCuda selection_forward_propagation_cuda(selection_batch_samples_number, neural_network);
@@ -627,7 +627,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
     { 
         if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = Dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         training_error = type(0);
 
@@ -675,7 +675,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
         if (has_selection)
         {
-            selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+            selection_batches = Dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
             if (is_classification_model)    selection_accuracy = type(0);

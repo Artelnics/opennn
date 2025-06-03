@@ -62,7 +62,7 @@ private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     Tensor<Condition, 1> input_conditions;
     Tensor<Condition, 1> output_conditions;
@@ -82,7 +82,7 @@ struct ResponseOptimizationResults
 {
     ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef TIMESERIESDATASET_H
-#define TIMESERIESDATASET_H
+#ifndef TIMESERIESDataset_H
+#define TIMESERIESDataset_H
 
 #include "data_set.h"
 

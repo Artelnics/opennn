@@ -515,7 +515,7 @@ public:
 
     //AutoAssociation Models
 
-    virtual void transform_associative_dataset();
+    virtual void transform_associative_Dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
 
     // convert
@@ -608,7 +608,7 @@ struct Batch
 
     Index samples_number = 0;
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     dimensions input_dimensions;
     Tensor<type, 1> input_tensor;
@@ -655,7 +655,7 @@ struct BatchCuda
 
     Index samples_number = 0;
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     dimensions input_dimensions;
     dimensions decoder_dimensions;

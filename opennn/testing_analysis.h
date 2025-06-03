@@ -268,7 +268,7 @@ private:
 
    NeuralNetwork* neural_network = nullptr;
 
-   Dataset* dataset = nullptr;
+   Dataset* Dataset = nullptr;
 
    bool display = true;
 };

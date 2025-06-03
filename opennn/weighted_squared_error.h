@@ -39,7 +39,7 @@ public:
 
    void set_normalization_coefficient() override;
 
-   void set_data_set(Dataset*) override;
+   void set_dataset(Dataset*) override;
 
    string get_loss_method() const override;
 

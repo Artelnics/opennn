@@ -6,8 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef LANGUAGEDATASET_H
-#define LANGUAGEDATASET_H
+#ifndef LANGUAGEDataset_H
+#define LANGUAGEDataset_H
 
 #include "data_set.h"
 

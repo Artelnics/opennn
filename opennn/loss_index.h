@@ -40,7 +40,7 @@ public:
 
    inline Dataset* get_data_set() const 
    {
-      return dataset;
+      return Dataset;
    }
 
    const type& get_regularization_weight() const;
@@ -227,7 +227,7 @@ protected:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* dataset = nullptr;
+    Dataset* Dataset = nullptr;
 
     RegularizationMethod regularization_method = RegularizationMethod::L2;
 

@@ -163,7 +163,7 @@ const unique_ptr<Layer>& NeuralNetwork::get_layer(const string& layer_name) cons
 
 Index NeuralNetwork::get_layer_index(const string& layer_name) const
 {
-    if(layer_name == "dataset" || layer_name == "decoder")
+    if(layer_name == "Dataset" || layer_name == "decoder")
         return -1;
 
     if(layer_name == "input")

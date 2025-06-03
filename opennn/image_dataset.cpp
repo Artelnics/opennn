@@ -545,7 +545,7 @@ void ImageDataset::read_bmp()
     }
 
 
-    // cerr << "Included scale_variables function in the image_dataset::read_bmp" << endl;
+    // cerr << "Included scale_variables function in the image_Dataset::read_bmp" << endl;
     // scale_variables(VariableUse::Input);
 }
 

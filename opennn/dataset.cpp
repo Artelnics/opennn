@@ -4555,7 +4555,7 @@ void Dataset::decode(string&) const
 void Dataset::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
 
 // AutoAssociation Models
-void Dataset::transform_associative_dataset() {}
+void Dataset::transform_associative_Dataset() {}
 void Dataset::save_auto_associative_data_binary(const string&) const {};
 
 
