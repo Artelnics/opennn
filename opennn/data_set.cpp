@@ -4209,7 +4209,7 @@ string Dataset::RawVariable::get_type_string() const
 
 void Dataset::read_data_file_preview(ifstream& file)
 {
-    if (display) cout << "Reading data file preview..." << endl;
+//    if (display) cout << "Reading data file preview..." << endl;
 
     const string separator_string = get_separator_string();
 

@@ -10,7 +10,7 @@
 #include "images.h"
 #include "neural_network.h"
 #include "layer.h"
-#include "perceptron_layer.h""
+#include "perceptron_layer.h"
 #include "perceptron_layer_3d.h"
 #include "pooling_layer.h"
 #include "scaling_layer_2d.h"
@@ -255,6 +255,7 @@ void NeuralNetwork::set(const NeuralNetwork::ModelType& new_model_type,
     if(input_names.empty())
     {
         input_names.resize(inputs_number);
+
         for(Index i = 0; i < inputs_number; i++)
             input_names[i] = "input_" + to_string(i+1);
     }
@@ -338,9 +339,9 @@ void NeuralNetwork::set_classification(const dimensions& input_dimensions,
 
     for (Index i = 0; i < complexity_size; i++)
         add_layer(make_unique<Dense2d>(get_output_dimensions(),
-                                               dimensions{complexity_dimensions[i]},
-                                               Dense2d::Activation::HyperbolicTangent,
-                                               "dense2d_layer_" + to_string(i + 1)));
+                                       dimensions{complexity_dimensions[i]},
+                                       Dense2d::Activation::HyperbolicTangent,
+                                       "dense2d_layer_" + to_string(i + 1)));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),
                                    output_dimensions,
@@ -353,15 +354,11 @@ void NeuralNetwork::set_forecasting(const dimensions& input_dimensions,
                                     const dimensions& complexity_dimensions, 
                                     const dimensions& output_dimensions)
 {
+
     add_layer(make_unique<Scaling2d>(input_dimensions));
 
     add_layer(make_unique<Recurrent>(get_output_dimensions(),
-        dimensions{ complexity_dimensions[0] }));
-
-    add_layer(make_unique<Dense2d>(get_output_dimensions(),
-        output_dimensions,
-        Dense2d::Activation::HyperbolicTangent,
-        "recurrent_layer"));
+                                     output_dimensions));
 
     add_layer(make_unique<Unscaling>(output_dimensions));
 
@@ -800,14 +797,13 @@ void NeuralNetwork::forward_propagate(const vector<pair<type*, dimensions>>& inp
     const Index first_layer_index = is_training ? first_trainable_layer_index : 0;
     const Index last_layer_index = is_training ? last_trainable_layer_index : layers_number - 1;
 
-    const vector<vector<pair<type*, dimensions>>> layer_input_pairs = forward_propagation.get_layer_input_pairs(input_pair, is_training);
+    const vector<vector<pair<type*, dimensions>>> layer_input_pairs
+        = forward_propagation.get_layer_input_pairs(input_pair, is_training);
 
     for (Index i = first_layer_index; i <= last_layer_index; i++)
-    {
         layers[i]->forward_propagate(layer_input_pairs[i],
                                      forward_propagation.layers[i],
                                      is_training);
-    }
 }
 
 
@@ -1438,6 +1434,7 @@ void NeuralNetwork::print() const
         cout << "Inputs:" << endl;
         print_vector(get_input_names());
     }
+
     const Index layers_number = get_layers_number();       
 
     cout << "Layers number: " << layers_number << endl;

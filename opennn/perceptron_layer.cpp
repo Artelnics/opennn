@@ -473,11 +473,11 @@ void Dense2d::print() const
          << "Input dimensions: " << get_input_dimensions()[0] << endl
          << "Output dimensions: " << get_output_dimensions()[0] << endl
          << "Biases dimensions: " << biases.dimensions() << endl
-         << "Synaptic weights dimensions: " << weights.dimensions() << endl;
+         << "Weights dimensions: " << weights.dimensions() << endl;
 
     cout << "Biases:" << endl;
     cout << biases << endl;
-    cout << "Synaptic weights:" << endl;
+    cout << "Weights:" << endl;
     cout << weights << endl;
 
     cout << "Activation function:" << endl;

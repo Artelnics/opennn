@@ -43,7 +43,7 @@ void Batch::fill(const vector<Index>& sample_indices,
         else
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
-    else if(is_instance_of<TimeSeriesDataSet>(dataset)){
+    else if(is_instance_of<TimeSeriesDataset>(dataset)){
         //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
         fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
         input_dimensions = { batch_size, sequence_length, input_size };
@@ -52,7 +52,7 @@ void Batch::fill(const vector<Index>& sample_indices,
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
     // fill targets
-    if(is_instance_of<TimeSeriesDataSet>(dataset))
+    if(is_instance_of<TimeSeriesDataset>(dataset))
         fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
     else if (is_instance_of<LanguageDataset>(dataset))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
@@ -161,23 +161,20 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     dataset = new_data_set;
 
     const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
-    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(Dataset::VariableUse::Decoder);
     const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {
-        cout << "data_set_input_dimensions: " << endl;
-
-        input_dimensions = { samples_number};
+        input_dimensions = {samples_number};
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
 
         const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
         input_tensor.resize(input_size);
-
-        cout << "input_tensor: " << input_tensor.dimensions() << endl;
     }
 
     // @todo
+    // const dimensions& data_set_decoder_dimensions = data_set->get_dimensions(Dataset::VariableUse::Decoder);
+
     // if (!data_set_decoder_dimensions.empty())
     // {
     //     decoder_dimensions = { samples_number };
@@ -189,9 +186,7 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
 
     if (!data_set_target_dimensions.empty())
     {
-        cout << "data_set_input_dimensions: " << endl;
-
-        target_dimensions = { samples_number};
+        target_dimensions = {samples_number};
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
 
         const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());

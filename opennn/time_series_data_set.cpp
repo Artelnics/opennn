@@ -15,7 +15,7 @@
 namespace opennn
 {
 
-TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
+TimeSeriesDataset::TimeSeriesDataset(const Index& new_samples_number,
                                      const dimensions& new_input_dimensions,
                                      const dimensions& new_target_dimensions)
     :Dataset(new_samples_number, new_input_dimensions, new_target_dimensions)
@@ -23,7 +23,7 @@ TimeSeriesDataSet::TimeSeriesDataSet(const Index& new_samples_number,
 }
 
 
-TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
+TimeSeriesDataset::TimeSeriesDataset(const filesystem::path& data_path,
                                      const string& separator,
                                      const bool& has_header,
                                      const bool& has_sample_ids,
@@ -33,64 +33,43 @@ TimeSeriesDataSet::TimeSeriesDataSet(const filesystem::path& data_path,
 }
 
 
-const Index& TimeSeriesDataSet::get_time_raw_variable_index() const
+const Index& TimeSeriesDataset::get_time_raw_variable_index() const
 {
     return time_raw_variable_index;
 }
 
 
-const Index& TimeSeriesDataSet::get_group_raw_variable_index() const
-{
-    return group_raw_variable_index;
-}
-
-
-const Index& TimeSeriesDataSet::get_lags_number() const
+const Index& TimeSeriesDataset::get_lags_number() const
 {
     return lags_number;
 }
 
 
-const Index& TimeSeriesDataSet::get_steps_ahead() const
+const Index& TimeSeriesDataset::get_steps_ahead() const
 {
     return steps_ahead;
 }
 
 
-const string& TimeSeriesDataSet::get_time_raw_variable() const
-{
-    return time_raw_variable;
-}
-
-void TimeSeriesDataSet::set_lags_number(const Index& new_lags_number)
+void TimeSeriesDataset::set_lags_number(const Index& new_lags_number)
 {
     lags_number = new_lags_number;
 }
 
 
-void TimeSeriesDataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
+void TimeSeriesDataset::set_steps_ahead_number(const Index& new_steps_ahead_number)
 {
     steps_ahead = new_steps_ahead_number;
 }
 
-void TimeSeriesDataSet::set_time_raw_variable_index(const Index& new_time_raw_variable_number)
-{
-    time_raw_variable_index = new_time_raw_variable_number;
-}
 
-void TimeSeriesDataSet::set_time_raw_variable(const string& new_time_column)
+void TimeSeriesDataset::set_time_raw_variable_index(const Index& new_time_raw_variable_index)
 {
-    time_raw_variable = new_time_column;
+    time_raw_variable_index = new_time_raw_variable_index;
 }
 
 
-void TimeSeriesDataSet::set_group_by_raw_variable(const string& new_group_by_column)
-{
-//    group_by_column = new_group_by_column;
-}
-
-
-void TimeSeriesDataSet::print() const
+void TimeSeriesDataset::print() const
 {
     if(!display) return;
 
@@ -103,7 +82,7 @@ void TimeSeriesDataSet::print() const
          << "Number of samples: " << samples_number << "\n"
          << "Number of variables: " << variables_number << "\n"
          << "Number of input variables: " << input_variables_number << "\n"
-         << "Number of targets: " << target_variables_bumber << "\n"
+         << "Number of target variables: " << target_variables_bumber << "\n"
          << "Input variables dimensions: ";
 
     print_vector(get_dimensions(Dataset::VariableUse::Input));
@@ -111,10 +90,13 @@ void TimeSeriesDataSet::print() const
     cout << "Target variables dimensions: ";
 
     print_vector(get_dimensions(Dataset::VariableUse::Target));
+
+
+
 }
 
 
-void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
+void TimeSeriesDataset::to_XML(XMLPrinter& printer) const
 {
     // if(model_type != ModelType::Forecasting)
     //     throw runtime_error("No forecasting model type");
@@ -130,7 +112,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
     add_xml_element(printer, "MissingValuesLabel", missing_values_label);
     add_xml_element(printer, "LagsNumber", to_string(get_lags_number()));
     add_xml_element(printer, "StepsAhead", to_string(get_steps_ahead()));
-    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
+//    add_xml_element(printer, "TimeRawVariable", get_time_raw_variable());
     add_xml_element(printer, "GroupByRawVariable", "");
     add_xml_element(printer, "Codification", get_codification_string());
     printer.CloseElement();
@@ -242,7 +224,7 @@ void TimeSeriesDataSet::to_XML(XMLPrinter& printer) const
 }
 
 
-void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
+void TimeSeriesDataset::from_XML(const XMLDocument& data_set_document)
 {
     const XMLElement* data_set_element = data_set_document.FirstChildElement("Dataset");
     if(!data_set_element)
@@ -265,7 +247,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
     set_missing_values_label(read_xml_string(data_source_element, "MissingValuesLabel"));
     set_lags_number(stoi(read_xml_string(data_source_element, "LagsNumber")));
     set_steps_ahead_number(stoi(read_xml_string(data_source_element, "StepsAhead")));
-    set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
+//    set_time_raw_variable(read_xml_string(data_source_element, "TimeRawVariable"));
     //set_group_by_raw_variable(read_xml_string(data_source_element, "GroupByRawVariable"));
     set_codification(read_xml_string(data_source_element, "Codification"));
 
@@ -437,7 +419,7 @@ void TimeSeriesDataSet::from_XML(const XMLDocument& data_set_document)
 }
 
 
-void TimeSeriesDataSet::impute_missing_values_mean()
+void TimeSeriesDataset::impute_missing_values_mean()
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_variable_indices = get_used_variable_indices();
@@ -549,7 +531,7 @@ void TimeSeriesDataSet::impute_missing_values_mean()
 
 // @todo Complete method following the structure.
 
-void TimeSeriesDataSet::fill_gaps()
+void TimeSeriesDataset::fill_gaps()
 {   
     type start_time = 50;
     type end_time = 100;
@@ -585,7 +567,7 @@ void TimeSeriesDataSet::fill_gaps()
 }
 
 
-Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_number) const
+Tensor<type, 2> TimeSeriesDataset::calculate_autocorrelations(const Index& lags_number) const
 {
     const Index samples_number = get_samples_number();
 
@@ -672,7 +654,7 @@ Tensor<type, 2> TimeSeriesDataSet::calculate_autocorrelations(const Index& lags_
 }
 
 
-Tensor<type, 3> TimeSeriesDataSet::calculate_cross_correlations(const Index& lags_number) const
+Tensor<type, 3> TimeSeriesDataset::calculate_cross_correlations(const Index& lags_number) const
 {
     const Index samples_number = get_samples_number();
 

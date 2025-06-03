@@ -370,6 +370,26 @@ string Recurrent::get_activation_function_string_expression() const
 }
 
 
+void Recurrent::print() const
+{
+    cout << "Recurrent layer" << endl
+         << "Input dimensions: " << get_input_dimensions()[0] << endl
+         << "Output dimensions: " << get_output_dimensions()[0] << endl
+         << "Biases dimensions: " << biases.dimensions() << endl
+         << "Input weights dimensions: " << input_weights.dimensions() << endl
+         << "Recurrent weights dimensions: " << recurrent_weights.dimensions() << endl;
+
+    cout << "Biases:" << endl;
+    cout << biases << endl;
+    cout << "Input weights:" << endl;
+    cout << input_weights << endl;
+    cout << "Recurrent weights:" << endl;
+    cout << recurrent_weights << endl;
+    cout << "Activation function:" << endl;
+    cout << get_activation_function_string() << endl;
+}
+
+
 void Recurrent::from_XML(const XMLDocument& document)
 {
     const XMLElement* recurrent_layer_element = document.FirstChildElement("Recurrent");

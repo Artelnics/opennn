@@ -35,10 +35,6 @@ int main()
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                     { inputs_number }, { neurons_number}, { targets_number });
 
-        cout << "targets_number: " << targets_number << endl;
-
-        neural_network.print();
-
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &dataset);
