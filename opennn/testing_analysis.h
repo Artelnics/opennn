@@ -196,7 +196,7 @@ public:
 
    // Binary classification rates
 
-   BinaryClassificationRates calculate_binary_classification_rates() const;
+   BinaryClassificationRates calculate_binary_classification_rates(const type& = 0.50) const;
 
    vector<Index> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;
    vector<Index> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<Index>&, const type&) const;

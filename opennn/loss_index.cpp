@@ -168,7 +168,7 @@ void LossIndex::back_propagate(const Batch& batch,
     if(batch.is_empty()) return;
 
     // Loss index
-
+    cout << "adri71 - 00 -> " << back_propagation.loss << endl;
     calculate_error(batch, forward_propagation, back_propagation);
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);

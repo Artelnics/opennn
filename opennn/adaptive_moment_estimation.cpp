@@ -131,7 +131,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     check();
 
-    if(display) cout << "Training with adaptive moment estimation \"Adam\" ...\n";
+    if(display) cout << "Training with adaptive moment estimation \"Adam\" ..." << endl;
 
     // Data set
 
@@ -263,7 +263,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         // Loss
 
         training_error /= type(training_batches_number);
-
         if(is_classification_model)   
             training_accuracy /= type(training_batches_number);
 

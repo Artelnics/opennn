@@ -1545,7 +1545,7 @@ vector<Histogram> TestingAnalysis::calculate_output_histogram(const Tensor<type,
 }
 
 
-TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates() const
+TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_classification_rates(const type& decision_threshold) const
 {
     const Tensor<type, 2> inputs = dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
 
@@ -1555,19 +1555,13 @@ TestingAnalysis::BinaryClassificationRates TestingAnalysis::calculate_binary_cla
 
     const vector<Index> testing_indices = dataset->get_sample_indices(Dataset::SampleUse::Testing);
 
-    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network->get_first(Layer::Type::Dense2d));
-
     BinaryClassificationRates binary_classification_rates;
-/*
-    const type decision_threshold = dense_2d_layer
-                                        ? dense_2d_layer->get_decision_threshold()
-                                        : type(0.5);
 
     binary_classification_rates.true_positives_indices = calculate_true_positive_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.false_positives_indices = calculate_false_positive_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.false_negatives_indices = calculate_false_negative_samples(targets, outputs, testing_indices, decision_threshold);
     binary_classification_rates.true_negatives_indices = calculate_true_negative_samples(targets, outputs, testing_indices, decision_threshold);
-*/
+
     return binary_classification_rates;
 }
 
