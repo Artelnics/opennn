@@ -13,13 +13,13 @@
 namespace opennn
 {
 
-CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+CrossEntropyError2d::CrossEntropyError2d(NeuralNetwork* new_neural_network, Dataset* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
 
 
-void CrossEntropyError::calculate_error(const Batch& batch,
+void CrossEntropyError2d::calculate_error(const Batch& batch,
                                         const ForwardPropagation& forward_propagation,
                                         BackPropagation& back_propagation) const
 {
@@ -31,7 +31,7 @@ void CrossEntropyError::calculate_error(const Batch& batch,
 }
 
 
-void CrossEntropyError::calculate_binary_error(const Batch& batch,
+void CrossEntropyError2d::calculate_binary_error(const Batch& batch,
                                                const ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -54,13 +54,13 @@ void CrossEntropyError::calculate_binary_error(const Batch& batch,
     Tensor<type, 0>& error = back_propagation.error;
 
     error.device(*thread_pool_device)
-        = ((targets * (outputs + type(1e-5)).log() + (type(1) - targets) * ((type(1) - outputs + type(1e-5)).log())).sum()) / type(-samples_number);
+        = ((targets * (outputs + epsilon).log() + (type(1) - targets) * ((type(1) - outputs + epsilon).log())).sum()) / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
-void CrossEntropyError::calculate_multiple_error(const Batch& batch,
+void CrossEntropyError2d::calculate_multiple_error(const Batch& batch,
                                                  const ForwardPropagation& forward_propagation,
                                                  BackPropagation& back_propagation) const
 {
@@ -82,13 +82,13 @@ void CrossEntropyError::calculate_multiple_error(const Batch& batch,
 
     Tensor<type, 0>& error = back_propagation.error;
 
-    error.device(*thread_pool_device) = (targets*(outputs + type(1e-5)).log()).sum() / type(-samples_number);
+    error.device(*thread_pool_device) = (targets*(outputs + epsilon).log()).sum() / type(-samples_number);
 
     if(isnan(error())) throw runtime_error("\nError is NAN.");
 }
 
 
-void CrossEntropyError::calculate_output_delta(const Batch& batch,
+void CrossEntropyError2d::calculate_output_delta(const Batch& batch,
                                                ForwardPropagation& forward_propagation,
                                                BackPropagation& back_propagation) const
 {
@@ -100,7 +100,7 @@ void CrossEntropyError::calculate_output_delta(const Batch& batch,
 }
 
 
-void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
+void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
                                                       ForwardPropagation& forward_propagation,
                                                       BackPropagation& back_propagation) const
 {
@@ -112,11 +112,18 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> targets = tensor_map_2(targets_pair);
 
+    // cout << "samples_number: " << samples_number << endl;
+    // cout << "targets_pair_first: " << targets_pair.first << endl;
+    // cout << "targets_pair_second: " << endl;
+    // print_vector(targets_pair.second);
+
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
+
+    cout << "outputs: " << outputs.dimensions() << endl;
 
     // Back propagation
 
@@ -124,12 +131,16 @@ void CrossEntropyError::calculate_binary_output_delta(const Batch& batch,
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
 
+    cout << "output_deltas: " << output_deltas << endl;
+
+    // throw runtime_error("ehh");
+
     output_deltas.device(*thread_pool_device)
-        = (-targets/(outputs + type(1e-5)) + (type(1) - targets)/(type(1) - outputs + type(1e-5)))/type(samples_number);
+        = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);
 }
 
 
-void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
+void CrossEntropyError2d::calculate_multiple_output_delta(const Batch& batch,
                                                         ForwardPropagation& forward_propagation,
                                                         BackPropagation& back_propagation) const
 {
@@ -157,29 +168,29 @@ void CrossEntropyError::calculate_multiple_output_delta(const Batch& batch,
 }
 
 
-string CrossEntropyError::get_loss_method() const
+string CrossEntropyError2d::get_loss_method() const
 {
-    return "CROSS_ENTROPY_ERROR";
+    return "CROSS_ENTROPY_ERROR_2D";
 }
 
 
-string CrossEntropyError::get_error_type_text() const
+string CrossEntropyError2d::get_error_type_text() const
 {
     return "Cross entropy error";
 }
 
 
-void CrossEntropyError::to_XML(XMLPrinter& file_stream) const
+void CrossEntropyError2d::to_XML(XMLPrinter& file_stream) const
 {
-    file_stream.OpenElement("CrossEntropyError");
+    file_stream.OpenElement("CrossEntropyError2d");
 
     file_stream.CloseElement();
 }
 
 
-void CrossEntropyError::from_XML(const XMLDocument& document)
+void CrossEntropyError2d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
+    const XMLElement* root_element = document.FirstChildElement("CrossEntropyError2d");
 
     if(!root_element)
         throw runtime_error("Cross entropy error element is nullptr.\n");
@@ -198,7 +209,7 @@ void CrossEntropyError::from_XML(const XMLDocument& document)
 
 #ifdef OPENNN_CUDA
 
-void CrossEntropyError::calculate_error_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_error_cuda(const BatchCuda& batch_cuda,
                                              const ForwardPropagationCuda& forward_propagation_cuda,
                                              BackPropagationCuda& back_propagation_cuda) const
 {
@@ -210,7 +221,7 @@ void CrossEntropyError::calculate_error_cuda(const BatchCuda& batch_cuda,
 }
 
 
-void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
                                                     const ForwardPropagationCuda& forward_propagation_cuda,
                                                     BackPropagationCuda& back_propagation_cuda) const
 {
@@ -252,8 +263,6 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
     const float alpha = 1.0f;
     const float alpha_minus_one = -1.0f;
     const float beta = 0.0f;
-
-    const float epsilon = type(1e-5);
 
     cudaMemcpy(one_minus_outputs, ones, size * sizeof(float), cudaMemcpyDeviceToDevice);
     cudaMemcpy(one_minus_targets, ones, size * sizeof(float), cudaMemcpyDeviceToDevice);
@@ -329,7 +338,7 @@ void CrossEntropyError::calculate_binary_error_cuda(const BatchCuda& batch_cuda,
 }
 
 
-void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_multiple_error_cuda(const BatchCuda& batch_cuda,
                                                       const ForwardPropagationCuda& forward_propagation_cuda,
                                                       BackPropagationCuda& back_propagation_cuda) const
 {
@@ -366,8 +375,6 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 
     float alpha = 1.0f;
     const float beta = 0.0f;
-
-    const float epsilon = type(1e-5);
 
     // outputs + epsilon
     cudaMemcpy(outputs_plus_epsilon, outputs, size * sizeof(float), cudaMemcpyDeviceToDevice);
@@ -407,7 +414,7 @@ void CrossEntropyError::calculate_multiple_error_cuda(const BatchCuda& batch_cud
 }
 
 
-void CrossEntropyError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
                                                     ForwardPropagationCuda& forward_propagation_cuda,
                                                     BackPropagationCuda& back_propagation_cuda) const
 {
@@ -419,7 +426,7 @@ void CrossEntropyError::calculate_output_delta_cuda(const BatchCuda& batch_cuda,
 }
 
 
-void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_binary_output_delta_cuda(const BatchCuda& batch_cuda,
                                                            ForwardPropagationCuda& forward_propagation_cuda,
                                                            BackPropagationCuda& back_propagation_cuda) const
 {
@@ -464,13 +471,13 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
     cudnnOpTensor(cudnn_handle,
         operator_sum_descriptor,
         &beta,
-        output_tensor_descriptor,
+        outputs_tensor_descriptor,
         numerator_2,
         &beta_minus_one,
         output_tensor_descriptor,
         targets,
         &beta,
-        output_tensor_descriptor,
+        outputs_tensor_descriptor,
         numerator_2);
 
     // (-targets / (outputs)
@@ -494,7 +501,7 @@ void CrossEntropyError::calculate_binary_output_delta_cuda(const BatchCuda& batc
 }
 
 
-void CrossEntropyError::calculate_multiple_output_delta_cuda(const BatchCuda& batch_cuda,
+void CrossEntropyError2d::calculate_multiple_output_delta_cuda(const BatchCuda& batch_cuda,
                                                              ForwardPropagationCuda& forward_propagation_cuda,
                                                              BackPropagationCuda& back_propagation_cuda) const
 {

@@ -30,18 +30,18 @@ int main()
 
         // Data set
 /*
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
+        LanguageDataset language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
 
 
-        LanguageDataSet language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
+        LanguageDataset language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
 
-        // LanguageDataSet language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
+        // LanguageDataset language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
         // language_data_set.print_raw_variables();
         // language_data_set.print_data();
 
-        const Index input_length = language_data_set.get_input_size();
-        const Index decoder_length = language_data_set.get_target_size();
+        const Index input_length = language_data_set.get_input_length();
+        const Index decoder_length = language_data_set.get_target_length();
 
         const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
         const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
@@ -66,7 +66,7 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &language_data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
 
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -74,7 +74,7 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        language_data_set.set(DataSet::SampleUse::Training);
+        language_data_set.set(Dataset::SampleUse::Training);
         // adaptive_moment_estimation->set_loss_goal(0.3);
         adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
@@ -250,7 +250,7 @@ int main()
 
         // Data Set
 
-        LanguageDataSet language_data_set({0},{0});
+        LanguageDataset language_data_set({0},{0});
 
         language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
 

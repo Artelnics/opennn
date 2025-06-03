@@ -26,8 +26,8 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
     
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
     EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
     
@@ -40,10 +40,10 @@ TEST(NeuralNetworkTest, ApproximationConstructor)
             EXPECT_EQ(type, Layer::Type::Scaling2d);
             break;    
         case 1:
-            EXPECT_EQ(type, Layer::Type::Perceptron);
+            EXPECT_EQ(type, Layer::Type::Dense2d);
             break;
         case 2:
-            EXPECT_EQ(type, Layer::Type::Perceptron);
+            EXPECT_EQ(type, Layer::Type::Dense2d);
             break;
         case 3:
             EXPECT_EQ(type, Layer::Type::Unscaling);
@@ -66,7 +66,7 @@ TEST(NeuralNetworkTest, ClassificationConstructor)
     
     EXPECT_EQ(neural_network.get_layers_number(), 3);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Probabilistic);
 }
 
@@ -78,7 +78,7 @@ TEST(NeuralNetworkTest, ForecastingConstructor)
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
     EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Recurrent);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
     EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
 }
@@ -90,10 +90,10 @@ TEST(NeuralNetworkTest, AutoAssociationConstructor)
 
     EXPECT_EQ(neural_network.get_layers_number(), 6);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(5)->get_type(), Layer::Type::Unscaling);
 }
 
@@ -122,7 +122,7 @@ TEST(NeuralNetworkTest, ImageClassificationConstructor)
 
 TEST(NeuralNetworkTest, ForwardPropagate)
 {
-    //Test Perceptron
+    //Test Dense2d
 
     Index inputs_number = 2;
     Index outputs_number = 1;
@@ -151,8 +151,8 @@ TEST(NeuralNetworkTest, ForwardPropagate)
 
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Approximation, {inputs_number}, {neurons_number}, {outputs_number});
 
-    Perceptron* perceptron_layer = static_cast<Perceptron*>(neural_network.get_first(Layer::Type::Perceptron));
-    perceptron_layer->set_activation_function(Perceptron::Activation::Logistic);
+    Dense2d* perceptron_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    perceptron_layer->set_activation_function(Dense2d::Activation::Logistic);
 
     ForwardPropagation forward_propagation(data_set.get_samples_number(), &neural_network);
 
@@ -289,8 +289,8 @@ TEST(NeuralNetworkTest, test_save)
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
     EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
 
@@ -305,8 +305,8 @@ TEST(NeuralNetworkTest, test_save)
 
     EXPECT_EQ(neural_network.get_layers_number(), 5);
     EXPECT_EQ(neural_network.get_layer(0)->get_type(), Layer::Type::Scaling2d);
-    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Perceptron);
-    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Perceptron);
+    EXPECT_EQ(neural_network.get_layer(1)->get_type(), Layer::Type::Dense2d);
+    EXPECT_EQ(neural_network.get_layer(2)->get_type(), Layer::Type::Dense2d);
     EXPECT_EQ(neural_network.get_layer(3)->get_type(), Layer::Type::Unscaling);
     EXPECT_EQ(neural_network.get_layer(4)->get_type(), Layer::Type::Bounding);
 }
@@ -373,13 +373,13 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         neural_network.set(NeuralNetwork::ModelType::Approximation, { inputs_number }, {outputs_number }, {1});
 
-        //Perceptron* perceptron_layer = static_cast<Perceptron*>(neural_network.get_layer(1));
+        //Dense2d* perceptron_layer = static_cast<Dense2d*>(neural_network.get_layer(1));
         
         Layer::Type perceptron_layer = neural_network.get_layer(1)->get_type();
 
         const Index neurons_number = perceptron_layer->get_neurons_number();
 
-        perceptron_layer=set_activation_function(Perceptron::Activation::Logistic);
+        perceptron_layer=set_activation_function(Dense2d::Activation::Logistic);
 
         ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
 
@@ -435,8 +435,8 @@ TEST(NeuralNetworkTest, test_forward_propagate)
 
         neural_network.set();
 
-        Perceptron* perceptron_layer = new Perceptron(inputs_number, outputs_number);
-        perceptron_layer->set_activation_function(Perceptron::Activation::Logistic);
+        Dense2d* perceptron_layer = new Dense2d(inputs_number, outputs_number);
+        perceptron_layer->set_activation_function(Dense2d::Activation::Logistic);
         const Index neurons_number_perceptron = perceptron_layer->get_neurons_number();
 
         Probabilistic* probabilistic_layer = new Probabilistic(outputs_number, outputs_number);

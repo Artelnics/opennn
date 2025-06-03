@@ -19,6 +19,9 @@ namespace opennn
 
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
 {
+    if(thread_pool != nullptr)
+        shutdown_threads();
+
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -83,8 +86,23 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    if (thread_pool != nullptr)
+        shutdown_threads();
+
+    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+}
+
+
+void OptimizationAlgorithm::shutdown_threads()
+{
+    if(thread_pool_device != nullptr)
+        thread_pool_device.reset();
+
+    if(thread_pool != nullptr) {
+        thread_pool.release();
+        thread_pool.reset();
+    }
 }
 
 
@@ -238,10 +256,10 @@ type OptimizationAlgorithm::get_elapsed_time(const time_t &beginning_time)
 
 void OptimizationAlgorithm::set_names()
 {
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    const vector<string> input_names = data_set->get_variable_names(DataSet::VariableUse::Input);
-    const vector<string> target_names = data_set->get_variable_names(DataSet::VariableUse::Target);
+    const vector<string> input_names = dataset->get_variable_names(Dataset::VariableUse::Input);
+    const vector<string> target_names = dataset->get_variable_names(Dataset::VariableUse::Target);
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
@@ -252,13 +270,13 @@ void OptimizationAlgorithm::set_names()
 
 void OptimizationAlgorithm::set_scaling()
 {
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has(Layer::Type::Scaling2d))
     {
-        const vector<Scaler> input_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Input);
-        const vector<Descriptives> input_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Input);
+        const vector<Scaler> input_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Input);
+        const vector<Descriptives> input_variable_descriptives = dataset->scale_variables(Dataset::VariableUse::Input);
 
         Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network->get_first(Layer::Type::Scaling2d));
         scaling_layer_2d->set_descriptives(input_variable_descriptives);
@@ -267,8 +285,8 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Unscaling))
     {
-        const vector<Scaler> target_variable_scalers = data_set->get_variable_scalers(DataSet::VariableUse::Target);
-        const vector<Descriptives> target_variable_descriptives = data_set->scale_variables(DataSet::VariableUse::Target);
+        const vector<Scaler> target_variable_scalers = dataset->get_variable_scalers(Dataset::VariableUse::Target);
+        const vector<Descriptives> target_variable_descriptives = dataset->scale_variables(Dataset::VariableUse::Target);
 
         Unscaling* unscaling_layer = static_cast<Unscaling*>(neural_network->get_first(Layer::Type::Unscaling));
         unscaling_layer->set_descriptives(target_variable_descriptives);
@@ -277,15 +295,15 @@ void OptimizationAlgorithm::set_scaling()
 
     if(neural_network->has(Layer::Type::Scaling4d))
     {
-        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
-        image_data_set->scale_variables(DataSet::VariableUse::Input);
+        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
+        image_dataset->scale_variables(Dataset::VariableUse::Input);
     }
 }
 
 
 void OptimizationAlgorithm::set_unscaling()
 {
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
     NeuralNetwork* neural_network = loss_index->get_neural_network();
 
     if(neural_network->has(Layer::Type::Scaling2d))
@@ -294,7 +312,7 @@ void OptimizationAlgorithm::set_unscaling()
 
         const vector<Descriptives> input_variable_descriptives = scaling_layer_2d->get_descriptives();
 
-        data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+        dataset->unscale_variables(Dataset::VariableUse::Input, input_variable_descriptives);
     }
 
     if(neural_network->has(Layer::Type::Unscaling))
@@ -303,29 +321,29 @@ void OptimizationAlgorithm::set_unscaling()
 
         const vector<Descriptives> target_variable_descriptives = unscaling_layer->get_descriptives();
 
-        data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+        dataset->unscale_variables(Dataset::VariableUse::Target, target_variable_descriptives);
     }
 
     if(neural_network->has(Layer::Type::Scaling4d))
     {
-        ImageDataSet* image_data_set = static_cast<ImageDataSet*>(data_set);
-        image_data_set->unscale_variables(DataSet::VariableUse::Input);
+        ImageDataset* image_dataset = static_cast<ImageDataset*>(dataset);
+        image_dataset->unscale_variables(Dataset::VariableUse::Input);
     }
 
-    // if(!is_instance_of<LanguageDataSet>(data_set))
-    //     data_set->unscale_variables(DataSet::VariableUse::Input, input_variable_descriptives);
+    // if(!is_instance_of<LanguageDataset>(dataset))
+    //     dataset->unscale_variables(Dataset::VariableUse::Input, input_variable_descriptives);
 
     // if(neural_network->has(Layer::Type::Unscaling))
-    //     data_set->unscale_variables(DataSet::VariableUse::Target, target_variable_descriptives);
+    //     dataset->unscale_variables(Dataset::VariableUse::Target, target_variable_descriptives);
 
 }
 
 
 void OptimizationAlgorithm::set_vocabularies()
 {
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    if(!is_instance_of<LanguageDataSet>(data_set))
+    if(!is_instance_of<LanguageDataset>(dataset))
         return;
 
     NeuralNetwork* neural_network = loss_index->get_neural_network();
@@ -333,7 +351,7 @@ void OptimizationAlgorithm::set_vocabularies()
     if(!is_instance_of<Transformer>(neural_network))
         return;
 
-    LanguageDataSet* language_data_set = static_cast<LanguageDataSet*>(data_set);
+    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(dataset);
 
     const unordered_map<string, Index>& input_vocabulary = language_data_set->get_input_vocabulary();
     const unordered_map<string, Index>& target_vocabulary = language_data_set->get_target_vocabulary();

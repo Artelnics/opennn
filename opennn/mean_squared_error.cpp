@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network, Dataset* new_data_set)
     : LossIndex(new_neural_network, new_data_set)
 {
 }
@@ -23,7 +23,6 @@ void MeanSquaredError::calculate_error(const Batch& batch,
                                        BackPropagation& back_propagation) const
 {
     const Index outputs_number = neural_network->get_outputs_number();
-
     // Batch
 
     const Index samples_number = batch.get_samples_number();
@@ -43,7 +42,7 @@ void MeanSquaredError::calculate_error(const Batch& batch,
     Tensor<type, 2>& errors = back_propagation.errors;
 
     Tensor<type, 0>& error = back_propagation.error;
-    
+
     errors.device(*thread_pool_device) = outputs - targets;
     
     error.device(*thread_pool_device) = errors.contract(errors, axes(0,0,1,1)) / type(samples_number * outputs_number);

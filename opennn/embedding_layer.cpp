@@ -238,6 +238,28 @@ void Embedding::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagati
 }
 
 
+void Embedding::print() const
+{
+    cout << "Embedding Layer" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Type: Embedding" << endl;
+
+    cout << "Input dimensions: ";
+    print_vector(get_input_dimensions());
+
+    cout << "Output dimensions: ";
+    print_vector(get_output_dimensions());
+
+    cout << "Vocabulary size: " << get_vocabulary_size() << endl;
+    cout << "Sequence length: " << get_sequence_length() << endl;
+    cout << "Embedding dimension: " << get_embedding_dimension() << endl;
+
+    cout << "Dropout rate: " << dropout_rate << endl;
+
+    cout << "Weights dimensions: " << weights.dimensions() << endl;
+}
+
+
 void Embedding::from_XML(const XMLDocument& document)
 {
     const XMLElement* embedding_layer_element = document.FirstChildElement("Embedding");
@@ -393,8 +415,7 @@ void Embedding::allocate_parameters_device()
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    if (cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)) != cudaSuccess)
-        cout << "Synaptic weights allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&weights_device, inputs_number * outputs_number * sizeof(float)));
 }
 
 
@@ -411,8 +432,7 @@ void Embedding::copy_parameters_device()
     if (!weights_device)
         cout << "Weights device is null" << endl;
 
-    if (cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice) != cudaSuccess)
-        cout << "Weights device copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights_device, weights.data(), weights.size() * sizeof(type), cudaMemcpyHostToDevice));
 }
 
 
@@ -421,8 +441,7 @@ void Embedding::copy_parameters_host()
     if (!weights_device)
         cout << "Synaptic weights is null" << endl;
 
-    if (cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost) != cudaSuccess)
-        cout << "Weights host copy error" << endl;
+    CHECK_CUDA(cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
 

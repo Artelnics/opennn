@@ -187,6 +187,7 @@ Tensor<type, 2> self_kronecker_product(const ThreadPoolDevice* thread_pool_devic
     return matrix;
 }
 
+
 void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor<type, 2>>& matrix, const Tensor<type, 1>& vector)
 {
     // @ Changes to test (the case in which you can divide by 0)
@@ -203,33 +204,6 @@ void divide_columns(const ThreadPoolDevice* thread_pool_device, TensorMap<Tensor
                 corrected_vector(j) = 1;
 
         column.device(*thread_pool_device) = column / corrected_vector;
-    }
-}
-
-
-void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& matrix)
-{
-    const Index columns_number = matrix.dimension(1);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i);
-
-        column.device(*thread_pool_device) = column + vector(i);
-    }
-}
-
-
-void sum_columns(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, TensorMap<Tensor<type, 2>>& matrix)
-{
-    const Index columns_number = matrix.dimension(1);
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        // TensorMap<Tensor<type, 1>> column = tensor_map(matrix, i); //This one gives an error because the matrix is a TensorMap<Tensor<type, 2>> instead of just Tensor<type, 2>
-        auto column = matrix.chip(i, 1);
-
-        column.device(*thread_pool_device) = column + vector(i);
     }
 }
 
@@ -491,7 +465,6 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
 {
     const type norm = l2_norm(thread_pool_device, vector);
-
     if(norm < NUMERIC_LIMITS_MIN)
     {
         gradient.setZero();

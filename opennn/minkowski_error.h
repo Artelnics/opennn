@@ -19,7 +19,7 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   MinkowskiError(NeuralNetwork* = nullptr, DataSet* = nullptr);
+   MinkowskiError(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    type get_Minkowski_parameter() const;
 
@@ -46,6 +46,7 @@ private:
 
    type minkowski_parameter;
 
+    const type epsilon = numeric_limits<type>::epsilon();
 
 #ifdef OPENNN_CUDA
 

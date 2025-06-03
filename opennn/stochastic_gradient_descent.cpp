@@ -190,19 +190,19 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     // Data set
 
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    const bool has_selection = data_set->has_selection();
+    const bool has_selection = dataset->has_selection();
     
-    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
 
-    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
         
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -210,8 +210,8 @@ TrainingResults StochasticGradientDescent::perform_training()
          ? min(selection_samples_number, batch_size)
          : 0;
 
-    Batch training_batch(training_batch_samples_number, data_set);
-    Batch selection_batch(selection_batch_samples_number, data_set);
+    Batch training_batch(training_batch_samples_number, dataset);
+    Batch selection_batch(selection_batch_samples_number, dataset);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
                                               ? training_samples_number / training_batch_samples_number
@@ -275,7 +275,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     {
         if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         const Index batches_number = training_batches.size();
 
@@ -329,7 +329,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         
         if(has_selection)
         {
-            selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+            selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
 
@@ -428,6 +428,9 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     if(display) results.print();
     
+    training_batch.shutdown_threads();
+    selection_batch.shutdown_threads();
+
     return results;
 }
 
@@ -536,19 +539,19 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
     // Data set
 
-    DataSet* data_set = loss_index->get_data_set();
+    Dataset* dataset = loss_index->get_data_set();
 
-    const bool has_selection = data_set->has_selection();
+    const bool has_selection = dataset->has_selection();
 
-    const vector<Index> input_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Input);
-    const vector<Index> target_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Target);
-    const vector<Index> decoder_variable_indices = data_set->get_variable_indices(DataSet::VariableUse::Decoder);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+    const vector<Index> decoder_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Decoder);
 
-    const vector<Index> training_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Training);
-    const vector<Index> selection_samples_indices = data_set->get_sample_indices(DataSet::SampleUse::Selection);
+    const vector<Index> training_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> selection_samples_indices = dataset->get_sample_indices(Dataset::SampleUse::Selection);
 
-    const Index training_samples_number = data_set->get_samples_number(DataSet::SampleUse::Training);
-    const Index selection_samples_number = data_set->get_samples_number(DataSet::SampleUse::Selection);
+    const Index training_samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     const Index training_batch_samples_number = min(training_samples_number, batch_size);
 
@@ -556,8 +559,8 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
         ? min(selection_samples_number, batch_size)
         : 0;
 
-    BatchCuda training_batch_cuda(training_batch_samples_number, data_set);
-    BatchCuda selection_batch_cuda(selection_batch_samples_number, data_set);
+    BatchCuda training_batch_cuda(training_batch_samples_number, dataset);
+    BatchCuda selection_batch_cuda(selection_batch_samples_number, dataset);
 
     const Index training_batches_number = (training_batch_samples_number != 0)
         ? training_samples_number / training_batch_samples_number
@@ -624,7 +627,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
     {
         if (display && epoch % display_period == 0) cout << "Epoch: " << epoch << endl;
 
-        training_batches = data_set->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
+        training_batches = dataset->get_batches(training_samples_indices, training_batch_samples_number, shuffle);
 
         const Index batches_number = training_batches.size();
 
@@ -678,7 +681,7 @@ TrainingResults StochasticGradientDescent::perform_training_cuda()
 
         if (has_selection)
         {
-            selection_batches = data_set->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
+            selection_batches = dataset->get_batches(selection_samples_indices, selection_batch_samples_number, shuffle);
 
             selection_error = type(0);
 
@@ -815,13 +818,8 @@ void SGDOptimizationDataCuda::set(StochasticGradientDescent* new_stochastic_grad
 
     const Index parameters_number = stochastic_gradient_descent->get_loss_index()->get_neural_network()->get_parameters_number();
 
-    // Gradient
-
-    if (cudaMalloc(&parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "parameters_increment allocation error" << endl;
-
-    if (cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)) != cudaSuccess)
-        cout << "last_parameters_increment allocation error" << endl;
+    CHECK_CUDA(cudaMalloc(&parameters_increment, parameters_number * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&last_parameters_increment, parameters_number * sizeof(float)));
 }
 
 

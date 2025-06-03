@@ -60,8 +60,6 @@
 
 #endif
 
-//#include "tinyxml2.h"
-
 using namespace std;
 using namespace Eigen;
 //using namespace tinyxml2;

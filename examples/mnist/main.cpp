@@ -26,24 +26,20 @@ int main()
 
         // Data set
 
-        ImageDataSet image_data_set;
-
-        image_data_set.set_data_path("data");
-
-        image_data_set.read_bmp();
+        ImageDataset image_dataset;//("../data");
 
         // Neural network
-
+/*
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            image_data_set.get_dimensions(DataSet::VariableUse::Input),
-            { 8,4 },
-            image_data_set.get_dimensions(DataSet::VariableUse::Target));
+            image_dataset.get_dimensions(Dataset::VariableUse::Input),
+            {8, 4},
+            image_dataset.get_dimensions(Dataset::VariableUse::Target));
 
         // Training strategy
 
-        TrainingStrategy training_strategy(&neural_network, &image_data_set);
+        TrainingStrategy training_strategy(&neural_network, &image_dataset);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
         training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(512);
@@ -54,12 +50,12 @@ int main()
 
         // Testing analysis
 
-        const TestingAnalysis testing_analysis(&neural_network, &image_data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &image_dataset);
         
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-
+*/
         cout << "Bye!" << endl;
         
         return 0;

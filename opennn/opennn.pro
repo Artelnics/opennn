@@ -68,10 +68,10 @@ HEADERS += \
     scaling.h \
     correlations.h \
     tinyxml2.h \
-    data_set.h \
+    dataset.h \
     batch.h \
     time_series_data_set.h \
-    image_data_set.h \
+    image_dataset.h \
     language_data_set.h \
     layer.h \
     scaling_layer_2d.h \
@@ -93,7 +93,7 @@ HEADERS += \
     minkowski_error.h \
     mean_squared_error.h \
     weighted_squared_error.h\
-    cross_entropy_error.h \
+    cross_entropy_error_2d.h \
     training_strategy.h \
     learning_rate_algorithm.h \
     quasi_newton_method.h \

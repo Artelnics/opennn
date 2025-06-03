@@ -13,7 +13,6 @@
 namespace opennn
 {
 
-    
 struct RGBQuad
 {
     uint8_t blue;
@@ -69,37 +68,38 @@ int32_t read_s32_le(ifstream& f, const string& file_path_str_for_error)
 
 Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs) 
 {
-    string image_path_str = image_path_fs.string();
+    const string image_path_str = image_path_fs.string();
 
     ifstream file(image_path_fs, ios::binary);
 
     if (!file)
         throw runtime_error("Cannot open BMP file: " + image_path_str);
 
-    uint16_t bfType = read_u16_le(file, image_path_str);
+    const uint16_t bfType = read_u16_le(file, image_path_str);
+
     if (bfType != 0x4D42)
         throw runtime_error("Not a BMP file (invalid signature 'BM'): " + image_path_str);
 
-    uint32_t bfSize = read_u32_le(file, image_path_str);    // unused
-    uint16_t bfReserved1 = read_u16_le(file, image_path_str); // unused
-    uint16_t bfReserved2 = read_u16_le(file, image_path_str); // unused
-    uint32_t bfOffBits = read_u32_le(file, image_path_str);
+//    uint32_t bfSize = read_u32_le(file, image_path_str);    // unused
+//    uint16_t bfReserved1 = read_u16_le(file, image_path_str); // unused
+//    uint16_t bfReserved2 = read_u16_le(file, image_path_str); // unused
+    const uint32_t bfOffBits = read_u32_le(file, image_path_str);
 
-    uint32_t biSize = read_u32_le(file, image_path_str);
+    const uint32_t biSize = read_u32_le(file, image_path_str);
 
     if (biSize != 40)
         throw runtime_error("Unsupported BMP DIB header size: " + to_string(biSize) + " in file: " + image_path_str + ". Expected 40 (BITMAPINFOHEADER).");
 
-    int32_t biWidth = read_s32_le(file, image_path_str);
-    int32_t biHeight_signed = read_s32_le(file, image_path_str);
-    uint16_t biPlanes = read_u16_le(file, image_path_str);
-    uint16_t biBitCount = read_u16_le(file, image_path_str);
-    uint32_t biCompression = read_u32_le(file, image_path_str);
-    uint32_t biSizeImage = read_u32_le(file, image_path_str); // unused
-    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str); // unused
-    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str); // unused
-    uint32_t biClrUsed = read_u32_le(file, image_path_str);
-    uint32_t biClrImportant = read_u32_le(file, image_path_str); // unused
+    const int32_t biWidth = read_s32_le(file, image_path_str);
+    const int32_t biHeight_signed = read_s32_le(file, image_path_str);
+    const uint16_t biPlanes = read_u16_le(file, image_path_str);
+    const uint16_t biBitCount = read_u16_le(file, image_path_str);
+    const uint32_t biCompression = read_u32_le(file, image_path_str);
+//    uint32_t biSizeImage = read_u32_le(file, image_path_str); // unused
+//    int32_t biXPelsPerMeter = read_s32_le(file, image_path_str); // unused
+//    int32_t biYPelsPerMeter = read_s32_le(file, image_path_str); // unused
+    const uint32_t biClrUsed = read_u32_le(file, image_path_str);
+//    uint32_t biClrImportant = read_u32_le(file, image_path_str); // unused
 
     if (biWidth <= 0)
         throw runtime_error("BMP width must be positive. Got: " + to_string(biWidth) + " in file: " + image_path_str);
@@ -132,8 +132,10 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
     if (biBitCount <= 8) 
     {
         uint32_t num_palette_colors = biClrUsed;
+
         if (num_palette_colors == 0)
             num_palette_colors = 1 << biBitCount;
+
         if (num_palette_colors > 256 && biBitCount == 8)
             throw runtime_error("Invalid palette size for 8-bit BMP: " + to_string(num_palette_colors) + " in file: " + image_path_str);
 
@@ -153,6 +155,7 @@ Tensor<type, 3> read_bmp_image(const filesystem::path& image_path_fs)
         throw runtime_error("Failed to seek to pixel data offset (" + to_string(bfOffBits) + ") in BMP: " + image_path_str);
 
     int bytes_per_pixel_in_file;
+
     if (biBitCount == 32) bytes_per_pixel_in_file = 4;
     else if (biBitCount == 24) bytes_per_pixel_in_file = 3;
     else if (biBitCount == 8) bytes_per_pixel_in_file = 1;

@@ -15,17 +15,17 @@
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, DataSet* new_data_set)
-    : data_set(new_data_set)
+ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_data_set)
+    : dataset(new_data_set)
 {
     set(new_neural_network, new_data_set);
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network, DataSet* new_data_set)
+void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {   
     neural_network = new_neural_network;
-    data_set = new_data_set;
+    dataset = new_data_set;
 
     if(!neural_network) return;
 
@@ -349,9 +349,9 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_raw_variables_number = data_set->get_raw_variables_number(DataSet::VariableUse::Input);
+    const int input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
 
-    vector<Index> used_raw_variables_indices = data_set->get_used_raw_variables_indices();
+    vector<Index> used_raw_variables_indices = dataset->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
@@ -363,15 +363,15 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
         {
             used_raw_variable_index = used_raw_variables_indices[j];
 
-            const DataSet::RawVariableType raw_variable_type = data_set->get_raw_variable_type(used_raw_variable_index);
+            const Dataset::RawVariableType raw_variable_type = dataset->get_raw_variable_type(used_raw_variable_index);
 
-            if(raw_variable_type == DataSet::RawVariableType::Numeric
-            || raw_variable_type == DataSet::RawVariableType::Constant)
+            if(raw_variable_type == Dataset::RawVariableType::Numeric
+            || raw_variable_type == Dataset::RawVariableType::Constant)
             {
                 inputs(i, index) = get_random_type(input_minimums[index], input_maximums[index]);
                 index++;
             }
-            else if(raw_variable_type == DataSet::RawVariableType::Binary)
+            else if(raw_variable_type == Dataset::RawVariableType::Binary)
             {
                 inputs(i, index) = (input_conditions(index) == ResponseOptimization::Condition::EqualTo)
                     ? input_minimums[index]
@@ -379,9 +379,9 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 
                 index++;
             }
-            else if(raw_variable_type == DataSet::RawVariableType::Categorical)
+            else if(raw_variable_type == Dataset::RawVariableType::Categorical)
             {
-                const Index categories_number = data_set->get_raw_variables()[used_raw_variable_index].get_categories_number();
+                const Index categories_number = dataset->get_raw_variables()[used_raw_variable_index].get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)
