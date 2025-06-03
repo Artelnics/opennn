@@ -1685,7 +1685,7 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     set_default_raw_variables_uses();
 
-    missing_values_method = MissingValuesMethod::Median;
+    missing_values_method = MissingValuesMethod::Mean;
     scrub_missing_values();
 
     input_dimensions = { get_variables_number(Dataset::VariableUse::Input) };
@@ -2613,6 +2613,7 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
+
             correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)

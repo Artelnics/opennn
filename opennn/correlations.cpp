@@ -545,8 +545,8 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.add_layer(make_unique<Dense2d>(dim1, dim2, Dense2d::Activation::Logistic));
 
     neural_network.set_parameters_constant(type(0.001));
-
     TrainingStrategy training_strategy(&neural_network, &dataset);
+
     training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);
@@ -566,7 +566,6 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     const Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
 
     // Logistic correlation
-
     const array<Index, 1> vector{{x_filtered.size()}};
 
     correlation.r = linear_correlation(thread_pool_device, outputs.reshape(vector), targets.reshape(vector)).r;
@@ -726,7 +725,7 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     Dataset dataset(x_filtered.size(), {1}, {y_filtered.dimension(1)});
 
     dataset.set_data(data);
-    // dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
+    dataset.set_raw_variable_indices(input_columns_indices, target_columns_indices);
     dataset.set_binary_raw_variables();
     dataset.set_default_raw_variables_scalers();
 
@@ -741,12 +740,12 @@ Correlation logistic_correlation_vector_matrix(const ThreadPoolDevice* thread_po
     NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                  { input_variables_number }, {1}, {target_variables_number});
 
-    // Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
+    Scaling2d* scaling_layer_2d = static_cast<Scaling2d*>(neural_network.get_first(Layer::Type::Scaling2d));
 
-    // Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
+    Dense2d* dense_2d_layer = static_cast<Dense2d*>(neural_network.get_first(Layer::Type::Dense2d));
 
-    // dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
-    // scaling_layer_2d->set_display(false);
+    dense_2d_layer->set_activation_function(Dense2d::Activation::Softmax);
+    scaling_layer_2d->set_display(false);
 
     TrainingStrategy training_strategy(&neural_network, &dataset);
 

@@ -569,7 +569,7 @@ protected:
 
     // Missing Values
 
-    MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
+    MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
 
     Index missing_values_number = 0;
 

@@ -177,15 +177,12 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
-
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
-
     Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = (outputs - targets);

@@ -167,15 +167,11 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
 
     if (!data_set_input_dimensions.empty())
     {
-        cout << "data_set_input_dimensions: " << endl;
-
         input_dimensions = { samples_number};
         input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
 
         const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
         input_tensor.resize(input_size);
-
-        cout << "input_tensor: " << input_tensor.dimensions() << endl;
     }
 
     // @todo
@@ -190,8 +186,6 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
 
     if (!data_set_target_dimensions.empty())
     {
-        cout << "data_set_input_dimensions: " << endl;
-
         target_dimensions = { samples_number};
         target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
 
