@@ -150,6 +150,9 @@ public:
 
    static type calculate_h(const type&);
 
+   type calculate_error_xxx();
+
+
    Tensor<type, 1> calculate_numerical_gradient();
    Tensor<type, 1> calculate_numerical_gradient_lm();
    Tensor<type, 2> calculate_numerical_jacobian();

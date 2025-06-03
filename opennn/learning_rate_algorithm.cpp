@@ -107,8 +107,8 @@ void LearningRateAlgorithm::set_threads_number(const int& new_threads_number)
     if (thread_pool != nullptr)
         shutdown_threads();
 
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 

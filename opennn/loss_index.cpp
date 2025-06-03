@@ -72,8 +72,8 @@ void LossIndex::set_threads_number(const int& new_threads_number)
     if (thread_pool != nullptr)
         shutdown_threads();
 
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -82,7 +82,8 @@ void LossIndex::shutdown_threads()
     if(thread_pool_device != nullptr)
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
+    if(thread_pool != nullptr)
+    {
         thread_pool.release();
         thread_pool.reset();
     }
@@ -168,7 +169,7 @@ void LossIndex::back_propagate(const Batch& batch,
     if(batch.is_empty()) return;
 
     // Loss index
-    cout << "adri71 - 00 -> " << back_propagation.loss << endl;
+
     calculate_error(batch, forward_propagation, back_propagation);
 
     calculate_layers_error_gradient(batch, forward_propagation, back_propagation);
@@ -644,7 +645,36 @@ void BackPropagation::print() const
 }
 
 
-Tensor<type, 1> LossIndex::calculate_numerical_gradient() 
+type LossIndex::calculate_error_xxx()
+{
+
+    const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
+
+    const vector<Index> sample_indices = dataset->get_sample_indices(Dataset::SampleUse::Training);
+    const vector<Index> input_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Input);
+    const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
+
+    Batch batch(samples_number, dataset);
+
+    batch.fill(sample_indices, input_variable_indices, {}, target_variable_indices);
+
+    ForwardPropagation forward_propagation(samples_number, neural_network);
+
+    neural_network->forward_propagate(batch.get_input_pairs(),
+                                      forward_propagation);
+
+/*
+    BackPropagation back_propagation(samples_number, this);
+
+    calculate_error(batch, forward_propagation, back_propagation);
+
+    return back_propagation.error();
+*/
+    return 0;
+}
+
+
+Tensor<type, 1> LossIndex::calculate_numerical_gradient()
 {
     const Index samples_number = dataset->get_samples_number(Dataset::SampleUse::Training);
 

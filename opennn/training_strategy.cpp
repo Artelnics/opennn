@@ -167,6 +167,9 @@ string TrainingStrategy::write_loss_method() const
     case LossMethod::CROSS_ENTROPY_ERROR_2D:
         return "CROSS_ENTROPY_ERROR_2D";
 
+    case LossMethod::CROSS_ENTROPY_ERROR_3D:
+        return "CROSS_ENTROPY_ERROR_3D";
+
     default:
         return string();
     }

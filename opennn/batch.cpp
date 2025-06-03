@@ -146,9 +146,8 @@ void Batch::shutdown_threads()
 {
     thread_pool_device.reset();
 
-    if(thread_pool) {
+    if(thread_pool)
         thread_pool.release();
-    }
 
     thread_pool.reset();
 }
