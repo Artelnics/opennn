@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "../../opennn/data_set.h"
+#include "../../opennn/dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"

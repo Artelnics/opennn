@@ -986,11 +986,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_thres
 Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_confusion() const
 {
     Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> inputs = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> targets = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
+    const Tensor<type, 2> targets = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
 
     const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
 
@@ -2088,11 +2088,11 @@ pair<type, type> TestingAnalysis::test_transformer() const
     cout << "Testing transformer..." << endl;
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> context = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> input = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> target = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> input = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
+    const Tensor<type, 2> target = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
@@ -2117,13 +2117,13 @@ pair<type, type> TestingAnalysis::test_transformer() const
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
     // for(Index i = 0; i < testing_context.dimension(1); i++)
-    //     cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
+    //     cout<<language_dataset->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Spanish:"<<endl;
     // cout<<testing_input.chip(10,0)<<endl;
     // for(Index i = 0; i < testing_input.dimension(1); i++)
-    //     cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
+    //     cout<<language_dataset->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Prediction:"<<endl;
@@ -2149,7 +2149,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     //             max = outputs(10,j,i);
     //         }else{continue;}
     //     }
-    //     cout<<language_data_set->get_completion_vocabulary()[index]<<" ";
+    //     cout<<language_dataset->get_completion_vocabulary()[index]<<" ";
     // }
 
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);

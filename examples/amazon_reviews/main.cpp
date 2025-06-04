@@ -13,7 +13,7 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/language_data_set.h"
+#include "../../opennn/language_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
