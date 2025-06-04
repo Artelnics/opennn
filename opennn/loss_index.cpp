@@ -87,6 +87,7 @@ void LossIndex::shutdown_threads()
         thread_pool.release();
         thread_pool.reset();
     }
+
 }
 
 

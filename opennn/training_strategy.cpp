@@ -272,6 +272,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
     Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
+
 }
 
 

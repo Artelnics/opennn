@@ -1959,13 +1959,13 @@ void Dataset::set_threads_number(const int& new_threads_number)
 
 void Dataset::shutdown_threads()
 {
-    if(thread_pool_device != nullptr)
-        thread_pool_device.reset();
+    // if(thread_pool_device != nullptr)
+    //     thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
-        thread_pool.release();
-        thread_pool.reset();
-    }
+    // if(thread_pool != nullptr) {
+    //     thread_pool.release();
+    //     thread_pool.reset();
+    // }
 }
 
 
@@ -2613,7 +2613,6 @@ Tensor<Correlation, 2> Dataset::calculate_input_raw_variable_pearson_correlation
             const Index current_input_index_j = input_raw_variable_indices[j];
 
             const Tensor<type, 2> input_j = get_raw_variable_data(current_input_index_j);
-
             correlations_pearson(i, j) = correlation(thread_pool_device.get(), input_i, input_j);
 
             if (correlations_pearson(i, j).r > type(1) - NUMERIC_LIMITS_MIN)
