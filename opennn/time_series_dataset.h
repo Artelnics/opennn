@@ -57,7 +57,6 @@ private:
     Index steps_ahead = 1;
 
     Index time_raw_variable_index = 0;
-
 };
 
 }

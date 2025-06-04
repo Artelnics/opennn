@@ -43,22 +43,22 @@ void Batch::fill(const vector<Index>& sample_indices,
         else
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
-    else if(is_instance_of<TimeSeriesDataset>(dataset)){
+    else if(is_instance_of<TimeSeriesDataset>(dataset))
+    {
         //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
-        fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
+        fill_tensor_3d(data, sample_indices, input_indices, input_tensor.data());
         input_dimensions = { batch_size, sequence_length, input_size };
     }
     else
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
     // fill targets
-    if(is_instance_of<TimeSeriesDataset>(dataset))
-        fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
-    else if (is_instance_of<LanguageDataset>(dataset))
-        fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
-    else
-        fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
 
+    is_instance_of<TimeSeriesDataset>(dataset)
+        ? fill_tensor_3d(data, sample_indices, target_indices, target_tensor.data())
+        : fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
+
+    fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
 }
 
 
@@ -92,37 +92,30 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
         Tensor<type, 3> image = inputs.chip(batch_index, 0);
 
         if(random_reflection_axis_x)
-            reflect_image_x(thread_pool_device.get(), image);
+            reflect_image_x(thread_pool_device.get(),
+                            image);
 
         if(random_reflection_axis_y)
-            reflect_image_y(thread_pool_device.get(), image);
+            reflect_image_y(thread_pool_device.get(),
+                            image);
 
         if(random_rotation_minimum != 0 && random_rotation_maximum != 0)
-        {
-            const type angle = random_rotation_minimum < random_rotation_maximum
-                             ? random_rotation_minimum + type(rand())
-                             : random_rotation_maximum;
-
-            rotate_image(thread_pool_device.get(), image, image, angle);
-        }
+            rotate_image(thread_pool_device.get(),
+                         image,
+                         image,
+                         get_random_type(random_rotation_minimum, random_rotation_maximum));
 
         if(random_horizontal_translation_minimum != 0 && random_horizontal_translation_maximum != 0)
-        {
-            const type translation = random_horizontal_translation_minimum < random_horizontal_translation_maximum
-                                   ? random_horizontal_translation_minimum + type(rand())
-                                   : random_horizontal_translation_maximum;
-
-            translate_image_x(thread_pool_device.get(), image, image, translation);
-        }
+            translate_image_x(thread_pool_device.get(),
+                              image,
+                              image,
+                              get_random_type(random_horizontal_translation_minimum, random_horizontal_translation_maximum));
 
         if(random_vertical_translation_minimum != 0 && random_vertical_translation_maximum != 0)
-        {
-            const type translation = random_vertical_translation_minimum < random_vertical_translation_maximum
-                                         ? random_vertical_translation_minimum + type(rand())
-                                         : random_vertical_translation_maximum;
-
-            translate_image_y(thread_pool_device.get(), image, image, translation);
-        }
+            translate_image_y(thread_pool_device.get(),
+                              image,
+                              image,
+                              get_random_type(random_vertical_translation_minimum, random_vertical_translation_maximum));
     } 
 
     return Tensor<type, 2>();
@@ -151,12 +144,8 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
 
     if (!data_set_input_dimensions.empty())
     {
-
-        input_dimensions = {samples_number};
-        input_dimensions.insert(input_dimensions.end(), data_set_input_dimensions.begin(), data_set_input_dimensions.end());
-
-        const Index input_size = accumulate(input_dimensions.begin(), input_dimensions.end(), 1, multiplies<Index>());
-        input_tensor.resize(input_size);
+        input_dimensions = prepend(samples_number, data_set_input_dimensions);
+        input_tensor.resize(get_size(input_dimensions));
     }
 
     // @todo
@@ -172,13 +161,9 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     // }
 
     if (!data_set_target_dimensions.empty())
-    {
-
-        target_dimensions = {samples_number};
-        target_dimensions.insert(target_dimensions.end(), data_set_target_dimensions.begin(), data_set_target_dimensions.end());
-
-        const Index target_size = accumulate(target_dimensions.begin(), target_dimensions.end(), 1, multiplies<Index>());
-        target_tensor.resize(target_size);
+    {        
+        target_dimensions = prepend(samples_number, data_set_target_dimensions);
+        target_tensor.resize(get_size(target_dimensions));
     }
 }
 
@@ -197,25 +182,15 @@ void Batch::print() const
 
     print_vector(input_dimensions);
     
-    if(input_dimensions.size() == 4)
-    {
-        const TensorMap<Tensor<type, 4>> inputs((type*)input_tensor.data(),
-                                                input_dimensions[0],
-                                                input_dimensions[1],
-                                                input_dimensions[2],
-                                                input_dimensions[3]);
-
-        cout << inputs << endl;
-    }
-    else
-    {
-        const TensorMap<Tensor<type, 2>> inputs((type*)input_tensor.data(),
-                                                input_dimensions[0],
-                                                input_dimensions[1]);
-
-        cout << inputs << endl;
-    }
-    
+    input_dimensions.size() == 4
+        ? cout << TensorMap<Tensor<type, 4>>((type*)input_tensor.data(),
+                                             input_dimensions[0],
+                                             input_dimensions[1],
+                                             input_dimensions[2],
+                                             input_dimensions[3]) << endl
+        : cout << TensorMap<Tensor<type, 2>>((type*)input_tensor.data(),
+                                             input_dimensions[0],
+                                             input_dimensions[1]) << endl;
     cout << "Decoder:" << endl
          << "Decoder dimensions:" << endl;
 
@@ -226,11 +201,9 @@ void Batch::print() const
 
     print_vector(target_dimensions);
 
-    const TensorMap<Tensor<type, 2>> targets((type*)target_tensor.data(),
-                                             target_dimensions[0],
-                                             target_dimensions[1]);
-
-    cout << targets << endl;
+    cout << TensorMap<Tensor<type, 2>>((type*)target_tensor.data(),
+                                       target_dimensions[0],
+                                       target_dimensions[1]) << endl;
 }
 
 
