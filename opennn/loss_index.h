@@ -9,7 +9,7 @@
 #ifndef LOSSINDEX_H
 #define LOSSINDEX_H
 
-#include "data_set.h"
+#include "dataset.h"
 #include "neural_network.h"
 #include "batch.h"
 
@@ -40,7 +40,7 @@ public:
 
    inline Dataset* get_data_set() const 
    {
-      return Dataset;
+      return dataset;
    }
 
    const type& get_regularization_weight() const;
@@ -227,7 +227,7 @@ protected:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* Dataset = nullptr;
+    Dataset* dataset = nullptr;
 
     RegularizationMethod regularization_method = RegularizationMethod::L2;
 

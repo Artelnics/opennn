@@ -8,10 +8,10 @@
 
 #include "batch.h"
 #include "tensors.h"
-#include "image_data_set.h"
-#include "language_data_set.h"
+#include "image_dataset.h"
+#include "language_dataset.h"
 #include "images.h"
-#include "time_series_data_set.h"
+#include "time_series_dataset.h"
 
 namespace opennn
 {
@@ -21,16 +21,16 @@ void Batch::fill(const vector<Index>& sample_indices,
                  const vector<Index>& decoder_indices,
                  const vector<Index>& target_indices)
 {
-    const Tensor<type, 2>& data = Dataset->get_data();
+    const Tensor<type, 2>& data = dataset->get_data();
 
     const Index batch_size = sample_indices.size();
     const Index sequence_length = sample_indices.size() / batch_size;
     const Index input_size = data.dimension(1);
 
     // fill inputs
-    if(is_instance_of<ImageDataset>(Dataset))
+    if(is_instance_of<ImageDataset>(dataset))
     {
-        ImageDataset* image_Dataset = dynamic_cast<ImageDataset*>(Dataset);
+        ImageDataset* image_Dataset = dynamic_cast<ImageDataset*>(dataset);
 
         if (image_Dataset->get_augmentation())
         {
@@ -43,7 +43,7 @@ void Batch::fill(const vector<Index>& sample_indices,
         else
             fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
     }
-    else if(is_instance_of<TimeSeriesDataset>(Dataset)){
+    else if(is_instance_of<TimeSeriesDataset>(dataset)){
         //fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
         fill_tensor_3D(data, sample_indices, input_indices, input_tensor.data());
         input_dimensions = { batch_size, sequence_length, input_size };
@@ -52,9 +52,9 @@ void Batch::fill(const vector<Index>& sample_indices,
         fill_tensor_data(data, sample_indices, input_indices, input_tensor.data());
 
     // fill targets
-    if(is_instance_of<TimeSeriesDataset>(Dataset))
+    if(is_instance_of<TimeSeriesDataset>(dataset))
         fill_tensor_3D(data, sample_indices, target_indices, target_tensor.data());
-    else if (is_instance_of<LanguageDataset>(Dataset))
+    else if (is_instance_of<LanguageDataset>(dataset))
         fill_tensor_data(data, sample_indices, decoder_indices, decoder_tensor.data());
     else
         fill_tensor_data(data, sample_indices, target_indices, target_tensor.data());
@@ -64,9 +64,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 
 Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 {
-    ImageDataset* image_Dataset = static_cast<ImageDataset*>(Dataset);
+    ImageDataset* image_Dataset = static_cast<ImageDataset*>(dataset);
 
-    const dimensions input_dimensions = Dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
 
     const Index input_height = input_dimensions[0];
     const Index input_width = input_dimensions[1];
@@ -158,10 +158,10 @@ void Batch::set(const Index& new_samples_number, Dataset* new_data_set)
     if (!new_data_set) return;
 
     samples_number = new_samples_number;
-    Dataset = new_data_set;
+    dataset = new_data_set;
 
-    const dimensions& data_set_input_dimensions = Dataset->get_dimensions(Dataset::VariableUse::Input);
-    const dimensions& data_set_target_dimensions = Dataset->get_dimensions(Dataset::VariableUse::Target);
+    const dimensions& data_set_input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
+    const dimensions& data_set_target_dimensions = dataset->get_dimensions(Dataset::VariableUse::Target);
 
     if (!data_set_input_dimensions.empty())
     {

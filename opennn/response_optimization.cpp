@@ -16,7 +16,7 @@ namespace opennn
 {
 
 ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Dataset* new_data_set)
-    : Dataset(new_data_set)
+    : dataset(new_data_set)
 {
     set(new_neural_network, new_data_set);
 }
@@ -25,7 +25,7 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network, Da
 void ResponseOptimization::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 {   
     neural_network = new_neural_network;
-    Dataset = new_data_set;
+    dataset = new_data_set;
 
     if(!neural_network) return;
 
@@ -349,9 +349,9 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
     Tensor<type, 2> inputs(evaluations_number, inputs_number);
     inputs.setZero();
 
-    const int input_raw_variables_number = Dataset->get_raw_variables_number(Dataset::VariableUse::Input);
+    const int input_raw_variables_number = dataset->get_raw_variables_number(Dataset::VariableUse::Input);
 
-    vector<Index> used_raw_variables_indices = Dataset->get_used_raw_variables_indices();
+    vector<Index> used_raw_variables_indices = dataset->get_used_raw_variables_indices();
 
     for(Index i = 0; i < evaluations_number; i++)
     {
@@ -363,7 +363,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
         {
             used_raw_variable_index = used_raw_variables_indices[j];
 
-            const Dataset::RawVariableType raw_variable_type = Dataset->get_raw_variable_type(used_raw_variable_index);
+            const Dataset::RawVariableType raw_variable_type = dataset->get_raw_variable_type(used_raw_variable_index);
 
             if(raw_variable_type == Dataset::RawVariableType::Numeric
             || raw_variable_type == Dataset::RawVariableType::Constant)
@@ -381,7 +381,7 @@ Tensor<type, 2> ResponseOptimization::calculate_inputs() const
             }
             else if(raw_variable_type == Dataset::RawVariableType::Categorical)
             {
-                const Index categories_number = Dataset->get_raw_variables()[used_raw_variable_index].get_categories_number();
+                const Index categories_number = dataset->get_raw_variables()[used_raw_variable_index].get_categories_number();
                 Index equal_index = -1;
 
                 for(Index k = 0; k < categories_number; k++)

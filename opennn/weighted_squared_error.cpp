@@ -65,7 +65,7 @@ void WeightedSquaredError::set_default()
     if(!has_data_set())
         return;
 
-    if(Dataset->get_samples_number() == 0)
+    if(dataset->get_samples_number() == 0)
         return;
 
     set_weights();
@@ -95,10 +95,10 @@ void WeightedSquaredError::set_weights(const type& new_positives_weight, const t
 
 void WeightedSquaredError::set_weights()
 {
-    if (!Dataset) return;
+    if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables 
-        = Dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables(Dataset::VariableUse::Target);
 
     if(target_raw_variables.empty())
     {
@@ -107,7 +107,7 @@ void WeightedSquaredError::set_weights()
     }
     else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const Tensor<Index, 1> target_distribution = Dataset->calculate_target_distribution();
+        const Tensor<Index, 1> target_distribution = dataset->calculate_target_distribution();
 
         const Index negatives = target_distribution[0];
         const Index positives = target_distribution[1];
@@ -128,18 +128,18 @@ void WeightedSquaredError::set_weights()
 
 void WeightedSquaredError::set_normalization_coefficient()
 {
-    if (!Dataset) return;
+    if (!dataset) return;
 
     const vector<Dataset::RawVariable>& target_raw_variables
-        = Dataset->get_raw_variables(Dataset::VariableUse::Target);
+        = dataset->get_raw_variables(Dataset::VariableUse::Target);
 
     if(target_raw_variables.empty())
         normalization_coefficient = type(1);
     else if(target_raw_variables.size() == 1 && target_raw_variables[0].type == Dataset::RawVariableType::Binary)
     {
-        const vector<Index> target_variable_indices = Dataset->get_variable_indices(Dataset::VariableUse::Target);
+        const vector<Index> target_variable_indices = dataset->get_variable_indices(Dataset::VariableUse::Target);
 
-        const Index negatives = Dataset->calculate_used_negatives(target_variable_indices[0]);
+        const Index negatives = dataset->calculate_used_negatives(target_variable_indices[0]);
 
         normalization_coefficient = type(negatives)*negatives_weight*type(0.5);
     }
@@ -150,7 +150,7 @@ void WeightedSquaredError::set_normalization_coefficient()
 
 void WeightedSquaredError::set_data_set(Dataset* new_data_set)
 {
-    Dataset = new_data_set;
+    dataset = new_data_set;
 
     set_weights();
 
@@ -164,7 +164,7 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
 {
     // Data set
 
-    const Index total_samples_number = Dataset->get_samples_number();
+    const Index total_samples_number = dataset->get_samples_number();
 
     // Batch
 
@@ -205,7 +205,7 @@ void WeightedSquaredError::calculate_output_delta(const Batch& batch,
 {    
     // Data set
 
-    const Index total_samples_number = Dataset->get_samples_number();
+    const Index total_samples_number = dataset->get_samples_number();
 
     // Batch
 

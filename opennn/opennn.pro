@@ -70,9 +70,9 @@ HEADERS += \
     tinyxml2.h \
     dataset.h \
     batch.h \
-    time_series_data_set.h \
+    time_seriesdataset.h \
     image_dataset.h \
-    language_data_set.h \
+    language_dataset.h \
     layer.h \
     scaling_layer_2d.h \
     scaling_layer_4d.h \
@@ -133,11 +133,11 @@ SOURCES += \
     scaling.cpp \
     correlations.cpp \
     tinyxml2.cpp \
-    data_set.cpp \
+    dataset.cpp \
     batch.cpp \
-    time_series_data_set.cpp \
-    image_data_set.cpp \
-    language_data_set.cpp \
+    time_series_dataset.cpp \
+    image_dataset.cpp \
+    language_dataset.cpp \
     layer.cpp \
     scaling_layer_2d.cpp \
     scaling_layer_4d.cpp \

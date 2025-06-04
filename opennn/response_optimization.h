@@ -10,7 +10,7 @@
 #define RESPONSEOPTIMIZATION_H
 
 #include "neural_network.h"
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {
@@ -62,7 +62,7 @@ private:
 
     NeuralNetwork* neural_network = nullptr;
 
-    Dataset* Dataset = nullptr;
+    Dataset* dataset = nullptr;
 
     Tensor<Condition, 1> input_conditions;
     Tensor<Condition, 1> output_conditions;
@@ -82,7 +82,7 @@ struct ResponseOptimizationResults
 {
     ResponseOptimizationResults(NeuralNetwork* new_neural_network = nullptr);
 
-    Dataset* Dataset = nullptr;
+    Dataset* dataset = nullptr;
 
     NeuralNetwork* neural_network = nullptr;
 

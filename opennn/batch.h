@@ -1,7 +1,7 @@
 #ifndef BATCH_H
 #define BATCH_H
 
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {

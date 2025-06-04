@@ -9,7 +9,7 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "data_set.h"
+#include "dataset.h"
 #include "neural_network.h"
 
 namespace opennn
@@ -268,7 +268,7 @@ private:
 
    NeuralNetwork* neural_network = nullptr;
 
-   Dataset* Dataset = nullptr;
+   Dataset* dataset = nullptr;
 
    bool display = true;
 };

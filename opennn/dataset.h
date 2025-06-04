@@ -608,7 +608,7 @@ struct Batch
 
     Index samples_number = 0;
 
-    Dataset* Dataset = nullptr;
+    Dataset* dataset = nullptr;
 
     dimensions input_dimensions;
     Tensor<type, 1> input_tensor;

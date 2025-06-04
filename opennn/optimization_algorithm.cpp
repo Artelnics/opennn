@@ -6,12 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "image_data_set.h"
+#include "image_dataset.h"
 #include "pch.h"
 #include "optimization_algorithm.h"
 #include "scaling_layer_2d.h"
 #include "unscaling_layer.h"
-#include "language_data_set.h"
+#include "language_dataset.h"
 #include "transformer.h"
 
 namespace opennn

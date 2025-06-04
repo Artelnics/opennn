@@ -9,7 +9,7 @@
 #ifndef LANGUAGEDataset_H
 #define LANGUAGEDataset_H
 
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {

@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "image_data_set.h"
+#include "image_dataset.h"
 #include "images.h"
 #include "tensors.h"
 #include "strings_utilities.h"

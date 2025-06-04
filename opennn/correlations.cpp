@@ -9,7 +9,7 @@
 #include "perceptron_layer.h"
 #include "tensors.h"
 #include "correlations.h"
-#include "data_set.h"
+#include "dataset.h"
 #include "neural_network.h"
 #include "training_strategy.h"
 #include "scaling_layer_2d.h"

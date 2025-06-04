@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "data_set.h"
+#include "dataset.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
