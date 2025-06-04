@@ -359,9 +359,6 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(display) results.print();
 
-    training_batch.shutdown_threads();
-    selection_batch.shutdown_threads();
-
     return results;
 }
 

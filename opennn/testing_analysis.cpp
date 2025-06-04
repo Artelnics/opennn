@@ -23,9 +23,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
     neural_network = new_neural_network;
     dataset = new_data_set;
 
-    if(thread_pool != nullptr)
-        shutdown_threads();
-
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -52,23 +49,16 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void TestingAnalysis::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
         thread_pool.release();
         thread_pool.reset();
     }
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 

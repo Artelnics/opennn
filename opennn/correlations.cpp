@@ -547,6 +547,7 @@ Correlation logistic_correlation_vector_vector(const ThreadPoolDevice* thread_po
     neural_network.set_parameters_constant(type(0.001));
 
     TrainingStrategy training_strategy(&neural_network, &Dataset);
+
     training_strategy.set_display(false);
 
     training_strategy.set_loss_method(TrainingStrategy::LossMethod::MEAN_SQUARED_ERROR);

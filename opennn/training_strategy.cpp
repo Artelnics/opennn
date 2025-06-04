@@ -272,6 +272,7 @@ void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_data_
     adaptive_moment_estimation.set_loss_index(new_loss_index);
     quasi_Newton_method.set_loss_index(new_loss_index);
     Levenberg_Marquardt_algorithm.set_loss_index(new_loss_index);
+
 }
 
 
@@ -334,28 +335,6 @@ void TrainingStrategy::set_threads_number(const int& new_threads_number)
     Levenberg_Marquardt_algorithm.set_threads_number(new_threads_number);
     stochastic_gradient_descent.set_threads_number(new_threads_number);
     adaptive_moment_estimation.set_threads_number(new_threads_number);
-}
-
-
-void TrainingStrategy::shutdown_threads()
-{
-    mean_squared_error.shutdown_threads();
-    normalized_squared_error.shutdown_threads();
-    Minkowski_error.shutdown_threads();
-    weighted_squared_error.shutdown_threads();;
-    cross_entropy_error_2d.shutdown_threads();
-    cross_entropy_error_3d.shutdown_threads();
-
-    quasi_Newton_method.shutdown_threads();
-    quasi_Newton_method.get_learning_rate_algorithm()->shutdown_threads();
-    Levenberg_Marquardt_algorithm.shutdown_threads();
-    stochastic_gradient_descent.shutdown_threads();
-    adaptive_moment_estimation.shutdown_threads();
-
-    if(dataset != nullptr)
-        dataset->shutdown_threads();
-    if(neural_network != nullptr)
-        neural_network->shutdown_threads();
 }
 
 
