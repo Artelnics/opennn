@@ -57,8 +57,13 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
     const unsigned int threads_number = thread::hardware_concurrency();
 
-    if(thread_pool != nullptr)
-        shutdown_threads();
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -69,25 +74,16 @@ void LossIndex::set(NeuralNetwork* new_neural_network, Dataset* new_data_set)
 
 void LossIndex::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void LossIndex::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr)
-    {
         thread_pool.release();
         thread_pool.reset();
     }
 
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -740,8 +736,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient()
        numerical_gradient(i) = (error_forward - error_backward)/type(2*h);
     }
 
-    batch.shutdown_threads();
-
     return numerical_gradient;
 }
 
@@ -814,8 +808,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_gradient_lm()
         numerical_gradient_lm(i) = (error_forward - error_backward)/type(2*h);
     }
 
-    batch.shutdown_threads();
-
     return numerical_gradient_lm;
 }
 
@@ -873,8 +865,6 @@ Tensor<type, 1> LossIndex::calculate_numerical_input_derivatives()
 
         numerical_inputs_derivatives(i) = (error_forward - error_backward) / type(2 * h);
     }
-
-    batch.shutdown_threads();
 
     return numerical_inputs_derivatives;
 }
@@ -953,8 +943,6 @@ Tensor<type, 2> LossIndex::calculate_numerical_jacobian()
         for(Index i = 0; i < samples_number; i++)
             jacobian(i, j) = (error_terms_forward(i) - error_terms_backward(i))/(type(2.0)*h);
     }
-
-    batch.shutdown_threads();
 
     return jacobian;
 }
@@ -1177,8 +1165,6 @@ Tensor<type, 2> LossIndex::calculate_numerical_hessian()
     for (Index i = 0; i < parameters_number; i++)
         for (Index j = 0; j < i; j++)
             H(i, j) = H(j, i);
-
-    batch.shutdown_threads();
 
     return H;
 }

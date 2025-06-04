@@ -19,9 +19,6 @@ namespace opennn
 
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index)
 {
-    if(thread_pool != nullptr)
-        shutdown_threads();
-
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -86,23 +83,16 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index)
 
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void OptimizationAlgorithm::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
         thread_pool.release();
         thread_pool.reset();
     }
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -351,10 +341,10 @@ void OptimizationAlgorithm::set_vocabularies()
     if(!is_instance_of<Transformer>(neural_network))
         return;
 
-    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(Dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(Dataset);
 
-    const unordered_map<string, Index>& input_vocabulary = language_data_set->get_input_vocabulary();
-    const unordered_map<string, Index>& target_vocabulary = language_data_set->get_target_vocabulary();
+    const unordered_map<string, Index>& input_vocabulary = language_dataset->get_input_vocabulary();
+    const unordered_map<string, Index>& target_vocabulary = language_dataset->get_target_vocabulary();
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
 

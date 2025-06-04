@@ -23,9 +23,6 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new
     neural_network = new_neural_network;
     dataset = new_data_set;
 
-    if(thread_pool != nullptr)
-        shutdown_threads();
-
     const unsigned int threads_number = thread::hardware_concurrency();
 
     thread_pool = make_unique<ThreadPool>(threads_number);
@@ -52,23 +49,16 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
-
-    thread_pool = make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void TestingAnalysis::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
         thread_pool.release();
         thread_pool.reset();
     }
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -986,11 +976,11 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion(const type& decision_thres
 Tensor<Index, 2> TestingAnalysis::calculate_sentimental_analysis_transformer_confusion() const
 {
     Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> inputs = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> context = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> targets = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> inputs = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
+    const Tensor<type, 2> targets = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
 
     const dimensions input_dimensions = dataset->get_dimensions(Dataset::VariableUse::Input);
 
@@ -2088,11 +2078,11 @@ pair<type, type> TestingAnalysis::test_transformer() const
     cout << "Testing transformer..." << endl;
 
     Transformer* transformer = static_cast<Transformer*>(neural_network);
-    LanguageDataset* language_data_set = static_cast<LanguageDataset*>(dataset);
+    LanguageDataset* language_dataset = static_cast<LanguageDataset*>(dataset);
 
-    const Tensor<type, 2> context = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
-    const Tensor<type, 2> input = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
-    const Tensor<type, 2> target = language_data_set->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
+    const Tensor<type, 2> context = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Input);
+    const Tensor<type, 2> input = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Decoder);
+    const Tensor<type, 2> target = language_dataset->get_data(Dataset::SampleUse::Testing, Dataset::VariableUse::Target);
 
     const Index testing_batch_size = input.dimension(0) > 2000 ? 2000 : input.dimension(0);
 
@@ -2117,13 +2107,13 @@ pair<type, type> TestingAnalysis::test_transformer() const
     // cout<<"English:"<<endl;
     // cout<<testing_context.chip(10,0)<<endl;
     // for(Index i = 0; i < testing_context.dimension(1); i++)
-    //     cout<<language_data_set->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
+    //     cout<<language_dataset->get_context_vocabulary()[Index(testing_context(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Spanish:"<<endl;
     // cout<<testing_input.chip(10,0)<<endl;
     // for(Index i = 0; i < testing_input.dimension(1); i++)
-    //     cout<<language_data_set->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
+    //     cout<<language_dataset->get_completion_vocabulary()[Index(testing_input(10,i))]<<" ";
     // cout<<endl;
     // cout<<endl;
     // cout<<"Prediction:"<<endl;
@@ -2149,7 +2139,7 @@ pair<type, type> TestingAnalysis::test_transformer() const
     //             max = outputs(10,j,i);
     //         }else{continue;}
     //     }
-    //     cout<<language_data_set->get_completion_vocabulary()[index]<<" ";
+    //     cout<<language_dataset->get_completion_vocabulary()[index]<<" ";
     // }
 
     const type error = calculate_cross_entropy_error_3d(outputs, testing_target);

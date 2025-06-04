@@ -23,6 +23,14 @@ public:
 
     OptimizationAlgorithm(LossIndex* = nullptr);
 
+    ~OptimizationAlgorithm()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     enum class StoppingCondition{None,
                                  MinimumLossDecrease,
                                  LossGoal,
@@ -51,7 +59,6 @@ public:
     void set(LossIndex* = nullptr);
 
     virtual void set_threads_number(const int&);
-    void shutdown_threads();
 
     virtual void set_loss_index(LossIndex*);
 

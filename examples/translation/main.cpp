@@ -30,21 +30,21 @@ int main()
 
         // Data set
 /*
-        LanguageDataset language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
+        LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt", true);
 
 
-        LanguageDataset language_data_set("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
+        LanguageDataset language_dataset("/Users/artelnics/Documents/opennn/examples/translation/data/ENtoES_dataset_reduced_6.txt");
 
-        // LanguageDataset language_data_set("/Users/artelnics/Desktop/sentiment_analysis.csv");
+        // LanguageDataset language_dataset("/Users/artelnics/Desktop/sentiment_analysis.csv");
 
-        // language_data_set.print_raw_variables();
-        // language_data_set.print_data();
+        // language_dataset.print_raw_variables();
+        // language_dataset.print_data();
 
-        const Index input_length = language_data_set.get_input_length();
-        const Index decoder_length = language_data_set.get_target_length();
+        const Index input_length = language_dataset.get_input_length();
+        const Index decoder_length = language_dataset.get_target_length();
 
-        const Index input_vocabulary_size = language_data_set.get_input_vocabulary_size();
-        const Index target_vocabulary_size = language_data_set.get_target_vocabulary_size();
+        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index target_vocabulary_size = language_dataset.get_target_vocabulary_size();
 
         // Sentiment analysis case
 
@@ -64,7 +64,7 @@ int main()
 
         cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
 
-        TrainingStrategy training_strategy(&neural_network, &language_data_set);
+        TrainingStrategy training_strategy(&neural_network, &language_dataset);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
 
@@ -74,7 +74,7 @@ int main()
 
         AdaptiveMomentEstimation* adaptive_moment_estimation = training_strategy.get_adaptive_moment_estimation();
 
-        language_data_set.set(Dataset::SampleUse::Training);
+        language_dataset.set(Dataset::SampleUse::Training);
         // adaptive_moment_estimation->set_loss_goal(0.3);
         adaptive_moment_estimation->set_maximum_epochs_number(100);
         adaptive_moment_estimation->set_maximum_time(59400);
@@ -85,7 +85,7 @@ int main()
 
         // Prediction test
         cout << "Vocabulary:" << endl;
-        language_data_set.print_vocabulary(language_data_set.get_input_vocabulary());
+        language_dataset.print_vocabulary(language_dataset.get_input_vocabulary());
 
         Tensor<type,2> testing_data(3,10);
         testing_data(0,0) = 2;
@@ -137,14 +137,14 @@ int main()
                                 heads_number,
                                 layers_number);
 
-        transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
-        transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
+        transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
         transformer.set_dropout_rate(0);
 
-        language_data_set.split_samples_sequential(0.9,0.1,0);
+        language_dataset.split_samples_sequential(0.9,0.1,0);
         // Training strategy
 
-        TrainingStrategy training_strategy(&transformer, &language_data_set);
+        TrainingStrategy training_strategy(&transformer, &language_dataset);
 
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_3D);
 
@@ -171,16 +171,16 @@ int main()
 
         // transformer.set_model_type(NeuralNetwork::ModelType::TextClassification);
 
-        // transformer.set_input_vocabulary(language_data_set.get_input_vocabulary());
-        // transformer.set_output_vocabulary(language_data_set.get_target_vocabulary());
+        // transformer.set_input_vocabulary(language_dataset.get_input_vocabulary());
+        // transformer.set_output_vocabulary(language_dataset.get_target_vocabulary());
         // transformer.set_input_length(input_length);
         // transformer.set_decoder_length(decoder_length);
 
 
-        // language_data_set.print_vocabulary(language_data_set.get_input_vocabulary());
+        // language_dataset.print_vocabulary(language_dataset.get_input_vocabulary());
         //Testing
 
-        // const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        // const TestingAnalysis testing_analysis(&transformer, &language_dataset);
         // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
 
         // cout << "TESTING ANALYSIS:" << endl;
@@ -250,13 +250,13 @@ int main()
 
         // Data Set
 
-        LanguageDataset language_data_set({0},{0});
+        LanguageDataset language_dataset({0},{0});
 
-        language_data_set.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_data_set.xml");
+        language_dataset.load("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/language_dataset.xml");
 
 
-        const vector<string>& completion_vocabulary = language_data_set.get_completion_vocabulary();
-        const vector<string>& context_vocabulary = language_data_set.get_context_vocabulary();
+        const vector<string>& completion_vocabulary = language_dataset.get_completion_vocabulary();
+        const vector<string>& context_vocabulary = language_dataset.get_context_vocabulary();
 
         const Index embedding_dimension = 64;
         const Index perceptron_depth = 128;
@@ -265,9 +265,9 @@ int main()
 
         const vector <Index> complexity = {embedding_dimension, perceptron_depth, heads_number, number_of_layers};
 
-        const dimensions target_dimensions = {language_data_set.get_completion_length(), language_data_set.get_completion_vocabulary_size()};
+        const dimensions target_dimensions = {language_dataset.get_completion_length(), language_dataset.get_completion_vocabulary_size()};
 
-        const dimensions input_dimensions = {language_data_set.get_context_length(), language_data_set.get_context_vocabulary_size()};
+        const dimensions input_dimensions = {language_dataset.get_context_length(), language_dataset.get_context_vocabulary_size()};
 
         Transformer transformer(target_dimensions, input_dimensions, complexity);
         transformer.load_transformer("/home/artelnics/Escritorio/andres_alonso/ViT/dataset/amazon_reviews/sentimental_analysis.xml");
@@ -276,7 +276,7 @@ int main()
         transformer.set_input_vocabulary(completion_vocabulary);
         transformer.set_context_vocabulary(context_vocabulary);
 
-        const TestingAnalysis testing_analysis(&transformer, &language_data_set);
+        const TestingAnalysis testing_analysis(&transformer, &language_dataset);
 
         string prediction = testing_analysis.test_transformer({"Mic Doesn't work."},false);
         cout<<prediction<<endl;

@@ -338,28 +338,6 @@ void TrainingStrategy::set_threads_number(const int& new_threads_number)
 }
 
 
-void TrainingStrategy::shutdown_threads()
-{
-    mean_squared_error.shutdown_threads();
-    normalized_squared_error.shutdown_threads();
-    Minkowski_error.shutdown_threads();
-    weighted_squared_error.shutdown_threads();;
-    cross_entropy_error_2d.shutdown_threads();
-    cross_entropy_error_3d.shutdown_threads();
-
-    quasi_Newton_method.shutdown_threads();
-    quasi_Newton_method.get_learning_rate_algorithm()->shutdown_threads();
-    Levenberg_Marquardt_algorithm.shutdown_threads();
-    stochastic_gradient_descent.shutdown_threads();
-    adaptive_moment_estimation.shutdown_threads();
-
-    if(dataset != nullptr)
-        dataset->shutdown_threads();
-    if(neural_network != nullptr)
-        neural_network->shutdown_threads();
-}
-
-
 void TrainingStrategy::set_data_set(Dataset* new_data_set)
 {
     dataset = new_data_set;

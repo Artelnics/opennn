@@ -317,14 +317,14 @@ void ImageDataset::to_XML(XMLPrinter& printer) const
 
 void ImageDataset::from_XML(const XMLDocument& data_set_document)
 {
-    const XMLElement* image_data_set_element = data_set_document.FirstChildElement("ImageDataset");
+    const XMLElement* image_dataset_element = data_set_document.FirstChildElement("ImageDataset");
 
-    if (!image_data_set_element)
+    if (!image_dataset_element)
         throw runtime_error("ImageDataset element is nullptr.\n");
 
     // Data Source
 
-    const XMLElement* data_source_element = image_data_set_element->FirstChildElement("DataSource");
+    const XMLElement* data_source_element = image_dataset_element->FirstChildElement("DataSource");
 
     if (!data_source_element)
         throw runtime_error("Element is nullptr: DataSource");
@@ -351,7 +351,7 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
 
     // Raw Variables
 
-    const XMLElement* raw_variables_element = image_data_set_element->FirstChildElement("RawVariables");
+    const XMLElement* raw_variables_element = image_dataset_element->FirstChildElement("RawVariables");
 
     if (!raw_variables_element)
         throw runtime_error("RawVariables element is nullptr.\n");
@@ -388,9 +388,9 @@ void ImageDataset::from_XML(const XMLDocument& data_set_document)
     // Samples
 
     if (has_sample_ids)
-        sample_ids = get_tokens(read_xml_string(image_data_set_element, "Ids"), ",");
+        sample_ids = get_tokens(read_xml_string(image_dataset_element, "Ids"), ",");
 
-    const XMLElement* samples_element = image_data_set_element->FirstChildElement("Samples");
+    const XMLElement* samples_element = image_dataset_element->FirstChildElement("Samples");
 
     if (!samples_element)
         throw runtime_error("Samples element is nullptr.\n");

@@ -37,6 +37,14 @@ public:
             const bool& = false,
             const Codification& = Codification::UTF8);
 
+    ~Dataset()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     // Enumerations
 
     enum class Separator{None, Space, Tab, Comma, Semicolon};
@@ -240,7 +248,6 @@ public:
     void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
-    void shutdown_threads();
 
     // Samples set
 
@@ -587,13 +594,20 @@ struct Batch
 {
     Batch(const Index& = 0, Dataset* = nullptr);
 
+    ~Batch()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;
 
     Index get_samples_number() const;
 
     void set(const Index& = 0, Dataset* = nullptr);
-    void shutdown_threads();
 
     void fill(const vector<Index>&,
               const vector<Index>&,
