@@ -31,6 +31,14 @@ public:
 
    LossIndex(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
+    ~LossIndex()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
    enum class RegularizationMethod{L1, L2, NoRegularization};
 
    inline NeuralNetwork* get_neural_network() const 
@@ -56,7 +64,6 @@ public:
    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
    void set_threads_number(const int&);
-   void shutdown_threads();
 
    void set_neural_network(NeuralNetwork*);
 

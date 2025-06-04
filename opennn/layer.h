@@ -49,7 +49,13 @@ public:
 
     Layer();
 
-    virtual ~Layer() {}
+    ~Layer()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     string get_name() const;
 
@@ -85,7 +91,6 @@ public:
     virtual void set_parameters(const Tensor<type, 1>&, Index&);
 
     void set_threads_number(const int&);
-    void shutdown_threads();
 
     // Forward propagation
 

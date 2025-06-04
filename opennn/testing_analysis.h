@@ -22,6 +22,14 @@ public:
 
    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
 
+    ~TestingAnalysis()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     struct GoodnessOfFitAnalysis
     {
        type determination = type(0);
@@ -87,7 +95,6 @@ public:
    void set_display(const bool&);
 
    void set_threads_number(const int&);
-   void shutdown_threads();
 
    // Checking
 

@@ -131,25 +131,11 @@ Tensor<type, 2> Batch::perform_augmentation(const Tensor<type, 2>& data)
 
 Batch::Batch(const Index& new_samples_number, Dataset* new_data_set)
 {
-    if(thread_pool != nullptr)
-        shutdown_threads();
-
     const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
     set(new_samples_number, new_data_set);
-}
-
-
-void Batch::shutdown_threads()
-{
-    thread_pool_device.reset();
-
-    if(thread_pool)
-        thread_pool.release();
-
-    thread_pool.reset();
 }
 
 

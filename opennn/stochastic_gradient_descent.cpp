@@ -427,9 +427,6 @@ TrainingResults StochasticGradientDescent::perform_training()
     set_unscaling();
 
     if(display) results.print();
-    
-    training_batch.shutdown_threads();
-    selection_batch.shutdown_threads();
 
     return results;
 }

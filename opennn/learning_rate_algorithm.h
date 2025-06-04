@@ -25,6 +25,14 @@ public:
 
    LearningRateAlgorithm(LossIndex* = nullptr);
 
+   ~LearningRateAlgorithm()
+   {
+       thread_pool_device.reset();
+
+       thread_pool.release();
+       thread_pool.reset();
+   }
+
    struct Triplet
    {
        Triplet();
@@ -66,7 +74,6 @@ public:
 
    void set_loss_index(LossIndex*);
    void set_threads_number(const int&);
-   void shutdown_threads();
 
    void set_learning_rate_method(const LearningRateMethod&);
    void set_learning_rate_method(const string&);
