@@ -259,7 +259,7 @@ void Dense2d::batch_normalization(Tensor<type, 1>& means,
 */
 
 void Dense2d::calculate_activations(Tensor<type, 2>& activations,
-                                       Tensor<type, 2>& activation_derivatives) const
+                                    Tensor<type, 2>& activation_derivatives) const
 {
     switch(activation_function)
     {
@@ -284,16 +284,16 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
-    Dense2dForwardPropagation* this_forward_propagation =
+    Dense2dForwardPropagation* dense2d_forward_propagation =
         static_cast<Dense2dForwardPropagation*>(layer_forward_propagation.get());
 
-    Tensor<type, 2>& outputs = this_forward_propagation->outputs;
+    Tensor<type, 2>& outputs = dense2d_forward_propagation->outputs;
 
     calculate_combinations(inputs,
                            outputs);
 
     is_training
-        ? calculate_activations(outputs, this_forward_propagation->activation_derivatives)
+        ? calculate_activations(outputs, dense2d_forward_propagation->activation_derivatives)
         : calculate_activations(outputs, empty_2);
 
     if(is_training && dropout_rate > type(0))
