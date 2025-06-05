@@ -24,8 +24,13 @@ void WeightedSquaredError::set(NeuralNetwork* new_neural_network, Dataset* new_d
 {
     const unsigned int threads_number = thread::hardware_concurrency();
 
-    if(thread_pool != nullptr)
-        shutdown_threads();
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
@@ -177,15 +182,12 @@ void WeightedSquaredError::calculate_error(const Batch& batch,
     // Forward propagation
 
     const pair<type*, dimensions> outputs_pair = forward_propagation.get_last_trainable_layer_outputs_pair();
-
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
     // Back propagation
 
     Tensor<type, 2>& errors = back_propagation.errors;
-
     Tensor<type, 2>& errors_weights = back_propagation.errors_weights;
-
     Tensor<type, 0>& error = back_propagation.error;
 
     errors.device(*thread_pool_device) = (outputs - targets);

@@ -250,8 +250,11 @@
     <ClInclude Include="bounding_layer.h" />
     <ClCompile Include="bounding_layer.cpp" />
     <ClInclude Include="box_plot.h" />
+    <ClInclude Include="dataset.h" />
     <ClInclude Include="flatten_layer_3d.h" />
     <ClInclude Include="forward_propagation.h" />
+    <ClInclude Include="image_dataset.h" />
+    <ClInclude Include="language_dataset.h" />
     <ClInclude Include="layer_back_propagation.h" />
     <ClInclude Include="layer_back_propagation_lm.h" />
     <ClInclude Include="model_expression.h" />
@@ -265,12 +268,11 @@
     <ClCompile Include="cross_entropy_error.cpp" />
     <ClInclude Include="cross_entropy_error_3d.h" />
     <ClCompile Include="cross_entropy_error_3d.cpp" />
-    <ClInclude Include="data_set.h" />
-    <ClCompile Include="data_set.cpp" />
     <ClInclude Include="batch.h" />
     <ClCompile Include="batch.cpp" />
     <ClInclude Include="descriptives.h" />
     <ClInclude Include="embedding_layer.h" />
+    <ClCompile Include="dataset.cpp" />
     <ClCompile Include="embedding_layer.cpp" />
     <ClInclude Include="flatten_layer.h" />
     <ClCompile Include="flatten_layer.cpp" />
@@ -282,15 +284,13 @@
     <ClInclude Include="growing_neurons.h" />
     <ClCompile Include="growing_neurons.cpp" />
     <ClInclude Include="histogram.h" />
-    <ClInclude Include="image_data_set.h" />
-    <ClCompile Include="image_data_set.cpp" />
     <ClInclude Include="inputs_selection.h" />
+    <ClCompile Include="image_dataset.cpp" />
     <ClCompile Include="inputs_selection.cpp" />
     <ClInclude Include="kmeans.h" />
     <ClCompile Include="kmeans.cpp" />
-    <ClInclude Include="language_data_set.h" />
-    <ClCompile Include="language_data_set.cpp" />
     <ClInclude Include="layer.h" />
+    <ClCompile Include="language_dataset.cpp" />
     <ClCompile Include="layer.cpp" />
     <ClInclude Include="learning_rate_algorithm.h" />
     <ClCompile Include="learning_rate_algorithm.cpp" />
@@ -356,9 +356,9 @@
     <ClCompile Include="tensors.cpp" />
     <ClInclude Include="testing_analysis.h" />
     <ClCompile Include="testing_analysis.cpp" />
-    <ClInclude Include="time_series_data_set.h" />
-    <ClCompile Include="time_series_data_set.cpp" />
+    <ClInclude Include="time_series_dataset.h" />
     <ClInclude Include="tinyxml2.h" />
+    <ClCompile Include="time_series_dataset.cpp" />
     <ClCompile Include="tinyxml2.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">NotUsing</PrecompiledHeader>

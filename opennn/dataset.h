@@ -37,6 +37,14 @@ public:
             const bool& = false,
             const Codification& = Codification::UTF8);
 
+    ~Dataset()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     // Enumerations
 
     enum class Separator{None, Space, Tab, Comma, Semicolon};
@@ -240,7 +248,6 @@ public:
     void set_model_type(const ModelType&);
 
     void set_threads_number(const int&);
-    void shutdown_threads();
 
     // Samples set
 
@@ -436,8 +443,6 @@ public:
 
     virtual void set_data_random();
     void set_data_rosenbrock();
-    void set_data_sum();
-    void set_data_classification();
 
     // Serialization
 
@@ -515,7 +520,7 @@ public:
 
     //AutoAssociation Models
 
-    virtual void transform_associative_dataset();
+    virtual void transform_associative_Dataset();
     virtual void save_auto_associative_data_binary(const string&) const;
 
     // convert
@@ -569,7 +574,7 @@ protected:
 
     // Missing Values
 
-    MissingValuesMethod missing_values_method = MissingValuesMethod::Unuse;
+    MissingValuesMethod missing_values_method = MissingValuesMethod::Mean;
 
     Index missing_values_number = 0;
 
@@ -587,13 +592,20 @@ struct Batch
 {
     Batch(const Index& = 0, Dataset* = nullptr);
 
+    ~Batch()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
     vector<pair<type*, dimensions>> get_input_pairs() const;
     pair<type*, dimensions> get_target_pair() const;
 
     Index get_samples_number() const;
 
     void set(const Index& = 0, Dataset* = nullptr);
-    void shutdown_threads();
 
     void fill(const vector<Index>&,
               const vector<Index>&,

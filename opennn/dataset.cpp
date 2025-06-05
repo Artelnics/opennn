@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "data_set.h"
+#include "dataset.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "tensors.h"
@@ -269,9 +269,11 @@ string Dataset::get_sample_string(const Index& sample_index) const
         switch (raw_variable.type)
         {
         case RawVariableType::Numeric:
+        case RawVariableType::DateTime:
+        case RawVariableType::Constant:
             sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
+                                 ? missing_values_label
+                                 : to_string(double(data(sample_index, variable_index)));
 
             variable_index++;
             break;
@@ -284,13 +286,6 @@ string Dataset::get_sample_string(const Index& sample_index) const
             variable_index++;
             break;
 
-        case RawVariableType::DateTime:
-            sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-            break;
 
         case RawVariableType::Categorical:
             if (isnan(data(sample_index, variable_index)))
@@ -314,13 +309,6 @@ string Dataset::get_sample_string(const Index& sample_index) const
             }
             break;
 
-        case RawVariableType::Constant:
-            sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-            break;
 
         default:
             break;
@@ -644,27 +632,24 @@ void Dataset::set_default_raw_variables_uses()
 
     for (Index i = raw_variables.size() - 1; i >= 0; i--)
     {
-        if (raw_variables[i].type == RawVariableType::Constant
-            || raw_variables[i].type == RawVariableType::DateTime)
-        {
-            raw_variables[i].set_use(VariableUse::None);
-            continue;
-        }
+        RawVariable& raw_variable = raw_variables[i];
 
-        if (!target)
+        if (raw_variable.type == RawVariableType::Constant ||
+            raw_variable.type == RawVariableType::DateTime)
         {
-            if (model_type != ModelType::Classification ||
-                (raw_variables[i].type == RawVariableType::Binary ||
-                 raw_variables[i].type == RawVariableType::Categorical))
-            {
-                raw_variables[i].set_use(VariableUse::Target);
-                target = true;
-                continue;
-            }
+            raw_variable.set_use(VariableUse::None);
         }
-
+        else if (!target
+        && (model_type != ModelType::Classification ||
+            raw_variable.type == RawVariableType::Binary ||
+            raw_variable.type == RawVariableType::Categorical))
+        {
+            raw_variable.set_use(VariableUse::Target);
+            target = true;
+        }
     }
 }
+
 
 void Dataset::set_default_raw_variables_uses_forecasting()
 {
@@ -1155,8 +1140,8 @@ void Dataset::set_raw_variable_type(const string& name, const RawVariableType& n
 
 void Dataset::set_raw_variable_types(const RawVariableType& new_type)
 {
-    for (size_t i = 0; i < raw_variables.size(); i++)
-        raw_variables[i].type = new_type;
+    for (auto& raw_variable : raw_variables)
+        raw_variable.type = new_type;
 }
 
 
@@ -1685,7 +1670,7 @@ void Dataset::set(const filesystem::path& new_data_path,
 
     set_default_raw_variables_uses();
 
-    missing_values_method = MissingValuesMethod::Median;
+    missing_values_method = MissingValuesMethod::Mean;
     scrub_missing_values();
 
     input_dimensions = { get_variables_number(Dataset::VariableUse::Input) };
@@ -1793,10 +1778,15 @@ void Dataset::set_display(const bool& new_display)
 
 void Dataset::set_default()
 {
-    const unsigned int threads_number = thread::hardware_concurrency();
-    if(thread_pool != nullptr)
-        shutdown_threads();
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
+        thread_pool_device.reset();
 
+        thread_pool.release();
+        thread_pool.reset();
+    }
+
+    const unsigned int threads_number = thread::hardware_concurrency();
     thread_pool = make_unique<ThreadPool>(threads_number);
     thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), threads_number);
 
@@ -1949,23 +1939,17 @@ void Dataset::set_missing_values_method(const string& new_missing_values_method)
 
 void Dataset::set_threads_number(const int& new_threads_number)
 {
-    if (thread_pool != nullptr)
-        shutdown_threads();
 
-    thread_pool = std::make_unique<ThreadPool>(new_threads_number);
-    thread_pool_device = std::make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
-}
-
-
-void Dataset::shutdown_threads()
-{
-    if(thread_pool_device != nullptr)
+    if(thread_pool != nullptr || thread_pool_device != nullptr)
+    {
         thread_pool_device.reset();
 
-    if(thread_pool != nullptr) {
         thread_pool.release();
         thread_pool.reset();
     }
+
+    thread_pool = make_unique<ThreadPool>(new_threads_number);
+    thread_pool_device = make_unique<ThreadPoolDevice>(thread_pool.get(), new_threads_number);
 }
 
 
@@ -3589,47 +3573,6 @@ void Dataset::set_data_rosenbrock()
 }
 
 
-void Dataset::set_data_classification()
-{
-    const Index samples_number = get_samples_number();
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
-
-    data.setConstant(0.0);
-
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(0, 1);
-    /*
-        #pragma omp parallel for
-        for(Index i = 0; i < samples_number; i++)
-        {
-            for(Index j = 0; j < input_variables_number; j++)
-                data(i, j) = get_random_type(-1, 1);
-
-            target_variables_number == 1
-                ? data(i, input_variables_number) = dist(gen)
-                : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
-        }
-    */
-}
-
-
-void Dataset::set_data_sum()
-{
-    set_random(data);
-    /*
-            for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,variables_number-1) = type(0);
-
-                for(Index j = 0; j < variables_number-1; j++)
-                    data(i,variables_number-1) += data(i, j);
-            }
-        */
-}
-
-
 Tensor<Index, 1> Dataset::filter_data(const Tensor<type, 1>& minimums,
     const Tensor<type, 1>& maximums)
 {
@@ -4209,7 +4152,7 @@ string Dataset::RawVariable::get_type_string() const
 
 void Dataset::read_data_file_preview(ifstream& file)
 {
-    if (display) cout << "Reading data file preview..." << endl;
+//    if (display) cout << "Reading data file preview..." << endl;
 
     const string separator_string = get_separator_string();
 
@@ -4555,7 +4498,7 @@ void Dataset::decode(string&) const
 void Dataset::fill_image_data(const int&, const int&, const int&, const Tensor<type, 2>&) {}
 
 // AutoAssociation Models
-void Dataset::transform_associative_dataset() {}
+void Dataset::transform_associative_Dataset() {}
 void Dataset::save_auto_associative_data_binary(const string&) const {};
 
 

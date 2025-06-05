@@ -6,10 +6,10 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef IMAGEDATASET_H
-#define IMAGEDATASET_H
+#ifndef IMAGEDataset_H
+#define IMAGEDataset_H
 
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {

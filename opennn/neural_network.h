@@ -113,7 +113,6 @@ public:
    void set_default();
 
    void set_threads_number(const int&);
-   void shutdown_threads();
 
    void set_display(const bool&);
 
@@ -151,12 +150,12 @@ public:
    // Output
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-
-   Tensor<type, 3> calculate_output(const Tensor<type, 2>&);
-
    Tensor<type, 3> calculate_outputs(const Tensor<type, 3>&);
-
    Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
+
+   Tensor<type, 3> calculate_outputs_2_3(const Tensor<type, 2>&);
+
+
 
    Tensor<type, 2> calculate_scaled_outputs(type*, Tensor<Index, 1>& );
 
@@ -166,7 +165,7 @@ public:
 
    // Serialization
 
-   Tensor<string, 2> get_perceptron_layers_information() const;
+   Tensor<string, 2> get_dense2d_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
 
    void from_XML(const XMLDocument&);

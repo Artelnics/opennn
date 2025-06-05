@@ -10,7 +10,7 @@
 #define RESPONSEOPTIMIZATION_H
 
 #include "neural_network.h"
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn
 {

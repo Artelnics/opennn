@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "../../opennn/data_set.h"
+#include "../../opennn/dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -34,8 +34,6 @@ int main()
         
         NeuralNetwork neural_network(NeuralNetwork::ModelType::Classification,
                                     { inputs_number }, { neurons_number}, { targets_number });
-
-        neural_network.print();
 
         // Training strategy
 

@@ -13,7 +13,7 @@
 #include <string>
 #include <time.h>
 
-#include "../../opennn/language_data_set.h"
+#include "../../opennn/language_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -26,52 +26,36 @@ int main()
     {
         cout << "OpenNN. Amazon reviews example." << endl;
 
-        // Data set
-
         LanguageDataset language_dataset("../data/amazon_cells_labelled.txt");
 
-        // const vector<string> input_words = language_dataset.get_raw_variable_names(Dataset::VariableUse::Input);
-        // const vector<string> targets_names = language_dataset.get_variable_names(Dataset::VariableUse::Target);
+        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
+        const Index sequence_length = language_dataset.get_input_length();
+        const Index embedding_dimension = 32;
 
-        // const Index words_number = language_dataset.get_variables_number(Dataset::VariableUse::Input);
-        // const Index target_variables_number = language_dataset.get_variables_number(Dataset::VariableUse::Target);
+        const Index neurons_number = 64;
 
-        // cout<<words_number<<endl;
-        // cout<<target_variables_number<<endl;
+        const Index targets_number = language_dataset.get_target_length();
 
-        // @todo get input and target dimensions
+        dimensions input_dimensions      = {input_vocabulary_size, sequence_length, embedding_dimension};
+        dimensions complexity_dimensions = {neurons_number};
+        dimensions output_dimensions     = {targets_number};
 
-        // Neural Network
+        NeuralNetwork neural_network(
+            NeuralNetwork::ModelType::TextClassification,
+            input_dimensions,
+            complexity_dimensions,
+            output_dimensions);
 
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::TextClassification,
-                                     { 1885, 40, 32 }, { }, { 1 });
+        Tensor<type, 2> inputs(1,1);
+        inputs.setRandom();
 
-//        neural_network.print(); Improve to show something nice
+        Tensor<type, 3> outputs = neural_network.calculate_outputs_2_3(inputs);
 
-        // Training Strategy
 
-        TrainingStrategy training_strategy(&neural_network, &language_dataset);
-
-        training_strategy.print();
-
-        //training_strategy.perform_training();
-
-        // language_dataset.set(Dataset::SampleUse::Testing);
 /*
-        const TestingAnalysis testing_analysis(&neural_network, &language_dataset);
+        CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
 
-        TestingAnalysis::RocAnalysis roc_analysis = testing_analysis.perform_roc_analysis();
-
-        cout << "TESTING ANALYSIS:" << endl;
-        cout << "Roc curve: " << roc_analysis.area_under_curve << endl;
-
-        // pair<type, type> transformer_error_accuracy = testing_analysis.test_transformer();
-
-        // cout << "TESTING ANALYSIS:" << endl;
-        // cout << "Testing error: " << transformer_error_accuracy.first << endl;
-        // cout << "Testing accuracy: " << transformer_error_accuracy.second << endl;
-
-        // transformer.save("/home/artelnics/Escritorio/andres_alonso/ViT/ENtoES_model.xml");
+        cout << cross_entropy_error_3d.calculate_error_xxx() << endl;
 */
         cout << "Good bye!" << endl;
 

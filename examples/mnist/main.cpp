@@ -11,7 +11,7 @@
 #include <vector>
 #include <exception>
 
-#include "../../opennn/image_data_set.h"
+#include "../../opennn/image_dataset.h"
 #include "../../opennn/neural_network.h"
 #include "../../opennn/training_strategy.h"
 #include "../../opennn/testing_analysis.h"
@@ -26,7 +26,7 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset;//("../data");
+        ImageDataset image_dataset("../data");
 
         // Neural network
 /*

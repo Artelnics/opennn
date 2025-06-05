@@ -37,7 +37,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
         return;
     }
 
-    const Tensor<type, 1> training_target_means = dataset->calculate_means(Dataset::SampleUse::Training, Dataset::VariableUse::Target); 
+    const Tensor<type, 1> training_target_means = dataset->calculate_means(Dataset::SampleUse::Training, Dataset::VariableUse::Target);
     const Tensor<type, 2> training_target_data = dataset->get_data(Dataset::SampleUse::Training, Dataset::VariableUse::Target);
 
     normalization_coefficient = calculate_normalization_coefficient(training_target_data, training_target_means);

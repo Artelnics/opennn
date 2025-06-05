@@ -14,11 +14,11 @@
 #include <ctime>
 
 #include "../opennn/pch.h"
-#include "../opennn/data_set.h"
+#include "../opennn/dataset.h"
 #include "../opennn/neural_network.h"
 #include "../opennn/training_strategy.h"
 #include "../opennn/testing_analysis.h"
-#include "../opennn/image_data_set.h"
+#include "../opennn/image_dataset.h"
 #include "../opennn/scaling_layer_4d.h"
 #include "../opennn/convolutional_layer.h"
 #include "../opennn/pooling_layer.h"

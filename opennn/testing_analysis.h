@@ -9,7 +9,7 @@
 #ifndef TESTINGANALYSIS_H
 #define TESTINGANALYSIS_H
 
-#include "data_set.h"
+#include "dataset.h"
 #include "neural_network.h"
 
 namespace opennn
@@ -21,6 +21,14 @@ class TestingAnalysis
 public: 
 
    TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
+
+    ~TestingAnalysis()
+    {
+        thread_pool_device.reset();
+
+        thread_pool.release();
+        thread_pool.reset();
+    }
 
     struct GoodnessOfFitAnalysis
     {
@@ -87,7 +95,6 @@ public:
    void set_display(const bool&);
 
    void set_threads_number(const int&);
-   void shutdown_threads();
 
    // Checking
 

@@ -36,7 +36,7 @@ public:
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},
             const Activation& = Dense2d::Activation::HyperbolicTangent,
-            const string& = "dense_layer");
+            const string& = "dense2d_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -53,7 +53,7 @@ public:
     void set(const dimensions& = {0},
              const dimensions& = {0},
              const Dense2d::Activation & = Dense2d::Activation::HyperbolicTangent,
-             const string& = "dense_layer");
+             const string& = "dense2d_layer");
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
@@ -174,9 +174,9 @@ private:
 };
 
 
-struct PerceptronForwardPropagation : LayerForwardPropagation
+struct Dense2dForwardPropagation : LayerForwardPropagation
 {
-    PerceptronForwardPropagation(const Index& = 0, Layer* = nullptr);
+    Dense2dForwardPropagation(const Index& = 0, Layer* = nullptr);
 
     pair<type*, dimensions> get_outputs_pair() const override;
 
@@ -193,9 +193,9 @@ struct PerceptronForwardPropagation : LayerForwardPropagation
 };
 
 
-struct PerceptronBackPropagation : LayerBackPropagation
+struct Dense2dBackPropagation : LayerBackPropagation
 {
-    PerceptronBackPropagation(const Index& = 0, Layer* = nullptr);
+    Dense2dBackPropagation(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 
@@ -213,9 +213,9 @@ struct PerceptronBackPropagation : LayerBackPropagation
 };
 
 
-struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
+struct Dense2dLayerBackPropagationLM : LayerBackPropagationLM
 {
-    PerceptronLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
+    Dense2dLayerBackPropagationLM(const Index& = 0, Layer* = nullptr);
 
     vector<pair<type*, dimensions>> get_input_derivative_pairs() const override;
 

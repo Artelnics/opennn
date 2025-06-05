@@ -29,7 +29,7 @@ public:
            const Index& = 0,
            const Index& = 0,
            const Activation& = Dense3d::Activation::HyperbolicTangent,
-           const string& = "perceptron_layer_3d");
+           const string& = "dense3d_layer");
 
    Index get_sequence_length() const;
    Index get_input_dimension() const;
@@ -55,7 +55,7 @@ public:
             const Index& = 0,
             const Index& = 0,
             const Dense3d::Activation& = Dense3d::Activation::HyperbolicTangent,
-            const string & = "perceptron_layer_3d");
+            const string & = "dense3d_layer");
 
    void set_parameters(const Tensor<type, 1>&, Index&) override;
 

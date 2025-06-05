@@ -9,7 +9,7 @@
 #include "model_expression.h"
 #include "scaling_layer_2d.h"
 #include "strings_utilities.h"
-#include "data_set.h"
+#include "dataset.h"
 
 namespace opennn {
 

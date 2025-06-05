@@ -242,20 +242,20 @@ void Dense3d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
 
     // Forward propagation
 
-    const Dense3dForwardPropagation* perceptron_layer_3d_forward_propagation =
+    const Dense3dForwardPropagation* dense3d_layer_forward_propagation =
             static_cast<Dense3dForwardPropagation*>(forward_propagation.get());
 
-    const Tensor<type, 3>& activation_derivatives = perceptron_layer_3d_forward_propagation->activation_derivatives;
+    const Tensor<type, 3>& activation_derivatives = dense3d_layer_forward_propagation->activation_derivatives;
 
     // Back propagation
 
-    Dense3dBackPropagation* perceptron_3d_back_propagation =
+    Dense3dBackPropagation* dense3d_back_propagation =
             static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    Tensor<type, 1>& bias_derivatives = perceptron_3d_back_propagation->bias_derivatives;
-    Tensor<type, 2>& weight_derivatives = perceptron_3d_back_propagation->weight_derivatives;
+    Tensor<type, 1>& bias_derivatives = dense3d_back_propagation->bias_derivatives;
+    Tensor<type, 2>& weight_derivatives = dense3d_back_propagation->weight_derivatives;
 
-    Tensor<type, 3>& input_derivatives = perceptron_3d_back_propagation->input_derivatives;
+    Tensor<type, 3>& input_derivatives = dense3d_back_propagation->input_derivatives;
 
     deltas.device(*thread_pool_device) = deltas * activation_derivatives;
 
@@ -271,33 +271,33 @@ void Dense3d::insert_gradient(unique_ptr<LayerBackPropagation>& back_propagation
                                    Index& index,
                                    Tensor<type, 1>& gradient) const
 {
-    Dense3dBackPropagation* perceptron_back_propagation =
+    Dense3dBackPropagation* dense3d_back_propagation =
         static_cast<Dense3dBackPropagation*>(back_propagation.get());
 
-    copy_to_vector(gradient, perceptron_back_propagation->weight_derivatives, index);
-    copy_to_vector(gradient, perceptron_back_propagation->bias_derivatives, index);
+    copy_to_vector(gradient, dense3d_back_propagation->weight_derivatives, index);
+    copy_to_vector(gradient, dense3d_back_propagation->bias_derivatives, index);
 }
 
 
 void Dense3d::from_XML(const XMLDocument& document)
 {
-    const XMLElement* perceptron_layer_element = document.FirstChildElement("Dense3d");
+    const XMLElement* dense2d_layer_element = document.FirstChildElement("Dense3d");
 
-    if(!perceptron_layer_element)
+    if(!dense2d_layer_element)
         throw runtime_error("Dense3d element is nullptr.\n");
 
-    const Index new_sequence_length = read_xml_index(perceptron_layer_element, "InputsNumber");
-    const Index new_input_dimension = read_xml_index(perceptron_layer_element, "InputsDepth");
-    const Index new_output_dimension = read_xml_index(perceptron_layer_element, "NeuronsNumber");
+    const Index new_sequence_length = read_xml_index(dense2d_layer_element, "InputsNumber");
+    const Index new_input_dimension = read_xml_index(dense2d_layer_element, "InputsDepth");
+    const Index new_output_dimension = read_xml_index(dense2d_layer_element, "NeuronsNumber");
 
     set(new_sequence_length, new_input_dimension, new_output_dimension);
 
-    set_name(read_xml_string(perceptron_layer_element, "Name"));
-    set_activation_function(read_xml_string(perceptron_layer_element, "Activation"));
+    set_name(read_xml_string(dense2d_layer_element, "Name"));
+    set_activation_function(read_xml_string(dense2d_layer_element, "Activation"));
 
     Index index = 0;
 
-    set_parameters(to_type_vector(read_xml_string(perceptron_layer_element, "Parameters"), " "), index);
+    set_parameters(to_type_vector(read_xml_string(dense2d_layer_element, "Parameters"), " "), index);
 }
 
 

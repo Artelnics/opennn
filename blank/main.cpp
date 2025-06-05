@@ -13,7 +13,7 @@
 #include <string>
 #include <time.h>
 
-#include "../opennn/language_data_set.h"
+#include "../opennn/language_dataset.h"
 #include "../opennn/embedding_layer.h"
 #include "../opennn/perceptron_layer_3d.h"
 #include "../opennn/multihead_attention_layer.h"

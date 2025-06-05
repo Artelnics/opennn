@@ -150,9 +150,9 @@ void InputsSelection::check() const
     if(!loss_index->has_data_set())
         throw runtime_error("Pointer to data set is nullptr.\n");
 
-    const Dataset* dataset = loss_index->get_data_set();
+    const Dataset* Dataset = loss_index->get_data_set();
 
-    const Index selection_samples_number = dataset->get_samples_number(Dataset::SampleUse::Selection);
+    const Index selection_samples_number = Dataset->get_samples_number(Dataset::SampleUse::Selection);
 
     if(selection_samples_number == 0)
         throw runtime_error("Number of selection samples is zero.\n");
