@@ -36,7 +36,7 @@ public:
     Dense2d(const dimensions& = {0},
             const dimensions& = {0},
             const Activation& = Dense2d::Activation::HyperbolicTangent,
-            const string& = "perceptron_layer");
+            const string& = "dense_layer");
 
     dimensions get_input_dimensions() const override;
     dimensions get_output_dimensions() const override;
@@ -53,7 +53,7 @@ public:
     void set(const dimensions& = {0},
              const dimensions& = {0},
              const Dense2d::Activation & = Dense2d::Activation::HyperbolicTangent,
-             const string& = "perceptron_layer");
+             const string& = "dense_layer");
 
     void set_input_dimensions(const dimensions&) override;
     void set_output_dimensions(const dimensions&) override;
@@ -171,8 +171,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    type decision_threshold;
 };
 
 
@@ -245,8 +243,11 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     type* combinations = nullptr;
 
+    cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
     cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
 };
 
 
@@ -259,17 +260,16 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
     void print() const override;
 
     void free() override;
+    
+    float* combination_deltas_device = nullptr;
 
     float* bias_derivatives_device = nullptr;
-
     float* weight_derivatives_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;
 
     cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
-
-    float* combination_deltas_device = nullptr;
 
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
 };

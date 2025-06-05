@@ -685,8 +685,10 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     type* combinations = perceptron_layer_forward_propagation_cuda->combinations;
     type* outputs = perceptron_layer_forward_propagation_cuda->outputs;
 
-    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
+    const cudnnActivationDescriptor_t& activation_descriptor = perceptron_layer_forward_propagation_cuda->activation_descriptor;
 
+    const cudnnTensorDescriptor_t& output_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_tensor_descriptor;
+    const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = perceptron_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
     const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
     const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = perceptron_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
 
@@ -738,10 +740,10 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             CUDNN_SOFTMAX_ACCURATE,
             CUDNN_SOFTMAX_MODE_CHANNEL,
             &alpha,
-            output_tensor_descriptor,
+            output_softmax_tensor_descriptor,
             combinations,
             &beta,
-            output_tensor_descriptor,
+            output_softmax_tensor_descriptor,
             outputs);
 
         break;
@@ -800,7 +802,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Error combinations derivatives
 
-    if (perceptron_layer->get_activation_function() != Activation::Linear)
+    if (perceptron_layer->get_activation_function() != Activation::Linear && perceptron_layer->get_activation_function() != Activation::Softmax)
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
             &alpha,
@@ -920,7 +922,7 @@ void Dense2d::copy_parameters_host()
     if (!biases_device) cout << "Biases is null" << endl;
     if (!weights_device) cout << "Synaptic weights is null" << endl;
 
-    CHECK_CUDA(cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost))
+    CHECK_CUDA(cudaMemcpy(biases.data(), biases_device, biases.size() * sizeof(type), cudaMemcpyDeviceToHost));
     CHECK_CUDA(cudaMemcpy(weights.data(), weights_device, weights.size() * sizeof(type), cudaMemcpyDeviceToHost));
 }
 
@@ -958,6 +960,16 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
     CHECK_CUDA(cudaMalloc(&combinations, batch_size * outputs_number * sizeof(float)));
     CHECK_CUDA(cudaMalloc(&outputs, batch_size * outputs_number * sizeof(float)));
 
+    cudnnCreateTensorDescriptor(&output_softmax_tensor_descriptor);
+
+    cudnnSetTensor4dDescriptor(output_softmax_tensor_descriptor,
+        CUDNN_TENSOR_NCHW,
+        CUDNN_DATA_FLOAT,
+        1,
+        outputs_number,
+        batch_size,
+        1);
+
     cudnnCreateTensorDescriptor(&output_tensor_descriptor);
 
     cudnnSetTensor4dDescriptor(output_tensor_descriptor,
@@ -977,6 +989,15 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         1,
         1,
         1);
+
+    // Activations
+
+    if (outputs_number == 1)
+    {
+        cudnnCreateActivationDescriptor(&activation_descriptor);
+
+        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
+    }
 }
 
 void Dense2dForwardPropagationCuda::print() const
@@ -990,9 +1011,11 @@ void Dense2dForwardPropagationCuda::free()
     cudaFree(combinations);
     cudaFree(outputs);
 
+    cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
+    cudnnDestroyActivationDescriptor(activation_descriptor);
 }
 
 

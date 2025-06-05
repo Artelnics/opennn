@@ -1441,7 +1441,7 @@ void ConvolutionalBackPropagationCuda::set(const Index& new_batch_size, Layer* n
 
     // Error combinations derivatives
 
-    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)))
+    CHECK_CUDA(cudaMalloc(&combination_deltas_device, batch_size * output_height * output_width * kernels_number * sizeof(float)));
 
     cudnnCreateTensorDescriptor(&combination_deltas_tensor_descriptor);
 

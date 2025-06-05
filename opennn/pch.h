@@ -58,6 +58,16 @@
 #include <curand.h>
 #include <cudnn.h>
 
+#define CHECK_CUDA(call) do \
+{ \
+    cudaError_t err = call; \
+    if (err != cudaSuccess) \
+    { \
+        fprintf(stderr, "CUDA Error %s:%d - %s (%d)\n", \
+                __FILE__, __LINE__, cudaGetErrorString(err), err); \
+    } \
+} while(0)
+
 #endif
 
 using namespace std;
