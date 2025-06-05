@@ -26,10 +26,10 @@ int main()
 
         // Data set
 
-        ImageDataset image_dataset("../data");
+        ImageDataset image_dataset("data");
 
         // Neural network
-/*
+
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             image_dataset.get_dimensions(Dataset::VariableUse::Input),
             {8, 4},
@@ -55,7 +55,7 @@ int main()
         cout << "Calculating confusion...." << endl;
         const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
         cout << "\nConfusion matrix:\n" << confusion << endl;
-*/
+
         cout << "Bye!" << endl;
         
         return 0;

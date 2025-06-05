@@ -123,7 +123,6 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     #ifdef OPENNN_CUDA
     
-    // Activations
     if (activation_function != Activation::Softmax)
     {
         cudnnCreateActivationDescriptor(&activation_descriptor);
@@ -211,7 +210,6 @@ void Dense2d::set_activation_function(const string& new_activation_function_name
 void Dense2d::set_parameters_constant(const type& value)
 {
     biases.setConstant(value);
-
     weights.setConstant(value);
 }
 
@@ -219,7 +217,6 @@ void Dense2d::set_parameters_constant(const type& value)
 void Dense2d::set_parameters_random()
 {
     set_random(biases);
-
     set_random(weights);
 }
 
@@ -689,8 +686,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     const cudnnTensorDescriptor_t& output_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
-    const cudnnTensorDescriptor_t& outputs_batch_tensor_descriptor = dense2d_layer_forward_propagation_cuda->outputs_batch_tensor_descriptor;
-    const cudnnTensorDescriptor_t& biases_batch_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_batch_tensor_descriptor;
+
+    const cudnnTensorDescriptor_t& biases_tensor_descriptor = dense2d_layer_forward_propagation_cuda->biases_tensor_descriptor;
 
     // Combinations
 
@@ -706,25 +703,16 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         combinations,
         batch_size);
 
-    // @todo Improve by using cudnnAddTensor
+    cudnnStatus_t add_status = cudnnAddTensor(cudnn_handle,
+        &alpha,
+        biases_tensor_descriptor,
+        biases_device,
+        &beta_add,
+        output_tensor_descriptor,
+        combinations);
 
-    for (Index biases_index = 0; biases_index < outputs_number; biases_index++)
-    {
-        type* outputs_batch = combinations + biases_index * batch_size;
-        type* biases_batch = biases_device + biases_index;
-
-        cudnnOpTensor(cudnn_handle,
-            operator_sum_descriptor,
-            &alpha,
-            outputs_batch_tensor_descriptor,
-            outputs_batch,
-            &alpha,
-            biases_batch_tensor_descriptor,
-            biases_batch,
-            &beta,
-            outputs_batch_tensor_descriptor,
-            outputs_batch);
-    }
+    if (add_status != CUDNN_STATUS_SUCCESS)
+        cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(add_status) << endl;
 
     // Activations
 
@@ -945,13 +933,13 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     // Biases
 
-    cudnnCreateTensorDescriptor(&biases_batch_tensor_descriptor);
+    cudnnCreateTensorDescriptor(&biases_tensor_descriptor);
 
-    cudnnSetTensor4dDescriptor(biases_batch_tensor_descriptor,
+    cudnnSetTensor4dDescriptor(biases_tensor_descriptor,
         CUDNN_TENSOR_NCHW,
         CUDNN_DATA_FLOAT,
         1,
-        1,
+        outputs_number,
         1,
         1);
 
@@ -980,16 +968,6 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         1,
         1);
 
-    cudnnCreateTensorDescriptor(&outputs_batch_tensor_descriptor);
-
-    cudnnSetTensor4dDescriptor(outputs_batch_tensor_descriptor,
-        CUDNN_TENSOR_NCHW,
-        CUDNN_DATA_FLOAT,
-        batch_size,
-        1,
-        1,
-        1);
-
     // Activations
 
     if (outputs_number == 1)
@@ -1013,8 +991,7 @@ void Dense2dForwardPropagationCuda::free()
 
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
-    cudnnDestroyTensorDescriptor(outputs_batch_tensor_descriptor);
-    cudnnDestroyTensorDescriptor(biases_batch_tensor_descriptor);
+    cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
     cudnnDestroyActivationDescriptor(activation_descriptor);
 }
 

@@ -40,12 +40,12 @@ int main()
         #ifdef OPENNN_CUDA
 
         // Data set
-        /*
+        
         const Index samples_number = 2;
 
         const Index image_height = 3;
         const Index image_width = 3;
-        const Index channels = 1;
+        const Index channels = 3;
         const Index targets = 2;
 
         ImageDataset data_set(samples_number, {image_height, image_width, channels}, {targets});
@@ -56,12 +56,10 @@ int main()
         data_set.set(Dataset::SampleUse::Training);
 
         data_set.print_data();
-        */
+        /*
         ImageDataset data_set;
 
         data_set.set_data_path("C:/cifar10_bmp");
-        //data_set.set_data_path("../examples/mnist/data");
-        //data_set.set_data_path("../examples/mnist/data_bin");
 
         data_set.read_bmp();
 
@@ -69,14 +67,14 @@ int main()
         
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
         const dimensions output_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
-
+        */
         // Neural network
-        /*
+        
         NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
             data_set.get_dimensions(Dataset::VariableUse::Input),
-            { 128,64,32 },
+            { 1 },
             data_set.get_dimensions(Dataset::VariableUse::Target));
-        */
+        /*
         NeuralNetwork neural_network;
 
         // Scaling 4D
@@ -175,7 +173,7 @@ int main()
             Dense2d::Activation::Softmax,
             "probabilistic")
         );
-
+        */
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);

@@ -244,8 +244,8 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
     type* combinations = nullptr;
 
     cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+
+    cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
 
     cudnnActivationDescriptor_t activation_descriptor = nullptr;
 };
