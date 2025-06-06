@@ -151,6 +151,7 @@
     <ClCompile Include="..\opennn\training_strategy.cpp" />
     <ClCompile Include="..\opennn\transformer.cpp" />
     <ClCompile Include="..\opennn\unscaling_layer.cpp" />
+    <ClCompile Include="..\opennn\vgg16.cpp" />
     <ClCompile Include="..\opennn\weighted_squared_error.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -228,6 +229,7 @@
     <ClInclude Include="..\opennn\training_strategy.h" />
     <ClInclude Include="..\opennn\transformer.h" />
     <ClInclude Include="..\opennn\unscaling_layer.h" />
+    <ClInclude Include="..\opennn\vgg16.h" />
     <ClInclude Include="..\opennn\weighted_squared_error.h" />
   </ItemGroup>
   <ItemGroup>

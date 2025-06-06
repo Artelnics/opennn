@@ -410,7 +410,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
     add_layer(make_unique<Scaling4d>(input_dimensions));
     
     const Index complexity_size = complexity_dimensions.size();
-    /*
+    
     for (Index i = 0; i < complexity_size; i++)
     {
         const dimensions kernel_dimensions = { 2, 2, get_output_dimensions()[2], complexity_dimensions[i] };
@@ -436,7 +436,7 @@ void NeuralNetwork::set_image_classification(const dimensions& input_dimensions,
                                        pooling_method,
                                        "pooling_layer_" + to_string(i + 1)));
     }
-    */
+    
     add_layer(make_unique<Flatten>(get_output_dimensions()));
 
     add_layer(make_unique<Dense2d>(get_output_dimensions(),

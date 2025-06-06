@@ -371,7 +371,9 @@
     <ClCompile Include="transformer.cpp" />
     <ClInclude Include="unscaling_layer.h" />
     <ClCompile Include="unscaling_layer.cpp" />
+    <ClInclude Include="vgg16.h" />
     <ClInclude Include="weighted_squared_error.h" />
+    <ClCompile Include="vgg16.cpp" />
     <ClCompile Include="weighted_squared_error.cpp" />
   </ItemGroup>
   <ItemGroup>
