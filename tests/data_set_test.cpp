@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "../opennn/data_set.h"
+#include "../opennn/dataset.h"
 
 
 void create_temp_csv_file(const string& file_path, const string& content) 
@@ -16,7 +16,7 @@ void create_temp_csv_file(const string& file_path, const string& content)
 
 TEST(DataSet, DefaultConstructor)
 {
-    DataSet data_set;
+    Dataset data_set;
 
     EXPECT_EQ(data_set.get_variables_number(), 0);
     EXPECT_EQ(data_set.get_samples_number(), 0);
@@ -26,7 +26,7 @@ TEST(DataSet, DefaultConstructor)
 TEST(DataSet, DimensionsConstructor)
 {
 
-    DataSet data_set(1, { 1 }, { 1 });
+    Dataset data_set(1, { 1 }, { 1 });
 
     EXPECT_EQ(data_set.get_samples_number(), 1);
     EXPECT_EQ(data_set.get_variables_number(), 2);

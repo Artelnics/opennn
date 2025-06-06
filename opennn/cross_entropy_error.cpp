@@ -123,17 +123,11 @@ void CrossEntropyError2d::calculate_binary_output_delta(const Batch& batch,
 
     const TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
 
-    cout << "outputs: " << outputs.dimensions() << endl;
-
     // Back propagation
 
     const pair<type*, dimensions> output_deltas_pair = back_propagation.get_output_deltas_pair();
 
     TensorMap<Tensor<type, 2>> output_deltas = tensor_map_2(output_deltas_pair);
-
-    cout << "output_deltas: " << output_deltas << endl;
-
-    // throw runtime_error("ehh");
 
     output_deltas.device(*thread_pool_device)
         = (-targets/(outputs + epsilon) + (type(1) - targets)/(type(1) - outputs + epsilon))/type(samples_number);

@@ -51,12 +51,10 @@ int main()
 
         Tensor<type, 3> outputs = neural_network.calculate_outputs_2_3(inputs);
 
-
-/*
         CrossEntropyError3d cross_entropy_error_3d(&neural_network, &language_dataset);
 
         cout << cross_entropy_error_3d.calculate_error_xxx() << endl;
-*/
+
         cout << "Good bye!" << endl;
 
         return 0;

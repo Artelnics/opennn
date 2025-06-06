@@ -283,74 +283,6 @@ Index Transformer::get_decoder_length() const
 {
     return decoder_length;
 }
-/*
-// string Transformer::calculate_outputs(const string& context_string, const bool& imported_vocabulary)
-// {
-//     type start_indicator = 1;
-//     type end_indicator = 2;
-
-//     if(imported_vocabulary)
-//     {
-//     type start_indicator = 2;
-//     type end_indicator = 3;
-//     }
-
-//     const Index batch_size = 1;
-
-//     Tensor<type, 2> context(batch_size, decoder_length);
-//     context.setZero();
-//     context(0) = start_indicator;
-
-//     if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
-//     else
-//     tokenize_wordpiece(context_tokens[0], context);
-
-//     Tensor<type, 2> input(batch_size, input_length);
-//     input.setZero();
-//     input(0) = start_indicator;
-
-//     ForwardPropagation forward_propagation(batch_size, this);
-
-//     const pair<type*, dimensions> context_pair(context.data(), { 1, decoder_length });
-//     const pair<type*, dimensions> input_pair(input.data(), { 1, input_length });
-
-//     const vector<pair<type*, dimensions>> input_pairs = {input_pair, context_pair};
-
-//     const Index layers_number = get_layers_number();
-
-//     const pair<type*, dimensions> outputs_pair
-//         = forward_propagation.layers[layers_number - 1]->get_outputs_pair();
-
-//     TensorMap<Tensor<type, 2>> outputs = tensor_map_2(outputs_pair);
-
-//     Tensor<type, 1> current_outputs(outputs_pair.second[2]);
-//     Tensor<Index, 0> prediction;
-
-//     for(Index i = 1; i < input_length; i++)
-//     {
-//         //forward_propagate(input_pairs, forward_propagation);
-
-//         current_outputs.device(*thread_pool_device) = outputs.chip(i - 1, 0);
-
-//         prediction.device(*thread_pool_device) = current_outputs.argmax();
-
-//         input(i) = type(prediction(0));
-
-//         if(prediction(0) == end_indicator)
-//             break;
-//     }
-
-//     ostringstream output_string;
-
-//     //if(!imported_vocabulary)
-//     // detokenize_whitespace(input, output_string);
-//     //else
-//     detokenize_wordpiece(input, output_string);
-
-//     return output_string.str();
-
-// }
-*/
 
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
@@ -456,39 +388,6 @@ Tensor<type, 3> Transformer::calculate_outputs(const Tensor<type, 2>& input, con
 
     return tensor_map_3(output_pair);
 }
-
-/*
-// void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
-// {
-//     const Index context_vocabulary_size = input_vocabulary.size();
-
-//     bool line_ended = false;
-
-//     for(Index j = 0; j < input_length - 1; j++)
-//     {
-//         if(j < context_tokens.size())
-//         {
-//             auto it = find(input_vocabulary.data(), input_vocabulary.data() + context_vocabulary_size, context_tokens[j]);
-
-//             const Index word_index = it - input_vocabulary.data();
-
-//             context(j + 1) = type(word_index);
-//         }
-//         else
-//         {
-//             if(j == context_tokens.size() || (j == input_length - 2 && !line_ended))
-//             {
-//                 context(j + 1) = 3; // end indicator
-//                 line_ended = true;
-//             }
-//             else
-//             {
-//                 break;
-//             }
-//         }
-//     }
-// }
-*/
 
 void Transformer::tokenize_whitespace(const vector<string>& context_tokens, Tensor<type, 2>& context)
 {
@@ -600,19 +499,6 @@ void Transformer::tokenize_wordpiece(const vector<string>& context_tokens, Tenso
     }
 }
 
-/*
-//void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
-//{
-    // @todo prediction is of rank 2 but only one loop. Why?
-
-//    for(Index i = 1; i < input_length; i++)
-//    {
-//        if(predictions(i) == 2) break;
-
-//        output_string << input_vocabulary[Index(predictions(i))] << " ";
-//    }
-//}
-*/
 void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstream& output_string)
 {
     for(Index i = 1; i < decoder_length; i++)
@@ -630,27 +516,6 @@ void Transformer::detokenize_whitespace(Tensor<type, 2>& predictions, ostringstr
     }
 }
 
-
-/*
-void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
-{
-    buffer << output_vocabulary[Index(predictions(1))];
-
-    string current_prediction;
-
-    for(Index i = 2; i < output_length; i++)
-    {
-        if(predictions(i) == 3)
-            break;
-
-        current_prediction = output_vocabulary[Index(predictions(i))];
-
-        current_prediction.substr(0, 2) == "##"
-           ? buffer << current_prediction.substr(2)
-           : buffer << " " << current_prediction;
-    }
-}
-*/
 
 void Transformer::detokenize_wordpiece(Tensor<type, 2>& predictions, ostringstream& buffer)
 {

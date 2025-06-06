@@ -6,6 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
+#include "dataset.h"
 #include "tensors.h"
 #include "images.h"
 #include "neural_network.h"
@@ -1417,8 +1418,7 @@ void NeuralNetwork::outputs_from_XML(const XMLElement* outputs_element)
 void NeuralNetwork::print() const
 {
     cout << "Neural network" << endl
-         << "Model type:" << endl
-         << get_model_type_string() << endl;
+         << "Model type:" << get_model_type_string() << endl;
 
     // print_vector(get_input_names());
 
@@ -1442,8 +1442,7 @@ void NeuralNetwork::print() const
     cout << "Outputs:" << endl;
     print_vector(get_output_names());
 
-    cout << "Parameters number:" << endl
-         << get_parameters_number() << endl;
+    cout << "Parameters number: " << get_parameters_number() << endl;
 }
 
 
