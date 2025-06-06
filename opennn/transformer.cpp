@@ -287,11 +287,8 @@ Index Transformer::get_decoder_length() const
 string Transformer::calculate_outputs(const vector<string>& input_string)
 {
 
-    //if(imported_vocabulary)
-    //{
     type start_indicator = 2;
     type end_indicator = 3;
-    //}
 
     //@todo
     vector<vector<string>> input_tokens(input_string.size());
@@ -303,12 +300,7 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
     Tensor<type, 2> input(samples_number, input_length);
     input.setZero();
 
-    //if(!imported_vocabulary)    tokenize_whitespace(context_tokens[0], context);
-    //else
-    // tokenize_wordpiece(input_tokens[0], input);
-
     tokenize_wordpiece(input_tokens[0], input);
-    // tokenize_whitespace(input_tokens[0], input);
 
     cout << "Input codification:\n" << input << endl;
 
@@ -355,15 +347,9 @@ string Transformer::calculate_outputs(const vector<string>& input_string)
 
     ostringstream output_buffer;
 
-    //if(!imported_vocabulary)    
-    // detokenize_whitespace(input, output_string);
-    //else
-
     cout << "Output codification:\n" << decoder << endl;
 
-
     detokenize_wordpiece(decoder, output_buffer);
-    // detokenize_whitespace(decoder, output_buffer);
 
     return output_buffer.str();   
 

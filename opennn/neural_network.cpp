@@ -1420,8 +1420,6 @@ void NeuralNetwork::print() const
     cout << "Neural network" << endl
          << "Model type:" << get_model_type_string() << endl;
 
-    // print_vector(get_input_names());
-
     if(model_type != ModelType::ImageClassification)
     {
         cout << "Inputs:" << endl;
