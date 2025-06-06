@@ -632,7 +632,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training_cuda()
 
         for (Index iteration = 0; iteration < training_batches_number; iteration++)
         {
-            cout << "Batch : " << iteration << " / " << training_batches_number << endl;
             // Data set
 
             training_batch_cuda.fill(training_batches[iteration],
