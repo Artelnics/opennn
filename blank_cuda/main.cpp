@@ -78,7 +78,6 @@ int main()
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
         const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
 
-        // VGG16
         VGG16 neural_network(input_dimensions, target_dimensions);
         
         // Training strategy

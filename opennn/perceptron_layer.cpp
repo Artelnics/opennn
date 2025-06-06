@@ -109,13 +109,7 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
     set_parameters_random();
 
-    if (new_activation_function == Activation::Softmax)
-    {
-        new_output_dimensions[0] == 1
-            ? activation_function = Activation::Logistic
-            : activation_function = Activation::Softmax;
-    } else
-        set_activation_function(new_activation_function);
+    set_activation_function(new_activation_function);
 
     set_name(new_name);
     
@@ -131,14 +125,16 @@ void Dense2d::set(const dimensions& new_input_dimensions,
 
         switch (get_activation_function())
         {
-        case Dense2d::Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
-        case Dense2d::Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
-        case Dense2d::Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
-        case Dense2d::Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
-        case Dense2d::Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
+        case Activation::Linear: activation = CUDNN_ACTIVATION_IDENTITY; break;
+        case Activation::Logistic: activation = CUDNN_ACTIVATION_SIGMOID; break;
+        case Activation::HyperbolicTangent: activation = CUDNN_ACTIVATION_TANH; break;
+        case Activation::RectifiedLinear: activation = CUDNN_ACTIVATION_RELU; break;
+        case Activation::ExponentialLinear: activation = CUDNN_ACTIVATION_ELU; break;
 
         default: break;
         }
+
+        cudnnSetActivationDescriptor(activation_descriptor, activation, CUDNN_PROPAGATE_NAN, 0.0);
     }
 
     #endif
@@ -176,7 +172,14 @@ void Dense2d::set_parameters(const Tensor<type, 1>& new_parameters, Index& index
 
 void Dense2d::set_activation_function(const Dense2d::Activation& new_activation_function)
 {
-    activation_function = new_activation_function;
+    if (new_activation_function == Activation::Softmax)
+    {
+        get_output_dimensions()[0] == 1
+            ? activation_function = Activation::Logistic
+            : activation_function = Activation::Softmax;
+    }
+    else
+        activation_function = new_activation_function;
 }
 
 
@@ -682,8 +685,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     type* combinations = dense2d_layer_forward_propagation_cuda->combinations;
     type* outputs = dense2d_layer_forward_propagation_cuda->outputs;
 
-    const cudnnActivationDescriptor_t& activation_descriptor = dense2d_layer_forward_propagation_cuda->activation_descriptor;
-
     const cudnnTensorDescriptor_t& output_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_tensor_descriptor;
     const cudnnTensorDescriptor_t& output_softmax_tensor_descriptor = dense2d_layer_forward_propagation_cuda->output_softmax_tensor_descriptor;
 
@@ -747,7 +748,10 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
             outputs);
 
         break;
-    }      
+    }
+
+    // Droput
+
 }
 
 
@@ -967,15 +971,6 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         outputs_number,
         1,
         1);
-
-    // Activations
-
-    if (outputs_number == 1)
-    {
-        cudnnCreateActivationDescriptor(&activation_descriptor);
-
-        cudnnSetActivationDescriptor(activation_descriptor, CUDNN_ACTIVATION_SIGMOID, CUDNN_PROPAGATE_NAN, 0.0);
-    }
 }
 
 void Dense2dForwardPropagationCuda::print() const
@@ -992,7 +987,6 @@ void Dense2dForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
-    cudnnDestroyActivationDescriptor(activation_descriptor);
 }
 
 
