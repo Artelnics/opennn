@@ -651,12 +651,6 @@ void Pooling::forward_propagate_cuda(const vector<float*>& inputs_device,
                                      unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                      const bool& is_training)
 {
-    // Inputs
-
-    const Index inputs_height = get_input_height();
-    const Index inputs_width = get_input_width();
-    const Index channels_number = get_channels_number();
-
     // Forward propagation
 
     PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda
@@ -690,12 +684,6 @@ void Pooling::back_propagate_cuda(const vector<float*>& inputs_device,
                                   unique_ptr<LayerForwardPropagationCuda>& forward_propagation_cuda,
                                   unique_ptr<LayerBackPropagationCuda>& back_propagation_cuda) const
 {
-    // Inputs
-
-    const Index inputs_height = get_input_height();
-    const Index inputs_width = get_input_width();
-    const Index channels_number = get_channels_number();
-
     // Forward propagation
 
     PoolingForwardPropagationCuda* pooling_layer_forward_propagation_cuda

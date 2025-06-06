@@ -104,7 +104,7 @@
     <ClCompile Include="..\opennn\correlations.cpp" />
     <ClCompile Include="..\opennn\cross_entropy_error.cpp" />
     <ClCompile Include="..\opennn\cross_entropy_error_3d.cpp" />
-    <ClCompile Include="..\opennn\data_set.cpp" />
+    <ClCompile Include="..\opennn\dataset.cpp" />
     <ClCompile Include="..\opennn\embedding_layer.cpp" />
     <ClCompile Include="..\opennn\flatten_layer.cpp" />
     <ClCompile Include="..\opennn\flatten_layer_3d.cpp" />
@@ -112,10 +112,10 @@
     <ClCompile Include="..\opennn\growing_inputs.cpp" />
     <ClCompile Include="..\opennn\growing_neurons.cpp" />
     <ClCompile Include="..\opennn\images.cpp" />
-    <ClCompile Include="..\opennn\image_data_set.cpp" />
+    <ClCompile Include="..\opennn\image_dataset.cpp" />
     <ClCompile Include="..\opennn\inputs_selection.cpp" />
     <ClCompile Include="..\opennn\kmeans.cpp" />
-    <ClCompile Include="..\opennn\language_data_set.cpp" />
+    <ClCompile Include="..\opennn\language_dataset.cpp" />
     <ClCompile Include="..\opennn\layer.cpp" />
     <ClCompile Include="..\opennn\learning_rate_algorithm.cpp" />
     <ClCompile Include="..\opennn\levenberg_marquardt_algorithm.cpp" />
@@ -146,7 +146,7 @@
     <ClCompile Include="..\opennn\strings_utilities.cpp" />
     <ClCompile Include="..\opennn\tensors.cpp" />
     <ClCompile Include="..\opennn\testing_analysis.cpp" />
-    <ClCompile Include="..\opennn\time_series_data_set.cpp" />
+    <ClCompile Include="..\opennn\time_series_dataset.cpp" />
     <ClCompile Include="..\opennn\tinyxml2.cpp" />
     <ClCompile Include="..\opennn\training_strategy.cpp" />
     <ClCompile Include="..\opennn\transformer.cpp" />
@@ -172,7 +172,7 @@
     <ClInclude Include="..\opennn\correlations.h" />
     <ClInclude Include="..\opennn\cross_entropy_error.h" />
     <ClInclude Include="..\opennn\cross_entropy_error_3d.h" />
-    <ClInclude Include="..\opennn\data_set.h" />
+    <ClInclude Include="..\opennn\dataset.h" />
     <ClInclude Include="..\opennn\descriptives.h" />
     <ClInclude Include="..\opennn\embedding_layer.h" />
     <ClInclude Include="..\opennn\flatten_layer.h" />
@@ -183,11 +183,11 @@
     <ClInclude Include="..\opennn\growing_neurons.h" />
     <ClInclude Include="..\opennn\histogram.h" />
     <ClInclude Include="..\opennn\images.h" />
-    <ClInclude Include="..\opennn\image_data_set.h" />
+    <ClInclude Include="..\opennn\image_dataset.h" />
     <ClInclude Include="..\opennn\inputs_selection.h" />
     <ClInclude Include="..\opennn\kernel.cuh" />
     <ClInclude Include="..\opennn\kmeans.h" />
-    <ClInclude Include="..\opennn\language_data_set.h" />
+    <ClInclude Include="..\opennn\language_dataset.h" />
     <ClInclude Include="..\opennn\layer.h" />
     <ClInclude Include="..\opennn\layer_back_propagation.h" />
     <ClInclude Include="..\opennn\layer_back_propagation_lm.h" />
@@ -223,7 +223,7 @@
     <ClInclude Include="..\opennn\strings_utilities.h" />
     <ClInclude Include="..\opennn\tensors.h" />
     <ClInclude Include="..\opennn\testing_analysis.h" />
-    <ClInclude Include="..\opennn\time_series_data_set.h" />
+    <ClInclude Include="..\opennn\time_series_dataset.h" />
     <ClInclude Include="..\opennn\tinyxml2.h" />
     <ClInclude Include="..\opennn\training_strategy.h" />
     <ClInclude Include="..\opennn\transformer.h" />

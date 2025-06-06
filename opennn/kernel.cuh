@@ -61,122 +61,23 @@ void print_device_data(const type*, const size_t);
 
 // Operation kernel
 
-__global__ void multiplication_kernel(const int, const type*, const type*, type*);
-
 __global__ void division_kernel(const int, const type*, const type*, type*);
-
-__global__ void square_kernel(int, const type*, type*);
-
-__global__ void exponential_kernel(int, const type*, type*);
 
 __global__ void log_kernel(int, const type*, type*);
 
 __global__ void log_in_place_kernel(const int, type*);
 
-__global__ void pow_kernel(const int, const type, type*);
-
-__global__ void sign_kernel(int, const type*, type*);
-
-__global__ void subtract_kernel(int, const type*, const type*, type*);
-
-__global__ void dot_device(int, int, int, float*, const float*, float*);
-
 __global__ void divide_subtract_kernel(int, type*, const type*, const type*);
-
-
-// Operation in place kernel
-
-__global__ void multiplication_in_place_kernel(int, const type*, type*);
-
-__global__ void abs_kernel(int, type*); // in place
-
-__global__ void square_root_kernel(int, type*); // in place
-
-__global__ void divide_in_place_kernel(int, type*, const type*); // in place
-
-__global__ void subtract_in_place_kernel(int, type*, type*); // in place
-
-__global__ void sum_kernel(type*, type*, const size_t&); // vector sum
 
 
 // Wrappers operations
 
-void multiplication(const size_t&, const type*, const type*, type*);
-
 void division(const size_t&, const type*, const type*, type*);
-
-void square(const size_t&, const type*, type*);
-
-void exponential(const size_t&, const type*, type*);
 
 void log(const size_t&, const type*, type*);
 
 void log_in_place(const size_t&, type*);
 
-void sign_cuda(int, const type*, type*);
-
-void subtract(const size_t&, const type*, const type*, type*);
-
 void divide_subtract(const size_t&, type*, const type*, const type*);
-
-// Wrappers operations in place
-
-void multiplication_in_place(int, const type*, type*);
-
-void abs(const size_t&, type*);
-
-void pow(const int&, const type&, type*);
-
-void square_root(const size_t&, type*);
-
-void division_in_place(const size_t&, type*, const type*);
-
-void subtract_in_place(const size_t&, type*, type*);
-
-void sum_in_place(const size_t&, type, type*);
-
-void sum(type*, type*, const size_t&);
-
-
-// aux methods probabilistic
-
-void calculate_error_combinations_derivatives(const int&, const int&, const float*, const float*, float*);
-__global__ void calculate_error_combinations_derivatives_kernel(const int, const int, const float*, const float*, float*);
-
-
-// aux methods RNN
-
-void multiply_rows_device(const int&, const int&, const float*, const float*, float*);
-__global__ void multiply_rows_kernel(const int, const int, const float*, const float*, float*);
-
-
-void sum_recurrence(const int& size, const int&, const float*, float*);
-__global__ void sum_recurrence_kernel(const int, const int, const float*, float*);
-
-
-void sum_identity(const int& size, const int&, float*);
-__global__ void sum_identity_kernel(const int, const int, float*);
-
-
-void chip_row_device(const int& size, const int&, const int&, const float*, float*);
-__global__ void chip_row_kernel(const int, const int, const int, const float*, float*);
-
-
-void append_rows_device(const int&, const int&, const int&, float*, const float*);
-__global__ void append_rows_kernel(const int, const int, const int, float*, const float*);
-
-
-// Loss wrappers
-
-void calculate_weighted_squared_error(const int&, const float&, const float&, const float*, const float*, float*);
-__global__ void weighted_squared_error_kernel(const int, const float, const float, const float*, const float*, float*);
-
-
-void calculate_cross_entropy_error(const int&, const float*, const float*, float*);
-__global__ void cross_entropy_error_kernel(const int, const float*, const float*, float*);
-
-
-void calculate_cross_entropy_error_derivative(const int&, const float*, const float*, float*);
-__global__ void cross_entropy_error_derivative_kernel(const int, const float*, const float*, float*);
 
 #endif // KERNEL_CUH

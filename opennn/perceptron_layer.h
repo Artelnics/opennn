@@ -171,8 +171,6 @@ private:
     Activation activation_function = Activation::HyperbolicTangent;
 
     type dropout_rate = type(0);
-
-    type decision_threshold;
 };
 
 
@@ -245,8 +243,11 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
 
     type* combinations = nullptr;
 
-    cudnnTensorDescriptor_t outputs_batch_tensor_descriptor = nullptr;
-    cudnnTensorDescriptor_t biases_batch_tensor_descriptor = nullptr;
+    cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
+
+    cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
+
+    cudnnActivationDescriptor_t activation_descriptor = nullptr;
 };
 
 
@@ -259,17 +260,16 @@ struct Dense2dBackPropagationCuda : public LayerBackPropagationCuda
     void print() const override;
 
     void free() override;
+    
+    float* combination_deltas_device = nullptr;
 
     float* bias_derivatives_device = nullptr;
-
     float* weight_derivatives_device = nullptr;
     
     float* ones = nullptr;
     float one = 1.0f;
 
     cudnnTensorDescriptor_t combination_deltas_tensor_descriptor = nullptr;
-
-    float* combination_deltas_device = nullptr;
 
     cudnnTensorDescriptor_t deltas_tensor_descriptor = nullptr;
 };

@@ -443,8 +443,6 @@ public:
 
     virtual void set_data_random();
     void set_data_rosenbrock();
-    void set_data_sum();
-    void set_data_classification();
 
     // Serialization
 
@@ -669,7 +667,7 @@ struct BatchCuda
 
     Index samples_number = 0;
 
-    Dataset* Dataset = nullptr;
+    Dataset* dataset = nullptr;
 
     dimensions input_dimensions;
     dimensions decoder_dimensions;

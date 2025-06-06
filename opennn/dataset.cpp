@@ -269,9 +269,11 @@ string Dataset::get_sample_string(const Index& sample_index) const
         switch (raw_variable.type)
         {
         case RawVariableType::Numeric:
+        case RawVariableType::DateTime:
+        case RawVariableType::Constant:
             sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
+                                 ? missing_values_label
+                                 : to_string(double(data(sample_index, variable_index)));
 
             variable_index++;
             break;
@@ -284,13 +286,6 @@ string Dataset::get_sample_string(const Index& sample_index) const
             variable_index++;
             break;
 
-        case RawVariableType::DateTime:
-            sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-            break;
 
         case RawVariableType::Categorical:
             if (isnan(data(sample_index, variable_index)))
@@ -314,13 +309,6 @@ string Dataset::get_sample_string(const Index& sample_index) const
             }
             break;
 
-        case RawVariableType::Constant:
-            sample_string += isnan(data(sample_index, variable_index))
-                ? missing_values_label
-                : to_string(double(data(sample_index, variable_index)));
-
-            variable_index++;
-            break;
 
         default:
             break;
@@ -644,27 +632,24 @@ void Dataset::set_default_raw_variables_uses()
 
     for (Index i = raw_variables.size() - 1; i >= 0; i--)
     {
-        if (raw_variables[i].type == RawVariableType::Constant
-            || raw_variables[i].type == RawVariableType::DateTime)
-        {
-            raw_variables[i].set_use(VariableUse::None);
-            continue;
-        }
+        RawVariable& raw_variable = raw_variables[i];
 
-        if (!target)
+        if (raw_variable.type == RawVariableType::Constant ||
+            raw_variable.type == RawVariableType::DateTime)
         {
-            if (model_type != ModelType::Classification ||
-                (raw_variables[i].type == RawVariableType::Binary ||
-                 raw_variables[i].type == RawVariableType::Categorical))
-            {
-                raw_variables[i].set_use(VariableUse::Target);
-                target = true;
-                continue;
-            }
+            raw_variable.set_use(VariableUse::None);
         }
-
+        else if (!target
+        && (model_type != ModelType::Classification ||
+            raw_variable.type == RawVariableType::Binary ||
+            raw_variable.type == RawVariableType::Categorical))
+        {
+            raw_variable.set_use(VariableUse::Target);
+            target = true;
+        }
     }
 }
+
 
 void Dataset::set_default_raw_variables_uses_forecasting()
 {
@@ -1155,8 +1140,8 @@ void Dataset::set_raw_variable_type(const string& name, const RawVariableType& n
 
 void Dataset::set_raw_variable_types(const RawVariableType& new_type)
 {
-    for (size_t i = 0; i < raw_variables.size(); i++)
-        raw_variables[i].type = new_type;
+    for (auto& raw_variable : raw_variables)
+        raw_variable.type = new_type;
 }
 
 
@@ -3585,47 +3570,6 @@ void Dataset::set_data_rosenbrock()
 
         data(i, variables_number - 1) = rosenbrock;
     }
-}
-
-
-void Dataset::set_data_classification()
-{
-    const Index samples_number = get_samples_number();
-    const Index input_variables_number = get_variables_number(VariableUse::Input);
-    const Index target_variables_number = get_variables_number(VariableUse::Target);
-
-    data.setConstant(0.0);
-
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(0, 1);
-    /*
-        #pragma omp parallel for
-        for(Index i = 0; i < samples_number; i++)
-        {
-            for(Index j = 0; j < input_variables_number; j++)
-                data(i, j) = get_random_type(-1, 1);
-
-            target_variables_number == 1
-                ? data(i, input_variables_number) = dist(gen)
-                : data(i, input_variables_number + get_random_index(0, target_variables_number-1)) = 1;
-        }
-    */
-}
-
-
-void Dataset::set_data_sum()
-{
-    set_random(data);
-    /*
-            for(Index i = 0; i < samples_number; i++)
-            {
-                data(i,variables_number-1) = type(0);
-
-                for(Index j = 0; j < variables_number-1; j++)
-                    data(i,variables_number-1) += data(i, j);
-            }
-        */
 }
 
 
