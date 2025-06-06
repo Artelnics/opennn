@@ -22,12 +22,8 @@ public:
     enum class Activation{Logistic, 
                           HyperbolicTangent,
                           Linear, 
-                          RectifiedLinear, 
-                          ExponentialLinear,
-                          ScaledExponentialLinear, 
-                          SoftPlus, 
-                          SoftSign, 
-                          HardSigmoid};
+                          RectifiedLinear,
+                          ExponentialLinear};
 
    Recurrent(const dimensions & = {0}, const dimensions& = {0});
 

@@ -40,16 +40,13 @@ bool Convolutional::get_batch_normalization() const
 void Convolutional::preprocess_inputs(const Tensor<type, 4>& inputs,
                                       Tensor<type, 4>& preprocessed_inputs) const
 {
-    if (convolution_type == Convolution::Same)
-        if (row_stride != 1 || column_stride != 1)
-            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides());
-        else
-            preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings());
-    else
-        if (row_stride != 1 || column_stride != 1)
-            preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides());
-        else
-            preprocessed_inputs.device(*thread_pool_device) = inputs;
+    convolution_type == Convolution::Same
+        ? row_stride != 1 || column_stride != 1
+            ? preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings()).stride(get_strides())
+            : preprocessed_inputs.device(*thread_pool_device) = inputs.pad(get_paddings())
+        : row_stride != 1 || column_stride != 1
+            ? preprocessed_inputs.device(*thread_pool_device) = inputs.stride(get_strides())
+            : preprocessed_inputs.device(*thread_pool_device) = inputs;
 }
 
 
@@ -80,6 +77,8 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
 
     Tensor<type, 4>& outputs = this_forward_propagation->outputs;
 
+    const Index kernels_number = get_kernels_number();
+
     if (is_training)
     {
         Tensor<type, 1>& means = this_forward_propagation->means;
@@ -88,11 +87,19 @@ void Convolutional::normalize(unique_ptr<LayerForwardPropagation>& layer_forward
         means.device(*thread_pool_device) = outputs.mean(array<Index, 3>({0, 1, 2}));
         standard_deviations.device(*thread_pool_device) = (outputs - means).square().mean().sqrt();
 
+        outputs.device(*thread_pool_device) =
+            (outputs - means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
+            (standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+
         outputs.device(*thread_pool_device)
             = (outputs - means) / (standard_deviations + epsilon);
     }
-
-    const Index kernels_number = get_kernels_number();
+    else
+    {
+        outputs.device(*thread_pool_device) =
+            (outputs - moving_means.reshape(array<Index, 4>({kernels_number, 1, 1, 1}))) /
+            (moving_standard_deviations.reshape(array<Index, 4>({kernels_number, 1, 1, 1})) + epsilon);
+    }
 
     for(Index kernel_index = 0; kernel_index < kernels_number; kernel_index++)
     {
@@ -160,10 +167,6 @@ void Convolutional::calculate_activations(Tensor<type, 4>& activations, Tensor<t
     case Activation::Logistic: logistic(activations, activation_derivatives); return;
     case Activation::HyperbolicTangent: hyperbolic_tangent(activations, activation_derivatives); return;
     case Activation::RectifiedLinear: rectified_linear(activations, activation_derivatives); return;
-    case Activation::ScaledExponentialLinear: scaled_exponential_linear(activations, activation_derivatives); return;
-    case Activation::SoftPlus: soft_plus(activations, activation_derivatives); return;
-    case Activation::SoftSign: soft_sign(activations, activation_derivatives); return;
-    case Activation::HardSigmoid: hard_sigmoid(activations, activation_derivatives); return;
     case Activation::ExponentialLinear: exponential_linear(activations, activation_derivatives); return;
     default: return;
     }
@@ -276,7 +279,7 @@ void Convolutional::back_propagate(const vector<pair<type*, dimensions>>& input_
     {
         const TensorMap<Tensor<type, 3>> kernel_convolution_deltas = tensor_map_(deltas, kernel_index);
 
-        TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data+ kernel_index*kernel_size,
+        TensorMap<Tensor<type, 4>> kernel_weight_derivatives(weight_derivatives_data + kernel_index*kernel_size,
                                    1, kernel_height,kernel_width, kernel_channels);
 
         kernel_weight_derivatives = preprocessed_inputs.convolve(kernel_convolution_deltas, array<Index, 3>({0, 1, 2}));
@@ -346,10 +349,6 @@ string Convolutional::get_activation_function_string() const
     case Activation::HyperbolicTangent: return "HyperbolicTangent";
     case Activation::Linear: return "Linear";
     case Activation::RectifiedLinear: return "RectifiedLinear";
-    case Activation::ScaledExponentialLinear: return "ScaledExponentialLinear";
-    case Activation::SoftPlus: return "SoftPlus";
-    case Activation::SoftSign: return "SoftSign";
-    case Activation::HardSigmoid: return "HardSigmoid";
     case Activation::ExponentialLinear: return "ExponentialLinear";
     }
 
@@ -600,14 +599,6 @@ void Convolutional::set_activation_function(const string& new_activation_functio
         activation_function = Activation::Linear;
     else if(new_activation_function_name == "RectifiedLinear")
         activation_function = Activation::RectifiedLinear;
-    else if(new_activation_function_name == "ScaledExponentialLinear")
-        activation_function = Activation::ScaledExponentialLinear;
-    else if(new_activation_function_name == "SoftPlus")
-        activation_function = Activation::SoftPlus;
-    else if(new_activation_function_name == "SoftSign")
-        activation_function = Activation::SoftSign;
-    else if(new_activation_function_name == "HardSigmoid")
-        activation_function = Activation::HardSigmoid;
     else if(new_activation_function_name == "ExponentialLinear")
         activation_function = Activation::ExponentialLinear;
     else
