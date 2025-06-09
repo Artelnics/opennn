@@ -246,6 +246,14 @@ struct Dense2dForwardPropagationCuda : public LayerForwardPropagationCuda
     cudnnTensorDescriptor_t output_softmax_tensor_descriptor = nullptr;
 
     cudnnTensorDescriptor_t biases_tensor_descriptor = nullptr;
+
+    cudnnDropoutDescriptor_t dropout_descriptor = nullptr;
+    void* dropout_states = nullptr;
+    size_t dropout_states_size = 0;
+    unsigned long long dropout_seed = 1337ULL; // @todo random
+
+    void* dropout_reserve_space = nullptr;
+    size_t dropout_reserve_space_size = 0;  
 };
 
 

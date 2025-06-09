@@ -61,25 +61,24 @@ int main()
         
         ImageDataset data_set;
 
-        data_set.set_data_path("C:/melanoma_dataset_bmp");
+        data_set.set_data_path("../examples/mnist/data");
 
         data_set.read_bmp();
 
         data_set.split_samples_random(0.8, 0.0, 0.2);
-        
-        // Neural network
-        /*
-        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
-            data_set.get_dimensions(Dataset::VariableUse::Input),
-            { 128,64,32 },
-            data_set.get_dimensions(Dataset::VariableUse::Target));
-        */
-        
+
         const dimensions input_dimensions = data_set.get_dimensions(Dataset::VariableUse::Input);
         const dimensions target_dimensions = data_set.get_dimensions(Dataset::VariableUse::Target);
-
-        VGG16 neural_network(input_dimensions, target_dimensions);
         
+        // Neural network
+
+        NeuralNetwork neural_network(NeuralNetwork::ModelType::ImageClassification,
+            data_set.get_dimensions(Dataset::VariableUse::Input),
+            { 1 },
+            data_set.get_dimensions(Dataset::VariableUse::Target));
+
+        //VGG16 neural_network(input_dimensions, target_dimensions);
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -87,7 +86,7 @@ int main()
         training_strategy.set_loss_method(TrainingStrategy::LossMethod::CROSS_ENTROPY_ERROR_2D);
         training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::ADAPTIVE_MOMENT_ESTIMATION);
         training_strategy.get_loss_index()->set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
-        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(6);
+        training_strategy.get_adaptive_moment_estimation()->set_batch_samples_number(128);
         training_strategy.get_adaptive_moment_estimation()->set_maximum_epochs_number(10);
         training_strategy.set_display_period(1);
 

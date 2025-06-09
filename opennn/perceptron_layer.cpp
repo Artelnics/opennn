@@ -36,6 +36,8 @@ dimensions Dense2d::get_output_dimensions() const
 
 void Dense2d::set_dropout_rate(const type& new_dropout_rate)
 {
+    if (new_dropout_rate < type(0) || new_dropout_rate >= type(1))
+        throw runtime_error("Dropout rate must be in [0,1).");
     dropout_rate = new_dropout_rate;
 }
 
@@ -116,6 +118,8 @@ void Dense2d::set(const dimensions& new_input_dimensions,
     layer_type = Layer::Type::Dense2d;
 
     #ifdef OPENNN_CUDA
+
+    // Activations
     
     if (activation_function != Activation::Softmax)
     {
@@ -279,8 +283,8 @@ void Dense2d::calculate_activations(Tensor<type, 2>& activations,
 
 
 void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                   unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
-                                   const bool& is_training)
+                                unique_ptr<LayerForwardPropagation>& layer_forward_propagation,
+                                const bool& is_training)
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
 
@@ -302,9 +306,9 @@ void Dense2d::forward_propagate(const vector<pair<type*, dimensions>>& input_pai
 
 
 void Dense2d::back_propagate(const vector<pair<type*, dimensions>>& input_pairs,
-                                const vector<pair<type*, dimensions>>& delta_pairs,
-                                unique_ptr<LayerForwardPropagation>& forward_propagation,
-                                unique_ptr<LayerBackPropagation>& back_propagation) const
+                             const vector<pair<type*, dimensions>>& delta_pairs,
+                             unique_ptr<LayerForwardPropagation>& forward_propagation,
+                             unique_ptr<LayerBackPropagation>& back_propagation) const
 {
     const TensorMap<Tensor<type, 2>> inputs = tensor_map_2(input_pairs[0]);
     TensorMap<Tensor<type, 2>> deltas = tensor_map_2(delta_pairs[0]);
@@ -678,8 +682,6 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
     Dense2dForwardPropagationCuda* dense2d_layer_forward_propagation_cuda =
         static_cast<Dense2dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Dense2d* perceptron_layer = static_cast<Dense2d*>(dense2d_layer_forward_propagation_cuda->layer);
-
     const Index batch_size = dense2d_layer_forward_propagation_cuda->batch_size;
 
     type* combinations = dense2d_layer_forward_propagation_cuda->combinations;
@@ -704,7 +706,7 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         combinations,
         batch_size);
 
-    cudnnStatus_t add_status = cudnnAddTensor(cudnn_handle,
+    cudnnStatus_t status = cudnnAddTensor(cudnn_handle,
         &alpha,
         biases_tensor_descriptor,
         biases_device,
@@ -712,8 +714,8 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
         output_tensor_descriptor,
         combinations);
 
-    if (add_status != CUDNN_STATUS_SUCCESS)
-        cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(add_status) << endl;
+    if (status != CUDNN_STATUS_SUCCESS)
+        cerr << "Dense2d CUDA: cudnnAddTensor failed. Error: " << cudnnGetErrorString(status) << endl;
 
     // Activations
 
@@ -752,6 +754,20 @@ void Dense2d::forward_propagate_cuda(const vector<float*>& inputs_device,
 
     // Droput
 
+    if (is_training && get_dropout_rate() > type(0))
+    {
+        status = cudnnDropoutForward(cudnn_handle,
+            dense2d_layer_forward_propagation_cuda->dropout_descriptor,
+            output_tensor_descriptor,
+            outputs,
+            output_tensor_descriptor,
+            outputs,
+            dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
+            dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
+
+        if (status != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnDropoutForward failed: " << cudnnGetErrorString(status) << endl;
+    }
 }
 
 
@@ -770,7 +786,7 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
     Dense2dForwardPropagationCuda* dense2d_layer_forward_propagation_cuda =
         static_cast<Dense2dForwardPropagationCuda*>(forward_propagation_cuda.get());
 
-    Dense2d* perceptron_layer = static_cast<Dense2d*>(dense2d_layer_forward_propagation_cuda->layer);
+    Dense2d* dense2d_layer = static_cast<Dense2d*>(dense2d_layer_forward_propagation_cuda->layer);
 
     const Index batch_size = dense2d_layer_forward_propagation_cuda->batch_size;
 
@@ -779,22 +795,39 @@ void Dense2d::back_propagate_cuda(const vector<float*>& inputs_device,
 
     // Back propagation
 
-    Dense2dBackPropagationCuda* perceptron_layer_back_propagation =
+    Dense2dBackPropagationCuda* dense2d_layer_back_propagation =
         static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
 
-    float* ones = perceptron_layer_back_propagation->ones;
-    float* error_combinations_derivatives = perceptron_layer_back_propagation->combination_deltas_device;
+    float* ones = dense2d_layer_back_propagation->ones;
+    float* error_combinations_derivatives = dense2d_layer_back_propagation->combination_deltas_device;
 
-    float* bias_derivatives = perceptron_layer_back_propagation->bias_derivatives_device;
-    float* weight_derivatives = perceptron_layer_back_propagation->weight_derivatives_device;
-    float* input_derivatives = perceptron_layer_back_propagation->input_derivatives;
+    float* bias_derivatives = dense2d_layer_back_propagation->bias_derivatives_device;
+    float* weight_derivatives = dense2d_layer_back_propagation->weight_derivatives_device;
+    float* input_derivatives = dense2d_layer_back_propagation->input_derivatives;
 
-    const cudnnTensorDescriptor_t& deltas_tensor_descriptor = perceptron_layer_back_propagation->deltas_tensor_descriptor;
-    const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = perceptron_layer_back_propagation->combination_deltas_tensor_descriptor;
+    const cudnnTensorDescriptor_t& deltas_tensor_descriptor = dense2d_layer_back_propagation->deltas_tensor_descriptor;
+    const cudnnTensorDescriptor_t& combination_deltas_tensor_descriptor = dense2d_layer_back_propagation->combination_deltas_tensor_descriptor;
+
+    // Dropout
+
+    if (get_dropout_rate() > type(0))
+    {
+        cudnnStatus_t dstatus = cudnnDropoutBackward(cudnn_handle,
+            dense2d_layer_forward_propagation_cuda->dropout_descriptor,
+            deltas_tensor_descriptor,
+            deltas_device[0],
+            deltas_tensor_descriptor,
+            deltas_device[0],
+            dense2d_layer_forward_propagation_cuda->dropout_reserve_space,
+            dense2d_layer_forward_propagation_cuda->dropout_reserve_space_size);
+
+        if (dstatus != CUDNN_STATUS_SUCCESS)
+            cout << "cudnnDropoutBackward failed: " << cudnnGetErrorString(dstatus) << endl;
+    }
 
     // Error combinations derivatives
 
-    if (perceptron_layer->get_activation_function() != Activation::Linear && perceptron_layer->get_activation_function() != Activation::Softmax)
+    if (dense2d_layer->get_activation_function() != Activation::Linear && dense2d_layer->get_activation_function() != Activation::Softmax)
         cudnnActivationBackward(cudnn_handle,
             activation_descriptor,
             &alpha,
@@ -863,11 +896,11 @@ void Dense2d::insert_gradient_cuda(unique_ptr<LayerBackPropagationCuda>& back_pr
                                       Index& index, 
                                       float* gradient) const
 {
-    Dense2dBackPropagationCuda* perceptron_layer_back_propagation =
+    Dense2dBackPropagationCuda* dense2d_layer_back_propagation =
         static_cast<Dense2dBackPropagationCuda*>(back_propagation_cuda.get());
 
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->weight_derivatives_device, weights.size(), index);
-    copy_to_vector_cuda(gradient, perceptron_layer_back_propagation->bias_derivatives_device, biases.size(), index);
+    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->weight_derivatives_device, weights.size(), index);
+    copy_to_vector_cuda(gradient, dense2d_layer_back_propagation->bias_derivatives_device, biases.size(), index);
 }
 
 
@@ -932,8 +965,10 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
 
     layer = new_layer;
 
-    const Index outputs_number = layer->get_outputs_number();
-    const Index inputs_number = layer->get_input_dimensions()[0];
+    Dense2d* dense2d_layer = static_cast<Dense2d*>(layer);
+
+    const Index outputs_number = dense2d_layer->get_outputs_number();
+    const Index inputs_number = dense2d_layer->get_input_dimensions()[0];
 
     // Biases
 
@@ -971,6 +1006,27 @@ void Dense2dForwardPropagationCuda::set(const Index& new_batch_size, Layer* new_
         outputs_number,
         1,
         1);
+
+    //Dropout
+
+    if (dense2d_layer->get_dropout_rate() > type(0))
+    {
+        cudnnCreateDropoutDescriptor(&dropout_descriptor);
+
+        cudnnDropoutGetStatesSize(dense2d_layer->get_cudnn_handle(), &dropout_states_size);
+
+        cudaMalloc(&dropout_states, dropout_states_size);
+
+        cudnnSetDropoutDescriptor(dropout_descriptor,
+            dense2d_layer->get_cudnn_handle(),
+            static_cast<float>(dense2d_layer->get_dropout_rate()),
+            dropout_states,
+            dropout_states_size,
+            dropout_seed);
+
+        cudnnDropoutGetReserveSpaceSize(output_tensor_descriptor, &dropout_reserve_space_size);
+        cudaMalloc(&dropout_reserve_space, dropout_reserve_space_size);
+    }
 }
 
 void Dense2dForwardPropagationCuda::print() const
@@ -987,6 +1043,13 @@ void Dense2dForwardPropagationCuda::free()
     cudnnDestroyTensorDescriptor(output_softmax_tensor_descriptor);
     cudnnDestroyTensorDescriptor(output_tensor_descriptor);
     cudnnDestroyTensorDescriptor(biases_tensor_descriptor);
+
+    if (dropout_reserve_space)
+        cudaFree(dropout_reserve_space);
+    if (dropout_descriptor)
+        cudnnDestroyDropoutDescriptor(dropout_descriptor);
+    if (dropout_states)
+        cudaFree(dropout_states);
 }
 
 
